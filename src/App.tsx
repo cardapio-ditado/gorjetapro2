@@ -9,7 +9,6 @@ import AuthRecoveryGate from './components/AuthRecoveryGate';
 import { testConnection } from './lib/supabase';
 
 const Dashboard           = lazy(() => import('./pages/Dashboard'));
-const DashboardHome       = lazy(() => import('./pages/DashboardHome'));
 const Finance             = lazy(() => import('./pages/Finance'));
 const AdvancedInventory   = lazy(() => import('./pages/AdvancedInventory'));
 const Staff               = lazy(() => import('./pages/Staff'));
