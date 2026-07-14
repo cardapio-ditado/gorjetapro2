@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
-  TrendingUp, Calendar, FileText, CreditCard, Receipt,
+  TrendingUp, FileText, CreditCard, Receipt,
   ArrowLeftRight, Tag, Building2, Activity, PieChart,
   Settings, Target, RefreshCw, MessageSquare, X,
   DollarSign, ChevronRight,
@@ -10,7 +10,6 @@ import dayjs from 'dayjs';
 import 'dayjs/locale/pt-br';
 
 import FluxoCaixa               from '../components/financeiro/FluxoCaixa';
-import ResumoDia                from '../components/financeiro/ResumoDia';
 import ExtratoDiario            from '../components/financeiro/ExtratoDiario';
 import ContasPagar              from '../components/financeiro/ContasPagar';
 import ContasReceber            from '../components/financeiro/ContasReceber';
@@ -26,39 +25,46 @@ import ChatFinanceiroIA         from '../components/financeiro/ChatFinanceiroIA'
 dayjs.locale('pt-br');
 
 interface Tab {
+  slug: string;
   label: string;
   icon: React.ElementType;
   description: string;
 }
 
 const TABS: Tab[] = [
-  { label: 'Fluxo de Caixa',           icon: TrendingUp,     description: 'Entradas e saídas do período' },
-  { label: 'Resumo do Dia',            icon: Calendar,       description: 'Visão consolidada do dia' },
-  { label: 'Extrato Diário',           icon: FileText,       description: 'Lançamentos detalhados por dia' },
-  { label: 'Contas a Pagar',           icon: CreditCard,     description: 'Obrigações financeiras em aberto' },
-  { label: 'Contas a Receber',         icon: Receipt,        description: 'Valores a receber' },
-  { label: 'Histórico e Estornos',     icon: ArrowLeftRight, description: 'Histórico completo e estornos' },
-  { label: 'Categorizar',             icon: Tag,            description: 'Categorize os lançamentos' },
-  { label: 'Ficha Fornecedor',         icon: Building2,      description: 'Dados financeiros por fornecedor' },
-  { label: 'Kardex Fornecedor',        icon: Activity,       description: 'Movimentações por fornecedor' },
-  { label: 'Kardex Completo',          icon: FileText,       description: 'Kardex financeiro completo' },
-  { label: 'Relatórios',              icon: PieChart,       description: 'Relatórios gerenciais' },
-  { label: 'Cadastros',               icon: Settings,       description: 'Cadastros gerais do financeiro' },
+  { slug: 'fluxo',             label: 'Fluxo de Caixa',       icon: TrendingUp,     description: 'Entradas e saídas do período' },
+  { slug: 'extrato',           label: 'Extrato Diário',       icon: FileText,       description: 'Lançamentos detalhados por dia' },
+  { slug: 'pagar',             label: 'Contas a Pagar',       icon: CreditCard,     description: 'Obrigações financeiras em aberto' },
+  { slug: 'receber',           label: 'Contas a Receber',     icon: Receipt,        description: 'Valores a receber' },
+  { slug: 'historico',         label: 'Histórico e Estornos', icon: ArrowLeftRight, description: 'Histórico completo e estornos' },
+  { slug: 'categorizar',       label: 'Categorizar',          icon: Tag,            description: 'Categorize os lançamentos' },
+  { slug: 'ficha-fornecedor',  label: 'Ficha Fornecedor',     icon: Building2,      description: 'Dados financeiros por fornecedor' },
+  { slug: 'kardex-fornecedor', label: 'Kardex Fornecedor',    icon: Activity,       description: 'Movimentações por fornecedor' },
+  { slug: 'kardex-completo',   label: 'Kardex Completo',      icon: FileText,       description: 'Kardex financeiro completo' },
+  { slug: 'relatorios',        label: 'Relatórios',           icon: PieChart,       description: 'Relatórios gerenciais' },
+  { slug: 'cadastros',         label: 'Cadastros',            icon: Settings,       description: 'Cadastros gerais do financeiro' },
 ];
 
-const CONTENT: Record<number, React.ReactNode> = {
-  0:  <FluxoCaixa />,
-  1:  <ResumoDia />,
-  2:  <ExtratoDiario />,
-  3:  <ContasPagar />,
-  4:  <ContasReceber />,
-  5:  <HistoricoPagamentosEstorno />,
-  6:  <CategorizarLancamentos />,
-  7:  <FichaFinanceiraFornecedor />,
-  8:  <KardexFinanceiroFornecedor />,
-  9:  <KardexFornecedor />,
-  10: <RelatoriosGerenciais />,
-  11: <GeneralRegistrations />,
+const CONTENT: Record<string, React.ReactNode> = {
+  'fluxo':             <FluxoCaixa />,
+  'extrato':           <ExtratoDiario />,
+  'pagar':             <ContasPagar />,
+  'receber':           <ContasReceber />,
+  'historico':         <HistoricoPagamentosEstorno />,
+  'categorizar':       <CategorizarLancamentos />,
+  'ficha-fornecedor':  <FichaFinanceiraFornecedor />,
+  'kardex-fornecedor': <KardexFinanceiroFornecedor />,
+  'kardex-completo':   <KardexFornecedor />,
+  'relatorios':        <RelatoriosGerenciais />,
+  'cadastros':         <GeneralRegistrations />,
+};
+
+// Links antigos usavam índice numérico (?tab=N). Mapa de compatibilidade:
+// o antigo tab=1 (Resumo do Dia, removido — redundante com /financeiro) cai no fluxo.
+const LEGACY_TABS: Record<string, string> = {
+  '0': 'fluxo', '1': 'fluxo', '2': 'extrato', '3': 'pagar', '4': 'receber',
+  '5': 'historico', '6': 'categorizar', '7': 'ficha-fornecedor',
+  '8': 'kardex-fornecedor', '9': 'kardex-completo', '10': 'relatorios', '11': 'cadastros',
 };
 
 const Finance: React.FC = () => {
@@ -68,15 +74,17 @@ const Finance: React.FC = () => {
   const [showChat, setShowChat] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
-  // Sync tab com URL
+  // Sync tab com URL (aceita slug novo e índice numérico legado)
   useEffect(() => {
-    const t = parseInt(new URLSearchParams(location.search).get('tab') || '0');
-    if (!isNaN(t) && t >= 0 && t < TABS.length) setTab(t);
+    const raw  = new URLSearchParams(location.search).get('tab') || 'fluxo';
+    const slug = LEGACY_TABS[raw] ?? raw;
+    const idx  = TABS.findIndex(t => t.slug === slug);
+    setTab(idx >= 0 ? idx : 0);
   }, [location.search]);
 
   const goToTab = (i: number) => {
     setTab(i);
-    navigate(`/finance?tab=${i}`, { replace: true });
+    navigate(`/finance?tab=${TABS[i].slug}`, { replace: true });
   };
 
   const current = TABS[tab];
@@ -167,7 +175,7 @@ const Finance: React.FC = () => {
 
       {/* ── CONTEÚDO ── */}
       <div className="flex-1 px-6 lg:px-8 py-6" style={{ background: '#0d0f1a' }}>
-        {CONTENT[tab] ?? (
+        {CONTENT[current.slug] ?? (
           <div className="flex items-center justify-center py-24">
             <p className="text-white/30 text-sm">Módulo em desenvolvimento</p>
           </div>

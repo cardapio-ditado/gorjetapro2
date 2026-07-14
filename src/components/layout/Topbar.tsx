@@ -34,18 +34,17 @@ const ALL_ROUTES: SearchResult[] = [
   { label: 'Músicos',                 path: '/musicians',                                            icon: Music },
   { label: 'Eventos',                 path: '/events',                                               icon: CalendarDays },
   // Financeiro
-  { label: 'Financeiro — Fluxo de Caixa',        path: '/finance?tab=0',   icon: DollarSign },
-  { label: 'Financeiro — Resumo do Dia',         path: '/finance?tab=1',   icon: DollarSign },
-  { label: 'Financeiro — Extrato Diário',        path: '/finance?tab=2',   icon: DollarSign },
-  { label: 'Financeiro — Contas a Pagar',        path: '/finance?tab=3',   icon: DollarSign },
-  { label: 'Financeiro — Contas a Receber',      path: '/finance?tab=4',   icon: DollarSign },
-  { label: 'Financeiro — Histórico / Estornos',  path: '/finance?tab=5',   icon: DollarSign },
-  { label: 'Financeiro — Categorizar',           path: '/finance?tab=6',   icon: DollarSign },
-  { label: 'Financeiro — Ficha Fornecedor',      path: '/finance?tab=7',   icon: DollarSign },
-  { label: 'Financeiro — Kardex Fornecedor',     path: '/finance?tab=8',   icon: DollarSign },
-  { label: 'Financeiro — Kardex Completo',       path: '/finance?tab=9',   icon: DollarSign },
-  { label: 'Financeiro — Relatórios',            path: '/finance?tab=10',  icon: DollarSign },
-  { label: 'Financeiro — Cadastros',             path: '/finance?tab=11',  icon: DollarSign },
+  { label: 'Financeiro — Fluxo de Caixa',        path: '/finance?tab=fluxo',             icon: DollarSign },
+  { label: 'Financeiro — Extrato Diário',        path: '/finance?tab=extrato',           icon: DollarSign },
+  { label: 'Financeiro — Contas a Pagar',        path: '/finance?tab=pagar',             icon: DollarSign },
+  { label: 'Financeiro — Contas a Receber',      path: '/finance?tab=receber',           icon: DollarSign },
+  { label: 'Financeiro — Histórico / Estornos',  path: '/finance?tab=historico',         icon: DollarSign },
+  { label: 'Financeiro — Categorizar',           path: '/finance?tab=categorizar',       icon: DollarSign },
+  { label: 'Financeiro — Ficha Fornecedor',      path: '/finance?tab=ficha-fornecedor',  icon: DollarSign },
+  { label: 'Financeiro — Kardex Fornecedor',     path: '/finance?tab=kardex-fornecedor', icon: DollarSign },
+  { label: 'Financeiro — Kardex Completo',       path: '/finance?tab=kardex-completo',   icon: DollarSign },
+  { label: 'Financeiro — Relatórios',            path: '/finance?tab=relatorios',        icon: DollarSign },
+  { label: 'Financeiro — Cadastros',             path: '/finance?tab=cadastros',         icon: DollarSign },
   { label: 'Dashboard Financeiro',               path: '/financeiro',       icon: DollarSign },
   { label: 'Visão Estratégica',                  path: '/visao-estrategica',icon: DollarSign },
   { label: 'Entradas Previsto x Real',           path: '/entradas',         icon: DollarSign },
@@ -68,7 +67,7 @@ const ALL_ROUTES: SearchResult[] = [
   { label: 'Estoque — Estoques',            path: '/advanced-inventory?area=cadastros&tela=estoques',   icon: Warehouse },
   { label: 'Controle De Ville',             path: '/controle-deville',                                  icon: Warehouse },
   // Estratégico & Fidelidade
-  { label: 'Estratégico',                   path: '/gestao-estrategica',                                icon: TrendingUp },
+  { label: 'OKRs Estratégicos',             path: '/gestao-estrategica',                                icon: TrendingUp },
   { label: 'Fidelidade — Sincronização',    path: '/fidelidade',                                        icon: Star },
   { label: 'Fidelidade — Buscar Cliente',   path: '/fidelidade?tab=busca',                              icon: Star },
   { label: 'Fidelidade — Aniversariantes',  path: '/fidelidade?tab=aniversario',                        icon: Star },
@@ -193,7 +192,7 @@ const Topbar: React.FC<TopbarProps> = ({ toggleSidebar, user, onLogout }) => {
       '/solicitacoes': { module: 'Solicitações' },
       '/ocorrencias': { module: 'Ocorrências' },
       '/marketing': { module: 'Marketing' },
-      '/gestao-estrategica': { module: 'Estratégico' },
+      '/gestao-estrategica': { module: 'OKRs Estratégicos' },
       '/visao-estrategica': { module: 'Financeiro', sub: 'Visão Estratégica' },
       '/entradas': { module: 'Financeiro', sub: 'Entradas' },
       '/zig-recebimentos': { module: 'Financeiro', sub: 'ZIG Recebimentos' },
@@ -203,15 +202,23 @@ const Topbar: React.FC<TopbarProps> = ({ toggleSidebar, user, onLogout }) => {
       '/settings': { module: 'Configurações' },
       '/fidelidade': { module: 'Fidelidade' },
       '/metas-tarefas': { module: 'Metas & Tarefas' },
-      '/gestao-estrategica': { module: 'Estratégico' },
     };
 
     const search2 = location.search;
     if (search2.includes('tab=')) {
+      const slugMatch = search2.match(/tab=([a-z-]+)/);
+      if (slugMatch && path === '/finance') {
+        const tabsPorSlug: Record<string, string> = {
+          'fluxo': 'Fluxo de Caixa', 'extrato': 'Extrato', 'pagar': 'Contas a Pagar',
+          'receber': 'Contas a Receber', 'historico': 'Histórico', 'categorizar': 'Categorizar',
+          'ficha-fornecedor': 'Ficha Fornecedor', 'kardex-fornecedor': 'Kardex Fornecedor',
+          'kardex-completo': 'Kardex Completo', 'relatorios': 'Relatórios', 'cadastros': 'Cadastros',
+        };
+        return { module: 'Financeiro', sub: tabsPorSlug[slugMatch[1]] ?? 'Fluxo de Caixa' };
+      }
       const tabMatch = search2.match(/tab=(\d+)/);
       if (tabMatch && path === '/finance') {
-        const tabs = ['Fluxo de Caixa', 'Resumo do Dia', 'Extrato', 'Contas a Pagar', 'Contas a Receber', 'Histórico', 'Categorizar', 'Ficha Fornecedor', 'Kardex Fornecedor', 'Kardex Completo', 'Relatórios', 'Cadastros'];
-        return { module: 'Financeiro', sub: tabs[parseInt(tabMatch[1])] };
+        return { module: 'Financeiro', sub: 'Fluxo de Caixa' };
       }
       if (tabMatch && path === '/staff') {
         const tabs = ['Colaboradores', 'Escalas', 'Férias', 'Ocorrências', 'Extras', 'Funções', 'Configurações', 'Relatórios', 'Gorjetas'];
