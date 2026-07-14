@@ -1,0 +1,462 @@
+import React, { useState, useEffect } from 'react';
+import { X, Upload, FileSpreadsheet, Sparkles, CheckCircle, AlertCircle, Edit3 } from 'lucide-react';
+import { supabase } from '../../lib/supabase';
+
+interface ImportarVendasIAProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSuccess: () => void;
+}
+
+interface ItemImportacao {
+  id: string;
+  linha_numero: number;
+  nome_produto_externo: string;
+  quantidade: number;
+  valor_unitario: number | null;
+  item_estoque_id: string | null;
+  item_estoque_nome: string | null;
+  status: string;
+  confianca_mapeamento: number;
+}
+
+const ImportarVendasIA: React.FC<ImportarVendasIAProps> = ({ isOpen, onClose, onSuccess }) => {
+  const [etapa, setEtapa] = useState<'upload' | 'processando' | 'revisao' | 'finalizando' | 'concluido'>('upload');
+  const [arquivo, setArquivo] = useState<File | null>(null);
+  const [estoques, setEstoques] = useState<any[]>([]);
+  const [estoqueId, setEstoqueId] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [importacaoId, setImportacaoId] = useState<string | null>(null);
+  const [itens, setItens] = useState<ItemImportacao[]>([]);
+  const [itensEstoque, setItensEstoque] = useState<any[]>([]);
+  const [editandoId, setEditandoId] = useState<string | null>(null);
+  const [salvarMapeamentos, setSalvarMapeamentos] = useState(true);
+  const [resultado, setResultado] = useState<any>(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      carregarEstoques();
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (estoqueId) {
+      carregarItensEstoque();
+    }
+  }, [estoqueId]);
+
+  const carregarEstoques = async () => {
+    const { data } = await supabase
+      .from('estoques')
+      .select('*')
+      .eq('ativo', true)
+      .order('nome');
+
+    if (data) {
+      setEstoques(data);
+      if (data.length > 0) setEstoqueId(data[0].id);
+    }
+  };
+
+  const carregarItensEstoque = async () => {
+    const { data } = await supabase
+      .from('itens_estoque')
+      .select('*')
+      .eq('estoque_id', estoqueId)
+      .eq('ativo', true)
+      .order('nome');
+
+    if (data) setItensEstoque(data);
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setArquivo(file);
+      setError(null);
+    }
+  };
+
+  const handleUpload = async () => {
+    if (!arquivo || !estoqueId) {
+      setError('Selecione um arquivo e um estoque');
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    setEtapa('processando');
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+
+      const formData = new FormData();
+      formData.append('file', arquivo);
+      formData.append('estoque_id', estoqueId);
+      formData.append('user_id', user?.id || '');
+
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const response = await fetch(`${supabaseUrl}/functions/v1/importar-vendas-estoque`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+        },
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || 'Erro ao processar arquivo');
+      }
+
+      setImportacaoId(data.importacao_id);
+      await carregarItensImportacao(data.importacao_id);
+      setEtapa('revisao');
+
+    } catch (err) {
+      console.error('Erro:', err);
+      setError(err instanceof Error ? err.message : 'Erro ao processar arquivo');
+      setEtapa('upload');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const carregarItensImportacao = async (impId: string) => {
+    const { data } = await supabase
+      .from('itens_importacao_vendas')
+      .select('*')
+      .eq('importacao_id', impId)
+      .order('linha_numero');
+
+    if (data) setItens(data);
+  };
+
+  const handleEditarItem = (itemId: string, novoItemEstoqueId: string) => {
+    const itemEstoque = itensEstoque.find(i => i.id === novoItemEstoqueId);
+
+    setItens(prev => prev.map(item =>
+      item.id === itemId
+        ? {
+            ...item,
+            item_estoque_id: novoItemEstoqueId,
+            item_estoque_nome: itemEstoque?.nome || null,
+            confianca_mapeamento: 1.0
+          }
+        : item
+    ));
+
+    setEditandoId(null);
+  };
+
+  const handleConfirmar = async () => {
+    if (!importacaoId) return;
+
+    setLoading(true);
+    setEtapa('finalizando');
+    setError(null);
+
+    try {
+      const itensRevisados = itens
+        .filter(i => i.confianca_mapeamento === 1.0)
+        .map(i => ({
+          id: i.id,
+          item_estoque_id: i.item_estoque_id,
+          item_estoque_nome: i.item_estoque_nome
+        }));
+
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const response = await fetch(`${supabaseUrl}/functions/v1/confirmar-importacao-vendas`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          importacao_id: importacaoId,
+          itens_revisados: itensRevisados.length > 0 ? itensRevisados : null,
+          salvar_mapeamentos: salvarMapeamentos
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || 'Erro ao confirmar importação');
+      }
+
+      setResultado(data);
+      setEtapa('concluido');
+
+      setTimeout(() => {
+        onSuccess();
+        handleFechar();
+      }, 3000);
+
+    } catch (err) {
+      console.error('Erro:', err);
+      setError(err instanceof Error ? err.message : 'Erro ao confirmar importação');
+      setEtapa('revisao');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleFechar = () => {
+    setEtapa('upload');
+    setArquivo(null);
+    setImportacaoId(null);
+    setItens([]);
+    setError(null);
+    setResultado(null);
+    onClose();
+  };
+
+  if (!isOpen) return null;
+
+  const itensMapeados = itens.filter(i => i.item_estoque_id).length;
+  const itensPendentes = itens.filter(i => !i.item_estoque_id).length;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg w-full max-w-6xl max-h-[90vh] overflow-hidden flex flex-col">
+        <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-blue-600 to-indigo-600">
+          <div className="flex justify-between items-start">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
+                <Sparkles className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h3 className="text-xl font-semibold text-white">Importar Vendas com IA</h3>
+                <p className="text-sm text-blue-100 mt-1">Dê saída automática no estoque a partir de arquivo XLS/CSV</p>
+              </div>
+            </div>
+            <button onClick={handleFechar} className="text-white hover:text-blue-100">
+              <X className="w-6 h-6" />
+            </button>
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-6">
+          {etapa === 'upload' && (
+            <div className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Estoque de Destino</label>
+                <select
+                  value={estoqueId}
+                  onChange={(e) => setEstoqueId(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                >
+                  {estoques.map(est => (
+                    <option key={est.id} value={est.id}>{est.nome}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Arquivo de Vendas (XLS, CSV)</label>
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-blue-500 transition-colors">
+                  <input
+                    type="file"
+                    accept=".xls,.xlsx,.csv,.txt"
+                    onChange={handleFileChange}
+                    className="hidden"
+                    id="file-upload"
+                  />
+                  <label htmlFor="file-upload" className="cursor-pointer">
+                    <FileSpreadsheet className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-sm text-gray-600">{arquivo ? arquivo.name : 'Clique para selecionar o arquivo'}</p>
+                  </label>
+                </div>
+              </div>
+
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <h4 className="font-semibold text-blue-900 mb-2">Como funciona:</h4>
+                <ol className="text-sm text-blue-800 space-y-1 list-decimal list-inside">
+                  <li>Selecione o arquivo XLS/CSV com as vendas</li>
+                  <li>A IA identifica automaticamente as colunas de produto e quantidade</li>
+                  <li>Os produtos são mapeados com os itens do estoque</li>
+                  <li>Você revisa e ajusta os mapeamentos se necessário</li>
+                  <li>As saídas de estoque são criadas automaticamente</li>
+                </ol>
+              </div>
+
+              {error && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3">
+                  <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-medium text-red-900">Erro</p>
+                    <p className="text-sm text-red-700 mt-1">{error}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {etapa === 'processando' && (
+            <div className="flex flex-col items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mb-4"></div>
+              <p className="text-lg font-medium text-gray-900">Processando arquivo...</p>
+              <p className="text-sm text-gray-600 mt-2">A IA está mapeando os produtos</p>
+            </div>
+          )}
+
+          {etapa === 'revisao' && (
+            <div className="space-y-6">
+              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4">
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <p className="text-sm text-gray-600">Total de Itens</p>
+                    <p className="text-2xl font-bold text-gray-900">{itens.length}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Mapeados</p>
+                    <p className="text-2xl font-bold text-green-600">{itensMapeados}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Pendentes</p>
+                    <p className="text-2xl font-bold text-orange-600">{itensPendentes}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="salvar-map"
+                  checked={salvarMapeamentos}
+                  onChange={(e) => setSalvarMapeamentos(e.target.checked)}
+                  className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                />
+                <label htmlFor="salvar-map" className="text-sm text-gray-700">
+                  Salvar mapeamentos para futuras importações
+                </label>
+              </div>
+
+              <div className="space-y-2 max-h-96 overflow-y-auto">
+                {itens.map(item => (
+                  <div
+                    key={item.id}
+                    className={`border rounded-lg p-4 ${
+                      item.item_estoque_id ? 'border-green-200 bg-green-50' : 'border-orange-200 bg-orange-50'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1">
+                        <p className="font-medium text-gray-900">{item.nome_produto_externo}</p>
+                        <p className="text-sm text-gray-600 mt-1">Qtd: {item.quantidade}</p>
+
+                        {editandoId === item.id ? (
+                          <div className="mt-2">
+                            <select
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                              defaultValue={item.item_estoque_id || ''}
+                              onChange={(e) => handleEditarItem(item.id, e.target.value)}
+                            >
+                              <option value="">Selecione o item...</option>
+                              {itensEstoque.map(ie => (
+                                <option key={ie.id} value={ie.id}>{ie.nome}</option>
+                              ))}
+                            </select>
+                          </div>
+                        ) : (
+                          <>
+                            {item.item_estoque_id ? (
+                              <div className="mt-2 flex items-center gap-2">
+                                <CheckCircle className="w-4 h-4 text-green-600" />
+                                <span className="text-sm text-green-700">{item.item_estoque_nome}</span>
+                                {item.confianca_mapeamento < 1 && (
+                                  <span className="text-xs text-green-600">
+                                    ({Math.round(item.confianca_mapeamento * 100)}%)
+                                  </span>
+                                )}
+                              </div>
+                            ) : (
+                              <div className="mt-2 flex items-center gap-2">
+                                <AlertCircle className="w-4 h-4 text-orange-600" />
+                                <span className="text-sm text-orange-700">Não mapeado</span>
+                              </div>
+                            )}
+                          </>
+                        )}
+                      </div>
+
+                      <button
+                        onClick={() => setEditandoId(editandoId === item.id ? null : item.id)}
+                        className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors"
+                      >
+                        <Edit3 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {etapa === 'finalizando' && (
+            <div className="flex flex-col items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mb-4"></div>
+              <p className="text-lg font-medium text-gray-900">Processando saídas...</p>
+            </div>
+          )}
+
+          {etapa === 'concluido' && resultado && (
+            <div className="flex flex-col items-center justify-center py-12">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
+                <CheckCircle className="w-10 h-10 text-green-600" />
+              </div>
+              <p className="text-xl font-semibold text-gray-900 mb-2">Importação Concluída!</p>
+              <p className="text-sm text-gray-600">{resultado.total_sucesso} saídas criadas com sucesso</p>
+            </div>
+          )}
+        </div>
+
+        <div className="p-6 border-t border-gray-200 bg-gray-50">
+          <div className="flex justify-end gap-3">
+            {etapa === 'upload' && (
+              <>
+                <button
+                  onClick={handleFechar}
+                  className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleUpload}
+                  disabled={!arquivo || !estoqueId || loading}
+                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                  <Upload className="w-5 h-5" />
+                  Processar Arquivo
+                </button>
+              </>
+            )}
+
+            {etapa === 'revisao' && (
+              <>
+                <button
+                  onClick={handleFechar}
+                  className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleConfirmar}
+                  disabled={itensMapeados === 0 || loading}
+                  className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Confirmar ({itensMapeados} itens)
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default ImportarVendasIA;

@@ -1,0 +1,993 @@
+import React, { useState, useEffect } from 'react';
+import { 
+  Plus, 
+  Search, 
+  Filter, 
+  Edit, 
+  Trash2, 
+  Eye,
+  Factory,
+  Calendar,
+  DollarSign,
+  CheckCircle,
+  XCircle,
+  Clock,
+  AlertTriangle,
+  Download,
+  FileText,
+  Package,
+  Users,
+  ChefHat,
+  Play,
+  Pause,
+  Target,
+  Activity,
+  TrendingUp
+} from 'lucide-react';
+import { supabase } from '../../lib/supabase';
+import { exportToExcel } from '../../utils/reportGenerator';
+import dayjs from 'dayjs';
+
+interface Producao {
+  id: string;
+  ficha_id: string;
+  ficha_nome: string;
+  quantidade: number;
+  data_producao: string;
+  custo_total_producao: number;
+  responsavel?: string;
+  status: 'planejado' | 'em_andamento' | 'concluido' | 'cancelado';
+  observacoes?: string;
+  criado_em: string;
+}
+
+interface FichaTecnica {
+  id: string;
+  nome: string;
+  porcoes?: number;
+  custo_total?: number;
+  ativo: boolean;
+  categoria?: string;
+  dificuldade?: string;
+  tempo_preparo?: number;
+}
+
+interface FormData {
+  ficha_id: string;
+  quantidade: number;
+  data_producao: string;
+  responsavel: string;
+  status: 'planejado' | 'em_andamento' | 'concluido' | 'cancelado';
+  observacoes: string;
+}
+
+interface IndicadoresProducao {
+  total_producoes: number;
+  producoes_mes: number;
+  producoes_concluidas: number;
+  producoes_pendentes: number;
+  valor_total_producao: number;
+  fichas_ativas: number;
+}
+
+const ProducaoEstoque: React.FC = () => {
+  const [producoes, setProducoes] = useState<Producao[]>([]);
+  const [fichasTecnicas, setFichasTecnicas] = useState<FichaTecnica[]>([]);
+  const [indicadores, setIndicadores] = useState<IndicadoresProducao | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [showForm, setShowForm] = useState(false);
+  const [editingProducao, setEditingProducao] = useState<Producao | null>(null);
+  
+  // Filtros
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'planejado' | 'em_andamento' | 'concluido' | 'cancelado'>('all');
+  const [fichaFilter, setFichaFilter] = useState('all');
+  const [responsavelFilter, setResponsavelFilter] = useState('all');
+  const [dataInicial, setDataInicial] = useState(dayjs().subtract(30, 'days').format('YYYY-MM-DD'));
+  const [dataFinal, setDataFinal] = useState(dayjs().format('YYYY-MM-DD'));
+  
+  const [formData, setFormData] = useState<FormData>({
+    ficha_id: '',
+    quantidade: 1,
+    data_producao: dayjs().format('YYYY-MM-DD'),
+    responsavel: '',
+    status: 'planejado',
+    observacoes: ''
+  });
+
+  const responsaveis = [
+    'Chef Principal',
+    'Sous Chef',
+    'Cozinheiro 1',
+    'Cozinheiro 2',
+    'Auxiliar de Cozinha',
+    'Confeiteiro',
+    'Padeiro'
+  ];
+
+  useEffect(() => {
+    fetchData();
+    fetchFichasTecnicas();
+    fetchIndicadores();
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [statusFilter, fichaFilter, responsavelFilter, dataInicial, dataFinal]);
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      let query = supabase
+        .from('vw_producao_detalhada')
+        .select('*');
+
+      // Aplicar filtros
+      if (statusFilter !== 'all') {
+        query = query.eq('status', statusFilter);
+      }
+
+      if (fichaFilter !== 'all') {
+        query = query.eq('ficha_id', fichaFilter);
+      }
+
+      if (responsavelFilter !== 'all') {
+        query = query.eq('responsavel', responsavelFilter);
+      }
+
+      if (dataInicial) {
+        query = query.gte('data_producao', dataInicial);
+      }
+
+      if (dataFinal) {
+        query = query.lte('data_producao', dataFinal);
+      }
+
+      const { data, error } = await query.order('data_producao', { ascending: false });
+
+      if (error) throw error;
+
+      const producoesProcessadas: Producao[] = (data || []).map(prod => ({
+        id: prod.id,
+        ficha_id: prod.ficha_id,
+        ficha_nome: prod.ficha_nome,
+        quantidade: prod.quantidade,
+        data_producao: prod.data_producao,
+        custo_total_producao: prod.custo_total_producao,
+        responsavel: prod.responsavel,
+        status: prod.status,
+        observacoes: prod.observacoes,
+        criado_em: prod.criado_em
+      }));
+
+      setProducoes(producoesProcessadas);
+    } catch (err) {
+      console.error('Error fetching productions:', err);
+      setError(err instanceof Error ? err.message : 'Erro ao carregar produções');
+      setProducoes([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchFichasTecnicas = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('fichas_tecnicas')
+        .select('*')
+        .eq('ativo', true)
+        .order('nome');
+
+      if (error) throw error;
+      setFichasTecnicas(data || []);
+    } catch (err) {
+      console.error('Error fetching technical sheets:', err);
+      setFichasTecnicas([]);
+    }
+  };
+
+  const fetchIndicadores = async () => {
+    try {
+      // Buscar dados básicos de produção
+      const { data: producoesData, error: producoesError } = await supabase
+        .from('producoes')
+        .select('*');
+
+      if (producoesError) throw producoesError;
+
+      // Buscar dados do mês atual
+      const inicioMes = dayjs().startOf('month').format('YYYY-MM-DD');
+      const fimMes = dayjs().endOf('month').format('YYYY-MM-DD');
+
+      const { data: producoesMes, error: producoesMesError } = await supabase
+        .from('producoes')
+        .select('*')
+        .gte('data_producao', inicioMes)
+        .lte('data_producao', fimMes);
+
+      if (producoesMesError) throw producoesMesError;
+
+      // Buscar fichas ativas
+      const { data: fichasAtivas, error: fichasError } = await supabase
+        .from('fichas_tecnicas')
+        .select('id')
+        .eq('ativo', true);
+
+      if (fichasError) throw fichasError;
+
+      const totalProducoes = (producoesData || []).length;
+      const producoesMesAtual = (producoesMes || []).length;
+      const producoesConcluidas = (producoesData || []).filter(p => p.status === 'concluido').length;
+      const producoesPendentes = (producoesData || []).filter(p => ['planejado', 'em_andamento'].includes(p.status)).length;
+      const valorTotalProducao = (producoesData || []).reduce((sum, p) => sum + (p.custo_total_producao || 0), 0);
+      const fichasAtivasCount = (fichasAtivas || []).length;
+
+      setIndicadores({
+        total_producoes: totalProducoes,
+        producoes_mes: producoesMesAtual,
+        producoes_concluidas: producoesConcluidas,
+        producoes_pendentes: producoesPendentes,
+        valor_total_producao: valorTotalProducao,
+        fichas_ativas: fichasAtivasCount
+      });
+    } catch (err) {
+      console.error('Error fetching indicators:', err);
+      setIndicadores(null);
+    }
+  };
+
+  const handleSave = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Validações
+      if (!formData.ficha_id || formData.quantidade <= 0) {
+        throw new Error('Preencha todos os campos obrigatórios');
+      }
+
+      // Buscar dados da ficha técnica para calcular custo
+      const { data: fichaData, error: fichaError } = await supabase
+        .from('fichas_tecnicas')
+        .select('custo_total')
+        .eq('id', formData.ficha_id)
+        .single();
+
+      if (fichaError) throw fichaError;
+
+      const custoTotalProducao = (fichaData.custo_total || 0) * formData.quantidade;
+
+      const dataToSave = {
+        ...formData,
+        custo_total_producao: custoTotalProducao
+      };
+
+      if (editingProducao) {
+        const { error } = await supabase
+          .from('producoes')
+          .update(dataToSave)
+          .eq('id', editingProducao.id);
+
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('producoes')
+          .insert([dataToSave]);
+
+        if (error) throw error;
+      }
+
+      setShowForm(false);
+      setEditingProducao(null);
+      resetForm();
+      fetchData();
+      fetchIndicadores();
+    } catch (err) {
+      console.error('Error saving production:', err);
+      setError(err instanceof Error ? err.message : 'Erro ao salvar produção');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Tem certeza que deseja excluir esta produção?')) return;
+
+    try {
+      setLoading(true);
+      const { error } = await supabase
+        .from('producoes')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      fetchData();
+      fetchIndicadores();
+    } catch (err) {
+      console.error('Error deleting production:', err);
+      setError(err instanceof Error ? err.message : 'Erro ao excluir produção');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const iniciarProducao = async (id: string) => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const { error } = await supabase
+        .from('producoes')
+        .update({ 
+          status: 'em_andamento'
+        })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      fetchData();
+      fetchIndicadores();
+    } catch (err) {
+      console.error('Error starting production:', err);
+      setError(err instanceof Error ? err.message : 'Erro ao iniciar produção');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const concluirProducao = async (id: string) => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const { error } = await supabase
+        .from('producoes')
+        .update({ 
+          status: 'concluido'
+        })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      fetchData();
+      fetchIndicadores();
+    } catch (err) {
+      console.error('Error completing production:', err);
+      setError(err instanceof Error ? err.message : 'Erro ao concluir produção');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const openForm = (producao?: Producao) => {
+    if (producao) {
+      setEditingProducao(producao);
+      setFormData({
+        ficha_id: producao.ficha_id,
+        quantidade: producao.quantidade,
+        data_producao: producao.data_producao,
+        responsavel: producao.responsavel || '',
+        status: producao.status,
+        observacoes: producao.observacoes || ''
+      });
+    } else {
+      setEditingProducao(null);
+      resetForm();
+    }
+    setShowForm(true);
+  };
+
+  const resetForm = () => {
+    setFormData({
+      ficha_id: '',
+      quantidade: 1,
+      data_producao: dayjs().format('YYYY-MM-DD'),
+      responsavel: '',
+      status: 'planejado',
+      observacoes: ''
+    });
+  };
+
+  const filteredProducoes = producoes.filter(producao => {
+    const matchesSearch = producao.ficha_nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         producao.responsavel?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         producao.observacoes?.toLowerCase().includes(searchTerm.toLowerCase());
+    return matchesSearch;
+  });
+
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(value);
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'planejado':
+        return 'text-blue-700 bg-blue-100';
+      case 'em_andamento':
+        return 'text-yellow-700 bg-yellow-100';
+      case 'concluido':
+        return 'text-green-700 bg-green-100';
+      case 'cancelado':
+        return 'text-red-700 bg-red-100';
+      default:
+        return 'text-gray-700 bg-gray-100';
+    }
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'planejado':
+        return <Clock className="w-4 h-4" />;
+      case 'em_andamento':
+        return <Play className="w-4 h-4" />;
+      case 'concluido':
+        return <CheckCircle className="w-4 h-4" />;
+      case 'cancelado':
+        return <XCircle className="w-4 h-4" />;
+      default:
+        return <AlertTriangle className="w-4 h-4" />;
+    }
+  };
+
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case 'planejado':
+        return 'Planejado';
+      case 'em_andamento':
+        return 'Em Andamento';
+      case 'concluido':
+        return 'Concluído';
+      case 'cancelado':
+        return 'Cancelado';
+      default:
+        return status;
+    }
+  };
+
+  const exportData = () => {
+    if (filteredProducoes.length === 0) {
+      alert('Não há dados para exportar');
+      return;
+    }
+
+    const headers = [
+      'Ficha Técnica',
+      'Quantidade',
+      'Data Produção',
+      'Responsável',
+      'Status',
+      'Custo Total',
+      'Custo Unitário',
+      'Observações'
+    ];
+
+    const data = filteredProducoes.map(producao => [
+      producao.ficha_nome,
+      producao.quantidade,
+      dayjs(producao.data_producao).format('DD/MM/YYYY'),
+      producao.responsavel || '',
+      getStatusText(producao.status),
+      producao.custo_total_producao,
+      producao.quantidade > 0 ? (producao.custo_total_producao / producao.quantidade) : 0,
+      producao.observacoes || ''
+    ]);
+
+    const fileName = `producoes-${dayjs().format('YYYY-MM-DD')}`;
+    exportToExcel(data, fileName, headers);
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h3 className="text-lg font-medium text-gray-900">Controle de Produção</h3>
+        <div className="flex gap-2">
+          <button
+            onClick={exportData}
+            className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+          >
+            <Download className="w-4 h-4 inline mr-2" />
+            Exportar Excel
+          </button>
+          <button
+            onClick={() => openForm()}
+            className="px-4 py-2 bg-[#7D1F2C] text-white rounded-lg hover:bg-[#6a1a25]"
+          >
+            <Plus className="w-4 h-4 inline mr-2" />
+            Nova Produção
+          </button>
+        </div>
+      </div>
+
+      {error && (
+        <div className="p-4 bg-red-100 text-red-700 rounded-lg">
+          {error}
+        </div>
+      )}
+
+      {/* Indicadores */}
+      {indicadores && (
+        <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
+          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+            <div className="flex items-center">
+              <Factory className="w-8 h-8 text-blue-600 mr-3" />
+              <div>
+                <p className="text-sm font-medium text-gray-500">Total Produções</p>
+                <p className="text-2xl font-bold text-blue-600">
+                  {indicadores.total_producoes}
+                </p>
+                <p className="text-sm text-gray-600">Registradas</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+            <div className="flex items-center">
+              <Activity className="w-8 h-8 text-purple-600 mr-3" />
+              <div>
+                <p className="text-sm font-medium text-gray-500">Produções Este Mês</p>
+                <p className="text-2xl font-bold text-purple-600">
+                  {indicadores.producoes_mes}
+                </p>
+                <p className="text-sm text-gray-600">No período</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+            <div className="flex items-center">
+              <CheckCircle className="w-8 h-8 text-green-600 mr-3" />
+              <div>
+                <p className="text-sm font-medium text-gray-500">Concluídas</p>
+                <p className="text-2xl font-bold text-green-600">
+                  {indicadores.producoes_concluidas}
+                </p>
+                <p className="text-sm text-gray-600">Finalizadas</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+            <div className="flex items-center">
+              <Clock className="w-8 h-8 text-orange-600 mr-3" />
+              <div>
+                <p className="text-sm font-medium text-gray-500">Pendentes</p>
+                <p className="text-2xl font-bold text-orange-600">
+                  {indicadores.producoes_pendentes}
+                </p>
+                <p className="text-sm text-gray-600">Em andamento</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+            <div className="flex items-center">
+              <DollarSign className="w-8 h-8 text-teal-600 mr-3" />
+              <div>
+                <p className="text-sm font-medium text-gray-500">Valor Total</p>
+                <p className="text-2xl font-bold text-teal-600">
+                  {formatCurrency(indicadores.valor_total_producao)}
+                </p>
+                <p className="text-sm text-gray-600">Produzido</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+            <div className="flex items-center">
+              <FileText className="w-8 h-8 text-indigo-600 mr-3" />
+              <div>
+                <p className="text-sm font-medium text-gray-500">Fichas Ativas</p>
+                <p className="text-2xl font-bold text-indigo-600">
+                  {indicadores.fichas_ativas}
+                </p>
+                <p className="text-sm text-gray-600">Disponíveis</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Filtros */}
+      <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+        <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
+          <div>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <input
+                type="text"
+                placeholder="Buscar produções..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+              />
+            </div>
+          </div>
+
+          <div>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value as any)}
+              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+            >
+              <option value="all">Todos os Status</option>
+              <option value="planejado">Planejado</option>
+              <option value="em_andamento">Em Andamento</option>
+              <option value="concluido">Concluído</option>
+              <option value="cancelado">Cancelado</option>
+            </select>
+          </div>
+
+          <div>
+            <select
+              value={fichaFilter}
+              onChange={(e) => setFichaFilter(e.target.value)}
+              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+            >
+              <option value="all">Todas as Fichas</option>
+              {fichasTecnicas.map((ficha) => (
+                <option key={ficha.id} value={ficha.id}>
+                  {ficha.nome}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <select
+              value={responsavelFilter}
+              onChange={(e) => setResponsavelFilter(e.target.value)}
+              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+            >
+              <option value="all">Todos os Responsáveis</option>
+              {responsaveis.map((resp) => (
+                <option key={resp} value={resp}>
+                  {resp}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <input
+              type="date"
+              value={dataInicial}
+              onChange={(e) => setDataInicial(e.target.value)}
+              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+            />
+          </div>
+
+          <div>
+            <input
+              type="date"
+              value={dataFinal}
+              onChange={(e) => setDataFinal(e.target.value)}
+              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Lista de Produções */}
+      {loading ? (
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7D1F2C]"></div>
+        </div>
+      ) : (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="text-left bg-gray-50 border-b">
+                  <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Ficha Técnica
+                  </th>
+                  <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Quantidade
+                  </th>
+                  <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Data Produção
+                  </th>
+                  <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Responsável
+                  </th>
+                  <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Custo Total
+                  </th>
+                  <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Ações
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {filteredProducoes.map((producao) => (
+                  <tr key={producao.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4">
+                      <div className="flex items-center">
+                        <ChefHat className="w-5 h-5 text-[#7D1F2C] mr-3" />
+                        <div>
+                          <div className="font-medium text-gray-900">{producao.ficha_nome}</div>
+                          {producao.observacoes && (
+                            <div className="text-sm text-gray-500">{producao.observacoes}</div>
+                          )}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <Package className="w-4 h-4 text-gray-400 mr-2" />
+                        <span className="font-medium text-gray-900">
+                          {producao.quantidade}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">
+                        {dayjs(producao.data_producao).format('DD/MM/YYYY')}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        {producao.responsavel ? (
+                          <>
+                            <Users className="w-4 h-4 text-gray-400 mr-2" />
+                            <span className="text-sm text-gray-900">{producao.responsavel}</span>
+                          </>
+                        ) : (
+                          <span className="text-sm text-gray-400">Não definido</span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div>
+                        <div className="font-medium text-gray-900">
+                          {formatCurrency(producao.custo_total_producao)}
+                        </div>
+                        {producao.quantidade > 0 && (
+                          <div className="text-sm text-gray-500">
+                            Unit: {formatCurrency(producao.custo_total_producao / producao.quantidade)}
+                          </div>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`inline-flex items-center px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(producao.status)}`}>
+                        {getStatusIcon(producao.status)}
+                        <span className="ml-1">{getStatusText(producao.status)}</span>
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex space-x-2">
+                        {producao.status === 'planejado' && (
+                          <button
+                            onClick={() => iniciarProducao(producao.id)}
+                            className="text-green-600 hover:text-green-800"
+                            title="Iniciar Produção"
+                          >
+                            <Play className="w-4 h-4" />
+                          </button>
+                        )}
+                        {producao.status === 'em_andamento' && (
+                          <button
+                            onClick={() => concluirProducao(producao.id)}
+                            className="text-blue-600 hover:text-blue-800"
+                            title="Concluir Produção"
+                          >
+                            <CheckCircle className="w-4 h-4" />
+                          </button>
+                        )}
+                        <button
+                          onClick={() => openForm(producao)}
+                          className="text-blue-600 hover:text-blue-800"
+                          title="Editar"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(producao.id)}
+                          className="text-red-600 hover:text-red-800"
+                          title="Excluir"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {filteredProducoes.length === 0 && (
+            <div className="text-center py-12">
+              <Factory className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhuma produção encontrada</h3>
+              <p className="text-gray-500">
+                {searchTerm || statusFilter !== 'all' || fichaFilter !== 'all' || responsavelFilter !== 'all'
+                  ? 'Nenhuma produção corresponde aos filtros aplicados.'
+                  : 'Nenhuma produção cadastrada.'}
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Modal do Formulário */}
+      {showForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-2xl">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">
+              {editingProducao ? 'Editar Produção' : 'Nova Produção'}
+            </h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Ficha Técnica *
+                </label>
+                <select
+                  value={formData.ficha_id}
+                  onChange={(e) => setFormData({ ...formData, ficha_id: e.target.value })}
+                  className="w-full rounded-md border-gray-300 shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                  required
+                >
+                  <option value="">Selecione uma ficha técnica...</option>
+                  {fichasTecnicas.map((ficha) => (
+                    <option key={ficha.id} value={ficha.id}>
+                      {ficha.nome} ({ficha.porcoes} porções - {formatCurrency(ficha.custo_total || 0)})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Quantidade *
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  value={formData.quantidade}
+                  onChange={(e) => setFormData({ ...formData, quantidade: parseInt(e.target.value) || 1 })}
+                  className="w-full rounded-md border-gray-300 shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                  required
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Quantidade de receitas a produzir
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Data de Produção *
+                </label>
+                <input
+                  type="date"
+                  value={formData.data_producao}
+                  onChange={(e) => setFormData({ ...formData, data_producao: e.target.value })}
+                  className="w-full rounded-md border-gray-300 shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Responsável
+                </label>
+                <select
+                  value={formData.responsavel}
+                  onChange={(e) => setFormData({ ...formData, responsavel: e.target.value })}
+                  className="w-full rounded-md border-gray-300 shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                >
+                  <option value="">Selecione um responsável...</option>
+                  {responsaveis.map((resp) => (
+                    <option key={resp} value={resp}>
+                      {resp}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Status
+                </label>
+                <select
+                  value={formData.status}
+                  onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
+                  className="w-full rounded-md border-gray-300 shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                >
+                  <option value="planejado">Planejado</option>
+                  <option value="em_andamento">Em Andamento</option>
+                  <option value="concluido">Concluído</option>
+                  <option value="cancelado">Cancelado</option>
+                </select>
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Observações
+                </label>
+                <textarea
+                  value={formData.observacoes}
+                  onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
+                  className="w-full rounded-md border-gray-300 shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                  rows={3}
+                  placeholder="Observações sobre a produção..."
+                />
+              </div>
+
+              {/* Resumo do Custo */}
+              {formData.ficha_id && formData.quantidade > 0 && (
+                <div className="md:col-span-2 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                  <h4 className="font-medium text-blue-900 mb-2">Resumo da Produção</h4>
+                  {(() => {
+                    const ficha = fichasTecnicas.find(f => f.id === formData.ficha_id);
+                    const custoUnitario = ficha?.custo_total || 0;
+                    const custoTotal = custoUnitario * formData.quantidade;
+                    const porcoesTotais = (ficha?.porcoes || 1) * formData.quantidade;
+                    
+                    return (
+                      <div className="grid grid-cols-4 gap-4 text-sm">
+                        <div>
+                          <span className="text-blue-700 font-medium">Custo por Receita:</span>
+                          <div className="text-lg font-bold text-blue-900">
+                            {formatCurrency(custoUnitario)}
+                          </div>
+                        </div>
+                        <div>
+                          <span className="text-blue-700 font-medium">Quantidade:</span>
+                          <div className="text-lg font-bold text-blue-900">
+                            {formData.quantidade} receitas
+                          </div>
+                        </div>
+                        <div>
+                          <span className="text-blue-700 font-medium">Porções Totais:</span>
+                          <div className="text-lg font-bold text-blue-900">
+                            {porcoesTotais} porções
+                          </div>
+                        </div>
+                        <div>
+                          <span className="text-blue-700 font-medium">Custo Total:</span>
+                          <div className="text-lg font-bold text-blue-900">
+                            {formatCurrency(custoTotal)}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
+              )}
+            </div>
+            
+            <div className="mt-6 flex justify-end space-x-3">
+              <button
+                onClick={() => setShowForm(false)}
+                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleSave}
+                disabled={loading || !formData.ficha_id || formData.quantidade <= 0}
+                className="px-4 py-2 bg-[#7D1F2C] text-white rounded-md hover:bg-[#6a1a25] disabled:opacity-50"
+              >
+                {loading ? 'Salvando...' : 'Salvar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default ProducaoEstoque;

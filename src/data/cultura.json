@@ -1,0 +1,51 @@
+{
+  "missao": "Embriagar os corações de felicidade.",
+  "visao": "Ser referência em entretenimento no Mato Grosso, transformando cada visita em celebração.",
+  "valores": {
+    "Hospitalidade": {
+      "positivo": [
+        "Sorrir no rosto e chamar o cliente pelo nome, criando um ambiente acolhedor",
+        "Manter o local organizado e aconchegante para todos"
+      ],
+      "negativo": [
+        "Ignorar clientes ou deixar o local bagunçado"
+      ]
+    },
+    "Respeito": {
+      "positivo": [
+        "Tratar todos como importantes, ouvir e valorizar as pessoas"
+      ],
+      "negativo": [
+        "Desrespeitar ou ignorar opiniões de colegas ou clientes"
+      ]
+    },
+    "Qualidade": {
+      "positivo": [
+        "Servir o melhor chopp e manter tudo limpo",
+        "Escolher ingredientes de primeira e atenção aos detalhes"
+      ],
+      "negativo": [
+        "Servir produtos de baixa qualidade ou economizar no errado"
+      ]
+    },
+    "Inovação": {
+      "positivo": [
+        "Usar tecnologia como pedidos pelo celular",
+        "Trazer novidades no cardápio e ouvir ideias",
+        "Estar atento a novas tendências e adaptar-se rapidamente"
+      ],
+      "negativo": [
+        "Ficar preso ao jeito antigo ou ignorar novas ideias"
+      ]
+    },
+    "Iniciativa e Proatividade": {
+      "positivo": [
+        "Antecipar necessidades e resolver problemas rapidamente",
+        "Ouvir a equipe e adaptar-se a mudanças"
+      ],
+      "negativo": [
+        "Esperar por reclamações para agir ou falhar na comunicação"
+      ]
+    }
+  }
+}
