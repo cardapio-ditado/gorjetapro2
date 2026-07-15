@@ -374,9 +374,9 @@ const Dashboard: React.FC = () => {
         </div>
         <div className="flex items-end gap-1 h-24">
           {caixa.serie_14d.map(d => (
-            <div key={d.data} className="flex-1 flex items-end gap-px group relative" title={`${fmtData(d.data)} · +${fmtR(Number(d.entradas))} / -${fmtR(Number(d.saidas))}`}>
-              <div className="flex-1 bg-emerald-500/60 rounded-t-sm min-h-[2px]" style={{ height: `${(Number(d.entradas) / maxSerie) * 100}%` }} />
-              <div className="flex-1 bg-red-500/60 rounded-t-sm min-h-[2px]" style={{ height: `${(Number(d.saidas) / maxSerie) * 100}%` }} />
+            <div key={d.data} className="flex-1 h-full flex items-end justify-center gap-px group relative" title={`${fmtData(d.data)} · +${fmtR(Number(d.entradas))} / -${fmtR(Number(d.saidas))}`}>
+              <div className="flex-1 bg-emerald-500/60 rounded-t-sm min-h-[2px]" style={{ height: `${Math.max(2, (Number(d.entradas) / maxSerie) * 100)}%` }} />
+              <div className="flex-1 bg-red-500/60 rounded-t-sm min-h-[2px]" style={{ height: `${Math.max(2, (Number(d.saidas) / maxSerie) * 100)}%` }} />
             </div>
           ))}
         </div>
