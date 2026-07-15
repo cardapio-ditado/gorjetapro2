@@ -34,9 +34,10 @@ interface PainelDono {
     serie_14d: { data: string; entradas: number; saidas: number }[];
   };
   vendas: {
-    data: string; pessoas: number; faturamento: number;
-    gorjetas: number; ticket_medio: number;
-    anterior: { data: string; pessoas: number; faturamento: number } | null;
+    data: string; total: number; bebidas: number; alimentos: number; outros: number;
+    transacoes: number; mes: number;
+    anterior: { data: string; total: number } | null;
+    serie_14d: { data: string; total: number }[];
   } | null;
   cmv: {
     success: boolean; cmv: number; cmv_percentual: number | null;
@@ -199,8 +200,8 @@ const Dashboard: React.FC = () => {
   const resultadoMes = Number(caixa.mes.entradas) - Number(caixa.mes.saidas);
   const mesNome = new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
 
-  const variacaoVendas = vendas?.anterior
-    ? ((vendas.faturamento - vendas.anterior.faturamento) / vendas.anterior.faturamento) * 100
+  const variacaoVendas = vendas?.anterior && Number(vendas.anterior.total) > 0
+    ? ((Number(vendas.total) - Number(vendas.anterior.total)) / Number(vendas.anterior.total)) * 100
     : null;
 
   const maxSerie = Math.max(1, ...caixa.serie_14d.map(d => Math.max(Number(d.entradas), Number(d.saidas))));
@@ -232,7 +233,7 @@ const Dashboard: React.FC = () => {
           <div className="relative mt-5 bg-white/5 border border-white/10 rounded-2xl p-4">
             <div className="flex items-center justify-between flex-wrap gap-2">
               <p className="text-white/65 text-[10px] font-bold uppercase tracking-wider">
-                Última noite · {fmtData(vendas.data)}
+                Vendas ZIG · {fmtData(vendas.data)}
               </p>
               {variacaoVendas !== null && (
                 <span className={`text-[10px] font-black px-2 py-0.5 rounded-md ${
@@ -244,10 +245,10 @@ const Dashboard: React.FC = () => {
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-3">
               {[
-                { label: 'Faturamento',  valor: fmtR(vendas.faturamento),  destaque: true  },
-                { label: 'Pessoas',      valor: String(vendas.pessoas),    destaque: false },
-                { label: 'Ticket médio', valor: fmtR(vendas.ticket_medio), destaque: false },
-                { label: 'Gorjetas',     valor: fmtR(vendas.gorjetas),     destaque: false },
+                { label: 'Faturamento dia', valor: fmtR(Number(vendas.total)),     destaque: true  },
+                { label: 'Bebidas',         valor: fmtR(Number(vendas.bebidas)),   destaque: false },
+                { label: 'Alimentos',       valor: fmtR(Number(vendas.alimentos)), destaque: false },
+                { label: 'No mês',          valor: fmtR(Number(vendas.mes)),       destaque: false },
               ].map(k => (
                 <div key={k.label} className="text-center">
                   <p className="text-white/55 text-[9px] font-bold uppercase tracking-wider">{k.label}</p>
