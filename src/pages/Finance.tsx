@@ -33,7 +33,7 @@ interface Tab {
 
 const TABS: Tab[] = [
   { slug: 'fluxo',             label: 'Fluxo de Caixa',       icon: TrendingUp,     description: 'Entradas e saídas do período' },
-  { slug: 'extrato',           label: 'Extrato Diário',       icon: FileText,       description: 'Lançamentos detalhados por dia' },
+  { slug: 'extrato',           label: 'Extrato',              icon: FileText,       description: 'Resumo do dia detalhado ou visão por período' },
   { slug: 'pagar',             label: 'Contas a Pagar',       icon: CreditCard,     description: 'Obrigações financeiras em aberto' },
   { slug: 'receber',           label: 'Contas a Receber',     icon: Receipt,        description: 'Valores a receber' },
   { slug: 'historico',         label: 'Histórico e Estornos', icon: ArrowLeftRight, description: 'Histórico completo e estornos' },
