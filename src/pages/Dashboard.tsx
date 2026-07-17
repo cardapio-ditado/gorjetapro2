@@ -7,14 +7,25 @@ import { supabase } from '../lib/supabase';
 import ChatFinanceiroIA from '../components/financeiro/ChatFinanceiroIA';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-const fmtR = (v: number) =>
-  v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 0, maximumFractionDigits: 0 });
+// Blindados contra null/undefined: se qualquer valor do painel vier vazio
+// (ex.: sub-objeto ausente durante recarga de sessão), o helper devolve um
+// fallback seguro em vez de quebrar a tela inteira com "Cannot read
+// properties of undefined (reading 'toLocaleString')".
+const fmtR = (v: number | null | undefined) =>
+  (Number(v) || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 0, maximumFractionDigits: 0 });
 
-const fmtData = (d: string) =>
-  new Date(d + (d.includes('T') ? '' : 'T12:00')).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
+const fmtData = (d: string | null | undefined) => {
+  if (!d) return '—';
+  const dt = new Date(d + (d.includes('T') ? '' : 'T12:00'));
+  if (isNaN(dt.getTime())) return '—';
+  return dt.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
+};
 
-const diasAtraso = (d: string) => {
-  const diff = Date.now() - new Date(d + (d.includes('T') ? '' : 'T12:00')).getTime();
+const diasAtraso = (d: string | null | undefined) => {
+  if (!d) return 0;
+  const dt = new Date(d + (d.includes('T') ? '' : 'T12:00'));
+  if (isNaN(dt.getTime())) return 0;
+  const diff = Date.now() - dt.getTime();
   return Math.max(0, Math.floor(diff / 86400000));
 };
 
@@ -99,19 +110,20 @@ function ListaScroll({
   titulo: string; items: any[]; emptyMsg: string;
   renderItem: (item: any, i: number) => React.ReactNode; maxH?: string;
 }) {
+  const lista = items ?? [];
   return (
     <div className="bg-[#12141f] border border-white/10 rounded-2xl overflow-hidden">
       <div className="px-4 py-3 border-b border-white/10 flex justify-between items-center">
         <p className="text-sm font-bold text-white">{titulo}</p>
-        <span className="text-xs text-white/50 font-medium">{items.length} item{items.length !== 1 ? 's' : ''}</span>
+        <span className="text-xs text-white/50 font-medium">{lista.length} item{lista.length !== 1 ? 's' : ''}</span>
       </div>
-      {items.length === 0 ? (
+      {lista.length === 0 ? (
         <div className="py-8 text-center">
           <p className="text-xs text-white/40">{emptyMsg}</p>
         </div>
       ) : (
         <div className={`${maxH} overflow-y-auto divide-y divide-white/5`}>
-          {items.map(renderItem)}
+          {lista.map(renderItem)}
         </div>
       )}
     </div>
@@ -130,7 +142,7 @@ function ModalRH({ contas, onClose }: { contas: PainelDono['equipe']['rh_contas'
           </button>
         </div>
         <div className="flex-1 overflow-y-auto divide-y divide-white/5">
-          {contas.map((c, i) => {
+          {(contas ?? []).map((c, i) => {
             const vencido = new Date(c.vencimento) < new Date();
             return (
               <div key={i} className={`px-5 py-3.5 flex items-center gap-3 ${vencido ? 'bg-red-500/5' : ''}`}>
@@ -196,7 +208,23 @@ const Dashboard: React.FC = () => {
     </div>
   );
 
-  const { caixa, vendas, cmv, contas, equipe, estoque, diario, eventos } = painel;
+  // Blindagem: se qualquer bloco do painel vier ausente (ex.: recarga de
+  // sessão devolvendo payload parcial), usa um default vazio em vez de
+  // quebrar a tela inteira ao acessar sub-propriedades.
+  const caixa   = painel.caixa   ?? { hoje: { entradas: 0, saidas: 0 }, mes: { entradas: 0, saidas: 0 }, serie_14d: [] };
+  const vendas  = painel.vendas  ?? null;
+  const cmv     = painel.cmv     ?? { success: false, cmv: 0, cmv_percentual: null, compras: 0, avisos: [] };
+  const contas  = painel.contas  ?? { vencidas: { qtd: 0, valor: 0 }, semana: { qtd: 0, valor: 0 }, lista_vencidas: [], lista_semana: [] };
+  const equipe  = painel.equipe  ?? {
+    colaboradores: { ativos: 0, ferias: 0, afastados: 0 },
+    caches: { qtd: 0, valor: 0, lista: [] },
+    extras: { qtd: 0, valor: 0, lista: [] },
+    rh_contas: { qtd: 0, valor: 0, lista: [] },
+  };
+  const estoque = painel.estoque ?? { valor_total: 0, negativos: 0, abaixo_minimo: 0 };
+  const diario  = painel.diario  ?? { pendencias: 0, criticas: 0, lista: [] };
+  const eventos = painel.eventos ?? [];
+
   const resultadoMes = Number(caixa.mes.entradas) - Number(caixa.mes.saidas);
   const mesNome = new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
 
@@ -204,7 +232,7 @@ const Dashboard: React.FC = () => {
     ? ((Number(vendas.total) - Number(vendas.anterior.total)) / Number(vendas.anterior.total)) * 100
     : null;
 
-  const maxSerie = Math.max(1, ...caixa.serie_14d.map(d => Math.max(Number(d.entradas), Number(d.saidas))));
+  const maxSerie = Math.max(1, ...(caixa.serie_14d ?? []).map(d => Math.max(Number(d.entradas), Number(d.saidas))));
 
   return (
     <div className="space-y-5 pb-16">
@@ -291,13 +319,13 @@ const Dashboard: React.FC = () => {
         <AlertCard
           icon={Music} label="Músicos em Aberto"
           count={equipe.caches.qtd} value={Number(equipe.caches.valor)}
-          color="bg-pink-600" alert={equipe.caches.lista.some(m => new Date(m.data) < new Date())}
+          color="bg-pink-600" alert={(equipe.caches.lista ?? []).some(m => new Date(m.data) < new Date())}
           onClick={() => refMusicos.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
         />
         <AlertCard
           icon={Briefcase} label="Extras em Aberto"
           count={equipe.extras.qtd} value={Number(equipe.extras.valor)}
-          color="bg-orange-600" alert={equipe.extras.lista.some(e => new Date(e.data) < new Date())}
+          color="bg-orange-600" alert={(equipe.extras.lista ?? []).some(e => new Date(e.data) < new Date())}
           onClick={() => refExtras.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
         />
         <button
@@ -324,7 +352,7 @@ const Dashboard: React.FC = () => {
           <p className="text-[10px] font-bold text-white/55 uppercase tracking-widest mb-1">CMV do Mês</p>
           <p className="text-xl font-black text-white">{fmtR(Number(cmv.cmv))}</p>
           {cmv.cmv_percentual !== null ? (
-            <p className={`text-[10px] mt-1.5 font-semibold ${cmv.cmv_percentual > 35 ? 'text-yellow-400' : 'text-emerald-400'}`}>
+            <p className={`text-[10px] mt-1.5 font-semibold ${Number(cmv.cmv_percentual) > 35 ? 'text-yellow-400' : 'text-emerald-400'}`}>
               {Number(cmv.cmv_percentual).toFixed(1)}% do faturamento
             </p>
           ) : (
@@ -374,7 +402,7 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
         <div className="flex items-end gap-1 h-24">
-          {caixa.serie_14d.map(d => (
+          {(caixa.serie_14d ?? []).map(d => (
             <div key={d.data} className="flex-1 h-full flex items-end justify-center gap-px group relative" title={`${fmtData(d.data)} · +${fmtR(Number(d.entradas))} / -${fmtR(Number(d.saidas))}`}>
               <div className="flex-1 bg-emerald-500/60 rounded-t-sm min-h-[2px]" style={{ height: `${Math.max(2, (Number(d.entradas) / maxSerie) * 100)}%` }} />
               <div className="flex-1 bg-red-500/60 rounded-t-sm min-h-[2px]" style={{ height: `${Math.max(2, (Number(d.saidas) / maxSerie) * 100)}%` }} />
@@ -382,8 +410,8 @@ const Dashboard: React.FC = () => {
           ))}
         </div>
         <div className="flex justify-between mt-1 text-[9px] text-white/40">
-          <span>{fmtData(caixa.serie_14d[0]?.data ?? '')}</span>
-          <span>{fmtData(caixa.serie_14d[caixa.serie_14d.length - 1]?.data ?? '')}</span>
+          <span>{fmtData(caixa.serie_14d?.[0]?.data ?? '')}</span>
+          <span>{fmtData(caixa.serie_14d?.[caixa.serie_14d.length - 1]?.data ?? '')}</span>
         </div>
       </div>
 
@@ -407,7 +435,7 @@ const Dashboard: React.FC = () => {
               </div>
             )}
           />
-          {contas.lista_vencidas.length > 0 && (
+          {(contas.lista_vencidas ?? []).length > 0 && (
             <div className="mt-1 px-4 py-2 bg-[#12141f] border border-white/5 rounded-xl flex justify-between">
               <p className="text-[10px] text-white/50">Total atrasado</p>
               <p className="text-xs font-black text-red-400">{fmtR(Number(contas.vencidas.valor))}</p>
@@ -433,7 +461,7 @@ const Dashboard: React.FC = () => {
               </div>
             )}
           />
-          {contas.lista_semana.length > 0 && (
+          {(contas.lista_semana ?? []).length > 0 && (
             <div className="mt-1 px-4 py-2 bg-[#12141f] border border-white/5 rounded-xl flex justify-between">
               <p className="text-[10px] text-white/50">Total da semana</p>
               <p className="text-xs font-black text-blue-400">{fmtR(Number(contas.semana.valor))}</p>
@@ -473,7 +501,7 @@ const Dashboard: React.FC = () => {
               );
             }}
           />
-          {equipe.caches.lista.length > 0 && (
+          {(equipe.caches.lista ?? []).length > 0 && (
             <div className="mt-1 px-4 py-2 bg-[#12141f] border border-white/5 rounded-xl flex justify-between">
               <p className="text-[10px] text-white/50">Total em aberto</p>
               <p className="text-xs font-black text-pink-400">{fmtR(Number(equipe.caches.valor))}</p>
@@ -509,7 +537,7 @@ const Dashboard: React.FC = () => {
               );
             }}
           />
-          {equipe.extras.lista.length > 0 && (
+          {(equipe.extras.lista ?? []).length > 0 && (
             <div className="mt-1 px-4 py-2 bg-[#12141f] border border-white/5 rounded-xl flex justify-between">
               <p className="text-[10px] text-white/50">Total em aberto</p>
               <p className="text-xs font-black text-orange-400">{fmtR(Number(equipe.extras.valor))}</p>
@@ -578,7 +606,7 @@ const Dashboard: React.FC = () => {
               </button>
             </div>
             <div className="flex-1 overflow-y-auto divide-y divide-white/5">
-              {itensAtencao.map((item: any, i: number) => (
+              {(itensAtencao ?? []).map((item: any, i: number) => (
                 <div key={i} className={`px-5 py-3.5 flex items-start gap-3 ${item.status_alerta === 'negativo' ? 'bg-red-500/5' : ''}`}>
                   <div className={`mt-1.5 w-2 h-2 rounded-full shrink-0 ${
                     item.status_alerta === 'negativo' ? 'bg-red-500'
@@ -607,7 +635,7 @@ const Dashboard: React.FC = () => {
                       : Number(item.saldo_real) === 0 ? 'text-white/30'
                       : 'text-yellow-400'
                     }`}>
-                      {parseFloat(Number(item.saldo_real).toFixed(3)).toLocaleString('pt-BR', { maximumFractionDigits: 3 })} {item.unidade_medida}
+                      {parseFloat(Number(item.saldo_real ?? 0).toFixed(3)).toLocaleString('pt-BR', { maximumFractionDigits: 3 })} {item.unidade_medida}
                     </p>
                     {item.estoque_minimo > 0 && (
                       <p className="text-[10px] text-white/40 mt-0.5">min: {item.estoque_minimo}</p>
@@ -618,9 +646,9 @@ const Dashboard: React.FC = () => {
             </div>
             <div className="px-5 py-3 border-t border-white/10 grid grid-cols-3 gap-3 text-center">
               {[
-                { label: 'Negativos', count: itensAtencao.filter((i: any) => i.status_alerta === 'negativo').length, color: 'text-red-400' },
-                { label: 'Zerados',   count: itensAtencao.filter((i: any) => i.status_alerta === 'zerado').length,   color: 'text-white/40' },
-                { label: 'Criticos',  count: itensAtencao.filter((i: any) => i.status_alerta === 'critico').length,  color: 'text-yellow-400' },
+                { label: 'Negativos', count: (itensAtencao ?? []).filter((i: any) => i.status_alerta === 'negativo').length, color: 'text-red-400' },
+                { label: 'Zerados',   count: (itensAtencao ?? []).filter((i: any) => i.status_alerta === 'zerado').length,   color: 'text-white/40' },
+                { label: 'Criticos',  count: (itensAtencao ?? []).filter((i: any) => i.status_alerta === 'critico').length,  color: 'text-yellow-400' },
               ].map(s => (
                 <div key={s.label}>
                   <p className={`text-lg font-black ${s.color}`}>{s.count}</p>
