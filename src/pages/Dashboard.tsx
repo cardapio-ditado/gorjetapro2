@@ -85,7 +85,7 @@ function AlertCard({
       className={`flex-shrink-0 w-48 rounded-2xl border p-4 text-left transition-all hover:scale-105
         ${alert
           ? 'bg-red-950/40 border-red-500/40 hover:border-red-400/60'
-          : 'bg-[#12141f] border-white/10 hover:border-white/20'
+          : 'glass-card hover:border-white/25'
         }`}
     >
       <div className="flex items-center gap-2 mb-2">
@@ -112,7 +112,7 @@ function ListaScroll({
 }) {
   const lista = items ?? [];
   return (
-    <div className="bg-[#12141f] border border-white/10 rounded-2xl overflow-hidden">
+    <div className="glass-card rounded-2xl overflow-hidden">
       <div className="px-4 py-3 border-b border-white/10 flex justify-between items-center">
         <p className="text-sm font-bold text-white">{titulo}</p>
         <span className="text-xs text-white/50 font-medium">{lista.length} item{lista.length !== 1 ? 's' : ''}</span>
@@ -134,7 +134,7 @@ function ListaScroll({
 function ModalRH({ contas, onClose }: { contas: PainelDono['equipe']['rh_contas']['lista']; onClose: () => void }) {
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-[#0f1020] border border-white/10 rounded-2xl w-full max-w-lg max-h-[80vh] flex flex-col">
+      <div className="glass-modal rounded-2xl w-full max-w-lg max-h-[80vh] flex flex-col">
         <div className="px-5 py-4 border-b border-white/10 flex justify-between items-center">
           <h3 className="font-bold text-white">Custo RH — Contas em Aberto</h3>
           <button onClick={onClose} className="p-1.5 hover:bg-white/10 rounded-xl">
@@ -330,7 +330,7 @@ const Dashboard: React.FC = () => {
         />
         <button
           onClick={() => setShowModalRH(true)}
-          className="flex-shrink-0 w-48 rounded-2xl border border-white/10 bg-[#12141f] p-4 text-left hover:border-white/20 hover:scale-105 transition-all"
+          className="flex-shrink-0 w-48 rounded-2xl glass-card p-4 text-left hover:border-white/25 hover:scale-105 transition-all"
         >
           <div className="flex items-center gap-2 mb-2">
             <div className="p-1.5 rounded-lg bg-teal-700">
@@ -348,7 +348,7 @@ const Dashboard: React.FC = () => {
 
       {/* ── KPIs: CMV real + estoque + diário ─────────────────────────── */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="bg-[#12141f] border border-white/10 rounded-2xl p-4">
+        <div className="glass-card rounded-2xl p-4">
           <p className="text-[10px] font-bold text-white/55 uppercase tracking-widest mb-1">CMV do Mês</p>
           <p className="text-xl font-black text-white">{fmtR(Number(cmv.cmv))}</p>
           {cmv.cmv_percentual !== null ? (
@@ -362,7 +362,7 @@ const Dashboard: React.FC = () => {
           )}
         </div>
 
-        <div className="bg-[#12141f] border border-white/10 rounded-2xl p-4">
+        <div className="glass-card rounded-2xl p-4">
           <p className="text-[10px] font-bold text-white/55 uppercase tracking-widest mb-1">Valor em Estoque</p>
           <p className="text-xl font-black text-white">{fmtR(Number(estoque.valor_total))}</p>
           <p className="text-[10px] mt-1.5 text-white/50">compras no mês: {fmtR(Number(cmv.compras))}</p>
@@ -370,7 +370,7 @@ const Dashboard: React.FC = () => {
 
         <button
           onClick={() => setShowEstoqueDetalhe(true)}
-          className="bg-[#12141f] border border-white/10 rounded-2xl p-4 text-left hover:border-red-500/40 hover:bg-red-500/5 transition-all group"
+          className="glass-card rounded-2xl p-4 text-left hover:border-red-500/40 hover:bg-red-500/5 transition-all group"
         >
           <p className="text-[10px] font-bold text-white/55 uppercase tracking-widest mb-1">Estoque em Alerta</p>
           <p className={`text-xl font-black ${(estoque.abaixo_minimo + estoque.negativos) > 0 ? 'text-red-400' : 'text-white'}`}>
@@ -381,7 +381,7 @@ const Dashboard: React.FC = () => {
           </p>
         </button>
 
-        <div className={`bg-[#12141f] border rounded-2xl p-4 ${diario.criticas > 0 ? 'border-red-500/40' : 'border-white/10'}`}>
+        <div className={`glass-card rounded-2xl p-4 ${diario.criticas > 0 ? 'border-red-500/40' : ''}`}>
           <p className="text-[10px] font-bold text-white/55 uppercase tracking-widest mb-1">Diário de Bordo</p>
           <p className={`text-xl font-black ${diario.pendencias > 0 ? 'text-yellow-400' : 'text-white'}`}>
             {diario.pendencias}
@@ -393,7 +393,7 @@ const Dashboard: React.FC = () => {
       </div>
 
       {/* ── CAIXA 14 DIAS (mini gráfico) ──────────────────────────────── */}
-      <div className="bg-[#12141f] border border-white/10 rounded-2xl p-4">
+      <div className="glass-card rounded-2xl p-4">
         <div className="flex justify-between items-center mb-3">
           <p className="text-sm font-bold text-white">Caixa — últimos 14 dias</p>
           <div className="flex items-center gap-3 text-[10px] text-white/50">
@@ -436,7 +436,7 @@ const Dashboard: React.FC = () => {
             )}
           />
           {(contas.lista_vencidas ?? []).length > 0 && (
-            <div className="mt-1 px-4 py-2 bg-[#12141f] border border-white/5 rounded-xl flex justify-between">
+            <div className="mt-1 px-4 py-2 glass-soft rounded-xl flex justify-between">
               <p className="text-[10px] text-white/50">Total atrasado</p>
               <p className="text-xs font-black text-red-400">{fmtR(Number(contas.vencidas.valor))}</p>
             </div>
@@ -462,7 +462,7 @@ const Dashboard: React.FC = () => {
             )}
           />
           {(contas.lista_semana ?? []).length > 0 && (
-            <div className="mt-1 px-4 py-2 bg-[#12141f] border border-white/5 rounded-xl flex justify-between">
+            <div className="mt-1 px-4 py-2 glass-soft rounded-xl flex justify-between">
               <p className="text-[10px] text-white/50">Total da semana</p>
               <p className="text-xs font-black text-blue-400">{fmtR(Number(contas.semana.valor))}</p>
             </div>
@@ -502,7 +502,7 @@ const Dashboard: React.FC = () => {
             }}
           />
           {(equipe.caches.lista ?? []).length > 0 && (
-            <div className="mt-1 px-4 py-2 bg-[#12141f] border border-white/5 rounded-xl flex justify-between">
+            <div className="mt-1 px-4 py-2 glass-soft rounded-xl flex justify-between">
               <p className="text-[10px] text-white/50">Total em aberto</p>
               <p className="text-xs font-black text-pink-400">{fmtR(Number(equipe.caches.valor))}</p>
             </div>
@@ -538,7 +538,7 @@ const Dashboard: React.FC = () => {
             }}
           />
           {(equipe.extras.lista ?? []).length > 0 && (
-            <div className="mt-1 px-4 py-2 bg-[#12141f] border border-white/5 rounded-xl flex justify-between">
+            <div className="mt-1 px-4 py-2 glass-soft rounded-xl flex justify-between">
               <p className="text-[10px] text-white/50">Total em aberto</p>
               <p className="text-xs font-black text-orange-400">{fmtR(Number(equipe.extras.valor))}</p>
             </div>
@@ -595,7 +595,7 @@ const Dashboard: React.FC = () => {
       {/* ── MODAL DETALHE ESTOQUE ─────────────────────────────────────── */}
       {showEstoqueDetalhe && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-[#0f1020] border border-white/10 rounded-2xl w-full max-w-lg max-h-[80vh] flex flex-col">
+          <div className="glass-modal rounded-2xl w-full max-w-lg max-h-[80vh] flex flex-col">
             <div className="px-5 py-4 border-b border-white/10 flex justify-between items-center">
               <div>
                 <h3 className="font-bold text-white">Itens para Reposição</h3>
@@ -661,7 +661,7 @@ const Dashboard: React.FC = () => {
       )}
 
       {/* ── EQUIPE ────────────────────────────────────────────────────── */}
-      <div className="bg-[#12141f] border border-white/10 rounded-2xl p-5">
+      <div className="glass-card rounded-2xl p-5">
         <p className="text-sm font-bold text-white mb-4">Equipe</p>
         <div className="flex flex-wrap gap-3">
           {[

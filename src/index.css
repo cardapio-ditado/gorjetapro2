@@ -305,6 +305,54 @@
     border: 1px solid rgba(255,255,255,0.07);
   }
 
+  /* ── Glassmorphism (novo layout) ─────────────────────────────────────────
+   * Luz ambiente vinho/dourado atrás de superfícies de vidro fosco.
+   * .ambient-glow usa APENAS background (radial-gradients) — nada de
+   * transform/filter em ancestrais (regra do .page-transition: transform
+   * em ancestral sequestra modais position:fixed).
+   * Cuidado: backdrop-filter também cria containing block para descendentes
+   * position:fixed — NUNCA aplicar .glass-card/.glass-sidebar em um
+   * elemento que contenha modais fixed dentro dele.
+   */
+  .ambient-glow {
+    background:
+      radial-gradient(640px 640px at -8% -12%, rgba(125,31,44,0.38), transparent 68%),
+      radial-gradient(560px 560px at 108% 112%, rgba(212,175,55,0.13), transparent 68%),
+      radial-gradient(900px 520px at 50% 125%, rgba(125,31,44,0.10), transparent 72%),
+      var(--bg-base);
+  }
+
+  .glass-card {
+    background: rgba(255,255,255,0.045);
+    -webkit-backdrop-filter: blur(16px);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255,255,255,0.10);
+    border-top-color: rgba(255,255,255,0.18);
+    box-shadow: 0 8px 28px rgba(0,0,0,0.32);
+  }
+
+  /* superfícies internas/apoio — sem blur (performance em listas densas) */
+  .glass-soft {
+    background: rgba(255,255,255,0.045);
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+
+  .glass-modal {
+    background: rgba(14,16,30,0.85);
+    -webkit-backdrop-filter: blur(22px);
+    backdrop-filter: blur(22px);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-top-color: rgba(255,255,255,0.2);
+    box-shadow: 0 24px 64px rgba(0,0,0,0.55);
+  }
+
+  .glass-sidebar {
+    background: rgba(9,12,20,0.72);
+    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
+    border-right: 1px solid rgba(255,255,255,0.07);
+  }
+
   /* ── Dividers ── */
   .divider       { height: 1px; background: var(--border); }
   .divider-gold  { height: 1px; background: linear-gradient(90deg, transparent, rgba(212,175,55,0.3), transparent); }

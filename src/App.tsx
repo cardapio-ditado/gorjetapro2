@@ -85,7 +85,7 @@ function AppContent() {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden" style={{ background: 'var(--bg-base)' }}>
+    <div className="flex h-screen overflow-hidden ambient-glow">
 
       {/* Overlay mobile */}
       {sidebarOpen && (
@@ -102,7 +102,8 @@ function AppContent() {
         transition-transform duration-300 ease-in-out
         lg:translate-x-0 lg:static lg:inset-0
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-      `} style={{ background: 'var(--bg-dark)', borderRight: '1px solid rgba(255,255,255,0.06)' }}>
+        glass-sidebar
+      `}>
         <SidebarModern onNavigate={() => setSidebarOpen(false)} onCloseMobile={() => setSidebarOpen(false)} />
       </aside>
 
@@ -110,7 +111,7 @@ function AppContent() {
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
         <Topbar toggleSidebar={() => setSidebarOpen(v => !v)} user={usuario} onLogout={logout} />
 
-        <main className="flex-1 overflow-y-auto" style={{ background: 'var(--bg-base)' }}>
+        <main className="flex-1 overflow-y-auto">
           <div key={location.key} className="p-5 lg:p-7 min-h-full page-transition">
             <Suspense fallback={<PageLoader />}>
               <Routes>
