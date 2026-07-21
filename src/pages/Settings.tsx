@@ -456,7 +456,7 @@ const Settings: React.FC = () => {
             )}
             
             {activeTab === 'users' && (
-              <ProtectedRoute moduloSlug="settings" acao="editar">
+              <ProtectedRoute moduloSlug="configuracoes" acao="editar">
                 <GerenciamentoUsuarios />
               </ProtectedRoute>
             )}
