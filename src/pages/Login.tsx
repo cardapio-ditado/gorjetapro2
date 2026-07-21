@@ -81,7 +81,7 @@ const Login: React.FC = () => {
   const busy = isLoading || loading;
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'radial-gradient(640px 640px at 12% 18%, rgba(125,31,44,0.45), transparent 70%), radial-gradient(560px 560px at 88% 85%, rgba(212,175,55,0.16), transparent 70%), #080c14' }}>
+    <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'radial-gradient(760px 720px at 8% 12%, rgba(155,37,53,0.6), transparent 65%), radial-gradient(640px 640px at 92% 88%, rgba(212,175,55,0.25), transparent 65%), radial-gradient(500px 500px at 90% 8%, rgba(125,31,44,0.3), transparent 65%), linear-gradient(160deg, #10131f 0%, #0a0d17 50%, #140a12 100%)' }}>
       <div className="w-full max-w-md">
         {/* Logo e Título */}
         <div className="text-center mb-8">
@@ -99,7 +99,7 @@ const Login: React.FC = () => {
         </div>
 
         {/* Formulário de Login */}
-        <div className="rounded-2xl p-8" style={{ background: 'rgba(255,255,255,0.05)', backdropFilter: 'blur(22px)', WebkitBackdropFilter: 'blur(22px)', border: '1px solid rgba(255,255,255,0.12)', borderTopColor: 'rgba(255,255,255,0.2)', boxShadow: '0 24px 64px rgba(0,0,0,0.55)' }}>
+        <div className="rounded-2xl p-8" style={{ background: 'linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0.05))', backdropFilter: 'blur(24px) saturate(150%)', WebkitBackdropFilter: 'blur(24px) saturate(150%)', border: '1px solid rgba(255,255,255,0.14)', borderTopColor: 'rgba(255,255,255,0.28)', boxShadow: '0 32px 90px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.1)' }}>
           <div className="text-center mb-6">
             <h2 className="text-xl font-semibold mb-1" style={{ color: '#eef1f8' }}>Fazer Login</h2>
             <p className="text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>Acesse sua conta para continuar</p>

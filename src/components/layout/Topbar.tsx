@@ -234,7 +234,7 @@ const Topbar: React.FC<TopbarProps> = ({ toggleSidebar, user, onLogout }) => {
   const showDropdown = searchFocused && results.length > 0;
 
   return (
-    <header className="h-[52px] flex items-center px-4 gap-3" style={{ background: 'var(--bg-dark)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+    <header className="h-[52px] flex items-center px-4 gap-3 glass-topbar">
 
       {/* Hamburger — mobile only */}
       <button

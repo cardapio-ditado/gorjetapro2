@@ -238,7 +238,7 @@ const Dashboard: React.FC = () => {
     <div className="space-y-5 pb-16">
 
       {/* ── HERO: vendas da última noite + caixa do mês ───────────────── */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#7D1F2C] via-[#9B2535] to-[#3d0e16] p-6 shadow-2xl">
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#7D1F2C] via-[#9B2535] to-[#3d0e16] p-6 border border-[#D4AF37]/25 shadow-[0_24px_80px_rgba(125,31,44,0.45)]">
         <div className="absolute inset-0 opacity-[0.06]"
           style={{ backgroundImage: 'repeating-linear-gradient(45deg,#D4AF37 0,#D4AF37 1px,transparent 0,transparent 50%),repeating-linear-gradient(-45deg,#D4AF37 0,#D4AF37 1px,transparent 0,transparent 50%)', backgroundSize: '28px 28px' }} />
         <div className="absolute top-0 right-0 w-64 h-64 rounded-full bg-[#D4AF37] opacity-5 -translate-y-1/2 translate-x-1/3" />
@@ -280,7 +280,7 @@ const Dashboard: React.FC = () => {
               ].map(k => (
                 <div key={k.label} className="text-center">
                   <p className="text-white/55 text-[9px] font-bold uppercase tracking-wider">{k.label}</p>
-                  <p className={`font-black mt-0.5 ${k.destaque ? 'text-[#D4AF37] text-xl' : 'text-white text-lg'}`}>{k.valor}</p>
+                  <p className={`font-black mt-0.5 ${k.destaque ? 'text-gold-gradient text-2xl' : 'text-white text-lg'}`}>{k.valor}</p>
                 </div>
               ))}
             </div>
