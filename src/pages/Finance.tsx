@@ -10,6 +10,7 @@ import dayjs from 'dayjs';
 import 'dayjs/locale/pt-br';
 
 import FluxoCaixa               from '../components/financeiro/FluxoCaixa';
+import FaturamentoZig           from '../components/financeiro/FaturamentoZig';
 import ExtratoDiario            from '../components/financeiro/ExtratoDiario';
 import ContasPagar              from '../components/financeiro/ContasPagar';
 import ContasReceber            from '../components/financeiro/ContasReceber';
@@ -33,6 +34,7 @@ interface Tab {
 
 const TABS: Tab[] = [
   { slug: 'fluxo',             label: 'Fluxo de Caixa',       icon: TrendingUp,     description: 'Entradas e saídas do período' },
+  { slug: 'faturamento',       label: 'Faturamento',          icon: TrendingUp,     description: 'Vendas ZIG por dia — bebidas, alimentos, couvert' },
   { slug: 'extrato',           label: 'Extrato',              icon: FileText,       description: 'Resumo do dia detalhado ou visão por período' },
   { slug: 'pagar',             label: 'Contas a Pagar',       icon: CreditCard,     description: 'Obrigações financeiras em aberto' },
   { slug: 'receber',           label: 'Contas a Receber',     icon: Receipt,        description: 'Valores a receber' },
@@ -47,6 +49,7 @@ const TABS: Tab[] = [
 
 const CONTENT: Record<string, React.ReactNode> = {
   'fluxo':             <FluxoCaixa />,
+  'faturamento':       <FaturamentoZig />,
   'extrato':           <ExtratoDiario />,
   'pagar':             <ContasPagar />,
   'receber':           <ContasReceber />,
