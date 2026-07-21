@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { RefreshCw, TrendingUp, Calendar, Award, Beer, UtensilsCrossed } from 'lucide-react';
+import { RefreshCw, TrendingUp, Calendar, Award, Beer, UtensilsCrossed, Receipt } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell,
 } from 'recharts';
@@ -15,6 +15,7 @@ interface DiaFaturamento {
   couvert: number;
   outros: number;
   num_transacoes: number;
+  num_comandas: number;
   sincronizado_em: string;
 }
 
@@ -99,6 +100,8 @@ const FaturamentoZig: React.FC = () => {
   const totBebidas   = dados.reduce((s, d) => s + Number(d.bebidas), 0);
   const totAlimentos = dados.reduce((s, d) => s + Number(d.alimentos), 0);
   const totCouvert   = dados.reduce((s, d) => s + Number(d.couvert) + Number(d.taxa_servico), 0);
+  const totComandas  = dados.reduce((s, d) => s + Number(d.num_comandas), 0);
+  const ticketMedio  = totComandas > 0 ? totalPeriodo / totComandas : 0;
   const diasComVenda = dados.filter(d => Number(d.total) > 0).length;
   const media        = diasComVenda > 0 ? totalPeriodo / diasComVenda : 0;
   const melhorDia    = dados.reduce<DiaFaturamento | null>((m, d) => (!m || Number(d.total) > Number(m.total) ? d : m), null);
@@ -162,8 +165,9 @@ const FaturamentoZig: React.FC = () => {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(150px,1fr))', gap: 10 }}>
           {[
             { icon: TrendingUp, label: 'Faturamento no período', value: fmt(totalPeriodo), color: S.gold, bg: S.goldBg },
+            { icon: Receipt,    label: `Ticket médio (${totComandas} comandas)`, value: fmt(ticketMedio), color: S.green, bg: S.greenBg },
             { icon: Calendar,   label: `Média/dia (${diasComVenda} dias)`, value: fmt(media), color: S.blue, bg: S.blueBg },
-            { icon: Award,      label: melhorDia ? `Melhor dia · ${dayjs(melhorDia.data).format('DD/MM')}` : 'Melhor dia', value: melhorDia ? fmt(Number(melhorDia.total)) : '—', color: S.green, bg: S.greenBg },
+            { icon: Award,      label: melhorDia ? `Melhor dia · ${dayjs(melhorDia.data).format('DD/MM')}` : 'Melhor dia', value: melhorDia ? fmt(Number(melhorDia.total)) : '—', color: S.gold, bg: S.goldBg },
             { icon: Beer,       label: 'Bebidas', value: fmt(totBebidas), color: S.blue, bg: S.blueBg },
             { icon: UtensilsCrossed, label: 'Alimentos', value: fmt(totAlimentos), color: S.gold, bg: S.goldBg },
             { icon: TrendingUp, label: 'Couvert + Taxa', value: fmt(totCouvert), color: S.muted, bg: 'rgba(255,255,255,0.03)' },
@@ -222,7 +226,7 @@ const FaturamentoZig: React.FC = () => {
               <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 640 }}>
                 <thead>
                   <tr style={{ background: 'rgba(255,255,255,0.03)' }}>
-                    {['Data', 'Total', 'Bebidas', 'Alimentos', 'Couvert', 'Taxa Serv.', 'Transações'].map((h, i) => (
+                    {['Data', 'Total', 'Comandas', 'Ticket médio', 'Bebidas', 'Alimentos', 'Couvert', 'Taxa Serv.'].map((h, i) => (
                       <th key={i} style={{ padding: '10px 14px', textAlign: i > 0 ? 'right' : 'left', fontSize: 10, fontWeight: 600, color: S.label, textTransform: 'uppercase', letterSpacing: '0.6px', borderBottom: `1px solid ${S.border}` }}>{h}</th>
                     ))}
                   </tr>
@@ -239,11 +243,14 @@ const FaturamentoZig: React.FC = () => {
                         <td style={{ padding: '10px 14px', textAlign: 'right' }}>
                           <span style={{ color: S.gold, fontSize: 13, fontWeight: 700, fontFamily: 'monospace' }}>{fmt(Number(d.total))}</span>
                         </td>
+                        <td style={{ padding: '10px 14px', textAlign: 'right', color: S.muted, fontSize: 12 }}>{d.num_comandas}</td>
+                        <td style={{ padding: '10px 14px', textAlign: 'right', color: S.green, fontSize: 12, fontWeight: 600, fontFamily: 'monospace' }}>
+                          {Number(d.num_comandas) > 0 ? fmt(Number(d.total) / Number(d.num_comandas)) : '—'}
+                        </td>
                         <td style={{ padding: '10px 14px', textAlign: 'right', color: S.text, fontSize: 12, fontFamily: 'monospace' }}>{fmt(Number(d.bebidas))}</td>
                         <td style={{ padding: '10px 14px', textAlign: 'right', color: S.text, fontSize: 12, fontFamily: 'monospace' }}>{fmt(Number(d.alimentos))}</td>
                         <td style={{ padding: '10px 14px', textAlign: 'right', color: S.muted, fontSize: 12, fontFamily: 'monospace' }}>{fmt(Number(d.couvert))}</td>
                         <td style={{ padding: '10px 14px', textAlign: 'right', color: S.muted, fontSize: 12, fontFamily: 'monospace' }}>{fmt(Number(d.taxa_servico))}</td>
-                        <td style={{ padding: '10px 14px', textAlign: 'right', color: S.muted, fontSize: 12 }}>{d.num_transacoes}</td>
                       </tr>
                     );
                   })}
@@ -252,9 +259,11 @@ const FaturamentoZig: React.FC = () => {
                   <tr style={{ background: 'rgba(255,255,255,0.03)', borderTop: `1px solid ${S.border}` }}>
                     <td style={{ padding: '10px 14px', color: S.text, fontSize: 12, fontWeight: 700 }}>Total</td>
                     <td style={{ padding: '10px 14px', textAlign: 'right', color: S.gold, fontSize: 13, fontWeight: 800, fontFamily: 'monospace' }}>{fmt(totalPeriodo)}</td>
+                    <td style={{ padding: '10px 14px', textAlign: 'right', color: S.text, fontSize: 12, fontWeight: 700, fontFamily: 'monospace' }}>{totComandas}</td>
+                    <td style={{ padding: '10px 14px', textAlign: 'right', color: S.green, fontSize: 12, fontWeight: 800, fontFamily: 'monospace' }}>{fmt(ticketMedio)}</td>
                     <td style={{ padding: '10px 14px', textAlign: 'right', color: S.text, fontSize: 12, fontWeight: 700, fontFamily: 'monospace' }}>{fmt(totBebidas)}</td>
                     <td style={{ padding: '10px 14px', textAlign: 'right', color: S.text, fontSize: 12, fontWeight: 700, fontFamily: 'monospace' }}>{fmt(totAlimentos)}</td>
-                    <td colSpan={3} />
+                    <td colSpan={2} />
                   </tr>
                 </tfoot>
               </table>
