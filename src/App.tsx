@@ -8,7 +8,7 @@ import Login from './pages/Login';
 import AuthRecoveryGate from './components/AuthRecoveryGate';
 import { testConnection } from './lib/supabase';
 
-const Dashboard           = lazy(() => import('./pages/Dashboard'));
+const PainelInicial       = lazy(() => import('./pages/PainelInicial'));
 const Finance             = lazy(() => import('./pages/Finance'));
 const AdvancedInventory   = lazy(() => import('./pages/AdvancedInventory'));
 const Staff               = lazy(() => import('./pages/Staff'));
@@ -120,8 +120,8 @@ function AppContent() {
           <div key={location.key} className="p-5 lg:p-7 min-h-full page-transition">
             <Suspense fallback={<PageLoader />}>
               <Routes>
-                <Route path="/"                    element={<ProtectedRoute moduloSlug="dashboard">     <Dashboard />           </ProtectedRoute>} />
-                <Route path="/dashboard"           element={<ProtectedRoute moduloSlug="dashboard">     <Dashboard />           </ProtectedRoute>} />
+                <Route path="/"                    element={<ProtectedRoute moduloSlug="dashboard">     <PainelInicial />       </ProtectedRoute>} />
+                <Route path="/dashboard"           element={<ProtectedRoute moduloSlug="dashboard">     <PainelInicial />       </ProtectedRoute>} />
                 <Route path="/portal-gerente"      element={<ProtectedRoute moduloSlug="dashboard">     <PortalGerente />       </ProtectedRoute>} />
                 <Route path="/agenda-diaria"       element={<ProtectedRoute moduloSlug="dashboard">     <AgendaDiaria />        </ProtectedRoute>} />
                 <Route path="/finance"             element={<ProtectedRoute moduloSlug="financeiro">    <Finance />             </ProtectedRoute>} />

@@ -4,6 +4,7 @@ import {
   UserCheck, UserX, Gift, Briefcase, MessageSquare, Package, BookOpen,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
 import ChatFinanceiroIA from '../components/financeiro/ChatFinanceiroIA';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -159,6 +160,8 @@ function ModalRH({ contas, onClose }: { contas: PainelDono['equipe']['rh_contas'
 // Layout bento: manchete de vendas gigante + radar lateral + blocos de gestão.
 // Todos os KPIs vêm da RPC canônica fn_dashboard_dono — não duplicar cálculos aqui.
 const Dashboard: React.FC = () => {
+  const { usuario } = useAuth();
+  const primeiroNome = usuario?.nome_completo?.split(' ')[0] || '';
   const [loading, setLoading]         = useState(true);
   const [refreshing, setRefreshing]   = useState(false);
   const [showChatIA, setShowChatIA]   = useState(false);
@@ -238,7 +241,7 @@ const Dashboard: React.FC = () => {
       <div className="flex items-end justify-between flex-wrap gap-3">
         <div>
           <p className="text-[#D4AF37] text-[10px] font-black uppercase tracking-[0.3em] mb-1">Ditado Popular</p>
-          <h1 className="text-2xl font-black text-white leading-none">{saudacao()}, Kadu</h1>
+          <h1 className="text-2xl font-black text-white leading-none">{saudacao()}, {primeiroNome}</h1>
           <p className="text-white/40 text-xs mt-1 capitalize">{dataLonga}</p>
         </div>
         <button onClick={refresh} disabled={refreshing}

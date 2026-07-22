@@ -32,15 +32,15 @@ const ESTOQUE_SUBMODS_USER = [
   { name: 'Operação', path: '/advanced-inventory?area=operacao&tela=home' },
 ];
 
-interface SubModule { name: string; path: string; }
-interface Module {
+export interface SubModule { name: string; path: string; }
+export interface Module {
   name: string; path: string;
   icon: React.ElementType; slug: string;
   subModules?: SubModule[];
   group?: 'operacao' | 'gestao' | 'sistema';
 }
 
-const MODULES: Module[] = [
+export const MODULES: Module[] = [
   { name: 'Dashboard',      path: '/',                   icon: Home,          slug: 'dashboard',       group: 'operacao' },
   { name: 'Portal do Gerente', path: '/portal-gerente',  icon: LayoutDashboard, slug: 'dashboard',     group: 'operacao' },
   { name: 'Agenda do Dia',  path: '/agenda-diaria',      icon: ClipboardList, slug: 'dashboard',       group: 'operacao' },
