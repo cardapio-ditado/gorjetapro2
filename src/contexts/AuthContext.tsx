@@ -13,6 +13,7 @@ export interface Usuario {
   cargo?: string;
   departamento?: string;
   configuracoes?: any;
+  precisa_trocar_senha?: boolean;
 }
 
 export interface Permissao {
@@ -32,6 +33,7 @@ interface AuthContextType {
   error: string | null;
   login: (email: string, senha: string) => Promise<boolean>;
   logout: () => void;
+  refreshUsuario: () => Promise<void>;
   verificarPermissao: (moduloSlug: string, abaSlug?: string, acao?: string) => boolean;
   temAcessoModulo: (moduloSlug: string) => boolean;
   temAcessoAba: (moduloSlug: string, abaSlug: string) => boolean;
@@ -278,10 +280,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     if (usuario) await loadPermissoes(usuario.id, usuario.nivel);
   };
 
+  // Recarrega o perfil (usuarios_sistema) do banco — usado depois de trocar
+  // a senha provisória, para o flag precisa_trocar_senha refletir na hora
+  // sem exigir logout/login.
+  const refreshUsuario = async (): Promise<void> => {
+    const perfil = await carregarPerfil();
+    if (perfil) {
+      usuarioRef.current = perfil;
+      setUsuario(perfil);
+    }
+  };
+
   return (
     <AuthContext.Provider value={{
       usuario, permissoes, loading, error,
-      login, logout,
+      login, logout, refreshUsuario,
       verificarPermissao, temAcessoModulo, temAcessoAba,
       isMaster, isAdmin, refreshPermissoes
     }}>

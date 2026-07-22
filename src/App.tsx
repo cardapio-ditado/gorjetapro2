@@ -66,6 +66,11 @@ function AppContent() {
 
   if (!usuario && !isRotaPublica) return <Login />;
 
+  // Conta criada com senha provisória (ver GerenciamentoUsuarios) — obrigada
+  // a trocar antes de usar o resto do sistema. Mesma tela/mecanismo do link
+  // de convite/recuperação, só que disparado por este flag em vez do hash.
+  if (usuario?.precisa_trocar_senha) return <RedefinirSenha />;
+
   if (isRotaPublica) {
     return (
       <Suspense fallback={<PageLoader />}>

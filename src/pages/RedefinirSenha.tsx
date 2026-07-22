@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
 
 /**
  * Página /redefinir-senha
@@ -10,6 +11,7 @@ import { supabase } from '../lib/supabase';
  */
 export default function RedefinirSenha() {
   const navigate = useNavigate();
+  const { refreshUsuario } = useAuth();
   const [senha, setSenha] = useState('');
   const [confirmar, setConfirmar] = useState('');
   const [erro, setErro] = useState<string | null>(null);
@@ -34,11 +36,18 @@ export default function RedefinirSenha() {
     }
     setSalvando(true);
     const { error } = await supabase.auth.updateUser({ password: senha });
-    setSalvando(false);
     if (error) {
+      setSalvando(false);
       setErro('Erro ao salvar a senha: ' + error.message);
       return;
     }
+    // Libera o acesso normal caso a conta tivesse senha provisória pendente
+    // (sem efeito se a pessoa chegou aqui por link de convite/recuperação).
+    // refreshUsuario() atualiza o perfil em memória — sem isso o App.tsx
+    // continuaria vendo precisa_trocar_senha=true e bloquearia em loop.
+    await supabase.rpc('fn_marcar_senha_trocada');
+    await refreshUsuario();
+    setSalvando(false);
     // Senha definida: limpa o hash do link e segue para o sistema
     window.history.replaceState(null, '', '/');
     navigate('/', { replace: true });

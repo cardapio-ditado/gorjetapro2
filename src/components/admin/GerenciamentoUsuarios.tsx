@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, Filter, CreditCard as Edit, Trash2, Eye, Shield, User, Users, Settings, CheckCircle, XCircle, Crown, Star, AlertTriangle, Download, FileText, Lock, Unlock, Calendar, Mail, Phone, Briefcase, Building } from 'lucide-react';
+import { Plus, Search, Filter, CreditCard as Edit, Trash2, Eye, EyeOff, Shield, User, Users, Settings, CheckCircle, XCircle, Crown, Star, AlertTriangle, Download, FileText, Lock, Unlock, Calendar, Mail, Phone, Briefcase, Building } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import GerenciamentoPermissoes from './GerenciamentoPermissoes';
 import { useAuth } from '../../contexts/AuthContext';
@@ -41,6 +41,16 @@ interface FormData {
   ativo: boolean;
   // Só usado ao CRIAR (nivel 'usuario') — vira auth_pre_cadastro.modulos_permitidos
   modulosPermitidos: string[];
+  // Só usado ao CRIAR — senha provisória, obrigatoriamente trocada no 1º acesso
+  senhaProvisoria: string;
+}
+
+// Gera senha provisória aleatória (crypto-safe) para o admin repassar à pessoa
+function gerarSenhaProvisoria(): string {
+  const alfabeto = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
+  const bytes = new Uint32Array(10);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes, b => alfabeto[b % alfabeto.length]).join('');
 }
 
 interface ModuloOpcao { id: string; slug: string; nome: string; }
@@ -83,10 +93,12 @@ const GerenciamentoUsuarios: React.FC = () => {
     departamento: 'Operacional',
     data_admissao: dayjs().format('YYYY-MM-DD'),
     ativo: true,
-    modulosPermitidos: []
+    modulosPermitidos: [],
+    senhaProvisoria: gerarSenhaProvisoria()
   });
   const [modulosDisponiveis, setModulosDisponiveis] = useState<ModuloOpcao[]>([]);
   const [avisoConvite, setAvisoConvite] = useState<string | null>(null);
+  const [mostrarSenha, setMostrarSenha] = useState(true);
 
   const departamentos = [
     'Administração', 'Operacional', 'Cozinha', 'Bar', 'Eventos', 
@@ -176,12 +188,13 @@ const GerenciamentoUsuarios: React.FC = () => {
   };
 
   /**
-   * REGRA DE OURO: nenhuma senha é lida, gerada ou gravada por este painel.
-   * O único caminho de credencial é o Supabase Auth: a pessoa recebe um
-   * convite (Authentication → Invite user no painel do Supabase) e define
-   * a própria senha em /redefinir-senha. Este formulário só prepara o
-   * PRÉ-CADASTRO (auth_pre_cadastro) — o gatilho handle_novo_usuario_auth
-   * liga o perfil automaticamente no primeiro login real dessa pessoa.
+   * REGRA DE OURO: a única credencial de verdade é a do Supabase Auth.
+   * Este painel nunca lê/grava senha em tabela — a senha provisória digitada
+   * aqui só viaja (HTTPS) até a edge function admin-criar-usuario, que roda
+   * no servidor com a service_role key (nunca exposta ao cliente) e chama
+   * supabase.auth.admin.createUser(). A conta nasce com
+   * precisa_trocar_senha=true, forçando a troca em /redefinir-senha — mesmo
+   * mecanismo (auth.updateUser) usado pelo link de convite/recuperação.
    */
   const handleSave = async () => {
     try {
@@ -191,6 +204,10 @@ const GerenciamentoUsuarios: React.FC = () => {
 
       if (!formData.nome_completo || !formData.email) {
         throw new Error('Nome e email são obrigatórios');
+      }
+
+      if (!editingUsuario && formData.senhaProvisoria.length < 8) {
+        throw new Error('A senha provisória precisa ter pelo menos 8 caracteres.');
       }
 
       const dataToSave = {
@@ -255,16 +272,24 @@ const GerenciamentoUsuarios: React.FC = () => {
           modulos_permitidos: modulos,
         };
 
-        const { error } = preExistente
+        const { error: preError } = preExistente
           ? await supabase.from('auth_pre_cadastro').update(preCadastro).ilike('email', formData.email)
           : await supabase.from('auth_pre_cadastro').insert([preCadastro]);
 
-        if (error) throw error;
+        if (preError) throw preError;
+
+        // Cria a conta de verdade no Supabase Auth com a senha provisória
+        // (roda no servidor — service_role nunca chega ao navegador).
+        const { data: criacao, error: fnError } = await supabase.functions.invoke('admin-criar-usuario', {
+          body: { email: formData.email, senha: formData.senhaProvisoria },
+        });
+
+        if (fnError) throw new Error(fnError.message || 'Falha ao criar a conta de acesso.');
+        if (criacao && criacao.ok === false) throw new Error(criacao.error || 'Falha ao criar a conta de acesso.');
 
         setAvisoConvite(
-          `Pré-cadastro de ${formData.nome_completo} salvo. Para liberar o acesso, envie o convite pelo ` +
-          `painel do Supabase: Authentication → Invite user, com o email ${formData.email}. ` +
-          `A conta é criada automaticamente quando a pessoa definir a senha pelo link recebido.`
+          `Conta de ${formData.nome_completo} criada. Senha provisória: "${formData.senhaProvisoria}" — repasse ` +
+          `para a pessoa (WhatsApp, verbal, etc). Ela será obrigada a trocar a senha no primeiro acesso.`
         );
       }
 
@@ -366,7 +391,8 @@ const GerenciamentoUsuarios: React.FC = () => {
         departamento: usuario.departamento || 'Operacional',
         data_admissao: usuario.data_admissao || dayjs().format('YYYY-MM-DD'),
         ativo: usuario.ativo,
-        modulosPermitidos: []
+        modulosPermitidos: [],
+        senhaProvisoria: ''
       });
     } else {
       setEditingUsuario(null);
@@ -385,7 +411,8 @@ const GerenciamentoUsuarios: React.FC = () => {
       departamento: 'Operacional',
       data_admissao: dayjs().format('YYYY-MM-DD'),
       ativo: true,
-      modulosPermitidos: []
+      modulosPermitidos: [],
+      senhaProvisoria: gerarSenhaProvisoria()
     });
   };
 
@@ -861,9 +888,8 @@ const GerenciamentoUsuarios: React.FC = () => {
             </h3>
             {!editingUsuario && (
               <p className="text-xs text-white/50 mb-4">
-                Nenhuma senha é definida aqui — isso só prepara o pré-cadastro. O acesso é liberado
-                enviando o convite pelo painel do Supabase (Authentication → Invite user) com o mesmo email;
-                a pessoa define a própria senha no link recebido.
+                A pessoa recebe a senha provisória abaixo e é obrigada a trocá-la no primeiro acesso.
+                Nenhuma senha fica salva neste painel — a conta é criada diretamente no Supabase Auth.
               </p>
             )}
 
@@ -896,6 +922,41 @@ const GerenciamentoUsuarios: React.FC = () => {
                   placeholder="email@ditadopopular.com"
                 />
               </div>
+
+              {!editingUsuario && (
+                <div>
+                  <label className="block text-sm font-medium text-white/80 mb-1">
+                    Senha Provisória *
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type={mostrarSenha ? 'text' : 'password'}
+                      value={formData.senhaProvisoria}
+                      onChange={(e) => setFormData({ ...formData, senhaProvisoria: e.target.value })}
+                      className="w-full rounded-md border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50 font-mono"
+                      required
+                      minLength={8}
+                      placeholder="Mínimo 8 caracteres"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setMostrarSenha(v => !v)}
+                      className="px-3 rounded-md border border-white/20 bg-white/5 text-white/60 hover:bg-white/10 flex-shrink-0"
+                      title={mostrarSenha ? 'Ocultar' : 'Mostrar'}
+                    >
+                      {mostrarSenha ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, senhaProvisoria: gerarSenhaProvisoria() })}
+                      className="px-3 rounded-md border border-white/20 bg-white/5 text-white/60 hover:bg-white/10 flex-shrink-0 text-xs font-semibold"
+                    >
+                      Gerar
+                    </button>
+                  </div>
+                  <p className="text-xs text-white/40 mt-1">Copie e repasse à pessoa após salvar.</p>
+                </div>
+              )}
 
               <div>
                 <label className="block text-sm font-medium text-white/80 mb-1">
@@ -1035,7 +1096,7 @@ const GerenciamentoUsuarios: React.FC = () => {
               </button>
               <button
                 onClick={handleSave}
-                disabled={loading || !formData.nome_completo || !formData.email}
+                disabled={loading || !formData.nome_completo || !formData.email || (!editingUsuario && formData.senhaProvisoria.length < 8)}
                 className="px-4 py-2 bg-[#7D1F2C] text-white rounded-md hover:bg-[#6a1a25] disabled:opacity-50"
               >
                 {loading ? 'Salvando...' : 'Salvar'}
