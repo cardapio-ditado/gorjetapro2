@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, Filter, CreditCard as Edit, Trash2, Eye, EyeOff, Shield, User, Users, Settings, CheckCircle, XCircle, Crown, Star, AlertTriangle, Download, FileText, Lock, Unlock, Calendar, Mail, Phone, Briefcase, Building } from 'lucide-react';
+import { Plus, Search, Filter, CreditCard as Edit, Trash2, Eye, Shield, User, Users, Settings, CheckCircle, XCircle, Crown, Star, AlertTriangle, Download, FileText, Lock, Unlock, Calendar, Mail, Phone, Briefcase, Building } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import GerenciamentoPermissoes from './GerenciamentoPermissoes';
 import { useAuth } from '../../contexts/AuthContext';
@@ -33,14 +33,17 @@ interface UsuarioSistema {
 interface FormData {
   nome_completo: string;
   email: string;
-  senha: string;
   nivel: 'master' | 'admin' | 'usuario' | 'visitante';
   telefone: string;
   cargo: string;
   departamento: string;
   data_admissao: string;
   ativo: boolean;
+  // Só usado ao CRIAR (nivel 'usuario') — vira auth_pre_cadastro.modulos_permitidos
+  modulosPermitidos: string[];
 }
+
+interface ModuloOpcao { id: string; slug: string; nome: string; }
 
 interface IndicadoresUsuarios {
   total_usuarios: number;
@@ -74,14 +77,16 @@ const GerenciamentoUsuarios: React.FC = () => {
   const [formData, setFormData] = useState<FormData>({
     nome_completo: '',
     email: '',
-    senha: '',
     nivel: 'usuario',
     telefone: '',
     cargo: '',
     departamento: 'Operacional',
     data_admissao: dayjs().format('YYYY-MM-DD'),
-    ativo: true
+    ativo: true,
+    modulosPermitidos: []
   });
+  const [modulosDisponiveis, setModulosDisponiveis] = useState<ModuloOpcao[]>([]);
+  const [avisoConvite, setAvisoConvite] = useState<string | null>(null);
 
   const departamentos = [
     'Administração', 'Operacional', 'Cozinha', 'Bar', 'Eventos', 
@@ -92,6 +97,7 @@ const GerenciamentoUsuarios: React.FC = () => {
     if (isMaster()) {
       fetchData();
       fetchIndicadores();
+      fetchModulos();
     }
   }, []);
 
@@ -169,34 +175,32 @@ const GerenciamentoUsuarios: React.FC = () => {
     }
   };
 
+  /**
+   * REGRA DE OURO: nenhuma senha é lida, gerada ou gravada por este painel.
+   * O único caminho de credencial é o Supabase Auth: a pessoa recebe um
+   * convite (Authentication → Invite user no painel do Supabase) e define
+   * a própria senha em /redefinir-senha. Este formulário só prepara o
+   * PRÉ-CADASTRO (auth_pre_cadastro) — o gatilho handle_novo_usuario_auth
+   * liga o perfil automaticamente no primeiro login real dessa pessoa.
+   */
   const handleSave = async () => {
     try {
       setLoading(true);
       setError(null);
+      setAvisoConvite(null);
 
-      // Validações
       if (!formData.nome_completo || !formData.email) {
         throw new Error('Nome e email são obrigatórios');
       }
 
-      if (!editingUsuario && !formData.senha) {
-        throw new Error('Senha é obrigatória para novos usuários');
-      }
-
-      // TODO: Implementar hash da senha com bcrypt
-      const senhaHash = formData.senha ? `hashed_${formData.senha}` : undefined;
-
       const dataToSave = {
         nome_completo: formData.nome_completo,
-        email: formData.email,
         nivel: formData.nivel,
         telefone: formData.telefone,
         cargo: formData.cargo,
         departamento: formData.departamento,
         data_admissao: formData.data_admissao,
         ativo: formData.ativo,
-        ...(senhaHash && { senha_hash: senhaHash }),
-        criado_por: usuarioLogado?.id
       };
 
       if (editingUsuario) {
@@ -217,11 +221,51 @@ const GerenciamentoUsuarios: React.FC = () => {
 
         if (error) throw error;
       } else {
-        const { error } = await supabase
+        // Já existe conta ativa (vinculada ao Auth) com este email?
+        const { data: existente } = await supabase
           .from('usuarios_sistema')
-          .insert([dataToSave]);
+          .select('id')
+          .ilike('email', formData.email)
+          .maybeSingle();
+
+        if (existente) {
+          throw new Error('Já existe uma conta com este email. Edite o usuário existente em vez de criar um novo.');
+        }
+
+        const modulos = formData.nivel === 'usuario'
+          ? Array.from(new Set(['dashboard', ...formData.modulosPermitidos]))
+          : null; // admin/master recebem acesso completo automaticamente
+
+        const { data: preExistente } = await supabase
+          .from('auth_pre_cadastro')
+          .select('email, utilizado')
+          .ilike('email', formData.email)
+          .maybeSingle();
+
+        if (preExistente?.utilizado) {
+          throw new Error('Este email já foi usado para ativar uma conta. Verifique em Usuários.');
+        }
+
+        const preCadastro = {
+          email: formData.email,
+          nome_completo: formData.nome_completo,
+          nivel: formData.nivel,
+          cargo: formData.cargo || null,
+          departamento: formData.departamento || null,
+          modulos_permitidos: modulos,
+        };
+
+        const { error } = preExistente
+          ? await supabase.from('auth_pre_cadastro').update(preCadastro).ilike('email', formData.email)
+          : await supabase.from('auth_pre_cadastro').insert([preCadastro]);
 
         if (error) throw error;
+
+        setAvisoConvite(
+          `Pré-cadastro de ${formData.nome_completo} salvo. Para liberar o acesso, envie o convite pelo ` +
+          `painel do Supabase: Authentication → Invite user, com o email ${formData.email}. ` +
+          `A conta é criada automaticamente quando a pessoa definir a senha pelo link recebido.`
+        );
       }
 
       setShowForm(false);
@@ -235,6 +279,25 @@ const GerenciamentoUsuarios: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const fetchModulos = async () => {
+    const { data, error } = await supabase
+      .from('modulos_sistema')
+      .select('id, slug, nome')
+      .eq('ativo', true)
+      .neq('slug', 'dashboard')
+      .order('nome');
+    if (!error) setModulosDisponiveis((data as ModuloOpcao[]) || []);
+  };
+
+  const toggleModuloPermitido = (slug: string) => {
+    setFormData(prev => ({
+      ...prev,
+      modulosPermitidos: prev.modulosPermitidos.includes(slug)
+        ? prev.modulosPermitidos.filter(s => s !== slug)
+        : [...prev.modulosPermitidos, slug],
+    }));
   };
 
   const handleDelete = async (id: string) => {
@@ -291,18 +354,19 @@ const GerenciamentoUsuarios: React.FC = () => {
   };
 
   const openForm = (usuario?: UsuarioSistema) => {
+    setAvisoConvite(null);
     if (usuario) {
       setEditingUsuario(usuario);
       setFormData({
         nome_completo: usuario.nome_completo,
         email: usuario.email,
-        senha: '', // Não carregar senha existente
         nivel: usuario.nivel,
         telefone: usuario.telefone || '',
         cargo: usuario.cargo || '',
         departamento: usuario.departamento || 'Operacional',
         data_admissao: usuario.data_admissao || dayjs().format('YYYY-MM-DD'),
-        ativo: usuario.ativo
+        ativo: usuario.ativo,
+        modulosPermitidos: []
       });
     } else {
       setEditingUsuario(null);
@@ -315,13 +379,13 @@ const GerenciamentoUsuarios: React.FC = () => {
     setFormData({
       nome_completo: '',
       email: '',
-      senha: '',
       nivel: 'usuario',
       telefone: '',
       cargo: '',
       departamento: 'Operacional',
       data_admissao: dayjs().format('YYYY-MM-DD'),
-      ativo: true
+      ativo: true,
+      modulosPermitidos: []
     });
   };
 
@@ -458,6 +522,13 @@ const GerenciamentoUsuarios: React.FC = () => {
       {error && (
         <div className="p-4 bg-red-900/30 text-red-300 rounded-lg">
           {error}
+        </div>
+      )}
+
+      {avisoConvite && (
+        <div className="p-4 bg-blue-900/30 text-blue-200 rounded-lg flex items-start gap-2">
+          <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+          <span>{avisoConvite}</span>
         </div>
       )}
 
@@ -785,10 +856,17 @@ const GerenciamentoUsuarios: React.FC = () => {
       {showForm && (
         <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
           <div className="bg-[#0f1020] rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <h3 className="text-lg font-medium text-white mb-4">
+            <h3 className={`text-lg font-medium text-white ${editingUsuario ? 'mb-4' : 'mb-1'}`}>
               {editingUsuario ? 'Editar Usuário' : 'Novo Usuário'}
             </h3>
-            
+            {!editingUsuario && (
+              <p className="text-xs text-white/50 mb-4">
+                Nenhuma senha é definida aqui — isso só prepara o pré-cadastro. O acesso é liberado
+                enviando o convite pelo painel do Supabase (Authentication → Invite user) com o mesmo email;
+                a pessoa define a própria senha no link recebido.
+              </p>
+            )}
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-white/80 mb-1">
@@ -814,21 +892,8 @@ const GerenciamentoUsuarios: React.FC = () => {
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   className="w-full rounded-md border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
                   required
+                  disabled={!!editingUsuario}
                   placeholder="email@ditadopopular.com"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-white/80 mb-1">
-                  {editingUsuario ? 'Nova Senha (deixe vazio para manter)' : 'Senha *'}
-                </label>
-                <input
-                  type="password"
-                  value={formData.senha}
-                  onChange={(e) => setFormData({ ...formData, senha: e.target.value })}
-                  className="w-full rounded-md border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
-                  required={!editingUsuario}
-                  placeholder="••••••••"
                 />
               </div>
 
@@ -854,6 +919,36 @@ const GerenciamentoUsuarios: React.FC = () => {
                   </p>
                 )}
               </div>
+
+              {!editingUsuario && formData.nivel === 'usuario' && (
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-white/80 mb-2">
+                    Módulos liberados
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {modulosDisponiveis.map(m => {
+                      const marcado = formData.modulosPermitidos.includes(m.slug);
+                      return (
+                        <button
+                          type="button"
+                          key={m.id}
+                          onClick={() => toggleModuloPermitido(m.slug)}
+                          className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${
+                            marcado
+                              ? 'bg-[#7D1F2C] border-[#7D1F2C] text-white'
+                              : 'bg-white/5 border-white/20 text-white/60 hover:bg-white/10'
+                          }`}
+                        >
+                          {m.nome}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {formData.modulosPermitidos.length === 0 && (
+                    <p className="text-xs text-white/40 mt-1">Sem módulo marcado, a pessoa só verá o Dashboard.</p>
+                  )}
+                </div>
+              )}
 
               <div>
                 <label className="block text-sm font-medium text-white/80 mb-1">
@@ -940,7 +1035,7 @@ const GerenciamentoUsuarios: React.FC = () => {
               </button>
               <button
                 onClick={handleSave}
-                disabled={loading || !formData.nome_completo || !formData.email || (!editingUsuario && !formData.senha)}
+                disabled={loading || !formData.nome_completo || !formData.email}
                 className="px-4 py-2 bg-[#7D1F2C] text-white rounded-md hover:bg-[#6a1a25] disabled:opacity-50"
               >
                 {loading ? 'Salvando...' : 'Salvar'}
