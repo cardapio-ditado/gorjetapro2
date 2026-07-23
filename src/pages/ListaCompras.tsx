@@ -32,12 +32,14 @@ interface Lista {
   valor_estimado: number; criado_em: string; concluido_em: string | null;
 }
 
+type NivelAlvo = 'minimo' | 'ideal';
+
 interface Sugestao {
   item_id: string; nome: string; categoria: string; unidade_medida: string;
   tipo_compra: 'rua' | 'fornecedor' | 'ambos';
-  fornecedor_nome: string | null; fornecedor_telefone: string | null; ciclo_dias: number;
-  consumo_medio_diario: number; demanda_prevista: number;
-  saldo_atual: number; estoque_minimo: number; ponto_reposicao: number; em_lista_aberta: number;
+  fornecedor_nome: string | null; fornecedor_telefone: string | null;
+  saldo_atual: number; estoque_minimo: number; nivel_ideal: number;
+  quantidade_alvo: number; em_lista_aberta: number;
   quantidade_sugerida: number; custo_medio: number; custo_estimado: number;
   criterio: string;
 }
@@ -74,6 +76,7 @@ function grupoDe(item: ItemLista, agruparPorFornecedor: boolean): string {
 export default function ListaCompras() {
   const [aba, setAba] = useState<'nova' | 'historico'>('nova');
   const [tipoFiltro, setTipoFiltro] = useState<TipoCompra>('todos');
+  const [nivelAlvo, setNivelAlvo] = useState<NivelAlvo>('minimo');
   const [titulo, setTitulo] = useState('');
   const [observacoes, setObservacoes] = useState('');
   const [ignorarListasAbertas, setIgnorarListasAbertas] = useState(false);
@@ -118,7 +121,7 @@ export default function ListaCompras() {
   useEffect(() => {
     if (aba === 'nova' && !listaAtiva) carregarSugestoes();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [aba, listaAtiva, ignorarListasAbertas]);
+  }, [aba, listaAtiva, ignorarListasAbertas, nivelAlvo]);
 
   const carregarSugestoes = async () => {
     setCarregandoSugestoes(true);
@@ -126,7 +129,7 @@ export default function ListaCompras() {
       const r = await fetch(`${SUPABASE_URL}/rest/v1/rpc/fn_sugestao_compra`, {
         method: 'POST',
         headers: { ...headers, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ p_ciclo_padrao: 1, p_dias_seguranca: 1, p_dias_historico: 28, p_ignorar_listas: ignorarListasAbertas }),
+        body: JSON.stringify({ p_nivel_alvo: nivelAlvo, p_ignorar_listas: ignorarListasAbertas }),
       });
       const d = await r.json();
       if (Array.isArray(d)) setSugestoes(d);
@@ -148,7 +151,7 @@ export default function ListaCompras() {
         return;
       }
 
-      const tituloFinal = titulo || `Lista ${TIPO_LABEL[tipoFiltro]} – ${new Date().toLocaleDateString('pt-BR')}`;
+      const tituloFinal = titulo || `Lista ${TIPO_LABEL[tipoFiltro]} (${nivelAlvo === 'ideal' ? 'Ideal +25%' : 'Mínimo'}) – ${new Date().toLocaleDateString('pt-BR')}`;
       const valorTotal = sugestoesFiltradas.reduce((s, i) => s + Number(i.custo_estimado), 0);
 
       // 1. Criar cabeçalho da lista (numero é gerado pelo trigger no banco)
@@ -182,14 +185,14 @@ export default function ListaCompras() {
         fornecedor_tel: s.fornecedor_telefone || null,
         estoque_atual: Number(s.saldo_atual),
         estoque_minimo: Number(s.estoque_minimo),
-        ponto_reposicao: Number(s.ponto_reposicao),
+        ponto_reposicao: Number(s.nivel_ideal),
         quantidade_sugerida: Number(s.quantidade_sugerida),
         quantidade_comprar: Number(s.quantidade_sugerida),
         custo_unitario: Number(s.custo_medio),
         custo_estimado: Number(s.custo_estimado),
         comprado: false,
         comprado_em: null,
-        observacao: s.criterio !== 'previsao_dia_semana' ? s.criterio : null,
+        observacao: null,
         ordem: 0,
       }));
 
@@ -378,7 +381,7 @@ ${grupos.map(grupo => `
             </div>
             <div>
               <h1 className="text-xl font-bold text-white">Lista de Compras</h1>
-              <p className="text-sm text-white/40">Geração automática por estoque mínimo e ponto de reposição</p>
+              <p className="text-sm text-white/40">Geração automática por estoque mínimo ou ideal (+25%)</p>
             </div>
           </div>
           <div className="flex gap-2">
@@ -421,6 +424,22 @@ ${grupos.map(grupo => `
                 {tipoFiltro === 'fornecedor' && (
                   <p className="text-[11px] text-white/30 mt-1.5">A lista será agrupada por fornecedor, pra facilitar ligar/mandar pedido pra cada um.</p>
                 )}
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-white/40 uppercase tracking-wide mb-2 block">Nível de reposição</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {([
+                    { v: 'minimo', titulo: 'Mínimo', desc: 'Só até o estoque mínimo, sem sobra' },
+                    { v: 'ideal', titulo: 'Ideal (+25%)', desc: 'Mínimo + 25% de folga' },
+                  ] as { v: NivelAlvo; titulo: string; desc: string }[]).map(op => (
+                    <button key={op.v} onClick={() => setNivelAlvo(op.v)}
+                      className={`text-left p-3 rounded-xl border transition-all ${nivelAlvo === op.v ? 'bg-[#7D1F2C] text-white border-[#7D1F2C]' : 'bg-[#12141f]/5 text-white/60 border-white/10 hover:bg-[#12141f]/10'}`}>
+                      <p className="text-sm font-semibold">{op.titulo}</p>
+                      <p className={`text-[11px] mt-0.5 ${nivelAlvo === op.v ? 'text-white/70' : 'text-white/40'}`}>{op.desc}</p>
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <div>
@@ -467,43 +486,36 @@ ${grupos.map(grupo => `
                           <th className="px-3 py-2 text-left font-medium">Item</th>
                           <th className="px-3 py-2 text-right font-medium">Em estoque</th>
                           <th className="px-3 py-2 text-right font-medium">Mínimo</th>
-                          <th className="px-3 py-2 text-right font-medium">Qtd sugerida</th>
-                          <th className="px-2 py-2"></th>
+                          <th className="px-3 py-2 text-right font-medium">Alvo ({nivelAlvo === 'ideal' ? 'ideal' : 'mín'})</th>
+                          <th className="px-3 py-2 text-right font-medium">Comprar</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-white/5">
-                        {sugestoesFiltradas.map(s => {
-                          const isFallback = s.criterio === 'fallback_minimo' || s.criterio === 'sem_dados';
-                          return (
-                            <tr key={s.item_id} className="hover:bg-white/[0.02]">
-                              <td className="px-3 py-2">
-                                <div className="flex items-center gap-1.5">
-                                  <span className={`text-[9px] px-1 py-0.5 rounded border flex-shrink-0 ${TIPO_COLOR[s.tipo_compra]}`}>
-                                    {s.tipo_compra === 'rua' ? 'Rua' : s.tipo_compra === 'fornecedor' ? 'Forn.' : 'Amb.'}
-                                  </span>
-                                  <p className="text-white/80 font-medium truncate max-w-[140px]">{s.nome}</p>
-                                </div>
-                                {s.fornecedor_nome && <p className="text-white/30 text-[10px] ml-6">{s.fornecedor_nome}</p>}
-                              </td>
-                              <td className="px-3 py-2 text-right text-red-400/80">
-                                {fmt(s.saldo_atual, s.saldo_atual % 1 === 0 ? 0 : 2)} {s.unidade_medida}
-                              </td>
-                              <td className="px-3 py-2 text-right text-white/50">
-                                {fmt(s.estoque_minimo, 0)}
-                              </td>
-                              <td className="px-3 py-2 text-right text-white font-semibold">
-                                {fmt(s.quantidade_sugerida, 2)} {s.unidade_medida}
-                              </td>
-                              <td className="px-2 py-2">
-                                {isFallback && (
-                                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-white/10 text-white/40 border border-white/10">
-                                    {s.criterio === 'sem_dados' ? 'sem dados' : 'mínimo'}
-                                  </span>
-                                )}
-                              </td>
-                            </tr>
-                          );
-                        })}
+                        {sugestoesFiltradas.map(s => (
+                          <tr key={s.item_id} className="hover:bg-white/[0.02]">
+                            <td className="px-3 py-2">
+                              <div className="flex items-center gap-1.5">
+                                <span className={`text-[9px] px-1 py-0.5 rounded border flex-shrink-0 ${TIPO_COLOR[s.tipo_compra]}`}>
+                                  {s.tipo_compra === 'rua' ? 'Rua' : s.tipo_compra === 'fornecedor' ? 'Forn.' : 'Amb.'}
+                                </span>
+                                <p className="text-white/80 font-medium truncate max-w-[140px]">{s.nome}</p>
+                              </div>
+                              {s.fornecedor_nome && <p className="text-white/30 text-[10px] ml-6">{s.fornecedor_nome}</p>}
+                            </td>
+                            <td className="px-3 py-2 text-right text-red-400/80">
+                              {fmt(s.saldo_atual, s.saldo_atual % 1 === 0 ? 0 : 2)} {s.unidade_medida}
+                            </td>
+                            <td className="px-3 py-2 text-right text-white/50">
+                              {fmt(s.estoque_minimo, 0)}
+                            </td>
+                            <td className="px-3 py-2 text-right text-amber-400/80">
+                              {fmt(s.quantidade_alvo, s.quantidade_alvo % 1 === 0 ? 0 : 2)}
+                            </td>
+                            <td className="px-3 py-2 text-right text-white font-semibold">
+                              {fmt(s.quantidade_sugerida, s.quantidade_sugerida % 1 === 0 ? 0 : 2)} {s.unidade_medida}
+                            </td>
+                          </tr>
+                        ))}
                       </tbody>
                     </table>
                   </div>
@@ -622,7 +634,7 @@ ${grupos.map(grupo => `
                     {isExp && (
                       <div className="divide-y divide-white/5">
                         {itensGrupo.map(item => {
-                          const meta = item.ponto_reposicao > 0 ? item.ponto_reposicao : item.estoque_minimo * 1.2;
+                          const ideal = item.estoque_minimo * 1.25;
                           return (
                           <div key={item.id} className={`flex items-start gap-3 px-5 py-3 transition-colors ${item.comprado ? 'bg-green-500/10' : ''} ${salvando === item.id ? 'opacity-60' : ''}`}>
                             <button onClick={() => toggleComprado(item)} className="mt-0.5 flex-shrink-0">
@@ -640,7 +652,7 @@ ${grupos.map(grupo => `
                               <div className="flex items-center gap-3 mt-1 flex-wrap">
                                 <span className="text-xs text-red-500">Estoque: <strong>{fmt(item.estoque_atual, item.estoque_atual % 1 === 0 ? 0 : 2)} {item.unidade_medida}</strong></span>
                                 <span className="text-xs text-white/30">Mín: {fmt(item.estoque_minimo, 0)}</span>
-                                {meta > 0 && <span className="text-xs text-amber-400">Repos.: {fmt(meta, meta % 1 === 0 ? 0 : 1)}</span>}
+                                {item.estoque_minimo > 0 && <span className="text-xs text-amber-400">Ideal: {fmt(ideal, ideal % 1 === 0 ? 0 : 1)}</span>}
                                 {item.fornecedor_nome && (
                                   <span className="text-xs text-blue-400">📦 {item.fornecedor_nome}{item.fornecedor_tel && ` · ${item.fornecedor_tel}`}</span>
                                 )}
