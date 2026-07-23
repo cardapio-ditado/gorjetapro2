@@ -1,12 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Search, Filter, Calendar, Clock, User, Users, MapPin, CheckCircle, AlertCircle, CreditCard as Edit, Trash2, Download, Eye, CalendarDays, Building, Grid2x2 as Grid, List, ChevronLeft, ChevronRight } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { exportToExcel } from '../../utils/reportGenerator';
 import dayjs from 'dayjs';
 import weekOfYear from 'dayjs/plugin/weekOfYear';
 import isoWeek from 'dayjs/plugin/isoWeek';
 
 dayjs.extend(weekOfYear);
 dayjs.extend(isoWeek);
+
+// Sugere o tipo de turno a partir do horário de início — evita ter que
+// escolher manualmente algo que o próprio horário já responde.
+// A pessoa ainda pode trocar depois (ex.: marcar "Variável" num caso atípico).
+function detectarTurno(horarioInicio: string): 'diurno' | 'noturno' | 'madrugada' {
+  const hora = Number(horarioInicio.split(':')[0]);
+  if (hora >= 0 && hora < 6) return 'madrugada';
+  if (hora >= 6 && hora < 18) return 'diurno';
+  return 'noturno';
+}
 
 interface EscalaTrabalho {
   id: string;
@@ -459,9 +470,31 @@ const EscalasTrabalho: React.FC = () => {
     const novosColaboradores = formData.colaboradores_selecionados.includes(colaboradorId)
       ? formData.colaboradores_selecionados.filter(id => id !== colaboradorId)
       : [...formData.colaboradores_selecionados, colaboradorId];
-    
-    setFormData({ 
-      ...formData, 
+
+    setFormData({
+      ...formData,
+      colaboradores_selecionados: novosColaboradores,
+      aplicar_todos_colaboradores: novosColaboradores.length === colaboradores.length
+    });
+  };
+
+  // Não existe um "setor" fixo por colaborador (a mesma pessoa pode escalar
+  // em setores diferentes em dias diferentes) — a função é o proxy natural
+  // (ex.: "Cozinheiro"/"Auxiliar de Cozinha" = pessoal da cozinha). Clicar
+  // num chip marca/desmarca de uma vez todo mundo daquela função.
+  const funcoesDisponiveis = Array.from(
+    new Set(colaboradores.map((c) => c.funcao_nome).filter(Boolean))
+  ).sort();
+
+  const selecionarPorFuncao = (funcao: string) => {
+    const idsDaFuncao = colaboradores.filter((c) => c.funcao_nome === funcao).map((c) => c.id);
+    const todosJaSelecionados = idsDaFuncao.every((id) => formData.colaboradores_selecionados.includes(id));
+    const novosColaboradores = todosJaSelecionados
+      ? formData.colaboradores_selecionados.filter((id) => !idsDaFuncao.includes(id))
+      : Array.from(new Set([...formData.colaboradores_selecionados, ...idsDaFuncao]));
+
+    setFormData({
+      ...formData,
       colaboradores_selecionados: novosColaboradores,
       aplicar_todos_colaboradores: novosColaboradores.length === colaboradores.length
     });
@@ -548,6 +581,28 @@ const EscalasTrabalho: React.FC = () => {
                          escala.setor.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesSearch;
   });
+
+  const exportarEscalas = () => {
+    if (filteredEscalas.length === 0) {
+      alert('Não há escalas para exportar nesta semana/filtro.');
+      return;
+    }
+    const headers = ['Data', 'Dia da Semana', 'Colaborador', 'Função', 'Setor', 'Posto de Trabalho', 'Turno', 'Horário Início', 'Horário Fim', 'Folga', 'Observações'];
+    const linhas = filteredEscalas.map((e) => [
+      dayjs(e.data_escala).format('DD/MM/YYYY'),
+      dayjs(e.data_escala).format('dddd'),
+      e.colaborador_nome,
+      e.funcao_nome || '',
+      e.setor,
+      e.posto_trabalho_nome || '',
+      e.tipo_turno,
+      e.eh_folga ? '' : e.horario_inicio,
+      e.eh_folga ? '' : e.horario_fim,
+      e.eh_folga ? 'Sim' : 'Não',
+      e.observacoes || '',
+    ]);
+    exportToExcel(linhas, `escalas-semana-${semanaFilter}-${anoFilter}`, headers);
+  };
 
   const getTurnoColor = (turno: string) => {
     switch (turno) {
@@ -785,7 +840,7 @@ const EscalasTrabalho: React.FC = () => {
             </button>
           </div>
           <button
-            onClick={() => {/* TODO: Export */}}
+            onClick={exportarEscalas}
             className="px-4 py-2 bg-[#12141f] border border-white/20 rounded-lg text-white/80 hover:bg-white/5"
           >
             <Download className="w-4 h-4 inline mr-2" />
@@ -1350,7 +1405,30 @@ const EscalasTrabalho: React.FC = () => {
                         {formData.aplicar_todos_colaboradores ? 'Desmarcar Todos' : 'Selecionar Todos'}
                       </button>
                     </div>
-                    
+
+                    {funcoesDisponiveis.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 mb-2">
+                        {funcoesDisponiveis.map((funcao) => {
+                          const idsDaFuncao = colaboradores.filter((c) => c.funcao_nome === funcao).map((c) => c.id);
+                          const ativo = idsDaFuncao.every((id) => formData.colaboradores_selecionados.includes(id));
+                          return (
+                            <button
+                              type="button"
+                              key={funcao}
+                              onClick={() => selecionarPorFuncao(funcao)}
+                              className={`px-2.5 py-1 rounded-full text-xs font-semibold border transition-colors ${
+                                ativo
+                                  ? 'bg-[#7D1F2C] border-[#7D1F2C] text-white'
+                                  : 'bg-white/5 border-white/20 text-white/60 hover:bg-white/10'
+                              }`}
+                            >
+                              {funcao}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+
                     <div className="max-h-40 overflow-y-auto border border-white/20 rounded-lg p-2">
                       {colaboradores.map((colaborador) => (
                         <label key={colaborador.id} className="flex items-center p-2 hover:bg-white/5">
@@ -1413,7 +1491,7 @@ const EscalasTrabalho: React.FC = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-white/80 mb-2">
-                    Tipo de Turno
+                    Tipo de Turno <span className="text-white/40 font-normal">(sugerido pelo horário)</span>
                   </label>
                   <select
                     value={formData.tipo_turno}
@@ -1453,7 +1531,11 @@ const EscalasTrabalho: React.FC = () => {
                     <input
                       type="time"
                       value={formData.horario_inicio}
-                      onChange={(e) => setFormData({ ...formData, horario_inicio: e.target.value })}
+                      onChange={(e) => setFormData({
+                        ...formData,
+                        horario_inicio: e.target.value,
+                        tipo_turno: e.target.value ? detectarTurno(e.target.value) : formData.tipo_turno,
+                      })}
                       className="w-full border border-white/20 rounded-lg px-4 py-2 bg-white/5 text-white focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
                     />
                   </div>
