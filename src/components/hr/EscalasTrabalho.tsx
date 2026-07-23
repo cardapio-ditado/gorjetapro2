@@ -21,6 +21,15 @@ interface EscalaTrabalho {
   eh_folga: boolean;
   observacoes?: string;
   criado_em: string;
+  posto_trabalho_id?: string | null;
+  posto_trabalho_nome?: string | null;
+}
+
+interface PostoTrabalho {
+  id: string;
+  setor: string;
+  nome: string;
+  ordem: number;
 }
 
 interface FormData {
@@ -30,6 +39,7 @@ interface FormData {
   horario_fim: string;
   tipo_turno: 'diurno' | 'noturno' | 'madrugada' | 'variavel';
   setor: string;
+  posto_trabalho_id: string;
   eh_folga: boolean;
   observacoes: string;
   // Novos campos para escalas em lote
@@ -64,6 +74,7 @@ const EscalasTrabalho: React.FC = () => {
   const [calendarioMes, setCalendarioMes] = useState(dayjs());
   const [escalasCalendario, setEscalasCalendario] = useState<EscalaTrabalho[]>([]);
   const [apenasfolgas, setApenasfolgas] = useState(false);
+  const [postosTrabalho, setPostosTrabalho] = useState<PostoTrabalho[]>([]);
 
   // Filtros
   const [searchTerm, setSearchTerm] = useState('');
@@ -80,6 +91,7 @@ const EscalasTrabalho: React.FC = () => {
     horario_fim: '17:00',
     tipo_turno: 'diurno',
     setor: 'Salão',
+    posto_trabalho_id: '',
     eh_folga: false,
     observacoes: '',
     tipo_cadastro: 'individual',
@@ -97,6 +109,7 @@ const EscalasTrabalho: React.FC = () => {
 
   useEffect(() => {
     fetchColaboradores();
+    fetchPostosTrabalho();
     fetchEscalas();
     fetchIndicadores();
     if (viewMode === 'calendar') {
@@ -122,6 +135,21 @@ const EscalasTrabalho: React.FC = () => {
       setColaboradores(data || []);
     } catch (err) {
       console.error('Error fetching employees:', err);
+    }
+  };
+
+  const fetchPostosTrabalho = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('postos_trabalho')
+        .select('id, setor, nome, ordem')
+        .eq('ativo', true)
+        .order('ordem');
+
+      if (error) throw error;
+      setPostosTrabalho(data || []);
+    } catch (err) {
+      console.error('Error fetching postos de trabalho:', err);
     }
   };
 
@@ -297,6 +325,7 @@ const EscalasTrabalho: React.FC = () => {
       horario_fim: formData.eh_folga ? null : formData.horario_fim,
       tipo_turno: formData.tipo_turno,
       setor: formData.setor,
+      posto_trabalho_id: formData.setor === 'Cozinha' ? (formData.posto_trabalho_id || null) : null,
       eh_folga: formData.eh_folga,
       observacoes: formData.observacoes
     };
@@ -363,6 +392,7 @@ const EscalasTrabalho: React.FC = () => {
             horario_fim: formData.eh_folga ? null : formData.horario_fim,
             tipo_turno: formData.tipo_turno,
             setor: formData.setor,
+            posto_trabalho_id: formData.setor === 'Cozinha' ? (formData.posto_trabalho_id || null) : null,
             eh_folga: formData.eh_folga,
             observacoes: formData.observacoes
           });
@@ -471,6 +501,7 @@ const EscalasTrabalho: React.FC = () => {
         horario_fim: escala.horario_fim || '17:00',
         tipo_turno: escala.tipo_turno,
         setor: escala.setor,
+        posto_trabalho_id: escala.posto_trabalho_id || '',
         eh_folga: escala.eh_folga,
         observacoes: escala.observacoes || '',
         tipo_cadastro: 'individual',
@@ -495,6 +526,7 @@ const EscalasTrabalho: React.FC = () => {
       horario_fim: '17:00',
       tipo_turno: 'diurno',
       setor: 'Salão',
+      posto_trabalho_id: '',
       eh_folga: false,
       observacoes: '',
       tipo_cadastro: 'individual',
@@ -655,9 +687,9 @@ const EscalasTrabalho: React.FC = () => {
                             ? 'bg-white/10 text-white/60'
                             : getTurnoColor(escala.tipo_turno)
                         }`}
-                        title={`${escala.colaborador_nome} - ${
-                          escala.eh_folga 
-                            ? 'FOLGA' 
+                        title={`${escala.colaborador_nome}${escala.posto_trabalho_nome ? ' · ' + escala.posto_trabalho_nome : ''} - ${
+                          escala.eh_folga
+                            ? 'FOLGA'
                             : `${escala.horario_inicio} - ${escala.horario_fim}`
                         }`}
                       >
@@ -1086,6 +1118,9 @@ const EscalasTrabalho: React.FC = () => {
                         <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getSetorColor(escala.setor)}`}>
                           {escala.setor}
                         </span>
+                        {escala.posto_trabalho_nome && (
+                          <div className="text-xs text-white/40 mt-1">{escala.posto_trabalho_nome}</div>
+                        )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
                         {escala.eh_folga ? (
@@ -1344,7 +1379,7 @@ const EscalasTrabalho: React.FC = () => {
                   </label>
                   <select
                     value={formData.setor}
-                    onChange={(e) => setFormData({ ...formData, setor: e.target.value })}
+                    onChange={(e) => setFormData({ ...formData, setor: e.target.value, posto_trabalho_id: '' })}
                     className="w-full border border-white/20 rounded-lg px-4 py-2 bg-white/5 text-white focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
                     required
                   >
@@ -1355,6 +1390,26 @@ const EscalasTrabalho: React.FC = () => {
                     ))}
                   </select>
                 </div>
+
+                {formData.setor === 'Cozinha' && (
+                  <div>
+                    <label className="block text-sm font-medium text-white/80 mb-2">
+                      Posto de Trabalho
+                    </label>
+                    <select
+                      value={formData.posto_trabalho_id}
+                      onChange={(e) => setFormData({ ...formData, posto_trabalho_id: e.target.value })}
+                      className="w-full border border-white/20 rounded-lg px-4 py-2 bg-white/5 text-white focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+                    >
+                      <option value="">Sem posto definido</option>
+                      {postosTrabalho.filter(p => p.setor === 'Cozinha').map((posto) => (
+                        <option key={posto.id} value={posto.id}>
+                          {posto.nome}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
 
                 <div>
                   <label className="block text-sm font-medium text-white/80 mb-2">
