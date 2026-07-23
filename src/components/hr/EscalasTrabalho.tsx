@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, Filter, Calendar, Clock, User, Users, MapPin, CheckCircle, AlertCircle, CreditCard as Edit, Trash2, Download, Eye, CalendarDays, Building, Grid2x2 as Grid, List, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Search, Filter, Calendar, Clock, User, Users, MapPin, CheckCircle, AlertCircle, CreditCard as Edit, Trash2, Download, Eye, CalendarDays, Building, Grid2x2 as Grid, List, ChevronLeft, ChevronRight, ChevronDown, FileText } from 'lucide-react';
+import { Menu } from '@headlessui/react';
 import { supabase } from '../../lib/supabase';
-import { exportToExcel } from '../../utils/reportGenerator';
+import { exportToExcel, ReportGenerator } from '../../utils/reportGenerator';
 import dayjs from 'dayjs';
 import weekOfYear from 'dayjs/plugin/weekOfYear';
 import isoWeek from 'dayjs/plugin/isoWeek';
@@ -604,6 +605,41 @@ const EscalasTrabalho: React.FC = () => {
     exportToExcel(linhas, `escalas-semana-${semanaFilter}-${anoFilter}`, headers);
   };
 
+  const exportarEscalasPDF = () => {
+    if (filteredEscalas.length === 0) {
+      alert('Não há escalas para exportar nesta semana/filtro.');
+      return;
+    }
+    const inicioSemana = dayjs().year(anoFilter).isoWeek(semanaFilter).startOf('isoWeek');
+    const fimSemana = dayjs().year(anoFilter).isoWeek(semanaFilter).endOf('isoWeek');
+
+    const rg = new ReportGenerator({
+      title: 'Escala de Trabalho',
+      filename: `escalas-semana-${semanaFilter}-${anoFilter}.pdf`,
+      orientation: 'landscape',
+    });
+    let y = rg.addHeader(
+      'Escala de Trabalho',
+      `Semana ${semanaFilter}/${anoFilter} · ${inicioSemana.format('DD/MM')} a ${fimSemana.format('DD/MM/YYYY')}`
+    );
+
+    const headers = ['Data', 'Colaborador', 'Função', 'Setor / Posto', 'Turno', 'Horário'];
+    const linhas = filteredEscalas
+      .slice()
+      .sort((a, b) => a.data_escala.localeCompare(b.data_escala) || a.colaborador_nome.localeCompare(b.colaborador_nome))
+      .map((e) => [
+        `${dayjs(e.data_escala).format('DD/MM')} (${dayjs(e.data_escala).format('ddd')})`,
+        e.colaborador_nome,
+        e.funcao_nome || '-',
+        e.posto_trabalho_nome ? `${e.setor} — ${e.posto_trabalho_nome}` : e.setor,
+        e.tipo_turno,
+        e.eh_folga ? 'Folga' : `${e.horario_inicio} - ${e.horario_fim}`,
+      ]);
+
+    rg.addTable(headers, linhas, y);
+    rg.save(`escalas-semana-${semanaFilter}-${anoFilter}.pdf`);
+  };
+
   const getTurnoColor = (turno: string) => {
     switch (turno) {
       case 'diurno': return 'bg-yellow-900/30 text-yellow-300';
@@ -839,13 +875,35 @@ const EscalasTrabalho: React.FC = () => {
               Calendário
             </button>
           </div>
-          <button
-            onClick={exportarEscalas}
-            className="px-4 py-2 bg-[#12141f] border border-white/20 rounded-lg text-white/80 hover:bg-white/5"
-          >
-            <Download className="w-4 h-4 inline mr-2" />
-            Exportar
-          </button>
+          <Menu as="div" className="relative">
+            <Menu.Button className="px-4 py-2 bg-[#12141f] border border-white/20 rounded-lg text-white/80 hover:bg-white/5 flex items-center gap-2">
+              <Download className="w-4 h-4" />
+              Exportar
+              <ChevronDown className="w-3.5 h-3.5" />
+            </Menu.Button>
+            <Menu.Items className="absolute right-0 top-[110%] bg-[#0f1020] border border-white/10 rounded-lg w-44 z-50 overflow-hidden shadow-xl">
+              <Menu.Item>
+                {({ active }) => (
+                  <button
+                    onClick={exportarEscalas}
+                    className={`w-full flex items-center gap-2 text-left px-4 py-2.5 text-sm ${active ? 'bg-white/5' : ''} text-white/80`}
+                  >
+                    <Download className="w-4 h-4" /> Excel
+                  </button>
+                )}
+              </Menu.Item>
+              <Menu.Item>
+                {({ active }) => (
+                  <button
+                    onClick={exportarEscalasPDF}
+                    className={`w-full flex items-center gap-2 text-left px-4 py-2.5 text-sm ${active ? 'bg-white/5' : ''} text-white/80`}
+                  >
+                    <FileText className="w-4 h-4" /> PDF
+                  </button>
+                )}
+              </Menu.Item>
+            </Menu.Items>
+          </Menu>
           <button
             onClick={() => openForm()}
             className="px-4 py-2 bg-[#7D1F2C] text-white rounded-lg hover:bg-[#6a1a25]"
