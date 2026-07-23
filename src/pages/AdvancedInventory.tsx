@@ -23,7 +23,7 @@ import ChatFinanceiroIA        from '../components/financeiro/ChatFinanceiroIA';
 import InventarioConsolidado   from '../components/inventory/InventarioConsolidado';
 import DashboardEstoque        from '../components/inventory/DashboardEstoque';
 import ZigVendasSync           from './ZigVendasSync';
-import ListaCompra             from '../components/inventory/ListaCompra';
+import ListaCompras            from './ListaCompras';
 import RelatoriosEstoque       from '../components/inventory/RelatoriosEstoque';
 import VendasDashboard         from '../components/inventory/VendasDashboard';
 import MapeamentoItensExcel    from '../components/inventory/MapeamentoItensExcel';
@@ -162,7 +162,7 @@ const AdvancedInventory: React.FC = () => {
 
     // Compras
     if (tela === 'compras')      return <ComprasEstoque />;
-    if (tela === 'lista-compras') return <ListaCompra />;
+    if (tela === 'lista-compras') return <ListaCompras />;
 
     // Análise
     if (tela === 'dashboard')   return (

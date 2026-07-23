@@ -1,9 +1,9 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import {
   ShoppingCart, RefreshCw, CheckCircle2, Circle,
   Package, Truck, Store, Filter, ChevronDown, ChevronRight,
   Printer, ClipboardList, Search, X,
-  BarChart2, Check, Link, Copy
+  BarChart2, Check, Link,
 } from 'lucide-react';
 
 const SUPABASE_URL  = import.meta.env.VITE_SUPABASE_URL as string;
@@ -32,6 +32,16 @@ interface Lista {
   valor_estimado: number; criado_em: string; concluido_em: string | null;
 }
 
+interface Sugestao {
+  item_id: string; nome: string; categoria: string; unidade_medida: string;
+  tipo_compra: 'rua' | 'fornecedor' | 'ambos';
+  fornecedor_nome: string | null; fornecedor_telefone: string | null; ciclo_dias: number;
+  consumo_medio_diario: number; demanda_prevista: number;
+  saldo_atual: number; estoque_minimo: number; ponto_reposicao: number; em_lista_aberta: number;
+  quantidade_sugerida: number; custo_medio: number; custo_estimado: number;
+  criterio: string;
+}
+
 const TIPO_LABEL: Record<string, string> = {
   rua: 'Compra na Rua', fornecedor: 'Pedido Fornecedor', ambos: 'Ambos', todos: 'Todos',
 };
@@ -53,105 +63,11 @@ function fmt(n: number, dec = 2) {
 }
 function fmtMoeda(n: number) { return 'R$ ' + fmt(n); }
 
-// ─── Componente de impressão ────────────────────────────────────────────────
-function PrintView({ lista, itens }: { lista: Lista; itens: ItemLista[] }) {
-  const categorias = [...new Set(itens.map(i => i.categoria))].sort();
-  const total = itens.reduce((s, i) => s + i.custo_estimado, 0);
-  return (
-    <div style={{ fontFamily: 'Arial, sans-serif', fontSize: '12px', color: '#111', background: '#fff', padding: '20px' }}>
-      <div style={{ borderBottom: '2px solid #333', paddingBottom: '12px', marginBottom: '16px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-          <div>
-            <h1 style={{ fontSize: '18px', fontWeight: 'bold', margin: 0 }}>📋 LISTA DE COMPRAS</h1>
-            <p style={{ margin: '4px 0 0', color: '#555' }}>{lista.numero} — {lista.titulo}</p>
-          </div>
-          <div style={{ textAlign: 'right', fontSize: '11px', color: '#555' }}>
-            <p style={{ margin: 0 }}>Data: {new Date(lista.criado_em).toLocaleDateString('pt-BR')}</p>
-            <p style={{ margin: 0 }}>Total: {lista.total_itens} itens</p>
-            <p style={{ margin: 0 }}>Valor est.: {fmtMoeda(lista.valor_estimado)}</p>
-          </div>
-        </div>
-        {lista.observacoes && (
-          <p style={{ margin: '8px 0 0', fontSize: '11px', color: '#666', fontStyle: 'italic' }}>Obs: {lista.observacoes}</p>
-        )}
-      </div>
-      {categorias.map(cat => {
-        const itensCat = itens.filter(i => i.categoria === cat);
-        return (
-          <div key={cat} style={{ marginBottom: '16px', pageBreakInside: 'avoid' }}>
-            <h3 style={{ fontSize: '13px', fontWeight: 'bold', margin: '0 0 6px', padding: '4px 8px', background: '#f0f0f0', borderLeft: '3px solid #7D1F2C' }}>
-              {cat} ({itensCat.length} {itensCat.length === 1 ? 'item' : 'itens'})
-            </h3>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead>
-                <tr style={{ background: '#fafafa', fontSize: '10px', color: '#666' }}>
-                  <th style={{ width: '20px', padding: '4px', textAlign: 'center', border: '1px solid #ddd' }}>✓</th>
-                  <th style={{ padding: '4px 8px', textAlign: 'left', border: '1px solid #ddd' }}>Item</th>
-                  <th style={{ width: '60px', padding: '4px', textAlign: 'center', border: '1px solid #ddd' }}>Tipo</th>
-                  <th style={{ width: '70px', padding: '4px', textAlign: 'center', border: '1px solid #ddd' }}>Em estoque</th>
-                  <th style={{ width: '55px', padding: '4px', textAlign: 'center', border: '1px solid #ddd' }}>Mínimo</th>
-                  <th style={{ width: '80px', padding: '4px', textAlign: 'center', border: '1px solid #ddd' }}>Qtd comprar</th>
-                  <th style={{ width: '70px', padding: '4px', textAlign: 'center', border: '1px solid #ddd' }}>Vlr Unit.</th>
-                  <th style={{ width: '75px', padding: '4px', textAlign: 'center', border: '1px solid #ddd' }}>Total Est.</th>
-                  <th style={{ padding: '4px 8px', textAlign: 'left', border: '1px solid #ddd' }}>Fornecedor</th>
-                </tr>
-              </thead>
-              <tbody>
-                {itensCat.map((item, idx) => (
-                  <tr key={item.id} style={{ background: idx % 2 === 0 ? '#fff' : '#fafafa' }}>
-                    <td style={{ padding: '6px 4px', textAlign: 'center', border: '1px solid #ddd' }}>
-                      <div style={{ width: '14px', height: '14px', border: '1.5px solid #999', borderRadius: '3px', margin: '0 auto' }} />
-                    </td>
-                    <td style={{ padding: '6px 8px', border: '1px solid #ddd', fontWeight: '500' }}>{item.nome_item}</td>
-                    <td style={{ padding: '6px 4px', textAlign: 'center', border: '1px solid #ddd', fontSize: '10px' }}>
-                      {item.tipo_compra === 'rua' ? '🛒 Rua' : item.tipo_compra === 'fornecedor' ? '🚚 Forn.' : '🔀'}
-                    </td>
-                    <td style={{ padding: '6px 4px', textAlign: 'center', border: '1px solid #ddd', color: '#e55' }}>
-                      {fmt(item.estoque_atual, item.estoque_atual % 1 === 0 ? 0 : 2)} {item.unidade_medida}
-                    </td>
-                    <td style={{ padding: '6px 4px', textAlign: 'center', border: '1px solid #ddd', color: '#888' }}>
-                      {fmt(item.estoque_minimo, 0)}
-                    </td>
-                    <td style={{ padding: '6px 4px', textAlign: 'center', border: '1px solid #ddd', fontWeight: 'bold', fontSize: '13px' }}>
-                      {fmt(item.quantidade_comprar, item.quantidade_comprar % 1 === 0 ? 0 : 2)} {item.unidade_medida}
-                    </td>
-                    <td style={{ padding: '6px 4px', textAlign: 'center', border: '1px solid #ddd', color: '#555', fontSize: '10px' }}>
-                      {item.custo_unitario > 0 ? fmtMoeda(item.custo_unitario) : '—'}
-                    </td>
-                    <td style={{ padding: '6px 4px', textAlign: 'center', border: '1px solid #ddd', color: '#333' }}>
-                      {item.custo_estimado > 0 ? fmtMoeda(item.custo_estimado) : '—'}
-                    </td>
-                    <td style={{ padding: '6px 8px', border: '1px solid #ddd', fontSize: '10px', color: '#555' }}>
-                      {item.fornecedor_nome || '—'}
-                      {item.fornecedor_tel && <span style={{ display: 'block', color: '#888' }}>{item.fornecedor_tel}</span>}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        );
-      })}
-      <div style={{ borderTop: '2px solid #333', marginTop: '20px', paddingTop: '12px', display: 'flex', justifyContent: 'space-between', fontSize: '11px' }}>
-        <div>
-          <strong>Total:</strong> {itens.length} itens &nbsp;|&nbsp;
-          <strong>Valor estimado:</strong> {fmtMoeda(total)}
-        </div>
-        <div style={{ color: '#888' }}>
-          Gerado por: {lista.gerado_por} &nbsp;|&nbsp; {new Date(lista.criado_em).toLocaleString('pt-BR')}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-interface Sugestao {
-  item_id: string; nome: string; categoria: string; unidade_medida: string;
-  fornecedor_nome: string | null; ciclo_dias: number;
-  consumo_medio_diario: number; demanda_prevista: number;
-  saldo_atual: number; em_lista_aberta: number;
-  quantidade_sugerida: number; custo_medio: number; custo_estimado: number;
-  criterio: string;
+// Agrupa por fornecedor quando o filtro é "Pedido Fornecedor" (faz mais sentido ligar
+// pra cada fornecedor separado); nos demais casos agrupa por categoria.
+function grupoDe(item: ItemLista, agruparPorFornecedor: boolean): string {
+  if (agruparPorFornecedor) return item.fornecedor_nome || 'Sem fornecedor definido';
+  return item.categoria;
 }
 
 // ─── Componente principal ────────────────────────────────────────────────────
@@ -160,6 +76,7 @@ export default function ListaCompras() {
   const [tipoFiltro, setTipoFiltro] = useState<TipoCompra>('todos');
   const [titulo, setTitulo] = useState('');
   const [observacoes, setObservacoes] = useState('');
+  const [ignorarListasAbertas, setIgnorarListasAbertas] = useState(false);
   const [gerando, setGerando] = useState(false);
   const [erroGerar, setErroGerar] = useState('');
   const [listaAtiva, setListaAtiva] = useState<Lista | null>(null);
@@ -173,7 +90,6 @@ export default function ListaCompras() {
 
   const [listas, setListas] = useState<Lista[]>([]);
   const [carregandoListas, setCarregandoListas] = useState(false);
-  const printRef = useRef<HTMLDivElement>(null);
 
   const headers = { apikey: SUPABASE_ANON, Authorization: `Bearer ${SUPABASE_ANON}`, 'Content-Type': 'application/json' };
 
@@ -191,7 +107,8 @@ export default function ListaCompras() {
     const d = await r.json();
     if (Array.isArray(d)) {
       setItens(d);
-      setExpandidas(new Set(d.map((i: ItemLista) => i.categoria)));
+      const agruparPorFornecedor = d[0]?.tipo_compra === 'fornecedor';
+      setExpandidas(new Set(d.map((i: ItemLista) => grupoDe(i, agruparPorFornecedor))));
     }
     setCarregandoItens(false);
   };
@@ -200,7 +117,8 @@ export default function ListaCompras() {
 
   useEffect(() => {
     if (aba === 'nova' && !listaAtiva) carregarSugestoes();
-  }, [aba, listaAtiva]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [aba, listaAtiva, ignorarListasAbertas]);
 
   const carregarSugestoes = async () => {
     setCarregandoSugestoes(true);
@@ -208,7 +126,7 @@ export default function ListaCompras() {
       const r = await fetch(`${SUPABASE_URL}/rest/v1/rpc/fn_sugestao_compra`, {
         method: 'POST',
         headers: { ...headers, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ p_ciclo_padrao: 1, p_dias_seguranca: 1, p_dias_historico: 28 }),
+        body: JSON.stringify({ p_ciclo_padrao: 1, p_dias_seguranca: 1, p_dias_historico: 28, p_ignorar_listas: ignorarListasAbertas }),
       });
       const d = await r.json();
       if (Array.isArray(d)) setSugestoes(d);
@@ -216,35 +134,28 @@ export default function ListaCompras() {
     setCarregandoSugestoes(false);
   };
 
+  // Sugestões filtradas pelo tipo de compra selecionado — feito no cliente
+  // (já temos os dados carregados), então trocar o filtro é instantâneo.
+  const sugestoesFiltradas = tipoFiltro === 'todos'
+    ? sugestoes
+    : sugestoes.filter(s => s.tipo_compra === tipoFiltro || s.tipo_compra === 'ambos');
+
   const gerarLista = async () => {
     setGerando(true); setErroGerar('');
     try {
-      // 1. Buscar sugestões via fn_sugestao_compra (baseado em consumo médio diário)
-      const rSug = await fetch(`${SUPABASE_URL}/rest/v1/rpc/fn_sugestao_compra`, {
-        method: 'POST',
-        headers: { ...headers, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ p_ciclo_padrao: 1, p_dias_seguranca: 1, p_dias_historico: 28 }),
-      });
-      const sugestoesAll: Sugestao[] = await rSug.json();
-      if (!Array.isArray(sugestoesAll)) { setErroGerar('Erro ao calcular sugestões.'); return; }
-
-      // Filtrar por tipo se necessário
-      const sugestoesFiltradas = sugestoesAll;
       if (sugestoesFiltradas.length === 0) {
-        setErroGerar('✅ Todos os itens estão com estoque suficiente para o período!');
+        setErroGerar('✅ Nenhum item desse tipo precisa de reposição no momento!');
         return;
       }
 
-      const numero = `LC-${Date.now().toString().slice(-6)}`;
-      const tituloFinal = titulo || `Lista de Compras – ${new Date().toLocaleDateString('pt-BR')}`;
+      const tituloFinal = titulo || `Lista ${TIPO_LABEL[tipoFiltro]} – ${new Date().toLocaleDateString('pt-BR')}`;
       const valorTotal = sugestoesFiltradas.reduce((s, i) => s + Number(i.custo_estimado), 0);
 
-      // 2. Criar registro de lista
+      // 1. Criar cabeçalho da lista (numero é gerado pelo trigger no banco)
       const rLista = await fetch(`${SUPABASE_URL}/rest/v1/listas_compra`, {
         method: 'POST',
         headers: { ...headers, Prefer: 'return=representation' },
         body: JSON.stringify({
-          numero,
           titulo: tituloFinal,
           tipo_compra: tipoFiltro,
           status: 'aberta',
@@ -259,26 +170,26 @@ export default function ListaCompras() {
       const lista = Array.isArray(dLista) ? dLista[0] : dLista;
       if (!lista?.id) { setErroGerar('Erro ao criar lista.'); return; }
 
-      // 3. Inserir itens
+      // 2. Inserir itens, cada um com seu próprio tipo/estoque/fornecedor reais
       const itensParaInserir = sugestoesFiltradas.map(s => ({
         lista_id: lista.id,
         item_id: s.item_id,
         nome_item: s.nome,
         categoria: s.categoria,
         unidade_medida: s.unidade_medida,
-        tipo_compra: 'todos',
+        tipo_compra: s.tipo_compra,
         fornecedor_nome: s.fornecedor_nome || null,
-        fornecedor_tel: null,
+        fornecedor_tel: s.fornecedor_telefone || null,
         estoque_atual: Number(s.saldo_atual),
-        estoque_minimo: 0,
-        ponto_reposicao: 0,
+        estoque_minimo: Number(s.estoque_minimo),
+        ponto_reposicao: Number(s.ponto_reposicao),
         quantidade_sugerida: Number(s.quantidade_sugerida),
         quantidade_comprar: Number(s.quantidade_sugerida),
         custo_unitario: Number(s.custo_medio),
         custo_estimado: Number(s.custo_estimado),
         comprado: false,
         comprado_em: null,
-        observacao: s.criterio !== 'historico' ? s.criterio : null,
+        observacao: s.criterio !== 'previsao_dia_semana' ? s.criterio : null,
         ordem: 0,
       }));
 
@@ -338,12 +249,13 @@ export default function ListaCompras() {
   const imprimir = () => {
     if (!listaAtiva || itens.length === 0) return;
 
-    const categorias = [...new Set(itens.map(i => i.categoria))].sort();
+    const agruparPorFornecedor = listaAtiva.tipo_compra === 'fornecedor';
+    const grupos = [...new Set(itens.map(i => grupoDe(i, agruparPorFornecedor)))].sort();
     const total = itens.reduce((s, i) => s + i.custo_estimado, 0);
     const loc = (n: number) => n.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
 
-    const linhasTabela = (cat: string) =>
-      itens.filter(i => i.categoria === cat).map((item, idx) => `
+    const linhasTabela = (grupo: string) =>
+      itens.filter(i => grupoDe(i, agruparPorFornecedor) === grupo).map((item, idx) => `
         <tr style="background:${idx % 2 === 0 ? '#fff' : '#fafafa'}">
           <td style="padding:6px 4px;text-align:center;border:1px solid #ddd">
             <div style="width:14px;height:14px;border:1.5px solid #999;border-radius:3px;margin:0 auto"></div>
@@ -395,9 +307,9 @@ td { border: 1px solid #ddd; }
     <p style="margin:0">Valor est.: R$ ${loc(listaAtiva.valor_estimado)}</p>
   </div>
 </div>
-${categorias.map(cat => `
+${grupos.map(grupo => `
 <div style="page-break-inside:avoid;margin-bottom:16px">
-  <h3>${cat} (${itens.filter(i => i.categoria === cat).length} itens)</h3>
+  <h3>${grupo} (${itens.filter(i => grupoDe(i, agruparPorFornecedor) === grupo).length} itens)</h3>
   <table>
     <thead><tr>
       <th style="width:20px">V</th>
@@ -410,7 +322,7 @@ ${categorias.map(cat => `
       <th style="width:75px">Total Est.</th>
       <th style="text-align:left">Fornecedor</th>
     </tr></thead>
-    <tbody>${linhasTabela(cat)}</tbody>
+    <tbody>${linhasTabela(grupo)}</tbody>
   </table>
 </div>`).join('')}
 <div class="footer">
@@ -440,6 +352,8 @@ ${categorias.map(cat => `
     };
   };
 
+  const agruparPorFornecedor = listaAtiva?.tipo_compra === 'fornecedor';
+
   const itensFiltrados = busca
     ? itens.filter(i =>
         i.nome_item.toLowerCase().includes(busca.toLowerCase()) ||
@@ -447,7 +361,7 @@ ${categorias.map(cat => `
         (i.fornecedor_nome || '').toLowerCase().includes(busca.toLowerCase()))
     : itens;
 
-  const categorias = [...new Set(itensFiltrados.map(i => i.categoria))].sort();
+  const grupos = [...new Set(itensFiltrados.map(i => grupoDe(i, agruparPorFornecedor)))].sort();
   const totalItens = itens.length;
   const totalComprados = itens.filter(i => i.comprado).length;
   const pct = totalItens > 0 ? Math.round((totalComprados / totalItens) * 100) : 0;
@@ -464,7 +378,7 @@ ${categorias.map(cat => `
             </div>
             <div>
               <h1 className="text-xl font-bold text-white">Lista de Compras</h1>
-              <p className="text-sm text-white/40">Geração automática por estoque mínimo</p>
+              <p className="text-sm text-white/40">Geração automática por estoque mínimo e ponto de reposição</p>
             </div>
           </div>
           <div className="flex gap-2">
@@ -482,7 +396,7 @@ ${categorias.map(cat => `
 
         {/* ─── ABA NOVA LISTA (formulário) ─── */}
         {aba === 'nova' && !listaAtiva && (
-          <div className="flex-1 p-6 max-w-2xl mx-auto w-full">
+          <div className="flex-1 p-6 max-w-2xl mx-auto w-full overflow-y-auto">
             <div className="bg-[#12141f] rounded-2xl border border-white/10 p-6 space-y-5">
               <h2 className="font-semibold text-white/90 flex items-center gap-2">
                 <BarChart2 size={16} className="text-[#7D1F2C]" /> Gerar nova lista
@@ -504,6 +418,9 @@ ${categorias.map(cat => `
                     </button>
                   ))}
                 </div>
+                {tipoFiltro === 'fornecedor' && (
+                  <p className="text-[11px] text-white/30 mt-1.5">A lista será agrupada por fornecedor, pra facilitar ligar/mandar pedido pra cada um.</p>
+                )}
               </div>
 
               <div>
@@ -520,46 +437,59 @@ ${categorias.map(cat => `
                   className="w-full bg-[#12141f]/5 border border-white/20 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#7D1F2C]/30 resize-none" />
               </div>
 
+              <button
+                onClick={() => setIgnorarListasAbertas(v => !v)}
+                className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border transition-all text-sm ${ignorarListasAbertas ? 'bg-amber-500/10 border-amber-500/30 text-amber-300' : 'bg-[#12141f]/5 border-white/10 text-white/50'}`}>
+                <div className="text-left">
+                  <p className="font-semibold">Ignorar listas abertas</p>
+                  <p className="text-xs opacity-70 mt-0.5">{ignorarListasAbertas ? 'Gerando quantidades completas — não desconta o que já está pedido em outras listas' : 'Desconta o que já está em listas abertas, pra não duplicar pedido'}</p>
+                </div>
+                <div className={`w-10 h-5 rounded-full flex-shrink-0 ml-3 transition-colors relative ${ignorarListasAbertas ? 'bg-amber-500' : 'bg-white/20'}`}>
+                  <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${ignorarListasAbertas ? 'left-5' : 'left-0.5'}`} />
+                </div>
+              </button>
+
               {/* Prévia de sugestões da função de cálculo */}
               <div className="rounded-xl border border-white/10 overflow-hidden">
                 <div className="flex items-center justify-between px-4 py-2.5 bg-white/5">
                   <span className="text-xs font-semibold text-white/60 uppercase tracking-wide">
-                    Prévia — {carregandoSugestoes ? 'carregando...' : `${sugestoes.length} itens sugeridos`}
+                    Prévia — {carregandoSugestoes ? 'carregando...' : `${sugestoesFiltradas.length} itens sugeridos`}
                   </span>
                   <button onClick={carregarSugestoes} className="text-white/30 hover:text-white/60 transition-colors">
                     <RefreshCw size={13} className={carregandoSugestoes ? 'animate-spin' : ''} />
                   </button>
                 </div>
-                {sugestoes.length > 0 && (
+                {sugestoesFiltradas.length > 0 && (
                   <div className="overflow-x-auto max-h-56 overflow-y-auto">
                     <table className="w-full text-xs">
                       <thead className="sticky top-0">
                         <tr className="bg-[#0c1018] text-white/40">
                           <th className="px-3 py-2 text-left font-medium">Item</th>
-                          <th className="px-3 py-2 text-right font-medium">Cons./dia</th>
-                          <th className="px-3 py-2 text-right font-medium">Previsto p/ período</th>
-                          <th className="px-3 py-2 text-right font-medium">Ciclo</th>
+                          <th className="px-3 py-2 text-right font-medium">Em estoque</th>
+                          <th className="px-3 py-2 text-right font-medium">Mínimo</th>
                           <th className="px-3 py-2 text-right font-medium">Qtd sugerida</th>
                           <th className="px-2 py-2"></th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-white/5">
-                        {sugestoes.map(s => {
+                        {sugestoesFiltradas.map(s => {
                           const isFallback = s.criterio === 'fallback_minimo' || s.criterio === 'sem_dados';
                           return (
                             <tr key={s.item_id} className="hover:bg-white/[0.02]">
                               <td className="px-3 py-2">
-                                <p className="text-white/80 font-medium truncate max-w-[180px]">{s.nome}</p>
-                                {s.fornecedor_nome && <p className="text-white/30 text-[10px]">{s.fornecedor_nome}</p>}
+                                <div className="flex items-center gap-1.5">
+                                  <span className={`text-[9px] px-1 py-0.5 rounded border flex-shrink-0 ${TIPO_COLOR[s.tipo_compra]}`}>
+                                    {s.tipo_compra === 'rua' ? 'Rua' : s.tipo_compra === 'fornecedor' ? 'Forn.' : 'Amb.'}
+                                  </span>
+                                  <p className="text-white/80 font-medium truncate max-w-[140px]">{s.nome}</p>
+                                </div>
+                                {s.fornecedor_nome && <p className="text-white/30 text-[10px] ml-6">{s.fornecedor_nome}</p>}
+                              </td>
+                              <td className="px-3 py-2 text-right text-red-400/80">
+                                {fmt(s.saldo_atual, s.saldo_atual % 1 === 0 ? 0 : 2)} {s.unidade_medida}
                               </td>
                               <td className="px-3 py-2 text-right text-white/50">
-                                {fmt(s.consumo_medio_diario, 2)} {s.unidade_medida}
-                              </td>
-                              <td className="px-3 py-2 text-right text-white/70 font-medium">
-                                {fmt(s.demanda_prevista, 2)} {s.unidade_medida}
-                              </td>
-                              <td className="px-3 py-2 text-right text-white/50">
-                                {s.ciclo_dias === 1 ? 'diário' : `${s.ciclo_dias}d`}
+                                {fmt(s.estoque_minimo, 0)}
                               </td>
                               <td className="px-3 py-2 text-right text-white font-semibold">
                                 {fmt(s.quantidade_sugerida, 2)} {s.unidade_medida}
@@ -578,8 +508,8 @@ ${categorias.map(cat => `
                     </table>
                   </div>
                 )}
-                {!carregandoSugestoes && sugestoes.length === 0 && (
-                  <p className="px-4 py-3 text-xs text-white/30">Nenhum item abaixo do ponto de reposição no momento.</p>
+                {!carregandoSugestoes && sugestoesFiltradas.length === 0 && (
+                  <p className="px-4 py-3 text-xs text-white/30">Nenhum item desse tipo abaixo do ponto de reposição no momento.</p>
                 )}
               </div>
 
@@ -589,10 +519,10 @@ ${categorias.map(cat => `
                 </div>
               )}
 
-              <button onClick={gerarLista} disabled={gerando}
+              <button onClick={gerarLista} disabled={gerando || sugestoesFiltradas.length === 0}
                 className="w-full flex items-center justify-center gap-2 bg-[#7D1F2C] hover:bg-[#6a1a25] disabled:opacity-50 text-white font-semibold py-3 rounded-xl transition-colors">
                 <ShoppingCart size={18} className={gerando ? 'animate-pulse' : ''} />
-                {gerando ? 'Analisando estoque...' : 'Gerar Lista de Compras'}
+                {gerando ? 'Gerando lista...' : `Gerar Lista de Compras (${sugestoesFiltradas.length})`}
               </button>
             </div>
           </div>
@@ -669,29 +599,31 @@ ${categorias.map(cat => `
                   <RefreshCw size={24} className="animate-spin mx-auto mb-3" />
                   <p>Carregando itens...</p>
                 </div>
-              ) : categorias.length === 0 ? (
+              ) : grupos.length === 0 ? (
                 <div className="text-center py-16 text-white/30">
                   <Package size={32} className="mx-auto mb-3 opacity-40" />
                   <p>Nenhum item encontrado</p>
                 </div>
-              ) : categorias.map(cat => {
-                const itensCat = itensFiltrados.filter(i => i.categoria === cat);
-                const comprados = itensCat.filter(i => i.comprado).length;
-                const isExp = expandidas.has(cat);
+              ) : grupos.map(grupo => {
+                const itensGrupo = itensFiltrados.filter(i => grupoDe(i, agruparPorFornecedor) === grupo);
+                const comprados = itensGrupo.filter(i => i.comprado).length;
+                const isExp = expandidas.has(grupo);
                 return (
-                  <div key={cat} className="bg-[#12141f] rounded-2xl border border-white/10 overflow-hidden">
-                    <button onClick={() => setExpandidas(prev => { const s = new Set(prev); if (s.has(cat)) s.delete(cat); else s.add(cat); return s; })}
+                  <div key={grupo} className="bg-[#12141f] rounded-2xl border border-white/10 overflow-hidden">
+                    <button onClick={() => setExpandidas(prev => { const s = new Set(prev); if (s.has(grupo)) s.delete(grupo); else s.add(grupo); return s; })}
                       className="w-full flex items-center justify-between px-5 py-3 hover:bg-[#12141f]/5 transition-colors">
                       <div className="flex items-center gap-3">
                         {isExp ? <ChevronDown size={16} className="text-white/30"/> : <ChevronRight size={16} className="text-white/30"/>}
-                        <span className="font-semibold text-white/90">{cat}</span>
-                        <span className="text-xs text-white/30">{itensCat.length} {itensCat.length === 1 ? 'item' : 'itens'}</span>
+                        <span className="font-semibold text-white/90">{grupo}</span>
+                        <span className="text-xs text-white/30">{itensGrupo.length} {itensGrupo.length === 1 ? 'item' : 'itens'}</span>
                       </div>
-                      {comprados > 0 && <span className="text-xs text-green-400 font-medium">{comprados}/{itensCat.length} ✓</span>}
+                      {comprados > 0 && <span className="text-xs text-green-400 font-medium">{comprados}/{itensGrupo.length} ✓</span>}
                     </button>
                     {isExp && (
                       <div className="divide-y divide-white/5">
-                        {itensCat.map(item => (
+                        {itensGrupo.map(item => {
+                          const meta = item.ponto_reposicao > 0 ? item.ponto_reposicao : item.estoque_minimo * 1.2;
+                          return (
                           <div key={item.id} className={`flex items-start gap-3 px-5 py-3 transition-colors ${item.comprado ? 'bg-green-500/10' : ''} ${salvando === item.id ? 'opacity-60' : ''}`}>
                             <button onClick={() => toggleComprado(item)} className="mt-0.5 flex-shrink-0">
                               {item.comprado
@@ -708,7 +640,7 @@ ${categorias.map(cat => `
                               <div className="flex items-center gap-3 mt-1 flex-wrap">
                                 <span className="text-xs text-red-500">Estoque: <strong>{fmt(item.estoque_atual, item.estoque_atual % 1 === 0 ? 0 : 2)} {item.unidade_medida}</strong></span>
                                 <span className="text-xs text-white/30">Mín: {fmt(item.estoque_minimo, 0)}</span>
-                                <span className="text-xs text-amber-400">Meta: {fmt(item.estoque_minimo * 1.2, item.estoque_minimo % 1 === 0 ? 0 : 1)}</span>
+                                {meta > 0 && <span className="text-xs text-amber-400">Repos.: {fmt(meta, meta % 1 === 0 ? 0 : 1)}</span>}
                                 {item.fornecedor_nome && (
                                   <span className="text-xs text-blue-400">📦 {item.fornecedor_nome}{item.fornecedor_tel && ` · ${item.fornecedor_tel}`}</span>
                                 )}
@@ -726,7 +658,8 @@ ${categorias.map(cat => `
                               {item.custo_estimado > 0 && <span className="text-xs text-white/40">{fmtMoeda(item.custo_estimado)}</span>}
                             </div>
                           </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     )}
                   </div>
@@ -793,9 +726,6 @@ ${categorias.map(cat => `
           </div>
         )}
       </div>
-
-      {/* Ref para impressão (não usado mais, mantido por compatibilidade) */}
-      <div ref={printRef} style={{ display: 'none' }} />
     </div>
   );
 }
