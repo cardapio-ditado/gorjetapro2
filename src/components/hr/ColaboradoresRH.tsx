@@ -14,6 +14,8 @@ interface Colaborador {
   data_nascimento?: string;
   funcao_id?: string;
   funcao_personalizada?: string;
+  setor_id?: string;
+  setor_nome?: string;
   tipo_vinculo: 'clt' | 'freelancer' | 'prestador';
   data_admissao?: string;
   data_demissao?: string;
@@ -42,6 +44,7 @@ interface FormData {
   data_nascimento: string;
   funcao_id: string;
   funcao_personalizada: string;
+  setor_id: string;
   tipo_vinculo: 'clt' | 'freelancer' | 'prestador';
   data_admissao: string;
   data_demissao: string;
@@ -70,6 +73,7 @@ interface IndicadoresColaboradores {
 const ColaboradoresRH: React.FC = () => {
   const [colaboradores, setColaboradores] = useState<Colaborador[]>([]);
   const [funcoes, setFuncoes] = useState<any[]>([]);
+  const [setores, setSetores] = useState<any[]>([]);
   const [indicadores, setIndicadores] = useState<IndicadoresColaboradores | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -92,6 +96,7 @@ const ColaboradoresRH: React.FC = () => {
     data_nascimento: '',
     funcao_id: '',
     funcao_personalizada: '',
+    setor_id: '',
     tipo_vinculo: 'clt',
     data_admissao: dayjs().format('YYYY-MM-DD'),
     salario_fixo: 0,
@@ -107,6 +112,7 @@ const ColaboradoresRH: React.FC = () => {
   useEffect(() => {
     fetchData();
     fetchFuncoes();
+    fetchSetores();
     fetchIndicadores();
   }, []);
 
@@ -164,6 +170,21 @@ const ColaboradoresRH: React.FC = () => {
       setFuncoes(data || []);
     } catch (err) {
       console.error('Error fetching functions:', err);
+    }
+  };
+
+  const fetchSetores = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('setores')
+        .select('*')
+        .eq('ativo', true)
+        .order('ordem');
+
+      if (error) throw error;
+      setSetores(data || []);
+    } catch (err) {
+      console.error('Error fetching setores:', err);
     }
   };
 
@@ -350,6 +371,7 @@ const ColaboradoresRH: React.FC = () => {
         data_nascimento: colaborador.data_nascimento || '',
         funcao_id: colaborador.funcao_id || '',
         funcao_personalizada: colaborador.funcao_personalizada || '',
+        setor_id: colaborador.setor_id || '',
         tipo_vinculo: colaborador.tipo_vinculo,
         data_admissao: colaborador.data_admissao || '',
         salario_fixo: colaborador.salario_fixo || 0,
@@ -376,6 +398,7 @@ const ColaboradoresRH: React.FC = () => {
       data_nascimento: '',
       funcao_id: '',
       funcao_personalizada: '',
+      setor_id: '',
       tipo_vinculo: 'clt',
       data_admissao: dayjs().format('YYYY-MM-DD'),
       data_demissao: '',
@@ -696,6 +719,9 @@ const ColaboradoresRH: React.FC = () => {
                         <div className="font-medium text-white">
                           {colaborador.funcao_nome || colaborador.funcao_personalizada || 'Não definida'}
                         </div>
+                        {colaborador.setor_nome && (
+                          <div className="text-xs text-text-secondary">{colaborador.setor_nome}</div>
+                        )}
                         {colaborador.funcao_salario_base && (
                           <div className="text-sm text-text-secondary">
                             Base: {formatCurrency(colaborador.funcao_salario_base)}
@@ -879,6 +905,24 @@ const ColaboradoresRH: React.FC = () => {
                   {funcoes.map((funcao) => (
                     <option key={funcao.id} value={funcao.id}>
                       {funcao.nome}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--text-secondary)' }}>
+                  Setor
+                </label>
+                <select
+                  value={formData.setor_id}
+                  onChange={(e) => setFormData({ ...formData, setor_id: e.target.value })}
+                  className="input-dark"
+                >
+                  <option value="">Selecione um setor...</option>
+                  {setores.map((setor) => (
+                    <option key={setor.id} value={setor.id}>
+                      {setor.nome}
                     </option>
                   ))}
                 </select>

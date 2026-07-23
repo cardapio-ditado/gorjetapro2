@@ -44,6 +44,20 @@ interface PostoTrabalho {
   ordem: number;
 }
 
+// Uma linha por colaborador no lançamento em lote — cada pessoa com o
+// próprio setor/posto/horário/turno/folga (não um valor único pra todos).
+interface LoteItem {
+  colaborador_id: string;
+  colaborador_nome: string;
+  funcao_nome: string;
+  setor: string;
+  posto_trabalho_id: string;
+  horario_inicio: string;
+  horario_fim: string;
+  tipo_turno: 'diurno' | 'noturno' | 'madrugada' | 'variavel';
+  eh_folga: boolean;
+}
+
 interface FormData {
   colaborador_id: string;
   data_escala: string;
@@ -54,13 +68,12 @@ interface FormData {
   posto_trabalho_id: string;
   eh_folga: boolean;
   observacoes: string;
-  // Novos campos para escalas em lote
+  // Campos para escalas em lote (período — os colaboradores e seus próprios
+  // horários/setor/posto/folga ficam em `loteItens`, não aqui)
   tipo_cadastro: 'individual' | 'semanal' | 'mensal';
   data_inicio_periodo: string;
   data_fim_periodo: string;
   dias_semana: string[]; // Para escalas semanais
-  aplicar_todos_colaboradores: boolean;
-  colaboradores_selecionados: string[];
 }
 
 interface IndicadoresEscalas {
@@ -110,18 +123,20 @@ const EscalasTrabalho: React.FC = () => {
     data_inicio_periodo: dayjs().format('YYYY-MM-DD'),
     data_fim_periodo: dayjs().add(7, 'days').format('YYYY-MM-DD'),
     dias_semana: ['1', '2', '3', '4', '5'], // Segunda a sexta por padrão
-    aplicar_todos_colaboradores: false,
-    colaboradores_selecionados: []
   });
+  const [loteItens, setLoteItens] = useState<LoteItem[]>([]);
 
-  const setores = [
-    'Salão', 'Bar', 'Cozinha', 'Recepção', 'Limpeza', 
-    'Segurança', 'Administração', 'Estoque', 'Outros'
-  ];
+  // Setores cadastrados no banco (mesma tabela que a ficha do colaborador
+  // usa para o "setor de casa"). Mantém a variável `setores` como array de
+  // NOMES para não precisar reescrever o resto do arquivo (Setor da escala
+  // individual, filtros, getSetorColor) — só a origem dos dados mudou.
+  const [setoresCadastro, setSetoresCadastro] = useState<{ id: string; nome: string }[]>([]);
+  const setores = setoresCadastro.map((s) => s.nome);
 
   useEffect(() => {
     fetchColaboradores();
     fetchPostosTrabalho();
+    fetchSetoresCadastro();
     fetchEscalas();
     fetchIndicadores();
     if (viewMode === 'calendar') {
@@ -139,7 +154,7 @@ const EscalasTrabalho: React.FC = () => {
     try {
       const { data, error } = await supabase
         .from('vw_colaboradores_completo')
-        .select('id, nome_completo, funcao_nome, status')
+        .select('id, nome_completo, funcao_nome, status, setor_id, setor_nome')
         .eq('status', 'ativo')
         .order('nome_completo');
 
@@ -147,6 +162,21 @@ const EscalasTrabalho: React.FC = () => {
       setColaboradores(data || []);
     } catch (err) {
       console.error('Error fetching employees:', err);
+    }
+  };
+
+  const fetchSetoresCadastro = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('setores')
+        .select('id, nome')
+        .eq('ativo', true)
+        .order('ordem');
+
+      if (error) throw error;
+      setSetoresCadastro(data || []);
+    } catch (err) {
+      console.error('Error fetching setores:', err);
     }
   };
 
@@ -359,53 +389,38 @@ const EscalasTrabalho: React.FC = () => {
   };
 
   const salvarEscalaEmLote = async () => {
-    // Validações para escalas em lote
-    if (!formData.data_inicio_periodo || !formData.data_fim_periodo || !formData.setor) {
-      throw new Error('Preencha todos os campos obrigatórios para escalas em lote');
+    if (!formData.data_inicio_periodo || !formData.data_fim_periodo) {
+      throw new Error('Preencha o período (data início e fim)');
     }
-
     if (dayjs(formData.data_fim_periodo).isBefore(dayjs(formData.data_inicio_periodo))) {
       throw new Error('Data fim deve ser posterior à data início');
     }
-
-    // Definir colaboradores
-    let colaboradoresParaEscala: string[] = [];
-    if (formData.aplicar_todos_colaboradores) {
-      colaboradoresParaEscala = colaboradores.map(c => c.id);
-    } else if (formData.colaboradores_selecionados.length > 0) {
-      colaboradoresParaEscala = formData.colaboradores_selecionados;
-    } else if (formData.colaborador_id) {
-      colaboradoresParaEscala = [formData.colaborador_id];
-    } else {
-      throw new Error('Selecione pelo menos um colaborador');
+    if (loteItens.length === 0) {
+      throw new Error('Adicione pelo menos um colaborador ao lote');
     }
 
-    // Gerar datas do período
     const datas = gerarDatasPeriodo();
-    
-    // Preparar escalas para inserção
     const escalasParaInserir: any[] = [];
-    
-    for (const colaboradorId of colaboradoresParaEscala) {
+
+    for (const item of loteItens) {
       for (const data of datas) {
-        // Verificar se já existe escala para este colaborador nesta data
         const { data: existingEscala } = await supabase
           .from('escalas_trabalho')
           .select('id')
-          .eq('colaborador_id', colaboradorId)
+          .eq('colaborador_id', item.colaborador_id)
           .eq('data_escala', data)
-          .single();
+          .maybeSingle();
 
         if (!existingEscala) {
           escalasParaInserir.push({
-            colaborador_id: colaboradorId,
+            colaborador_id: item.colaborador_id,
             data_escala: data,
-            horario_inicio: formData.eh_folga ? null : formData.horario_inicio,
-            horario_fim: formData.eh_folga ? null : formData.horario_fim,
-            tipo_turno: formData.tipo_turno,
-            setor: formData.setor,
-            posto_trabalho_id: formData.setor === 'Cozinha' ? (formData.posto_trabalho_id || null) : null,
-            eh_folga: formData.eh_folga,
+            horario_inicio: item.eh_folga ? null : item.horario_inicio,
+            horario_fim: item.eh_folga ? null : item.horario_fim,
+            tipo_turno: item.tipo_turno,
+            setor: item.setor,
+            posto_trabalho_id: item.setor === 'Cozinha' ? (item.posto_trabalho_id || null) : null,
+            eh_folga: item.eh_folga,
             observacoes: formData.observacoes
           });
         }
@@ -416,7 +431,6 @@ const EscalasTrabalho: React.FC = () => {
       throw new Error('Todas as escalas para o período já existem');
     }
 
-    // Inserir todas as escalas
     const { error } = await supabase
       .from('escalas_trabalho')
       .insert(escalasParaInserir);
@@ -459,46 +473,48 @@ const EscalasTrabalho: React.FC = () => {
     setFormData({ ...formData, dias_semana: novosDias });
   };
 
-  const selecionarTodosColaboradores = () => {
-    setFormData({
-      ...formData,
-      aplicar_todos_colaboradores: !formData.aplicar_todos_colaboradores,
-      colaboradores_selecionados: formData.aplicar_todos_colaboradores ? [] : colaboradores.map(c => c.id)
-    });
+  // Monta uma linha de lote com valores padrão a partir do cadastro do
+  // colaborador (setor "de casa"), editável depois — cada pessoa pode ter
+  // setor/posto/horário/turno/folga diferentes dentro do mesmo lote.
+  const criarLoteItem = (colaborador: any): LoteItem => ({
+    colaborador_id: colaborador.id,
+    colaborador_nome: colaborador.nome_completo,
+    funcao_nome: colaborador.funcao_nome || '',
+    setor: colaborador.setor_nome || setores[0] || 'Salão',
+    posto_trabalho_id: '',
+    horario_inicio: '08:00',
+    horario_fim: '17:00',
+    tipo_turno: detectarTurno('08:00'),
+    eh_folga: false,
+  });
+
+  const adicionarColaboradorAoLote = (colaboradorId: string) => {
+    if (loteItens.some((i) => i.colaborador_id === colaboradorId)) return;
+    const colaborador = colaboradores.find((c) => c.id === colaboradorId);
+    if (!colaborador) return;
+    setLoteItens([...loteItens, criarLoteItem(colaborador)]);
   };
 
-  const toggleColaboradorSelecionado = (colaboradorId: string) => {
-    const novosColaboradores = formData.colaboradores_selecionados.includes(colaboradorId)
-      ? formData.colaboradores_selecionados.filter(id => id !== colaboradorId)
-      : [...formData.colaboradores_selecionados, colaboradorId];
-
-    setFormData({
-      ...formData,
-      colaboradores_selecionados: novosColaboradores,
-      aplicar_todos_colaboradores: novosColaboradores.length === colaboradores.length
-    });
+  const removerColaboradorDoLote = (colaboradorId: string) => {
+    setLoteItens(loteItens.filter((i) => i.colaborador_id !== colaboradorId));
   };
 
-  // Não existe um "setor" fixo por colaborador (a mesma pessoa pode escalar
-  // em setores diferentes em dias diferentes) — a função é o proxy natural
-  // (ex.: "Cozinheiro"/"Auxiliar de Cozinha" = pessoal da cozinha). Clicar
-  // num chip marca/desmarca de uma vez todo mundo daquela função.
-  const funcoesDisponiveis = Array.from(
-    new Set(colaboradores.map((c) => c.funcao_nome).filter(Boolean))
-  ).sort();
+  const adicionarTodosDoSetorAoLote = (setorNome: string) => {
+    const doSetor = colaboradores.filter(
+      (c) => c.setor_nome === setorNome && !loteItens.some((i) => i.colaborador_id === c.id)
+    );
+    setLoteItens([...loteItens, ...doSetor.map(criarLoteItem)]);
+  };
 
-  const selecionarPorFuncao = (funcao: string) => {
-    const idsDaFuncao = colaboradores.filter((c) => c.funcao_nome === funcao).map((c) => c.id);
-    const todosJaSelecionados = idsDaFuncao.every((id) => formData.colaboradores_selecionados.includes(id));
-    const novosColaboradores = todosJaSelecionados
-      ? formData.colaboradores_selecionados.filter((id) => !idsDaFuncao.includes(id))
-      : Array.from(new Set([...formData.colaboradores_selecionados, ...idsDaFuncao]));
-
-    setFormData({
-      ...formData,
-      colaboradores_selecionados: novosColaboradores,
-      aplicar_todos_colaboradores: novosColaboradores.length === colaboradores.length
-    });
+  const atualizarItemLote = (colaboradorId: string, patch: Partial<LoteItem>) => {
+    setLoteItens(loteItens.map((item) => {
+      if (item.colaborador_id !== colaboradorId) return item;
+      const atualizado = { ...item, ...patch };
+      // Horário mudou? sugere o turno de novo, igual ao modo individual.
+      if (patch.horario_inicio) atualizado.tipo_turno = detectarTurno(patch.horario_inicio);
+      if (patch.setor && patch.setor !== 'Cozinha') atualizado.posto_trabalho_id = '';
+      return atualizado;
+    }));
   };
 
   const handleDelete = async (id: string) => {
@@ -526,6 +542,7 @@ const EscalasTrabalho: React.FC = () => {
   };
 
   const openForm = (escala?: EscalaTrabalho) => {
+    setLoteItens([]);
     if (escala) {
       setEditingEscala(escala);
       setFormData({
@@ -542,8 +559,6 @@ const EscalasTrabalho: React.FC = () => {
         data_inicio_periodo: dayjs().format('YYYY-MM-DD'),
         data_fim_periodo: dayjs().add(7, 'days').format('YYYY-MM-DD'),
         dias_semana: ['1', '2', '3', '4', '5'],
-        aplicar_todos_colaboradores: false,
-        colaboradores_selecionados: []
       });
     } else {
       setEditingEscala(null);
@@ -553,6 +568,7 @@ const EscalasTrabalho: React.FC = () => {
   };
 
   const resetForm = () => {
+    setLoteItens([]);
     setFormData({
       colaborador_id: '',
       data_escala: dayjs().format('YYYY-MM-DD'),
@@ -567,8 +583,6 @@ const EscalasTrabalho: React.FC = () => {
       data_inicio_periodo: dayjs().format('YYYY-MM-DD'),
       data_fim_periodo: dayjs().add(7, 'days').format('YYYY-MM-DD'),
       dias_semana: ['1', '2', '3', '4', '5'],
-      aplicar_todos_colaboradores: false,
-      colaboradores_selecionados: []
     });
   };
 
@@ -1449,65 +1463,157 @@ const EscalasTrabalho: React.FC = () => {
                     </div>
                   )}
 
-                  {/* Seleção de colaboradores */}
+                  {/* Adicionar colaboradores ao lote */}
                   <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <label className="block text-sm font-medium text-white/80">
-                        Colaboradores
-                      </label>
-                      <button
-                        type="button"
-                        onClick={selecionarTodosColaboradores}
-                        className="text-sm text-[#7D1F2C] hover:text-[#6a1a25]"
-                      >
-                        {formData.aplicar_todos_colaboradores ? 'Desmarcar Todos' : 'Selecionar Todos'}
-                      </button>
-                    </div>
+                    <label className="block text-sm font-medium text-white/80 mb-2">
+                      Adicionar Colaboradores
+                    </label>
 
-                    {funcoesDisponiveis.length > 0 && (
+                    {setores.length > 0 && (
                       <div className="flex flex-wrap gap-1.5 mb-2">
-                        {funcoesDisponiveis.map((funcao) => {
-                          const idsDaFuncao = colaboradores.filter((c) => c.funcao_nome === funcao).map((c) => c.id);
-                          const ativo = idsDaFuncao.every((id) => formData.colaboradores_selecionados.includes(id));
-                          return (
-                            <button
-                              type="button"
-                              key={funcao}
-                              onClick={() => selecionarPorFuncao(funcao)}
-                              className={`px-2.5 py-1 rounded-full text-xs font-semibold border transition-colors ${
-                                ativo
-                                  ? 'bg-[#7D1F2C] border-[#7D1F2C] text-white'
-                                  : 'bg-white/5 border-white/20 text-white/60 hover:bg-white/10'
-                              }`}
-                            >
-                              {funcao}
-                            </button>
-                          );
-                        })}
+                        {setores.map((setorNome) => (
+                          <button
+                            type="button"
+                            key={setorNome}
+                            onClick={() => adicionarTodosDoSetorAoLote(setorNome)}
+                            className="px-2.5 py-1 rounded-full text-xs font-semibold border bg-white/5 border-white/20 text-white/60 hover:bg-white/10 transition-colors"
+                          >
+                            + Todos de {setorNome}
+                          </button>
+                        ))}
                       </div>
                     )}
 
-                    <div className="max-h-40 overflow-y-auto border border-white/20 rounded-lg p-2">
-                      {colaboradores.map((colaborador) => (
-                        <label key={colaborador.id} className="flex items-center p-2 hover:bg-white/5">
-                          <input
-                            type="checkbox"
-                            checked={formData.colaboradores_selecionados.includes(colaborador.id)}
-                            onChange={() => toggleColaboradorSelecionado(colaborador.id)}
-                            className="mr-2 rounded border-white/20 text-[#7D1F2C] focus:ring-[#7D1F2C]"
-                          />
-                          <div>
-                            <div className="text-sm font-medium">{colaborador.nome_completo}</div>
-                            <div className="text-xs text-white/40">{colaborador.funcao_nome}</div>
-                          </div>
-                        </label>
-                      ))}
+                    <div className="max-h-32 overflow-y-auto border border-white/20 rounded-lg p-2">
+                      {colaboradores.map((colaborador) => {
+                        const jaAdicionado = loteItens.some((item) => item.colaborador_id === colaborador.id);
+                        return (
+                          <label key={colaborador.id} className="flex items-center p-2 hover:bg-white/5">
+                            <input
+                              type="checkbox"
+                              checked={jaAdicionado}
+                              onChange={() =>
+                                jaAdicionado
+                                  ? removerColaboradorDoLote(colaborador.id)
+                                  : adicionarColaboradorAoLote(colaborador.id)
+                              }
+                              className="mr-2 rounded border-white/20 text-[#7D1F2C] focus:ring-[#7D1F2C]"
+                            />
+                            <div>
+                              <div className="text-sm font-medium">{colaborador.nome_completo}</div>
+                              <div className="text-xs text-white/40">
+                                {colaborador.funcao_nome}
+                                {colaborador.setor_nome ? ` · ${colaborador.setor_nome}` : ''}
+                              </div>
+                            </div>
+                          </label>
+                        );
+                      })}
                     </div>
                   </div>
+
+                  {/* Tabela editável — cada colaborador com seu próprio setor/posto/horário/turno/folga */}
+                  {loteItens.length > 0 && (
+                    <div>
+                      <label className="block text-sm font-medium text-white/80 mb-2">
+                        {loteItens.length} colaborador{loteItens.length !== 1 ? 'es' : ''} no lote — ajuste cada um
+                      </label>
+                      <div className="max-h-80 overflow-y-auto border border-white/20 rounded-lg divide-y divide-white/10">
+                        {loteItens.map((item) => (
+                          <div key={item.colaborador_id} className="p-3">
+                            <div className="flex items-center justify-between mb-2">
+                              <div>
+                                <span className="text-sm font-semibold text-white">{item.colaborador_nome}</span>
+                                {item.funcao_nome && (
+                                  <span className="text-xs text-white/40 ml-2">{item.funcao_nome}</span>
+                                )}
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => removerColaboradorDoLote(item.colaborador_id)}
+                                className="text-white/30 hover:text-red-400"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+
+                            <div className="grid grid-cols-2 sm:grid-cols-6 gap-2 items-end">
+                              <div>
+                                <label className="block text-[10px] text-white/40 mb-1">Setor</label>
+                                <select
+                                  value={item.setor}
+                                  onChange={(e) => atualizarItemLote(item.colaborador_id, { setor: e.target.value })}
+                                  className="w-full text-xs border border-white/20 rounded-md px-2 py-1.5 bg-white/5 text-white"
+                                >
+                                  {setores.map((s) => (
+                                    <option key={s} value={s}>{s}</option>
+                                  ))}
+                                </select>
+                              </div>
+
+                              {item.setor === 'Cozinha' && (
+                                <div>
+                                  <label className="block text-[10px] text-white/40 mb-1">Posto</label>
+                                  <select
+                                    value={item.posto_trabalho_id}
+                                    onChange={(e) => atualizarItemLote(item.colaborador_id, { posto_trabalho_id: e.target.value })}
+                                    className="w-full text-xs border border-white/20 rounded-md px-2 py-1.5 bg-white/5 text-white"
+                                  >
+                                    <option value="">Sem posto</option>
+                                    {postosTrabalho.filter((p) => p.setor === 'Cozinha').map((p) => (
+                                      <option key={p.id} value={p.id}>{p.nome}</option>
+                                    ))}
+                                  </select>
+                                </div>
+                              )}
+
+                              <label className="flex items-center gap-1.5 text-xs text-white/70 pb-1.5">
+                                <input
+                                  type="checkbox"
+                                  checked={item.eh_folga}
+                                  onChange={(e) => atualizarItemLote(item.colaborador_id, { eh_folga: e.target.checked })}
+                                  className="rounded border-white/20 text-[#7D1F2C] focus:ring-[#7D1F2C]"
+                                />
+                                🏖️ Folga
+                              </label>
+
+                              {!item.eh_folga && (
+                                <>
+                                  <div>
+                                    <label className="block text-[10px] text-white/40 mb-1">Início</label>
+                                    <input
+                                      type="time"
+                                      value={item.horario_inicio}
+                                      onChange={(e) => atualizarItemLote(item.colaborador_id, { horario_inicio: e.target.value })}
+                                      className="w-full text-xs border border-white/20 rounded-md px-2 py-1.5 bg-white/5 text-white"
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="block text-[10px] text-white/40 mb-1">Fim</label>
+                                    <input
+                                      type="time"
+                                      value={item.horario_fim}
+                                      onChange={(e) => atualizarItemLote(item.colaborador_id, { horario_fim: e.target.value })}
+                                      className="w-full text-xs border border-white/20 rounded-md px-2 py-1.5 bg-white/5 text-white"
+                                    />
+                                  </div>
+                                  <div className="text-[10px] text-white/40 capitalize pb-1.5">
+                                    {item.tipo_turno}
+                                  </div>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
-              {/* Campos comuns */}
+              {/* Campos individuais (no lote, cada colaborador tem os seus, na tabela acima) */}
+              {formData.tipo_cadastro === 'individual' && (
+              <>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-white/80 mb-2">
@@ -1610,6 +1716,8 @@ const EscalasTrabalho: React.FC = () => {
                     />
                   </div>
                 </div>
+              )}
+              </>
               )}
 
               {/* Observações */}
