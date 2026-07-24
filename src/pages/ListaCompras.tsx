@@ -65,6 +65,13 @@ function fmt(n: number, dec = 2) {
 }
 function fmtMoeda(n: number) { return 'R$ ' + fmt(n); }
 
+// Só peso/volume aceita fração; unidade/garrafa/lata/pacote/caixa é sempre inteiro
+// (não dá pra comprar 0,4 de uma garrafa de Campari).
+const UNIDADES_FRACIONAVEIS = ['kg', 'g', 'grama', 'gramas', 'l', 'litro', 'litros', 'ml', 'mililitro', 'mililitros'];
+function ehFracionado(um: string | null | undefined): boolean {
+  return UNIDADES_FRACIONAVEIS.includes((um || '').trim().toLowerCase());
+}
+
 // Agrupa por fornecedor quando o filtro é "Pedido Fornecedor" (faz mais sentido ligar
 // pra cada fornecedor separado); nos demais casos agrupa por categoria.
 function grupoDe(item: ItemLista, agruparPorFornecedor: boolean): string {
@@ -230,7 +237,8 @@ export default function ListaCompras() {
   };
 
   const atualizarQtd = async (item: ItemLista, qtd: number) => {
-    const novaQtd = Math.max(0, qtd);
+    // Item em unidade inteira não pode ter fração na quantidade a comprar
+    const novaQtd = Math.max(0, ehFracionado(item.unidade_medida) ? qtd : Math.round(qtd));
     const novoCusto = Number((item.custo_unitario * novaQtd).toFixed(2));
     setItens(prev => prev.map(i => i.id === item.id ? { ...i, quantidade_comprar: novaQtd, custo_estimado: novoCusto } : i));
     await fetch(`${SUPABASE_URL}/rest/v1/listas_compra_itens?id=eq.${item.id}`, {
@@ -661,7 +669,7 @@ ${grupos.map(grupo => `
                             <div className="flex-shrink-0 flex flex-col items-end gap-1">
                               <div className="flex items-center gap-1">
                                 <button onClick={() => atualizarQtd(item, item.quantidade_comprar - 1)} className="w-6 h-6 rounded-lg bg-[#12141f]/10 hover:bg-white/15 text-white/60 text-sm font-bold flex items-center justify-center">−</button>
-                                <input type="number" value={item.quantidade_comprar} min={0} step={0.5}
+                                <input type="number" value={item.quantidade_comprar} min={0} step={ehFracionado(item.unidade_medida) ? 0.5 : 1}
                                   onChange={e => atualizarQtd(item, parseFloat(e.target.value) || 0)}
                                   className="w-16 text-center text-sm font-bold border border-white/10 rounded-lg py-0.5 bg-[#12141f] text-white focus:outline-none focus:ring-2 focus:ring-[#7D1F2C]/30" />
                                 <button onClick={() => atualizarQtd(item, item.quantidade_comprar + 1)} className="w-6 h-6 rounded-lg bg-[#12141f]/10 hover:bg-white/15 text-white/60 text-sm font-bold flex items-center justify-center">+</button>
