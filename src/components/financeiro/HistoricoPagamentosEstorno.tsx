@@ -77,8 +77,10 @@ const HistoricoPagamentosEstorno: React.FC = () => {
   });
 
   const handleEstornar = async () => {
-    if (!selectedPagamento || !motivo.trim()) { alert('Informe o motivo'); return; }
-    if (!confirm(`Confirma estorno de ${fmt(selectedPagamento.valor)}?`)) return;
+    // O próprio modal já é a confirmação (com aviso de irreversível); não usamos
+    // window.confirm() aqui porque o navegador pode bloqueá-lo silenciosamente
+    // e o estorno "não acontecia nada".
+    if (!selectedPagamento || !motivo.trim()) return;
     try {
       setLoading(true); setError(null);
       const { data, error: rpcError } = await supabase.rpc('estornar_pagamento_parcial', { p_fluxo_caixa_id: selectedPagamento.id, p_motivo: motivo, p_observacoes: observacoes||null });
@@ -276,10 +278,15 @@ const HistoricoPagamentosEstorno: React.FC = () => {
                 <textarea value={observacoes} onChange={e=>setObservacoes(e.target.value)} rows={2} placeholder="Detalhes adicionais..." style={{ background:'rgba(255,255,255,0.05)', border:`1px solid ${S.border}`, borderRadius:8, padding:'8px 12px', color:S.text, fontSize:12, outline:'none', width:'100%', resize:'vertical', boxSizing:'border-box' }} />
               </div>
             </div>
-            <div style={{ display:'flex', justifyContent:'flex-end', gap:8, marginTop:20 }}>
+            {!motivo && (
+              <p style={{ color:S.orange, fontSize:11, margin:'14px 0 0', textAlign:'right' }}>
+                Selecione o <strong>motivo</strong> acima para habilitar o estorno.
+              </p>
+            )}
+            <div style={{ display:'flex', justifyContent:'flex-end', gap:8, marginTop:12 }}>
               <button onClick={()=>setShowEstornoModal(false)} style={{ background:'rgba(255,255,255,0.05)', border:`1px solid ${S.border}`, borderRadius:8, padding:'8px 14px', color:S.muted, fontSize:12, cursor:'pointer' }}>Cancelar</button>
               <button onClick={handleEstornar} disabled={loading||!motivo}
-                style={{ display:'flex', alignItems:'center', gap:6, background:S.orangeBg, border:`1px solid ${S.orangeBorder}`, borderRadius:8, padding:'8px 14px', color:S.orange, fontSize:12, cursor:'pointer', fontWeight:600, opacity:loading||!motivo?0.5:1 }}>
+                style={{ display:'flex', alignItems:'center', gap:6, background:S.orangeBg, border:`1px solid ${S.orangeBorder}`, borderRadius:8, padding:'8px 14px', color:S.orange, fontSize:12, cursor: loading||!motivo ? 'not-allowed' : 'pointer', fontWeight:600, opacity:loading||!motivo?0.5:1 }}>
                 <RotateCcw style={{ width:13, height:13 }} /> {loading?'Processando...':'Confirmar Estorno'}
               </button>
             </div>
