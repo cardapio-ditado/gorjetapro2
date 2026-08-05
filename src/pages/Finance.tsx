@@ -4,7 +4,7 @@ import {
   TrendingUp, FileText, CreditCard, Receipt,
   ArrowLeftRight, Tag, Building2, Activity, PieChart,
   Settings, Target, RefreshCw, MessageSquare, X,
-  DollarSign, ChevronRight,
+  DollarSign, ChevronRight, Upload,
 } from 'lucide-react';
 import dayjs from 'dayjs';
 import 'dayjs/locale/pt-br';
@@ -15,6 +15,7 @@ import ExtratoDiario            from '../components/financeiro/ExtratoDiario';
 import ContasPagar              from '../components/financeiro/ContasPagar';
 import ContasReceber            from '../components/financeiro/ContasReceber';
 import HistoricoPagamentosEstorno from '../components/financeiro/HistoricoPagamentosEstorno';
+import ConciliacaoBancaria       from '../components/financeiro/ConciliacaoBancaria';
 import CategorizarLancamentos   from '../components/financeiro/CategorizarLancamentos';
 import FichaFinanceiraFornecedor from '../components/financeiro/FichaFinanceiraFornecedor';
 import KardexFinanceiroFornecedor from '../components/financeiro/KardexFinanceiroFornecedor';
@@ -39,6 +40,7 @@ const TABS: Tab[] = [
   { slug: 'pagar',             label: 'Contas a Pagar',       icon: CreditCard,     description: 'Obrigações financeiras em aberto' },
   { slug: 'receber',           label: 'Contas a Receber',     icon: Receipt,        description: 'Valores a receber' },
   { slug: 'historico',         label: 'Histórico e Estornos', icon: ArrowLeftRight, description: 'Histórico completo e estornos' },
+  { slug: 'conciliacao',       label: 'Conciliação Bancária', icon: Upload,         description: 'Importe o extrato (OFX/XML) e concilie com o que está lançado' },
   { slug: 'categorizar',       label: 'Categorizar',          icon: Tag,            description: 'Categorize os lançamentos' },
   { slug: 'ficha-fornecedor',  label: 'Ficha Fornecedor',     icon: Building2,      description: 'Dados financeiros por fornecedor' },
   { slug: 'kardex-fornecedor', label: 'Kardex Fornecedor',    icon: Activity,       description: 'Movimentações por fornecedor' },
@@ -54,6 +56,7 @@ const CONTENT: Record<string, React.ReactNode> = {
   'pagar':             <ContasPagar />,
   'receber':           <ContasReceber />,
   'historico':         <HistoricoPagamentosEstorno />,
+  'conciliacao':       <ConciliacaoBancaria />,
   'categorizar':       <CategorizarLancamentos />,
   'ficha-fornecedor':  <FichaFinanceiraFornecedor />,
   'kardex-fornecedor': <KardexFinanceiroFornecedor />,
