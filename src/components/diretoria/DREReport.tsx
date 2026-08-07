@@ -52,6 +52,7 @@ export default function DREReport() {
   const [lancamentos, setLancamentos] = useState<Lancamento[]>([]);
   const [loading, setLoading] = useState(false);
   const [showDebug, setShowDebug] = useState(false);
+  const [saldoInicialMes, setSaldoInicialMes] = useState<number | null>(null);
 
   const anos = [2024, 2025, 2026, 2027];
   const meses = [
@@ -107,6 +108,15 @@ export default function DREReport() {
         grupo_dre: grupoMap.get(r.categoria_raiz_id) || null,
       }));
       setDreData(dreEnriquecido);
+
+      // Saldo inicial de caixa do mês (encadeado a partir da âncora jul/2026).
+      // Só faz sentido em visão mensal — no "ano todo" não mostramos.
+      if (mes !== 'all') {
+        const { data: saldoIni } = await supabase.rpc('fn_dre_saldo_inicial', { p_ano: ano, p_mes: mes });
+        setSaldoInicialMes(saldoIni === null || saldoIni === undefined ? null : Number(saldoIni));
+      } else {
+        setSaldoInicialMes(null);
+      }
 
       // 2. Buscar TODOS os lançamentos do fluxo de caixa SEM LIMITE
       const startDate = mes === 'all' ? `${ano}-01-01` : `${ano}-${String(mes).padStart(2, '0')}-01`;
@@ -410,6 +420,40 @@ export default function DREReport() {
       doc.text('VARIAÇÃO DE CAIXA NO PERÍODO', margin, yPos);
       doc.text(formatCurrency(totais.variacaoCaixa), pageWidth - margin, yPos, { align: 'right' });
     }
+
+    // Posição de caixa (saldo anterior -> saldo final), quando aplicável
+    if (mes !== 'all' && saldoInicialMes !== null) {
+      const saldoFinal = saldoInicialMes + totais.variacaoCaixa;
+      yPos += 12;
+      doc.setTextColor(100, 116, 139);
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'bold');
+      doc.text('POSIÇÃO DE CAIXA (SOBRA ACUMULADA)', margin, yPos);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.setTextColor(30, 41, 59);
+      yPos += 6;
+      doc.text('Saldo do mês anterior', margin + 5, yPos);
+      doc.text(formatCurrency(saldoInicialMes), pageWidth - margin, yPos, { align: 'right' });
+      yPos += 6;
+      doc.text('(+) Resultado operacional', margin + 5, yPos);
+      doc.text(formatCurrency(totais.resultado), pageWidth - margin, yPos, { align: 'right' });
+      if (totais.aportes > 0) {
+        yPos += 6;
+        doc.text('(+) Aportes / Empréstimos', margin + 5, yPos);
+        doc.text(formatCurrency(totais.aportes), pageWidth - margin, yPos, { align: 'right' });
+      }
+      yPos += 6;
+      doc.text('(-) Retiradas de Sócios', margin + 5, yPos);
+      doc.text(formatCurrency(totais.retiradas), pageWidth - margin, yPos, { align: 'right' });
+      yPos += 9;
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(12);
+      const corS = saldoFinal >= 0 ? [5, 150, 105] : [220, 38, 38];
+      doc.setTextColor(corS[0], corS[1], corS[2]);
+      doc.text('= SALDO PARA O PRÓXIMO MÊS', margin, yPos);
+      doc.text(formatCurrency(saldoFinal), pageWidth - margin, yPos, { align: 'right' });
+    }
     doc.setTextColor(0, 0, 0);
 
     // Modo detalhado: adicionar todos os lançamentos agrupados por categoria
@@ -655,6 +699,15 @@ export default function DREReport() {
       ...(totais.aportes > 0 ? [['(+) Aportes / Empréstimos', formatCurrency(totais.aportes)]] : []),
       ...(totais.retiradas > 0 ? [['(-) Retiradas de Sócios', formatCurrency(totais.retiradas)]] : []),
       ...((totais.retiradas > 0 || totais.aportes > 0) ? [['VARIAÇÃO DE CAIXA NO PERÍODO', formatCurrency(totais.variacaoCaixa)]] : []),
+      ...(mes !== 'all' && saldoInicialMes !== null ? [
+        [],
+        ['POSIÇÃO DE CAIXA', ''],
+        ['Saldo do mês anterior', formatCurrency(saldoInicialMes)],
+        ['(+) Resultado operacional', formatCurrency(totais.resultado)],
+        ...(totais.aportes > 0 ? [['(+) Aportes / Empréstimos', formatCurrency(totais.aportes)]] : []),
+        ['(-) Retiradas de Sócios', formatCurrency(totais.retiradas)],
+        ['= Saldo para o próximo mês', formatCurrency(saldoInicialMes + totais.variacaoCaixa)],
+      ] : []),
     ];
     XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(sheetResumo), 'Resumo');
 
@@ -708,6 +761,48 @@ export default function DREReport() {
   const totais = calcularTotais();
   const receitasConsolidadas = consolidarPorCategoria('receita');
   const despesasConsolidadas = consolidarPorCategoria('despesa');
+
+  // Posição de caixa: só em visão mensal e a partir da âncora (jul/2026)
+  const temPosicaoCaixa = mes !== 'all' && saldoInicialMes !== null;
+  const saldoFinalMes = (saldoInicialMes ?? 0) + totais.variacaoCaixa;
+
+  // Bloco reutilizável de "Posição de Caixa" (saldo anterior -> saldo final)
+  const PosicaoCaixa = () => (
+    <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
+      <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3">
+        Posição de Caixa (sobra acumulada)
+      </h3>
+      <div className="space-y-1">
+        <div className="flex justify-between py-2 px-4">
+          <span className="text-slate-700">Saldo que veio do mês anterior</span>
+          <span className="font-semibold text-slate-900">{formatCurrency(saldoInicialMes ?? 0)}</span>
+        </div>
+        <div className="flex justify-between py-2 px-4">
+          <span className="text-slate-600">(+) Resultado operacional do mês</span>
+          <span className={totais.resultado >= 0 ? 'text-green-400' : 'text-red-400'}>{formatCurrency(totais.resultado)}</span>
+        </div>
+        {totais.aportes > 0 && (
+          <div className="flex justify-between py-2 px-4">
+            <span className="text-slate-600">(+) Aportes / Empréstimos</span>
+            <span className="text-green-400">{formatCurrency(totais.aportes)}</span>
+          </div>
+        )}
+        <div className="flex justify-between py-2 px-4">
+          <span className="text-slate-600">(-) Retiradas de Sócios</span>
+          <span className="text-red-400">{formatCurrency(totais.retiradas)}</span>
+        </div>
+        <div className="flex justify-between py-4 bg-slate-100 px-6 rounded-lg mt-2">
+          <span className="font-bold text-slate-900 text-lg">= Saldo para o próximo mês</span>
+          <span className={`font-bold text-lg ${saldoFinalMes >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+            {formatCurrency(saldoFinalMes)}
+          </span>
+        </div>
+        <p className="text-xs text-slate-400 px-4 pt-2">
+          Se o saldo cai com resultado operacional positivo, a sobra foi para retiradas; se o resultado operacional é negativo, a operação consumiu a sobra.
+        </p>
+      </div>
+    </div>
+  );
 
   // Agrupar lançamentos por data para debug
   const lancamentosPorData: { [key: string]: number } = {};
@@ -914,50 +1009,53 @@ export default function DREReport() {
       {!loading && lancamentos.length > 0 && (
         <>
           {modo === 'sintetico' && (
-            <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
-              <h3 className="text-lg font-semibold text-slate-900 mb-4">Modo Sintético - Resumo</h3>
-              <div className="space-y-2">
-                <div className="flex justify-between py-3 border-b border-slate-200">
-                  <span className="font-medium text-slate-700">Receitas Totais</span>
-                  <span className="font-semibold text-green-400">{formatCurrency(totais.receitas)}</span>
-                </div>
-                <div className="flex justify-between py-3 border-b border-slate-200">
-                  <span className="font-medium text-slate-700">(-) Despesas Totais</span>
-                  <span className="font-semibold text-red-400">{formatCurrency(totais.despesas)}</span>
-                </div>
-                <div className="flex justify-between py-4 bg-slate-50 px-4 rounded-lg mt-4">
-                  <span className="font-bold text-slate-900 text-lg">Resultado Operacional</span>
-                  <span className={`font-bold text-lg ${totais.resultado >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                    {formatCurrency(totais.resultado)}
-                  </span>
-                </div>
+            <div className="space-y-6">
+              <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
+                <h3 className="text-lg font-semibold text-slate-900 mb-4">Modo Sintético - Resumo</h3>
+                <div className="space-y-2">
+                  <div className="flex justify-between py-3 border-b border-slate-200">
+                    <span className="font-medium text-slate-700">Receitas Totais</span>
+                    <span className="font-semibold text-green-400">{formatCurrency(totais.receitas)}</span>
+                  </div>
+                  <div className="flex justify-between py-3 border-b border-slate-200">
+                    <span className="font-medium text-slate-700">(-) Despesas Totais</span>
+                    <span className="font-semibold text-red-400">{formatCurrency(totais.despesas)}</span>
+                  </div>
+                  <div className="flex justify-between py-4 bg-slate-50 px-4 rounded-lg mt-4">
+                    <span className="font-bold text-slate-900 text-lg">Resultado Operacional</span>
+                    <span className={`font-bold text-lg ${totais.resultado >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                      {formatCurrency(totais.resultado)}
+                    </span>
+                  </div>
 
-                {(totais.retiradas > 0 || totais.aportes > 0) && (
-                  <>
-                    <div className="flex justify-between pt-5 pb-1 px-4">
-                      <span className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Abaixo da linha (não afeta o resultado)</span>
-                    </div>
-                    {totais.aportes > 0 && (
-                      <div className="flex justify-between py-2 border-b border-slate-100 px-4">
-                        <span className="text-slate-600">(+) Aportes / Empréstimos</span>
-                        <span className="text-green-400">{formatCurrency(totais.aportes)}</span>
+                  {!temPosicaoCaixa && (totais.retiradas > 0 || totais.aportes > 0) && (
+                    <>
+                      <div className="flex justify-between pt-5 pb-1 px-4">
+                        <span className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Abaixo da linha (não afeta o resultado)</span>
                       </div>
-                    )}
-                    {totais.retiradas > 0 && (
-                      <div className="flex justify-between py-2 border-b border-slate-100 px-4">
-                        <span className="text-slate-600">(-) Retiradas de Sócios</span>
-                        <span className="text-red-400">{formatCurrency(totais.retiradas)}</span>
+                      {totais.aportes > 0 && (
+                        <div className="flex justify-between py-2 border-b border-slate-100 px-4">
+                          <span className="text-slate-600">(+) Aportes / Empréstimos</span>
+                          <span className="text-green-400">{formatCurrency(totais.aportes)}</span>
+                        </div>
+                      )}
+                      {totais.retiradas > 0 && (
+                        <div className="flex justify-between py-2 border-b border-slate-100 px-4">
+                          <span className="text-slate-600">(-) Retiradas de Sócios</span>
+                          <span className="text-red-400">{formatCurrency(totais.retiradas)}</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between py-3 bg-slate-100 px-4 rounded-lg mt-2">
+                        <span className="font-bold text-slate-900">Variação de Caixa no Período</span>
+                        <span className={`font-bold ${totais.variacaoCaixa >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                          {formatCurrency(totais.variacaoCaixa)}
+                        </span>
                       </div>
-                    )}
-                    <div className="flex justify-between py-3 bg-slate-100 px-4 rounded-lg mt-2">
-                      <span className="font-bold text-slate-900">Variação de Caixa no Período</span>
-                      <span className={`font-bold ${totais.variacaoCaixa >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                        {formatCurrency(totais.variacaoCaixa)}
-                      </span>
-                    </div>
-                  </>
-                )}
+                    </>
+                  )}
+                </div>
               </div>
+              {temPosicaoCaixa && <PosicaoCaixa />}
             </div>
           )}
 
@@ -1049,8 +1147,8 @@ export default function DREReport() {
                 </div>
               </div>
 
-              {/* Abaixo da linha */}
-              {(totais.retiradas > 0 || totais.aportes > 0) && (
+              {/* Abaixo da linha (fallback quando não há posição de caixa) */}
+              {!temPosicaoCaixa && (totais.retiradas > 0 || totais.aportes > 0) && (
                 <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
                   <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3">
                     Abaixo da linha (não afeta o resultado operacional)
@@ -1077,6 +1175,9 @@ export default function DREReport() {
                   </div>
                 </div>
               )}
+
+              {/* Posição de caixa acumulada */}
+              {temPosicaoCaixa && <PosicaoCaixa />}
             </div>
           )}
 
