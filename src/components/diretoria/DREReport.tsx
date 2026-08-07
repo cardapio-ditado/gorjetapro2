@@ -15,6 +15,7 @@ interface DREData {
   mes: number;
   valor_total: number;
   quantidade_lancamentos: number;
+  grupo_dre?: string | null;
 }
 
 interface Lancamento {
@@ -93,7 +94,19 @@ export default function DREReport() {
       if (dreError) throw dreError;
 
       console.log('📊 DRE Data:', dreResult?.length, 'registros');
-      setDreData(dreResult || []);
+
+      // Enriquecer cada linha com o grupo_dre da categoria raiz, pra separar
+      // o que é "abaixo da linha" (retiradas de sócios, aportes) do resultado
+      // operacional. Retirada de sócio é distribuição de lucro, não despesa.
+      const { data: catsGrupo } = await supabase
+        .from('categorias_financeiras')
+        .select('id, grupo_dre');
+      const grupoMap = new Map((catsGrupo || []).map((c: any) => [c.id, c.grupo_dre]));
+      const dreEnriquecido = (dreResult || []).map((r: any) => ({
+        ...r,
+        grupo_dre: grupoMap.get(r.categoria_raiz_id) || null,
+      }));
+      setDreData(dreEnriquecido);
 
       // 2. Buscar TODOS os lançamentos do fluxo de caixa SEM LIMITE
       const startDate = mes === 'all' ? `${ano}-01-01` : `${ano}-${String(mes).padStart(2, '0')}-01`;
@@ -205,21 +218,39 @@ export default function DREReport() {
   };
 
   const calcularTotais = () => {
-    const receitas = dreData
+    // "Abaixo da linha" = retiradas de sócios / aportes / empréstimos.
+    // Não entram no resultado operacional (não são receita/despesa da operação).
+    const ehAbaixo = (d: DREData) => d.grupo_dre === 'abaixo_da_linha';
+    const operacional = dreData.filter(d => !ehAbaixo(d));
+
+    const receitas = operacional
       .filter(d => d.tipo === 'receita')
       .reduce((sum, d) => sum + Math.abs(d.valor_total), 0);
 
-    const despesas = dreData
+    const despesas = operacional
       .filter(d => d.tipo === 'despesa')
       .reduce((sum, d) => sum + Math.abs(d.valor_total), 0);
 
     const resultado = receitas - despesas;
 
-    return { receitas, despesas, resultado };
+    // Abaixo da linha
+    const abaixo = dreData.filter(ehAbaixo);
+    const aportes = abaixo
+      .filter(d => d.tipo === 'receita')
+      .reduce((sum, d) => sum + Math.abs(d.valor_total), 0);
+    const retiradas = abaixo
+      .filter(d => d.tipo === 'despesa')
+      .reduce((sum, d) => sum + Math.abs(d.valor_total), 0);
+
+    // Variação de caixa do período = resultado operacional + aportes - retiradas
+    const variacaoCaixa = resultado + aportes - retiradas;
+
+    return { receitas, despesas, resultado, aportes, retiradas, variacaoCaixa };
   };
 
   const consolidarPorCategoria = (tipo: 'receita' | 'despesa'): CategoriaConsolidada[] => {
-    const categorias = dreData.filter(d => d.tipo === tipo);
+    // Exclui "abaixo da linha" (retiradas/aportes) — mostrado em seção própria.
+    const categorias = dreData.filter(d => d.tipo === tipo && d.grupo_dre !== 'abaixo_da_linha');
     const raizes: { [key: string]: CategoriaConsolidada } = {};
 
     categorias.forEach(cat => {
@@ -349,8 +380,37 @@ export default function DREReport() {
     doc.setFont('helvetica', 'bold');
     const cor = totais.resultado >= 0 ? [5, 150, 105] : [220, 38, 38];
     doc.setTextColor(cor[0], cor[1], cor[2]);
-    doc.text('RESULTADO DO PERÍODO', margin, yPos);
+    doc.text('RESULTADO OPERACIONAL', margin, yPos);
     doc.text(formatCurrency(totais.resultado), pageWidth - margin, yPos, { align: 'right' });
+
+    // Abaixo da linha (retiradas/aportes) — não afeta o resultado operacional
+    if (totais.retiradas > 0 || totais.aportes > 0) {
+      yPos += 12;
+      doc.setTextColor(100, 116, 139);
+      doc.setFontSize(9);
+      doc.text('ABAIXO DA LINHA (não afeta o resultado)', margin, yPos);
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(30, 41, 59);
+      if (totais.aportes > 0) {
+        yPos += 6;
+        doc.text('(+) Aportes / Empréstimos', margin + 5, yPos);
+        doc.text(formatCurrency(totais.aportes), pageWidth - margin, yPos, { align: 'right' });
+      }
+      if (totais.retiradas > 0) {
+        yPos += 6;
+        doc.text('(-) Retiradas de Sócios', margin + 5, yPos);
+        doc.text(formatCurrency(totais.retiradas), pageWidth - margin, yPos, { align: 'right' });
+      }
+      yPos += 9;
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(12);
+      const corV = totais.variacaoCaixa >= 0 ? [5, 150, 105] : [220, 38, 38];
+      doc.setTextColor(corV[0], corV[1], corV[2]);
+      doc.text('VARIAÇÃO DE CAIXA NO PERÍODO', margin, yPos);
+      doc.text(formatCurrency(totais.variacaoCaixa), pageWidth - margin, yPos, { align: 'right' });
+    }
+    doc.setTextColor(0, 0, 0);
 
     // Modo detalhado: adicionar todos os lançamentos agrupados por categoria
     if (modo === 'detalhado') {
@@ -591,7 +651,10 @@ export default function DREReport() {
       ['RECEITAS', formatCurrency(totais.receitas)],
       ['(-) DESPESAS', formatCurrency(totais.despesas)],
       [],
-      ['RESULTADO DO PERÍODO', formatCurrency(totais.resultado)]
+      ['RESULTADO OPERACIONAL', formatCurrency(totais.resultado)],
+      ...(totais.aportes > 0 ? [['(+) Aportes / Empréstimos', formatCurrency(totais.aportes)]] : []),
+      ...(totais.retiradas > 0 ? [['(-) Retiradas de Sócios', formatCurrency(totais.retiradas)]] : []),
+      ...((totais.retiradas > 0 || totais.aportes > 0) ? [['VARIAÇÃO DE CAIXA NO PERÍODO', formatCurrency(totais.variacaoCaixa)]] : []),
     ];
     XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(sheetResumo), 'Resumo');
 
@@ -863,11 +926,37 @@ export default function DREReport() {
                   <span className="font-semibold text-red-400">{formatCurrency(totais.despesas)}</span>
                 </div>
                 <div className="flex justify-between py-4 bg-slate-50 px-4 rounded-lg mt-4">
-                  <span className="font-bold text-slate-900 text-lg">Resultado do Período</span>
+                  <span className="font-bold text-slate-900 text-lg">Resultado Operacional</span>
                   <span className={`font-bold text-lg ${totais.resultado >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                     {formatCurrency(totais.resultado)}
                   </span>
                 </div>
+
+                {(totais.retiradas > 0 || totais.aportes > 0) && (
+                  <>
+                    <div className="flex justify-between pt-5 pb-1 px-4">
+                      <span className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Abaixo da linha (não afeta o resultado)</span>
+                    </div>
+                    {totais.aportes > 0 && (
+                      <div className="flex justify-between py-2 border-b border-slate-100 px-4">
+                        <span className="text-slate-600">(+) Aportes / Empréstimos</span>
+                        <span className="text-green-400">{formatCurrency(totais.aportes)}</span>
+                      </div>
+                    )}
+                    {totais.retiradas > 0 && (
+                      <div className="flex justify-between py-2 border-b border-slate-100 px-4">
+                        <span className="text-slate-600">(-) Retiradas de Sócios</span>
+                        <span className="text-red-400">{formatCurrency(totais.retiradas)}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between py-3 bg-slate-100 px-4 rounded-lg mt-2">
+                      <span className="font-bold text-slate-900">Variação de Caixa no Período</span>
+                      <span className={`font-bold ${totais.variacaoCaixa >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                        {formatCurrency(totais.variacaoCaixa)}
+                      </span>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           )}
@@ -953,12 +1042,41 @@ export default function DREReport() {
               {/* Resultado */}
               <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
                 <div className="flex justify-between py-4 bg-slate-100 px-6 rounded-lg">
-                  <span className="font-bold text-slate-900 text-xl">RESULTADO DO PERÍODO</span>
+                  <span className="font-bold text-slate-900 text-xl">RESULTADO OPERACIONAL</span>
                   <span className={`font-bold text-xl ${totais.resultado >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                     {formatCurrency(totais.resultado)}
                   </span>
                 </div>
               </div>
+
+              {/* Abaixo da linha */}
+              {(totais.retiradas > 0 || totais.aportes > 0) && (
+                <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
+                  <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3">
+                    Abaixo da linha (não afeta o resultado operacional)
+                  </h3>
+                  <div className="space-y-2">
+                    {totais.aportes > 0 && (
+                      <div className="flex justify-between py-2 px-4">
+                        <span className="text-slate-700">(+) Aportes / Empréstimos</span>
+                        <span className="font-semibold text-green-400">{formatCurrency(totais.aportes)}</span>
+                      </div>
+                    )}
+                    {totais.retiradas > 0 && (
+                      <div className="flex justify-between py-2 px-4">
+                        <span className="text-slate-700">(-) Retiradas de Sócios</span>
+                        <span className="font-semibold text-red-400">{formatCurrency(totais.retiradas)}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between py-4 bg-slate-100 px-6 rounded-lg mt-2">
+                      <span className="font-bold text-slate-900 text-lg">VARIAÇÃO DE CAIXA NO PERÍODO</span>
+                      <span className={`font-bold text-lg ${totais.variacaoCaixa >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                        {formatCurrency(totais.variacaoCaixa)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
