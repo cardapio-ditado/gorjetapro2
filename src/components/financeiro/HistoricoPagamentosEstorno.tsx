@@ -87,9 +87,10 @@ const HistoricoPagamentosEstorno: React.FC = () => {
       if (rpcError) throw rpcError;
       const result = data as { success: boolean; error?: string; message?: string };
       if (!result.success) throw new Error(result.error || 'Erro ao processar estorno');
-      alert(result.message || 'Estorno realizado!');
+      // Sem alert() nativo (o navegador pode suprimir): fecha o modal e recarrega
+      // a lista — o pagamento passa a aparecer como "Estornado".
       setShowEstornoModal(false); setSelectedPagamento(null); setMotivo(''); setObservacoes('');
-      fetchData();
+      await fetchData();
     } catch (err: any) { setError(err.message); }
     finally { setLoading(false); }
   };
@@ -198,7 +199,7 @@ const HistoricoPagamentosEstorno: React.FC = () => {
                       </td>
                       <td style={{ padding:'9px 14px', whiteSpace:'nowrap' }}>
                         {!est && (
-                          <button onClick={() => { setSelectedPagamento(p); setMotivo(''); setObservacoes(''); setShowEstornoModal(true); }}
+                          <button onClick={() => { setSelectedPagamento(p); setMotivo(''); setObservacoes(''); setError(null); setShowEstornoModal(true); }}
                             style={{ display:'flex', alignItems:'center', gap:5, background:S.orangeBg, border:`1px solid ${S.orangeBorder}`, borderRadius:7, padding:'5px 10px', color:S.orange, fontSize:11, cursor:'pointer', fontWeight:500 }}>
                             <RotateCcw style={{ width:11, height:11 }} /> Estornar
                           </button>
@@ -282,6 +283,12 @@ const HistoricoPagamentosEstorno: React.FC = () => {
               <p style={{ color:S.orange, fontSize:11, margin:'14px 0 0', textAlign:'right' }}>
                 Selecione o <strong>motivo</strong> acima para habilitar o estorno.
               </p>
+            )}
+            {error && (
+              <div style={{ background:S.redBg, border:`1px solid ${S.redBorder}`, borderRadius:8, padding:'8px 12px', marginTop:14, display:'flex', gap:8 }}>
+                <AlertTriangle style={{ width:14, height:14, color:S.red, flexShrink:0, marginTop:1 }} />
+                <p style={{ color:S.red, fontSize:11, margin:0 }}>{error}</p>
+              </div>
             )}
             <div style={{ display:'flex', justifyContent:'flex-end', gap:8, marginTop:12 }}>
               <button onClick={()=>setShowEstornoModal(false)} style={{ background:'rgba(255,255,255,0.05)', border:`1px solid ${S.border}`, borderRadius:8, padding:'8px 14px', color:S.muted, fontSize:12, cursor:'pointer' }}>Cancelar</button>
