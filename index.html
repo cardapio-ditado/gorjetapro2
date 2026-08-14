@@ -39,6 +39,28 @@
         });
       }
     </script>
+    <script>
+      // Aviso de emergência em JS bem antigo (sem módulos, sem arrow function) —
+      // roda mesmo se o bundle principal falhar ao carregar/executar no
+      // aparelho do colaborador, para nunca ficar tela branca sem explicação.
+      window.__rrErro = null;
+      window.addEventListener('error', function (e) {
+        if (!window.__rrErro) {
+          window.__rrErro = (e && e.message ? e.message : 'Erro desconhecido');
+        }
+      });
+      setTimeout(function () {
+        var raiz = document.getElementById('root');
+        if (raiz && raiz.childNodes.length === 0) {
+          raiz.innerHTML =
+            '<div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#0d0d15;color:#fff;padding:24px;text-align:center;font-family:sans-serif;">' +
+            '<p style="font-size:15px;margin-bottom:8px;">Não consegui carregar a página.</p>' +
+            '<p style="font-size:12px;color:#999;margin-bottom:16px;">' + (window.__rrErro || 'Verifique sua conexão e tente novamente.') + '</p>' +
+            '<button onclick="location.reload()" style="background:#e8a921;color:#0d0d15;border:none;padding:10px 20px;border-radius:8px;font-weight:600;">Tentar novamente</button>' +
+            '</div>';
+        }
+      }, 6000);
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
