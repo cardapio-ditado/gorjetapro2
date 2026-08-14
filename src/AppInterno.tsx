@@ -7,6 +7,8 @@ import ViagensList from './pages/viagens/ViagensList';
 import ViagemDetalhe from './pages/viagens/ViagemDetalhe';
 import Cadastros from './pages/cadastros/Cadastros';
 import Eventos from './pages/eventos/Eventos';
+import EventoDetalhe from './pages/eventos/EventoDetalhe';
+import Financeiro from './pages/financeiro/Financeiro';
 import Placeholder from './pages/Placeholder';
 
 function Protegido({ children }: { children: React.ReactNode }) {
@@ -49,6 +51,8 @@ export default function AppInterno() {
           <Route path="/viagens/:id" element={<ViagemDetalhe />} />
           <Route path="/cadastros" element={<Cadastros />} />
           <Route path="/eventos" element={<Eventos />} />
+          <Route path="/eventos/:id" element={<EventoDetalhe />} />
+          <Route path="/financeiro" element={<Financeiro />} />
           <Route path="/modulo/:slug" element={<Placeholder />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />

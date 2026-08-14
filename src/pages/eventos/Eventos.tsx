@@ -1,16 +1,10 @@
 import { FormEvent, useEffect, useState } from 'react';
-import { CalendarDays, MapPin, Pencil, Plus, Trash2 } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { CalendarDays, ChevronRight, MapPin, Plus } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
-import { Evento } from '../../types';
+import { Evento, EVENTO_STATUS_LABEL } from '../../types';
 import { formatarData } from '../../utils/format';
 import Modal from '../../components/Modal';
-
-const STATUS_LABEL: Record<Evento['status'], string> = {
-  planejado: 'Planejado',
-  em_andamento: 'Em andamento',
-  encerrado: 'Encerrado',
-  cancelado: 'Cancelado',
-};
 
 const STATUS_COR: Record<Evento['status'], string> = {
   planejado: 'bg-sky-500/15 text-sky-300 border-sky-500/30',
@@ -20,18 +14,17 @@ const STATUS_COR: Record<Evento['status'], string> = {
 };
 
 export default function Eventos() {
+  const navigate = useNavigate();
   const [eventos, setEventos] = useState<Evento[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
 
   const [modal, setModal] = useState(false);
-  const [edit, setEdit] = useState<Evento | null>(null);
   const [fNome, setFNome] = useState('');
   const [fCidade, setFCidade] = useState('');
   const [fLocal, setFLocal] = useState('');
   const [fInicio, setFInicio] = useState('');
   const [fFim, setFFim] = useState('');
-  const [fStatus, setFStatus] = useState<Evento['status']>('planejado');
   const [fObs, setFObs] = useState('');
   const [salvando, setSalvando] = useState(false);
   const [erroForm, setErroForm] = useState<string | null>(null);
@@ -51,59 +44,46 @@ export default function Eventos() {
     carregar();
   }, []);
 
-  function abrir(e?: Evento) {
-    setEdit(e ?? null);
-    setFNome(e?.nome ?? '');
-    setFCidade(e?.cidade ?? '');
-    setFLocal(e?.local ?? '');
-    setFInicio(e?.data_inicio ?? '');
-    setFFim(e?.data_fim ?? '');
-    setFStatus(e?.status ?? 'planejado');
-    setFObs(e?.obs ?? '');
+  function abrirNovo() {
+    setFNome('');
+    setFCidade('');
+    setFLocal('');
+    setFInicio('');
+    setFFim('');
+    setFObs('');
     setErroForm(null);
     setModal(true);
   }
 
-  async function salvar(ev: FormEvent) {
+  async function criar(ev: FormEvent) {
     ev.preventDefault();
     setSalvando(true);
     setErroForm(null);
-    const registro = {
-      nome: fNome.trim(),
-      cidade: fCidade.trim() || null,
-      local: fLocal.trim() || null,
-      data_inicio: fInicio || null,
-      data_fim: fFim || null,
-      status: fStatus,
-      obs: fObs.trim() || null,
-    };
-    const { error } = edit
-      ? await supabase.from('rr_eventos').update(registro).eq('id', edit.id)
-      : await supabase.from('rr_eventos').insert(registro);
+    const { data, error } = await supabase
+      .from('rr_eventos')
+      .insert({
+        nome: fNome.trim(),
+        cidade: fCidade.trim() || null,
+        local: fLocal.trim() || null,
+        data_inicio: fInicio || null,
+        data_fim: fFim || null,
+        obs: fObs.trim() || null,
+      })
+      .select('id')
+      .single();
     setSalvando(false);
     if (error) return setErroForm(error.message);
     setModal(false);
-    await carregar();
-  }
-
-  async function excluir(e: Evento) {
-    if (!window.confirm(`Excluir o evento "${e.nome}"? Não dá pra desfazer.`)) return;
-    const { error } = await supabase.from('rr_eventos').delete().eq('id', e.id);
-    if (error) {
-      return alert(
-        error.message.includes('foreign key')
-          ? 'Não dá pra excluir: há viagens vinculadas a este evento. Marque como encerrado em vez de excluir.'
-          : error.message,
-      );
-    }
-    await carregar();
+    if (data) navigate(`/eventos/${data.id}`);
   }
 
   return (
     <div>
       <div className="mb-6 flex items-center justify-between">
-        <p className="text-sm text-zinc-500">Agenda dos eventos de bar &amp; show</p>
-        <button onClick={() => abrir()} className="btn-gold">
+        <p className="text-sm text-zinc-500">
+          Cada evento é um hub: dados, estoque por área e financeiro ficam dentro dele.
+        </p>
+        <button onClick={abrirNovo} className="btn-gold">
           <Plus className="h-4 w-4" /> Novo evento
         </button>
       </div>
@@ -121,17 +101,10 @@ export default function Eventos() {
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {eventos.map((e) => (
-            <div key={e.id} className="card group p-5 transition hover:border-gold-500/50">
+            <Link key={e.id} to={`/eventos/${e.id}`} className="card group p-5 transition hover:border-gold-500/50">
               <div className="flex items-start justify-between gap-2">
                 <h3 className="text-sm font-semibold text-white">{e.nome}</h3>
-                <div className="flex shrink-0 items-center gap-1">
-                  <button onClick={() => abrir(e)} className="rounded-lg p-1.5 text-zinc-600 transition hover:bg-night-800 hover:text-gold-300">
-                    <Pencil className="h-4 w-4" />
-                  </button>
-                  <button onClick={() => excluir(e)} className="rounded-lg p-1.5 text-zinc-600 transition hover:bg-red-950/40 hover:text-red-300">
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                </div>
+                <ChevronRight className="h-4 w-4 shrink-0 text-zinc-600 transition group-hover:text-gold-400" />
               </div>
               <div className="mt-3 space-y-1.5 text-xs text-zinc-400">
                 <div className="flex items-center gap-1.5">
@@ -145,15 +118,15 @@ export default function Eventos() {
                 </div>
               </div>
               <span className={`mt-4 inline-block rounded-full border px-2.5 py-1 text-xs font-medium ${STATUS_COR[e.status]}`}>
-                {STATUS_LABEL[e.status]}
+                {EVENTO_STATUS_LABEL[e.status]}
               </span>
-            </div>
+            </Link>
           ))}
         </div>
       )}
 
-      <Modal aberto={modal} titulo={edit ? 'Editar evento' : 'Novo evento'} onFechar={() => setModal(false)}>
-        <form onSubmit={salvar} className="space-y-4">
+      <Modal aberto={modal} titulo="Novo evento" onFechar={() => setModal(false)}>
+        <form onSubmit={criar} className="space-y-4">
           <div>
             <label className="label">Nome do evento *</label>
             <input className="input" value={fNome} onChange={(e) => setFNome(e.target.value)} required />
@@ -179,16 +152,6 @@ export default function Eventos() {
             </div>
           </div>
           <div>
-            <label className="label">Status</label>
-            <select className="input" value={fStatus} onChange={(e) => setFStatus(e.target.value as Evento['status'])}>
-              {Object.entries(STATUS_LABEL).map(([k, v]) => (
-                <option key={k} value={k}>
-                  {v}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
             <label className="label">Observações</label>
             <textarea className="input" rows={2} value={fObs} onChange={(e) => setFObs(e.target.value)} />
           </div>
@@ -200,7 +163,7 @@ export default function Eventos() {
               Cancelar
             </button>
             <button type="submit" disabled={salvando} className="btn-gold">
-              {salvando ? 'Salvando…' : 'Salvar'}
+              {salvando ? 'Criando…' : 'Criar e abrir evento'}
             </button>
           </div>
         </form>

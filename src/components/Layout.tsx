@@ -7,6 +7,7 @@ const TITULOS: Record<string, string> = {
   '/viagens': 'Prestação de Contas Externa',
   '/cadastros': 'Cadastros',
   '/eventos': 'Eventos',
+  '/financeiro': 'Financeiro Central',
 };
 
 export default function Layout() {

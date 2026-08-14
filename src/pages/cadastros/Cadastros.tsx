@@ -1,10 +1,65 @@
 import { FormEvent, useEffect, useState } from 'react';
-import { CarFront, Pencil, Plus, Trash2, Users } from 'lucide-react';
+import { CarFront, Landmark, Package, Pencil, Plus, Tags, Trash2, Truck, Users } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { Funcionario, Veiculo } from '../../types';
+import { formatarMoeda } from '../../utils/format';
 import Modal from '../../components/Modal';
+import CrudSimples, { CampoCrud, RegistroCrud } from './CrudSimples';
 
-type Aba = 'funcionarios' | 'veiculos';
+type Aba = 'funcionarios' | 'veiculos' | 'fornecedores' | 'produtos' | 'categorias' | 'contas';
+
+const ABAS: [Aba, string, React.ElementType][] = [
+  ['funcionarios', 'Funcionários', Users],
+  ['veiculos', 'Veículos', CarFront],
+  ['fornecedores', 'Fornecedores', Truck],
+  ['produtos', 'Produtos', Package],
+  ['categorias', 'Categorias', Tags],
+  ['contas', 'Contas & Caixas', Landmark],
+];
+
+const CAMPOS_FORNECEDOR: CampoCrud[] = [
+  { chave: 'nome', rotulo: 'Nome *', obrigatorio: true },
+  { chave: 'cnpj_cpf', rotulo: 'CNPJ / CPF', metade: true },
+  { chave: 'telefone', rotulo: 'Telefone', metade: true },
+  { chave: 'email', rotulo: 'E-mail', metade: true },
+  { chave: 'pix', rotulo: 'Chave PIX', metade: true },
+  { chave: 'obs', rotulo: 'Observações' },
+];
+
+const CAMPOS_PRODUTO: CampoCrud[] = [
+  { chave: 'nome', rotulo: 'Nome *', obrigatorio: true, placeholder: 'Ex.: Cerveja lata 350ml' },
+  { chave: 'unidade', rotulo: 'Unidade', metade: true, placeholder: 'un, cx, kg, L…' },
+  { chave: 'categoria', rotulo: 'Categoria', metade: true, placeholder: 'Bebida, insumo, descartável…' },
+];
+
+const CAMPOS_CATEGORIA: CampoCrud[] = [
+  { chave: 'nome', rotulo: 'Nome *', obrigatorio: true },
+  {
+    chave: 'tipo',
+    rotulo: 'Tipo',
+    tipo: 'select',
+    opcoes: [
+      ['despesa', 'Despesa'],
+      ['receita', 'Receita'],
+    ],
+  },
+];
+
+const CAMPOS_CONTA: CampoCrud[] = [
+  { chave: 'nome', rotulo: 'Nome *', obrigatorio: true, placeholder: 'Ex.: Conta Itaú, Caixa do escritório' },
+  { chave: 'banco', rotulo: 'Banco', metade: true },
+  {
+    chave: 'tipo',
+    rotulo: 'Tipo',
+    tipo: 'select',
+    metade: true,
+    opcoes: [
+      ['banco', 'Conta bancária'],
+      ['caixa', 'Caixa físico'],
+    ],
+  },
+  { chave: 'saldo_inicial', rotulo: 'Saldo inicial (R$)', tipo: 'numero', metade: true, placeholder: '0,00' },
+];
 
 export default function Cadastros() {
   const [aba, setAba] = useState<Aba>('funcionarios');
@@ -145,13 +200,8 @@ export default function Cadastros() {
   return (
     <div>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex gap-2">
-          {(
-            [
-              ['funcionarios', 'Funcionários', Users],
-              ['veiculos', 'Veículos', CarFront],
-            ] as [Aba, string, React.ElementType][]
-          ).map(([chave, rotulo, Icone]) => (
+        <div className="flex flex-wrap gap-2">
+          {ABAS.map(([chave, rotulo, Icone]) => (
             <button
               key={chave}
               onClick={() => setAba(chave)}
@@ -165,74 +215,147 @@ export default function Cadastros() {
             </button>
           ))}
         </div>
-        <button onClick={() => (aba === 'funcionarios' ? abrirFunc() : abrirVei())} className="btn-gold">
-          <Plus className="h-4 w-4" /> {aba === 'funcionarios' ? 'Novo funcionário' : 'Novo veículo'}
-        </button>
+        {(aba === 'funcionarios' || aba === 'veiculos') && (
+          <button onClick={() => (aba === 'funcionarios' ? abrirFunc() : abrirVei())} className="btn-gold">
+            <Plus className="h-4 w-4" /> {aba === 'funcionarios' ? 'Novo funcionário' : 'Novo veículo'}
+          </button>
+        )}
       </div>
 
       {erro && (
         <div className="mb-4 rounded-lg border border-red-900/60 bg-red-950/40 px-4 py-3 text-sm text-red-300">{erro}</div>
       )}
 
-      {carregando ? (
-        <div className="flex justify-center py-20">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-night-700 border-t-gold-500" />
-        </div>
-      ) : aba === 'funcionarios' ? (
-        funcionarios.length === 0 ? (
-          <div className="card px-6 py-16 text-center text-sm text-zinc-500">Nenhum funcionário cadastrado.</div>
+      {aba === 'fornecedores' && (
+        <CrudSimples
+          tabela="rr_fornecedores"
+          novoRotulo="Novo fornecedor"
+          tituloNovo="Novo fornecedor"
+          tituloEditar="Editar fornecedor"
+          vazio="Nenhum fornecedor cadastrado."
+          campos={CAMPOS_FORNECEDOR}
+          linhaTitulo={(r) => String(r.nome ?? '')}
+          linhaDetalhe={(r) =>
+            [r.cnpj_cpf, r.telefone, r.email, r.pix ? `PIX: ${r.pix}` : null].filter(Boolean).join(' · ')
+          }
+          dicaExclusao="Não dá pra excluir: há lançamentos financeiros vinculados a este fornecedor. Marque como inativo."
+        />
+      )}
+
+      {aba === 'produtos' && (
+        <CrudSimples
+          tabela="rr_produtos"
+          novoRotulo="Novo produto"
+          tituloNovo="Novo produto"
+          tituloEditar="Editar produto"
+          vazio="Nenhum produto cadastrado. Os produtos aparecem no estoque dos eventos."
+          campos={CAMPOS_PRODUTO}
+          linhaTitulo={(r) => String(r.nome ?? '')}
+          linhaDetalhe={(r) => [r.unidade ? `Unidade: ${r.unidade}` : null, r.categoria].filter(Boolean).join(' · ')}
+          dicaExclusao="Não dá pra excluir: há movimentações de estoque com este produto. Marque como inativo."
+        />
+      )}
+
+      {aba === 'categorias' && (
+        <CrudSimples
+          tabela="rr_fin_categorias"
+          novoRotulo="Nova categoria"
+          tituloNovo="Nova categoria financeira"
+          tituloEditar="Editar categoria"
+          vazio="Nenhuma categoria cadastrada."
+          campos={CAMPOS_CATEGORIA}
+          linhaTitulo={(r) => String(r.nome ?? '')}
+          linhaDetalhe={() => ''}
+          badge={(r) =>
+            r.tipo === 'receita'
+              ? { texto: 'Receita', classe: 'bg-emerald-500/15 text-emerald-300' }
+              : { texto: 'Despesa', classe: 'bg-red-500/15 text-red-300' }
+          }
+          dicaExclusao="Não dá pra excluir: há lançamentos usando esta categoria. Marque como inativa."
+        />
+      )}
+
+      {aba === 'contas' && (
+        <CrudSimples
+          tabela="rr_fin_contas"
+          novoRotulo="Nova conta"
+          tituloNovo="Nova conta / caixa"
+          tituloEditar="Editar conta"
+          vazio="Nenhuma conta cadastrada. Cadastre para registrar pagamentos e conciliar o extrato."
+          campos={CAMPOS_CONTA}
+          linhaTitulo={(r) => String(r.nome ?? '')}
+          linhaDetalhe={(r) =>
+            [r.banco, `Saldo inicial: ${formatarMoeda(Number(r.saldo_inicial ?? 0))}`].filter(Boolean).join(' · ')
+          }
+          badge={(r: RegistroCrud) =>
+            r.tipo === 'caixa'
+              ? { texto: 'Caixa', classe: 'bg-purple-500/15 text-purple-300' }
+              : { texto: 'Banco', classe: 'bg-sky-500/15 text-sky-300' }
+          }
+          dicaExclusao="Não dá pra excluir: há lançamentos ou extrato vinculados a esta conta. Marque como inativa."
+        />
+      )}
+
+      {(aba === 'funcionarios' || aba === 'veiculos') &&
+        (carregando ? (
+          <div className="flex justify-center py-20">
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-night-700 border-t-gold-500" />
+          </div>
+        ) : aba === 'funcionarios' ? (
+          funcionarios.length === 0 ? (
+            <div className="card px-6 py-16 text-center text-sm text-zinc-500">Nenhum funcionário cadastrado.</div>
+          ) : (
+            <div className="card divide-y divide-night-800 overflow-hidden">
+              {funcionarios.map((f) => (
+                <div key={f.id} className="flex items-center gap-4 px-5 py-3.5">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className={`text-sm font-medium ${f.ativo ? 'text-zinc-100' : 'text-zinc-500 line-through'}`}>
+                        {f.nome}
+                      </span>
+                      {f.apelido && <span className="text-xs text-zinc-500">({f.apelido})</span>}
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-[0.65rem] font-medium ${
+                          f.tipo === 'fixo' ? 'bg-sky-500/15 text-sky-300' : 'bg-purple-500/15 text-purple-300'
+                        }`}
+                      >
+                        {f.tipo === 'fixo' ? 'Fixo' : 'Freelancer'}
+                      </span>
+                    </div>
+                    <div className="mt-0.5 text-xs text-zinc-500">
+                      {[f.funcao, f.telefone, f.pix ? `PIX: ${f.pix}` : null].filter(Boolean).join(' · ') || '—'}
+                    </div>
+                  </div>
+                  <button onClick={() => abrirFunc(f)} className="rounded-lg p-2 text-zinc-500 transition hover:bg-night-800 hover:text-gold-300">
+                    <Pencil className="h-4 w-4" />
+                  </button>
+                  <button onClick={() => excluirFunc(f)} className="rounded-lg p-2 text-zinc-500 transition hover:bg-red-950/40 hover:text-red-300">
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )
+        ) : veiculos.length === 0 ? (
+          <div className="card px-6 py-16 text-center text-sm text-zinc-500">Nenhum veículo cadastrado.</div>
         ) : (
           <div className="card divide-y divide-night-800 overflow-hidden">
-            {funcionarios.map((f) => (
-              <div key={f.id} className="flex items-center gap-4 px-5 py-3.5">
+            {veiculos.map((v) => (
+              <div key={v.id} className="flex items-center gap-4 px-5 py-3.5">
                 <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className={`text-sm font-medium ${f.ativo ? 'text-zinc-100' : 'text-zinc-500 line-through'}`}>
-                      {f.nome}
-                    </span>
-                    {f.apelido && <span className="text-xs text-zinc-500">({f.apelido})</span>}
-                    <span
-                      className={`rounded-full px-2 py-0.5 text-[0.65rem] font-medium ${
-                        f.tipo === 'fixo' ? 'bg-sky-500/15 text-sky-300' : 'bg-purple-500/15 text-purple-300'
-                      }`}
-                    >
-                      {f.tipo === 'fixo' ? 'Fixo' : 'Freelancer'}
-                    </span>
-                  </div>
-                  <div className="mt-0.5 text-xs text-zinc-500">
-                    {[f.funcao, f.telefone, f.pix ? `PIX: ${f.pix}` : null].filter(Boolean).join(' · ') || '—'}
-                  </div>
+                  <div className={`text-sm font-medium ${v.ativo ? 'text-zinc-100' : 'text-zinc-500 line-through'}`}>{v.nome}</div>
+                  <div className="mt-0.5 text-xs text-zinc-500">{[v.modelo, v.placa].filter(Boolean).join(' · ') || '—'}</div>
                 </div>
-                <button onClick={() => abrirFunc(f)} className="rounded-lg p-2 text-zinc-500 transition hover:bg-night-800 hover:text-gold-300">
+                <button onClick={() => abrirVei(v)} className="rounded-lg p-2 text-zinc-500 transition hover:bg-night-800 hover:text-gold-300">
                   <Pencil className="h-4 w-4" />
                 </button>
-                <button onClick={() => excluirFunc(f)} className="rounded-lg p-2 text-zinc-500 transition hover:bg-red-950/40 hover:text-red-300">
+                <button onClick={() => excluirVei(v)} className="rounded-lg p-2 text-zinc-500 transition hover:bg-red-950/40 hover:text-red-300">
                   <Trash2 className="h-4 w-4" />
                 </button>
               </div>
             ))}
           </div>
-        )
-      ) : veiculos.length === 0 ? (
-        <div className="card px-6 py-16 text-center text-sm text-zinc-500">Nenhum veículo cadastrado.</div>
-      ) : (
-        <div className="card divide-y divide-night-800 overflow-hidden">
-          {veiculos.map((v) => (
-            <div key={v.id} className="flex items-center gap-4 px-5 py-3.5">
-              <div className="min-w-0 flex-1">
-                <div className={`text-sm font-medium ${v.ativo ? 'text-zinc-100' : 'text-zinc-500 line-through'}`}>{v.nome}</div>
-                <div className="mt-0.5 text-xs text-zinc-500">{[v.modelo, v.placa].filter(Boolean).join(' · ') || '—'}</div>
-              </div>
-              <button onClick={() => abrirVei(v)} className="rounded-lg p-2 text-zinc-500 transition hover:bg-night-800 hover:text-gold-300">
-                <Pencil className="h-4 w-4" />
-              </button>
-              <button onClick={() => excluirVei(v)} className="rounded-lg p-2 text-zinc-500 transition hover:bg-red-950/40 hover:text-red-300">
-                <Trash2 className="h-4 w-4" />
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
+        ))}
 
       {/* modal funcionário */}
       <Modal aberto={modalFunc} titulo={editFunc ? 'Editar funcionário' : 'Novo funcionário'} onFechar={() => setModalFunc(false)}>
