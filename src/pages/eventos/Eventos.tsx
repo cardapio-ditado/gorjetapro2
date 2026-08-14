@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useState } from 'react';
-import { CalendarDays, MapPin, Pencil, Plus } from 'lucide-react';
+import { CalendarDays, MapPin, Pencil, Plus, Trash2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { Evento } from '../../types';
 import { formatarData } from '../../utils/format';
@@ -86,6 +86,19 @@ export default function Eventos() {
     await carregar();
   }
 
+  async function excluir(e: Evento) {
+    if (!window.confirm(`Excluir o evento "${e.nome}"? Não dá pra desfazer.`)) return;
+    const { error } = await supabase.from('rr_eventos').delete().eq('id', e.id);
+    if (error) {
+      return alert(
+        error.message.includes('foreign key')
+          ? 'Não dá pra excluir: há viagens vinculadas a este evento. Marque como encerrado em vez de excluir.'
+          : error.message,
+      );
+    }
+    await carregar();
+  }
+
   return (
     <div>
       <div className="mb-6 flex items-center justify-between">
@@ -111,9 +124,14 @@ export default function Eventos() {
             <div key={e.id} className="card group p-5 transition hover:border-gold-500/50">
               <div className="flex items-start justify-between gap-2">
                 <h3 className="text-sm font-semibold text-white">{e.nome}</h3>
-                <button onClick={() => abrir(e)} className="rounded-lg p-1.5 text-zinc-600 transition hover:bg-night-800 hover:text-gold-300">
-                  <Pencil className="h-4 w-4" />
-                </button>
+                <div className="flex shrink-0 items-center gap-1">
+                  <button onClick={() => abrir(e)} className="rounded-lg p-1.5 text-zinc-600 transition hover:bg-night-800 hover:text-gold-300">
+                    <Pencil className="h-4 w-4" />
+                  </button>
+                  <button onClick={() => excluir(e)} className="rounded-lg p-1.5 text-zinc-600 transition hover:bg-red-950/40 hover:text-red-300">
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
               <div className="mt-3 space-y-1.5 text-xs text-zinc-400">
                 <div className="flex items-center gap-1.5">

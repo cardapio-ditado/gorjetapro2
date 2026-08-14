@@ -50,11 +50,13 @@ create table public.rr_viagens (
   obs text,
   criado_por uuid,
   token_publico uuid not null default gen_random_uuid(),
+  arquivada boolean not null default false,
   criado_em timestamptz not null default now()
 );
 comment on table public.rr_viagens is 'RR Bares: dinheiro alocado para colaborador em viagem de preparação de evento.';
 create unique index rr_viagens_token_publico_idx on public.rr_viagens (token_publico);
 create index rr_viagens_status_idx on public.rr_viagens (status);
+create index rr_viagens_arquivada_idx on public.rr_viagens (arquivada);
 
 create table public.rr_viagem_lancamentos (
   id uuid primary key default gen_random_uuid(),
@@ -72,12 +74,24 @@ create table public.rr_viagem_lancamentos (
 comment on table public.rr_viagem_lancamentos is 'RR Bares: lançamentos da prestação de contas (despesa/aporte/devolução) com foto do comprovante.';
 create index rr_viagem_lancamentos_viagem_idx on public.rr_viagem_lancamentos (viagem_id);
 
+create table public.rr_viagem_ocorrencias (
+  id uuid primary key default gen_random_uuid(),
+  viagem_id uuid not null references public.rr_viagens(id) on delete cascade,
+  descricao text not null,
+  foto_url text,
+  criado_via text not null default 'sistema' check (criado_via in ('sistema','link_publico')),
+  criado_em timestamptz not null default now()
+);
+comment on table public.rr_viagem_ocorrencias is 'RR Bares: ocorrências da viagem (problema com veículo etc.) com foto opcional.';
+create index rr_viagem_ocorrencias_viagem_idx on public.rr_viagem_ocorrencias (viagem_id);
+
 -- RLS: acesso total para usuários autenticados (v1)
 alter table public.rr_funcionarios enable row level security;
 alter table public.rr_veiculos enable row level security;
 alter table public.rr_eventos enable row level security;
 alter table public.rr_viagens enable row level security;
 alter table public.rr_viagem_lancamentos enable row level security;
+alter table public.rr_viagem_ocorrencias enable row level security;
 
 create policy "rr auth select" on public.rr_funcionarios for select to authenticated using (true);
 create policy "rr auth write" on public.rr_funcionarios for all to authenticated using (true) with check (true);
@@ -89,6 +103,8 @@ create policy "rr auth select" on public.rr_viagens for select to authenticated 
 create policy "rr auth write" on public.rr_viagens for all to authenticated using (true) with check (true);
 create policy "rr auth select" on public.rr_viagem_lancamentos for select to authenticated using (true);
 create policy "rr auth write" on public.rr_viagem_lancamentos for all to authenticated using (true) with check (true);
+create policy "rr auth select" on public.rr_viagem_ocorrencias for select to authenticated using (true);
+create policy "rr auth write" on public.rr_viagem_ocorrencias for all to authenticated using (true) with check (true);
 
 -- bucket de comprovantes (leitura pública, upload autenticado)
 insert into storage.buckets (id, name, public)

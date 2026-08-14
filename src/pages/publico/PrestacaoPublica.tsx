@@ -1,12 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import {
+  AlertTriangle,
   ArrowDownCircle,
   ArrowUpCircle,
   Camera,
   CheckCircle2,
   Loader2,
+  Pencil,
   Sparkles,
+  Trash2,
   Undo2,
 } from 'lucide-react';
 import Logo from '../../components/Logo';
@@ -14,6 +17,23 @@ import { CATEGORIAS_DESPESA, LancamentoTipo } from '../../types';
 import { formatarData, formatarMoeda, hojeISO } from '../../utils/format';
 
 const FUNCAO_URL = 'https://uazjtiafdcrhhadaucbd.supabase.co/functions/v1/prestacao-publica';
+
+interface LancamentoInfo {
+  id: string;
+  tipo: LancamentoTipo;
+  categoria: string | null;
+  descricao: string | null;
+  valor: number;
+  data_lancamento: string;
+  comprovante_url: string | null;
+}
+
+interface OcorrenciaInfo {
+  id: string;
+  descricao: string;
+  foto_url: string | null;
+  criado_em: string;
+}
 
 interface InfoViagem {
   viagem: {
@@ -25,15 +45,8 @@ interface InfoViagem {
     funcionario: { nome: string; apelido: string | null } | null;
     evento: { nome: string; cidade: string | null } | null;
   };
-  lancamentos: {
-    id: string;
-    tipo: LancamentoTipo;
-    categoria: string | null;
-    descricao: string | null;
-    valor: number;
-    data_lancamento: string;
-    comprovante_url: string | null;
-  }[];
+  lancamentos: LancamentoInfo[];
+  ocorrencias: OcorrenciaInfo[];
   ia_disponivel: boolean;
 }
 
@@ -71,7 +84,7 @@ function arquivoParaBase64(arquivo: File): Promise<{ base64: string; mediaType: 
   });
 }
 
-type Etapa = 'inicio' | 'analisando' | 'conferir' | 'enviando' | 'sucesso';
+type Etapa = 'inicio' | 'analisando' | 'conferir' | 'ocorrencia' | 'enviando' | 'sucesso';
 
 export default function PrestacaoPublica() {
   const { token } = useParams();
@@ -86,6 +99,8 @@ export default function PrestacaoPublica() {
   const [mensagemIA, setMensagemIA] = useState<string | null>(null);
   const [perguntas, setPerguntas] = useState<string[]>([]);
   const [erro, setErro] = useState<string | null>(null);
+  const [editandoId, setEditandoId] = useState<string | null>(null);
+  const [mensagemSucesso, setMensagemSucesso] = useState('Lançamento salvo!');
 
   // campos confirmáveis
   const [fValor, setFValor] = useState('');
@@ -93,7 +108,12 @@ export default function PrestacaoPublica() {
   const [fData, setFData] = useState(hojeISO());
   const [fDescricao, setFDescricao] = useState('');
 
+  // fluxo de ocorrência (problema com carro, etc.)
+  const [ocorDescricao, setOcorDescricao] = useState('');
+  const [ocorFoto, setOcorFoto] = useState<{ base64: string; mediaType: string; previewUrl: string } | null>(null);
+
   const inputFotoRef = useRef<HTMLInputElement>(null);
+  const inputFotoOcorrenciaRef = useRef<HTMLInputElement>(null);
 
   async function carregar() {
     if (!token) return;
@@ -122,17 +142,51 @@ export default function PrestacaoPublica() {
 
   const aberta = info?.viagem.status === 'em_viagem' || info?.viagem.status === 'prestacao_pendente';
 
-  function iniciarFluxo(novoTipo: LancamentoTipo) {
-    setTipo(novoTipo);
+  function limparFormulario() {
     setErro(null);
     setMensagemIA(null);
     setPerguntas([]);
     setFoto(null);
     setFValor('');
-    setFCategoria(novoTipo === 'despesa' ? CATEGORIAS_DESPESA[0] : 'Outros');
     setFData(hojeISO());
+    setEditandoId(null);
+  }
+
+  function iniciarFluxo(novoTipo: LancamentoTipo) {
+    limparFormulario();
+    setTipo(novoTipo);
+    setFCategoria(novoTipo === 'despesa' ? CATEGORIAS_DESPESA[0] : 'Outros');
     setFDescricao(novoTipo === 'aporte' ? 'Dinheiro extra recebido' : novoTipo === 'devolucao' ? 'Devolução à empresa' : '');
     inputFotoRef.current?.click();
+  }
+
+  function lancarSemFoto() {
+    limparFormulario();
+    setTipo('despesa');
+    setFDescricao('');
+    setEtapa('conferir');
+  }
+
+  function iniciarEdicao(l: LancamentoInfo) {
+    limparFormulario();
+    setEditandoId(l.id);
+    setTipo(l.tipo);
+    setFValor(String(l.valor).replace('.', ','));
+    setFCategoria(l.categoria ?? CATEGORIAS_DESPESA[0]);
+    setFData(l.data_lancamento.slice(0, 10));
+    setFDescricao(l.descricao ?? '');
+    setEtapa('conferir');
+  }
+
+  async function excluirLancamento(id: string) {
+    if (!token) return;
+    if (!window.confirm('Excluir este lançamento? Não dá pra desfazer.')) return;
+    try {
+      await chamar('excluir_lancamento', token, { id });
+      await carregar();
+    } catch (e) {
+      alert(e instanceof Error ? e.message : 'Erro ao excluir');
+    }
   }
 
   async function aoEscolherFoto(arquivo: File | null) {
@@ -146,7 +200,7 @@ export default function PrestacaoPublica() {
     const previewUrl = URL.createObjectURL(arquivo);
     setFoto({ base64, mediaType, previewUrl });
 
-    if (tipo !== 'despesa' || !info?.ia_disponivel) {
+    if (tipo !== 'despesa' || !info?.ia_disponivel || editandoId) {
       setEtapa('conferir');
       return;
     }
@@ -187,21 +241,73 @@ export default function PrestacaoPublica() {
     setEtapa('enviando');
     setErro(null);
     try {
-      await chamar('lancar', token, {
-        tipo,
-        valor,
-        categoria: fCategoria,
-        data_lancamento: fData,
-        descricao: fDescricao.trim(),
-        imagem_base64: foto?.base64 ?? '',
-        media_type: foto?.mediaType ?? '',
-      });
+      if (editandoId) {
+        await chamar('editar_lancamento', token, {
+          id: editandoId,
+          valor,
+          categoria: fCategoria,
+          data_lancamento: fData,
+          descricao: fDescricao.trim(),
+          imagem_base64: foto?.base64 ?? '',
+          media_type: foto?.mediaType ?? '',
+        });
+        setMensagemSucesso('Lançamento atualizado!');
+      } else {
+        await chamar('lancar', token, {
+          tipo,
+          valor,
+          categoria: fCategoria,
+          data_lancamento: fData,
+          descricao: fDescricao.trim(),
+          imagem_base64: foto?.base64 ?? '',
+          media_type: foto?.mediaType ?? '',
+        });
+        setMensagemSucesso('Lançamento salvo!');
+      }
       setEtapa('sucesso');
       await carregar();
       setTimeout(() => setEtapa('inicio'), 2200);
     } catch (e) {
       setErro(e instanceof Error ? e.message : 'Erro ao salvar');
       setEtapa('conferir');
+    }
+  }
+
+  function iniciarOcorrencia() {
+    setOcorDescricao('');
+    setOcorFoto(null);
+    setErro(null);
+    setEtapa('ocorrencia');
+  }
+
+  async function aoEscolherFotoOcorrencia(arquivo: File | null) {
+    if (!arquivo) return;
+    const { base64, mediaType } = await arquivoParaBase64(arquivo);
+    const previewUrl = URL.createObjectURL(arquivo);
+    setOcorFoto({ base64, mediaType, previewUrl });
+  }
+
+  async function enviarOcorrencia() {
+    if (!token) return;
+    if (!ocorDescricao.trim()) {
+      setErro('Descreva o que aconteceu.');
+      return;
+    }
+    setErro(null);
+    setEtapa('enviando');
+    try {
+      await chamar('ocorrencia', token, {
+        descricao: ocorDescricao.trim(),
+        imagem_base64: ocorFoto?.base64 ?? '',
+        media_type: ocorFoto?.mediaType ?? '',
+      });
+      setMensagemSucesso('Ocorrência registrada!');
+      setEtapa('sucesso');
+      await carregar();
+      setTimeout(() => setEtapa('inicio'), 2200);
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : 'Erro ao enviar');
+      setEtapa('ocorrencia');
     }
   }
 
@@ -266,6 +372,17 @@ export default function PrestacaoPublica() {
             e.target.value = '';
           }}
         />
+        <input
+          ref={inputFotoOcorrenciaRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          className="hidden"
+          onChange={(e) => {
+            aoEscolherFotoOcorrencia(e.target.files?.[0] ?? null);
+            e.target.value = '';
+          }}
+        />
 
         {!aberta && (
           <div className="mt-6 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300">
@@ -295,6 +412,9 @@ export default function PrestacaoPublica() {
                 </div>
               </div>
             </button>
+            <button onClick={lancarSemFoto} className="w-full text-center text-xs text-zinc-500 underline underline-offset-2">
+              Sem comprovante ou a IA não está funcionando? Lançar digitando manualmente
+            </button>
 
             <div className="grid grid-cols-2 gap-3">
               <button
@@ -314,6 +434,17 @@ export default function PrestacaoPublica() {
                 <div className="mt-0.5 text-[0.7rem] text-zinc-500">Com foto do comprovante</div>
               </button>
             </div>
+
+            <button
+              onClick={iniciarOcorrencia}
+              className="flex w-full items-center gap-3 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 text-left transition active:scale-[0.98]"
+            >
+              <AlertTriangle className="h-6 w-6 shrink-0 text-amber-300" />
+              <div>
+                <div className="text-sm font-semibold text-white">Registrar ocorrência</div>
+                <div className="mt-0.5 text-[0.7rem] text-zinc-500">Problema com o carro ou algo fora do combinado — com foto</div>
+              </div>
+            </button>
           </div>
         )}
 
@@ -328,6 +459,12 @@ export default function PrestacaoPublica() {
 
         {etapa === 'conferir' && (
           <div className="mt-6 space-y-4">
+            {editandoId && (
+              <div className="rounded-xl border border-sky-500/30 bg-sky-500/10 px-4 py-2.5 text-xs text-sky-300">
+                Editando lançamento existente
+              </div>
+            )}
+
             {foto && (
               <img src={foto.previewUrl} alt="Comprovante" className="mx-auto max-h-44 rounded-xl border border-night-700" />
             )}
@@ -399,7 +536,7 @@ export default function PrestacaoPublica() {
 
               {!foto && (
                 <button type="button" onClick={() => inputFotoRef.current?.click()} className="btn-ghost w-full">
-                  <Camera className="h-4 w-4" /> Adicionar foto do comprovante
+                  <Camera className="h-4 w-4" /> {editandoId ? 'Trocar foto do comprovante' : 'Adicionar foto do comprovante'}
                 </button>
               )}
 
@@ -419,6 +556,49 @@ export default function PrestacaoPublica() {
           </div>
         )}
 
+        {etapa === 'ocorrencia' && (
+          <div className="mt-6 space-y-4">
+            <div className="card space-y-4 p-5">
+              <div>
+                <label className="label">O que aconteceu?</label>
+                <textarea
+                  className="input"
+                  rows={3}
+                  placeholder="Ex.: pneu furou na BR-163, troquei no borracheiro..."
+                  value={ocorDescricao}
+                  onChange={(e) => setOcorDescricao(e.target.value)}
+                  autoFocus
+                />
+              </div>
+
+              {ocorFoto ? (
+                <img src={ocorFoto.previewUrl} alt="Ocorrência" className="mx-auto max-h-44 rounded-xl border border-night-700" />
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => inputFotoOcorrenciaRef.current?.click()}
+                  className="btn-ghost w-full"
+                >
+                  <Camera className="h-4 w-4" /> Adicionar foto (opcional)
+                </button>
+              )}
+
+              {erro && (
+                <div className="rounded-lg border border-red-900/60 bg-red-950/40 px-3 py-2.5 text-sm text-red-300">{erro}</div>
+              )}
+
+              <div className="flex gap-3">
+                <button type="button" onClick={() => setEtapa('inicio')} className="btn-ghost flex-1">
+                  Cancelar
+                </button>
+                <button type="button" onClick={enviarOcorrencia} className="btn-gold flex-1">
+                  <CheckCircle2 className="h-4 w-4" /> Enviar
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {etapa === 'enviando' && (
           <div className="mt-10 text-center">
             <Loader2 className="mx-auto h-8 w-8 animate-spin text-gold-400" />
@@ -429,7 +609,7 @@ export default function PrestacaoPublica() {
         {etapa === 'sucesso' && (
           <div className="mt-10 text-center animate-fadeUp">
             <CheckCircle2 className="mx-auto h-12 w-12 text-emerald-400" />
-            <p className="mt-3 text-base font-semibold text-white">Lançamento salvo!</p>
+            <p className="mt-3 text-base font-semibold text-white">{mensagemSucesso}</p>
           </div>
         )}
 
@@ -460,6 +640,44 @@ export default function PrestacaoPublica() {
                     }`}
                   >
                     {l.tipo === 'aporte' ? '+' : '−'} {formatarMoeda(l.valor)}
+                  </div>
+                  {aberta && (
+                    <div className="flex shrink-0 items-center gap-1">
+                      <button
+                        onClick={() => iniciarEdicao(l)}
+                        className="rounded-lg p-1.5 text-zinc-600 transition hover:bg-night-800 hover:text-gold-300"
+                        title="Editar"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        onClick={() => excluirLancamento(l.id)}
+                        className="rounded-lg p-1.5 text-zinc-600 transition hover:bg-red-950/40 hover:text-red-300"
+                        title="Excluir"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ocorrências */}
+        {info.ocorrencias.length > 0 && etapa === 'inicio' && (
+          <div className="mt-8">
+            <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-zinc-500">Ocorrências registradas</h2>
+            <div className="space-y-2">
+              {info.ocorrencias.map((o) => (
+                <div key={o.id} className="card flex items-start gap-3 p-3">
+                  {o.foto_url && (
+                    <img src={o.foto_url} alt="Ocorrência" className="h-14 w-14 shrink-0 rounded-lg object-cover" />
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm text-zinc-200">{o.descricao}</p>
+                    <div className="mt-0.5 text-[0.7rem] text-zinc-500">{formatarData(o.criado_em)}</div>
                   </div>
                 </div>
               ))}

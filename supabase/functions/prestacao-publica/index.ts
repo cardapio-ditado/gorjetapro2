@@ -1,6 +1,6 @@
 // Edge function do link público de prestação de contas do colaborador.
 // Autenticação por token da viagem (rr_viagens.token_publico) — sem login.
-// Ações: info | analisar (IA lê a foto do comprovante) | lancar
+// Ações: info | analisar | lancar | editar_lancamento | excluir_lancamento | ocorrencia
 // IA: usa a primeira chave configurada nos secrets, nesta ordem:
 //   GEMINI_API_KEY (tier grátis) → GROQ_API_KEY (tier grátis) → ANTHROPIC_API_KEY
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
@@ -207,6 +207,17 @@ async function analisarComprovante(imagem: string, mediaType: string) {
   return { ia_disponivel: true, erro: "Não consegui ler a foto agora — preencha os dados abaixo." };
 }
 
+async function salvarFoto(viagemId: string, imagemBase64: string, mediaType: string): Promise<string> {
+  const ext = mediaType.split("/")[1]?.replace("jpeg", "jpg") ?? "jpg";
+  const caminho = `${viagemId}/${Date.now()}.${ext}`;
+  const bytes = Uint8Array.from(atob(imagemBase64), (c) => c.charCodeAt(0));
+  const { error: upErr } = await supabase.storage
+    .from(BUCKET)
+    .upload(caminho, bytes, { contentType: mediaType });
+  if (upErr) throw new Error(`Falha ao salvar foto: ${upErr.message}`);
+  return supabase.storage.from(BUCKET).getPublicUrl(caminho).data.publicUrl;
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: CORS });
   if (req.method !== "POST") return json({ erro: "Método não suportado" }, 405);
@@ -231,7 +242,17 @@ Deno.serve(async (req: Request) => {
         .select("id, tipo, categoria, descricao, valor, data_lancamento, comprovante_url, criado_em")
         .eq("viagem_id", viagem.id)
         .order("criado_em", { ascending: false });
-      return json({ viagem, lancamentos: lancamentos ?? [], ia_disponivel: iaDisponivel() });
+      const { data: ocorrencias } = await supabase
+        .from("rr_viagem_ocorrencias")
+        .select("id, descricao, foto_url, criado_em")
+        .eq("viagem_id", viagem.id)
+        .order("criado_em", { ascending: false });
+      return json({
+        viagem,
+        lancamentos: lancamentos ?? [],
+        ocorrencias: ocorrencias ?? [],
+        ia_disponivel: iaDisponivel(),
+      });
     }
 
     if (acao === "analisar") {
@@ -254,14 +275,7 @@ Deno.serve(async (req: Request) => {
       const imagem = String(body.imagem_base64 ?? "");
       if (imagem) {
         const mediaType = String(body.media_type ?? "image/jpeg");
-        const ext = mediaType.split("/")[1]?.replace("jpeg", "jpg") ?? "jpg";
-        const caminho = `${viagem.id}/${Date.now()}.${ext}`;
-        const bytes = Uint8Array.from(atob(imagem), (c) => c.charCodeAt(0));
-        const { error: upErr } = await supabase.storage
-          .from(BUCKET)
-          .upload(caminho, bytes, { contentType: mediaType });
-        if (upErr) return json({ erro: `Falha ao salvar comprovante: ${upErr.message}` }, 500);
-        comprovanteUrl = supabase.storage.from(BUCKET).getPublicUrl(caminho).data.publicUrl;
+        comprovanteUrl = await salvarFoto(viagem.id, imagem, mediaType);
       }
 
       const { data: lanc, error } = await supabase
@@ -280,6 +294,73 @@ Deno.serve(async (req: Request) => {
         .single();
       if (error) return json({ erro: error.message }, 500);
       return json({ ok: true, lancamento: lanc });
+    }
+
+    if (acao === "editar_lancamento") {
+      if (viagem.status !== "em_viagem" && viagem.status !== "prestacao_pendente") {
+        return json({ erro: "Esta prestação de contas já foi fechada." }, 409);
+      }
+      const id = String(body.id ?? "");
+      const valor = Number(body.valor);
+      if (!id) return json({ erro: "Lançamento não informado" }, 400);
+      if (!isFinite(valor) || valor <= 0) return json({ erro: "Valor inválido" }, 400);
+
+      const atualizacao: Record<string, unknown> = {
+        categoria: body.categoria ? String(body.categoria) : null,
+        descricao: String(body.descricao ?? "").trim() || null,
+        valor,
+        data_lancamento: String(body.data_lancamento ?? "") || new Date().toISOString().slice(0, 10),
+      };
+      const imagem = String(body.imagem_base64 ?? "");
+      if (imagem) {
+        const mediaType = String(body.media_type ?? "image/jpeg");
+        atualizacao.comprovante_url = await salvarFoto(viagem.id, imagem, mediaType);
+      }
+
+      const { data: lanc, error } = await supabase
+        .from("rr_viagem_lancamentos")
+        .update(atualizacao)
+        .eq("id", id)
+        .eq("viagem_id", viagem.id)
+        .select()
+        .single();
+      if (error) return json({ erro: error.message }, 500);
+      return json({ ok: true, lancamento: lanc });
+    }
+
+    if (acao === "excluir_lancamento") {
+      if (viagem.status !== "em_viagem" && viagem.status !== "prestacao_pendente") {
+        return json({ erro: "Esta prestação de contas já foi fechada." }, 409);
+      }
+      const id = String(body.id ?? "");
+      if (!id) return json({ erro: "Lançamento não informado" }, 400);
+      const { error } = await supabase
+        .from("rr_viagem_lancamentos")
+        .delete()
+        .eq("id", id)
+        .eq("viagem_id", viagem.id);
+      if (error) return json({ erro: error.message }, 500);
+      return json({ ok: true });
+    }
+
+    if (acao === "ocorrencia") {
+      const descricao = String(body.descricao ?? "").trim();
+      if (!descricao) return json({ erro: "Descreva a ocorrência." }, 400);
+
+      let fotoUrl: string | null = null;
+      const imagem = String(body.imagem_base64 ?? "");
+      if (imagem) {
+        const mediaType = String(body.media_type ?? "image/jpeg");
+        fotoUrl = await salvarFoto(viagem.id, imagem, mediaType);
+      }
+
+      const { data: ocorrencia, error } = await supabase
+        .from("rr_viagem_ocorrencias")
+        .insert({ viagem_id: viagem.id, descricao, foto_url: fotoUrl, criado_via: "link_publico" })
+        .select()
+        .single();
+      if (error) return json({ erro: error.message }, 500);
+      return json({ ok: true, ocorrencia });
     }
 
     return json({ erro: "Ação desconhecida" }, 400);

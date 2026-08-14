@@ -1,6 +1,6 @@
 import { FormEvent, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { CalendarDays, CarFront, ChevronRight, Plus, User, Wallet } from 'lucide-react';
+import { Archive, CalendarDays, CarFront, ChevronRight, Plus, User, Wallet } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { Evento, Funcionario, Veiculo, Viagem, ViagemStatus, STATUS_VIAGEM_LABEL } from '../../types';
 import { formatarData, formatarMoeda, hojeISO } from '../../utils/format';
@@ -17,7 +17,7 @@ export default function ViagensList() {
   const [viagens, setViagens] = useState<Viagem[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
-  const [filtro, setFiltro] = useState<'abertas' | 'todas'>('abertas');
+  const [filtro, setFiltro] = useState<'abertas' | 'todas' | 'arquivadas'>('abertas');
   const [modalNova, setModalNova] = useState(false);
 
   // apoio para o formulário
@@ -43,7 +43,12 @@ export default function ViagensList() {
       .from('rr_viagens')
       .select('*, funcionario:rr_funcionarios(*), veiculo:rr_veiculos(*), evento:rr_eventos(*)')
       .order('criado_em', { ascending: false });
-    if (filtro === 'abertas') query = query.in('status', ['em_viagem', 'prestacao_pendente']);
+    if (filtro === 'arquivadas') {
+      query = query.eq('arquivada', true);
+    } else {
+      query = query.eq('arquivada', false);
+      if (filtro === 'abertas') query = query.in('status', ['em_viagem', 'prestacao_pendente']);
+    }
     const { data, error } = await query;
     if (error) setErro(error.message);
     setViagens((data as Viagem[]) ?? []);
@@ -105,7 +110,7 @@ export default function ViagensList() {
     <div>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div className="flex gap-2">
-          {(['abertas', 'todas'] as const).map((f) => (
+          {(['abertas', 'todas', 'arquivadas'] as const).map((f) => (
             <button
               key={f}
               onClick={() => setFiltro(f)}
@@ -113,7 +118,7 @@ export default function ViagensList() {
                 filtro === f ? 'bg-gold-500/15 text-gold-300 border border-gold-500/40' : 'text-zinc-400 border border-night-700 hover:text-white'
               }`}
             >
-              {f === 'abertas' ? 'Em aberto' : 'Todas'}
+              {f === 'abertas' ? 'Em aberto' : f === 'todas' ? 'Todas' : 'Arquivadas'}
             </button>
           ))}
         </div>
@@ -168,6 +173,12 @@ export default function ViagensList() {
                 <Wallet className="h-4 w-4 text-gold-500" />
                 {formatarMoeda(v.valor_alocado)}
               </div>
+
+              {v.arquivada && (
+                <span className="inline-flex items-center gap-1 rounded-full border border-zinc-600/50 bg-zinc-500/10 px-2.5 py-1 text-xs font-medium text-zinc-400">
+                  <Archive className="h-3 w-3" /> Arquivada
+                </span>
+              )}
 
               <span className={`rounded-full border px-2.5 py-1 text-xs font-medium ${CORES_STATUS[v.status]}`}>
                 {STATUS_VIAGEM_LABEL[v.status]}

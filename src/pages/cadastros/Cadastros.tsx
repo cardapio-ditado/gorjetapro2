@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useState } from 'react';
-import { CarFront, Pencil, Plus, Users } from 'lucide-react';
+import { CarFront, Pencil, Plus, Trash2, Users } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { Funcionario, Veiculo } from '../../types';
 import Modal from '../../components/Modal';
@@ -116,6 +116,32 @@ export default function Cadastros() {
     await carregar();
   }
 
+  async function excluirFunc(f: Funcionario) {
+    if (!window.confirm(`Excluir "${f.nome}"? Não dá pra desfazer.`)) return;
+    const { error } = await supabase.from('rr_funcionarios').delete().eq('id', f.id);
+    if (error) {
+      return alert(
+        error.message.includes('foreign key')
+          ? 'Não dá pra excluir: há viagens vinculadas a este funcionário. Marque como inativo em vez de excluir.'
+          : error.message,
+      );
+    }
+    await carregar();
+  }
+
+  async function excluirVei(v: Veiculo) {
+    if (!window.confirm(`Excluir "${v.nome}"? Não dá pra desfazer.`)) return;
+    const { error } = await supabase.from('rr_veiculos').delete().eq('id', v.id);
+    if (error) {
+      return alert(
+        error.message.includes('foreign key')
+          ? 'Não dá pra excluir: há viagens vinculadas a este veículo. Marque como inativo em vez de excluir.'
+          : error.message,
+      );
+    }
+    await carregar();
+  }
+
   return (
     <div>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
@@ -180,6 +206,9 @@ export default function Cadastros() {
                 <button onClick={() => abrirFunc(f)} className="rounded-lg p-2 text-zinc-500 transition hover:bg-night-800 hover:text-gold-300">
                   <Pencil className="h-4 w-4" />
                 </button>
+                <button onClick={() => excluirFunc(f)} className="rounded-lg p-2 text-zinc-500 transition hover:bg-red-950/40 hover:text-red-300">
+                  <Trash2 className="h-4 w-4" />
+                </button>
               </div>
             ))}
           </div>
@@ -196,6 +225,9 @@ export default function Cadastros() {
               </div>
               <button onClick={() => abrirVei(v)} className="rounded-lg p-2 text-zinc-500 transition hover:bg-night-800 hover:text-gold-300">
                 <Pencil className="h-4 w-4" />
+              </button>
+              <button onClick={() => excluirVei(v)} className="rounded-lg p-2 text-zinc-500 transition hover:bg-red-950/40 hover:text-red-300">
+                <Trash2 className="h-4 w-4" />
               </button>
             </div>
           ))}

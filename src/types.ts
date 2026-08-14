@@ -41,6 +41,7 @@ export interface Viagem {
   valor_alocado: number;
   status: ViagemStatus;
   obs: string | null;
+  arquivada: boolean;
   criado_em: string;
   token_publico?: string;
   funcionario?: Funcionario;
@@ -59,6 +60,14 @@ export interface ViagemLancamento {
   valor: number;
   data_lancamento: string;
   comprovante_url: string | null;
+  criado_em: string;
+}
+
+export interface ViagemOcorrencia {
+  id: string;
+  viagem_id: string;
+  descricao: string;
+  foto_url: string | null;
   criado_em: string;
 }
 

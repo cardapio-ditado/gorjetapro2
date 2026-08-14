@@ -1,6 +1,8 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
+  Archive,
+  ArchiveRestore,
   ArrowDownCircle,
   ArrowUpCircle,
   Camera,
@@ -9,6 +11,7 @@ import {
   Link2,
   MessageCircle,
   Paperclip,
+  Pencil,
   Plus,
   Printer,
   RotateCcw,
@@ -18,23 +21,41 @@ import {
 import { supabase, BUCKET_COMPROVANTES } from '../../lib/supabase';
 import {
   CATEGORIAS_DESPESA,
+  Evento,
   LancamentoTipo,
   STATUS_VIAGEM_LABEL,
+  Veiculo,
   Viagem,
   ViagemLancamento,
+  ViagemOcorrencia,
 } from '../../types';
 import { formatarData, formatarMoeda, hojeISO } from '../../utils/format';
 import Modal from '../../components/Modal';
 
 export default function ViagemDetalhe() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [viagem, setViagem] = useState<Viagem | null>(null);
   const [lancamentos, setLancamentos] = useState<ViagemLancamento[]>([]);
+  const [ocorrencias, setOcorrencias] = useState<ViagemOcorrencia[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
   const [modalLanc, setModalLanc] = useState(false);
   const [fotoAmpliada, setFotoAmpliada] = useState<string | null>(null);
   const [linkCopiado, setLinkCopiado] = useState(false);
+
+  // edição da viagem
+  const [modalEditar, setModalEditar] = useState(false);
+  const [veiculos, setVeiculos] = useState<Veiculo[]>([]);
+  const [eventos, setEventos] = useState<Evento[]>([]);
+  const [eVeiculo, setEVeiculo] = useState('');
+  const [eEvento, setEEvento] = useState('');
+  const [ePartida, setEPartida] = useState('');
+  const [eRetorno, setERetorno] = useState('');
+  const [eValor, setEValor] = useState('');
+  const [eObs, setEObs] = useState('');
+  const [salvandoEdicao, setSalvandoEdicao] = useState(false);
+  const [erroEdicao, setErroEdicao] = useState<string | null>(null);
 
   // formulário de lançamento
   const [lTipo, setLTipo] = useState<LancamentoTipo>('despesa');
@@ -48,7 +69,7 @@ export default function ViagemDetalhe() {
 
   async function carregar() {
     setCarregando(true);
-    const [{ data: v, error: e1 }, { data: l, error: e2 }] = await Promise.all([
+    const [{ data: v, error: e1 }, { data: l, error: e2 }, { data: o }] = await Promise.all([
       supabase
         .from('rr_viagens')
         .select('*, token_publico, funcionario:rr_funcionarios(*), veiculo:rr_veiculos(*), evento:rr_eventos(*)')
@@ -60,16 +81,82 @@ export default function ViagemDetalhe() {
         .eq('viagem_id', id)
         .order('data_lancamento', { ascending: true })
         .order('criado_em', { ascending: true }),
+      supabase
+        .from('rr_viagem_ocorrencias')
+        .select('*')
+        .eq('viagem_id', id)
+        .order('criado_em', { ascending: false }),
     ]);
     if (e1 || e2) setErro(e1?.message ?? e2?.message ?? 'Erro ao carregar');
     setViagem(v as Viagem | null);
     setLancamentos((l as ViagemLancamento[]) ?? []);
+    setOcorrencias((o as ViagemOcorrencia[]) ?? []);
     setCarregando(false);
   }
 
   useEffect(() => {
     carregar();
   }, [id]);
+
+  useEffect(() => {
+    (async () => {
+      const [v, e] = await Promise.all([
+        supabase.from('rr_veiculos').select('*').eq('ativo', true).order('nome'),
+        supabase.from('rr_eventos').select('*').in('status', ['planejado', 'em_andamento']).order('data_inicio'),
+      ]);
+      setVeiculos((v.data as Veiculo[]) ?? []);
+      setEventos((e.data as Evento[]) ?? []);
+    })();
+  }, []);
+
+  function abrirEdicao() {
+    if (!viagem) return;
+    setEVeiculo(viagem.veiculo_id ?? '');
+    setEEvento(viagem.evento_id ?? '');
+    setEPartida(viagem.data_partida);
+    setERetorno(viagem.data_retorno_prevista ?? '');
+    setEValor(String(viagem.valor_alocado).replace('.', ','));
+    setEObs(viagem.obs ?? '');
+    setErroEdicao(null);
+    setModalEditar(true);
+  }
+
+  async function salvarEdicao(e: FormEvent) {
+    e.preventDefault();
+    const valor = parseFloat(eValor.replace(/\./g, '').replace(',', '.'));
+    if (isNaN(valor) || valor < 0) return setErroEdicao('Informe um valor alocado válido.');
+    setSalvandoEdicao(true);
+    setErroEdicao(null);
+    const { error } = await supabase
+      .from('rr_viagens')
+      .update({
+        veiculo_id: eVeiculo || null,
+        evento_id: eEvento || null,
+        data_partida: ePartida,
+        data_retorno_prevista: eRetorno || null,
+        valor_alocado: valor,
+        obs: eObs.trim() || null,
+      })
+      .eq('id', id);
+    setSalvandoEdicao(false);
+    if (error) return setErroEdicao(error.message);
+    setModalEditar(false);
+    await carregar();
+  }
+
+  async function excluirViagem() {
+    if (!window.confirm('Excluir esta viagem e toda a prestação de contas? Não dá pra desfazer.')) return;
+    const { error } = await supabase.from('rr_viagens').delete().eq('id', id);
+    if (error) return alert(error.message);
+    navigate('/viagens');
+  }
+
+  async function alternarArquivada() {
+    if (!viagem) return;
+    const { error } = await supabase.from('rr_viagens').update({ arquivada: !viagem.arquivada }).eq('id', id);
+    if (error) return alert(error.message);
+    await carregar();
+  }
 
   const resumo = useMemo(() => {
     const soma = (tipo: LancamentoTipo) =>
@@ -207,6 +294,15 @@ export default function ViagemDetalhe() {
           <button onClick={() => window.print()} className="btn-ghost">
             <Printer className="h-4 w-4" /> Relatório
           </button>
+          <button onClick={abrirEdicao} className="btn-ghost" title="Editar viagem">
+            <Pencil className="h-4 w-4" /> Editar
+          </button>
+          <button onClick={alternarArquivada} className="btn-ghost !px-3" title={viagem.arquivada ? 'Desarquivar' : 'Arquivar'}>
+            {viagem.arquivada ? <ArchiveRestore className="h-4 w-4 text-sky-400" /> : <Archive className="h-4 w-4" />}
+          </button>
+          <button onClick={excluirViagem} className="btn-ghost !px-3" title="Excluir viagem">
+            <Trash2 className="h-4 w-4 text-red-400" />
+          </button>
           {viagem.status === 'em_viagem' && (
             <button
               onClick={() => mudarStatus('prestacao_pendente', { data_retorno_real: hojeISO() })}
@@ -248,9 +344,16 @@ export default function ViagemDetalhe() {
               {viagem.evento?.cidade ? ` · ${viagem.evento.cidade}` : ''}
             </p>
           </div>
-          <span className="rounded-full border border-gold-500/40 bg-gold-500/10 px-3 py-1 text-xs font-medium text-gold-300 print:text-black">
-            {STATUS_VIAGEM_LABEL[viagem.status]}
-          </span>
+          <div className="flex items-center gap-2">
+            {viagem.arquivada && (
+              <span className="rounded-full border border-zinc-600/50 bg-zinc-500/10 px-3 py-1 text-xs font-medium text-zinc-400 print:text-black">
+                Arquivada
+              </span>
+            )}
+            <span className="rounded-full border border-gold-500/40 bg-gold-500/10 px-3 py-1 text-xs font-medium text-gold-300 print:text-black">
+              {STATUS_VIAGEM_LABEL[viagem.status]}
+            </span>
+          </div>
         </div>
         <div className="mt-4 grid grid-cols-2 gap-4 text-sm sm:grid-cols-4">
           <div>
@@ -398,6 +501,102 @@ export default function ViagemDetalhe() {
           </div>
         )}
       </div>
+
+      {/* ocorrências */}
+      {ocorrencias.length > 0 && (
+        <div className="card mt-4 overflow-hidden print:border print:border-zinc-300 print:bg-white print:shadow-none">
+          <div className="border-b border-night-700 px-5 py-4">
+            <h3 className="text-sm font-semibold text-white print:text-black">
+              Ocorrências <span className="text-zinc-500">({ocorrencias.length})</span>
+            </h3>
+          </div>
+          <div className="divide-y divide-night-800">
+            {ocorrencias.map((o) => (
+              <div key={o.id} className="flex items-start gap-4 px-5 py-3.5">
+                {o.foto_url && (
+                  <button
+                    onClick={() => setFotoAmpliada(o.foto_url)}
+                    className="h-14 w-14 shrink-0 overflow-hidden rounded-lg border border-night-700 print:hidden"
+                    title="Ver foto"
+                  >
+                    <img src={o.foto_url} alt="Ocorrência" className="h-full w-full object-cover" />
+                  </button>
+                )}
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm text-zinc-200 print:text-black">{o.descricao}</p>
+                  <div className="mt-0.5 text-xs text-zinc-500">{formatarData(o.criado_em)}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* modal editar viagem */}
+      <Modal aberto={modalEditar} titulo="Editar viagem" onFechar={() => setModalEditar(false)}>
+        <form onSubmit={salvarEdicao} className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="label">Veículo</label>
+              <select className="input" value={eVeiculo} onChange={(e) => setEVeiculo(e.target.value)}>
+                <option value="">Sem veículo</option>
+                {veiculos.map((v) => (
+                  <option key={v.id} value={v.id}>
+                    {v.nome} {v.placa ? `· ${v.placa}` : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="label">Evento</label>
+              <select className="input" value={eEvento} onChange={(e) => setEEvento(e.target.value)}>
+                <option value="">Sem evento</option>
+                {eventos.map((ev) => (
+                  <option key={ev.id} value={ev.id}>
+                    {ev.nome}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="label">Data da partida</label>
+              <input type="date" className="input" value={ePartida} onChange={(e) => setEPartida(e.target.value)} required />
+            </div>
+            <div>
+              <label className="label">Retorno previsto</label>
+              <input type="date" className="input" value={eRetorno} onChange={(e) => setERetorno(e.target.value)} />
+            </div>
+          </div>
+          <div>
+            <label className="label">Valor alocado para a viagem (R$)</label>
+            <input
+              type="text"
+              inputMode="decimal"
+              className="input"
+              value={eValor}
+              onChange={(e) => setEValor(e.target.value)}
+              required
+            />
+          </div>
+          <div>
+            <label className="label">Observações</label>
+            <textarea className="input" rows={2} value={eObs} onChange={(e) => setEObs(e.target.value)} />
+          </div>
+          {erroEdicao && (
+            <div className="rounded-lg border border-red-900/60 bg-red-950/40 px-3 py-2.5 text-sm text-red-300">{erroEdicao}</div>
+          )}
+          <div className="flex justify-end gap-3 pt-2">
+            <button type="button" onClick={() => setModalEditar(false)} className="btn-ghost">
+              Cancelar
+            </button>
+            <button type="submit" disabled={salvandoEdicao} className="btn-gold">
+              {salvandoEdicao ? 'Salvando…' : 'Salvar alterações'}
+            </button>
+          </div>
+        </form>
+      </Modal>
 
       {/* modal novo lançamento */}
       <Modal aberto={modalLanc} titulo="Novo lançamento" onFechar={() => setModalLanc(false)}>
