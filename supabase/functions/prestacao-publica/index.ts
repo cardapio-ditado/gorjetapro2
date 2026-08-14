@@ -1,9 +1,10 @@
 // Edge function do link público de prestação de contas do colaborador.
 // Autenticação por token da viagem (rr_viagens.token_publico) — sem login.
 // Ações: info | analisar (IA lê a foto do comprovante) | lancar
+// IA: usa a primeira chave configurada nos secrets, nesta ordem:
+//   GEMINI_API_KEY (tier grátis) → GROQ_API_KEY (tier grátis) → ANTHROPIC_API_KEY
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
-import Anthropic from "npm:@anthropic-ai/sdk";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -18,11 +19,37 @@ const supabase = createClient(
 
 const BUCKET = "rr-comprovantes";
 
+const CATEGORIAS = [
+  "Combustível",
+  "Alimentação",
+  "Hospedagem",
+  "Pedágio",
+  "Material / Compras",
+  "Manutenção veículo",
+  "Outros",
+];
+
+interface Analise {
+  valor: number | null;
+  data: string | null;
+  categoria: string;
+  estabelecimento: string | null;
+  descricao: string;
+  confianca: "alta" | "media" | "baixa";
+  perguntas: string[];
+}
+
 function json(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
     status,
     headers: { ...CORS, "Content-Type": "application/json" },
   });
+}
+
+function iaDisponivel(): boolean {
+  return Boolean(
+    Deno.env.get("GEMINI_API_KEY") || Deno.env.get("GROQ_API_KEY") || Deno.env.get("ANTHROPIC_API_KEY"),
+  );
 }
 
 async function buscarViagem(token: string) {
@@ -37,79 +64,147 @@ async function buscarViagem(token: string) {
   return data;
 }
 
-const SCHEMA_ANALISE = {
-  type: "object",
-  properties: {
-    valor: { type: ["number", "null"], description: "Valor total do comprovante em reais" },
-    data: { type: ["string", "null"], description: "Data do comprovante no formato YYYY-MM-DD" },
-    categoria: {
-      type: "string",
-      enum: [
-        "Combustível",
-        "Alimentação",
-        "Hospedagem",
-        "Pedágio",
-        "Material / Compras",
-        "Manutenção veículo",
-        "Outros",
+function promptAnalise(): string {
+  return (
+    "Você analisa fotos de comprovantes (notas fiscais, cupons, recibos, comprovantes PIX) para a prestação de contas de viagem de uma empresa de eventos de bar. " +
+    "Extraia os dados deste comprovante. A foto pode estar torta, amassada ou mal iluminada — faça o melhor possível. " +
+    "Se o valor ou a data estiverem ilegíveis, use null e adicione uma pergunta curta e simples em português para o colaborador responder (ex.: 'Qual foi o valor total?'). " +
+    `A categoria deve ser exatamente uma destas: ${CATEGORIAS.join(", ")}. Hoje é ${new Date().toISOString().slice(0, 10)}. ` +
+    'Responda SOMENTE com JSON neste formato: {"valor": number|null, "data": "YYYY-MM-DD"|null, "categoria": string, "estabelecimento": string|null, "descricao": string, "confianca": "alta"|"media"|"baixa", "perguntas": string[]}'
+  );
+}
+
+function extrairJson(texto: string): Analise {
+  const limpo = texto.replace(/```json|```/g, "").trim();
+  const inicio = limpo.indexOf("{");
+  const fim = limpo.lastIndexOf("}");
+  return JSON.parse(limpo.slice(inicio, fim + 1));
+}
+
+async function analisarComGemini(chave: string, imagem: string, mediaType: string): Promise<Analise> {
+  const resp = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${chave}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [
+          {
+            parts: [
+              { inline_data: { mime_type: mediaType, data: imagem } },
+              { text: promptAnalise() },
+            ],
+          },
+        ],
+        generationConfig: {
+          response_mime_type: "application/json",
+          response_schema: {
+            type: "object",
+            properties: {
+              valor: { type: "number", nullable: true },
+              data: { type: "string", nullable: true },
+              categoria: { type: "string", enum: CATEGORIAS },
+              estabelecimento: { type: "string", nullable: true },
+              descricao: { type: "string" },
+              confianca: { type: "string", enum: ["alta", "media", "baixa"] },
+              perguntas: { type: "array", items: { type: "string" } },
+            },
+            required: ["categoria", "descricao", "confianca", "perguntas"],
+          },
+        },
+      }),
+    },
+  );
+  if (!resp.ok) throw new Error(`Gemini ${resp.status}: ${(await resp.text()).slice(0, 200)}`);
+  const dados = await resp.json();
+  const texto = dados.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (!texto) throw new Error("Gemini sem resposta");
+  const analise = extrairJson(texto);
+  analise.valor ??= null;
+  analise.data ??= null;
+  analise.estabelecimento ??= null;
+  analise.perguntas ??= [];
+  return analise;
+}
+
+async function analisarComGroq(chave: string, imagem: string, mediaType: string): Promise<Analise> {
+  const resp = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${chave}` },
+    body: JSON.stringify({
+      model: "meta-llama/llama-4-scout-17b-16e-instruct",
+      max_tokens: 1024,
+      messages: [
+        {
+          role: "user",
+          content: [
+            { type: "image_url", image_url: { url: `data:${mediaType};base64,${imagem}` } },
+            { type: "text", text: promptAnalise() },
+          ],
+        },
       ],
-    },
-    estabelecimento: { type: ["string", "null"], description: "Nome do estabelecimento" },
-    descricao: { type: "string", description: "Descrição curta do gasto, ex.: 'abastecimento gasolina comum'" },
-    confianca: { type: "string", enum: ["alta", "media", "baixa"] },
-    perguntas: {
-      type: "array",
-      items: { type: "string" },
-      description: "Perguntas curtas e simples ao colaborador quando algo estiver ilegível ou faltando",
-    },
-  },
-  required: ["valor", "data", "categoria", "estabelecimento", "descricao", "confianca", "perguntas"],
-  additionalProperties: false,
-};
+    }),
+  });
+  if (!resp.ok) throw new Error(`Groq ${resp.status}: ${(await resp.text()).slice(0, 200)}`);
+  const dados = await resp.json();
+  const texto = dados.choices?.[0]?.message?.content;
+  if (!texto) throw new Error("Groq sem resposta");
+  const analise = extrairJson(texto);
+  analise.valor ??= null;
+  analise.data ??= null;
+  analise.estabelecimento ??= null;
+  analise.perguntas ??= [];
+  return analise;
+}
 
-async function analisarComprovante(imagemBase64: string, mediaType: string) {
-  const apiKey = Deno.env.get("ANTHROPIC_API_KEY");
-  if (!apiKey) return { ia_disponivel: false };
-
-  const anthropic = new Anthropic({ apiKey });
+async function analisarComAnthropic(chave: string, imagem: string, mediaType: string): Promise<Analise> {
+  const { default: Anthropic } = await import("npm:@anthropic-ai/sdk");
+  const anthropic = new Anthropic({ apiKey: chave });
   const resposta = await anthropic.beta.messages.create({
     model: "claude-opus-5",
     max_tokens: 8000,
     betas: ["server-side-fallback-2026-07-01"],
     fallbacks: "default",
-    output_config: {
-      effort: "low",
-      format: { type: "json_schema", schema: SCHEMA_ANALISE },
-    },
+    output_config: { effort: "low" },
     messages: [
       {
         role: "user",
         content: [
-          {
-            type: "image",
-            source: { type: "base64", media_type: mediaType, data: imagemBase64 },
-          },
-          {
-            type: "text",
-            text:
-              "Você analisa fotos de comprovantes (notas fiscais, cupons, recibos, comprovantes PIX) para a prestação de contas de viagem de uma empresa de eventos de bar. " +
-              "Extraia os dados deste comprovante. A foto pode estar torta, amassada ou mal iluminada — faça o melhor possível. " +
-              "Se o valor ou a data estiverem ilegíveis, use null e adicione uma pergunta curta e simples em português para o colaborador responder (ex.: 'Qual foi o valor total?'). " +
-              "Escolha a categoria que melhor descreve o gasto. Hoje é " + new Date().toISOString().slice(0, 10) + ".",
-          },
+          { type: "image", source: { type: "base64", media_type: mediaType, data: imagem } },
+          { type: "text", text: promptAnalise() },
         ],
       },
     ],
   });
-
-  if (resposta.stop_reason === "refusal") {
-    return { ia_disponivel: true, erro: "A análise foi recusada. Preencha os dados manualmente." };
-  }
+  if (resposta.stop_reason === "refusal") throw new Error("Análise recusada");
   const bloco = resposta.content.find((b: { type: string }) => b.type === "text") as
     | { type: "text"; text: string }
     | undefined;
-  if (!bloco) return { ia_disponivel: true, erro: "Sem resposta da análise." };
-  return { ia_disponivel: true, analise: JSON.parse(bloco.text) };
+  if (!bloco) throw new Error("Anthropic sem resposta");
+  return extrairJson(bloco.text);
+}
+
+async function analisarComprovante(imagem: string, mediaType: string) {
+  const gemini = Deno.env.get("GEMINI_API_KEY");
+  const groq = Deno.env.get("GROQ_API_KEY");
+  const anthropic = Deno.env.get("ANTHROPIC_API_KEY");
+  if (!gemini && !groq && !anthropic) return { ia_disponivel: false };
+
+  const tentativas: (() => Promise<Analise>)[] = [];
+  if (gemini) tentativas.push(() => analisarComGemini(gemini, imagem, mediaType));
+  if (groq) tentativas.push(() => analisarComGroq(groq, imagem, mediaType));
+  if (anthropic) tentativas.push(() => analisarComAnthropic(anthropic, imagem, mediaType));
+
+  let ultimoErro = "";
+  for (const tentar of tentativas) {
+    try {
+      return { ia_disponivel: true, analise: await tentar() };
+    } catch (e) {
+      ultimoErro = e instanceof Error ? e.message : "erro";
+    }
+  }
+  console.error("Falha na análise de comprovante:", ultimoErro);
+  return { ia_disponivel: true, erro: "Não consegui ler a foto agora — preencha os dados abaixo." };
 }
 
 Deno.serve(async (req: Request) => {
@@ -136,11 +231,7 @@ Deno.serve(async (req: Request) => {
         .select("id, tipo, categoria, descricao, valor, data_lancamento, comprovante_url, criado_em")
         .eq("viagem_id", viagem.id)
         .order("criado_em", { ascending: false });
-      return json({
-        viagem,
-        lancamentos: lancamentos ?? [],
-        ia_disponivel: Boolean(Deno.env.get("ANTHROPIC_API_KEY")),
-      });
+      return json({ viagem, lancamentos: lancamentos ?? [], ia_disponivel: iaDisponivel() });
     }
 
     if (acao === "analisar") {
