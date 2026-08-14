@@ -17,6 +17,19 @@
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      // Remove service workers e caches deixados pelo app antigo neste domínio
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function (regs) {
+          regs.forEach(function (r) { r.unregister(); });
+        });
+      }
+      if (window.caches && caches.keys) {
+        caches.keys().then(function (chaves) {
+          chaves.forEach(function (c) { caches.delete(c); });
+        });
+      }
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
