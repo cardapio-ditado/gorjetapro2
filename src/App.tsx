@@ -8,6 +8,7 @@ import ViagemDetalhe from './pages/viagens/ViagemDetalhe';
 import Cadastros from './pages/cadastros/Cadastros';
 import Eventos from './pages/eventos/Eventos';
 import Placeholder from './pages/Placeholder';
+import PrestacaoPublica from './pages/publico/PrestacaoPublica';
 
 function Protegido({ children }: { children: React.ReactNode }) {
   const { session, carregando } = useAuth();
@@ -28,6 +29,8 @@ export default function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<Login />} />
+          {/* link público do colaborador — sem login */}
+          <Route path="/p/:token" element={<PrestacaoPublica />} />
           <Route
             path="/"
             element={

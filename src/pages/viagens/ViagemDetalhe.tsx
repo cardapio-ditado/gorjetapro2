@@ -6,6 +6,8 @@ import {
   Camera,
   CheckCircle2,
   ChevronLeft,
+  Link2,
+  MessageCircle,
   Paperclip,
   Plus,
   Printer,
@@ -32,6 +34,7 @@ export default function ViagemDetalhe() {
   const [erro, setErro] = useState<string | null>(null);
   const [modalLanc, setModalLanc] = useState(false);
   const [fotoAmpliada, setFotoAmpliada] = useState<string | null>(null);
+  const [linkCopiado, setLinkCopiado] = useState(false);
 
   // formulário de lançamento
   const [lTipo, setLTipo] = useState<LancamentoTipo>('despesa');
@@ -48,7 +51,7 @@ export default function ViagemDetalhe() {
     const [{ data: v, error: e1 }, { data: l, error: e2 }] = await Promise.all([
       supabase
         .from('rr_viagens')
-        .select('*, funcionario:rr_funcionarios(*), veiculo:rr_veiculos(*), evento:rr_eventos(*)')
+        .select('*, token_publico, funcionario:rr_funcionarios(*), veiculo:rr_veiculos(*), evento:rr_eventos(*)')
         .eq('id', id)
         .single(),
       supabase
@@ -166,6 +169,22 @@ export default function ViagemDetalhe() {
   }
 
   const aberta = viagem.status === 'em_viagem' || viagem.status === 'prestacao_pendente';
+  const linkPublico = viagem.token_publico ? `${window.location.origin}/p/${viagem.token_publico}` : null;
+
+  function copiarLink() {
+    if (!linkPublico) return;
+    navigator.clipboard.writeText(linkPublico);
+    setLinkCopiado(true);
+    setTimeout(() => setLinkCopiado(false), 2000);
+  }
+
+  function compartilharWhatsApp() {
+    if (!linkPublico) return;
+    const texto =
+      `Olá${viagem?.funcionario?.nome ? `, ${viagem.funcionario.nome.split(' ')[0]}` : ''}! ` +
+      `Use este link para lançar seus gastos da viagem (tire foto dos comprovantes): ${linkPublico}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, '_blank');
+  }
 
   return (
     <div className="print:text-black">
@@ -175,6 +194,16 @@ export default function ViagemDetalhe() {
           <ChevronLeft className="h-4 w-4" /> Viagens
         </Link>
         <div className="flex flex-wrap gap-2">
+          {linkPublico && aberta && (
+            <>
+              <button onClick={copiarLink} className="btn-ghost" title="Copiar link do colaborador">
+                <Link2 className="h-4 w-4" /> {linkCopiado ? 'Copiado!' : 'Link do colaborador'}
+              </button>
+              <button onClick={compartilharWhatsApp} className="btn-ghost !px-3" title="Enviar por WhatsApp">
+                <MessageCircle className="h-4 w-4 text-emerald-400" />
+              </button>
+            </>
+          )}
           <button onClick={() => window.print()} className="btn-ghost">
             <Printer className="h-4 w-4" /> Relatório
           </button>

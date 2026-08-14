@@ -42,6 +42,7 @@ export interface Viagem {
   status: ViagemStatus;
   obs: string | null;
   criado_em: string;
+  token_publico?: string;
   funcionario?: Funcionario;
   veiculo?: Veiculo;
   evento?: Evento;
