@@ -1,60 +1,35 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
-import Login from './pages/Login';
-import Home from './pages/Home';
-import Layout from './components/Layout';
-import ViagensList from './pages/viagens/ViagensList';
-import ViagemDetalhe from './pages/viagens/ViagemDetalhe';
-import Cadastros from './pages/cadastros/Cadastros';
-import Eventos from './pages/eventos/Eventos';
-import Placeholder from './pages/Placeholder';
+import { Suspense, lazy } from 'react';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import PrestacaoPublica from './pages/publico/PrestacaoPublica';
 
-function Protegido({ children }: { children: React.ReactNode }) {
-  const { session, carregando } = useAuth();
-  if (carregando) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-night-950">
-        <div className="h-10 w-10 animate-spin rounded-full border-2 border-night-700 border-t-gold-500" />
-      </div>
-    );
-  }
-  if (!session) return <Navigate to="/login" replace />;
-  return <>{children}</>;
+// Sistema interno carregado sob demanda — visitantes do link público do
+// colaborador (/p/:token) nunca baixam esse pacote (login, cadastros,
+// financeiro, cliente do Supabase etc.), só a tela leve de lançamento.
+const AppInterno = lazy(() => import('./AppInterno'));
+
+function CarregandoInterno() {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-night-950">
+      <div className="h-10 w-10 animate-spin rounded-full border-2 border-night-700 border-t-gold-500" />
+    </div>
+  );
 }
 
 export default function App() {
   return (
-    <AuthProvider>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          {/* link público do colaborador — sem login */}
-          <Route path="/p/:token" element={<PrestacaoPublica />} />
-          <Route
-            path="/"
-            element={
-              <Protegido>
-                <Home />
-              </Protegido>
-            }
-          />
-          <Route
-            element={
-              <Protegido>
-                <Layout />
-              </Protegido>
-            }
-          >
-            <Route path="/viagens" element={<ViagensList />} />
-            <Route path="/viagens/:id" element={<ViagemDetalhe />} />
-            <Route path="/cadastros" element={<Cadastros />} />
-            <Route path="/eventos" element={<Eventos />} />
-            <Route path="/modulo/:slug" element={<Placeholder />} />
-          </Route>
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </BrowserRouter>
-    </AuthProvider>
+    <BrowserRouter>
+      <Routes>
+        {/* link público do colaborador — sem login, bundle independente e leve */}
+        <Route path="/p/:token" element={<PrestacaoPublica />} />
+        <Route
+          path="*"
+          element={
+            <Suspense fallback={<CarregandoInterno />}>
+              <AppInterno />
+            </Suspense>
+          }
+        />
+      </Routes>
+    </BrowserRouter>
   );
 }
