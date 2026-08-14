@@ -1,1 +1,0 @@
-gorjeta-pro-ditado

@@ -1,259 +1,116 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { FormEvent, useState } from 'react';
+import { Navigate, useNavigate } from 'react-router-dom';
+import { Eye, EyeOff, Lock, LogIn, Mail } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import { supabase } from '../lib/supabase';
-import { Eye, EyeOff, LogIn, User, Lock, AlertCircle, Mail } from 'lucide-react';
+import Logo from '../components/Logo';
 
-const Login: React.FC = () => {
+export default function Login() {
+  const { session, carregando, entrar } = useAuth();
   const navigate = useNavigate();
-  const { login, loading, error } = useAuth();
-  const [formData, setFormData] = useState({ email: '', senha: '' });
-  const [showPassword, setShowPassword] = useState(false);
-  const [loginError, setLoginError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [resetSent, setResetSent] = useState(false);
-  const [showReset, setShowReset] = useState(false);
-  const [resetEmail, setResetEmail] = useState('');
+  const [email, setEmail] = useState('');
+  const [senha, setSenha] = useState('');
+  const [verSenha, setVerSenha] = useState(false);
+  const [erro, setErro] = useState<string | null>(null);
+  const [enviando, setEnviando] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  if (!carregando && session) return <Navigate to="/" replace />;
+
+  async function aoEnviar(e: FormEvent) {
     e.preventDefault();
-    setLoginError(null);
-    setIsLoading(true);
-
-    try {
-      if (!formData.email || !formData.senha) {
-        setLoginError('Por favor, preencha todos os campos');
-        return;
-      }
-
-      if (!formData.email.includes('@')) {
-        setLoginError('Por favor, insira um email válido');
-        return;
-      }
-
-      const success = await login(formData.email, formData.senha);
-
-      if (success) {
-        navigate('/');
-      } else {
-        setLoginError(error || 'Email ou senha incorretos');
-      }
-    } catch (err) {
-      console.error('Erro no login:', err);
-      setLoginError('Erro interno do sistema. Tente novamente.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleResetPassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!resetEmail || !resetEmail.includes('@')) {
-      setLoginError('Digite um email válido');
+    setErro(null);
+    setEnviando(true);
+    const msg = await entrar(email.trim(), senha);
+    setEnviando(false);
+    if (msg) {
+      setErro(msg);
       return;
     }
-
-    setIsLoading(true);
-    setLoginError(null);
-
-    try {
-      const { error: resetError } = await supabase.auth.resetPasswordForEmail(
-        resetEmail,
-        { redirectTo: window.location.origin + '/redefinir-senha' }
-      );
-
-      if (resetError) throw resetError;
-
-      setResetSent(true);
-      setShowReset(false);
-    } catch (err: any) {
-      setLoginError('Não foi possível enviar o email de redefinição. Tente novamente.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleInputChange = (field: string, value: string) => {
-    setFormData({ ...formData, [field]: value });
-    if (loginError) setLoginError(null);
-  };
-
-  const busy = isLoading || loading;
+    navigate('/', { replace: true });
+  }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'radial-gradient(760px 720px at 8% 12%, rgba(155,37,53,0.6), transparent 65%), radial-gradient(640px 640px at 92% 88%, rgba(212,175,55,0.25), transparent 65%), radial-gradient(500px 500px at 90% 8%, rgba(125,31,44,0.3), transparent 65%), linear-gradient(160deg, #10131f 0%, #0a0d17 50%, #140a12 100%)' }}>
-      <div className="w-full max-w-md">
-        {/* Logo e Título */}
-        <div className="text-center mb-8">
-          <div className="flex justify-center mb-6">
-            <div className="p-4 rounded-2xl shadow-lg" style={{ background: 'linear-gradient(135deg, #7D1F2C, #D4AF37)' }}>
-              <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center">
-                <span className="text-2xl font-bold" style={{ background: 'linear-gradient(135deg, #7D1F2C, #D4AF37)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>DP</span>
-              </div>
-            </div>
-          </div>
-          <h1 className="text-3xl font-bold mb-2" style={{ color: '#eef1f8' }}>
-            Ditado Popular
-          </h1>
-          <p className="text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>Sistema de Gestão Integrada</p>
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-night-950 px-4">
+      {/* luzes de palco */}
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute -top-40 left-1/2 h-[34rem] w-[34rem] -translate-x-1/2 rounded-full bg-gold-500/10 blur-3xl animate-glow" />
+        <div className="absolute -bottom-52 -left-32 h-96 w-96 rounded-full bg-amber-700/10 blur-3xl" />
+        <div className="absolute -right-32 top-1/3 h-80 w-80 rounded-full bg-gold-600/5 blur-3xl" />
+        {/* linhas finas decorativas */}
+        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-gold-500/40 to-transparent" />
+        <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-gold-500/25 to-transparent" />
+      </div>
+
+      <div className="relative w-full max-w-md animate-fadeUp">
+        <div className="mb-8 flex justify-center">
+          <Logo size={110} />
         </div>
 
-        {/* Formulário de Login */}
-        <div className="rounded-2xl p-8" style={{ background: 'linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0.05))', backdropFilter: 'blur(24px) saturate(150%)', WebkitBackdropFilter: 'blur(24px) saturate(150%)', border: '1px solid rgba(255,255,255,0.14)', borderTopColor: 'rgba(255,255,255,0.28)', boxShadow: '0 32px 90px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.1)' }}>
-          <div className="text-center mb-6">
-            <h2 className="text-xl font-semibold mb-1" style={{ color: '#eef1f8' }}>Fazer Login</h2>
-            <p className="text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>Acesse sua conta para continuar</p>
-          </div>
+        <div className="card border-night-700/80 bg-night-850/80 p-8 backdrop-blur-sm">
+          <h1 className="text-center text-lg font-semibold text-white">Acessar o sistema</h1>
+          <p className="mt-1 text-center text-sm text-zinc-500">Entre com suas credenciais</p>
 
-          {resetSent && (
-            <div className="mb-6 p-4 rounded-lg flex items-start" style={{ background: 'rgba(34, 139, 87, 0.15)', border: '1px solid rgba(34, 139, 87, 0.3)' }}>
-              <AlertCircle className="w-5 h-5 mr-3 flex-shrink-0 mt-0.5" style={{ color: '#4ade80' }} />
-              <span className="text-sm" style={{ color: '#86efac' }}>Se o email existir, você receberá o link de redefinição.</span>
-            </div>
-          )}
-
-          {(loginError || error) && (
-            <div className="mb-6 p-4 rounded-lg flex items-center" style={{ background: 'rgba(125, 31, 44, 0.15)', border: '1px solid rgba(125, 31, 44, 0.3)' }}>
-              <AlertCircle className="w-5 h-5 mr-3 flex-shrink-0" style={{ color: '#fca5a5' }} />
-              <span className="text-sm" style={{ color: '#fca5a5' }}>{loginError || error}</span>
-            </div>
-          )}
-
-          {showReset ? (
-            <form onSubmit={handleResetPassword} className="space-y-5">
-              <div>
-                <label className="block text-sm font-medium mb-2" style={{ color: 'rgba(255,255,255,0.75)' }}>Email para redefinição</label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Mail className="h-5 w-5" style={{ color: 'rgba(255,255,255,0.4)' }} />
-                  </div>
-                  <input
-                    type="email"
-                    value={resetEmail}
-                    onChange={(e) => setResetEmail(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 rounded-xl focus:ring-2 focus:ring-[#D4AF37] transition-all duration-200"
-                    style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.14)', color: '#eef1f8' }}
-                    placeholder="seu.email@ditadopopular.com"
-                    required
-                    disabled={busy}
-                  />
-                </div>
+          <form onSubmit={aoEnviar} className="mt-6 space-y-4">
+            <div>
+              <label className="label">E-mail</label>
+              <div className="relative">
+                <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
+                <input
+                  type="email"
+                  required
+                  autoComplete="email"
+                  className="input pl-9"
+                  placeholder="voce@rrbares.com.br"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
               </div>
+            </div>
 
-              <button
-                type="submit"
-                disabled={busy}
-                className="w-full py-3 px-4 rounded-xl font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-                style={{ background: 'linear-gradient(135deg, #7D1F2C, #D4AF37)', color: '#fff' }}
-              >
-                {busy ? (
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                ) : (
-                  <>Enviar link de redefinição</>
-                )}
-              </button>
-
-              <button
-                type="button"
-                onClick={() => { setShowReset(false); setLoginError(null); }}
-                className="w-full text-sm transition-colors"
-                style={{ color: 'rgba(255,255,255,0.5)' }}
-              >
-                Voltar para o login
-              </button>
-            </form>
-          ) : (
-            <>
-              <form onSubmit={handleSubmit} className="space-y-5">
-                <div>
-                  <label className="block text-sm font-medium mb-2" style={{ color: 'rgba(255,255,255,0.75)' }}>Email</label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <User className="h-5 w-5" style={{ color: 'rgba(255,255,255,0.4)' }} />
-                    </div>
-                    <input
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) => handleInputChange('email', e.target.value)}
-                      className="w-full pl-10 pr-4 py-3 rounded-xl focus:ring-2 focus:ring-[#D4AF37] transition-all duration-200"
-                      style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.14)', color: '#eef1f8' }}
-                      placeholder="seu.email@ditadopopular.com"
-                      required
-                      disabled={busy}
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-2" style={{ color: 'rgba(255,255,255,0.75)' }}>Senha</label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <Lock className="h-5 w-5" style={{ color: 'rgba(255,255,255,0.4)' }} />
-                    </div>
-                    <input
-                      type={showPassword ? 'text' : 'password'}
-                      value={formData.senha}
-                      onChange={(e) => handleInputChange('senha', e.target.value)}
-                      className="w-full pl-10 pr-12 py-3 rounded-xl focus:ring-2 focus:ring-[#D4AF37] transition-all duration-200"
-                      style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.14)', color: '#eef1f8' }}
-                      placeholder="••••••••"
-                      required
-                      disabled={busy}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                      disabled={busy}
-                    >
-                      {showPassword ? (
-                        <EyeOff className="h-5 w-5" style={{ color: 'rgba(255,255,255,0.4)' }} />
-                      ) : (
-                        <Eye className="h-5 w-5" style={{ color: 'rgba(255,255,255,0.4)' }} />
-                      )}
-                    </button>
-                  </div>
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={busy || !formData.email || !formData.senha}
-                  className="w-full py-3 px-4 rounded-xl font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center hover:shadow-lg hover:scale-[1.02]"
-                  style={{ background: 'linear-gradient(135deg, #7D1F2C, #D4AF37)', color: '#fff' }}
-                >
-                  {busy ? (
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                  ) : (
-                    <>
-                      <LogIn className="w-5 h-5 mr-2" />
-                      Entrar
-                    </>
-                  )}
-                </button>
-              </form>
-
-              <div className="text-center pt-2">
+            <div>
+              <label className="label">Senha</label>
+              <div className="relative">
+                <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
+                <input
+                  type={verSenha ? 'text' : 'password'}
+                  required
+                  autoComplete="current-password"
+                  className="input pl-9 pr-10"
+                  placeholder="••••••••"
+                  value={senha}
+                  onChange={(e) => setSenha(e.target.value)}
+                />
                 <button
                   type="button"
-                  onClick={() => { setShowReset(true); setLoginError(null); setResetEmail(formData.email); }}
-                  className="text-sm transition-colors hover:underline"
-                  style={{ color: '#D4AF37' }}
+                  onClick={() => setVerSenha((v) => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 transition hover:text-zinc-300"
+                  tabIndex={-1}
                 >
-                  Esqueci minha senha
+                  {verSenha ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
-            </>
-          )}
+            </div>
+
+            {erro && (
+              <div className="rounded-lg border border-red-900/60 bg-red-950/40 px-3 py-2.5 text-sm text-red-300">
+                {erro}
+              </div>
+            )}
+
+            <button type="submit" disabled={enviando} className="btn-gold w-full py-3">
+              {enviando ? (
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-night-950/30 border-t-night-950" />
+              ) : (
+                <LogIn className="h-4 w-4" />
+              )}
+              {enviando ? 'Entrando…' : 'Entrar'}
+            </button>
+          </form>
         </div>
 
-        <div className="mt-6 text-center">
-          <p className="text-xs" style={{ color: 'rgba(255,255,255,0.3)' }}>
-            Sistema de Gestão Integrada v1.0 — © 2025 Ditado Popular
-          </p>
-        </div>
+        <p className="mt-6 text-center text-xs text-zinc-600">
+          RR Bares · Eventos de bar &amp; show — acesso restrito
+        </p>
       </div>
     </div>
   );
-};
-
-export default Login;
+}
