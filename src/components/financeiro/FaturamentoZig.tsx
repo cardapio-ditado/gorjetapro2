@@ -185,12 +185,15 @@ const FaturamentoZig: React.FC = () => {
 
       {loading ? (
         <div style={{ display: 'flex', justifyContent: 'center', padding: 48 }}>
-          <div style={{ width: 32, height: 32, borderRadius: '50%', border: `2px solid rgba(212,175,55,0.15)`, borderTop: `2px solid ${S.gold}`, animation: 'spin 0.8s linear infinite' }} />
+          <TableSkeleton rows={7} />
         </div>
       ) : dados.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: 48, color: S.label, fontSize: 13 }}>
-          Nenhum faturamento ZIG neste período. Clique em <strong style={{ color: S.text }}>Sincronizar ZIG</strong> para puxar da ZIG.
-        </div>
+        <EmptyState
+          icon={TrendingUp}
+          title="Nenhum faturamento sincronizado"
+          description="Não há vendas ZIG registradas neste período. Sincronize para puxar os dados da ZIG."
+          action={{ label: 'Sincronizar ZIG', onClick: () => sincronizar() }}
+        />
       ) : (
         <>
           {/* Gráfico de barras por dia */}
@@ -199,8 +202,8 @@ const FaturamentoZig: React.FC = () => {
             <ResponsiveContainer width="100%" height={240}>
               <BarChart data={chartData} margin={{ top: 4, right: 8, left: 8, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                <XAxis dataKey="dia" stroke={S.label} style={{ fontSize: 10 }} tickLine={false} />
-                <YAxis stroke={S.label} style={{ fontSize: 10 }} tickFormatter={fmtK} tickLine={false} axisLine={false} width={40} />
+                <XAxis dataKey="dia" stroke={S.label} style={{ fontSize:'var(--fs-caption)' }} tickLine={false} />
+                <YAxis stroke={S.label} style={{ fontSize:'var(--fs-caption)' }} tickFormatter={fmtK} tickLine={false} axisLine={false} width={40} />
                 <Tooltip
                   cursor={{ fill: 'rgba(255,255,255,0.03)' }}
                   contentStyle={{ background: '#1a1020', border: `1px solid ${S.border}`, borderRadius: 10, fontSize: 12 }}
@@ -214,7 +217,7 @@ const FaturamentoZig: React.FC = () => {
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
-            <div style={{ display: 'flex', gap: 14, marginTop: 8, fontSize: 10, color: S.label }}>
+            <div style={{ display: 'flex', gap: 14, marginTop: 8, fontSize:'var(--fs-caption)', color: S.label }}>
               <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}><span style={{ width: 9, height: 9, borderRadius: 2, background: S.gold }} /> sex/sáb</span>
               <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}><span style={{ width: 9, height: 9, borderRadius: 2, background: S.wine }} /> demais dias</span>
             </div>
@@ -227,7 +230,7 @@ const FaturamentoZig: React.FC = () => {
                 <thead>
                   <tr style={{ background: 'rgba(255,255,255,0.03)' }}>
                     {['Data', 'Total', 'Comandas', 'Ticket médio', 'Bebidas', 'Alimentos', 'Couvert', 'Taxa Serv.'].map((h, i) => (
-                      <th key={i} style={{ padding: '10px 14px', textAlign: i > 0 ? 'right' : 'left', fontSize: 10, fontWeight: 600, color: S.label, textTransform: 'uppercase', letterSpacing: '0.6px', borderBottom: `1px solid ${S.border}` }}>{h}</th>
+                      <th key={i} style={{ padding: '10px 14px', textAlign: i > 0 ? 'right' : 'left', fontSize:'var(--fs-label)', fontWeight:700, color:'var(--text-secondary)', textTransform:'uppercase', letterSpacing:'var(--tracking-caps)', borderBottom: `1px solid ${S.border}` }}>{h}</th>
                     ))}
                   </tr>
                 </thead>
@@ -238,7 +241,7 @@ const FaturamentoZig: React.FC = () => {
                       <tr key={i} style={{ borderBottom: `1px solid rgba(255,255,255,0.03)`, background: fds ? 'rgba(212,175,55,0.03)' : 'transparent' }}>
                         <td style={{ padding: '10px 14px' }}>
                           <p style={{ color: S.text, fontSize: 12, fontWeight: 500, margin: 0 }}>{dayjs(d.data).format('DD/MM/YYYY')}</p>
-                          <p style={{ color: fds ? S.gold : S.label, fontSize: 10, margin: 0 }}>{DIAS_SEMANA[dayjs(d.data).day()]}</p>
+                          <p style={{ color: fds ? S.gold : S.label, fontSize:'var(--fs-caption)', margin: 0 }}>{DIAS_SEMANA[dayjs(d.data).day()]}</p>
                         </td>
                         <td style={{ padding: '10px 14px', textAlign: 'right' }}>
                           <span style={{ color: S.gold, fontSize: 13, fontWeight: 700, fontFamily:'DM Mono, monospace', fontVariantNumeric:'tabular-nums' }}>{fmt(Number(d.total))}</span>
@@ -270,7 +273,7 @@ const FaturamentoZig: React.FC = () => {
             </div>
           </div>
 
-          <p style={{ color: S.label, fontSize: 10, textAlign: 'right' }}>
+          <p style={{ color: S.label, fontSize:'var(--fs-caption)', textAlign: 'right' }}>
             Faturamento bruto por noite operacional, direto da ZIG. Sincroniza automaticamente todo dia às 05:15.
           </p>
         </>

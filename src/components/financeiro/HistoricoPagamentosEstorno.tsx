@@ -149,7 +149,7 @@ const HistoricoPagamentosEstorno: React.FC = () => {
       {/* Tabela pagamentos */}
       {loading ? (
         <div style={{ display:'flex', justifyContent:'center', padding:48 }}>
-          <div style={{ width:32, height:32, borderRadius:'50%', border:`2px solid rgba(212,175,55,0.15)`, borderTop:`2px solid ${S.gold}`, animation:'spin 0.8s linear infinite' }} />
+          <TableSkeleton rows={7} />
           <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
         </div>
       ) : (
@@ -162,7 +162,7 @@ const HistoricoPagamentosEstorno: React.FC = () => {
               <thead>
                 <tr style={{ background:'rgba(255,255,255,0.03)' }}>
                   {['Data','Fornecedor','Descrição','Valor','Forma Pagamento','Status','Ações'].map((h,i) => (
-                    <th key={i} style={{ padding:'9px 14px', textAlign: i>=3 && i<6 ? 'right' : 'left', fontSize:10, fontWeight:600, color:S.label, textTransform:'uppercase', letterSpacing:'0.6px', borderBottom:`1px solid ${S.border}`, whiteSpace:'nowrap' }}>{h}</th>
+                    <th key={i} style={{ padding:'9px 14px', textAlign: i>=3 && i<6 ? 'right' : 'left', fontSize:'var(--fs-label)', fontWeight:700, color:'var(--text-secondary)', textTransform:'uppercase', letterSpacing:'var(--tracking-caps)', borderBottom:`1px solid ${S.border}`, whiteSpace:'nowrap' }}>{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -181,17 +181,17 @@ const HistoricoPagamentosEstorno: React.FC = () => {
                       </td>
                       <td style={{ padding:'9px 14px' }}>
                         <p style={{ color:S.text, fontSize:12, margin:0 }}>{p.conta_pagar_descricao||p.descricao}</p>
-                        {p.observacoes && <p style={{ color:S.label, fontSize:10, margin:0 }}>{p.observacoes}</p>}
+                        {p.observacoes && <p style={{ color:S.label, fontSize:'var(--fs-caption)', margin:0 }}>{p.observacoes}</p>}
                       </td>
                       <td style={{ padding:'9px 14px', textAlign:'right', whiteSpace:'nowrap' }}>
                         <span style={{ color:S.red, fontSize:12, fontWeight:700, fontFamily:'DM Mono, monospace', fontVariantNumeric:'tabular-nums' }}>{fmt(p.valor)}</span>
                       </td>
                       <td style={{ padding:'9px 14px', textAlign:'right' }}>
                         <p style={{ color:S.muted, fontSize:12, margin:0 }}>{p.forma_pagamento_nome||'—'}</p>
-                        {p.conta_bancaria && <p style={{ color:S.label, fontSize:10, margin:0 }}>{p.conta_bancaria}</p>}
+                        {p.conta_bancaria && <p style={{ color:S.label, fontSize:'var(--fs-caption)', margin:0 }}>{p.conta_bancaria}</p>}
                       </td>
                       <td style={{ padding:'9px 14px', textAlign:'right', whiteSpace:'nowrap' }}>
-                        <span style={{ display:'inline-block', padding:'3px 10px', borderRadius:20, fontSize:10, fontWeight:600,
+                        <span style={{ display:'inline-block', padding:'3px 10px', borderRadius:20, fontSize:'var(--fs-caption)', fontWeight:600,
                           background: est ? S.redBg : 'rgba(74,222,128,0.1)',
                           color: est ? S.red : S.green }}>
                           {est ? 'Estornado' : 'Ativo'}
@@ -210,7 +210,7 @@ const HistoricoPagamentosEstorno: React.FC = () => {
                 })}
               </tbody>
             </table>
-            {filtrados.length === 0 && <div style={{ textAlign:'center', padding:40, color:S.label, fontSize:13 }}>Nenhum pagamento encontrado</div>}
+            {filtrados.length === 0 && <EmptyState icon={ArrowLeftRight} title="Nenhum pagamento encontrado" description="Nenhum pagamento ou estorno corresponde aos filtros aplicados." />}
           </div>
         </div>
       )}
@@ -226,7 +226,7 @@ const HistoricoPagamentosEstorno: React.FC = () => {
               <thead>
                 <tr style={{ background:'rgba(255,255,255,0.03)' }}>
                   {['Data Estorno','Valor','Motivo','Estornado Por'].map((h,i) => (
-                    <th key={i} style={{ padding:'9px 14px', textAlign:'left', fontSize:10, fontWeight:600, color:S.label, textTransform:'uppercase', letterSpacing:'0.6px', borderBottom:`1px solid ${S.border}` }}>{h}</th>
+                    <th key={i} style={{ padding:'9px 14px', textAlign:'left', fontSize:'var(--fs-label)', fontWeight:700, color:'var(--text-secondary)', textTransform:'uppercase', letterSpacing:'var(--tracking-caps)', borderBottom:`1px solid ${S.border}` }}>{h}</th>
                   ))}
                 </tr>
               </thead>

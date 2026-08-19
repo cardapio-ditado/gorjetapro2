@@ -242,7 +242,7 @@ const ContasReceber: React.FC = () => {
             { label: 'Valor Vencido', value: fmt(indicadores.valor_vencido), color: S.orange, bg: 'rgba(251,146,60,0.08)', border: 'rgba(251,146,60,0.15)' },
           ].map((c, i) => (
             <div key={i} style={{ background: c.bg, borderRadius: 12, padding: '12px 14px', border: `1px solid ${c.border}` }}>
-              <p style={{ color: c.color, opacity: 0.6, fontSize: 10, margin: '0 0 6px', textTransform: 'uppercase', letterSpacing: '0.6px' }}>{c.label}</p>
+              <p style={{ color: c.color, opacity: 0.6, fontSize:'var(--fs-caption)', margin: '0 0 6px', textTransform: 'uppercase', letterSpacing: '0.6px' }}>{c.label}</p>
               <p style={{ color: c.color, fontSize: 20, fontWeight: 800, margin: 0, letterSpacing: '-0.5px' }}>{c.value}</p>
             </div>
           ))}
@@ -265,7 +265,7 @@ const ContasReceber: React.FC = () => {
       {/* Tabela */}
       {loading ? (
         <div style={{ display: 'flex', justifyContent: 'center', padding: 48 }}>
-          <div style={{ width: 32, height: 32, borderRadius: '50%', border: `2px solid rgba(212,175,55,0.15)`, borderTop: `2px solid ${S.gold}`, animation: 'spin 0.8s linear infinite' }} />
+          <TableSkeleton rows={7} />
           <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
         </div>
       ) : (
@@ -275,7 +275,7 @@ const ContasReceber: React.FC = () => {
               <thead>
                 <tr style={{ background: 'rgba(255,255,255,0.03)' }}>
                   {['Cliente', 'Descrição', 'Vencimento', 'Total', 'Recebido', 'Saldo', 'Status', 'Ações'].map((h, i) => (
-                    <th key={i} style={{ padding: '10px 14px', textAlign: i > 2 ? 'right' : 'left', fontSize: 10, fontWeight: 600, color: S.label, textTransform: 'uppercase', letterSpacing: '0.6px', borderBottom: `1px solid ${S.border}`, whiteSpace: 'nowrap' }}>{h}</th>
+                    <th key={i} style={{ padding: '10px 14px', textAlign: i > 2 ? 'right' : 'left', fontSize:'var(--fs-label)', fontWeight:700, color:'var(--text-secondary)', textTransform:'uppercase', letterSpacing:'var(--tracking-caps)', borderBottom: `1px solid ${S.border}`, whiteSpace: 'nowrap' }}>{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -289,15 +289,15 @@ const ContasReceber: React.FC = () => {
                       onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'transparent'}>
                       <td style={{ padding: '10px 14px' }}>
                         <p style={{ color: S.text, fontSize: 12, fontWeight: 500, margin: 0 }}>{conta.cliente_nome}</p>
-                        {conta.cliente_documento && <p style={{ color: S.label, fontSize: 10, margin: 0 }}>{conta.cliente_documento}</p>}
+                        {conta.cliente_documento && <p style={{ color: S.label, fontSize:'var(--fs-caption)', margin: 0 }}>{conta.cliente_documento}</p>}
                       </td>
                       <td style={{ padding: '10px 14px' }}>
                         <p style={{ color: S.text, fontSize: 12, margin: 0 }}>{conta.descricao}</p>
-                        {conta.numero_documento && <p style={{ color: S.label, fontSize: 10, margin: 0 }}>Doc: {conta.numero_documento}</p>}
+                        {conta.numero_documento && <p style={{ color: S.label, fontSize:'var(--fs-caption)', margin: 0 }}>Doc: {conta.numero_documento}</p>}
                       </td>
                       <td style={{ padding: '10px 14px', whiteSpace: 'nowrap' }}>
                         <p style={{ color: conta.esta_vencida ? S.red : S.text, fontSize: 12, fontWeight: 500, margin: 0 }}>{dayjs(conta.data_vencimento).format('DD/MM/YYYY')}</p>
-                        {conta.esta_vencida && <p style={{ color: S.red, fontSize: 10, margin: 0 }}>{conta.dias_vencimento}d atraso</p>}
+                        {conta.esta_vencida && <p style={{ color: S.red, fontSize:'var(--fs-caption)', margin: 0 }}>{conta.dias_vencimento}d atraso</p>}
                       </td>
                       <td style={{ padding: '10px 14px', textAlign: 'right', whiteSpace: 'nowrap' }}>
                         <span style={{ color: S.text, fontSize: 12, fontWeight: 600, fontFamily:'DM Mono, monospace', fontVariantNumeric:'tabular-nums' }}>{fmt(conta.valor_total)}</span>
@@ -311,7 +311,7 @@ const ContasReceber: React.FC = () => {
                       <td style={{ padding: '10px 14px', whiteSpace: 'nowrap' }}>
                         <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: st.bg, borderRadius: 20, padding: '3px 10px' }}>
                           <Icon style={{ width: 11, height: 11, color: st.color }} />
-                          <span style={{ color: st.color, fontSize: 10, fontWeight: 600 }}>{st.label}</span>
+                          <span style={{ color: st.color, fontSize:'var(--fs-caption)', fontWeight: 600 }}>{st.label}</span>
                         </div>
                       </td>
                       <td style={{ padding: '10px 14px', whiteSpace: 'nowrap' }}>
@@ -338,7 +338,7 @@ const ContasReceber: React.FC = () => {
               </tbody>
             </table>
             {filtered.length === 0 && (
-              <div style={{ textAlign: 'center', padding: 40, color: S.label, fontSize: 13 }}>Nenhuma conta encontrada</div>
+              <EmptyState icon={Receipt} title="Nenhuma conta a receber" description="Nao ha valores a receber para os filtros aplicados neste periodo." />
             )}
           </div>
         </div>

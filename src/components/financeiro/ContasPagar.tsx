@@ -280,7 +280,7 @@ const ContasPagar: React.FC = () => {
 
   const modalOverlay: React.CSSProperties = { position:'fixed', inset:0, background:'rgba(0,0,0,0.75)', backdropFilter:'blur(4px)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:50, padding:16 };
   const modalCard: React.CSSProperties = { background:S.modalBg, border:`1px solid ${S.border}`, borderRadius:16, padding:24, width:'100%', maxHeight:'90vh', overflowY:'auto' };
-  const sectionTitle: React.CSSProperties = { color:S.label, fontSize:10, fontWeight:600, margin:'0 0 10px', textTransform:'uppercase', letterSpacing:'0.6px', borderBottom:`1px solid ${S.border}`, paddingBottom:6 };
+  const sectionTitle: React.CSSProperties = { color:S.label, fontSize:'var(--fs-caption)', fontWeight:600, margin:'0 0 10px', textTransform:'uppercase', letterSpacing:'0.6px', borderBottom:`1px solid ${S.border}`, paddingBottom:6 };
 
   return (
     <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
@@ -327,9 +327,9 @@ const ContasPagar: React.FC = () => {
             { label:'Já Pago',      value:fmt(indicadores.valor_pago),           sub:`de ${fmt(indicadores.valor_total)}`,color:S.green,bg:S.greenBg,border:S.greenBorder },
           ].map((c,i) => (
             <div key={i} style={{ background:c.bg, borderRadius:12, padding:'12px 14px', border:`1px solid ${c.border}` }}>
-              <p style={{ color:c.color, opacity:.6, fontSize:10, margin:'0 0 6px', textTransform:'uppercase', letterSpacing:'.6px' }}>{c.label}</p>
+              <p style={{ color:c.color, opacity:.6, fontSize:'var(--fs-caption)', margin:'0 0 6px', textTransform:'uppercase', letterSpacing:'.6px' }}>{c.label}</p>
               <p style={{ color:c.color, fontSize:i===4?16:20, fontWeight:800, margin:'0 0 4px', letterSpacing:'-.5px' }}>{c.value}</p>
-              <p style={{ color:c.color, opacity:.45, fontSize:10, margin:0 }}>{c.sub}</p>
+              <p style={{ color:c.color, opacity:.45, fontSize:'var(--fs-caption)', margin:0 }}>{c.sub}</p>
             </div>
           ))}
         </div>
@@ -352,7 +352,7 @@ const ContasPagar: React.FC = () => {
       {/* Tabela */}
       {loading ? (
         <div style={{ display:'flex', justifyContent:'center', padding:48 }}>
-          <div style={{ width:32, height:32, borderRadius:'50%', border:`2px solid rgba(212,175,55,0.15)`, borderTop:`2px solid ${S.gold}`, animation:'spin 0.8s linear infinite' }} />
+          <TableSkeleton rows={7} />
           <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
         </div>
       ) : (
@@ -365,7 +365,7 @@ const ContasPagar: React.FC = () => {
                     <input type="checkbox" checked={selectedIds.size===filteredContas.length&&filteredContas.length>0} onChange={toggleSelectAll} style={{ accentColor:S.wine }} />
                   </th>
                   {['Prioridade','Fornecedor / Descrição','Vencimento','Total','Saldo','Status','Ações'].map((h,i) => (
-                    <th key={i} style={{ padding:'9px 12px', textAlign:i>=3&&i<=4?'right':'left', fontSize:10, fontWeight:600, color:S.label, textTransform:'uppercase', letterSpacing:'0.6px', borderBottom:`1px solid ${S.border}`, whiteSpace:'nowrap' }}>{h}</th>
+                    <th key={i} style={{ padding:'9px 12px', textAlign:i>=3&&i<=4?'right':'left', fontSize:'var(--fs-label)', fontWeight:700, color:'var(--text-secondary)', textTransform:'uppercase', letterSpacing:'var(--tracking-caps)', borderBottom:`1px solid ${S.border}`, whiteSpace:'nowrap' }}>{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -389,37 +389,37 @@ const ContasPagar: React.FC = () => {
                       <td style={{ padding:'9px 12px', minWidth:180 }}>
                         <p style={{ color:S.text, fontSize:12, fontWeight:600, margin:0 }}>{conta.fornecedor_nome}</p>
                         <p style={{ color:S.muted, fontSize:11, margin:'1px 0 0' }}>{conta.descricao}</p>
-                        {conta.numero_documento && <p style={{ color:S.label, fontSize:10, margin:0 }}>Doc: {conta.numero_documento}</p>}
-                        {conta.categoria_nome && <p style={{ color:S.label, fontSize:10, margin:0, display:'flex', alignItems:'center', gap:3 }}><Target style={{ width:9, height:9 }} />{conta.categoria_nome}</p>}
-                        {conta.observacao_tesouraria && <p style={{ color:'rgba(96,165,250,0.7)', fontSize:10, margin:0, display:'flex', alignItems:'center', gap:3 }}><MessageSquare style={{ width:9, height:9 }} />{conta.observacao_tesouraria}</p>}
-                        {(conta.total_pagamentos_parciais||0)>0 && <p style={{ color:S.label, fontSize:10, margin:0, display:'flex', alignItems:'center', gap:3 }}><Activity style={{ width:9, height:9 }} />{conta.total_pagamentos_parciais===1?`Pago em ${dayjs(conta.data_primeira_baixa).format('DD/MM/YY')}`:`${conta.total_pagamentos_parciais} pagamentos`}</p>}
+                        {conta.numero_documento && <p style={{ color:S.label, fontSize:'var(--fs-caption)', margin:0 }}>Doc: {conta.numero_documento}</p>}
+                        {conta.categoria_nome && <p style={{ color:S.label, fontSize:'var(--fs-caption)', margin:0, display:'flex', alignItems:'center', gap:3 }}><Target style={{ width:9, height:9 }} />{conta.categoria_nome}</p>}
+                        {conta.observacao_tesouraria && <p style={{ color:'rgba(96,165,250,0.7)', fontSize:'var(--fs-caption)', margin:0, display:'flex', alignItems:'center', gap:3 }}><MessageSquare style={{ width:9, height:9 }} />{conta.observacao_tesouraria}</p>}
+                        {(conta.total_pagamentos_parciais||0)>0 && <p style={{ color:S.label, fontSize:'var(--fs-caption)', margin:0, display:'flex', alignItems:'center', gap:3 }}><Activity style={{ width:9, height:9 }} />{conta.total_pagamentos_parciais===1?`Pago em ${dayjs(conta.data_primeira_baixa).format('DD/MM/YY')}`:`${conta.total_pagamentos_parciais} pagamentos`}</p>}
                       </td>
                       <td style={{ padding:'9px 12px', whiteSpace:'nowrap' }}>
                         <p style={{ color:conta.situacao_vencimento==='atrasada'?S.red:conta.situacao_vencimento==='vence_hoje'?S.amber:conta.situacao_vencimento==='vence_em_breve'?S.orange:S.text, fontSize:12, fontWeight:conta.situacao_vencimento==='atrasada'||conta.situacao_vencimento==='vence_hoje'?600:400, margin:0 }}>
                           {dayjs(conta.data_vencimento).format('DD/MM/YY')}
                         </p>
-                        {conta.situacao_vencimento==='atrasada'&&<p style={{ color:S.red, fontSize:10, margin:0 }}>{conta.dias_vencimento}d atraso</p>}
-                        {conta.situacao_vencimento==='vence_hoje'&&<p style={{ color:S.amber, fontSize:10, margin:0, fontWeight:700 }}>HOJE</p>}
-                        {conta.situacao_vencimento==='vence_em_breve'&&conta.dias_para_vencer!=null&&<p style={{ color:S.orange, fontSize:10, margin:0 }}>{conta.dias_para_vencer}d</p>}
+                        {conta.situacao_vencimento==='atrasada'&&<p style={{ color:S.red, fontSize:'var(--fs-caption)', margin:0 }}>{conta.dias_vencimento}d atraso</p>}
+                        {conta.situacao_vencimento==='vence_hoje'&&<p style={{ color:S.amber, fontSize:'var(--fs-caption)', margin:0, fontWeight:700 }}>HOJE</p>}
+                        {conta.situacao_vencimento==='vence_em_breve'&&conta.dias_para_vencer!=null&&<p style={{ color:S.orange, fontSize:'var(--fs-caption)', margin:0 }}>{conta.dias_para_vencer}d</p>}
                       </td>
                       <td style={{ padding:'9px 12px', textAlign:'right', whiteSpace:'nowrap' }}>
                         <p style={{ color:S.text, fontSize:12, fontWeight:600, margin:0, fontFamily:'DM Mono, monospace', fontVariantNumeric:'tabular-nums' }}>{fmt(conta.valor_total)}</p>
-                        {conta.valor_pago>0&&<p style={{ color:S.green, fontSize:10, margin:0 }}>Pago: {fmt(conta.valor_pago)}</p>}
+                        {conta.valor_pago>0&&<p style={{ color:S.green, fontSize:'var(--fs-caption)', margin:0 }}>Pago: {fmt(conta.valor_pago)}</p>}
                       </td>
                       <td style={{ padding:'9px 12px', textAlign:'right', whiteSpace:'nowrap' }}>
                         <p style={{ color:conta.saldo_restante>0?S.red:S.green, fontSize:12, fontWeight:700, margin:0, fontFamily:'DM Mono, monospace', fontVariantNumeric:'tabular-nums' }}>{fmt(conta.saldo_restante)}</p>
-                        {conta.valor_pago>0&&conta.saldo_restante>0&&<p style={{ color:S.label, fontSize:10, margin:0 }}>{((conta.valor_pago/conta.valor_total)*100).toFixed(0)}%</p>}
+                        {conta.valor_pago>0&&conta.saldo_restante>0&&<p style={{ color:S.label, fontSize:'var(--fs-caption)', margin:0 }}>{((conta.valor_pago/conta.valor_total)*100).toFixed(0)}%</p>}
                       </td>
                       <td style={{ padding:'9px 12px', whiteSpace:'nowrap' }}>
                         <div style={{ display:'inline-flex', alignItems:'center', gap:4, background:st.bg, borderRadius:20, padding:'3px 9px' }}>
                           <Ico style={{ width:10, height:10, color:st.color }} />
-                          <span style={{ color:st.color, fontSize:10, fontWeight:600 }}>{st.label}</span>
+                          <span style={{ color:st.color, fontSize:'var(--fs-caption)', fontWeight:600 }}>{st.label}</span>
                         </div>
                       </td>
                       <td style={{ padding:'9px 12px', whiteSpace:'nowrap' }}>
                         <div style={{ display:'flex', gap:5, alignItems:'center' }}>
                           {conta.saldo_restante>0&&(
-                            <button onClick={()=>abrirModalBaixa(conta)} style={{ display:'flex', alignItems:'center', gap:4, background:'rgba(74,222,128,0.1)', border:`1px solid rgba(74,222,128,0.2)`, borderRadius:6, padding:'4px 8px', color:S.green, fontSize:10, cursor:'pointer', fontWeight:600 }}>
+                            <button onClick={()=>abrirModalBaixa(conta)} style={{ display:'flex', alignItems:'center', gap:4, background:'rgba(74,222,128,0.1)', border:`1px solid rgba(74,222,128,0.2)`, borderRadius:6, padding:'4px 8px', color:S.green, fontSize:'var(--fs-caption)', cursor:'pointer', fontWeight:600 }}>
                               <Receipt style={{ width:10, height:10 }} /> Baixa
                             </button>
                           )}
@@ -439,7 +439,7 @@ const ContasPagar: React.FC = () => {
                 })}
               </tbody>
             </table>
-            {filteredContas.length===0&&<div style={{ textAlign:'center', padding:40, color:S.label, fontSize:13 }}>Nenhuma conta encontrada</div>}
+            {filteredContas.length===0 && <EmptyState icon={CreditCard} title="Nenhuma conta a pagar" description="Nao ha obrigacoes em aberto para os filtros aplicados neste periodo." />}
           </div>
         </div>
       )}
@@ -555,12 +555,12 @@ const ContasPagar: React.FC = () => {
               <p style={{ color:S.muted, fontSize:12, margin:'0 0 8px' }}>{baixaModal.conta.descricao}</p>
               <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:8 }}>
                 {[['Total', fmt(baixaModal.conta.valor_total), S.text], ['Pago', fmt(baixaModal.conta.valor_pago), S.green], ['Saldo', fmt(baixaModal.conta.saldo_restante), S.orange]].map(([l,v,c],i)=>(
-                  <div key={i}><span style={{ color:S.label, fontSize:10 }}>{l}</span><p style={{ color:c as string, fontSize:13, fontWeight:700, margin:0, fontFamily:'DM Mono, monospace', fontVariantNumeric:'tabular-nums' }}>{v}</p></div>
+                  <div key={i}><span style={{ color:S.label, fontSize:'var(--fs-caption)' }}>{l}</span><p style={{ color:c as string, fontSize:13, fontWeight:700, margin:0, fontFamily:'DM Mono, monospace', fontVariantNumeric:'tabular-nums' }}>{v}</p></div>
                 ))}
               </div>
             </div>
             <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
-              <div style={fStyle}><label style={labelStyle}>Valor do Pagamento *</label><div style={{ position:'relative' }}><span style={{ position:'absolute', left:12, top:'50%', transform:'translateY(-50%)', color:S.label, fontSize:12 }}>R$</span><input type="number" step="0.01" min="0.01" max={baixaModal.conta.saldo_restante} value={baixaModal.valorPagamento} onChange={e=>setBaixaModal({...baixaModal,valorPagamento:parseFloat(e.target.value)||0})} style={{ ...inputStyle, paddingLeft:36 }} /></div><p style={{ color:S.label, fontSize:10, margin:'3px 0 0' }}>Máx: {fmt(baixaModal.conta.saldo_restante)}</p></div>
+              <div style={fStyle}><label style={labelStyle}>Valor do Pagamento *</label><div style={{ position:'relative' }}><span style={{ position:'absolute', left:12, top:'50%', transform:'translateY(-50%)', color:S.label, fontSize:12 }}>R$</span><input type="number" step="0.01" min="0.01" max={baixaModal.conta.saldo_restante} value={baixaModal.valorPagamento} onChange={e=>setBaixaModal({...baixaModal,valorPagamento:parseFloat(e.target.value)||0})} style={{ ...inputStyle, paddingLeft:36 }} /></div><p style={{ color:S.label, fontSize:'var(--fs-caption)', margin:'3px 0 0' }}>Máx: {fmt(baixaModal.conta.saldo_restante)}</p></div>
               <div style={fStyle}><label style={labelStyle}>Data do Pagamento *</label><input type="date" value={baixaModal.dataPagamento} onChange={e=>setBaixaModal({...baixaModal,dataPagamento:e.target.value})} style={inputStyle} /></div>
               <div style={fStyle}><label style={labelStyle}>Forma de Pagamento *</label><SearchableSelect options={formasPagamento.map(f=>({value:f.id,label:f.nome}))} value={baixaModal.formaPagamentoId} onChange={v=>setBaixaModal({...baixaModal,formaPagamentoId:v})} placeholder="Buscar..." theme="dark" /></div>
               <div style={fStyle}><label style={labelStyle}>Conta Bancária *</label><SearchableSelect options={contasBancarias.map(c=>({value:c.id,label:`${c.banco} - ${c.tipo_conta}`,sublabel:`Saldo: ${fmt(c.saldo_atual)}`}))} value={baixaModal.contaBancariaId} onChange={v=>setBaixaModal({...baixaModal,contaBancariaId:v})} placeholder="Buscar..." theme="dark" /></div>
