@@ -157,7 +157,7 @@ const SidebarModern: React.FC<Props> = ({ onNavigate, onCloseMobile }) => {
     const open        = expanded === m.name || (expanded === null && moduloAtual?.name === m.name);
     const hasChildren = !!m.subModules?.length;
 
-    const itemClass = `relative w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] font-medium transition-all duration-150 group ${
+    const itemClass = `relative w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg t-body font-medium transition-all duration-150 group ${
       active
         ? 'text-white'
         : 'text-text-secondary hover:text-text-primary hover:bg-white/[0.04]'
@@ -204,7 +204,7 @@ const SidebarModern: React.FC<Props> = ({ onNavigate, onCloseMobile }) => {
                     const label = sub.name.replace('─ ', '').replace('─', '');
                     return (
                       <p key={sub.path + sub.name}
-                        className="text-[9px] font-bold uppercase tracking-widest px-2 pt-2.5 pb-1"
+                        className="t-caps font-bold uppercase tracking-widest px-2 pt-2.5 pb-1"
                         style={{ color: 'var(--text-secondary)' }}>
                         {label}
                       </p>
@@ -216,7 +216,7 @@ const SidebarModern: React.FC<Props> = ({ onNavigate, onCloseMobile }) => {
                       key={sub.path}
                       to={sub.path}
                       onClick={onNavigate}
-                      className={`flex items-center justify-between px-2.5 py-1.5 rounded-md text-[12px] font-sans transition-all duration-100 ${
+                      className={`flex items-center justify-between px-2.5 py-1.5 rounded-md t-label font-sans transition-all duration-100 ${
                         subActive
                           ? 'font-semibold'
                           : 'hover:bg-white/[0.04]'
@@ -258,7 +258,7 @@ const SidebarModern: React.FC<Props> = ({ onNavigate, onCloseMobile }) => {
   };
 
   const GroupLabel: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-    <p className="px-2.5 pt-3 pb-1.5 text-[9px] font-bold uppercase tracking-[0.1em]"
+    <p className="px-2.5 pt-3 pb-1.5 t-caps font-bold uppercase tracking-[0.1em]"
       style={{ color: 'var(--text-secondary)' }}>
       {children}
     </p>
@@ -285,14 +285,14 @@ const SidebarModern: React.FC<Props> = ({ onNavigate, onCloseMobile }) => {
         style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
         <div className="w-7 h-7 rounded-lg flex-shrink-0 flex items-center justify-center"
           style={{ background: 'linear-gradient(135deg, var(--wine), var(--gold))' }}>
-          <span className="text-white text-[9px] font-black tracking-tighter">DP</span>
+          <span className="text-white t-caps font-black tracking-tighter">DP</span>
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-[13px] font-bold leading-none tracking-tight"
+          <p className="t-body font-bold leading-none tracking-tight"
             style={{ color: 'var(--text-primary)' }}>
             Ditado Popular
           </p>
-          <p className="text-[9px] mt-0.5 tracking-widest uppercase font-medium"
+          <p className="t-caps mt-0.5 tracking-widest uppercase font-medium"
             style={{ color: 'var(--text-secondary)' }}>
             Gestão
           </p>
@@ -314,7 +314,7 @@ const SidebarModern: React.FC<Props> = ({ onNavigate, onCloseMobile }) => {
         <Link
           to="/"
           onClick={onNavigate}
-          className="w-full flex items-center gap-2.5 px-2.5 py-2 mb-2 rounded-lg text-[13px] font-medium transition-all duration-150"
+          className="w-full flex items-center gap-2.5 px-2.5 py-2 mb-2 rounded-lg t-body font-medium transition-all duration-150"
           style={{
             color: 'var(--gold)',
             background: 'rgba(212,175,55,0.07)',
@@ -354,11 +354,11 @@ const SidebarModern: React.FC<Props> = ({ onNavigate, onCloseMobile }) => {
             {initials}
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-[12px] font-semibold truncate leading-tight"
+            <p className="t-label font-semibold truncate leading-tight"
               style={{ color: 'var(--text-primary)' }}>
               {usuario?.nome_completo?.split(' ')[0] ?? 'Usuário'}
             </p>
-            <p className="text-[10px] capitalize truncate leading-tight mt-0.5"
+            <p className="t-caption capitalize truncate leading-tight mt-0.5"
               style={{ color: 'var(--text-secondary)' }}>
               {usuario?.cargo ?? usuario?.nivel ?? '—'}
             </p>

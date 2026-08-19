@@ -40,7 +40,7 @@ const MeuPainel: React.FC = () => {
         <div className="absolute inset-0 opacity-[0.06]"
           style={{ backgroundImage: 'repeating-linear-gradient(45deg,var(--gold) 0,var(--gold) 1px,transparent 0,transparent 50%),repeating-linear-gradient(-45deg,var(--gold) 0,var(--gold) 1px,transparent 0,transparent 50%)', backgroundSize: '28px 28px' }} />
         <div className="relative">
-          <p className="text-gold text-[10px] font-black uppercase tracking-[0.3em] mb-1">Ditado Popular</p>
+          <p className="text-gold t-caption font-black uppercase tracking-[0.3em] mb-1">Ditado Popular</p>
           <h1 className="font-display text-3xl font-bold text-white leading-tight">{saudacao()}, {primeiroNome}</h1>
           <p className="text-white/70 text-xs mt-1 capitalize">{dataLonga}</p>
         </div>

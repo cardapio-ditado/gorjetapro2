@@ -1,4 +1,5 @@
 import React, { lazy, Suspense, useState, useEffect } from 'react';
+import { motion } from 'motion/react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import SidebarModern from './components/layout/SidebarModern';
 import ProtectedRoute from './components/layout/ProtectedRoute';
@@ -128,8 +129,17 @@ function AppContent() {
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
         <Topbar toggleSidebar={() => setSidebarOpen(v => !v)} user={usuario} onLogout={logout} />
 
+        {/* Transicao de pagina: somente OPACIDADE. transform aqui vira containing
+            block e sequestra os modais position:fixed — foi o bug que quebrou os
+            formularios de compra/nota. Ver o aviso em src/index.css. */}
         <main className="flex-1 overflow-y-auto">
-          <div key={location.key} className="p-5 lg:p-7 min-h-full page-transition">
+          <motion.div
+            key={location.key}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.32, ease: [0.2, 0, 0, 1] }}
+            className="p-5 lg:p-7 min-h-full"
+          >
             <Suspense fallback={<PageLoader />}>
               <Routes>
                 <Route path="/dashboard"           element={<ProtectedRoute moduloSlug="dashboard">     <PainelInicial />       </ProtectedRoute>} />
@@ -167,7 +177,7 @@ function AppContent() {
                 } />
               </Routes>
             </Suspense>
-          </div>
+          </motion.div>
         </main>
       </div>
     </div>

@@ -284,7 +284,7 @@ const Topbar: React.FC<TopbarProps> = ({ toggleSidebar, user, onLogout }) => {
           ) : !searchFocused && (
             <div className="flex items-center gap-1 bg-white/5 border border-white/10 rounded px-1.5 py-0.5 flex-shrink-0">
               <Command className="text-white/30" size={10} />
-              <span className="text-white/30 text-[10px] font-mono font-medium">K</span>
+              <span className="text-white/30 t-caption font-mono font-medium">K</span>
             </div>
           )}
         </div>
@@ -316,7 +316,7 @@ const Topbar: React.FC<TopbarProps> = ({ toggleSidebar, user, onLogout }) => {
                     {sub && <span className="text-white/35 text-xs font-sans ml-2">{sub}</span>}
                   </div>
                   {i === selectedIndex && (
-                    <span className="text-white/20 text-[10px] font-mono flex-shrink-0">Enter</span>
+                    <span className="text-white/20 t-caption font-mono flex-shrink-0">Enter</span>
                   )}
                 </button>
               );
@@ -328,7 +328,7 @@ const Topbar: React.FC<TopbarProps> = ({ toggleSidebar, user, onLogout }) => {
       {/* Notificações */}
       <button className="relative flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center text-white/40 hover:text-white/70 hover:bg-white/5 transition-all">
         <Bell size={18} />
-        <span className="absolute top-1.5 right-1.5 w-5 h-4 bg-gold rounded-full text-[9px] font-sans font-bold text-dark flex items-center justify-center ring-2 ring-dark">
+        <span className="absolute top-1.5 right-1.5 w-5 h-4 bg-gold rounded-full t-caps font-sans font-bold text-dark flex items-center justify-center ring-2 ring-dark">
           3
         </span>
       </button>
@@ -353,7 +353,7 @@ const Topbar: React.FC<TopbarProps> = ({ toggleSidebar, user, onLogout }) => {
             <p className="text-white text-xs font-sans font-semibold leading-tight">
               {user?.nome_completo?.split(' ')[0] || 'Usuário'}
             </p>
-            <p className="text-white/40 text-[10px] font-sans capitalize leading-tight">
+            <p className="text-white/40 t-caption font-sans capitalize leading-tight">
               {user?.cargo || user?.nivel || '—'}
             </p>
           </div>
