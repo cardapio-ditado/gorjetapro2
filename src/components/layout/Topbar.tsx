@@ -257,7 +257,7 @@ const Topbar: React.FC<TopbarProps> = ({ toggleSidebar, user, onLogout }) => {
       </div>
 
       {/* Busca central */}
-      <div className="flex-1 max-w-xl mx-auto relative">
+      <div className="flex-1 min-w-0 max-w-xl mx-auto relative">
         <div className={`flex items-center gap-2.5 px-4 py-2 rounded-lg border transition-all duration-200 ${
           searchFocused
             ? 'bg-white/10 border-white/20'

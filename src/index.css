@@ -265,6 +265,59 @@
     color: var(--text-primary);
   }
 
+  /* ── Estados que faltavam ─────────────────────────────────────────────────
+     Todo clicavel precisa de cinco estados. Foco de teclado e o mais
+     esquecido e o unico que e requisito de acessibilidade (WCAG 2.4.7):
+     sem ele, quem navega por Tab nao sabe onde esta.
+     :focus-visible (e nao :focus) para o anel nao aparecer no clique de mouse.
+     ──────────────────────────────────────────────────────────────────────── */
+  .btn-primary:focus-visible,
+  .btn-secondary:focus-visible,
+  .btn-ghost:focus-visible,
+  .btn-icon:focus-visible {
+    outline: none;
+    box-shadow: var(--shadow-focus);
+  }
+
+  .btn-secondary:active { background: rgba(255,255,255,0.12); }
+  .btn-ghost:active     { background: var(--bg-active); }
+
+  .btn-secondary:disabled,
+  .btn-ghost:disabled,
+  .btn-icon:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    background: transparent;
+    color: var(--text-secondary);
+  }
+  .btn-secondary:disabled:hover,
+  .btn-ghost:disabled:hover,
+  .btn-icon:disabled:hover { background: transparent; border-color: var(--border); }
+
+  /* ── Botao so de icone ────────────────────────────────────────────────────
+     Alvo de 32px no minimo. Sempre com aria-label: sem rotulo textual, o
+     leitor de tela nao tem o que anunciar.                                  */
+  .btn-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: var(--r-badge);
+    border: 1px solid var(--border);
+    background: rgba(255,255,255,0.04);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: background var(--dur-fast) var(--ease-standard),
+                border-color var(--dur-fast) var(--ease-standard),
+                color var(--dur-fast) var(--ease-standard);
+  }
+  .btn-icon:hover  { background: rgba(255,255,255,0.09); color: var(--text-primary); border-color: var(--border-strong); }
+  .btn-icon:active { background: rgba(255,255,255,0.14); }
+
+  .btn-icon-danger:hover  { background: rgba(239,68,68,0.14); color: var(--danger-light, #f87171); border-color: rgba(239,68,68,0.35); }
+  .btn-icon-accent:hover  { background: rgba(96,165,250,0.14); color: #93c5fd; border-color: rgba(96,165,250,0.35); }
+
   /* ── Badges ── */
   .badge {
     display: inline-flex;
