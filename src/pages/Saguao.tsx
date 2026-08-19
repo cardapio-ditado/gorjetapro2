@@ -87,9 +87,10 @@ const Saguao: React.FC = () => {
   })).filter((a) => a.modulos.length > 0);
 
   // Duas fileiras fixas — 3 em cima, o resto embaixo deslocado meio passo —
-  // é o arranjo de colmeia de verdade pra até 5 favos (o total de áreas que
-  // existem). Sem depender de quebra de linha automática pra decidir o
-  // deslocamento, que era a causa do desalinhamento.
+  // é o arranjo de colmeia pra até 5 favos (o total de áreas que existem).
+  // Sem depender de quebra de linha automática pra decidir o deslocamento,
+  // que era a causa do desalinhamento. As fileiras NÃO se encaixam uma na
+  // outra: favo cobrindo favo come a borda dourada do de cima.
   const fileiras = areas.length > 3 ? [areas.slice(0, 3), areas.slice(3)] : [areas];
 
   const iniciais =
@@ -155,7 +156,7 @@ const Saguao: React.FC = () => {
                 className="flex justify-center"
                 style={{
                   gap: HEX_GAP,
-                  marginTop: fi === 0 ? 0 : -(HEX_H * 0.26),
+                  marginTop: fi === 0 ? 0 : HEX_GAP,
                   marginLeft: fi % 2 === 1 ? (HEX_W + HEX_GAP) / 2 : 0,
                 }}
               >
