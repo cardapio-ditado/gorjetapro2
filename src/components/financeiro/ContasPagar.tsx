@@ -48,8 +48,8 @@ interface BaixaModal {
 const fmt = (v: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
 
 const S = {
-  card:'#12141f', border:'rgba(255,255,255,0.06)', label:'rgba(255,255,255,0.35)',
-  text:'rgba(255,255,255,0.85)', muted:'rgba(255,255,255,0.5)',
+  card:'#12141f', border:'rgba(255,255,255,0.06)', label: 'var(--text-secondary)',
+  text: 'var(--text-primary)', muted:'rgba(255,255,255,0.5)',
   green:'#4ade80', red:'#f87171', blue:'#60a5fa', gold:'#D4AF37', orange:'#fb923c', amber:'#fbbf24',
   greenBg:'rgba(74,222,128,0.08)', redBg:'rgba(248,113,113,0.08)',
   blueBg:'rgba(96,165,250,0.08)', goldBg:'rgba(212,175,55,0.08)', orangeBg:'rgba(251,146,60,0.08)',
@@ -283,7 +283,7 @@ const ContasPagar: React.FC = () => {
   const sectionTitle: React.CSSProperties = { color:S.label, fontSize:10, fontWeight:600, margin:'0 0 10px', textTransform:'uppercase', letterSpacing:'0.6px', borderBottom:`1px solid ${S.border}`, paddingBottom:6 };
 
   return (
-    <div style={{ display:'flex', flexDirection:'column', gap:16, fontFamily:'-apple-system,BlinkMacSystemFont,"Inter",sans-serif' }}>
+    <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
 
       {/* Header */}
       <div style={{ display:'flex', justifyContent:'flex-end', gap:8, flexWrap:'wrap' }}>
@@ -403,11 +403,11 @@ const ContasPagar: React.FC = () => {
                         {conta.situacao_vencimento==='vence_em_breve'&&conta.dias_para_vencer!=null&&<p style={{ color:S.orange, fontSize:10, margin:0 }}>{conta.dias_para_vencer}d</p>}
                       </td>
                       <td style={{ padding:'9px 12px', textAlign:'right', whiteSpace:'nowrap' }}>
-                        <p style={{ color:S.text, fontSize:12, fontWeight:600, margin:0, fontFamily:'monospace' }}>{fmt(conta.valor_total)}</p>
+                        <p style={{ color:S.text, fontSize:12, fontWeight:600, margin:0, fontFamily:'DM Mono, monospace', fontVariantNumeric:'tabular-nums' }}>{fmt(conta.valor_total)}</p>
                         {conta.valor_pago>0&&<p style={{ color:S.green, fontSize:10, margin:0 }}>Pago: {fmt(conta.valor_pago)}</p>}
                       </td>
                       <td style={{ padding:'9px 12px', textAlign:'right', whiteSpace:'nowrap' }}>
-                        <p style={{ color:conta.saldo_restante>0?S.red:S.green, fontSize:12, fontWeight:700, margin:0, fontFamily:'monospace' }}>{fmt(conta.saldo_restante)}</p>
+                        <p style={{ color:conta.saldo_restante>0?S.red:S.green, fontSize:12, fontWeight:700, margin:0, fontFamily:'DM Mono, monospace', fontVariantNumeric:'tabular-nums' }}>{fmt(conta.saldo_restante)}</p>
                         {conta.valor_pago>0&&conta.saldo_restante>0&&<p style={{ color:S.label, fontSize:10, margin:0 }}>{((conta.valor_pago/conta.valor_total)*100).toFixed(0)}%</p>}
                       </td>
                       <td style={{ padding:'9px 12px', whiteSpace:'nowrap' }}>
@@ -555,7 +555,7 @@ const ContasPagar: React.FC = () => {
               <p style={{ color:S.muted, fontSize:12, margin:'0 0 8px' }}>{baixaModal.conta.descricao}</p>
               <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:8 }}>
                 {[['Total', fmt(baixaModal.conta.valor_total), S.text], ['Pago', fmt(baixaModal.conta.valor_pago), S.green], ['Saldo', fmt(baixaModal.conta.saldo_restante), S.orange]].map(([l,v,c],i)=>(
-                  <div key={i}><span style={{ color:S.label, fontSize:10 }}>{l}</span><p style={{ color:c as string, fontSize:13, fontWeight:700, margin:0, fontFamily:'monospace' }}>{v}</p></div>
+                  <div key={i}><span style={{ color:S.label, fontSize:10 }}>{l}</span><p style={{ color:c as string, fontSize:13, fontWeight:700, margin:0, fontFamily:'DM Mono, monospace', fontVariantNumeric:'tabular-nums' }}>{v}</p></div>
                 ))}
               </div>
             </div>

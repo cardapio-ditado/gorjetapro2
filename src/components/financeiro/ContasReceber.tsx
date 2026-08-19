@@ -17,8 +17,8 @@ interface ContaReceber {
 const fmt = (v: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
 
 const S = {
-  card: '#12141f', border: 'rgba(255,255,255,0.06)', label: 'rgba(255,255,255,0.35)',
-  text: 'rgba(255,255,255,0.85)', muted: 'rgba(255,255,255,0.5)',
+  card: '#12141f', border: 'rgba(255,255,255,0.06)', label: 'var(--text-secondary)',
+  text: 'var(--text-primary)', muted: 'rgba(255,255,255,0.5)',
   green: '#4ade80', red: '#f87171', blue: '#60a5fa', gold: '#D4AF37', orange: '#fb923c',
   greenBg: 'rgba(74,222,128,0.08)', redBg: 'rgba(248,113,113,0.08)',
   blueBg: 'rgba(96,165,250,0.08)', goldBg: 'rgba(212,175,55,0.08)',
@@ -217,7 +217,7 @@ const ContasReceber: React.FC = () => {
   const modalTitle: React.CSSProperties = { color: S.text, fontSize: 16, fontWeight: 700, margin: '0 0 20px' };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16, fontFamily: '-apple-system,BlinkMacSystemFont,"Inter",sans-serif' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
@@ -300,13 +300,13 @@ const ContasReceber: React.FC = () => {
                         {conta.esta_vencida && <p style={{ color: S.red, fontSize: 10, margin: 0 }}>{conta.dias_vencimento}d atraso</p>}
                       </td>
                       <td style={{ padding: '10px 14px', textAlign: 'right', whiteSpace: 'nowrap' }}>
-                        <span style={{ color: S.text, fontSize: 12, fontWeight: 600, fontFamily: 'monospace' }}>{fmt(conta.valor_total)}</span>
+                        <span style={{ color: S.text, fontSize: 12, fontWeight: 600, fontFamily:'DM Mono, monospace', fontVariantNumeric:'tabular-nums' }}>{fmt(conta.valor_total)}</span>
                       </td>
                       <td style={{ padding: '10px 14px', textAlign: 'right', whiteSpace: 'nowrap' }}>
-                        <span style={{ color: S.green, fontSize: 12, fontWeight: 600, fontFamily: 'monospace' }}>{fmt(conta.valor_recebido)}</span>
+                        <span style={{ color: S.green, fontSize: 12, fontWeight: 600, fontFamily:'DM Mono, monospace', fontVariantNumeric:'tabular-nums' }}>{fmt(conta.valor_recebido)}</span>
                       </td>
                       <td style={{ padding: '10px 14px', textAlign: 'right', whiteSpace: 'nowrap' }}>
-                        <span style={{ color: conta.saldo_restante > 0 ? S.orange : S.green, fontSize: 12, fontWeight: 600, fontFamily: 'monospace' }}>{fmt(conta.saldo_restante)}</span>
+                        <span style={{ color: conta.saldo_restante > 0 ? S.orange : S.green, fontSize: 12, fontWeight: 600, fontFamily:'DM Mono, monospace', fontVariantNumeric:'tabular-nums' }}>{fmt(conta.saldo_restante)}</span>
                       </td>
                       <td style={{ padding: '10px 14px', whiteSpace: 'nowrap' }}>
                         <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: st.bg, borderRadius: 20, padding: '3px 10px' }}>

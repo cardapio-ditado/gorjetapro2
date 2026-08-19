@@ -16,8 +16,8 @@ interface EstornoHistorico {
 const fmt = (v: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
 
 const S = {
-  card: '#12141f', border: 'rgba(255,255,255,0.06)', label: 'rgba(255,255,255,0.35)',
-  text: 'rgba(255,255,255,0.85)', muted: 'rgba(255,255,255,0.5)',
+  card: '#12141f', border: 'rgba(255,255,255,0.06)', label: 'var(--text-secondary)',
+  text: 'var(--text-primary)', muted: 'rgba(255,255,255,0.5)',
   green: '#4ade80', red: '#f87171', gold: '#D4AF37', orange: '#fb923c',
   greenBg: 'rgba(74,222,128,0.08)', redBg: 'rgba(248,113,113,0.08)',
   orangeBg: 'rgba(251,146,60,0.08)', orangeBorder: 'rgba(251,146,60,0.15)',
@@ -99,7 +99,7 @@ const HistoricoPagamentosEstorno: React.FC = () => {
   const modalCard: React.CSSProperties = { background: S.modalBg, border:`1px solid ${S.border}`, borderRadius:16, padding:24, width:'100%', maxWidth:480 };
 
   return (
-    <div style={{ display:'flex', flexDirection:'column', gap:16, fontFamily:'-apple-system,BlinkMacSystemFont,"Inter",sans-serif' }}>
+    <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
 
       {/* Aviso */}
       <div style={{ background: S.orangeBg, border:`1px solid ${S.orangeBorder}`, borderRadius:10, padding:'12px 16px', display:'flex', gap:10 }}>
@@ -184,7 +184,7 @@ const HistoricoPagamentosEstorno: React.FC = () => {
                         {p.observacoes && <p style={{ color:S.label, fontSize:10, margin:0 }}>{p.observacoes}</p>}
                       </td>
                       <td style={{ padding:'9px 14px', textAlign:'right', whiteSpace:'nowrap' }}>
-                        <span style={{ color:S.red, fontSize:12, fontWeight:700, fontFamily:'monospace' }}>{fmt(p.valor)}</span>
+                        <span style={{ color:S.red, fontSize:12, fontWeight:700, fontFamily:'DM Mono, monospace', fontVariantNumeric:'tabular-nums' }}>{fmt(p.valor)}</span>
                       </td>
                       <td style={{ padding:'9px 14px', textAlign:'right' }}>
                         <p style={{ color:S.muted, fontSize:12, margin:0 }}>{p.forma_pagamento_nome||'—'}</p>
@@ -234,7 +234,7 @@ const HistoricoPagamentosEstorno: React.FC = () => {
                 {estornos.map(e => (
                   <tr key={e.id} style={{ borderBottom:`1px solid rgba(255,255,255,0.03)` }}>
                     <td style={{ padding:'9px 14px' }}><span style={{ color:S.text, fontSize:12 }}>{dayjs(e.data_estorno).format('DD/MM/YY HH:mm')}</span></td>
-                    <td style={{ padding:'9px 14px' }}><span style={{ color:S.red, fontSize:12, fontWeight:700, fontFamily:'monospace' }}>{fmt(e.valor_estornado)}</span></td>
+                    <td style={{ padding:'9px 14px' }}><span style={{ color:S.red, fontSize:12, fontWeight:700, fontFamily:'DM Mono, monospace', fontVariantNumeric:'tabular-nums' }}>{fmt(e.valor_estornado)}</span></td>
                     <td style={{ padding:'9px 14px' }}><span style={{ color:S.muted, fontSize:12 }}>{e.motivo||'—'}</span></td>
                     <td style={{ padding:'9px 14px' }}><span style={{ color:S.label, fontSize:12 }}>{e.estornado_por_nome||'Sistema'}</span></td>
                   </tr>

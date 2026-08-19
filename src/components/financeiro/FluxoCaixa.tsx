@@ -250,12 +250,12 @@ const FluxoCaixa: React.FC = () => {
               ].map((r,i) => (
                 <div key={i} style={{ display:'flex', justifyContent:'space-between', background:'rgba(255,255,255,0.02)', padding:'8px 10px', borderRadius:7 }}>
                   <span style={{ color:S.label, fontSize:11 }}>{r.label}</span>
-                  <span style={{ color:r.color, fontWeight:700, fontSize:12, fontFamily:'monospace' }}>{r.value}</span>
+                  <span style={{ color:r.color, fontWeight:700, fontSize:12, fontFamily:'DM Mono, monospace', fontVariantNumeric:'tabular-nums' }}>{r.value}</span>
                 </div>
               ))}
               <div style={{ borderTop:`1px solid ${S.border}`, paddingTop:8, marginTop:2, display:'flex', justifyContent:'space-between', padding:'10px 10px 0' }}>
                 <span style={{ color:S.text, fontSize:13, fontWeight:600 }}>= Saldo Acumulado Final</span>
-                <span style={{ color:indicadores.saldo_total>=0?S.gold:S.red, fontWeight:800, fontSize:15, fontFamily:'monospace' }}>{fmt(indicadores.saldo_total)}</span>
+                <span style={{ color:indicadores.saldo_total>=0?S.gold:S.red, fontWeight:800, fontSize:15, fontFamily:'DM Mono, monospace', fontVariantNumeric:'tabular-nums' }}>{fmt(indicadores.saldo_total)}</span>
               </div>
             </div>
           </div>

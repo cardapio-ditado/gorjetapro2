@@ -1232,7 +1232,7 @@ const FidelidadeModule: React.FC = () => {
   }, []);
 
   return (
-    <div style={{ display: 'flex', minHeight: 'calc(100vh - 56px)', background: S.bg, fontFamily: 'Inter, sans-serif', margin: '-24px', marginTop: '-24px' }}>
+    <div style={{ display: 'flex', minHeight: 'calc(100vh - 56px)', background: S.bg, margin: '-24px', marginTop: '-24px' }}>
 
       {/* Sidebar */}
       <div style={{

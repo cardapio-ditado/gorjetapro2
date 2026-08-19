@@ -19,8 +19,8 @@ interface Lancamento {
 const fmt = (v: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
 
 const S = {
-  card: '#12141f', border: 'rgba(255,255,255,0.06)', label: 'rgba(255,255,255,0.35)',
-  text: 'rgba(255,255,255,0.85)', muted: 'rgba(255,255,255,0.5)',
+  card: '#12141f', border: 'rgba(255,255,255,0.06)', label: 'var(--text-secondary)',
+  text: 'var(--text-primary)', muted: 'rgba(255,255,255,0.5)',
   green: '#4ade80', red: '#f87171', blue: '#60a5fa', gold: '#D4AF37',
   greenBg: 'rgba(74,222,128,0.08)', redBg: 'rgba(248,113,113,0.08)',
   blueBg: 'rgba(96,165,250,0.08)', goldBg: 'rgba(212,175,55,0.08)',
@@ -169,7 +169,7 @@ const ExtratoDiario: React.FC = () => {
   const resultadoDia = (resumoDia?.total_entradas || 0) - (resumoDia?.total_saidas || 0);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16, fontFamily: '-apple-system,BlinkMacSystemFont,"Inter",sans-serif' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
       {/* ── Toggle de modo ── */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
@@ -268,12 +268,12 @@ const ExtratoDiario: React.FC = () => {
                 ].map((r, i) => (
                   <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '3px 0' }}>
                     <span style={{ color: S.muted, fontSize: 13 }}>{r.l}</span>
-                    <span style={{ color: r.c, fontSize: 13, fontFamily: 'monospace' }}>{r.v}</span>
+                    <span style={{ color: r.c, fontSize: 13, fontFamily:'DM Mono, monospace', fontVariantNumeric:'tabular-nums' }}>{r.v}</span>
                   </div>
                 ))}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: `1px solid ${S.border}`, marginTop: 6, paddingTop: 8 }}>
                   <span style={{ color: S.text, fontSize: 13, fontWeight: 700 }}>= Saldo Final</span>
-                  <span style={{ color: (resumoDia?.saldo_final || 0) >= 0 ? S.gold : S.red, fontSize: 13, fontWeight: 700, fontFamily: 'monospace' }}>{fmt(resumoDia?.saldo_final || 0)}</span>
+                  <span style={{ color: (resumoDia?.saldo_final || 0) >= 0 ? S.gold : S.red, fontSize: 13, fontWeight: 700, fontFamily:'DM Mono, monospace', fontVariantNumeric:'tabular-nums' }}>{fmt(resumoDia?.saldo_final || 0)}</span>
                 </div>
               </div>
 
@@ -300,7 +300,7 @@ const ExtratoDiario: React.FC = () => {
                               {l.categorias_financeiras?.nome || 'Sem categoria'}{l.centro_custo ? ` · ${l.centro_custo}` : ''}
                             </p>
                           </div>
-                          <span style={{ color: entrada ? S.green : S.red, fontSize: 13, fontWeight: 700, fontFamily: 'monospace', flexShrink: 0 }}>
+                          <span style={{ color: entrada ? S.green : S.red, fontSize: 13, fontWeight: 700, fontFamily:'DM Mono, monospace', fontVariantNumeric:'tabular-nums', flexShrink: 0 }}>
                             {entrada ? '+' : '−'} {fmt(Math.abs(Number(l.valor)))}
                           </span>
                         </div>
@@ -398,12 +398,12 @@ const ExtratoDiario: React.FC = () => {
                           <p style={{ color: S.label, fontSize: 10, margin: 0, textTransform: 'capitalize' }}>{dayjs(dia.data).format('dddd')}</p>
                         </td>
                         <td style={{ padding: '10px 14px', textAlign: 'right' }}>
-                          <span style={{ color: S.blue, fontSize: 12, fontWeight: 600, fontFamily: 'monospace' }}>{fmt(dia.saldo_anterior)}</span>
+                          <span style={{ color: S.blue, fontSize: 12, fontWeight: 600, fontFamily:'DM Mono, monospace', fontVariantNumeric:'tabular-nums' }}>{fmt(dia.saldo_anterior)}</span>
                         </td>
                         <td style={{ padding: '10px 14px', textAlign: 'right' }}>
                           {dia.qtd_entradas > 0 ? (
                             <>
-                              <p style={{ color: S.green, fontSize: 12, fontWeight: 700, margin: 0, fontFamily: 'monospace' }}>{fmt(dia.total_entradas)}</p>
+                              <p style={{ color: S.green, fontSize: 12, fontWeight: 700, margin: 0, fontFamily:'DM Mono, monospace', fontVariantNumeric:'tabular-nums' }}>{fmt(dia.total_entradas)}</p>
                               <p style={{ color: S.label, fontSize: 10, margin: 0 }}>{dia.qtd_entradas} lanç.</p>
                             </>
                           ) : <span style={{ color: S.muted, fontSize: 12 }}>—</span>}
@@ -411,13 +411,13 @@ const ExtratoDiario: React.FC = () => {
                         <td style={{ padding: '10px 14px', textAlign: 'right' }}>
                           {dia.qtd_saidas > 0 ? (
                             <>
-                              <p style={{ color: S.red, fontSize: 12, fontWeight: 700, margin: 0, fontFamily: 'monospace' }}>{fmt(dia.total_saidas)}</p>
+                              <p style={{ color: S.red, fontSize: 12, fontWeight: 700, margin: 0, fontFamily:'DM Mono, monospace', fontVariantNumeric:'tabular-nums' }}>{fmt(dia.total_saidas)}</p>
                               <p style={{ color: S.label, fontSize: 10, margin: 0 }}>{dia.qtd_saidas} lanç.</p>
                             </>
                           ) : <span style={{ color: S.muted, fontSize: 12 }}>—</span>}
                         </td>
                         <td style={{ padding: '10px 14px', textAlign: 'right' }}>
-                          <p style={{ color: dia.saldo_final >= 0 ? S.gold : S.red, fontSize: 12, fontWeight: 700, margin: 0, fontFamily: 'monospace' }}>{fmt(dia.saldo_final)}</p>
+                          <p style={{ color: dia.saldo_final >= 0 ? S.gold : S.red, fontSize: 12, fontWeight: 700, margin: 0, fontFamily:'DM Mono, monospace', fontVariantNumeric:'tabular-nums' }}>{fmt(dia.saldo_final)}</p>
                           <p style={{ color: S.label, fontSize: 10, margin: 0 }}>{dia.saldo_final >= dia.saldo_anterior ? '▲' : '▼'} {fmt(Math.abs(dia.saldo_final - dia.saldo_anterior))}</p>
                         </td>
                         <td style={{ padding: '10px 14px', textAlign: 'right' }}>

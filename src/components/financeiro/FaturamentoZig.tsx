@@ -23,8 +23,8 @@ const fmt   = (v: number) => new Intl.NumberFormat('pt-BR', { style: 'currency',
 const fmtK  = (v: number) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : String(Math.round(v));
 
 const S = {
-  card: '#12141f', border: 'rgba(255,255,255,0.06)', label: 'rgba(255,255,255,0.35)',
-  text: 'rgba(255,255,255,0.85)', muted: 'rgba(255,255,255,0.5)',
+  card: '#12141f', border: 'rgba(255,255,255,0.06)', label: 'var(--text-secondary)',
+  text: 'var(--text-primary)', muted: 'rgba(255,255,255,0.5)',
   green: '#4ade80', red: '#f87171', blue: '#60a5fa', gold: '#D4AF37', wine: '#7D1F2C',
   greenBg: 'rgba(74,222,128,0.08)', blueBg: 'rgba(96,165,250,0.08)',
   goldBg: 'rgba(212,175,55,0.08)', wineBg: 'rgba(125,31,44,0.12)',
@@ -114,7 +114,7 @@ const FaturamentoZig: React.FC = () => {
   }));
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16, fontFamily: '-apple-system,BlinkMacSystemFont,"Inter",sans-serif' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
       {/* Filtros + sincronizar */}
       <div style={{ background: S.card, borderRadius: 12, padding: '14px 16px', border: `1px solid ${S.border}`, display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -241,16 +241,16 @@ const FaturamentoZig: React.FC = () => {
                           <p style={{ color: fds ? S.gold : S.label, fontSize: 10, margin: 0 }}>{DIAS_SEMANA[dayjs(d.data).day()]}</p>
                         </td>
                         <td style={{ padding: '10px 14px', textAlign: 'right' }}>
-                          <span style={{ color: S.gold, fontSize: 13, fontWeight: 700, fontFamily: 'monospace' }}>{fmt(Number(d.total))}</span>
+                          <span style={{ color: S.gold, fontSize: 13, fontWeight: 700, fontFamily:'DM Mono, monospace', fontVariantNumeric:'tabular-nums' }}>{fmt(Number(d.total))}</span>
                         </td>
                         <td style={{ padding: '10px 14px', textAlign: 'right', color: S.muted, fontSize: 12 }}>{d.num_comandas}</td>
-                        <td style={{ padding: '10px 14px', textAlign: 'right', color: S.green, fontSize: 12, fontWeight: 600, fontFamily: 'monospace' }}>
+                        <td style={{ padding: '10px 14px', textAlign: 'right', color: S.green, fontSize: 12, fontWeight: 600, fontFamily:'DM Mono, monospace', fontVariantNumeric:'tabular-nums' }}>
                           {Number(d.num_comandas) > 0 ? fmt(Number(d.total) / Number(d.num_comandas)) : '—'}
                         </td>
-                        <td style={{ padding: '10px 14px', textAlign: 'right', color: S.text, fontSize: 12, fontFamily: 'monospace' }}>{fmt(Number(d.bebidas))}</td>
-                        <td style={{ padding: '10px 14px', textAlign: 'right', color: S.text, fontSize: 12, fontFamily: 'monospace' }}>{fmt(Number(d.alimentos))}</td>
-                        <td style={{ padding: '10px 14px', textAlign: 'right', color: S.muted, fontSize: 12, fontFamily: 'monospace' }}>{fmt(Number(d.couvert))}</td>
-                        <td style={{ padding: '10px 14px', textAlign: 'right', color: S.muted, fontSize: 12, fontFamily: 'monospace' }}>{fmt(Number(d.taxa_servico))}</td>
+                        <td style={{ padding: '10px 14px', textAlign: 'right', color: S.text, fontSize: 12, fontFamily:'DM Mono, monospace', fontVariantNumeric:'tabular-nums' }}>{fmt(Number(d.bebidas))}</td>
+                        <td style={{ padding: '10px 14px', textAlign: 'right', color: S.text, fontSize: 12, fontFamily:'DM Mono, monospace', fontVariantNumeric:'tabular-nums' }}>{fmt(Number(d.alimentos))}</td>
+                        <td style={{ padding: '10px 14px', textAlign: 'right', color: S.muted, fontSize: 12, fontFamily:'DM Mono, monospace', fontVariantNumeric:'tabular-nums' }}>{fmt(Number(d.couvert))}</td>
+                        <td style={{ padding: '10px 14px', textAlign: 'right', color: S.muted, fontSize: 12, fontFamily:'DM Mono, monospace', fontVariantNumeric:'tabular-nums' }}>{fmt(Number(d.taxa_servico))}</td>
                       </tr>
                     );
                   })}
@@ -258,11 +258,11 @@ const FaturamentoZig: React.FC = () => {
                 <tfoot>
                   <tr style={{ background: 'rgba(255,255,255,0.03)', borderTop: `1px solid ${S.border}` }}>
                     <td style={{ padding: '10px 14px', color: S.text, fontSize: 12, fontWeight: 700 }}>Total</td>
-                    <td style={{ padding: '10px 14px', textAlign: 'right', color: S.gold, fontSize: 13, fontWeight: 800, fontFamily: 'monospace' }}>{fmt(totalPeriodo)}</td>
-                    <td style={{ padding: '10px 14px', textAlign: 'right', color: S.text, fontSize: 12, fontWeight: 700, fontFamily: 'monospace' }}>{totComandas}</td>
-                    <td style={{ padding: '10px 14px', textAlign: 'right', color: S.green, fontSize: 12, fontWeight: 800, fontFamily: 'monospace' }}>{fmt(ticketMedio)}</td>
-                    <td style={{ padding: '10px 14px', textAlign: 'right', color: S.text, fontSize: 12, fontWeight: 700, fontFamily: 'monospace' }}>{fmt(totBebidas)}</td>
-                    <td style={{ padding: '10px 14px', textAlign: 'right', color: S.text, fontSize: 12, fontWeight: 700, fontFamily: 'monospace' }}>{fmt(totAlimentos)}</td>
+                    <td style={{ padding: '10px 14px', textAlign: 'right', color: S.gold, fontSize: 13, fontWeight: 800, fontFamily:'DM Mono, monospace', fontVariantNumeric:'tabular-nums' }}>{fmt(totalPeriodo)}</td>
+                    <td style={{ padding: '10px 14px', textAlign: 'right', color: S.text, fontSize: 12, fontWeight: 700, fontFamily:'DM Mono, monospace', fontVariantNumeric:'tabular-nums' }}>{totComandas}</td>
+                    <td style={{ padding: '10px 14px', textAlign: 'right', color: S.green, fontSize: 12, fontWeight: 800, fontFamily:'DM Mono, monospace', fontVariantNumeric:'tabular-nums' }}>{fmt(ticketMedio)}</td>
+                    <td style={{ padding: '10px 14px', textAlign: 'right', color: S.text, fontSize: 12, fontWeight: 700, fontFamily:'DM Mono, monospace', fontVariantNumeric:'tabular-nums' }}>{fmt(totBebidas)}</td>
+                    <td style={{ padding: '10px 14px', textAlign: 'right', color: S.text, fontSize: 12, fontWeight: 700, fontFamily:'DM Mono, monospace', fontVariantNumeric:'tabular-nums' }}>{fmt(totAlimentos)}</td>
                     <td colSpan={2} />
                   </tr>
                 </tfoot>
