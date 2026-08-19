@@ -12,6 +12,7 @@ export default {
         wine: {
           DEFAULT: '#7D1F2C',
           deep:    '#5C1520',
+          deepest: '#3d0e16',
           light:   '#9B2535',
           glow:    'rgba(125, 31, 44, 0.18)',
         },

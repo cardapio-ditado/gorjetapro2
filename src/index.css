@@ -7,6 +7,7 @@
   /* Brand */
   --wine:        #7D1F2C;
   --wine-deep:   #5C1520;
+  --wine-deepest:#3d0e16;  /* fim dos gradientes de banner (Dashboard, MeuPainel) */
   --wine-light:  #9B2535;
   --wine-glow:   rgba(125, 31, 44, 0.18);
   --gold:        #D4AF37;
