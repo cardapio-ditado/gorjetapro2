@@ -381,7 +381,9 @@ const ColaboradoresRH: React.FC = () => {
         email: colaborador.email || '',
         endereco: colaborador.endereco || '',
         observacoes: colaborador.observacoes || '',
-        status: colaborador.status
+        status: colaborador.status,
+        data_demissao: colaborador.data_demissao || '',
+        foto_url: colaborador.foto_url || ''
       });
     } else {
       setEditingColaborador(null);
