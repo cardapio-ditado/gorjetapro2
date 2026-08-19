@@ -4,7 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import {
   Home, DollarSign, Warehouse, Users, Music, CalendarDays,
   Settings, BookOpen, Target, ClipboardList,
-  TrendingUp, ChevronDown, LogOut, Star, X, LayoutDashboard,
+  TrendingUp, ChevronDown, LogOut, Star, X, LayoutDashboard, Hexagon,
 } from 'lucide-react';
 
 const ESTOQUE_SUBMODS_ADMIN = [
@@ -41,7 +41,7 @@ export interface Module {
 }
 
 export const MODULES: Module[] = [
-  { name: 'Dashboard',      path: '/',                   icon: Home,          slug: 'dashboard',       group: 'operacao' },
+  { name: 'Dashboard',      path: '/dashboard',          icon: Home,          slug: 'dashboard',       group: 'operacao' },
   { name: 'Portal do Gerente', path: '/portal-gerente',  icon: LayoutDashboard, slug: 'dashboard',     group: 'operacao' },
   { name: 'Agenda do Dia',  path: '/agenda-diaria',      icon: ClipboardList, slug: 'dashboard',       group: 'operacao' },
   { name: 'RH',             path: '/staff',              icon: Users,         slug: 'rh',              group: 'operacao',
@@ -137,7 +137,9 @@ const SidebarModern: React.FC<Props> = ({ onNavigate, onCloseMobile }) => {
 
   const renderModule = (m: Module) => {
     const active      = isModActive(m);
-    const open        = expanded === m.name;
+    // `expanded === null` = ninguém mexeu ainda: o módulo atual nasce aberto,
+    // porque com a lateral contextual ele é a única coisa na tela.
+    const open        = expanded === m.name || (expanded === null && moduloAtual?.name === m.name);
     const hasChildren = !!m.subModules?.length;
 
     const itemClass = `relative w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] font-medium transition-all duration-150 group ${
@@ -247,6 +249,16 @@ const SidebarModern: React.FC<Props> = ({ onNavigate, onCloseMobile }) => {
     </p>
   );
 
+  /**
+   * O módulo em que a pessoa está AGORA.
+   *
+   * A lateral deixou de listar os 14 módulos com ~60 subtelas de uma vez —
+   * isso virou o saguão ("/"). Aqui aparecem só as telas do módulo aberto,
+   * mais o caminho de volta. Fora de qualquer módulo (rota desconhecida), a
+   * lista completa continua sendo o plano B: uma lateral vazia parece defeito.
+   */
+  const moduloAtual = modulesWithDynamic.find(isModActive) ?? null;
+
   return (
     <div className="flex flex-col h-full" style={{ background: 'var(--bg-dark)' }}>
 
@@ -281,24 +293,47 @@ const SidebarModern: React.FC<Props> = ({ onNavigate, onCloseMobile }) => {
 
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto px-2 py-3 space-y-0.5 scrollbar-hide">
-        {operacao.length > 0 && (
-          <>
-            <GroupLabel>Operação</GroupLabel>
-            {operacao.map(renderModule)}
-          </>
-        )}
+        <Link
+          to="/"
+          onClick={onNavigate}
+          className="w-full flex items-center gap-2.5 px-2.5 py-2 mb-2 rounded-lg text-[13px] font-medium transition-all duration-150"
+          style={{
+            color: 'var(--gold)',
+            background: 'rgba(212,175,55,0.07)',
+            border: '1px solid rgba(212,175,55,0.14)',
+          }}
+        >
+          <Hexagon size={15} />
+          <span className="font-sans">Saguão</span>
+        </Link>
 
-        {gestao.length > 0 && (
+        {moduloAtual ? (
           <>
-            <GroupLabel>Gestão</GroupLabel>
-            {gestao.map(renderModule)}
+            <GroupLabel>Você está em</GroupLabel>
+            {renderModule(moduloAtual)}
           </>
-        )}
-
-        {sistema.length > 0 && (
+        ) : (
           <>
-            <GroupLabel>Sistema</GroupLabel>
-            {sistema.map(renderModule)}
+            {operacao.length > 0 && (
+              <>
+                <GroupLabel>Operação</GroupLabel>
+                {operacao.map(renderModule)}
+              </>
+            )}
+
+            {gestao.length > 0 && (
+              <>
+                <GroupLabel>Gestão</GroupLabel>
+                {gestao.map(renderModule)}
+              </>
+            )}
+
+            {sistema.length > 0 && (
+              <>
+                <GroupLabel>Sistema</GroupLabel>
+                {sistema.map(renderModule)}
+              </>
+            )}
           </>
         )}
       </nav>
