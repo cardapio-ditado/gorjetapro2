@@ -307,7 +307,7 @@ export default function RequisicaoPublica() {
                   type="text"
                   value={funcionarioNome}
                   onChange={(e) => setFuncionarioNome(e.target.value)}
-                  className="w-full px-4 py-2 bg-[#12141f]/5 border border-white/20 rounded-lg text-white placeholder-white/30 focus:ring-2 focus:ring-[#7D1F2C] focus:border-transparent"
+                  className="w-full px-4 py-2 bg-[#12141f]/5 border border-white/20 rounded-lg text-white placeholder-white/30 focus:ring-2 focus:ring-wine focus:border-transparent"
                   placeholder="Digite seu nome completo"
                 />
               </div>
@@ -319,7 +319,7 @@ export default function RequisicaoPublica() {
                   type="tel"
                   value={whatsapp}
                   onChange={(e) => setWhatsapp(e.target.value)}
-                  className="w-full px-4 py-2 bg-[#12141f]/5 border border-white/20 rounded-lg text-white placeholder-white/30 focus:ring-2 focus:ring-[#7D1F2C] focus:border-transparent"
+                  className="w-full px-4 py-2 bg-[#12141f]/5 border border-white/20 rounded-lg text-white placeholder-white/30 focus:ring-2 focus:ring-wine focus:border-transparent"
                   placeholder="(00) 00000-0000"
                 />
               </div>
@@ -331,7 +331,7 @@ export default function RequisicaoPublica() {
                   type="text"
                   value={setor}
                   onChange={(e) => setSetor(e.target.value)}
-                  className="w-full px-4 py-2 bg-[#12141f]/5 border border-white/20 rounded-lg text-white placeholder-white/30 focus:ring-2 focus:ring-[#7D1F2C] focus:border-transparent"
+                  className="w-full px-4 py-2 bg-[#12141f]/5 border border-white/20 rounded-lg text-white placeholder-white/30 focus:ring-2 focus:ring-wine focus:border-transparent"
                   placeholder="Ex: Cozinha, Bar, Salão..."
                 />
               </div>
@@ -400,7 +400,7 @@ export default function RequisicaoPublica() {
                       value={quantidadeItem}
                       onChange={(e) => setQuantidadeItem(e.target.value)}
                       placeholder="Quantidade"
-                      className="w-full px-4 py-2 bg-[#12141f]/5 border border-white/20 rounded-lg text-white placeholder-white/30 focus:ring-2 focus:ring-[#7D1F2C] focus:border-transparent"
+                      className="w-full px-4 py-2 bg-[#12141f]/5 border border-white/20 rounded-lg text-white placeholder-white/30 focus:ring-2 focus:ring-wine focus:border-transparent"
                     />
                   </div>
                   <div className="md:col-span-3">
@@ -409,7 +409,7 @@ export default function RequisicaoPublica() {
                       value={observacaoItem}
                       onChange={(e) => setObservacaoItem(e.target.value)}
                       placeholder="Observação (opcional)"
-                      className="w-full px-4 py-2 bg-[#12141f]/5 border border-white/20 rounded-lg text-white placeholder-white/30 focus:ring-2 focus:ring-[#7D1F2C] focus:border-transparent"
+                      className="w-full px-4 py-2 bg-[#12141f]/5 border border-white/20 rounded-lg text-white placeholder-white/30 focus:ring-2 focus:ring-wine focus:border-transparent"
                     />
                   </div>
                   <div className="md:col-span-2">
@@ -470,7 +470,7 @@ export default function RequisicaoPublica() {
               value={observacoes}
               onChange={(e) => setObservacoes(e.target.value)}
               rows={3}
-              className="w-full px-4 py-2 bg-[#12141f]/5 border border-white/20 rounded-lg text-white placeholder-white/30 focus:ring-2 focus:ring-[#7D1F2C] focus:border-transparent"
+              className="w-full px-4 py-2 bg-[#12141f]/5 border border-white/20 rounded-lg text-white placeholder-white/30 focus:ring-2 focus:ring-wine focus:border-transparent"
               placeholder="Informações adicionais sobre sua requisição..."
             />
           </div>

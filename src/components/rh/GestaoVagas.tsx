@@ -182,7 +182,7 @@ const GestaoVagas: React.FC = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7D1F2C]"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-wine"></div>
       </div>
     );
   }
@@ -200,7 +200,7 @@ const GestaoVagas: React.FC = () => {
             console.log('Abrindo formulário. Cargos disponíveis:', cargos.length);
             setShowForm(true);
           }}
-          className="px-4 py-2 bg-gradient-to-r from-[#7D1F2C] to-[#D4AF37] text-white rounded-lg hover:opacity-90 flex items-center gap-2"
+          className="px-4 py-2 bg-gradient-to-r from-wine to-gold text-white rounded-lg hover:opacity-90 flex items-center gap-2"
         >
           <Plus className="w-5 h-5" />
           Nova Vaga
@@ -216,13 +216,13 @@ const GestaoVagas: React.FC = () => {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Buscar vagas..."
-            className="w-full pl-10 pr-4 py-2 border border-white/20 rounded-lg focus:ring-2 focus:ring-[#7D1F2C]"
+            className="w-full pl-10 pr-4 py-2 border border-white/20 rounded-lg focus:ring-2 focus:ring-wine"
           />
         </div>
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="px-4 py-2 border border-white/20 rounded-lg focus:ring-2 focus:ring-[#7D1F2C]"
+          className="px-4 py-2 border border-white/20 rounded-lg focus:ring-2 focus:ring-wine"
         >
           <option value="todas">Todas</option>
           <option value="aberta">Abertas</option>
@@ -335,7 +335,7 @@ const GestaoVagas: React.FC = () => {
                   <select
                     value={formData.cargo_id}
                     onChange={(e) => handleCargoChange(e.target.value)}
-                    className="w-full px-4 py-2 border border-white/20 rounded-lg focus:ring-2 focus:ring-[#7D1F2C]"
+                    className="w-full px-4 py-2 border border-white/20 rounded-lg focus:ring-2 focus:ring-wine"
                     required
                   >
                     <option value="">Selecione um cargo</option>
@@ -361,7 +361,7 @@ const GestaoVagas: React.FC = () => {
                     type="text"
                     value={formData.titulo}
                     onChange={(e) => setFormData({ ...formData, titulo: e.target.value })}
-                    className="w-full px-4 py-2 border border-white/20 rounded-lg focus:ring-2 focus:ring-[#7D1F2C]"
+                    className="w-full px-4 py-2 border border-white/20 rounded-lg focus:ring-2 focus:ring-wine"
                     required
                   />
                 </div>
@@ -374,7 +374,7 @@ const GestaoVagas: React.FC = () => {
                     value={formData.descricao}
                     onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
                     rows={4}
-                    className="w-full px-4 py-2 border border-white/20 rounded-lg focus:ring-2 focus:ring-[#7D1F2C]"
+                    className="w-full px-4 py-2 border border-white/20 rounded-lg focus:ring-2 focus:ring-wine"
                     required
                   />
                 </div>
@@ -387,7 +387,7 @@ const GestaoVagas: React.FC = () => {
                     value={formData.requisitos}
                     onChange={(e) => setFormData({ ...formData, requisitos: e.target.value })}
                     rows={4}
-                    className="w-full px-4 py-2 border border-white/20 rounded-lg focus:ring-2 focus:ring-[#7D1F2C]"
+                    className="w-full px-4 py-2 border border-white/20 rounded-lg focus:ring-2 focus:ring-wine"
                     placeholder="Liste os requisitos obrigatórios e desejáveis"
                     required
                   />
@@ -401,7 +401,7 @@ const GestaoVagas: React.FC = () => {
                     type="text"
                     value={formData.local_trabalho}
                     onChange={(e) => setFormData({ ...formData, local_trabalho: e.target.value })}
-                    className="w-full px-4 py-2 border border-white/20 rounded-lg focus:ring-2 focus:ring-[#7D1F2C]"
+                    className="w-full px-4 py-2 border border-white/20 rounded-lg focus:ring-2 focus:ring-wine"
                     placeholder="Ex: Cuiabá - MT"
                   />
                 </div>
@@ -413,7 +413,7 @@ const GestaoVagas: React.FC = () => {
                   <select
                     value={formData.regime_contratual}
                     onChange={(e) => setFormData({ ...formData, regime_contratual: e.target.value })}
-                    className="w-full px-4 py-2 border border-white/20 rounded-lg focus:ring-2 focus:ring-[#7D1F2C]"
+                    className="w-full px-4 py-2 border border-white/20 rounded-lg focus:ring-2 focus:ring-wine"
                   >
                     <option value="CLT">CLT</option>
                     <option value="PJ">PJ</option>
@@ -431,7 +431,7 @@ const GestaoVagas: React.FC = () => {
                     type="text"
                     value={formData.salario_faixa}
                     onChange={(e) => setFormData({ ...formData, salario_faixa: e.target.value })}
-                    className="w-full px-4 py-2 border border-white/20 rounded-lg focus:ring-2 focus:ring-[#7D1F2C]"
+                    className="w-full px-4 py-2 border border-white/20 rounded-lg focus:ring-2 focus:ring-wine"
                     placeholder="Ex: R$ 2.500 - R$ 3.500"
                   />
                 </div>
@@ -443,7 +443,7 @@ const GestaoVagas: React.FC = () => {
                   <select
                     value={formData.status}
                     onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
-                    className="w-full px-4 py-2 border border-white/20 rounded-lg focus:ring-2 focus:ring-[#7D1F2C]"
+                    className="w-full px-4 py-2 border border-white/20 rounded-lg focus:ring-2 focus:ring-wine"
                   >
                     <option value="aberta">Aberta</option>
                     <option value="pausada">Pausada</option>
@@ -459,7 +459,7 @@ const GestaoVagas: React.FC = () => {
                     value={formData.beneficios}
                     onChange={(e) => setFormData({ ...formData, beneficios: e.target.value })}
                     rows={3}
-                    className="w-full px-4 py-2 border border-white/20 rounded-lg focus:ring-2 focus:ring-[#7D1F2C]"
+                    className="w-full px-4 py-2 border border-white/20 rounded-lg focus:ring-2 focus:ring-wine"
                     placeholder="Vale alimentação, plano de saúde, etc."
                   />
                 </div>
@@ -475,7 +475,7 @@ const GestaoVagas: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2 bg-gradient-to-r from-[#7D1F2C] to-[#D4AF37] text-white rounded-lg hover:opacity-90"
+                  className="px-6 py-2 bg-gradient-to-r from-wine to-gold text-white rounded-lg hover:opacity-90"
                 >
                   {editando ? 'Salvar Alterações' : 'Criar Vaga'}
                 </button>

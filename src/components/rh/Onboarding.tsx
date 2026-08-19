@@ -55,7 +55,7 @@ interface Colaborador {
   nome_completo: string;
 }
 
-const inp = 'w-full bg-white/5 border border-white/15 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-[#7D1F2C]/60 focus:ring-1 focus:ring-[#7D1F2C]/40';
+const inp = 'w-full bg-white/5 border border-white/15 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-wine/60 focus:ring-1 focus:ring-wine/40';
 const sel = inp + ' appearance-none';
 
 export default function Onboarding() {
@@ -185,19 +185,19 @@ export default function Onboarding() {
         <div className="flex gap-2">
           {(['instancias', 'templates'] as const).map(t => (
             <button key={t} onClick={() => setAba(t)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${aba === t ? 'bg-[#7D1F2C] text-white' : 'bg-white/5 text-white/60 hover:text-white hover:bg-white/10'}`}>
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${aba === t ? 'bg-wine text-white' : 'bg-white/5 text-white/60 hover:text-white hover:bg-white/10'}`}>
               {t === 'instancias' ? 'Em Andamento' : 'Templates'}
             </button>
           ))}
         </div>
         {aba === 'instancias' ? (
           <button onClick={() => { setForm({}); setModalNova(true); }}
-            className="flex items-center gap-2 px-4 py-2 bg-[#7D1F2C] hover:bg-[#9b2535] text-white rounded-xl text-sm font-medium transition-all">
+            className="flex items-center gap-2 px-4 py-2 bg-wine hover:bg-wine-light text-white rounded-xl text-sm font-medium transition-all">
             <Plus className="w-4 h-4" />Iniciar Onboarding
           </button>
         ) : (
           <button onClick={() => { setTemplateForm({}); setTemplateTarefas([{ titulo: '', prazo_dias: 1, responsavel: '', ordem: 0 }]); setModalTemplate('novo'); }}
-            className="flex items-center gap-2 px-4 py-2 bg-[#7D1F2C] hover:bg-[#9b2535] text-white rounded-xl text-sm font-medium transition-all">
+            className="flex items-center gap-2 px-4 py-2 bg-wine hover:bg-wine-light text-white rounded-xl text-sm font-medium transition-all">
             <Plus className="w-4 h-4" />Novo Template
           </button>
         )}
@@ -232,7 +232,7 @@ export default function Onboarding() {
                     <span>{prog}%</span>
                   </div>
                   <div className="h-2 bg-white/10 rounded-full overflow-hidden">
-                    <div className="h-full bg-gradient-to-r from-[#7D1F2C] to-[#D4AF37] rounded-full transition-all duration-500" style={{ width: `${prog}%` }} />
+                    <div className="h-full bg-gradient-to-r from-wine to-gold rounded-full transition-all duration-500" style={{ width: `${prog}%` }} />
                   </div>
                 </div>
                 <div className="flex items-center justify-between">
@@ -245,7 +245,7 @@ export default function Onboarding() {
                     )}
                   </div>
                   <button onClick={() => abrirInstancia(inst)}
-                    className="flex items-center gap-1 text-xs text-[#D4AF37] hover:text-white transition-all">
+                    className="flex items-center gap-1 text-xs text-gold hover:text-white transition-all">
                     Ver tarefas<ChevronRight className="w-3 h-3" />
                   </button>
                 </div>
@@ -339,7 +339,7 @@ export default function Onboarding() {
             <div className="p-6 border-t border-white/10 flex justify-end gap-3">
               <button onClick={() => setModalNova(false)} className="px-4 py-2 rounded-xl text-white/60 hover:text-white hover:bg-white/5 text-sm transition-all">Cancelar</button>
               <button onClick={iniciarOnboarding} disabled={salvando || !form.colaborador_id || !form.template_id}
-                className="px-6 py-2 bg-[#7D1F2C] hover:bg-[#9b2535] text-white rounded-xl text-sm font-medium transition-all disabled:opacity-50">
+                className="px-6 py-2 bg-wine hover:bg-wine-light text-white rounded-xl text-sm font-medium transition-all disabled:opacity-50">
                 {salvando ? 'Iniciando...' : 'Iniciar'}
               </button>
             </div>
@@ -370,7 +370,7 @@ export default function Onboarding() {
                 <div className="flex items-center justify-between mb-2">
                   <label className="text-white/60 text-xs">Tarefas do Template</label>
                   <button onClick={() => setTemplateTarefas(t => [...t, { titulo: '', prazo_dias: 1, responsavel: '', ordem: t.length }])}
-                    className="flex items-center gap-1 text-xs text-[#D4AF37] hover:text-white transition-all">
+                    className="flex items-center gap-1 text-xs text-gold hover:text-white transition-all">
                     <Plus className="w-3 h-3" />Adicionar
                   </button>
                 </div>
@@ -400,7 +400,7 @@ export default function Onboarding() {
             <div className="p-6 border-t border-white/10 flex justify-end gap-3">
               <button onClick={() => setModalTemplate(null)} className="px-4 py-2 rounded-xl text-white/60 hover:text-white hover:bg-white/5 text-sm transition-all">Cancelar</button>
               <button onClick={salvarTemplate} disabled={salvando}
-                className="px-6 py-2 bg-[#7D1F2C] hover:bg-[#9b2535] text-white rounded-xl text-sm font-medium transition-all disabled:opacity-50">
+                className="px-6 py-2 bg-wine hover:bg-wine-light text-white rounded-xl text-sm font-medium transition-all disabled:opacity-50">
                 {salvando ? 'Salvando...' : 'Salvar Template'}
               </button>
             </div>

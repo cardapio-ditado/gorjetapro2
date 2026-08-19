@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Target, Award, TrendingUp, CheckCircle, AlertCircle, Plus, CreditCard as Edit2, Trash2, X, Save, ChevronDown, ChevronUp } from 'lucide-react';
 import { cargoService, Cargo } from '../../services/rhService';
 
-const inp = 'w-full bg-white/5 border border-white/15 rounded-xl px-3 py-2 text-white text-sm placeholder-white/30 focus:outline-none focus:border-[#7D1F2C]/60';
-const sel = 'w-full bg-[#0e1019] border border-white/15 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-[#7D1F2C]/60';
+const inp = 'w-full bg-white/5 border border-white/15 rounded-xl px-3 py-2 text-white text-sm placeholder-white/30 focus:outline-none focus:border-wine/60';
+const sel = 'w-full bg-[#0e1019] border border-white/15 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-wine/60';
 
 type CargoForm = {
   nome: string;
@@ -157,7 +157,7 @@ const GestaoCargos: React.FC = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7D1F2C]"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-wine"></div>
       </div>
     );
   }
@@ -171,7 +171,7 @@ const GestaoCargos: React.FC = () => {
         </div>
         <button
           onClick={abrirNovo}
-          className="flex items-center gap-2 px-4 py-2 bg-[#7D1F2C] text-white rounded-xl hover:bg-[#9D2F3C] transition-colors text-sm font-medium"
+          className="flex items-center gap-2 px-4 py-2 bg-wine text-white rounded-xl hover:bg-[#9D2F3C] transition-colors text-sm font-medium"
         >
           <Plus className="w-4 h-4" />
           Novo Cargo
@@ -193,7 +193,7 @@ const GestaoCargos: React.FC = () => {
               onClick={() => setSelectedCargo(cargo)}
               className={`p-4 border rounded-xl cursor-pointer transition-all ${
                 selectedCargo?.id === cargo.id
-                  ? 'border-[#7D1F2C] bg-[#7D1F2C]/10'
+                  ? 'border-wine bg-wine/10'
                   : 'border-white/10 hover:border-white/20 bg-[#12141f]'
               }`}
             >
@@ -254,7 +254,7 @@ const GestaoCargos: React.FC = () => {
               {selectedCargo.missao && (
                 <div>
                   <h4 className="font-semibold text-white mb-2 flex items-center gap-2 text-sm">
-                    <Target className="w-4 h-4 text-[#7D1F2C]" /> Missão
+                    <Target className="w-4 h-4 text-wine" /> Missão
                   </h4>
                   <p className="text-white/70 text-sm bg-white/5 p-3 rounded-xl">{selectedCargo.missao}</p>
                 </div>
@@ -308,14 +308,14 @@ const GestaoCargos: React.FC = () => {
               {selectedCargo.indicadores?.length > 0 && (
                 <div>
                   <h4 className="font-semibold text-white mb-2 flex items-center gap-2 text-sm">
-                    <TrendingUp className="w-4 h-4 text-[#D4AF37]" /> Indicadores
+                    <TrendingUp className="w-4 h-4 text-gold" /> Indicadores
                   </h4>
                   <div className="space-y-2">
                     {selectedCargo.indicadores.map((ind, i) => (
                       <div key={i} className="bg-white/5 p-3 rounded-xl">
                         <div className="flex items-center justify-between mb-0.5">
                           <span className="font-medium text-sm text-white">{ind.nome}</span>
-                          <span className="text-xs text-[#7D1F2C] font-medium">Meta: {ind.meta}</span>
+                          <span className="text-xs text-wine font-medium">Meta: {ind.meta}</span>
                         </div>
                         {ind.descricao && <p className="text-xs text-white/40">{ind.descricao}</p>}
                       </div>
@@ -442,7 +442,7 @@ const GestaoCargos: React.FC = () => {
                       </div>
                       <div className="flex gap-2">
                         <button onClick={() => setShowIndicadorForm(false)} className="flex-1 py-1.5 border border-white/15 text-white/50 rounded-lg text-xs">Cancelar</button>
-                        <button onClick={adicionarIndicador} className="flex-1 py-1.5 bg-[#7D1F2C] text-white rounded-lg text-xs">Adicionar</button>
+                        <button onClick={adicionarIndicador} className="flex-1 py-1.5 bg-wine text-white rounded-lg text-xs">Adicionar</button>
                       </div>
                     </div>
                   ) : (
@@ -460,7 +460,7 @@ const GestaoCargos: React.FC = () => {
                 Cancelar
               </button>
               <button onClick={salvar} disabled={saving}
-                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-[#7D1F2C] text-white rounded-xl hover:bg-[#9D2F3C] disabled:opacity-50 text-sm font-medium">
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-wine text-white rounded-xl hover:bg-[#9D2F3C] disabled:opacity-50 text-sm font-medium">
                 <Save className="w-4 h-4" />
                 {saving ? 'Salvando...' : editingCargo ? 'Salvar Alterações' : 'Criar Cargo'}
               </button>

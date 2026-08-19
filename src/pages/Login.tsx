@@ -129,7 +129,7 @@ const Login: React.FC = () => {
                     type="email"
                     value={resetEmail}
                     onChange={(e) => setResetEmail(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 rounded-xl focus:ring-2 focus:ring-[#D4AF37] transition-all duration-200"
+                    className="w-full pl-10 pr-4 py-3 rounded-xl focus:ring-2 focus:ring-gold transition-all duration-200"
                     style={{ background: 'rgba(8,12,20,0.60)', border: '1px solid rgba(255,255,255,0.14)', color: 'var(--text-primary)' }}
                     placeholder="seu.email@ditadopopular.com"
                     required
@@ -173,7 +173,7 @@ const Login: React.FC = () => {
                       type="email"
                       value={formData.email}
                       onChange={(e) => handleInputChange('email', e.target.value)}
-                      className="w-full pl-10 pr-4 py-3 rounded-xl focus:ring-2 focus:ring-[#D4AF37] transition-all duration-200"
+                      className="w-full pl-10 pr-4 py-3 rounded-xl focus:ring-2 focus:ring-gold transition-all duration-200"
                       style={{ background: 'rgba(8,12,20,0.60)', border: '1px solid rgba(255,255,255,0.14)', color: 'var(--text-primary)' }}
                       placeholder="seu.email@ditadopopular.com"
                       required
@@ -192,7 +192,7 @@ const Login: React.FC = () => {
                       type={showPassword ? 'text' : 'password'}
                       value={formData.senha}
                       onChange={(e) => handleInputChange('senha', e.target.value)}
-                      className="w-full pl-10 pr-12 py-3 rounded-xl focus:ring-2 focus:ring-[#D4AF37] transition-all duration-200"
+                      className="w-full pl-10 pr-12 py-3 rounded-xl focus:ring-2 focus:ring-gold transition-all duration-200"
                       style={{ background: 'rgba(8,12,20,0.60)', border: '1px solid rgba(255,255,255,0.14)', color: 'var(--text-primary)' }}
                       placeholder="••••••••"
                       required

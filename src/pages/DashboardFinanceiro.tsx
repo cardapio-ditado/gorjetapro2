@@ -304,7 +304,7 @@ export default function DashboardFinanceiro() {
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
           <h1 className="text-2xl font-extrabold text-white tracking-tight">
-            Dashboard <span className="bg-gradient-to-r from-[#7D1F2C] to-[#D4AF37] bg-clip-text text-transparent">Financeiro</span>
+            Dashboard <span className="bg-gradient-to-r from-wine to-gold bg-clip-text text-transparent">Financeiro</span>
           </h1>
           <p className="text-sm text-white/30 mt-0.5">
             {mesAtualNome} {new Date().getFullYear()} · Dados em tempo real
@@ -354,7 +354,7 @@ export default function DashboardFinanceiro() {
               key={u.key}
               onClick={() => setFiltroUrg(filtroUrg === u.key ? 'todas' : u.key)}
               className={`rounded-2xl border p-4 text-left transition-all hover:shadow-md ${u.cor} ${
-                filtroUrg === u.key ? 'ring-2 ring-offset-1 ring-[#7D1F2C]' : ''
+                filtroUrg === u.key ? 'ring-2 ring-offset-1 ring-wine' : ''
               }`}
             >
               {loading
@@ -477,7 +477,7 @@ export default function DashboardFinanceiro() {
             <span className="text-[10px] text-white/30 font-medium">Ordenar:</span>
             <button
               onClick={() => setSortCat(s => s === 'valor' ? 'nome' : 'valor')}
-              className="text-[10px] font-semibold text-[#7D1F2C] hover:underline"
+              className="text-[10px] font-semibold text-wine hover:underline"
             >
               {sortCat === 'valor' ? 'Por valor' : 'A–Z'}
             </button>
@@ -487,7 +487,7 @@ export default function DashboardFinanceiro() {
         {/* Legenda */}
         <div className="flex items-center gap-4 px-5 py-2 bg-[#12141f]/5 border-b border-white/5">
           <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-sm bg-[#7D1F2C]" />
+            <div className="w-3 h-3 rounded-sm bg-wine" />
             <span className="text-[10px] font-semibold text-white/60">Mês atual</span>
           </div>
           <div className="flex items-center gap-1.5">
@@ -529,7 +529,7 @@ export default function DashboardFinanceiro() {
                     {/* Barras duplas */}
                     <div className="space-y-1">
                       <div className="h-1.5 rounded-full bg-[#12141f]/10 overflow-hidden">
-                        <div className="h-full rounded-full bg-[#7D1F2C] transition-all duration-700"
+                        <div className="h-full rounded-full bg-wine transition-all duration-700"
                           style={{ width: `${barAtual}%` }} />
                       </div>
                       {c.mes_anterior > 0 && (

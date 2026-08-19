@@ -127,8 +127,8 @@ export default function ContagemMobile() {
 
   if (loading) return (
     <div className="min-h-screen bg-[#0a0c14] flex flex-col items-center justify-center gap-4">
-      <div className="w-12 h-12 rounded-2xl bg-[#7D1F2C]/20 flex items-center justify-center">
-        <ClipboardList className="w-6 h-6 text-[#7D1F2C]" />
+      <div className="w-12 h-12 rounded-2xl bg-wine/20 flex items-center justify-center">
+        <ClipboardList className="w-6 h-6 text-wine" />
       </div>
       <Loader2 className="w-6 h-6 animate-spin text-white/40" />
       <p className="text-sm text-white/40">Carregando contagem...</p>
@@ -155,8 +155,8 @@ export default function ContagemMobile() {
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 mb-0.5">
-              <div className="w-6 h-6 rounded-lg bg-[#7D1F2C]/20 flex items-center justify-center shrink-0">
-                <ClipboardList className="w-3.5 h-3.5 text-[#7D1F2C]" />
+              <div className="w-6 h-6 rounded-lg bg-wine/20 flex items-center justify-center shrink-0">
+                <ClipboardList className="w-3.5 h-3.5 text-wine" />
               </div>
               <span className="text-[11px] text-white/40 uppercase tracking-wider font-semibold">Contagem de Estoque</span>
             </div>
@@ -175,7 +175,7 @@ export default function ContagemMobile() {
         <div className="mt-3 flex items-center gap-2">
           <div className="flex-1 bg-white/10 rounded-full h-2 overflow-hidden">
             <div
-              className="h-full bg-gradient-to-r from-[#7D1F2C] to-[#D4AF37] rounded-full transition-all duration-500"
+              className="h-full bg-gradient-to-r from-wine to-gold rounded-full transition-all duration-500"
               style={{ width: `${progressPct}%` }}
             />
           </div>
@@ -192,7 +192,7 @@ export default function ContagemMobile() {
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
             placeholder="Buscar por nome ou código..."
-            className="w-full pl-8 pr-3 py-2 text-sm border border-white/10 rounded-xl bg-white/5 text-white focus:outline-none focus:ring-2 focus:ring-[#7D1F2C]/30 focus:border-[#7D1F2C]"
+            className="w-full pl-8 pr-3 py-2 text-sm border border-white/10 rounded-xl bg-white/5 text-white focus:outline-none focus:ring-2 focus:ring-wine/30 focus:border-wine"
           />
         </div>
         <button
@@ -313,7 +313,7 @@ export default function ContagemMobile() {
                           ? 'border-green-500/50 bg-green-500/10 text-green-300 focus:ring-green-500/20'
                           : isContado && dif !== 0
                           ? 'border-orange-500/50 bg-orange-500/10 text-orange-300 focus:ring-orange-500/20'
-                          : 'border-white/10 bg-white/5 text-white focus:ring-[#7D1F2C]/20 focus:border-[#7D1F2C]'
+                          : 'border-white/10 bg-white/5 text-white focus:ring-wine/20 focus:border-wine'
                       }`}
                     />
                   </div>
@@ -349,7 +349,7 @@ export default function ContagemMobile() {
                   value={item.observacao || ''}
                   onChange={e => handleObs(item.id, e.target.value)}
                   placeholder="Observação (opcional)..."
-                  className="w-full text-xs border border-white/10 rounded-xl px-3 py-2 focus:ring-2 focus:ring-[#7D1F2C]/20 focus:border-[#7D1F2C] bg-white/5 text-white"
+                  className="w-full text-xs border border-white/10 rounded-xl px-3 py-2 focus:ring-2 focus:ring-wine/20 focus:border-wine bg-white/5 text-white"
                 />
               </div>
             </div>

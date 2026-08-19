@@ -94,14 +94,14 @@ export default function GestaoEstrategica() {
     <div className="space-y-6 pb-12">
 
       {/* ══ HEADER HERO ═══════════════════════════════════════════════════ */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#7D1F2C] via-[#9B2535] to-[#3d0e16] p-6 shadow-2xl">
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-wine via-wine-light to-wine-deepest p-6 shadow-2xl">
         <div className="absolute inset-0 opacity-[0.07]"
           style={{backgroundImage:`repeating-linear-gradient(45deg, #D4AF37 0px, #D4AF37 1px, transparent 0px, transparent 50%),repeating-linear-gradient(-45deg, #D4AF37 0px, #D4AF37 1px, transparent 0px, transparent 50%)`, backgroundSize:'30px 30px'}}/>
-        <div className="absolute top-0 right-0 w-72 h-72 rounded-full bg-[#D4AF37] opacity-5 -translate-y-1/2 translate-x-1/3"/>
+        <div className="absolute top-0 right-0 w-72 h-72 rounded-full bg-gold opacity-5 -translate-y-1/2 translate-x-1/3"/>
 
         <div className="relative flex items-start justify-between gap-4 flex-wrap">
           <div>
-            <p className="text-[#D4AF37] text-[10px] font-black uppercase tracking-[0.3em] mb-2">Ditado Popular</p>
+            <p className="text-gold text-[10px] font-black uppercase tracking-[0.3em] mb-2">Ditado Popular</p>
             <h1 className="text-3xl font-black text-white tracking-tight">OKRs Estratégicos</h1>
             <p className="text-white/50 text-sm mt-1">Objetivos e resultados-chave por trimestre</p>
           </div>
@@ -132,7 +132,7 @@ export default function GestaoEstrategica() {
       <section className="bg-[#12141f] rounded-3xl border border-white/10 p-6">
         <div className="flex items-start justify-between mb-5 flex-wrap gap-3">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-gradient-to-br from-[#7D1F2C] to-[#c94454] shadow-sm">
+            <div className="p-2.5 rounded-xl bg-gradient-to-br from-wine to-[#c94454] shadow-sm">
               <Target className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -141,7 +141,7 @@ export default function GestaoEstrategica() {
             </div>
           </div>
           <button onClick={()=>setShowForm(v=>!v)}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-[#7D1F2C] to-[#9B2535] shadow-sm hover:shadow-md transition-all h-fit">
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-wine to-wine-light shadow-sm hover:shadow-md transition-all h-fit">
             <Plus className="w-3.5 h-3.5"/>
             Novo Objetivo
           </button>
@@ -149,23 +149,23 @@ export default function GestaoEstrategica() {
 
         {/* Formulário */}
         {showForm&&(
-          <div className="mb-5 border-2 border-dashed border-[#D4AF37]/40 rounded-2xl p-4 bg-white/5">
+          <div className="mb-5 border-2 border-dashed border-gold/40 rounded-2xl p-4 bg-white/5">
             <p className="text-xs font-bold text-white/60 mb-3 uppercase tracking-wide">Novo Objetivo</p>
             <div className="grid gap-3">
               <input value={newOkr.titulo} onChange={e=>setNewOkr(v=>({...v,titulo:e.target.value}))}
                 placeholder="Título do objetivo *"
-                className="w-full text-sm text-white border border-white/10 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#7D1F2C]/40 bg-[#0d0f1a]"/>
+                className="w-full text-sm text-white border border-white/10 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-wine/40 bg-[#0d0f1a]"/>
               <textarea value={newOkr.descricao} onChange={e=>setNewOkr(v=>({...v,descricao:e.target.value}))}
                 placeholder="Descrição (opcional)" rows={2}
-                className="w-full text-sm text-white border border-white/10 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#7D1F2C]/40 bg-[#0d0f1a] resize-none"/>
+                className="w-full text-sm text-white border border-white/10 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-wine/40 bg-[#0d0f1a] resize-none"/>
               <div className="grid grid-cols-2 gap-3">
                 <select value={newOkr.trimestre} onChange={e=>setNewOkr(v=>({...v,trimestre:e.target.value}))}
-                  className="text-sm text-white border border-white/10 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#7D1F2C]/40 bg-[#0d0f1a]">
+                  className="text-sm text-white border border-white/10 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-wine/40 bg-[#0d0f1a]">
                   {trimestres.map(t=><option key={t}>{t}</option>)}
                 </select>
                 <input value={newOkr.responsavel} onChange={e=>setNewOkr(v=>({...v,responsavel:e.target.value}))}
                   placeholder="Responsável"
-                  className="text-sm text-white border border-white/10 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#7D1F2C]/40 bg-[#0d0f1a]"/>
+                  className="text-sm text-white border border-white/10 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-wine/40 bg-[#0d0f1a]"/>
               </div>
               <div className="flex gap-2 justify-end">
                 <button onClick={()=>setShowForm(false)}
@@ -173,7 +173,7 @@ export default function GestaoEstrategica() {
                   Cancelar
                 </button>
                 <button onClick={saveOkr} disabled={saving||!newOkr.titulo.trim()}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-[#7D1F2C] to-[#9B2535] disabled:opacity-50 hover:shadow-md transition-all">
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-wine to-wine-light disabled:opacity-50 hover:shadow-md transition-all">
                   {saving?<Loader2 className="w-3.5 h-3.5 animate-spin"/>:<Check className="w-3.5 h-3.5"/>}
                   Salvar
                 </button>

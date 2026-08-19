@@ -750,7 +750,7 @@ const ProcessarConsumoExcel: React.FC<ProcessarConsumoExcelProps> = ({ onClose }
                   </button>
                   <button
                     onClick={onClose}
-                    className="flex-1 px-4 py-2 bg-[#7D1F2C] text-white rounded-lg hover:bg-[#6a1a25]"
+                    className="flex-1 px-4 py-2 bg-wine text-white rounded-lg hover:bg-[#6a1a25]"
                   >
                     Concluir
                   </button>

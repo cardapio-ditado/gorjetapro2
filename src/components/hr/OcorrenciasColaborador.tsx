@@ -66,10 +66,10 @@ const TIPOS_DISCIPLINARES = [
   { key: 'justa_causa',         label: 'Justa Causa',         cls: 'bg-red-900/30 text-red-300 border-red-800/50' },
   { key: 'elogio',              label: 'Elogio',              cls: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' },
   { key: 'reconhecimento',      label: 'Reconhecimento',      cls: 'bg-blue-500/20 text-blue-400 border-blue-500/30' },
-  { key: 'premio',              label: 'Prêmio',              cls: 'bg-[#D4AF37]/20 text-[#D4AF37] border-[#D4AF37]/30' },
+  { key: 'premio',              label: 'Prêmio',              cls: 'bg-gold/20 text-gold border-gold/30' },
 ];
 
-const inp = 'w-full bg-white/5 border border-white/15 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-[#7D1F2C]/60 focus:ring-1 focus:ring-[#7D1F2C]/40';
+const inp = 'w-full bg-white/5 border border-white/15 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-wine/60 focus:ring-1 focus:ring-wine/40';
 const sel = inp + ' appearance-none';
 
 const tipoFinColor = (tipo: string) =>
@@ -109,7 +109,7 @@ const OcorrenciasColaborador: React.FC = () => {
             onClick={() => setAbaAtiva(t.key as any)}
             className={`px-5 py-2 rounded-lg text-sm font-medium transition-all ${
               abaAtiva === t.key
-                ? 'bg-[#7D1F2C] text-white shadow'
+                ? 'bg-wine text-white shadow'
                 : 'text-white/60 hover:text-white hover:bg-white/5'
             }`}
           >
@@ -389,7 +389,7 @@ function OcorrenciasFinanceiras() {
               <button onClick={exportar} className="px-3 py-2 bg-white/5 border border-white/20 rounded-lg text-white/70 hover:bg-white/10 text-sm flex items-center gap-2">
                 <Download className="w-4 h-4" /> Exportar Excel
               </button>
-              <button onClick={() => openForm()} className="px-4 py-2 bg-[#7D1F2C] text-white rounded-lg hover:bg-[#6a1a25] text-sm flex items-center gap-2">
+              <button onClick={() => openForm()} className="px-4 py-2 bg-wine text-white rounded-lg hover:bg-[#6a1a25] text-sm flex items-center gap-2">
                 <Plus className="w-4 h-4" /> Nova Ocorrência
               </button>
             </div>
@@ -401,7 +401,7 @@ function OcorrenciasFinanceiras() {
           <div className="bg-white/5 border border-white/10 rounded-xl overflow-hidden">
             {loading ? (
               <div className="flex justify-center items-center h-48">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#7D1F2C]" />
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-wine" />
               </div>
             ) : filtered.length === 0 ? (
               <div className="text-center py-12 text-white/40">
@@ -545,13 +545,13 @@ function OcorrenciasFinanceiras() {
               )}
               <label className="flex items-center gap-2 cursor-pointer">
                 <input type="checkbox" checked={form.impacta_folha} onChange={e => setForm(f => ({ ...f, impacta_folha: e.target.checked }))}
-                  className="rounded border-white/20 text-[#7D1F2C] focus:ring-[#7D1F2C]" />
+                  className="rounded border-white/20 text-wine focus:ring-wine" />
                 <span className="text-sm text-white/70">Impacta na folha de pagamento</span>
               </label>
             </div>
             <div className="flex justify-end gap-3 mt-6">
               <button onClick={() => { setShowForm(false); setError(null); }} className="px-4 py-2 border border-white/20 rounded-lg text-white/70 hover:bg-white/5">Cancelar</button>
-              <button onClick={salvar} disabled={loading} className="px-4 py-2 bg-[#7D1F2C] text-white rounded-lg hover:bg-[#6a1a25] disabled:opacity-50">
+              <button onClick={salvar} disabled={loading} className="px-4 py-2 bg-wine text-white rounded-lg hover:bg-[#6a1a25] disabled:opacity-50">
                 {loading ? 'Salvando...' : 'Salvar'}
               </button>
             </div>
@@ -948,7 +948,7 @@ function RelatorioFolha({ colaboradores }: { colaboradores: any[] }) {
             </select>
           </div>
           <button onClick={buscar} disabled={loading}
-            className="px-4 py-2 bg-[#7D1F2C] text-white rounded-xl hover:bg-[#6a1a25] disabled:opacity-50 font-medium text-sm">
+            className="px-4 py-2 bg-wine text-white rounded-xl hover:bg-[#6a1a25] disabled:opacity-50 font-medium text-sm">
             {loading ? 'Buscando...' : 'Buscar'}
           </button>
         </div>
@@ -984,7 +984,7 @@ function RelatorioFolha({ colaboradores }: { colaboradores: any[] }) {
                 <Download className="w-4 h-4" /> Excel
               </button>
               <button onClick={handleGerarPDF} disabled={gerandoPDF}
-                className="px-4 py-2 bg-[#7D1F2C] text-white rounded-lg hover:bg-[#6a1a25] disabled:opacity-50 text-sm flex items-center gap-2">
+                className="px-4 py-2 bg-wine text-white rounded-lg hover:bg-[#6a1a25] disabled:opacity-50 text-sm flex items-center gap-2">
                 <Printer className="w-4 h-4" />
                 {gerandoPDF ? 'Gerando...' : 'Gerar PDF'}
               </button>
@@ -994,7 +994,7 @@ function RelatorioFolha({ colaboradores }: { colaboradores: any[] }) {
           {/* Preview on-screen — clean white style */}
           <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-xl">
             {/* Header */}
-            <div className="bg-[#7D1F2C] px-6 py-4">
+            <div className="bg-wine px-6 py-4">
               <div className="flex justify-between items-center">
                 <div>
                   <h2 className="text-white font-bold text-lg">Relatório de Ocorrências Financeiras</h2>
@@ -1203,7 +1203,7 @@ function OcorrenciasDisciplinares() {
       {/* Lista */}
       {loading ? (
         <div className="flex justify-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#7D1F2C]" />
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-wine" />
         </div>
       ) : filtrados.length === 0 ? (
         <div className="text-center py-12 text-white/40 bg-white/5 rounded-xl border border-white/10">
@@ -1307,13 +1307,13 @@ function OcorrenciasDisciplinares() {
                 </div>
               )}
               <label className="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" checked={!!form.recibado} onChange={e => setForm((f: any) => ({ ...f, recibado: e.target.checked }))} className="rounded border-white/20 text-[#7D1F2C]" />
+                <input type="checkbox" checked={!!form.recibado} onChange={e => setForm((f: any) => ({ ...f, recibado: e.target.checked }))} className="rounded border-white/20 text-wine" />
                 <span className="text-sm text-white/70">Colaborador recibou o documento</span>
               </label>
             </div>
             <div className="flex justify-end gap-3 mt-6">
               <button onClick={() => setModal({ open: false })} className="px-4 py-2 border border-white/20 rounded-lg text-white/70 hover:bg-white/5">Cancelar</button>
-              <button onClick={salvar} disabled={salvando} className="px-4 py-2 bg-[#7D1F2C] text-white rounded-lg hover:bg-[#6a1a25] disabled:opacity-50">
+              <button onClick={salvar} disabled={salvando} className="px-4 py-2 bg-wine text-white rounded-lg hover:bg-[#6a1a25] disabled:opacity-50">
                 {salvando ? 'Salvando...' : 'Salvar'}
               </button>
             </div>
@@ -1349,7 +1349,7 @@ function OcorrenciasDisciplinares() {
             </div>
             <div className="flex justify-end gap-2 p-4 border-t print:hidden">
               <button onClick={() => setImpressao(null)} className="px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50">Fechar</button>
-              <button onClick={() => window.print()} className="px-4 py-2 bg-[#7D1F2C] text-white rounded-lg hover:bg-[#6a1a25] flex items-center gap-2">
+              <button onClick={() => window.print()} className="px-4 py-2 bg-wine text-white rounded-lg hover:bg-[#6a1a25] flex items-center gap-2">
                 <Printer className="w-4 h-4" /> Imprimir
               </button>
             </div>

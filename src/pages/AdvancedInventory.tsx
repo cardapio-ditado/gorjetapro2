@@ -295,7 +295,7 @@ const AdvancedInventory: React.FC = () => {
                     }}
                     className={`px-5 py-2.5 text-xs font-semibold border-b-2 whitespace-nowrap transition-all duration-150 flex-shrink-0
                       ${active
-                        ? 'border-[#D4AF37] text-white'
+                        ? 'border-gold text-white'
                         : 'border-transparent text-white/35 hover:text-white/60'}`}
                   >
                     {areaLabel[a]}
@@ -319,7 +319,7 @@ const AdvancedInventory: React.FC = () => {
       {!showChatIA && (
         <button
           onClick={() => setShowChatIA(true)}
-          className="fixed bottom-6 right-6 w-16 h-16 bg-gradient-to-br from-[#7D1F2C] to-[#D4AF37] text-white rounded-full shadow-2xl hover:shadow-3xl hover:scale-110 transition-all duration-300 flex items-center justify-center z-40 group"
+          className="fixed bottom-6 right-6 w-16 h-16 bg-gradient-to-br from-wine to-gold text-white rounded-full shadow-2xl hover:shadow-3xl hover:scale-110 transition-all duration-300 flex items-center justify-center z-40 group"
           title="Chat com Super Agente IA"
         >
           <MessageSquare className="w-7 h-7" />

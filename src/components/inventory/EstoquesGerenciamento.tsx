@@ -628,7 +628,7 @@ const EstoquesGerenciamento: React.FC = () => {
           </button>
           <button
             onClick={() => openForm()}
-            className="px-4 py-2 bg-[#7D1F2C] text-white rounded-lg hover:bg-[#6a1a25]"
+            className="px-4 py-2 bg-wine text-white rounded-lg hover:bg-[#6a1a25]"
           >
             <Plus className="w-4 h-4 inline mr-2" />
             Novo Estoque
@@ -736,7 +736,7 @@ const EstoquesGerenciamento: React.FC = () => {
                 placeholder="Buscar estoques..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-white/20 rounded-lg bg-white/5 text-white focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+                className="w-full pl-10 pr-4 py-2 border border-white/20 rounded-lg bg-white/5 text-white focus:ring-2 focus:ring-wine focus:border-wine"
               />
             </div>
           </div>
@@ -745,7 +745,7 @@ const EstoquesGerenciamento: React.FC = () => {
             <select
               value={tipoFilter}
               onChange={(e) => setTipoFilter(e.target.value)}
-              className="w-full border border-white/20 rounded-lg px-4 py-2 bg-white/5 text-white focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+              className="w-full border border-white/20 rounded-lg px-4 py-2 bg-white/5 text-white focus:ring-2 focus:ring-wine focus:border-wine"
             >
               <option value="all">Todos os Tipos</option>
               <option value="central">Central</option>
@@ -759,7 +759,7 @@ const EstoquesGerenciamento: React.FC = () => {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value as any)}
-              className="w-full border border-white/20 rounded-lg px-4 py-2 bg-white/5 text-white focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+              className="w-full border border-white/20 rounded-lg px-4 py-2 bg-white/5 text-white focus:ring-2 focus:ring-wine focus:border-wine"
             >
               <option value="all">Todos os Status</option>
               <option value="ativo">Ativo</option>
@@ -770,7 +770,7 @@ const EstoquesGerenciamento: React.FC = () => {
           <div>
             <button
               onClick={fetchData}
-              className="w-full px-4 py-2 bg-[#7D1F2C] text-white rounded-md hover:bg-[#6a1a25]"
+              className="w-full px-4 py-2 bg-wine text-white rounded-md hover:bg-[#6a1a25]"
             >
               <Filter className="w-4 h-4 inline mr-2" />
               Filtrar
@@ -782,7 +782,7 @@ const EstoquesGerenciamento: React.FC = () => {
       {/* Lista de Estoques */}
       {loading ? (
         <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7D1F2C]"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-wine"></div>
         </div>
       ) : (
         <div className="bg-[#12141f] rounded-lg border border-white/10 overflow-hidden">
@@ -927,7 +927,7 @@ const EstoquesGerenciamento: React.FC = () => {
                   type="text"
                   value={formData.nome}
                   onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
-                  className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                  className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                   required
                   placeholder="Ex: Estoque Principal, Estoque Bar, Estoque Cozinha"
                 />
@@ -940,7 +940,7 @@ const EstoquesGerenciamento: React.FC = () => {
                 <select
                   value={formData.tipo}
                   onChange={(e) => setFormData({ ...formData, tipo: e.target.value as any })}
-                  className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                  className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                   required
                 >
                   <option value="geral">Geral</option>
@@ -958,7 +958,7 @@ const EstoquesGerenciamento: React.FC = () => {
                   type="text"
                   value={formData.localizacao}
                   onChange={(e) => setFormData({ ...formData, localizacao: e.target.value })}
-                  className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                  className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                   placeholder="Ex: Térreo - Sala 1, Subsolo, Área Externa"
                 />
               </div>
@@ -970,7 +970,7 @@ const EstoquesGerenciamento: React.FC = () => {
                 <textarea
                   value={formData.descricao}
                   onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
-                  className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                  className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                   rows={3}
                   placeholder="Descrição detalhada do estoque..."
                 />
@@ -982,7 +982,7 @@ const EstoquesGerenciamento: React.FC = () => {
                   id="status"
                   checked={formData.status}
                   onChange={(e) => setFormData({ ...formData, status: e.target.checked })}
-                  className="rounded border-white/20 text-[#7D1F2C] focus:ring-[#7D1F2C]"
+                  className="rounded border-white/20 text-wine focus:ring-wine"
                 />
                 <label htmlFor="status" className="ml-2 text-sm text-white/80">
                   Estoque ativo
@@ -1000,7 +1000,7 @@ const EstoquesGerenciamento: React.FC = () => {
               <button
                 onClick={handleSave}
                 disabled={loading || !formData.nome}
-                className="px-4 py-2 bg-[#7D1F2C] text-white rounded-md hover:bg-[#6a1a25] disabled:opacity-50"
+                className="px-4 py-2 bg-wine text-white rounded-md hover:bg-[#6a1a25] disabled:opacity-50"
               >
                 {loading ? 'Salvando...' : 'Salvar'}
               </button>
@@ -1036,7 +1036,7 @@ const EstoquesGerenciamento: React.FC = () => {
 
             {loading ? (
               <div className="flex justify-center items-center h-64">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7D1F2C]"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-wine"></div>
               </div>
             ) : (
               <>
@@ -1152,7 +1152,7 @@ const EstoquesGerenciamento: React.FC = () => {
               <div className="flex gap-2">
                 <button
                   onClick={gerarListaComprasPDF}
-                  className="px-4 py-2 bg-[#7D1F2C] text-white rounded-lg hover:bg-[#6a1a25]"
+                  className="px-4 py-2 bg-wine text-white rounded-lg hover:bg-[#6a1a25]"
                 >
                   <Download className="w-4 h-4 inline mr-2" />
                   Gerar PDF

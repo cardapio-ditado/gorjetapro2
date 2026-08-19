@@ -51,8 +51,8 @@ interface Periodo {
   funcao_nome?: string;
 }
 
-const inp = 'w-full bg-white/5 border border-white/15 rounded-xl px-3 py-2 text-white text-sm placeholder-white/30 focus:outline-none focus:border-[#7D1F2C]/60';
-const sel = 'w-full bg-[#0e1019] border border-white/15 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-[#7D1F2C]/60';
+const inp = 'w-full bg-white/5 border border-white/15 rounded-xl px-3 py-2 text-white text-sm placeholder-white/30 focus:outline-none focus:border-wine/60';
+const sel = 'w-full bg-[#0e1019] border border-white/15 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-wine/60';
 
 // ────────────────────────────────────────
 // Helpers
@@ -425,7 +425,7 @@ const FeriasColaboradores: React.FC = () => {
               key={key}
               onClick={() => setViewMode(key)}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                viewMode === key ? 'bg-[#7D1F2C] text-white' : 'text-white/60 hover:text-white hover:bg-white/5'
+                viewMode === key ? 'bg-wine text-white' : 'text-white/60 hover:text-white hover:bg-white/5'
               }`}
             >
               <Icon className="w-4 h-4" />
@@ -468,7 +468,7 @@ const FeriasColaboradores: React.FC = () => {
             </div>
             <button
               onClick={() => { setPeriodoForm({ colaborador_id: '', periodo_aquisitivo_inicio: '', periodo_aquisitivo_fim: '', periodo_concessivo_inicio: '', periodo_concessivo_fim: '', dias_direito: '30', observacoes: '' }); setShowPeriodoForm(true); }}
-              className="flex items-center gap-2 px-4 py-2 bg-[#7D1F2C] text-white rounded-xl hover:bg-[#9D2F3C] text-sm font-medium"
+              className="flex items-center gap-2 px-4 py-2 bg-wine text-white rounded-xl hover:bg-[#9D2F3C] text-sm font-medium"
             >
               <Plus className="w-4 h-4" /> Novo Período
             </button>
@@ -500,7 +500,7 @@ const FeriasColaboradores: React.FC = () => {
 
           {/* Períodos list */}
           {loading ? (
-            <div className="flex justify-center py-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#7D1F2C]" /></div>
+            <div className="flex justify-center py-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-wine" /></div>
           ) : filteredPeriodos.length === 0 ? (
             <div className="text-center py-12 bg-[#12141f] border border-white/10 rounded-xl">
               <CalendarDays className="w-12 h-12 text-white/20 mx-auto mb-3" />
@@ -567,7 +567,7 @@ const FeriasColaboradores: React.FC = () => {
                       <div className="flex gap-1.5 shrink-0">
                         <button
                           onClick={() => { setViewMode('ferias'); setShowFeriasForm(true); setFeriasForm(f => ({ ...f, colaborador_id: p.colaborador_id, periodo_aquisitivo_id: p.id })); fetchPeriodosDisponiveis(p.colaborador_id); }}
-                          className="flex items-center gap-1 px-3 py-1.5 bg-[#7D1F2C]/30 text-[#e05060] border border-[#7D1F2C]/40 rounded-lg hover:bg-[#7D1F2C]/50 text-xs transition-colors"
+                          className="flex items-center gap-1 px-3 py-1.5 bg-wine/30 text-[#e05060] border border-wine/40 rounded-lg hover:bg-wine/50 text-xs transition-colors"
                           title="Agendar férias deste período"
                         >
                           <Plus className="w-3.5 h-3.5" /> Agendar
@@ -596,7 +596,7 @@ const FeriasColaboradores: React.FC = () => {
                 <Download className="w-4 h-4" /> Exportar
               </button>
               <button onClick={() => { setEditingFerias(null); setFeriasForm({ colaborador_id: '', periodo_aquisitivo_id: '', data_inicio: '', data_fim: '', observacoes: '' }); setShowFeriasForm(true); }}
-                className="flex items-center gap-2 px-4 py-2 bg-[#7D1F2C] text-white rounded-xl hover:bg-[#9D2F3C] text-sm font-medium">
+                className="flex items-center gap-2 px-4 py-2 bg-wine text-white rounded-xl hover:bg-[#9D2F3C] text-sm font-medium">
                 <Plus className="w-4 h-4" /> Cadastrar Férias
               </button>
             </div>
@@ -642,7 +642,7 @@ const FeriasColaboradores: React.FC = () => {
                   <option key={y} value={y}>{y}</option>
                 ))}
               </select>
-              <button onClick={fetchFerias} className="flex items-center justify-center gap-2 px-4 py-2 bg-[#7D1F2C] text-white rounded-xl hover:bg-[#9D2F3C] text-sm">
+              <button onClick={fetchFerias} className="flex items-center justify-center gap-2 px-4 py-2 bg-wine text-white rounded-xl hover:bg-[#9D2F3C] text-sm">
                 <Filter className="w-4 h-4" /> Filtrar
               </button>
             </div>
@@ -650,7 +650,7 @@ const FeriasColaboradores: React.FC = () => {
 
           {/* Table */}
           {loading ? (
-            <div className="flex justify-center py-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#7D1F2C]" /></div>
+            <div className="flex justify-center py-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-wine" /></div>
           ) : (
             <div className="bg-[#12141f] border border-white/10 rounded-xl overflow-hidden">
               <div className="overflow-x-auto">
@@ -730,7 +730,7 @@ const FeriasColaboradores: React.FC = () => {
                 <div className="text-center py-12">
                   <CalendarDays className="w-12 h-12 text-white/20 mx-auto mb-3" />
                   <p className="text-white/40 text-sm">Nenhuma férias encontrada.</p>
-                  <button onClick={() => { setViewMode('periodos'); }} className="mt-3 text-sm text-[#7D1F2C] hover:text-[#e05060]">
+                  <button onClick={() => { setViewMode('periodos'); }} className="mt-3 text-sm text-wine hover:text-[#e05060]">
                     Criar um período aquisitivo primeiro
                   </button>
                 </div>
@@ -812,7 +812,7 @@ const FeriasColaboradores: React.FC = () => {
 
               <div className="flex gap-3 pt-2">
                 <button onClick={() => setShowPeriodoForm(false)} className="flex-1 px-4 py-2 border border-white/15 text-white/70 rounded-xl hover:bg-white/5 text-sm">Cancelar</button>
-                <button onClick={salvarPeriodo} disabled={loading} className="flex-1 px-4 py-2 bg-[#7D1F2C] text-white rounded-xl hover:bg-[#9D2F3C] disabled:opacity-50 text-sm font-medium">
+                <button onClick={salvarPeriodo} disabled={loading} className="flex-1 px-4 py-2 bg-wine text-white rounded-xl hover:bg-[#9D2F3C] disabled:opacity-50 text-sm font-medium">
                   {loading ? 'Salvando...' : 'Salvar Período'}
                 </button>
               </div>
@@ -893,7 +893,7 @@ const FeriasColaboradores: React.FC = () => {
 
               <div className="flex gap-3 pt-2">
                 <button onClick={() => { setShowFeriasForm(false); setEditingFerias(null); }} className="flex-1 px-4 py-2 border border-white/15 text-white/70 rounded-xl hover:bg-white/5 text-sm">Cancelar</button>
-                <button onClick={salvarFerias} disabled={loading} className="flex-1 px-4 py-2 bg-[#7D1F2C] text-white rounded-xl hover:bg-[#9D2F3C] disabled:opacity-50 text-sm font-medium">
+                <button onClick={salvarFerias} disabled={loading} className="flex-1 px-4 py-2 bg-wine text-white rounded-xl hover:bg-[#9D2F3C] disabled:opacity-50 text-sm font-medium">
                   {loading ? 'Salvando...' : editingFerias ? 'Salvar' : 'Cadastrar'}
                 </button>
               </div>

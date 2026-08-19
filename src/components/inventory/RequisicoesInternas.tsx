@@ -385,7 +385,7 @@ export default function RequisicoesInternas() {
           </button>
           <button
             onClick={() => setMostrarFormulario(true)}
-            className="flex items-center gap-2 bg-[#7D1F2C] text-white px-4 py-2 rounded-xl hover:bg-[#6a1a25] text-sm font-semibold"
+            className="flex items-center gap-2 bg-wine text-white px-4 py-2 rounded-xl hover:bg-[#6a1a25] text-sm font-semibold"
           >
             <Plus className="w-4 h-4" /> Nova Requisição
           </button>
@@ -399,7 +399,7 @@ export default function RequisicoesInternas() {
           <input
             type="text" value={busca} onChange={e => setBusca(e.target.value)}
             placeholder="Buscar por número, funcionário ou setor..."
-            className="w-full pl-9 pr-3 py-2.5 bg-white/5 border border-white/20 text-white rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#7D1F2C]/30"
+            className="w-full pl-9 pr-3 py-2.5 bg-white/5 border border-white/20 text-white rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-wine/30"
           />
         </div>
         <SearchableSelect
@@ -555,7 +555,7 @@ export default function RequisicoesInternas() {
                   <Printer className="w-4 h-4" /> Imprimir
                 </button>
                 <button onClick={() => gerarPDF(requisicaoDetalhes)}
-                  className="flex items-center gap-2 px-4 py-2 bg-[#7D1F2C] text-white rounded-xl hover:bg-[#6a1a25] text-sm font-semibold">
+                  className="flex items-center gap-2 px-4 py-2 bg-wine text-white rounded-xl hover:bg-[#6a1a25] text-sm font-semibold">
                   <Download className="w-4 h-4" /> Baixar PDF
                 </button>
               </div>
@@ -581,13 +581,13 @@ export default function RequisicoesInternas() {
                 <div>
                   <label className="text-xs font-semibold text-white/50 uppercase tracking-wide block mb-1.5">Nome do Funcionário *</label>
                   <input type="text" value={funcionarioNome} onChange={e => setFuncionarioNome(e.target.value)}
-                    className="w-full bg-white/5 border border-white/20 text-white rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#7D1F2C]/30"
+                    className="w-full bg-white/5 border border-white/20 text-white rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-wine/30"
                     placeholder="Digite o nome" />
                 </div>
                 <div>
                   <label className="text-xs font-semibold text-white/50 uppercase tracking-wide block mb-1.5">Setor *</label>
                   <input type="text" value={setor} onChange={e => setSetor(e.target.value)}
-                    className="w-full bg-white/5 border border-white/20 text-white rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#7D1F2C]/30"
+                    className="w-full bg-white/5 border border-white/20 text-white rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-wine/30"
                     placeholder="Digite o setor" />
                 </div>
                 <div>
@@ -646,7 +646,7 @@ export default function RequisicoesInternas() {
                     <input type="number" step="0.01" min="0.01"
                       value={quantidadeItem} onChange={e => setQuantidadeItem(e.target.value)}
                       placeholder="Qtd"
-                      className="w-full bg-white/5 border border-white/20 text-white rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#7D1F2C]/30" />
+                      className="w-full bg-white/5 border border-white/20 text-white rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-wine/30" />
                     {itemAtualSaldo && itemAtualSaldo.saldo !== null && (
                       <p className={`text-[11px] mt-1 ${(itemAtualSaldo.saldo ?? 0) < 0 ? 'text-red-400' : 'text-white/40'}`}>
                         Saldo: {fmtQtd(itemAtualSaldo.saldo)} {itemAtualSaldo.unidade_medida}
@@ -656,11 +656,11 @@ export default function RequisicoesInternas() {
                   <div className="md:col-span-3">
                     <input type="text" value={observacaoItem} onChange={e => setObservacaoItem(e.target.value)}
                       placeholder="Observação (opcional)"
-                      className="w-full bg-white/5 border border-white/20 text-white rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#7D1F2C]/30" />
+                      className="w-full bg-white/5 border border-white/20 text-white rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-wine/30" />
                   </div>
                   <div className="md:col-span-2">
                     <button onClick={adicionarItem}
-                      className="w-full flex items-center justify-center gap-2 bg-[#7D1F2C] text-white rounded-xl py-2.5 text-sm font-semibold hover:bg-[#6a1a25]">
+                      className="w-full flex items-center justify-center gap-2 bg-wine text-white rounded-xl py-2.5 text-sm font-semibold hover:bg-[#6a1a25]">
                       <Plus className="w-4 h-4" /> Adicionar
                     </button>
                   </div>
@@ -700,7 +700,7 @@ export default function RequisicoesInternas() {
               <div>
                 <label className="text-xs font-semibold text-white/50 uppercase tracking-wide block mb-1.5">Observações Gerais</label>
                 <textarea value={observacoes} onChange={e => setObservacoes(e.target.value)} rows={3}
-                  className="w-full bg-white/5 border border-white/20 text-white rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#7D1F2C]/30 resize-none"
+                  className="w-full bg-white/5 border border-white/20 text-white rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-wine/30 resize-none"
                   placeholder="Observações adicionais..." />
               </div>
             </div>
@@ -711,7 +711,7 @@ export default function RequisicoesInternas() {
                 Cancelar
               </button>
               <button onClick={salvarRequisicao} disabled={loading || itens.length === 0}
-                className="flex items-center gap-2 px-5 py-2 bg-[#7D1F2C] text-white rounded-xl hover:bg-[#6a1a25] text-sm font-semibold disabled:opacity-40">
+                className="flex items-center gap-2 px-5 py-2 bg-wine text-white rounded-xl hover:bg-[#6a1a25] text-sm font-semibold disabled:opacity-40">
                 {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
                 {loading ? 'Salvando...' : 'Criar Requisição'}
               </button>

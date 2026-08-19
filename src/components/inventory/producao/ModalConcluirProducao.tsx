@@ -60,7 +60,7 @@ const ModalConcluirProducao: React.FC<ModalConcluirProducaoProps> = ({
             <label className="block text-sm font-medium text-white/80 mb-1.5">Quantidade Produzida *</label>
             <input type="number" min="0" step="0.001" value={quantidadeProduzida}
               onChange={e => setQuantidadeProduzida(parseFloat(e.target.value) || 0)}
-              className="w-full rounded-xl border border-white/20 bg-white/5 text-white px-3 py-2.5 focus:border-[#7D1F2C] focus:ring-2 focus:ring-[#7D1F2C]/30 focus:outline-none" />
+              className="w-full rounded-xl border border-white/20 bg-white/5 text-white px-3 py-2.5 focus:border-wine focus:ring-2 focus:ring-wine/30 focus:outline-none" />
             <p className="text-xs text-white/40 mt-1">Total produzido (aprovados + rejeitados)</p>
           </div>
 
@@ -68,7 +68,7 @@ const ModalConcluirProducao: React.FC<ModalConcluirProducaoProps> = ({
             <label className="block text-sm font-medium text-white/80 mb-1.5">Quantidade Aprovada *</label>
             <input type="number" min="0" max={quantidadeProduzida} step="0.001" value={quantidadeAprovada}
               onChange={e => setQuantidadeAprovada(parseFloat(e.target.value) || 0)}
-              className="w-full rounded-xl border border-white/20 bg-white/5 text-white px-3 py-2.5 focus:border-[#7D1F2C] focus:ring-2 focus:ring-[#7D1F2C]/30 focus:outline-none" />
+              className="w-full rounded-xl border border-white/20 bg-white/5 text-white px-3 py-2.5 focus:border-wine focus:ring-2 focus:ring-wine/30 focus:outline-none" />
             <p className="text-xs text-white/40 mt-1">Aprovada pelo controle de qualidade</p>
           </div>
 
@@ -76,7 +76,7 @@ const ModalConcluirProducao: React.FC<ModalConcluirProducaoProps> = ({
             <label className="block text-sm font-medium text-white/80 mb-1.5">Observações</label>
             <textarea value={observacoes} onChange={e => setObservacoes(e.target.value)} rows={3}
               placeholder="Observações sobre a produção..."
-              className="w-full rounded-xl border border-white/20 bg-white/5 text-white px-3 py-2.5 focus:border-[#7D1F2C] focus:ring-2 focus:ring-[#7D1F2C]/30 focus:outline-none resize-none" />
+              className="w-full rounded-xl border border-white/20 bg-white/5 text-white px-3 py-2.5 focus:border-wine focus:ring-2 focus:ring-wine/30 focus:outline-none resize-none" />
           </div>
 
           {quantidadeRejeitada > 0 && (
@@ -112,7 +112,7 @@ const ModalConcluirProducao: React.FC<ModalConcluirProducaoProps> = ({
             Cancelar
           </button>
           <button onClick={handleSubmit}
-            className="px-4 py-2.5 bg-[#7D1F2C] text-white rounded-xl hover:bg-[#6a1a25] text-sm font-semibold transition-colors">
+            className="px-4 py-2.5 bg-wine text-white rounded-xl hover:bg-[#6a1a25] text-sm font-semibold transition-colors">
             Concluir Produção
           </button>
         </div>

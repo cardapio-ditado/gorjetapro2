@@ -67,7 +67,7 @@ const CategoriaEditavel: React.FC<CategoriaEditavelProps> = ({
                   max="100"
                   value={percentual}
                   onChange={(e) => setPercentual(e.target.value)}
-                  className="w-full px-3 py-2 border border-white/20 rounded-lg focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+                  className="w-full px-3 py-2 border border-white/20 rounded-lg focus:ring-2 focus:ring-wine focus:border-wine"
                 />
                 <span className="absolute right-3 top-2 text-white/40">%</span>
               </div>
@@ -126,7 +126,7 @@ const CategoriaEditavel: React.FC<CategoriaEditavelProps> = ({
             <div className="flex gap-2">
               <button
                 onClick={() => setEditing(true)}
-                className="p-2 text-[#7D1F2C] hover:bg-blue-500/10 rounded-lg"
+                className="p-2 text-wine hover:bg-blue-500/10 rounded-lg"
                 title="Editar"
               >
                 <Edit2 className="w-4 h-4" />
@@ -501,7 +501,7 @@ const VisaoEstrategica: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="py-6">
             <h1 className="text-3xl font-bold text-white flex items-center gap-3">
-              <TrendingUp className="w-8 h-8 text-[#7D1F2C]" />
+              <TrendingUp className="w-8 h-8 text-wine" />
               Visão Estratégica
             </h1>
             <p className="mt-2 text-sm text-white/60">
@@ -517,7 +517,7 @@ const VisaoEstrategica: React.FC = () => {
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
                   activeTab === tab.id
-                    ? 'border-[#7D1F2C] text-[#7D1F2C]'
+                    ? 'border-wine text-wine'
                     : 'border-transparent text-white/40 hover:text-white/80 hover:border-white/20'
                 }`}
               >
@@ -535,7 +535,7 @@ const VisaoEstrategica: React.FC = () => {
           <div className="space-y-6">
             {!semanaAtual || showNovaSemana ? (
               <div className="bg-[#12141f] rounded-lg border border-white/10 p-8 text-center">
-                <DollarSign className="w-16 h-16 text-[#7D1F2C] mx-auto mb-4" />
+                <DollarSign className="w-16 h-16 text-wine mx-auto mb-4" />
                 <h2 className="text-2xl font-bold text-white mb-2">Criar Nova Semana</h2>
                 <p className="text-white/60 mb-6">
                   Informe o faturamento previsto para calcular os orçamentos
@@ -548,12 +548,12 @@ const VisaoEstrategica: React.FC = () => {
                     value={novoFaturamento}
                     onChange={(e) => setNovoFaturamento(e.target.value)}
                     placeholder="Ex: 100000.00"
-                    className="w-full px-4 py-3 text-center text-2xl font-bold border border-white/20 rounded-lg focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C] bg-white/5 text-white"
+                    className="w-full px-4 py-3 text-center text-2xl font-bold border border-white/20 rounded-lg focus:ring-2 focus:ring-wine focus:border-wine bg-white/5 text-white"
                   />
                   <div className="flex gap-2 mt-4">
                     <button
                       onClick={handleCriarSemana}
-                      className="flex-1 bg-[#7D1F2C] text-white px-6 py-3 rounded-lg hover:bg-[#6a1a25] font-medium"
+                      className="flex-1 bg-wine text-white px-6 py-3 rounded-lg hover:bg-[#6a1a25] font-medium"
                     >
                       Criar Semana
                     </button>
@@ -582,7 +582,7 @@ const VisaoEstrategica: React.FC = () => {
                             step="0.01"
                             value={faturamentoEdit}
                             onChange={(e) => setFaturamentoEdit(e.target.value)}
-                            className="text-3xl font-bold border-b-2 border-[#7D1F2C] focus:outline-none w-64 bg-transparent text-white"
+                            className="text-3xl font-bold border-b-2 border-wine focus:outline-none w-64 bg-transparent text-white"
                             autoFocus
                           />
                           <button onClick={handleAtualizarFaturamento} className="text-green-400 hover:text-green-400">
@@ -619,7 +619,7 @@ const VisaoEstrategica: React.FC = () => {
                       </div>
                       <button
                         onClick={() => setShowNovaSemana(true)}
-                        className="px-4 py-2 bg-[#7D1F2C] text-white rounded-lg hover:bg-[#6a1a25] font-medium flex items-center gap-2"
+                        className="px-4 py-2 bg-wine text-white rounded-lg hover:bg-[#6a1a25] font-medium flex items-center gap-2"
                       >
                         <Plus className="w-4 h-4" />
                         Nova Semana
@@ -845,7 +845,7 @@ const VisaoEstrategica: React.FC = () => {
                           <div className="flex items-center justify-center gap-2">
                             <button
                               onClick={() => handleEditarPagamento(pagamento)}
-                              className="text-[#7D1F2C] hover:text-blue-300 p-1 rounded hover:bg-blue-500/10"
+                              className="text-wine hover:text-blue-300 p-1 rounded hover:bg-blue-500/10"
                               title="Editar pagamento"
                             >
                               <Edit2 className="w-4 h-4" />
@@ -889,7 +889,7 @@ const VisaoEstrategica: React.FC = () => {
                         step="0.01"
                         value={valorEditandoPagamento}
                         onChange={(e) => setValorEditandoPagamento(e.target.value)}
-                        className="w-full px-3 py-2 border border-white/20 rounded-lg focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+                        className="w-full px-3 py-2 border border-white/20 rounded-lg focus:ring-2 focus:ring-wine focus:border-wine"
                         autoFocus
                       />
                       <p className="text-xs text-white/40 mt-1">
@@ -902,7 +902,7 @@ const VisaoEstrategica: React.FC = () => {
                       <textarea
                         value={observacaoEditandoPagamento}
                         onChange={(e) => setObservacaoEditandoPagamento(e.target.value)}
-                        className="w-full px-3 py-2 border border-white/20 rounded-lg focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+                        className="w-full px-3 py-2 border border-white/20 rounded-lg focus:ring-2 focus:ring-wine focus:border-wine"
                         rows={3}
                         placeholder="Observações sobre este pagamento (opcional)"
                       />
@@ -912,7 +912,7 @@ const VisaoEstrategica: React.FC = () => {
                   <div className="mt-6 flex gap-2">
                     <button
                       onClick={handleSalvarEdicaoPagamento}
-                      className="flex-1 bg-[#7D1F2C] text-white px-4 py-2 rounded-lg hover:bg-[#6a1a25] font-medium"
+                      className="flex-1 bg-wine text-white px-4 py-2 rounded-lg hover:bg-[#6a1a25] font-medium"
                     >
                       Salvar
                     </button>
@@ -949,7 +949,7 @@ const VisaoEstrategica: React.FC = () => {
                 </div>
                 <button
                   onClick={() => setShowNovaSemanaFutura(true)}
-                  className="bg-[#7D1F2C] text-white px-4 py-2 rounded-lg hover:bg-[#6a1a25] flex items-center gap-2"
+                  className="bg-wine text-white px-4 py-2 rounded-lg hover:bg-[#6a1a25] flex items-center gap-2"
                 >
                   <Plus className="w-4 h-4" />
                   Nova Semana Futura
@@ -957,7 +957,7 @@ const VisaoEstrategica: React.FC = () => {
               </div>
 
               {showNovaSemanaFutura && (
-                <div className="bg-blue-500/10 border border-[#7D1F2C]/40 rounded-lg p-4 mb-4">
+                <div className="bg-blue-500/10 border border-wine/40 rounded-lg p-4 mb-4">
                   <h4 className="font-medium text-white mb-3">Criar Nova Semana Futura</h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
@@ -968,7 +968,7 @@ const VisaoEstrategica: React.FC = () => {
                         type="date"
                         value={novaSemanaFutura.data_inicio}
                         onChange={(e) => setNovaSemanaFutura({ ...novaSemanaFutura, data_inicio: e.target.value })}
-                        className="w-full px-3 py-2 border border-white/20 rounded-lg focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+                        className="w-full px-3 py-2 border border-white/20 rounded-lg focus:ring-2 focus:ring-wine focus:border-wine"
                       />
                     </div>
                     <div>
@@ -981,14 +981,14 @@ const VisaoEstrategica: React.FC = () => {
                         value={novaSemanaFutura.faturamento}
                         onChange={(e) => setNovaSemanaFutura({ ...novaSemanaFutura, faturamento: e.target.value })}
                         placeholder="Ex: 100000.00"
-                        className="w-full px-3 py-2 border border-white/20 rounded-lg focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+                        className="w-full px-3 py-2 border border-white/20 rounded-lg focus:ring-2 focus:ring-wine focus:border-wine"
                       />
                     </div>
                   </div>
                   <div className="flex gap-2 mt-4">
                     <button
                       onClick={handleCriarSemanaFutura}
-                      className="bg-[#7D1F2C] text-white px-4 py-2 rounded-lg hover:bg-[#6a1a25]"
+                      className="bg-wine text-white px-4 py-2 rounded-lg hover:bg-[#6a1a25]"
                     >
                       Criar Semana
                     </button>
@@ -1052,7 +1052,7 @@ const VisaoEstrategica: React.FC = () => {
                   className={`px-4 py-2 rounded-lg font-medium flex items-center gap-2 ${
                     editingCategories
                       ? 'bg-white/10 text-white/60 hover:bg-white/15'
-                      : 'bg-[#7D1F2C] text-white hover:bg-[#6a1a25]'
+                      : 'bg-wine text-white hover:bg-[#6a1a25]'
                   }`}
                 >
                   <Edit2 className="w-4 h-4" />
@@ -1103,7 +1103,7 @@ const VisaoEstrategica: React.FC = () => {
                       setCategoriasDisponiveis(disponiveis);
                       setShowAdicionarCategoria(true);
                     }}
-                    className="w-full mt-4 px-4 py-3 border-2 border-dashed border-white/20 rounded-lg text-white/60 hover:border-[#7D1F2C] hover:text-[#7D1F2C] font-medium flex items-center justify-center gap-2"
+                    className="w-full mt-4 px-4 py-3 border-2 border-dashed border-white/20 rounded-lg text-white/60 hover:border-wine hover:text-wine font-medium flex items-center justify-center gap-2"
                   >
                     <Plus className="w-5 h-5" />
                     Adicionar Categoria do Plano de Contas
@@ -1121,7 +1121,7 @@ const VisaoEstrategica: React.FC = () => {
               )}
 
               {categorias.length > 0 && (
-                <div className="mt-6 p-4 bg-blue-500/10 rounded-lg border border-[#7D1F2C]/40">
+                <div className="mt-6 p-4 bg-blue-500/10 rounded-lg border border-wine/40">
                   <div className="flex justify-between items-center">
                     <span className="text-sm font-medium text-blue-300">Total de Percentuais:</span>
                     <span className="text-xl font-bold text-blue-300">
@@ -1218,7 +1218,7 @@ const VisaoEstrategica: React.FC = () => {
                         ).then(gastosFut => setGastosFuturos(gastosFut));
                       }
                     }}
-                    className="w-full px-4 py-3 bg-[#12141f]/5 border border-white/20 rounded-lg text-white placeholder-white/30 focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C] text-lg font-medium"
+                    className="w-full px-4 py-3 bg-[#12141f]/5 border border-white/20 rounded-lg text-white placeholder-white/30 focus:ring-2 focus:ring-wine focus:border-wine text-lg font-medium"
                   >
                     {semanasFuturas.map(sem => (
                       <option key={sem.id} value={sem.id}>
@@ -1240,7 +1240,7 @@ const VisaoEstrategica: React.FC = () => {
                       </div>
                       <div className="text-right">
                         <p className="text-sm text-white/60">Faturamento Previsto</p>
-                        <p className="text-3xl font-bold text-[#7D1F2C]">{formatCurrency(semanaFuturaSelecionada.faturamento)}</p>
+                        <p className="text-3xl font-bold text-wine">{formatCurrency(semanaFuturaSelecionada.faturamento)}</p>
                       </div>
                     </div>
 
@@ -1285,7 +1285,7 @@ const VisaoEstrategica: React.FC = () => {
                             <div className="relative w-full bg-white/10 rounded-full h-3 overflow-hidden">
                               <div
                                 className={`absolute top-0 left-0 h-full rounded-full transition-all ${
-                                  isOverBudget ? 'bg-red-500' : 'bg-[#7D1F2C]'
+                                  isOverBudget ? 'bg-red-500' : 'bg-wine'
                                 }`}
                                 style={{ width: `${Math.min(percentualGasto, 100)}%` }}
                               />
@@ -1327,7 +1327,7 @@ const VisaoEstrategica: React.FC = () => {
                                       </div>
                                       <div className="relative w-full bg-[#12141f]/10 rounded-full h-2 overflow-hidden">
                                         <div
-                                          className="absolute top-0 left-0 h-full bg-[#7D1F2C] rounded-full"
+                                          className="absolute top-0 left-0 h-full bg-wine rounded-full"
                                           style={{ width: `${Math.min(percentualSub, 100)}%` }}
                                         />
                                       </div>
@@ -1342,7 +1342,7 @@ const VisaoEstrategica: React.FC = () => {
                     </div>
 
                     {/* Resumo Geral */}
-                    <div className="mt-6 bg-[#12141f] rounded-lg border border-[#7D1F2C]/60 p-6">
+                    <div className="mt-6 bg-[#12141f] rounded-lg border border-wine/60 p-6">
                       <div className="grid grid-cols-3 gap-6 text-center">
                         <div>
                           <p className="text-sm text-white/60 mb-1">Total Orçado</p>
@@ -1352,7 +1352,7 @@ const VisaoEstrategica: React.FC = () => {
                         </div>
                         <div>
                           <p className="text-sm text-white/60 mb-1">Total Comprometido</p>
-                          <p className="text-2xl font-bold text-[#7D1F2C]">
+                          <p className="text-2xl font-bold text-wine">
                             {formatCurrency(
                               Object.entries(gastosFuturos)
                                 .filter(([key]) => !key.includes('_'))
@@ -1447,10 +1447,10 @@ const VisaoEstrategica: React.FC = () => {
                           <p className="text-sm text-white/40 mt-1">{cat.descricao}</p>
                         )}
                         {cat.tem_filhas && (
-                          <p className="text-xs text-[#7D1F2C] mt-1">Possui subcategorias</p>
+                          <p className="text-xs text-wine mt-1">Possui subcategorias</p>
                         )}
                       </div>
-                      <Plus className="w-5 h-5 text-[#7D1F2C]" />
+                      <Plus className="w-5 h-5 text-wine" />
                     </div>
                   ))}
                 </div>
@@ -1546,7 +1546,7 @@ const VisaoEstrategica: React.FC = () => {
                                 [sub.id]: parseFloat(e.target.value) || 0
                               });
                             }}
-                            className="w-full px-3 py-2 border border-white/20 rounded-lg focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C] text-right pr-8"
+                            className="w-full px-3 py-2 border border-white/20 rounded-lg focus:ring-2 focus:ring-wine focus:border-wine text-right pr-8"
                             placeholder="0"
                           />
                           <span className="absolute right-3 top-2.5 text-white/40 text-sm">%</span>
@@ -1555,7 +1555,7 @@ const VisaoEstrategica: React.FC = () => {
                     ))}
                   </div>
 
-                  <div className="mt-4 p-4 bg-blue-500/10 rounded-lg border border-[#7D1F2C]/40">
+                  <div className="mt-4 p-4 bg-blue-500/10 rounded-lg border border-wine/40">
                     <div className="flex justify-between items-center">
                       <span className="text-sm font-medium text-blue-300">
                         Total da categoria "{categoriaEditando.nome}":
@@ -1579,7 +1579,7 @@ const VisaoEstrategica: React.FC = () => {
                       max="100"
                       value={percentualCategoria}
                       onChange={(e) => setPercentualCategoria(e.target.value)}
-                      className="w-full px-4 py-3 bg-[#12141f]/5 border border-white/20 rounded-lg text-white placeholder-white/30 focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C] text-right pr-12 text-lg"
+                      className="w-full px-4 py-3 bg-[#12141f]/5 border border-white/20 rounded-lg text-white placeholder-white/30 focus:ring-2 focus:ring-wine focus:border-wine text-right pr-12 text-lg"
                       placeholder="Ex: 35"
                     />
                     <span className="absolute right-4 top-3.5 text-white/40 text-lg">%</span>
@@ -1652,7 +1652,7 @@ const VisaoEstrategica: React.FC = () => {
                     alert('Erro ao salvar categoria. Tente novamente.');
                   }
                 }}
-                className="px-6 py-2 bg-[#7D1F2C] text-white rounded-lg hover:bg-[#6a1a25] font-medium"
+                className="px-6 py-2 bg-wine text-white rounded-lg hover:bg-[#6a1a25] font-medium"
               >
                 Salvar Configuração
               </button>
@@ -1678,7 +1678,7 @@ const VisaoEstrategica: React.FC = () => {
                     onClick={() => setTipoVisualizacao('atual')}
                     className={`px-4 py-2 rounded font-medium text-sm transition-colors ${
                       tipoVisualizacao === 'atual'
-                        ? 'bg-[#12141f] text-[#7D1F2C] shadow'
+                        ? 'bg-[#12141f] text-wine shadow'
                         : 'text-white/60 hover:text-white'
                     }`}
                   >
@@ -1688,7 +1688,7 @@ const VisaoEstrategica: React.FC = () => {
                     onClick={() => setTipoVisualizacao('futura')}
                     className={`px-4 py-2 rounded font-medium text-sm transition-colors ${
                       tipoVisualizacao === 'futura'
-                        ? 'bg-[#12141f] text-[#7D1F2C] shadow'
+                        ? 'bg-[#12141f] text-wine shadow'
                         : 'text-white/60 hover:text-white'
                     }`}
                   >
@@ -1786,7 +1786,7 @@ const VisaoEstrategica: React.FC = () => {
                     <div className="grid grid-cols-3 gap-4">
                       <div className="bg-blue-500/10 rounded-lg p-4">
                         <p className="text-sm text-white/60 mb-1">Orçamento</p>
-                        <p className="text-2xl font-bold text-[#7D1F2C]">{formatCurrency(orcamento)}</p>
+                        <p className="text-2xl font-bold text-wine">{formatCurrency(orcamento)}</p>
                       </div>
                       <div className="bg-red-500/10 rounded-lg p-4">
                         <p className="text-sm text-white/60 mb-1">Gasto</p>
@@ -1956,7 +1956,7 @@ const VisaoEstrategica: React.FC = () => {
                                     <td className="px-4 py-3 text-right text-sm font-medium text-orange-400">
                                       {formatCurrency(conta.valor_restante_planejamento || conta.valor_restante || 0)}
                                     </td>
-                                    <td className="px-4 py-3 text-right text-sm font-bold text-[#7D1F2C]">
+                                    <td className="px-4 py-3 text-right text-sm font-bold text-wine">
                                       {formatCurrency(totalPagoNaSemana)}
                                     </td>
                                   </tr>
@@ -2059,11 +2059,11 @@ const RelatoriosTab: React.FC = () => {
             type="date"
             value={dataFiltro}
             onChange={(e) => setDataFiltro(e.target.value)}
-            className="px-3 py-2 border border-white/20 rounded-lg focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+            className="px-3 py-2 border border-white/20 rounded-lg focus:ring-2 focus:ring-wine focus:border-wine"
           />
           <div className="flex-1 text-right">
             <span className="text-sm text-white/60">Total do Dia: </span>
-            <span className="text-2xl font-bold text-[#7D1F2C]">{formatCurrency(totalDia)}</span>
+            <span className="text-2xl font-bold text-wine">{formatCurrency(totalDia)}</span>
           </div>
         </div>
       </div>
@@ -2087,7 +2087,7 @@ const RelatoriosTab: React.FC = () => {
           {/* Lista por Categoria */}
           {Object.values(grupos).map((grupo) => (
             <div key={grupo.nome} className="bg-[#12141f] rounded-lg border border-white/10 overflow-hidden">
-              <div className="px-6 py-4 bg-blue-500/10 border-b-2 border-[#7D1F2C]">
+              <div className="px-6 py-4 bg-blue-500/10 border-b-2 border-wine">
                 <div className="flex justify-between items-center">
                   <h3 className="text-lg font-bold text-white uppercase">{grupo.nome}</h3>
                   <span className="text-xl font-bold text-white">
@@ -2144,10 +2144,10 @@ const RelatoriosTab: React.FC = () => {
           ))}
 
           {/* Resumo Final */}
-          <div className="rounded-lg p-6 bg-blue-500/15 border border-[#7D1F2C]/60">
+          <div className="rounded-lg p-6 bg-blue-500/15 border border-wine/60">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-xl font-bold text-white">RESUMO DO DIA</h3>
-              <span className="text-3xl font-bold text-[#7D1F2C]">
+              <span className="text-3xl font-bold text-wine">
                 {formatCurrency(totalDia)}
               </span>
             </div>
@@ -2555,7 +2555,7 @@ const DespesasTab: React.FC<DespesasTabProps> = ({
               </button>
               <button
                 onClick={() => setShowNovaDespesaManual(true)}
-                className="bg-[#7D1F2C] text-white px-4 py-2 rounded-lg hover:bg-[#6a1a25] flex items-center gap-2"
+                className="bg-wine text-white px-4 py-2 rounded-lg hover:bg-[#6a1a25] flex items-center gap-2"
               >
                 <Plus className="w-4 h-4" />
                 Nova Despesa Manual
@@ -2575,7 +2575,7 @@ const DespesasTab: React.FC<DespesasTabProps> = ({
               {contasSelecionadas.size > 0 && (
                 <button
                   onClick={() => setShowModalPagamento(true)}
-                  className="bg-[#7D1F2C] text-white px-4 py-2 rounded-lg hover:bg-[#6a1a25] flex items-center gap-2"
+                  className="bg-wine text-white px-4 py-2 rounded-lg hover:bg-[#6a1a25] flex items-center gap-2"
                 >
                   <Check className="w-4 h-4" />
                   Marcar {contasSelecionadas.size} como Pago
@@ -2611,7 +2611,7 @@ const DespesasTab: React.FC<DespesasTabProps> = ({
           onClick={() => setSubTab('manuais')}
           className={`px-6 py-3 font-medium transition-colors ${
             subTab === 'manuais'
-              ? 'border-b-2 border-[#7D1F2C] text-[#7D1F2C]'
+              ? 'border-b-2 border-wine text-wine'
               : 'text-white/40 hover:text-white/80'
           }`}
         >
@@ -2724,7 +2724,7 @@ const DespesasTab: React.FC<DespesasTabProps> = ({
                           ) : (
                             <button
                               onClick={() => handleAbrirVincular(despesa)}
-                              className="text-[#7D1F2C] hover:text-blue-300 text-xs font-medium px-2 py-1 border border-[#7D1F2C] rounded hover:bg-blue-500/10"
+                              className="text-wine hover:text-blue-300 text-xs font-medium px-2 py-1 border border-wine rounded hover:bg-blue-500/10"
                               title="Vincular com conta a pagar"
                             >
                               <Link className="w-4 h-4" />
@@ -2859,7 +2859,7 @@ const DespesasTab: React.FC<DespesasTabProps> = ({
                                 <div className="flex flex-col items-end">
                                   <span className={`text-sm font-bold ${
                                     isPagoTotalmente ? 'text-green-400' :
-                                    isParcialmentePago ? 'text-[#7D1F2C]' :
+                                    isParcialmentePago ? 'text-wine' :
                                     subTab === 'vencidas' ? 'text-red-400' : 'text-yellow-400'
                                   }`}>
                                     {formatCurrency(valorRestante)}
@@ -2899,7 +2899,7 @@ const DespesasTab: React.FC<DespesasTabProps> = ({
                                   {!isPagoTotalmente && valorRestante > 0 && (
                                     <button
                                       onClick={() => handleAbrirPagamentoParcial(conta)}
-                                      className="text-[#7D1F2C] hover:text-blue-300 text-xs font-medium px-2 py-1 border border-[#7D1F2C] rounded hover:bg-blue-500/10"
+                                      className="text-wine hover:text-blue-300 text-xs font-medium px-2 py-1 border border-wine rounded hover:bg-blue-500/10"
                                       title="Registrar pagamento"
                                     >
                                       <DollarSign className="w-4 h-4" />
@@ -2965,7 +2965,7 @@ const DespesasTab: React.FC<DespesasTabProps> = ({
                   type="text"
                   value={novaDespesa.fornecedor}
                   onChange={(e) => setNovaDespesa({ ...novaDespesa, fornecedor: e.target.value })}
-                  className="w-full px-3 py-2 border border-white/20 rounded-lg focus:ring-2 focus:ring-[#7D1F2C]"
+                  className="w-full px-3 py-2 border border-white/20 rounded-lg focus:ring-2 focus:ring-wine"
                   required
                 />
               </div>
@@ -2976,7 +2976,7 @@ const DespesasTab: React.FC<DespesasTabProps> = ({
                   step="0.01"
                   value={novaDespesa.valor}
                   onChange={(e) => setNovaDespesa({ ...novaDespesa, valor: e.target.value })}
-                  className="w-full px-3 py-2 border border-white/20 rounded-lg focus:ring-2 focus:ring-[#7D1F2C]"
+                  className="w-full px-3 py-2 border border-white/20 rounded-lg focus:ring-2 focus:ring-wine"
                   required
                 />
               </div>
@@ -2985,7 +2985,7 @@ const DespesasTab: React.FC<DespesasTabProps> = ({
                 <select
                   value={novaDespesa.categoria_id}
                   onChange={(e) => setNovaDespesa({ ...novaDespesa, categoria_id: e.target.value, subcategoria_id: '' })}
-                  className="w-full px-3 py-2 border border-white/20 rounded-lg focus:ring-2 focus:ring-[#7D1F2C]"
+                  className="w-full px-3 py-2 border border-white/20 rounded-lg focus:ring-2 focus:ring-wine"
                   required
                 >
                   <option value="">Selecione...</option>
@@ -2999,7 +2999,7 @@ const DespesasTab: React.FC<DespesasTabProps> = ({
                 <select
                   value={novaDespesa.subcategoria_id}
                   onChange={(e) => setNovaDespesa({ ...novaDespesa, subcategoria_id: e.target.value })}
-                  className="w-full px-3 py-2 border border-white/20 rounded-lg focus:ring-2 focus:ring-[#7D1F2C]"
+                  className="w-full px-3 py-2 border border-white/20 rounded-lg focus:ring-2 focus:ring-wine"
                   disabled={!novaDespesa.categoria_id}
                 >
                   <option value="">Nenhuma</option>
@@ -3016,7 +3016,7 @@ const DespesasTab: React.FC<DespesasTabProps> = ({
                   type="date"
                   value={novaDespesa.data_vencimento}
                   onChange={(e) => setNovaDespesa({ ...novaDespesa, data_vencimento: e.target.value })}
-                  className="w-full px-3 py-2 border border-white/20 rounded-lg focus:ring-2 focus:ring-[#7D1F2C]"
+                  className="w-full px-3 py-2 border border-white/20 rounded-lg focus:ring-2 focus:ring-wine"
                   required
                 />
               </div>
@@ -3025,7 +3025,7 @@ const DespesasTab: React.FC<DespesasTabProps> = ({
                 <select
                   value={novaDespesa.tipo_lancamento || 'previsao'}
                   onChange={(e) => setNovaDespesa({ ...novaDespesa, tipo_lancamento: e.target.value as 'previsao' | 'realizada' })}
-                  className="w-full px-3 py-2 border border-white/20 rounded-lg focus:ring-2 focus:ring-[#7D1F2C]"
+                  className="w-full px-3 py-2 border border-white/20 rounded-lg focus:ring-2 focus:ring-wine"
                 >
                   <option value="previsao">Previsão (Planejamento)</option>
                   <option value="realizada">Realizada (Confirmada)</option>
@@ -3037,14 +3037,14 @@ const DespesasTab: React.FC<DespesasTabProps> = ({
                   type="text"
                   value={novaDespesa.descricao}
                   onChange={(e) => setNovaDespesa({ ...novaDespesa, descricao: e.target.value })}
-                  className="w-full px-3 py-2 border border-white/20 rounded-lg focus:ring-2 focus:ring-[#7D1F2C]"
+                  className="w-full px-3 py-2 border border-white/20 rounded-lg focus:ring-2 focus:ring-wine"
                 />
               </div>
             </div>
             <div className="flex gap-2 mt-4">
               <button
                 type="submit"
-                className="bg-[#7D1F2C] text-white px-4 py-2 rounded-lg hover:bg-[#6a1a25]"
+                className="bg-wine text-white px-4 py-2 rounded-lg hover:bg-[#6a1a25]"
               >
                 Salvar Despesa
               </button>
@@ -3075,7 +3075,7 @@ const DespesasTab: React.FC<DespesasTabProps> = ({
             </div>
           ) : (
             <div className="bg-[#12141f] rounded-lg border border-white/10">
-              <div className="px-6 py-4 bg-blue-500/10 border-b-2 border-[#7D1F2C]">
+              <div className="px-6 py-4 bg-blue-500/10 border-b-2 border-wine">
                 <h3 className="text-lg font-bold text-white">
                   DESPESAS LANÇADAS MANUALMENTE
                 </h3>
@@ -3191,7 +3191,7 @@ const DespesasTab: React.FC<DespesasTabProps> = ({
                       <td colSpan={2} className="px-4 py-3 text-sm font-bold text-white text-right">
                         TOTAL:
                       </td>
-                      <td className="px-4 py-3 text-sm font-bold text-[#7D1F2C] text-right">
+                      <td className="px-4 py-3 text-sm font-bold text-wine text-right">
                         {formatCurrency(despesasManuaisAtivas.reduce((sum, d) => sum + d.valor, 0))}
                       </td>
                       <td colSpan={2}></td>
@@ -3219,7 +3219,7 @@ const DespesasTab: React.FC<DespesasTabProps> = ({
             </div>
 
             <div className="p-6 space-y-4">
-              <div className="bg-blue-500/10 border border-[#7D1F2C]/40 rounded-lg p-4">
+              <div className="bg-blue-500/10 border border-wine/40 rounded-lg p-4">
                 <p className="text-sm text-blue-300">
                   <strong>Importante:</strong> Esta ação marca as contas como pagas apenas para efeitos de planejamento semanal.
                   O módulo financeiro real (Contas a Pagar) não será afetado.
@@ -3253,7 +3253,7 @@ const DespesasTab: React.FC<DespesasTabProps> = ({
                   value={observacao}
                   onChange={(e) => setObservacao(e.target.value)}
                   rows={3}
-                  className="w-full px-3 py-2 border border-white/20 rounded-lg focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+                  className="w-full px-3 py-2 border border-white/20 rounded-lg focus:ring-2 focus:ring-wine focus:border-wine"
                   placeholder="Ex: Pagamentos confirmados para esta semana"
                 />
               </div>
@@ -3268,7 +3268,7 @@ const DespesasTab: React.FC<DespesasTabProps> = ({
               </button>
               <button
                 onClick={handleMarcarComoInformativo}
-                className="px-6 py-2 bg-[#7D1F2C] text-white rounded-lg hover:bg-[#6a1a25] font-medium flex items-center gap-2"
+                className="px-6 py-2 bg-wine text-white rounded-lg hover:bg-[#6a1a25] font-medium flex items-center gap-2"
               >
                 <Check className="w-4 h-4" />
                 Confirmar Pagamentos
@@ -3293,7 +3293,7 @@ const DespesasTab: React.FC<DespesasTabProps> = ({
             </div>
 
             <div className="p-6 space-y-4">
-              <div className="bg-blue-500/10 border border-[#7D1F2C]/40 rounded-lg p-4">
+              <div className="bg-blue-500/10 border border-wine/40 rounded-lg p-4">
                 <p className="text-sm text-blue-300">
                   <strong>Pagamento Informativo:</strong> Este registro é apenas para o planejamento e não afeta o financeiro real.
                 </p>
@@ -3314,7 +3314,7 @@ const DespesasTab: React.FC<DespesasTabProps> = ({
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-white/60">Já Pago (Real):</span>
-                  <span className="font-medium text-[#7D1F2C]">{formatCurrency(contaParcialSelecionada.valor_pago_real || 0)}</span>
+                  <span className="font-medium text-wine">{formatCurrency(contaParcialSelecionada.valor_pago_real || 0)}</span>
                 </div>
                 {contaParcialSelecionada.valor_pago_planejamento > 0 && (
                   <div className="flex justify-between text-sm">
@@ -3339,7 +3339,7 @@ const DespesasTab: React.FC<DespesasTabProps> = ({
                   max={contaParcialSelecionada.valor_restante_planejamento}
                   value={valorParcial}
                   onChange={(e) => setValorParcial(e.target.value)}
-                  className="w-full px-3 py-2 border border-white/20 rounded-lg focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+                  className="w-full px-3 py-2 border border-white/20 rounded-lg focus:ring-2 focus:ring-wine focus:border-wine"
                   placeholder="0.00"
                 />
               </div>
@@ -3352,7 +3352,7 @@ const DespesasTab: React.FC<DespesasTabProps> = ({
                   value={observacaoParcial}
                   onChange={(e) => setObservacaoParcial(e.target.value)}
                   rows={2}
-                  className="w-full px-3 py-2 border border-white/20 rounded-lg focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+                  className="w-full px-3 py-2 border border-white/20 rounded-lg focus:ring-2 focus:ring-wine focus:border-wine"
                   placeholder="Ex: Primeira parcela"
                 />
               </div>
@@ -3367,7 +3367,7 @@ const DespesasTab: React.FC<DespesasTabProps> = ({
               </button>
               <button
                 onClick={handleRegistrarPagamentoParcial}
-                className="px-6 py-2 bg-[#7D1F2C] text-white rounded-lg hover:bg-[#6a1a25] font-medium flex items-center gap-2"
+                className="px-6 py-2 bg-wine text-white rounded-lg hover:bg-[#6a1a25] font-medium flex items-center gap-2"
               >
                 <DollarSign className="w-4 h-4" />
                 Registrar Pagamento
@@ -3427,7 +3427,7 @@ const DespesasTab: React.FC<DespesasTabProps> = ({
                   min="0.01"
                   value={valorEditar}
                   onChange={(e) => setValorEditar(e.target.value)}
-                  className="w-full px-3 py-2 border border-white/20 rounded-lg focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+                  className="w-full px-3 py-2 border border-white/20 rounded-lg focus:ring-2 focus:ring-wine focus:border-wine"
                   placeholder="0.00"
                 />
               </div>
@@ -3440,7 +3440,7 @@ const DespesasTab: React.FC<DespesasTabProps> = ({
                   value={observacaoEditar}
                   onChange={(e) => setObservacaoEditar(e.target.value)}
                   rows={2}
-                  className="w-full px-3 py-2 border border-white/20 rounded-lg focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+                  className="w-full px-3 py-2 border border-white/20 rounded-lg focus:ring-2 focus:ring-wine focus:border-wine"
                   placeholder="Ex: Valor corrigido"
                 />
               </div>
@@ -3455,7 +3455,7 @@ const DespesasTab: React.FC<DespesasTabProps> = ({
               </button>
               <button
                 onClick={handleEditarPagamento}
-                className="px-6 py-2 bg-[#7D1F2C] text-white rounded-lg hover:bg-[#6a1a25] font-medium flex items-center gap-2"
+                className="px-6 py-2 bg-wine text-white rounded-lg hover:bg-[#6a1a25] font-medium flex items-center gap-2"
               >
                 <Save className="w-4 h-4" />
                 Salvar Alterações
@@ -3515,7 +3515,7 @@ const DespesasTab: React.FC<DespesasTabProps> = ({
                           <div className="flex items-center gap-2 mb-1">
                             <span className="font-bold text-lg text-green-400">{formatCurrency(pagamento.valor_pago)}</span>
                             {pagamento.observacao && (
-                              <span className="text-xs bg-blue-500/15 text-[#7D1F2C] px-2 py-0.5 rounded">
+                              <span className="text-xs bg-blue-500/15 text-wine px-2 py-0.5 rounded">
                                 {pagamento.observacao}
                               </span>
                             )}
@@ -3532,7 +3532,7 @@ const DespesasTab: React.FC<DespesasTabProps> = ({
                         <div className="flex gap-1">
                           <button
                             onClick={() => handleAbrirEditar(pagamento)}
-                            className="text-[#7D1F2C] hover:text-blue-300 p-2"
+                            className="text-wine hover:text-blue-300 p-2"
                             title="Editar pagamento"
                           >
                             <Edit2 className="w-4 h-4" />
@@ -3611,7 +3611,7 @@ const DespesasTab: React.FC<DespesasTabProps> = ({
                     value={buscaVincular}
                     onChange={(e) => setBuscaVincular(e.target.value)}
                     placeholder="Buscar por fornecedor ou descrição..."
-                    className="block w-full pl-10 pr-3 py-2 border border-white/20 rounded-lg focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+                    className="block w-full pl-10 pr-3 py-2 border border-white/20 rounded-lg focus:ring-wine focus:border-wine"
                   />
                 </div>
               </div>
@@ -3738,7 +3738,7 @@ const DespesasTab: React.FC<DespesasTabProps> = ({
                     value={buscaFuturas}
                     onChange={(e) => setBuscaFuturas(e.target.value)}
                     placeholder="Buscar por fornecedor ou descrição..."
-                    className="block w-full pl-10 pr-3 py-2 border border-white/20 rounded-lg focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+                    className="block w-full pl-10 pr-3 py-2 border border-white/20 rounded-lg focus:ring-wine focus:border-wine"
                   />
                 </div>
               </div>
@@ -3826,7 +3826,7 @@ const DespesasTab: React.FC<DespesasTabProps> = ({
                                     }
                                   }
                                 }}
-                                className="flex-1 bg-[#7D1F2C] text-white px-4 py-2 rounded-lg hover:bg-[#6a1a25] text-sm font-medium"
+                                className="flex-1 bg-wine text-white px-4 py-2 rounded-lg hover:bg-[#6a1a25] text-sm font-medium"
                               >
                                 Importar com Data Personalizada
                               </button>

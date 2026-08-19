@@ -165,7 +165,7 @@ const Finance: React.FC = () => {
                     flex items-center gap-1.5 px-4 py-2.5 text-xs font-medium
                     border-b-2 whitespace-nowrap transition-all duration-150 flex-shrink-0
                     ${active
-                      ? 'border-[#D4AF37] text-white bg-[#12141f]/5'
+                      ? 'border-gold text-white bg-[#12141f]/5'
                       : 'border-transparent text-white/35 hover:text-white/60 hover:bg-[#12141f]/5'
                     }
                   `}

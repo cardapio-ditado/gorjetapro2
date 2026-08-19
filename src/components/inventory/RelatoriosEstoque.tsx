@@ -491,7 +491,7 @@ const RelatoriosEstoque: React.FC = () => {
     if (loading) {
       return (
         <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7D1F2C]"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-wine"></div>
         </div>
       );
     }
@@ -869,7 +869,7 @@ const RelatoriosEstoque: React.FC = () => {
         <h3 className="text-lg font-medium text-white">Relatórios de Estoque</h3>
         <button
           onClick={exportarRelatorio}
-          className="px-4 py-2 bg-[#7D1F2C] text-white rounded-lg hover:bg-[#6a1a25]"
+          className="px-4 py-2 bg-wine text-white rounded-lg hover:bg-[#6a1a25]"
         >
           <Download className="w-4 h-4 inline mr-2" />
           Exportar Relatório
@@ -893,7 +893,7 @@ const RelatoriosEstoque: React.FC = () => {
               type="date"
               value={periodoInicial}
               onChange={(e) => setPeriodoInicial(e.target.value)}
-              className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+              className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
             />
           </div>
 
@@ -905,7 +905,7 @@ const RelatoriosEstoque: React.FC = () => {
               type="date"
               value={periodoFinal}
               onChange={(e) => setPeriodoFinal(e.target.value)}
-              className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+              className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
             />
           </div>
 
@@ -916,7 +916,7 @@ const RelatoriosEstoque: React.FC = () => {
             <select
               value={agrupamento}
               onChange={(e) => setAgrupamento(e.target.value as any)}
-              className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+              className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
             >
               <option value="diario">Diário</option>
               <option value="semanal">Semanal</option>
@@ -931,7 +931,7 @@ const RelatoriosEstoque: React.FC = () => {
             <select
               value={estoqueFilter}
               onChange={(e) => setEstoqueFilter(e.target.value)}
-              className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+              className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
             >
               <option value="all">Todos os Estoques</option>
               {estoques.map((estoque) => (
@@ -949,7 +949,7 @@ const RelatoriosEstoque: React.FC = () => {
             <select
               value={tipoItemFilter}
               onChange={(e) => setTipoItemFilter(e.target.value)}
-              className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+              className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
             >
               <option value="all">Todos os Tipos</option>
               <option value="insumo">Insumos</option>
@@ -960,7 +960,7 @@ const RelatoriosEstoque: React.FC = () => {
           <div className="flex items-end">
             <button
               onClick={fetchRelatorios}
-              className="w-full px-4 py-2 bg-[#7D1F2C] text-white rounded-md hover:bg-[#6a1a25]"
+              className="w-full px-4 py-2 bg-wine text-white rounded-md hover:bg-[#6a1a25]"
             >
               <Filter className="w-4 h-4 inline mr-2" />
               Atualizar
@@ -1060,7 +1060,7 @@ const RelatoriosEstoque: React.FC = () => {
               onClick={() => setActiveTab('movimentacoes')}
               className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
                 activeTab === 'movimentacoes'
-                  ? 'border-[#7D1F2C] text-[#7D1F2C]'
+                  ? 'border-wine text-wine'
                   : 'border-transparent text-white/40 hover:text-white/80 hover:border-white/20'
               }`}
             >
@@ -1071,7 +1071,7 @@ const RelatoriosEstoque: React.FC = () => {
               onClick={() => setActiveTab('cmv')}
               className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
                 activeTab === 'cmv'
-                  ? 'border-[#7D1F2C] text-[#7D1F2C]'
+                  ? 'border-wine text-wine'
                   : 'border-transparent text-white/40 hover:text-white/80 hover:border-white/20'
               }`}
             >
@@ -1082,7 +1082,7 @@ const RelatoriosEstoque: React.FC = () => {
               onClick={() => setActiveTab('valor')}
               className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
                 activeTab === 'valor'
-                  ? 'border-[#7D1F2C] text-[#7D1F2C]'
+                  ? 'border-wine text-wine'
                   : 'border-transparent text-white/40 hover:text-white/80 hover:border-white/20'
               }`}
             >
@@ -1093,7 +1093,7 @@ const RelatoriosEstoque: React.FC = () => {
               onClick={() => setActiveTab('giro')}
               className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
                 activeTab === 'giro'
-                  ? 'border-[#7D1F2C] text-[#7D1F2C]'
+                  ? 'border-wine text-wine'
                   : 'border-transparent text-white/40 hover:text-white/80 hover:border-white/20'
               }`}
             >

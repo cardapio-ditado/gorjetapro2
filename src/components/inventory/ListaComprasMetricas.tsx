@@ -66,7 +66,7 @@ const ListaComprasMetricas: React.FC = () => {
                 placeholder="Nome do fornecedor"
                 value={filtros.fornecedorNome || ''}
                 onChange={(e) => setFiltros({ ...filtros, fornecedorNome: e.target.value })}
-                className="w-full pl-9 pr-3 py-2 text-sm border border-white/20 rounded-lg focus:ring-2 focus:ring-[#7D1F2C] focus:border-transparent"
+                className="w-full pl-9 pr-3 py-2 text-sm border border-white/20 rounded-lg focus:ring-2 focus:ring-wine focus:border-transparent"
               />
             </div>
           </div>
@@ -79,7 +79,7 @@ const ListaComprasMetricas: React.FC = () => {
                 type="date"
                 value={filtros.dataInicio || ''}
                 onChange={(e) => setFiltros({ ...filtros, dataInicio: e.target.value })}
-                className="w-full pl-9 pr-3 py-2 text-sm border border-white/20 rounded-lg focus:ring-2 focus:ring-[#7D1F2C] focus:border-transparent"
+                className="w-full pl-9 pr-3 py-2 text-sm border border-white/20 rounded-lg focus:ring-2 focus:ring-wine focus:border-transparent"
               />
             </div>
           </div>
@@ -92,7 +92,7 @@ const ListaComprasMetricas: React.FC = () => {
                 type="date"
                 value={filtros.dataFim || ''}
                 onChange={(e) => setFiltros({ ...filtros, dataFim: e.target.value })}
-                className="w-full pl-9 pr-3 py-2 text-sm border border-white/20 rounded-lg focus:ring-2 focus:ring-[#7D1F2C] focus:border-transparent"
+                className="w-full pl-9 pr-3 py-2 text-sm border border-white/20 rounded-lg focus:ring-2 focus:ring-wine focus:border-transparent"
               />
             </div>
           </div>
@@ -100,7 +100,7 @@ const ListaComprasMetricas: React.FC = () => {
           <div className="flex items-end gap-2">
             <button
               onClick={handleFiltrar}
-              className="flex-1 px-4 py-2 bg-[#7D1F2C] text-white text-sm rounded-lg hover:bg-[#6a1a25] transition-colors"
+              className="flex-1 px-4 py-2 bg-wine text-white text-sm rounded-lg hover:bg-[#6a1a25] transition-colors"
             >
               Filtrar
             </button>

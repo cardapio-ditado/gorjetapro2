@@ -384,7 +384,7 @@ ${grupos.map(grupo => `
       <div className="bg-[#12141f] border-b border-white/10 px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-[#7D1F2C] rounded-xl flex items-center justify-center">
+            <div className="w-10 h-10 bg-wine rounded-xl flex items-center justify-center">
               <ShoppingCart size={20} className="text-white" />
             </div>
             <div>
@@ -395,7 +395,7 @@ ${grupos.map(grupo => `
           <div className="flex gap-2">
             {(['nova', 'historico'] as const).map(a => (
               <button key={a} onClick={() => setAba(a)}
-                className={`px-4 py-2 rounded-xl text-sm font-medium border transition-colors ${aba === a ? 'bg-[#7D1F2C] text-white border-[#7D1F2C]' : 'bg-[#12141f]/5 text-white/60 border-white/10 hover:bg-[#12141f]/10'}`}>
+                className={`px-4 py-2 rounded-xl text-sm font-medium border transition-colors ${aba === a ? 'bg-wine text-white border-wine' : 'bg-[#12141f]/5 text-white/60 border-white/10 hover:bg-[#12141f]/10'}`}>
                 {a === 'nova' ? '+ Nova Lista' : '📋 Histórico'}
               </button>
             ))}
@@ -410,7 +410,7 @@ ${grupos.map(grupo => `
           <div className="flex-1 p-6 max-w-2xl mx-auto w-full overflow-y-auto">
             <div className="bg-[#12141f] rounded-2xl border border-white/10 p-6 space-y-5">
               <h2 className="font-semibold text-white/90 flex items-center gap-2">
-                <BarChart2 size={16} className="text-[#7D1F2C]" /> Gerar nova lista
+                <BarChart2 size={16} className="text-wine" /> Gerar nova lista
               </h2>
 
               <div>
@@ -423,7 +423,7 @@ ${grupos.map(grupo => `
                     { v: 'ambos', label: 'Ambos', icon: <Package size={14}/> },
                   ] as {v: TipoCompra; label: string; icon: any}[]).map(op => (
                     <button key={op.v} onClick={() => setTipoFiltro(op.v)}
-                      className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border text-xs font-medium transition-all ${tipoFiltro === op.v ? 'bg-[#7D1F2C] text-white border-[#7D1F2C]' : 'bg-[#12141f]/5 text-white/60 border-white/10 hover:bg-[#12141f]/10'}`}>
+                      className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border text-xs font-medium transition-all ${tipoFiltro === op.v ? 'bg-wine text-white border-wine' : 'bg-[#12141f]/5 text-white/60 border-white/10 hover:bg-[#12141f]/10'}`}>
                       {op.icon}
                       <span className="text-center leading-tight">{op.label}</span>
                     </button>
@@ -442,7 +442,7 @@ ${grupos.map(grupo => `
                     { v: 'ideal', titulo: 'Ideal (+25%)', desc: 'Mínimo + 25% de folga' },
                   ] as { v: NivelAlvo; titulo: string; desc: string }[]).map(op => (
                     <button key={op.v} onClick={() => setNivelAlvo(op.v)}
-                      className={`text-left p-3 rounded-xl border transition-all ${nivelAlvo === op.v ? 'bg-[#7D1F2C] text-white border-[#7D1F2C]' : 'bg-[#12141f]/5 text-white/60 border-white/10 hover:bg-[#12141f]/10'}`}>
+                      className={`text-left p-3 rounded-xl border transition-all ${nivelAlvo === op.v ? 'bg-wine text-white border-wine' : 'bg-[#12141f]/5 text-white/60 border-white/10 hover:bg-[#12141f]/10'}`}>
                       <p className="text-sm font-semibold">{op.titulo}</p>
                       <p className={`text-[11px] mt-0.5 ${nivelAlvo === op.v ? 'text-white/70' : 'text-white/40'}`}>{op.desc}</p>
                     </button>
@@ -454,14 +454,14 @@ ${grupos.map(grupo => `
                 <label className="text-xs font-semibold text-white/40 uppercase tracking-wide mb-1 block">Título (opcional)</label>
                 <input type="text" value={titulo} onChange={e => setTitulo(e.target.value)}
                   placeholder={`Lista ${TIPO_LABEL[tipoFiltro]} - ${new Date().toLocaleDateString('pt-BR')}`}
-                  className="w-full bg-[#12141f]/5 border border-white/20 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#7D1F2C]/30" />
+                  className="w-full bg-[#12141f]/5 border border-white/20 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-wine/30" />
               </div>
 
               <div>
                 <label className="text-xs font-semibold text-white/40 uppercase tracking-wide mb-1 block">Observações (opcional)</label>
                 <textarea value={observacoes} onChange={e => setObservacoes(e.target.value)} rows={2}
                   placeholder="Ex: Priorizar compras no atacado..."
-                  className="w-full bg-[#12141f]/5 border border-white/20 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#7D1F2C]/30 resize-none" />
+                  className="w-full bg-[#12141f]/5 border border-white/20 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-wine/30 resize-none" />
               </div>
 
               <button
@@ -540,7 +540,7 @@ ${grupos.map(grupo => `
               )}
 
               <button onClick={gerarLista} disabled={gerando || sugestoesFiltradas.length === 0}
-                className="w-full flex items-center justify-center gap-2 bg-[#7D1F2C] hover:bg-[#6a1a25] disabled:opacity-50 text-white font-semibold py-3 rounded-xl transition-colors">
+                className="w-full flex items-center justify-center gap-2 bg-wine hover:bg-[#6a1a25] disabled:opacity-50 text-white font-semibold py-3 rounded-xl transition-colors">
                 <ShoppingCart size={18} className={gerando ? 'animate-pulse' : ''} />
                 {gerando ? 'Gerando lista...' : `Gerar Lista de Compras (${sugestoesFiltradas.length})`}
               </button>
@@ -607,7 +607,7 @@ ${grupos.map(grupo => `
               <div className="relative max-w-sm">
                 <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
                 <input value={busca} onChange={e => setBusca(e.target.value)} placeholder="Buscar item..."
-                  className="w-full pl-9 pr-8 py-2 text-sm border border-white/10 rounded-xl bg-[#12141f] text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-[#7D1F2C]/30" />
+                  className="w-full pl-9 pr-8 py-2 text-sm border border-white/10 rounded-xl bg-[#12141f] text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-wine/30" />
                 {busca && <button onClick={() => setBusca('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60"><X size={14}/></button>}
               </div>
             </div>
@@ -648,7 +648,7 @@ ${grupos.map(grupo => `
                             <button onClick={() => toggleComprado(item)} className="mt-0.5 flex-shrink-0">
                               {item.comprado
                                 ? <CheckCircle2 size={22} className="text-green-500" />
-                                : <Circle size={22} className="text-white/20 hover:text-[#7D1F2C]" />}
+                                : <Circle size={22} className="text-white/20 hover:text-wine" />}
                             </button>
                             <div className="flex-1 min-w-0">
                               <div className="flex items-start justify-between gap-2">
@@ -671,7 +671,7 @@ ${grupos.map(grupo => `
                                 <button onClick={() => atualizarQtd(item, item.quantidade_comprar - 1)} className="w-6 h-6 rounded-lg bg-[#12141f]/10 hover:bg-white/15 text-white/60 text-sm font-bold flex items-center justify-center">−</button>
                                 <input type="number" value={item.quantidade_comprar} min={0} step={ehFracionado(item.unidade_medida) ? 0.5 : 1}
                                   onChange={e => atualizarQtd(item, parseFloat(e.target.value) || 0)}
-                                  className="w-16 text-center text-sm font-bold border border-white/10 rounded-lg py-0.5 bg-[#12141f] text-white focus:outline-none focus:ring-2 focus:ring-[#7D1F2C]/30" />
+                                  className="w-16 text-center text-sm font-bold border border-white/10 rounded-lg py-0.5 bg-[#12141f] text-white focus:outline-none focus:ring-2 focus:ring-wine/30" />
                                 <button onClick={() => atualizarQtd(item, item.quantidade_comprar + 1)} className="w-6 h-6 rounded-lg bg-[#12141f]/10 hover:bg-white/15 text-white/60 text-sm font-bold flex items-center justify-center">+</button>
                                 <span className="text-xs text-white/30 ml-1">{item.unidade_medida}</span>
                               </div>
@@ -734,7 +734,7 @@ ${grupos.map(grupo => `
                           )}
                         </div>
                         <button onClick={() => { abrirLista(lista.id); setAba('nova'); }}
-                          className="flex-shrink-0 px-3 py-2 rounded-xl border border-white/10 text-sm font-medium text-white/60 hover:bg-[#7D1F2C] hover:text-white hover:border-[#7D1F2C] transition-all">
+                          className="flex-shrink-0 px-3 py-2 rounded-xl border border-white/10 text-sm font-medium text-white/60 hover:bg-wine hover:text-white hover:border-wine transition-all">
                           Abrir
                         </button>
                       </div>

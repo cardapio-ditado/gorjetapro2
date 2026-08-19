@@ -364,7 +364,7 @@ const ItensEstoque: React.FC = () => {
             <Download className="w-4 h-4 inline mr-2" />Exportar Excel
           </button>
           <button onClick={() => openForm()}
-            className="px-4 py-2 bg-[#7D1F2C] text-white rounded-lg hover:bg-[#6a1a25]">
+            className="px-4 py-2 bg-wine text-white rounded-lg hover:bg-[#6a1a25]">
             <Plus className="w-4 h-4 inline mr-2" />Novo Item
           </button>
         </div>
@@ -434,30 +434,30 @@ const ItensEstoque: React.FC = () => {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30 w-4 h-4" />
             <input type="text" placeholder="Buscar itens..." value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
-              className={`w-full pl-9 pr-4 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-[#7D1F2C] ${searchTerm ? 'border-yellow-400 bg-yellow-500/10' : 'border-white/20'}`} />
+              className={`w-full pl-9 pr-4 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-wine ${searchTerm ? 'border-yellow-400 bg-yellow-500/10' : 'border-white/20'}`} />
           </div>
           {/* Estoque */}
           <select value={estoqueFilter} onChange={e => setEstoqueFilter(e.target.value)}
-            className={`border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#7D1F2C] ${estoqueFilter!=='all' ? 'border-yellow-400 bg-yellow-500/10' : 'border-white/20'}`}>
+            className={`border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-wine ${estoqueFilter!=='all' ? 'border-yellow-400 bg-yellow-500/10' : 'border-white/20'}`}>
             <option value="all">Todos estoques</option>
             {estoques.map(e => <option key={e.id} value={e.id}>{e.nome}</option>)}
           </select>
           {/* Status */}
           <select value={statusFilter} onChange={e => setStatusFilter(e.target.value as any)}
-            className={`border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#7D1F2C] ${statusFilter!=='all' ? 'border-yellow-400 bg-yellow-500/10' : 'border-white/20'}`}>
+            className={`border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-wine ${statusFilter!=='all' ? 'border-yellow-400 bg-yellow-500/10' : 'border-white/20'}`}>
             <option value="all">Todos status</option>
             <option value="ativo">Ativo</option>
             <option value="inativo">Inativo</option>
           </select>
           {/* Grupo contagem */}
           <select value={grupoFilter} onChange={e => setGrupoFilter(e.target.value)}
-            className={`border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#7D1F2C] ${grupoFilter!=='all' ? 'border-yellow-400 bg-yellow-500/10' : 'border-white/20'}`}>
+            className={`border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-wine ${grupoFilter!=='all' ? 'border-yellow-400 bg-yellow-500/10' : 'border-white/20'}`}>
             <option value="all">Todos grupos</option>
             {GRUPOS_CONTAGEM.map(g => <option key={g.value} value={g.value}>{g.label}</option>)}
           </select>
           {/* Ignorar contagem */}
           <select value={ignorarFilter} onChange={e => setIgnorarFilter(e.target.value as any)}
-            className={`border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#7D1F2C] ${ignorarFilter!=='all' ? 'border-yellow-400 bg-yellow-500/10' : 'border-white/20'}`}>
+            className={`border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-wine ${ignorarFilter!=='all' ? 'border-yellow-400 bg-yellow-500/10' : 'border-white/20'}`}>
             <option value="all">Contagem: todos</option>
             <option value="nao_ignorados">✅ Conta normalmente</option>
             <option value="ignorados">⊘ Não contar</option>
@@ -475,7 +475,7 @@ const ItensEstoque: React.FC = () => {
       {/* Tabela */}
       {loading ? (
         <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7D1F2C]" />
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-wine" />
         </div>
       ) : (
         <div className="bg-[#12141f] rounded-lg border border-white/10 overflow-hidden">
@@ -585,7 +585,7 @@ const ItensEstoque: React.FC = () => {
               <Package className="w-16 h-16 text-white/30 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-white mb-2">Nenhum item encontrado</h3>
               {hasActiveFilters
-                ? <button onClick={clearAllFilters} className="px-4 py-2 bg-[#7D1F2C] text-white rounded-lg hover:bg-[#6a1a25]">
+                ? <button onClick={clearAllFilters} className="px-4 py-2 bg-wine text-white rounded-lg hover:bg-[#6a1a25]">
                     Limpar filtros
                   </button>
                 : <p className="text-white/40">Nenhum item cadastrado.</p>}
@@ -614,7 +614,7 @@ const ItensEstoque: React.FC = () => {
                 <label className="block text-sm font-medium text-white/80 mb-1">Nome *</label>
                 <input type="text" value={formData.nome}
                   onChange={e => setFormData({ ...formData, nome: e.target.value })}
-                  className="w-full rounded-xl border-white/20 shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C]/20"
+                  className="w-full rounded-xl border-white/20 shadow-sm focus:border-wine focus:ring focus:ring-wine/20"
                   placeholder="Ex: Farinha de Trigo" required />
               </div>
 
@@ -623,7 +623,7 @@ const ItensEstoque: React.FC = () => {
                 <label className="block text-sm font-medium text-white/80 mb-1">Código</label>
                 <input type="text" value={formData.codigo}
                   onChange={e => setFormData({ ...formData, codigo: e.target.value })}
-                  className="w-full rounded-xl border-white/20 shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C]/20"
+                  className="w-full rounded-xl border-white/20 shadow-sm focus:border-wine focus:ring focus:ring-wine/20"
                   placeholder="Ex: FAR001" />
               </div>
 
@@ -632,7 +632,7 @@ const ItensEstoque: React.FC = () => {
                 <label className="block text-sm font-medium text-white/80 mb-1">Tipo *</label>
                 <select value={formData.tipo_item}
                   onChange={e => setFormData({ ...formData, tipo_item: e.target.value as any })}
-                  className="w-full rounded-xl border-white/20 shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C]/20">
+                  className="w-full rounded-xl border-white/20 shadow-sm focus:border-wine focus:ring focus:ring-wine/20">
                   <option value="insumo">Insumo</option>
                   <option value="produto_final">Produto para Venda</option>
                 </select>
@@ -643,7 +643,7 @@ const ItensEstoque: React.FC = () => {
                 <label className="block text-sm font-medium text-white/80 mb-1">Categoria *</label>
                 {!showNewCategoryInput ? (
                   <select value={formData.categoria} onChange={e => handleCategoryChange(e.target.value)}
-                    className="w-full rounded-xl border-white/20 shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C]/20">
+                    className="w-full rounded-xl border-white/20 shadow-sm focus:border-wine focus:ring focus:ring-wine/20">
                     {categoriasPredefinidas.map(c => <option key={c} value={c}>{c}</option>)}
                     <option value="nova_categoria">+ Criar nova categoria</option>
                   </select>
@@ -651,7 +651,7 @@ const ItensEstoque: React.FC = () => {
                   <div className="space-y-2">
                     <input type="text" value={newCategoryName}
                       onChange={e => setNewCategoryName(e.target.value)}
-                      className="w-full rounded-xl border-white/20 shadow-sm focus:border-[#7D1F2C]"
+                      className="w-full rounded-xl border-white/20 shadow-sm focus:border-wine"
                       placeholder="Nome da categoria..." autoFocus />
                     <div className="flex gap-2">
                       <button type="button" onClick={handleNewCategoryConfirm}
@@ -675,7 +675,7 @@ const ItensEstoque: React.FC = () => {
                 </label>
                 <select value={formData.grupo_contagem}
                   onChange={e => setFormData({ ...formData, grupo_contagem: e.target.value })}
-                  className="w-full rounded-xl border-white/20 shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C]/20">
+                  className="w-full rounded-xl border-white/20 shadow-sm focus:border-wine focus:ring focus:ring-wine/20">
                   {GRUPOS_CONTAGEM.map(g => <option key={g.value} value={g.value}>{g.label}</option>)}
                 </select>
                 <p className="text-xs text-white/30 mt-1">
@@ -688,7 +688,7 @@ const ItensEstoque: React.FC = () => {
                 <label className="block text-sm font-medium text-white/80 mb-1">Descrição</label>
                 <textarea value={formData.descricao}
                   onChange={e => setFormData({ ...formData, descricao: e.target.value })}
-                  className="w-full rounded-xl border-white/20 shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C]/20"
+                  className="w-full rounded-xl border-white/20 shadow-sm focus:border-wine focus:ring focus:ring-wine/20"
                   rows={2} placeholder="Descrição detalhada..." />
               </div>
 
@@ -697,7 +697,7 @@ const ItensEstoque: React.FC = () => {
                 <label className="block text-sm font-medium text-white/80 mb-1">Unidade de Medida *</label>
                 <select value={formData.unidade_medida}
                   onChange={e => setFormData({ ...formData, unidade_medida: e.target.value })}
-                  className="w-full rounded-xl border-white/20 shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C]/20">
+                  className="w-full rounded-xl border-white/20 shadow-sm focus:border-wine focus:ring focus:ring-wine/20">
                   {unidadesMedida.map(u => <option key={u} value={u}>{u}</option>)}
                 </select>
               </div>
@@ -709,7 +709,7 @@ const ItensEstoque: React.FC = () => {
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40 text-sm">R$</span>
                   <input type="number" step="0.01" min="0" value={formData.custo_medio}
                     onChange={e => setFormData({ ...formData, custo_medio: parseFloat(e.target.value) || 0 })}
-                    className="pl-10 w-full rounded-xl border-white/20 shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C]/20" />
+                    className="pl-10 w-full rounded-xl border-white/20 shadow-sm focus:border-wine focus:ring focus:ring-wine/20" />
                 </div>
               </div>
 
@@ -718,7 +718,7 @@ const ItensEstoque: React.FC = () => {
                 <label className="block text-sm font-medium text-white/80 mb-1">Estoque Crítico (Urgente)</label>
                 <input type="number" step="0.001" min="0" value={formData.estoque_minimo}
                   onChange={e => setFormData({ ...formData, estoque_minimo: parseFloat(e.target.value) || 0 })}
-                  className="w-full rounded-xl border-white/20 shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C]/20" />
+                  className="w-full rounded-xl border-white/20 shadow-sm focus:border-wine focus:ring focus:ring-wine/20" />
                 <p className="text-xs text-red-500 mt-1">Abaixo desta qtd = CRÍTICO</p>
               </div>
 
@@ -727,7 +727,7 @@ const ItensEstoque: React.FC = () => {
                 <label className="block text-sm font-medium text-white/80 mb-1">Ponto de Reposição</label>
                 <input type="number" step="0.001" min="0" value={formData.ponto_reposicao}
                   onChange={e => setFormData({ ...formData, ponto_reposicao: parseFloat(e.target.value) || 0 })}
-                  className="w-full rounded-xl border-white/20 shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C]/20" />
+                  className="w-full rounded-xl border-white/20 shadow-sm focus:border-wine focus:ring focus:ring-wine/20" />
                 <p className="text-xs text-yellow-400 mt-1">Abaixo desta qtd = ESTOQUE BAIXO</p>
               </div>
 
@@ -736,7 +736,7 @@ const ItensEstoque: React.FC = () => {
                 <label className="block text-sm font-medium text-white/80 mb-1">Estoque Nativo</label>
                 <select value={formData.estoque_nativo_id}
                   onChange={e => setFormData({ ...formData, estoque_nativo_id: e.target.value })}
-                  className="w-full rounded-xl border-white/20 shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C]/20">
+                  className="w-full rounded-xl border-white/20 shadow-sm focus:border-wine focus:ring focus:ring-wine/20">
                   <option value="">Sem estoque nativo</option>
                   {estoques.map(e => <option key={e.id} value={e.id}>{e.nome}</option>)}
                 </select>
@@ -747,7 +747,7 @@ const ItensEstoque: React.FC = () => {
                 <label className="block text-sm font-medium text-white/80 mb-1">Tipo de Compra *</label>
                 <select value={formData.tipo_compra}
                   onChange={e => setFormData({ ...formData, tipo_compra: e.target.value as any })}
-                  className="w-full rounded-xl border-white/20 shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C]/20">
+                  className="w-full rounded-xl border-white/20 shadow-sm focus:border-wine focus:ring focus:ring-wine/20">
                   <option value="ambos">Ambos</option>
                   <option value="fornecedor">Apenas Fornecedor</option>
                   <option value="rua">Apenas Rua/Feira</option>
@@ -760,7 +760,7 @@ const ItensEstoque: React.FC = () => {
                 <select value={formData.fornecedor_padrao_id}
                   onChange={e => setFormData({ ...formData, fornecedor_padrao_id: e.target.value })}
                   disabled={formData.tipo_compra === 'rua'}
-                  className="w-full rounded-xl border-white/20 shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C]/20 disabled:opacity-50">
+                  className="w-full rounded-xl border-white/20 shadow-sm focus:border-wine focus:ring focus:ring-wine/20 disabled:opacity-50">
                   <option value="">Nenhum</option>
                   {fornecedores.map(f => <option key={f.id} value={f.id}>{f.nome}</option>)}
                 </select>
@@ -773,7 +773,7 @@ const ItensEstoque: React.FC = () => {
                 <label className="flex items-center gap-3 p-3 bg-white/5 rounded-xl cursor-pointer hover:bg-white/10 transition-colors">
                   <input type="checkbox" checked={formData.tem_validade}
                     onChange={e => setFormData({ ...formData, tem_validade: e.target.checked })}
-                    className="w-4 h-4 rounded text-[#7D1F2C] border-white/20 focus:ring-[#7D1F2C]" />
+                    className="w-4 h-4 rounded text-wine border-white/20 focus:ring-wine" />
                   <div>
                     <p className="text-sm font-medium text-white/80">Tem validade</p>
                     <p className="text-xs text-white/40">Controlar vencimento</p>
@@ -784,7 +784,7 @@ const ItensEstoque: React.FC = () => {
                 <label className="flex items-center gap-3 p-3 bg-white/5 rounded-xl cursor-pointer hover:bg-white/10 transition-colors">
                   <input type="checkbox" checked={formData.status === 'ativo'}
                     onChange={e => setFormData({ ...formData, status: e.target.checked ? 'ativo' : 'inativo' })}
-                    className="w-4 h-4 rounded text-[#7D1F2C] border-white/20 focus:ring-[#7D1F2C]" />
+                    className="w-4 h-4 rounded text-wine border-white/20 focus:ring-wine" />
                   <div>
                     <p className="text-sm font-medium text-white/80">Item ativo</p>
                     <p className="text-xs text-white/40">Visível no sistema</p>
@@ -835,7 +835,7 @@ const ItensEstoque: React.FC = () => {
                 <label className="block text-sm font-medium text-white/80 mb-1">Observações</label>
                 <textarea value={formData.observacoes}
                   onChange={e => setFormData({ ...formData, observacoes: e.target.value })}
-                  className="w-full rounded-xl border-white/20 shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C]/20"
+                  className="w-full rounded-xl border-white/20 shadow-sm focus:border-wine focus:ring focus:ring-wine/20"
                   rows={2} placeholder="Observações adicionais..." />
               </div>
             </div>
@@ -847,7 +847,7 @@ const ItensEstoque: React.FC = () => {
               </button>
               <button onClick={handleSave}
                 disabled={loading || !formData.nome || !formData.unidade_medida}
-                className="px-5 py-2 bg-[#7D1F2C] text-white rounded-xl hover:bg-[#6a1a25] disabled:opacity-50 font-semibold">
+                className="px-5 py-2 bg-wine text-white rounded-xl hover:bg-[#6a1a25] disabled:opacity-50 font-semibold">
                 {loading ? 'Salvando...' : 'Salvar'}
               </button>
             </div>

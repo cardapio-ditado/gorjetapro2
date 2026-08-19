@@ -209,7 +209,7 @@ const ManualUsuario: React.FC = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-[#0d0f1a] flex items-center justify-center">
-        <Loader2 className="h-8 w-8 text-[#7D1F2C] animate-spin" />
+        <Loader2 className="h-8 w-8 text-wine animate-spin" />
       </div>
     );
   }
@@ -220,7 +220,7 @@ const ManualUsuario: React.FC = () => {
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-4">
-            <div className="bg-gradient-to-r from-[#7D1F2C] to-[#D4AF37] p-3 rounded-xl">
+            <div className="bg-gradient-to-r from-wine to-gold p-3 rounded-xl">
               <BookOpen className="h-8 w-8 text-white" />
             </div>
             <div>
@@ -237,7 +237,7 @@ const ManualUsuario: React.FC = () => {
               placeholder="Buscar no manual..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 border border-white/20 rounded-lg focus:ring-2 focus:ring-[#7D1F2C] focus:border-transparent"
+              className="w-full pl-10 pr-4 py-3 border border-white/20 rounded-lg focus:ring-2 focus:ring-wine focus:border-transparent"
             />
           </div>
         </div>
@@ -271,7 +271,7 @@ const ManualUsuario: React.FC = () => {
                         className="w-full flex items-center justify-between p-2 hover:bg-[#12141f]/5 rounded-lg text-left transition-colors"
                       >
                         <div className="flex items-center gap-2">
-                          <Icon className="h-5 w-5 text-[#7D1F2C]" />
+                          <Icon className="h-5 w-5 text-wine" />
                           <span className="text-sm font-medium text-white/80">
                             {categoria.nome}
                           </span>
@@ -291,7 +291,7 @@ const ManualUsuario: React.FC = () => {
                               onClick={() => handleTopicoClick(topico.id)}
                               className={`w-full text-left px-3 py-1.5 text-sm rounded transition-colors ${
                                 selectedTopico === topico.id
-                                  ? 'bg-[#7D1F2C] text-white'
+                                  ? 'bg-wine text-white'
                                   : 'text-white/60 hover:bg-[#12141f]/10'
                               }`}
                             >
@@ -380,7 +380,7 @@ const ManualUsuario: React.FC = () => {
                                 handleTopicoClick(firstTopico.id);
                               }
                             }}
-                            className="p-4 border border-white/10 rounded-lg hover:border-[#7D1F2C] hover:shadow-md transition-all cursor-pointer"
+                            className="p-4 border border-white/10 rounded-lg hover:border-wine hover:shadow-md transition-all cursor-pointer"
                           >
                             <div className={`inline-flex p-2 rounded-lg bg-gradient-to-r ${gradient} mb-2`}>
                               <Icon className="h-5 w-5 text-white" />

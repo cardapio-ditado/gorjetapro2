@@ -197,7 +197,7 @@ export default function MapaMesasPublico() {
         </p>
         <div className="rounded-2xl p-5 space-y-3 mb-6 text-left" style={{ background: '#101520', border: '1px solid rgba(255,255,255,0.08)' }}>
           <div className="flex items-start gap-3">
-            <MapPin size={16} className="text-[#7D1F2C] flex-shrink-0 mt-0.5" />
+            <MapPin size={16} className="text-wine flex-shrink-0 mt-0.5" />
             <div>
               <p className="text-xs text-white/40 mb-1">
                 {mesasSelecionadas.length > 1 ? 'Mesas' : 'Mesa'}
@@ -210,28 +210,28 @@ export default function MapaMesasPublico() {
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <Calendar size={16} className="text-[#7D1F2C] flex-shrink-0" />
+            <Calendar size={16} className="text-wine flex-shrink-0" />
             <div>
               <p className="text-xs text-white/40">Data</p>
               <p className="text-white font-semibold capitalize">{fmtData(data)}</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <Clock size={16} className="text-[#7D1F2C] flex-shrink-0" />
+            <Clock size={16} className="text-wine flex-shrink-0" />
             <div>
               <p className="text-xs text-white/40">Horário</p>
               <p className="text-white font-semibold">{horario}</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <Users size={16} className="text-[#7D1F2C] flex-shrink-0" />
+            <Users size={16} className="text-wine flex-shrink-0" />
             <div>
               <p className="text-xs text-white/40">Pessoas</p>
               <p className="text-white font-semibold">{form.numero_pessoas} {form.numero_pessoas === 1 ? 'pessoa' : 'pessoas'}</p>
             </div>
           </div>
         </div>
-        <button onClick={resetar} className="w-full py-3 rounded-xl font-semibold text-white bg-[#7D1F2C] hover:bg-[#6a1a25] transition-colors">
+        <button onClick={resetar} className="w-full py-3 rounded-xl font-semibold text-white bg-wine hover:bg-[#6a1a25] transition-colors">
           Fazer outra reserva
         </button>
       </div>
@@ -295,7 +295,7 @@ export default function MapaMesasPublico() {
               <input type="text" value={form.nome_cliente}
                 onChange={e => setForm(f => ({ ...f, nome_cliente: e.target.value }))}
                 placeholder="Seu nome"
-                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/25 focus:outline-none focus:ring-2 focus:ring-[#7D1F2C]/50 text-sm" />
+                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/25 focus:outline-none focus:ring-2 focus:ring-wine/50 text-sm" />
             </div>
 
             <div>
@@ -303,7 +303,7 @@ export default function MapaMesasPublico() {
               <input type="tel" value={form.telefone}
                 onChange={e => setForm(f => ({ ...f, telefone: e.target.value }))}
                 placeholder="(11) 99999-0000"
-                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/25 focus:outline-none focus:ring-2 focus:ring-[#7D1F2C]/50 text-sm" />
+                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/25 focus:outline-none focus:ring-2 focus:ring-wine/50 text-sm" />
             </div>
 
             <div>
@@ -313,7 +313,7 @@ export default function MapaMesasPublico() {
               <div className="flex gap-2 flex-wrap">
                 {Array.from({ length: maxPessoas - 1 }, (_, i) => i + 2).map(n => (
                   <button key={n} onClick={() => setForm(f => ({ ...f, numero_pessoas: n }))}
-                    className={`w-11 h-11 rounded-xl text-sm font-bold border transition-all ${form.numero_pessoas === n ? 'bg-[#7D1F2C] text-white border-[#7D1F2C]' : 'bg-white/5 text-white/50 border-white/10 hover:bg-white/10'}`}>
+                    className={`w-11 h-11 rounded-xl text-sm font-bold border transition-all ${form.numero_pessoas === n ? 'bg-wine text-white border-wine' : 'bg-white/5 text-white/50 border-white/10 hover:bg-white/10'}`}>
                     {n}
                   </button>
                 ))}
@@ -326,13 +326,13 @@ export default function MapaMesasPublico() {
                 onChange={e => setForm(f => ({ ...f, observacoes: e.target.value }))}
                 placeholder="Aniversário, decoração especial..."
                 rows={2}
-                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/25 focus:outline-none focus:ring-2 focus:ring-[#7D1F2C]/50 text-sm resize-none" />
+                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/25 focus:outline-none focus:ring-2 focus:ring-wine/50 text-sm resize-none" />
             </div>
           </div>
 
           <button onClick={handleConfirmar}
             disabled={!form.nome_cliente.trim() || salvando}
-            className="w-full mt-4 py-4 rounded-xl font-bold text-white bg-[#7D1F2C] hover:bg-[#6a1a25] disabled:opacity-40 transition-all text-base flex items-center justify-center gap-2">
+            className="w-full mt-4 py-4 rounded-xl font-bold text-white bg-wine hover:bg-[#6a1a25] disabled:opacity-40 transition-all text-base flex items-center justify-center gap-2">
             {salvando ? (
               <><div className="w-5 h-5 rounded-full border-2 border-white/30 border-t-white animate-spin" /> Confirmando...</>
             ) : (
@@ -399,7 +399,7 @@ export default function MapaMesasPublico() {
         <div className="flex gap-2 mb-4 overflow-x-auto pb-1">
           {secoes.map(s => (
             <button key={s} onClick={() => setSecaoAtiva(s)}
-              className={`flex-shrink-0 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all ${secaoAtiva === s ? 'bg-[#7D1F2C] text-white border-[#7D1F2C]' : 'bg-white/5 text-white/50 border-white/10 hover:bg-white/10'}`}>
+              className={`flex-shrink-0 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all ${secaoAtiva === s ? 'bg-wine text-white border-wine' : 'bg-white/5 text-white/50 border-white/10 hover:bg-white/10'}`}>
               {s === 'todas' ? 'Todas as áreas' : (SECAO_LABEL[s] || s)}
             </button>
           ))}

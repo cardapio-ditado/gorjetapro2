@@ -273,7 +273,7 @@ const AprovacoesSolicitacoes: React.FC = () => {
                 placeholder="Buscar solicitações..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-white/20 bg-white/5 rounded-lg focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+                className="w-full pl-10 pr-4 py-2 border border-white/20 bg-white/5 rounded-lg focus:ring-2 focus:ring-wine focus:border-wine"
               />
             </div>
           </div>
@@ -282,7 +282,7 @@ const AprovacoesSolicitacoes: React.FC = () => {
             <select
               value={prioridadeFilter}
               onChange={(e) => setPrioridadeFilter(e.target.value)}
-              className="w-full border border-white/20 bg-white/5 text-white rounded-lg px-4 py-2 focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+              className="w-full border border-white/20 bg-white/5 text-white rounded-lg px-4 py-2 focus:ring-2 focus:ring-wine focus:border-wine"
             >
               <option value="all">Todas as Prioridades</option>
               <option value="critica">Crítica</option>
@@ -297,7 +297,7 @@ const AprovacoesSolicitacoes: React.FC = () => {
             <select
               value={tipoFilter}
               onChange={(e) => setTipoFilter(e.target.value)}
-              className="w-full border border-white/20 bg-white/5 text-white rounded-lg px-4 py-2 focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+              className="w-full border border-white/20 bg-white/5 text-white rounded-lg px-4 py-2 focus:ring-2 focus:ring-wine focus:border-wine"
             >
               <option value="all">Todos os Tipos</option>
               <option value="manutencao_preventiva">Manutenção Preventiva</option>
@@ -314,7 +314,7 @@ const AprovacoesSolicitacoes: React.FC = () => {
               placeholder="Valor mínimo"
               value={valorMinimo}
               onChange={(e) => setValorMinimo(e.target.value)}
-              className="w-full border border-white/20 bg-white/5 text-white rounded-lg px-4 py-2 focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+              className="w-full border border-white/20 bg-white/5 text-white rounded-lg px-4 py-2 focus:ring-2 focus:ring-wine focus:border-wine"
             />
           </div>
 
@@ -324,7 +324,7 @@ const AprovacoesSolicitacoes: React.FC = () => {
               placeholder="Valor máximo"
               value={valorMaximo}
               onChange={(e) => setValorMaximo(e.target.value)}
-              className="w-full border border-white/20 bg-white/5 text-white rounded-lg px-4 py-2 focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+              className="w-full border border-white/20 bg-white/5 text-white rounded-lg px-4 py-2 focus:ring-2 focus:ring-wine focus:border-wine"
             />
           </div>
         </div>
@@ -333,7 +333,7 @@ const AprovacoesSolicitacoes: React.FC = () => {
       {/* Lista de Solicitações */}
       {loading ? (
         <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7D1F2C]"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-wine"></div>
         </div>
       ) : (
         <div className="bg-[#12141f] rounded-lg shadow-sm border border-white/10 overflow-hidden">
@@ -352,7 +352,7 @@ const AprovacoesSolicitacoes: React.FC = () => {
                           setSelectedSolicitacoes(new Set(filteredSolicitacoes.map(s => s.id)));
                         }
                       }}
-                      className="rounded border-white/20 text-[#7D1F2C] focus:ring-[#7D1F2C]"
+                      className="rounded border-white/20 text-wine focus:ring-wine"
                     />
                   </th>
                   <th className="px-6 py-3 text-xs font-medium text-white/50 uppercase tracking-wider">
@@ -394,7 +394,7 @@ const AprovacoesSolicitacoes: React.FC = () => {
                         type="checkbox"
                         checked={selectedSolicitacoes.has(solicitacao.id)}
                         onChange={() => toggleSolicitacaoSelection(solicitacao.id)}
-                        className="rounded border-white/20 text-[#7D1F2C] focus:ring-[#7D1F2C]"
+                        className="rounded border-white/20 text-wine focus:ring-wine"
                       />
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -546,7 +546,7 @@ const AprovacoesSolicitacoes: React.FC = () => {
               <textarea
                 value={observacaoAprovacao}
                 onChange={(e) => setObservacaoAprovacao(e.target.value)}
-                className="w-full rounded-md border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                className="w-full rounded-md border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                 rows={3}
                 placeholder={`Digite o motivo da ${approvalType === 'approve' ? 'aprovação' : 'rejeição'}...`}
               />

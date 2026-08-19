@@ -692,7 +692,7 @@ const ColaboradoresRH: React.FC = () => {
                             className="w-10 h-10 rounded-full object-cover mr-3"
                           />
                         ) : (
-                          <div className="w-10 h-10 rounded-full bg-[#7D1F2C] flex items-center justify-center text-white font-medium mr-3">
+                          <div className="w-10 h-10 rounded-full bg-wine flex items-center justify-center text-white font-medium mr-3">
                             {colaborador.nome_completo.split(' ').map(n => n[0]).join('').substring(0, 2)}
                           </div>
                         )}

@@ -49,7 +49,7 @@ const DashboardRH: React.FC = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7D1F2C]"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-wine"></div>
       </div>
     );
   }
@@ -199,7 +199,7 @@ const DashboardRH: React.FC = () => {
                     </div>
                     {candidatura.pontuacao_geral && (
                       <div className="text-right">
-                        <div className="text-2xl font-bold text-[#7D1F2C]">
+                        <div className="text-2xl font-bold text-wine">
                           {candidatura.pontuacao_geral.toFixed(0)}
                         </div>
                         <div className="text-xs text-white/40">Pontuação</div>

@@ -79,7 +79,7 @@ const ModalRevisaoFornecedores: React.FC<ModalRevisaoFornecedoresProps> = ({
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[60] p-4">
       <div className="bg-[#0f1020] rounded-lg w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="p-6 border-b border-white/10 bg-gradient-to-r from-[#7D1F2C] to-[#a0292e]">
+        <div className="p-6 border-b border-white/10 bg-gradient-to-r from-wine to-[#a0292e]">
           <div className="flex justify-between items-start">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
@@ -209,12 +209,12 @@ const ModalRevisaoFornecedores: React.FC<ModalRevisaoFornecedoresProps> = ({
                           }
                         }}
                         placeholder="Digite o nome do novo fornecedor"
-                        className="flex-1 px-4 py-2 bg-white/5 border border-white/20 text-white rounded-lg focus:ring-2 focus:ring-[#7D1F2C] focus:border-transparent"
+                        className="flex-1 px-4 py-2 bg-white/5 border border-white/20 text-white rounded-lg focus:ring-2 focus:ring-wine focus:border-transparent"
                       />
                       <button
                         onClick={() => handleCriarNovoFornecedor(pendente.index)}
                         disabled={!novoNome.trim()}
-                        className="px-4 py-2 bg-[#7D1F2C] text-white rounded-lg hover:bg-[#6a1a25] disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transition-colors"
+                        className="px-4 py-2 bg-wine text-white rounded-lg hover:bg-[#6a1a25] disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transition-colors"
                       >
                         <Plus className="w-5 h-5" />
                         Criar
@@ -265,7 +265,7 @@ const ModalRevisaoFornecedores: React.FC<ModalRevisaoFornecedoresProps> = ({
               <button
                 onClick={handleConfirmar}
                 disabled={!todosRevisados}
-                className="px-6 py-2 bg-[#7D1F2C] text-white rounded-lg hover:bg-[#6a1a25] disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transition-colors"
+                className="px-6 py-2 bg-wine text-white rounded-lg hover:bg-[#6a1a25] disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transition-colors"
               >
                 <CheckCircle className="w-5 h-5" />
                 Confirmar Lançamentos

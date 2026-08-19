@@ -538,7 +538,7 @@ const GerenciamentoUsuarios: React.FC = () => {
           </button>
           <button
             onClick={() => openForm()}
-            className="px-4 py-2 bg-[#7D1F2C] text-white rounded-lg hover:bg-[#6a1a25]"
+            className="px-4 py-2 bg-wine text-white rounded-lg hover:bg-[#6a1a25]"
           >
             <Plus className="w-4 h-4 inline mr-2" />
             Novo Usuário
@@ -635,7 +635,7 @@ const GerenciamentoUsuarios: React.FC = () => {
                 placeholder="Buscar usuários..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-white/20 bg-white/5 rounded-lg focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+                className="w-full pl-10 pr-4 py-2 border border-white/20 bg-white/5 rounded-lg focus:ring-2 focus:ring-wine focus:border-wine"
               />
             </div>
           </div>
@@ -644,7 +644,7 @@ const GerenciamentoUsuarios: React.FC = () => {
             <select
               value={nivelFilter}
               onChange={(e) => setNivelFilter(e.target.value)}
-              className="w-full border border-white/20 bg-white/5 text-white rounded-lg px-4 py-2 focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+              className="w-full border border-white/20 bg-white/5 text-white rounded-lg px-4 py-2 focus:ring-2 focus:ring-wine focus:border-wine"
             >
               <option value="all">Todos os Níveis</option>
               <option value="master">Master</option>
@@ -658,7 +658,7 @@ const GerenciamentoUsuarios: React.FC = () => {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value as any)}
-              className="w-full border border-white/20 bg-white/5 text-white rounded-lg px-4 py-2 focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+              className="w-full border border-white/20 bg-white/5 text-white rounded-lg px-4 py-2 focus:ring-2 focus:ring-wine focus:border-wine"
             >
               <option value="all">Todos os Status</option>
               <option value="ativo">Ativo</option>
@@ -670,7 +670,7 @@ const GerenciamentoUsuarios: React.FC = () => {
             <select
               value={departamentoFilter}
               onChange={(e) => setDepartamentoFilter(e.target.value)}
-              className="w-full border border-white/20 bg-white/5 text-white rounded-lg px-4 py-2 focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+              className="w-full border border-white/20 bg-white/5 text-white rounded-lg px-4 py-2 focus:ring-2 focus:ring-wine focus:border-wine"
             >
               <option value="all">Todos os Departamentos</option>
               {departamentos.map((dept) => (
@@ -684,7 +684,7 @@ const GerenciamentoUsuarios: React.FC = () => {
           <div>
             <button
               onClick={fetchData}
-              className="w-full px-4 py-2 bg-[#7D1F2C] text-white rounded-md hover:bg-[#6a1a25]"
+              className="w-full px-4 py-2 bg-wine text-white rounded-md hover:bg-[#6a1a25]"
             >
               <Filter className="w-4 h-4 inline mr-2" />
               Filtrar
@@ -696,7 +696,7 @@ const GerenciamentoUsuarios: React.FC = () => {
       {/* Lista de Usuários */}
       {loading ? (
         <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7D1F2C]"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-wine"></div>
         </div>
       ) : (
         <div className="bg-[#12141f] rounded-lg shadow-sm border border-white/10 overflow-hidden">
@@ -732,7 +732,7 @@ const GerenciamentoUsuarios: React.FC = () => {
                   <tr key={usuario.id} className="hover:bg-white/5">
                     <td className="px-6 py-4">
                       <div className="flex items-center">
-                        <div className="w-10 h-10 rounded-full bg-[#7D1F2C] flex items-center justify-center text-white font-medium mr-3">
+                        <div className="w-10 h-10 rounded-full bg-wine flex items-center justify-center text-white font-medium mr-3">
                           {usuario.nome_completo.split(' ').map(n => n[0]).join('').substring(0, 2)}
                         </div>
                         <div>
@@ -902,7 +902,7 @@ const GerenciamentoUsuarios: React.FC = () => {
                   type="text"
                   value={formData.nome_completo}
                   onChange={(e) => setFormData({ ...formData, nome_completo: e.target.value })}
-                  className="w-full rounded-md border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                  className="w-full rounded-md border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                   required
                   placeholder="Nome completo do usuário"
                 />
@@ -916,7 +916,7 @@ const GerenciamentoUsuarios: React.FC = () => {
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full rounded-md border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                  className="w-full rounded-md border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                   required
                   disabled={!!editingUsuario}
                   placeholder="email@ditadopopular.com"
@@ -933,7 +933,7 @@ const GerenciamentoUsuarios: React.FC = () => {
                       type={mostrarSenha ? 'text' : 'password'}
                       value={formData.senhaProvisoria}
                       onChange={(e) => setFormData({ ...formData, senhaProvisoria: e.target.value })}
-                      className="w-full rounded-md border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50 font-mono"
+                      className="w-full rounded-md border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50 font-mono"
                       required
                       minLength={8}
                       placeholder="Mínimo 8 caracteres"
@@ -965,7 +965,7 @@ const GerenciamentoUsuarios: React.FC = () => {
                 <select
                   value={formData.nivel}
                   onChange={(e) => setFormData({ ...formData, nivel: e.target.value as any })}
-                  className="w-full rounded-md border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                  className="w-full rounded-md border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                   required
                   disabled={editingUsuario?.id === usuarioLogado?.id}
                 >
@@ -996,7 +996,7 @@ const GerenciamentoUsuarios: React.FC = () => {
                           onClick={() => toggleModuloPermitido(m.slug)}
                           className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${
                             marcado
-                              ? 'bg-[#7D1F2C] border-[#7D1F2C] text-white'
+                              ? 'bg-wine border-wine text-white'
                               : 'bg-white/5 border-white/20 text-white/60 hover:bg-white/10'
                           }`}
                         >
@@ -1019,7 +1019,7 @@ const GerenciamentoUsuarios: React.FC = () => {
                   type="tel"
                   value={formData.telefone}
                   onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
-                  className="w-full rounded-md border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                  className="w-full rounded-md border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                   placeholder="(11) 99999-9999"
                 />
               </div>
@@ -1032,7 +1032,7 @@ const GerenciamentoUsuarios: React.FC = () => {
                   type="text"
                   value={formData.cargo}
                   onChange={(e) => setFormData({ ...formData, cargo: e.target.value })}
-                  className="w-full rounded-md border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                  className="w-full rounded-md border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                   placeholder="Ex: Gerente, Analista, Atendente"
                 />
               </div>
@@ -1044,7 +1044,7 @@ const GerenciamentoUsuarios: React.FC = () => {
                 <select
                   value={formData.departamento}
                   onChange={(e) => setFormData({ ...formData, departamento: e.target.value })}
-                  className="w-full rounded-md border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                  className="w-full rounded-md border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                   required
                 >
                   {departamentos.map((dept) => (
@@ -1063,7 +1063,7 @@ const GerenciamentoUsuarios: React.FC = () => {
                   type="date"
                   value={formData.data_admissao}
                   onChange={(e) => setFormData({ ...formData, data_admissao: e.target.value })}
-                  className="w-full rounded-md border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                  className="w-full rounded-md border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                 />
               </div>
 
@@ -1073,7 +1073,7 @@ const GerenciamentoUsuarios: React.FC = () => {
                   id="ativo"
                   checked={formData.ativo}
                   onChange={(e) => setFormData({ ...formData, ativo: e.target.checked })}
-                  className="rounded border-white/20 text-[#7D1F2C] focus:ring-[#7D1F2C]"
+                  className="rounded border-white/20 text-wine focus:ring-wine"
                   disabled={editingUsuario?.id === usuarioLogado?.id}
                 />
                 <label htmlFor="ativo" className="ml-2 text-sm text-white/80">
@@ -1097,7 +1097,7 @@ const GerenciamentoUsuarios: React.FC = () => {
               <button
                 onClick={handleSave}
                 disabled={loading || !formData.nome_completo || !formData.email || (!editingUsuario && formData.senhaProvisoria.length < 8)}
-                className="px-4 py-2 bg-[#7D1F2C] text-white rounded-md hover:bg-[#6a1a25] disabled:opacity-50"
+                className="px-4 py-2 bg-wine text-white rounded-md hover:bg-[#6a1a25] disabled:opacity-50"
               >
                 {loading ? 'Salvando...' : 'Salvar'}
               </button>

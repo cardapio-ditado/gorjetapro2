@@ -235,7 +235,7 @@ export default function InventarioConsolidado() {
           <input
             type="text" value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
             placeholder="Buscar por nome ou código..."
-            className="w-full pl-9 pr-3 py-2.5 bg-white/5 border border-white/20 text-white rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#7D1F2C]/30"
+            className="w-full pl-9 pr-3 py-2.5 bg-white/5 border border-white/20 text-white rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-wine/30"
           />
         </div>
 

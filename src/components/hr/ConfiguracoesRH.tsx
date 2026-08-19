@@ -37,7 +37,7 @@ const ConfiguracoesRH: React.FC = () => {
 
   const TextInput = ({ value, onChange }: { value: number; onChange: (v: string) => void }) => (
     <input
-      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#7D1F2C]/30 focus:border-[#7D1F2C]"
+      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-wine/30 focus:border-wine"
       value={value}
       onChange={(e) => onChange(e.target.value)}
     />
@@ -97,14 +97,14 @@ const ConfiguracoesRH: React.FC = () => {
                   type="button"
                   onClick={() => handleBoolean("adiantamento_abate_saldo", !cfg.adiantamento_abate_saldo)}
                   className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                    cfg.adiantamento_abate_saldo ? "bg-[#7D1F2C]" : "bg-gray-300"
+                    cfg.adiantamento_abate_saldo ? "bg-wine" : "bg-gray-300"
                   }`}
                 >
                   <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform ${
                     cfg.adiantamento_abate_saldo ? "translate-x-6" : "translate-x-1"
                   }`} />
                 </button>
-                <span className={`text-sm font-medium ${cfg.adiantamento_abate_saldo ? "text-[#7D1F2C]" : "text-gray-500"}`}>
+                <span className={`text-sm font-medium ${cfg.adiantamento_abate_saldo ? "text-wine" : "text-gray-500"}`}>
                   {cfg.adiantamento_abate_saldo ? "Ativo" : "Inativo"}
                 </span>
               </div>
@@ -116,7 +116,7 @@ const ConfiguracoesRH: React.FC = () => {
       <div className="flex items-center gap-3">
         <button
           onClick={handleSave}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold bg-[#7D1F2C] text-white hover:bg-[#9B2535] transition-all active:scale-95"
+          className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold bg-wine text-white hover:bg-wine-light transition-all active:scale-95"
         >
           <Save className="w-4 h-4" />
           {saved ? "Salvo!" : "Salvar configurações"}

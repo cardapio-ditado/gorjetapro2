@@ -368,7 +368,7 @@ const RelatoriosSolicitacoes: React.FC = () => {
         <h3 className="text-lg font-medium text-white">Relatórios de Solicitações</h3>
         <button
           onClick={exportarRelatorio}
-          className="px-4 py-2 bg-[#7D1F2C] text-white rounded-lg hover:bg-[#6a1a25]"
+          className="px-4 py-2 bg-wine text-white rounded-lg hover:bg-[#6a1a25]"
         >
           <Download className="w-4 h-4 inline mr-2" />
           Exportar Relatório
@@ -392,7 +392,7 @@ const RelatoriosSolicitacoes: React.FC = () => {
               type="date"
               value={periodoInicial}
               onChange={(e) => setPeriodoInicial(e.target.value)}
-              className="w-full rounded-md border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+              className="w-full rounded-md border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
             />
           </div>
 
@@ -404,7 +404,7 @@ const RelatoriosSolicitacoes: React.FC = () => {
               type="date"
               value={periodoFinal}
               onChange={(e) => setPeriodoFinal(e.target.value)}
-              className="w-full rounded-md border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+              className="w-full rounded-md border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
             />
           </div>
 
@@ -415,7 +415,7 @@ const RelatoriosSolicitacoes: React.FC = () => {
             <select
               value={agrupamento}
               onChange={(e) => setAgrupamento(e.target.value as any)}
-              className="w-full rounded-md border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+              className="w-full rounded-md border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
             >
               <option value="mensal">Mensal</option>
               <option value="trimestral">Trimestral</option>
@@ -425,7 +425,7 @@ const RelatoriosSolicitacoes: React.FC = () => {
           <div className="flex items-end">
             <button
               onClick={fetchRelatorios}
-              className="w-full px-4 py-2 bg-[#7D1F2C] text-white rounded-md hover:bg-[#6a1a25]"
+              className="w-full px-4 py-2 bg-wine text-white rounded-md hover:bg-[#6a1a25]"
             >
               <Filter className="w-4 h-4 inline mr-2" />
               Atualizar
@@ -436,7 +436,7 @@ const RelatoriosSolicitacoes: React.FC = () => {
 
       {loading ? (
         <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7D1F2C]"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-wine"></div>
         </div>
       ) : (
         <div className="space-y-6">
@@ -532,7 +532,7 @@ const RelatoriosSolicitacoes: React.FC = () => {
                     <div key={index} className="p-3 bg-white/5 rounded-lg">
                       <div className="flex justify-between items-center mb-2">
                         <span className="font-medium text-white">{setor.setor}</span>
-                        <span className="text-lg font-bold text-[#7D1F2C]">{setor.total}</span>
+                        <span className="text-lg font-bold text-wine">{setor.total}</span>
                       </div>
                       <div className="grid grid-cols-3 gap-2 text-sm">
                         <div className="text-center">

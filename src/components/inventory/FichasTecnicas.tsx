@@ -786,7 +786,7 @@ const FichasTecnicas: React.FC = () => {
           </button>
           <button
             onClick={() => openForm()}
-            className="px-4 py-2 bg-[#7D1F2C] text-white rounded-lg hover:bg-[#6a1a25]"
+            className="px-4 py-2 bg-wine text-white rounded-lg hover:bg-[#6a1a25]"
           >
             <Plus className="w-4 h-4 inline mr-2" />
             Nova Ficha
@@ -894,7 +894,7 @@ const FichasTecnicas: React.FC = () => {
                 placeholder="Buscar fichas..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-white/20 rounded-lg bg-white/5 text-white focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+                className="w-full pl-10 pr-4 py-2 border border-white/20 rounded-lg bg-white/5 text-white focus:ring-2 focus:ring-wine focus:border-wine"
               />
             </div>
           </div>
@@ -903,7 +903,7 @@ const FichasTecnicas: React.FC = () => {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value as any)}
-              className="w-full border border-white/20 rounded-lg px-4 py-2 bg-white/5 text-white focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+              className="w-full border border-white/20 rounded-lg px-4 py-2 bg-white/5 text-white focus:ring-2 focus:ring-wine focus:border-wine"
             >
               <option value="all">Todos os Status</option>
               <option value="ativo">Ativo</option>
@@ -915,7 +915,7 @@ const FichasTecnicas: React.FC = () => {
             <select
               value={custoFilter}
               onChange={(e) => setCustoFilter(e.target.value as any)}
-              className="w-full border border-white/20 rounded-lg px-4 py-2 bg-white/5 text-white focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+              className="w-full border border-white/20 rounded-lg px-4 py-2 bg-white/5 text-white focus:ring-2 focus:ring-wine focus:border-wine"
             >
               <option value="all">Todos os Custos</option>
               <option value="com_custo">Com Custo</option>
@@ -926,7 +926,7 @@ const FichasTecnicas: React.FC = () => {
           <div>
             <button
               onClick={fetchData}
-              className="w-full px-4 py-2 bg-[#7D1F2C] text-white rounded-md hover:bg-[#6a1a25]"
+              className="w-full px-4 py-2 bg-wine text-white rounded-md hover:bg-[#6a1a25]"
             >
               <Filter className="w-4 h-4 inline mr-2" />
               Filtrar
@@ -938,7 +938,7 @@ const FichasTecnicas: React.FC = () => {
       {/* Lista de Fichas */}
       {loading ? (
         <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7D1F2C]"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-wine"></div>
         </div>
       ) : (
         <div className="bg-[#12141f] rounded-lg border border-white/10 overflow-hidden">
@@ -1054,7 +1054,7 @@ const FichasTecnicas: React.FC = () => {
                                   }}
                                   className="w-full text-left px-4 py-2 hover:bg-white/10/5 flex items-center text-sm text-white/80"
                                 >
-                                  <ChefHat className="w-4 h-4 mr-3 text-[#7D1F2C]" />
+                                  <ChefHat className="w-4 h-4 mr-3 text-wine" />
                                   <div>
                                     <div className="font-medium">Receita para Cozinha</div>
                                     <div className="text-xs text-white/40">Apenas ingredientes e preparo</div>
@@ -1124,7 +1124,7 @@ const FichasTecnicas: React.FC = () => {
                   type="text"
                   value={formData.nome}
                   onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
-                  className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                  className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                   required
                   placeholder="Ex: Hambúrguer Artesanal, Caipirinha de Limão"
                 />
@@ -1139,7 +1139,7 @@ const FichasTecnicas: React.FC = () => {
                   min="1"
                   value={formData.porcoes}
                   onChange={(e) => setFormData({ ...formData, porcoes: parseInt(e.target.value) || 1 })}
-                  className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                  className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                   required
                 />
               </div>
@@ -1150,7 +1150,7 @@ const FichasTecnicas: React.FC = () => {
                   id="ativo"
                   checked={formData.ativo}
                   onChange={(e) => setFormData({ ...formData, ativo: e.target.checked })}
-                  className="rounded border-white/20 text-[#7D1F2C] focus:ring-[#7D1F2C]"
+                  className="rounded border-white/20 text-wine focus:ring-wine"
                 />
                 <label htmlFor="ativo" className="ml-2 text-sm text-white/80">
                   Ficha ativa
@@ -1170,7 +1170,7 @@ const FichasTecnicas: React.FC = () => {
                     value="producao"
                     checked={formData.tipo_consumo === 'producao'}
                     onChange={(e) => setFormData({ ...formData, tipo_consumo: e.target.value as 'producao' })}
-                    className="mt-1 text-[#7D1F2C] focus:ring-[#7D1F2C]"
+                    className="mt-1 text-wine focus:ring-wine"
                   />
                   <div className="ml-3">
                     <span className="font-medium text-white">Produção Prévia</span>
@@ -1188,7 +1188,7 @@ const FichasTecnicas: React.FC = () => {
                     value="venda_direta"
                     checked={formData.tipo_consumo === 'venda_direta'}
                     onChange={(e) => setFormData({ ...formData, tipo_consumo: e.target.value as 'venda_direta' })}
-                    className="mt-1 text-[#7D1F2C] focus:ring-[#7D1F2C]"
+                    className="mt-1 text-wine focus:ring-wine"
                   />
                   <div className="ml-3">
                     <span className="font-medium text-white">Venda Direta</span>
@@ -1213,7 +1213,7 @@ const FichasTecnicas: React.FC = () => {
                 <textarea
                   value={formData.modo_preparo}
                   onChange={(e) => setFormData({ ...formData, modo_preparo: e.target.value })}
-                  className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                  className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                   rows={6}
                   placeholder="Descreva o passo a passo do preparo da receita..."
                 />
@@ -1229,7 +1229,7 @@ const FichasTecnicas: React.FC = () => {
                 <textarea
                   value={formData.observacoes_preparo}
                   onChange={(e) => setFormData({ ...formData, observacoes_preparo: e.target.value })}
-                  className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                  className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                   rows={3}
                   placeholder="Dicas, cuidados especiais, tempo de preparo..."
                 />
@@ -1259,7 +1259,7 @@ const FichasTecnicas: React.FC = () => {
                           <select
                             value={ingrediente.tipo}
                             onChange={(e) => atualizarIngrediente(index, 'tipo', e.target.value)}
-                            className="w-full text-sm rounded-md border-white/20 shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                            className="w-full text-sm rounded-md border-white/20 shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                           >
                             <option value="item">Item de Estoque</option>
                             <option value="ficha">Ficha Técnica</option>
@@ -1274,7 +1274,7 @@ const FichasTecnicas: React.FC = () => {
                             <select
                               value={ingrediente.item_estoque_id || ''}
                               onChange={(e) => atualizarIngrediente(index, 'item_estoque_id', e.target.value)}
-                              className="w-full text-sm rounded-md border-white/20 shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                              className="w-full text-sm rounded-md border-white/20 shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                               required
                             >
                               <option value="">Selecione um item...</option>
@@ -1288,7 +1288,7 @@ const FichasTecnicas: React.FC = () => {
                             <select
                               value={ingrediente.ficha_tecnica_ingrediente_id || ''}
                               onChange={(e) => atualizarIngrediente(index, 'ficha_tecnica_ingrediente_id', e.target.value)}
-                              className="w-full text-sm rounded-md border-white/20 shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                              className="w-full text-sm rounded-md border-white/20 shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                               required
                             >
                               <option value="">Selecione uma ficha...</option>
@@ -1312,7 +1312,7 @@ const FichasTecnicas: React.FC = () => {
                             placeholder="Qtd"
                             value={ingrediente.quantidade}
                             onChange={(e) => atualizarIngrediente(index, 'quantidade', parseFloat(e.target.value) || 0)}
-                            className="w-full text-sm rounded-md border-white/20 shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                            className="w-full text-sm rounded-md border-white/20 shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                             required
                           />
                           {ingrediente.tipo === 'item' && ingrediente.item_estoque_id && (
@@ -1330,7 +1330,7 @@ const FichasTecnicas: React.FC = () => {
                             {ingrediente.tipo === 'item' && ingrediente.item_estoque_id && ingrediente.quantidade > 0 && (
                               <div>
                                 <span className="text-xs text-white/50">Custo:</span>
-                                <div className="font-medium text-[#7D1F2C] text-sm">
+                                <div className="font-medium text-wine text-sm">
                                   {formatCurrency(
                                     (itensEstoque.find(i => i.id === ingrediente.item_estoque_id)?.custo_medio || 0) * ingrediente.quantidade
                                   )}
@@ -1340,7 +1340,7 @@ const FichasTecnicas: React.FC = () => {
                             {ingrediente.tipo === 'ficha' && ingrediente.ficha_tecnica_ingrediente_id && ingrediente.quantidade > 0 && (
                               <div>
                                 <span className="text-xs text-white/50">Custo:</span>
-                                <div className="font-medium text-[#7D1F2C] text-sm">
+                                <div className="font-medium text-wine text-sm">
                                   {(() => {
                                     const ficha = fichasDisponiveis.find(f => f.id === ingrediente.ficha_tecnica_ingrediente_id);
                                     if (ficha && ficha.porcoes) {
@@ -1381,7 +1381,7 @@ const FichasTecnicas: React.FC = () => {
                           type="text"
                           value={ingrediente.observacoes || ''}
                           onChange={(e) => atualizarIngrediente(index, 'observacoes', e.target.value)}
-                          className="w-full text-sm rounded-md border-white/20 shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                          className="w-full text-sm rounded-md border-white/20 shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                           placeholder="Ex: picado, ralado, sem pele..."
                         />
                       </div>
@@ -1391,7 +1391,7 @@ const FichasTecnicas: React.FC = () => {
                   <div className="flex justify-end pt-3 border-t border-white/10">
                     <div className="text-right">
                       <span className="text-sm text-white/50">Custo Total da Ficha:</span>
-                      <span className="ml-2 text-lg font-bold text-[#7D1F2C]">
+                      <span className="ml-2 text-lg font-bold text-wine">
                         {formatCurrency(calcularCustoTotal())}
                       </span>
                       {formData.porcoes > 0 && (
@@ -1408,7 +1408,7 @@ const FichasTecnicas: React.FC = () => {
                   <p className="text-white/40">Nenhum ingrediente adicionado</p>
                   <button
                     onClick={adicionarIngrediente}
-                    className="mt-2 px-4 py-2 bg-[#7D1F2C] text-white rounded-lg hover:bg-[#6a1a25]"
+                    className="mt-2 px-4 py-2 bg-wine text-white rounded-lg hover:bg-[#6a1a25]"
                   >
                     Adicionar Primeiro Ingrediente
                   </button>
@@ -1426,7 +1426,7 @@ const FichasTecnicas: React.FC = () => {
               <button
                 onClick={handleSave}
                 disabled={loading || !formData.nome || formData.ingredientes.length === 0}
-                className="px-4 py-2 bg-[#7D1F2C] text-white rounded-md hover:bg-[#6a1a25] disabled:opacity-50"
+                className="px-4 py-2 bg-wine text-white rounded-md hover:bg-[#6a1a25] disabled:opacity-50"
               >
                 {loading ? 'Salvando...' : 'Salvar'}
               </button>

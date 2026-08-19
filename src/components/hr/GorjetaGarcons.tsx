@@ -588,9 +588,9 @@ const GorjetaGarcons: React.FC = () => {
             <Zap className="w-4 h-4" />
             Importar da ZIG
           </button>
-          <button onClick={() => setShowVendaForm(true)}     className="px-4 py-2 bg-[#7D1F2C] text-white rounded-lg hover:bg-[#6a1a25]"><Plus className="w-4 h-4 inline mr-2" />Nova Venda</button>
-          <button onClick={() => setShowAdicionalForm(true)} className="px-4 py-2 bg-[#7D1F2C] text-white rounded-lg hover:bg-[#6a1a25]"><Plus className="w-4 h-4 inline mr-2" />Gorjeta Adicional</button>
-          <button onClick={() => setShowDescontoForm(true)}  className="px-4 py-2 bg-[#7D1F2C] text-white rounded-lg hover:bg-[#6a1a25]"><Plus className="w-4 h-4 inline mr-2" />Desconto</button>
+          <button onClick={() => setShowVendaForm(true)}     className="px-4 py-2 bg-wine text-white rounded-lg hover:bg-[#6a1a25]"><Plus className="w-4 h-4 inline mr-2" />Nova Venda</button>
+          <button onClick={() => setShowAdicionalForm(true)} className="px-4 py-2 bg-wine text-white rounded-lg hover:bg-[#6a1a25]"><Plus className="w-4 h-4 inline mr-2" />Gorjeta Adicional</button>
+          <button onClick={() => setShowDescontoForm(true)}  className="px-4 py-2 bg-wine text-white rounded-lg hover:bg-[#6a1a25]"><Plus className="w-4 h-4 inline mr-2" />Desconto</button>
           <button className="px-4 py-2 bg-[#12141f] border border-white/20 rounded-lg text-white/80 hover:bg-white/5"><Download className="w-4 h-4 inline mr-2" />Exportar Tudo</button>
         </div>
       </div>
@@ -601,7 +601,7 @@ const GorjetaGarcons: React.FC = () => {
       <div className="bg-[#12141f] p-6 rounded-lg border border-white/10">
         <div className="flex items-center justify-between mb-4">
           <h4 className="text-lg font-medium text-white flex items-center">
-            <Calendar className="w-5 h-5 mr-2 text-[#7D1F2C]" />
+            <Calendar className="w-5 h-5 mr-2 text-wine" />
             Semana {semanaAtual.semana}/{semanaAtual.ano}
           </h4>
           <div className="flex items-center space-x-4">
@@ -636,14 +636,14 @@ const GorjetaGarcons: React.FC = () => {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30 w-5 h-5" />
             <input type="text" placeholder="Buscar colaborador..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-white/20 rounded-lg bg-white/5 text-white focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]" />
+              className="w-full pl-10 pr-4 py-2 border border-white/20 rounded-lg bg-white/5 text-white focus:ring-2 focus:ring-wine focus:border-wine" />
           </div>
           <select value={colaboradorFilter} onChange={e => setColaboradorFilter(e.target.value)}
-            className="w-full border border-white/20 rounded-lg px-4 py-2 bg-white/5 text-white focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]">
+            className="w-full border border-white/20 rounded-lg px-4 py-2 bg-white/5 text-white focus:ring-2 focus:ring-wine focus:border-wine">
             <option value="all">Todos os Colaboradores</option>
             {colaboradores.map(c => <option key={c.id} value={c.id}>{c.nome_completo}</option>)}
           </select>
-          <button onClick={carregarDadosSemana} className="w-full px-4 py-2 bg-[#7D1F2C] text-white rounded-md hover:bg-[#6a1a25]">
+          <button onClick={carregarDadosSemana} className="w-full px-4 py-2 bg-wine text-white rounded-md hover:bg-[#6a1a25]">
             <Filter className="w-4 h-4 inline mr-2" />Atualizar
           </button>
         </div>
@@ -652,7 +652,7 @@ const GorjetaGarcons: React.FC = () => {
       {/* Tabela */}
       {loading ? (
         <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7D1F2C]" />
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-wine" />
         </div>
       ) : (
         <div className="bg-[#12141f] rounded-lg border border-white/10 overflow-hidden">
@@ -681,7 +681,7 @@ const GorjetaGarcons: React.FC = () => {
                     <td className="px-6 py-4 font-bold text-lg text-white">{formatCurrency(saldo.total_liquido)}</td>
                     <td className="px-6 py-4">
                       <div className="flex space-x-2">
-                        <button onClick={() => gerarRecibo(saldo.colaborador_id)} className="text-[#7D1F2C] hover:text-[#6a1a25]" title="Gerar Recibo"><Receipt className="w-4 h-4" /></button>
+                        <button onClick={() => gerarRecibo(saldo.colaborador_id)} className="text-wine hover:text-[#6a1a25]" title="Gerar Recibo"><Receipt className="w-4 h-4" /></button>
                         <button onClick={() => gerarPagamentoSemanal(saldo.colaborador_id)} className="text-green-600 hover:text-green-800" title="Criar Conta a Pagar"><DollarSign className="w-4 h-4" /></button>
                         <button className="text-blue-600 hover:text-blue-800" title="Ver Detalhes"><Eye className="w-4 h-4" /></button>
                       </div>
@@ -874,7 +874,7 @@ const GorjetaGarcons: React.FC = () => {
             )}
             {zigResultado && (
               <div className="px-6 py-4 border-t border-white/5 flex justify-end bg-white/5 rounded-b-2xl">
-                <button onClick={() => setShowZigModal(false)} className="px-5 py-2 bg-[#7D1F2C] text-white rounded-lg text-sm font-semibold hover:bg-[#6a1a25]">Fechar</button>
+                <button onClick={() => setShowZigModal(false)} className="px-5 py-2 bg-wine text-white rounded-lg text-sm font-semibold hover:bg-[#6a1a25]">Fechar</button>
               </div>
             )}
           </div>
@@ -890,7 +890,7 @@ const GorjetaGarcons: React.FC = () => {
               <div>
                 <label className="block text-sm font-medium text-white/80 mb-1">Colaborador *</label>
                 <select value={formVenda.colaborador_id} onChange={e => setFormVenda({...formVenda, colaborador_id: e.target.value})}
-                  className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50" required>
+                  className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50" required>
                   <option value="">Selecione um colaborador...</option>
                   {colaboradores.map(c => <option key={c.id} value={c.id}>{c.nome_completo}</option>)}
                 </select>
@@ -898,12 +898,12 @@ const GorjetaGarcons: React.FC = () => {
               <div>
                 <label className="block text-sm font-medium text-white/80 mb-1">Data da Venda *</label>
                 <input type="date" value={formVenda.data_venda} onChange={e => setFormVenda({...formVenda, data_venda: e.target.value})}
-                  className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50" required />
+                  className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50" required />
               </div>
               <div>
                 <label className="block text-sm font-medium text-white/80 mb-1">Turno *</label>
                 <select value={formVenda.turno} onChange={e => setFormVenda({...formVenda, turno: e.target.value})}
-                  className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50">
+                  className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50">
                   <option value="almoco">Almoço</option><option value="jantar">Jantar</option><option value="noite">Noite</option>
                 </select>
               </div>
@@ -913,20 +913,20 @@ const GorjetaGarcons: React.FC = () => {
                   <span className="absolute inset-y-0 left-3 flex items-center text-white/40 text-sm">R$</span>
                   <input type="number" step="0.01" min="0" value={formVenda.valor_vendas}
                     onChange={e => setFormVenda({...formVenda, valor_vendas: parseFloat(e.target.value)||0})}
-                    className="pl-10 w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50" required />
+                    className="pl-10 w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50" required />
                 </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-white/80 mb-1">Observações</label>
                 <textarea value={formVenda.observacoes} onChange={e => setFormVenda({...formVenda, observacoes: e.target.value})}
-                  className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50" rows={2} />
+                  className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50" rows={2} />
               </div>
             </div>
             <div className="mt-6 flex justify-end space-x-3">
               <button onClick={() => { setShowVendaForm(false); setEditingItem(null); }}
                 className="px-4 py-2 border border-white/20 rounded-md text-white/80 hover:bg-white/5">Cancelar</button>
               <button onClick={salvarVenda} disabled={loading || !formVenda.colaborador_id || !formVenda.valor_vendas}
-                className="px-4 py-2 bg-[#7D1F2C] text-white rounded-md hover:bg-[#6a1a25] disabled:opacity-50">{loading ? 'Salvando...' : 'Salvar'}</button>
+                className="px-4 py-2 bg-wine text-white rounded-md hover:bg-[#6a1a25] disabled:opacity-50">{loading ? 'Salvando...' : 'Salvar'}</button>
             </div>
           </div>
         </div>
@@ -941,7 +941,7 @@ const GorjetaGarcons: React.FC = () => {
               <div>
                 <label className="block text-sm font-medium text-white/80 mb-1">Colaborador *</label>
                 <select value={formAdicional.colaborador_id} onChange={e => setFormAdicional({...formAdicional, colaborador_id: e.target.value})}
-                  className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50" required>
+                  className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50" required>
                   <option value="">Selecione um colaborador...</option>
                   {colaboradores.map(c => <option key={c.id} value={c.id}>{c.nome_completo}</option>)}
                 </select>
@@ -949,7 +949,7 @@ const GorjetaGarcons: React.FC = () => {
               <div>
                 <label className="block text-sm font-medium text-white/80 mb-1">Tipo *</label>
                 <select value={formAdicional.tipo} onChange={e => setFormAdicional({...formAdicional, tipo: e.target.value})}
-                  className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50">
+                  className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50">
                   <option value="gratificacao_lideranca">Gratificação Liderança</option>
                   <option value="gorjeta_fixa_feijoada">Gorjeta Fixa Feijoada</option>
                   <option value="bonus_especial">Bônus Especial</option>
@@ -959,7 +959,7 @@ const GorjetaGarcons: React.FC = () => {
               <div>
                 <label className="block text-sm font-medium text-white/80 mb-1">Descrição *</label>
                 <input type="text" value={formAdicional.descricao} onChange={e => setFormAdicional({...formAdicional, descricao: e.target.value})}
-                  className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50" required />
+                  className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50" required />
               </div>
               <div>
                 <label className="block text-sm font-medium text-white/80 mb-1">Valor *</label>
@@ -967,20 +967,20 @@ const GorjetaGarcons: React.FC = () => {
                   <span className="absolute inset-y-0 left-3 flex items-center text-white/40 text-sm">R$</span>
                   <input type="number" step="0.01" min="0" value={formAdicional.valor}
                     onChange={e => setFormAdicional({...formAdicional, valor: parseFloat(e.target.value)||0})}
-                    className="pl-10 w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50" required />
+                    className="pl-10 w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50" required />
                 </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-white/80 mb-1">Data de Referência *</label>
                 <input type="date" value={formAdicional.data_referencia} onChange={e => setFormAdicional({...formAdicional, data_referencia: e.target.value})}
-                  className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50" required />
+                  className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50" required />
               </div>
             </div>
             <div className="mt-6 flex justify-end space-x-3">
               <button onClick={() => { setShowAdicionalForm(false); setEditingItem(null); setFormAdicional({ colaborador_id:'', tipo:'outros', descricao:'', valor:0, data_referencia: dayjs().format('YYYY-MM-DD') }); }}
                 className="px-4 py-2 border border-white/20 rounded-md text-white/80 hover:bg-white/5">Cancelar</button>
               <button onClick={salvarAdicional} disabled={loading || !formAdicional.colaborador_id || !formAdicional.descricao || !formAdicional.valor}
-                className="px-4 py-2 bg-[#7D1F2C] text-white rounded-md hover:bg-[#6a1a25] disabled:opacity-50">{loading ? 'Salvando...' : 'Salvar'}</button>
+                className="px-4 py-2 bg-wine text-white rounded-md hover:bg-[#6a1a25] disabled:opacity-50">{loading ? 'Salvando...' : 'Salvar'}</button>
             </div>
           </div>
         </div>
@@ -995,7 +995,7 @@ const GorjetaGarcons: React.FC = () => {
               <div>
                 <label className="block text-sm font-medium text-white/80 mb-1">Colaborador *</label>
                 <select value={formDesconto.colaborador_id} onChange={e => setFormDesconto({...formDesconto, colaborador_id: e.target.value})}
-                  className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50" required>
+                  className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50" required>
                   <option value="">Selecione um colaborador...</option>
                   {colaboradores.map(c => <option key={c.id} value={c.id}>{c.nome_completo}</option>)}
                 </select>
@@ -1003,12 +1003,12 @@ const GorjetaGarcons: React.FC = () => {
               <div>
                 <label className="block text-sm font-medium text-white/80 mb-1">Data do Desconto *</label>
                 <input type="date" value={formDesconto.data_desconto} onChange={e => setFormDesconto({...formDesconto, data_desconto: e.target.value})}
-                  className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50" required />
+                  className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50" required />
               </div>
               <div>
                 <label className="block text-sm font-medium text-white/80 mb-1">Tipo de Consumo *</label>
                 <select value={formDesconto.tipo_consumo} onChange={e => setFormDesconto({...formDesconto, tipo_consumo: e.target.value})}
-                  className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50">
+                  className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50">
                   <option value="refeicao">Refeição</option><option value="bebida">Bebida</option>
                   <option value="lanche">Lanche</option><option value="cafe">Café</option><option value="outros">Outros</option>
                 </select>
@@ -1016,7 +1016,7 @@ const GorjetaGarcons: React.FC = () => {
               <div>
                 <label className="block text-sm font-medium text-white/80 mb-1">Descrição *</label>
                 <input type="text" value={formDesconto.descricao} onChange={e => setFormDesconto({...formDesconto, descricao: e.target.value})}
-                  className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50" required />
+                  className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50" required />
               </div>
               <div>
                 <label className="block text-sm font-medium text-white/80 mb-1">Valor do Desconto *</label>
@@ -1024,7 +1024,7 @@ const GorjetaGarcons: React.FC = () => {
                   <span className="absolute inset-y-0 left-3 flex items-center text-white/40 text-sm">R$</span>
                   <input type="number" step="0.01" min="0" value={formDesconto.valor_desconto}
                     onChange={e => setFormDesconto({...formDesconto, valor_desconto: parseFloat(e.target.value)||0})}
-                    className="pl-10 w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50" required />
+                    className="pl-10 w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50" required />
                 </div>
               </div>
             </div>
@@ -1032,7 +1032,7 @@ const GorjetaGarcons: React.FC = () => {
               <button onClick={() => { setShowDescontoForm(false); setEditingItem(null); }}
                 className="px-4 py-2 border border-white/20 rounded-md text-white/80 hover:bg-white/5">Cancelar</button>
               <button onClick={salvarDesconto} disabled={loading || !formDesconto.colaborador_id || !formDesconto.descricao || !formDesconto.valor_desconto}
-                className="px-4 py-2 bg-[#7D1F2C] text-white rounded-md hover:bg-[#6a1a25] disabled:opacity-50">{loading ? 'Salvando...' : 'Salvar'}</button>
+                className="px-4 py-2 bg-wine text-white rounded-md hover:bg-[#6a1a25] disabled:opacity-50">{loading ? 'Salvando...' : 'Salvar'}</button>
             </div>
           </div>
         </div>
@@ -1054,7 +1054,7 @@ const GorjetaGarcons: React.FC = () => {
             <div>
               <label className="block text-sm font-medium text-white/80 mb-1">Fornecedor *</label>
               <select value={selectedFornecedor} onChange={e => setSelectedFornecedor(e.target.value)}
-                className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50" required>
+                className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50" required>
                 <option value="">Selecione um fornecedor...</option>
                 {fornecedores.map(f => <option key={f.id} value={f.id}>{f.nome}</option>)}
               </select>
@@ -1063,7 +1063,7 @@ const GorjetaGarcons: React.FC = () => {
               <button onClick={() => { setShowFornecedorModal(false); setColaboradorParaPagamento(null); setValorParaPagamento(0); setSelectedFornecedor(''); }}
                 className="px-4 py-2 border border-white/20 rounded-md text-white/80 hover:bg-white/5">Cancelar</button>
               <button onClick={confirmarPagamentoComFornecedor} disabled={loading || !selectedFornecedor}
-                className="px-4 py-2 bg-[#7D1F2C] text-white rounded-md hover:bg-[#6a1a25] disabled:opacity-50">{loading ? 'Criando Conta...' : 'Criar Conta a Pagar'}</button>
+                className="px-4 py-2 bg-wine text-white rounded-md hover:bg-[#6a1a25] disabled:opacity-50">{loading ? 'Criando Conta...' : 'Criar Conta a Pagar'}</button>
             </div>
           </div>
         </div>

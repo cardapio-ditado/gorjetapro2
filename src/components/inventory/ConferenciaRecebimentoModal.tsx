@@ -391,7 +391,7 @@ const ConferenciaRecebimentoModal: React.FC<ConferenciaRecebimentoModalProps> = 
                 <button
                   onClick={handleConferir}
                   disabled={loading}
-                  className="w-full px-4 py-3 bg-[#7D1F2C] text-white rounded-lg hover:bg-[#6a1a25] disabled:opacity-50 flex items-center justify-center"
+                  className="w-full px-4 py-3 bg-wine text-white rounded-lg hover:bg-[#6a1a25] disabled:opacity-50 flex items-center justify-center"
                 >
                   {loading ? (
                     <>
@@ -583,7 +583,7 @@ const ConferenciaRecebimentoModal: React.FC<ConferenciaRecebimentoModalProps> = 
             </button>
             <button
               onClick={handleConfirm}
-              className="px-6 py-2 bg-[#7D1F2C] text-white rounded-lg hover:bg-[#6a1a25] flex items-center"
+              className="px-6 py-2 bg-wine text-white rounded-lg hover:bg-[#6a1a25] flex items-center"
             >
               <CheckCircle className="w-5 h-5 mr-2" />
               Confirmar Recebimento

@@ -199,7 +199,7 @@ const Dashboard: React.FC = () => {
 
   if (loading || !painel) return (
     <div className="flex items-center justify-center min-h-96">
-      <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#7D1F2C]" />
+      <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-wine" />
     </div>
   );
 
@@ -240,7 +240,7 @@ const Dashboard: React.FC = () => {
       {/* ── SAUDAÇÃO SLIM ─────────────────────────────────────────────── */}
       <div className="flex items-end justify-between flex-wrap gap-3">
         <div>
-          <p className="text-[#D4AF37] text-[10px] font-black uppercase tracking-[0.3em] mb-1">Ditado Popular</p>
+          <p className="text-gold text-[10px] font-black uppercase tracking-[0.3em] mb-1">Ditado Popular</p>
           <h1 className="text-2xl font-black text-white leading-none">{saudacao()}, {primeiroNome}</h1>
           <p className="text-white/40 text-xs mt-1 capitalize">{dataLonga}</p>
         </div>
@@ -255,10 +255,10 @@ const Dashboard: React.FC = () => {
       <div className="grid grid-cols-12 gap-4">
 
         {/* MANCHETE: vendas da noite */}
-        <div className="col-span-12 lg:col-span-8 relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#7D1F2C] via-[#9B2535] to-[#3d0e16] border border-[#D4AF37]/25 shadow-[0_24px_80px_rgba(125,31,44,0.45)] p-6 lg:p-8 flex flex-col justify-between min-h-[280px]">
+        <div className="col-span-12 lg:col-span-8 relative overflow-hidden rounded-3xl bg-gradient-to-br from-wine via-wine-light to-wine-deepest border border-gold/25 shadow-[0_24px_80px_rgba(125,31,44,0.45)] p-6 lg:p-8 flex flex-col justify-between min-h-[280px]">
           <div className="absolute inset-0 opacity-[0.06]"
             style={{ backgroundImage: 'repeating-linear-gradient(45deg,#D4AF37 0,#D4AF37 1px,transparent 0,transparent 50%),repeating-linear-gradient(-45deg,#D4AF37 0,#D4AF37 1px,transparent 0,transparent 50%)', backgroundSize: '28px 28px' }} />
-          <div className="absolute top-0 right-0 w-72 h-72 rounded-full bg-[#D4AF37] opacity-10 -translate-y-1/2 translate-x-1/3 blur-2xl" />
+          <div className="absolute top-0 right-0 w-72 h-72 rounded-full bg-gold opacity-10 -translate-y-1/2 translate-x-1/3 blur-2xl" />
 
           {vendas ? (
             <>
@@ -286,7 +286,7 @@ const Dashboard: React.FC = () => {
                 <div className="relative flex items-end gap-1.5 h-16 mt-5">
                   {serieVendas.map((d, i) => (
                     <div key={d.data} className="flex-1 h-full flex items-end" title={`${fmtData(d.data)} · ${fmtR(Number(d.total))}`}>
-                      <div className={`w-full rounded-t ${i === serieVendas.length - 1 ? 'bg-[#D4AF37]' : 'bg-white/25'}`}
+                      <div className={`w-full rounded-t ${i === serieVendas.length - 1 ? 'bg-gold' : 'bg-white/25'}`}
                         style={{ height: `${Math.max(3, (Number(d.total) / maxVendas) * 100)}%` }} />
                     </div>
                   ))}

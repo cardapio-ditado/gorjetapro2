@@ -177,7 +177,7 @@ const MovimentacoesCompostas: React.FC = () => {
             placeholder="Buscar por descrição ou tipo..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 w-full rounded-lg border-white/20 shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+            className="pl-10 w-full rounded-lg border-white/20 shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
           />
         </div>
 
@@ -185,7 +185,7 @@ const MovimentacoesCompostas: React.FC = () => {
           <select
             value={tipoFilter}
             onChange={(e) => setTipoFilter(e.target.value)}
-            className="w-full rounded-lg border-white/20 shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+            className="w-full rounded-lg border-white/20 shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
           >
             <option value="all">Todos os tipos</option>
             <option value="venda">Vendas</option>
@@ -204,7 +204,7 @@ const MovimentacoesCompostas: React.FC = () => {
 
       {loading ? (
         <div className="flex justify-center items-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7D1F2C]"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-wine"></div>
         </div>
       ) : filteredMovimentacoes.length === 0 ? (
         <div className="text-center py-12 bg-white/5 rounded-lg border-2 border-dashed border-white/20">
@@ -291,7 +291,7 @@ const MovimentacoesCompostas: React.FC = () => {
             <div className="flex-1 overflow-y-auto p-6">
               {loadingDetalhes ? (
                 <div className="flex justify-center items-center py-12">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#7D1F2C]"></div>
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-wine"></div>
                 </div>
               ) : itensDetalhes.length === 0 ? (
                 <p className="text-center text-white/40 py-8">Nenhum item encontrado</p>

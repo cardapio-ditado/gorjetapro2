@@ -876,7 +876,7 @@ const MovimentacoesEstoque: React.FC = () => {
           </button>
           <button
             onClick={() => openForm()}
-            className="px-4 py-2 bg-[#7D1F2C] text-white rounded-lg hover:bg-[#6a1a25]"
+            className="px-4 py-2 bg-wine text-white rounded-lg hover:bg-[#6a1a25]"
           >
             <Plus className="w-4 h-4 inline mr-2" />
             Nova Movimentação
@@ -984,7 +984,7 @@ const MovimentacoesEstoque: React.FC = () => {
                 placeholder="Buscar movimentações..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-white/20 rounded-lg bg-white/5 text-white focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+                className="w-full pl-10 pr-4 py-2 border border-white/20 rounded-lg bg-white/5 text-white focus:ring-2 focus:ring-wine focus:border-wine"
               />
             </div>
           </div>
@@ -993,7 +993,7 @@ const MovimentacoesEstoque: React.FC = () => {
             <select
               value={tipoFilter}
               onChange={(e) => setTipoFilter(e.target.value as any)}
-              className="w-full border border-white/20 rounded-lg px-4 py-2 bg-white/5 text-white focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+              className="w-full border border-white/20 rounded-lg px-4 py-2 bg-white/5 text-white focus:ring-2 focus:ring-wine focus:border-wine"
             >
               <option value="all">Todos os Tipos</option>
               <option value="entrada">Entradas</option>
@@ -1007,7 +1007,7 @@ const MovimentacoesEstoque: React.FC = () => {
             <select
               value={estoqueFilter}
               onChange={(e) => setEstoqueFilter(e.target.value)}
-              className="w-full border border-white/20 rounded-lg px-4 py-2 bg-white/5 text-white focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+              className="w-full border border-white/20 rounded-lg px-4 py-2 bg-white/5 text-white focus:ring-2 focus:ring-wine focus:border-wine"
             >
               <option value="all">Todos os Estoques</option>
               {estoques.map((estoque) => (
@@ -1022,7 +1022,7 @@ const MovimentacoesEstoque: React.FC = () => {
             <select
               value={itemFilter}
               onChange={(e) => setItemFilter(e.target.value)}
-              className="w-full border border-white/20 rounded-lg px-4 py-2 bg-white/5 text-white focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+              className="w-full border border-white/20 rounded-lg px-4 py-2 bg-white/5 text-white focus:ring-2 focus:ring-wine focus:border-wine"
             >
               <option value="all">Todos os Itens</option>
               {Array.from(new Set(itensDisponiveis.map(item => ({ id: item.id, nome: item.nome }))))
@@ -1039,7 +1039,7 @@ const MovimentacoesEstoque: React.FC = () => {
               type="date"
               value={dataInicial}
               onChange={(e) => setDataInicial(e.target.value)}
-              className="w-full border border-white/20 rounded-lg px-4 py-2 bg-white/5 text-white focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+              className="w-full border border-white/20 rounded-lg px-4 py-2 bg-white/5 text-white focus:ring-2 focus:ring-wine focus:border-wine"
             />
           </div>
 
@@ -1048,7 +1048,7 @@ const MovimentacoesEstoque: React.FC = () => {
               type="date"
               value={dataFinal}
               onChange={(e) => setDataFinal(e.target.value)}
-              className="w-full border border-white/20 rounded-lg px-4 py-2 bg-white/5 text-white focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+              className="w-full border border-white/20 rounded-lg px-4 py-2 bg-white/5 text-white focus:ring-2 focus:ring-wine focus:border-wine"
             />
           </div>
         </div>
@@ -1057,7 +1057,7 @@ const MovimentacoesEstoque: React.FC = () => {
       {/* Lista de Movimentações */}
       {loading ? (
         <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7D1F2C]"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-wine"></div>
         </div>
       ) : (
         <div className="bg-[#12141f] rounded-lg border border-white/10 overflow-hidden">
@@ -1247,7 +1247,7 @@ const MovimentacoesEstoque: React.FC = () => {
                       estoque_destino_id: ''
                     });
                   }}
-                  className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                  className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                   required
                 >
                   <option value="entrada">Entrada</option>
@@ -1265,7 +1265,7 @@ const MovimentacoesEstoque: React.FC = () => {
                   type="date"
                   value={formData.data_movimentacao}
                   onChange={(e) => setFormData({ ...formData, data_movimentacao: e.target.value })}
-                  className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                  className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                   required
                 />
               </div>
@@ -1283,7 +1283,7 @@ const MovimentacoesEstoque: React.FC = () => {
                         item_id: '',
                         ficha_tecnica_id: ''
                       })}
-                      className="rounded border-white/20 text-[#7D1F2C] focus:ring-[#7D1F2C]"
+                      className="rounded border-white/20 text-wine focus:ring-wine"
                     />
                     <span className="ml-2 text-sm font-medium text-white">
                       Usar Ficha Técnica de Venda Direta
@@ -1392,7 +1392,7 @@ const MovimentacoesEstoque: React.FC = () => {
                   min={formData.usar_ficha_tecnica ? "1" : "0.001"}
                   value={formData.quantidade}
                   onChange={(e) => setFormData({ ...formData, quantidade: parseFloat(e.target.value) || 0 })}
-                  className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                  className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                   required
                 />
                 {formData.usar_ficha_tecnica ? (
@@ -1427,7 +1427,7 @@ const MovimentacoesEstoque: React.FC = () => {
                     min="0"
                     value={formData.custo_unitario}
                     onChange={(e) => setFormData({ ...formData, custo_unitario: parseFloat(e.target.value) || 0 })}
-                    className="pl-10 w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                    className="pl-10 w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                     required
                   />
                 </div>
@@ -1491,7 +1491,7 @@ const MovimentacoesEstoque: React.FC = () => {
                         <tfoot className="bg-white/5">
                           <tr>
                             <td colSpan={3} className="px-4 py-2 text-sm font-medium text-right">Total:</td>
-                            <td className="px-4 py-2 text-sm font-bold text-[#7D1F2C]">
+                            <td className="px-4 py-2 text-sm font-bold text-wine">
                               {formatCurrency(itensMovimentacao.reduce((sum, item) => sum + item.custo_total, 0))}
                             </td>
                             <td></td>
@@ -1511,7 +1511,7 @@ const MovimentacoesEstoque: React.FC = () => {
                   type="text"
                   value={formData.motivo}
                   onChange={(e) => setFormData({ ...formData, motivo: e.target.value })}
-                  className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                  className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                   placeholder="Ex: Reposição, Venda, Defeito, etc."
                 />
               </div>
@@ -1523,7 +1523,7 @@ const MovimentacoesEstoque: React.FC = () => {
                 <textarea
                   value={formData.observacoes}
                   onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
-                  className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                  className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                   rows={2}
                   placeholder="Observações sobre a movimentação..."
                 />
@@ -1577,7 +1577,7 @@ const MovimentacoesEstoque: React.FC = () => {
                     (formData.usar_ficha_tecnica ? !formData.ficha_tecnica_id : (!formData.item_id || formData.custo_unitario < 0))
                   ))
                 }
-                className="px-4 py-2 bg-[#7D1F2C] text-white rounded-md hover:bg-[#6a1a25] disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-2 bg-wine text-white rounded-md hover:bg-[#6a1a25] disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? 'Salvando...' : itensMovimentacao.length > 0 ? `Salvar Movimentação (${itensMovimentacao.length} ${itensMovimentacao.length === 1 ? 'item' : 'itens'})` : 'Salvar'}
               </button>

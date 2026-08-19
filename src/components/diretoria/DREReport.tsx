@@ -821,7 +821,7 @@ export default function DREReport() {
               Relatório completo com {lancamentos.length.toLocaleString('pt-BR')} lançamentos
             </p>
           </div>
-          <FileText className="w-8 h-8 text-[#7D1F2C]" />
+          <FileText className="w-8 h-8 text-wine" />
         </div>
 
         {/* Filtros */}
@@ -834,7 +834,7 @@ export default function DREReport() {
             <select
               value={ano}
               onChange={(e) => setAno(Number(e.target.value))}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#7D1F2C] focus:border-transparent"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-wine focus:border-transparent"
             >
               {anos.map(a => (
                 <option key={a} value={a}>{a}</option>
@@ -850,7 +850,7 @@ export default function DREReport() {
             <select
               value={mes}
               onChange={(e) => setMes(e.target.value === 'all' ? 'all' : Number(e.target.value))}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#7D1F2C] focus:border-transparent"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-wine focus:border-transparent"
             >
               {meses.map(m => (
                 <option key={m.value} value={m.value}>{m.label}</option>
@@ -866,7 +866,7 @@ export default function DREReport() {
             <select
               value={modo}
               onChange={(e) => setModo(e.target.value as ModoVisualizacao)}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#7D1F2C] focus:border-transparent"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-wine focus:border-transparent"
             >
               <option value="sintetico">Sintético (Resumo)</option>
               <option value="analitico">Analítico (Por Categoria)</option>
@@ -919,7 +919,7 @@ export default function DREReport() {
       {loading && (
         <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-8">
           <div className="flex items-center justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#7D1F2C]"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-wine"></div>
             <span className="ml-3 text-slate-600">Carregando dados...</span>
           </div>
         </div>

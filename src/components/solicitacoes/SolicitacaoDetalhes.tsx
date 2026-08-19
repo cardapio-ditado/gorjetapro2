@@ -491,7 +491,7 @@ const SolicitacaoDetalhes: React.FC<SolicitacaoDetalhesProps> = ({
                 onClick={() => setActiveTab('detalhes')}
                 className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
                   activeTab === 'detalhes'
-                    ? 'bg-[#7D1F2C] text-white'
+                    ? 'bg-wine text-white'
                     : 'text-white/80 hover:bg-white/10'
                 }`}
               >
@@ -502,7 +502,7 @@ const SolicitacaoDetalhes: React.FC<SolicitacaoDetalhesProps> = ({
                 onClick={() => setActiveTab('comentarios')}
                 className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
                   activeTab === 'comentarios'
-                    ? 'bg-[#7D1F2C] text-white'
+                    ? 'bg-wine text-white'
                     : 'text-white/80 hover:bg-white/10'
                 }`}
               >
@@ -513,7 +513,7 @@ const SolicitacaoDetalhes: React.FC<SolicitacaoDetalhesProps> = ({
                 onClick={() => setActiveTab('anexos')}
                 className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
                   activeTab === 'anexos'
-                    ? 'bg-[#7D1F2C] text-white'
+                    ? 'bg-wine text-white'
                     : 'text-white/80 hover:bg-white/10'
                 }`}
               >
@@ -524,7 +524,7 @@ const SolicitacaoDetalhes: React.FC<SolicitacaoDetalhesProps> = ({
                 onClick={() => setActiveTab('historico')}
                 className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
                   activeTab === 'historico'
-                    ? 'bg-[#7D1F2C] text-white'
+                    ? 'bg-wine text-white'
                     : 'text-white/80 hover:bg-white/10'
                 }`}
               >
@@ -718,7 +718,7 @@ const SolicitacaoDetalhes: React.FC<SolicitacaoDetalhesProps> = ({
                         <textarea
                           value={novoComentario}
                           onChange={(e) => setNovoComentario(e.target.value)}
-                          className="w-full rounded-md border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                          className="w-full rounded-md border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                           rows={3}
                           placeholder="Adicionar comentário..."
                         />
@@ -727,7 +727,7 @@ const SolicitacaoDetalhes: React.FC<SolicitacaoDetalhesProps> = ({
                         <select
                           value={tipoComentario}
                           onChange={(e) => setTipoComentario(e.target.value)}
-                          className="w-full text-sm rounded-md border-white/20 shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                          className="w-full text-sm rounded-md border-white/20 shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                         >
                           <option value="geral">Geral</option>
                           <option value="tecnico">Técnico</option>
@@ -738,7 +738,7 @@ const SolicitacaoDetalhes: React.FC<SolicitacaoDetalhesProps> = ({
                         <button
                           onClick={adicionarComentario}
                           disabled={loading || !novoComentario.trim()}
-                          className="w-full px-3 py-2 bg-[#7D1F2C] text-white text-sm rounded-md hover:bg-[#6a1a25] disabled:opacity-50"
+                          className="w-full px-3 py-2 bg-wine text-white text-sm rounded-md hover:bg-[#6a1a25] disabled:opacity-50"
                         >
                           Adicionar
                         </button>

@@ -343,7 +343,7 @@ const AgendaDiaria: React.FC = () => {
 
   if (loading) return (
     <div className="flex items-center justify-center min-h-96">
-      <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#7D1F2C]" />
+      <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-wine" />
     </div>
   );
 
@@ -365,8 +365,8 @@ const AgendaDiaria: React.FC = () => {
             <div className="text-center min-w-[200px]">
               <p className="text-base font-black text-white capitalize">{labelData}</p>
               {!isHoje
-                ? <button onClick={() => setDataAtual(hoje)} className="text-[10px] text-[#D4AF37] font-bold hover:underline mt-0.5">voltar para hoje</button>
-                : <p className="text-[10px] text-[#D4AF37]/70 font-semibold mt-0.5">Hoje</p>
+                ? <button onClick={() => setDataAtual(hoje)} className="text-[10px] text-gold font-bold hover:underline mt-0.5">voltar para hoje</button>
+                : <p className="text-[10px] text-gold/70 font-semibold mt-0.5">Hoje</p>
               }
             </div>
             <button onClick={() => irParaDia(+1)} disabled={isHoje}
@@ -434,7 +434,7 @@ const AgendaDiaria: React.FC = () => {
                 {(['vencidas', '7dias', 'todas'] as const).map(f => (
                   <button key={f} onClick={() => setFiltro(f)}
                     className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all ${
-                      filtro === f ? 'bg-[#7D1F2C] text-white' : 'bg-white/8 text-white/40 hover:bg-white/12'
+                      filtro === f ? 'bg-wine text-white' : 'bg-white/8 text-white/40 hover:bg-white/12'
                     }`}>
                     {f === 'vencidas' ? 'Vencidas' : f === '7dias' ? 'Próx. 7d' : 'Todas'}
                   </button>
@@ -497,7 +497,7 @@ const AgendaDiaria: React.FC = () => {
                                     ? 'bg-emerald-500/10 text-emerald-500/40 cursor-not-allowed'
                                     : somenteLeitura
                                     ? 'bg-white/5 text-white/20 cursor-not-allowed'
-                                    : 'bg-[#7D1F2C] text-white hover:bg-[#9B2535] active:scale-95 cursor-pointer shadow-lg'
+                                    : 'bg-wine text-white hover:bg-wine-light active:scale-95 cursor-pointer shadow-lg'
                                 }`}>
                                 <ArrowRight className="w-4 h-4" />
                               </button>
@@ -586,7 +586,7 @@ const AgendaDiaria: React.FC = () => {
                     )}
                     {!somenteLeitura && (
                       <button onClick={() => setModalManual(true)}
-                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[11px] font-bold text-white bg-[#7D1F2C] hover:bg-[#9B2535] transition-all">
+                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[11px] font-bold text-white bg-wine hover:bg-wine-light transition-all">
                         <Plus className="w-3 h-3" /> Manual
                       </button>
                     )}
@@ -692,7 +692,7 @@ const AgendaDiaria: React.FC = () => {
                     <button key={g} type="button" onClick={() => setAGerente(g)}
                       className={`py-2.5 rounded-xl text-sm font-bold transition-all ${
                         aGerente === g
-                          ? 'bg-[#7D1F2C] text-white ring-2 ring-[#9B2535]/50'
+                          ? 'bg-wine text-white ring-2 ring-wine-light/50'
                           : 'bg-white/8 text-white/50 hover:bg-white/12 hover:text-white/80'
                       }`}>
                       {g}
@@ -729,7 +729,7 @@ const AgendaDiaria: React.FC = () => {
                 Cancelar
               </button>
               <button onClick={confirmarAuth} disabled={salvando || !aGerente || !aValor}
-                className="flex-1 py-2.5 rounded-xl text-sm font-bold bg-[#7D1F2C] text-white hover:bg-[#9B2535] transition-all disabled:opacity-40 active:scale-95">
+                className="flex-1 py-2.5 rounded-xl text-sm font-bold bg-wine text-white hover:bg-wine-light transition-all disabled:opacity-40 active:scale-95">
                 {salvando ? 'Salvando...' : 'Autorizar'}
               </button>
             </div>
@@ -836,7 +836,7 @@ const AgendaDiaria: React.FC = () => {
                   <button key={g} type="button" onClick={() => setMGerente(g)}
                     className={`py-2.5 rounded-xl text-sm font-bold transition-all ${
                       mGerente === g
-                        ? 'bg-[#7D1F2C] text-white'
+                        ? 'bg-wine text-white'
                         : 'bg-white/8 text-white/50 hover:bg-white/12 hover:text-white/80'
                     }`}>
                     {g}
@@ -851,7 +851,7 @@ const AgendaDiaria: React.FC = () => {
                 Cancelar
               </button>
               <button onClick={confirmarManual} disabled={salvando || !mDesc || !mValor}
-                className="flex-1 py-2.5 rounded-xl text-sm font-bold bg-[#7D1F2C] text-white hover:bg-[#9B2535] transition-all disabled:opacity-40">
+                className="flex-1 py-2.5 rounded-xl text-sm font-bold bg-wine text-white hover:bg-wine-light transition-all disabled:opacity-40">
                 {salvando ? 'Salvando...' : 'Adicionar'}
               </button>
             </div>
@@ -917,7 +917,7 @@ const AgendaDiaria: React.FC = () => {
             {/* Toolbar (não imprime) */}
             <div className="print:hidden fixed top-4 right-4 z-[60] flex gap-2">
               <button onClick={() => window.print()}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold bg-[#7D1F2C] text-white hover:bg-[#9B2535] shadow-xl transition-all">
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold bg-wine text-white hover:bg-wine-light shadow-xl transition-all">
                 <Printer className="w-4 h-4" /> Imprimir
               </button>
               <button onClick={() => setShowRelatorio(false)}

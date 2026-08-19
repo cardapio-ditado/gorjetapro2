@@ -1083,7 +1083,7 @@ const ComprasEstoque: React.FC = () => {
           </button>
           <button
             onClick={() => openForm()}
-            className="px-4 py-2 bg-[#7D1F2C] text-white rounded-lg hover:bg-[#6a1a25]"
+            className="px-4 py-2 bg-wine text-white rounded-lg hover:bg-[#6a1a25]"
           >
             <Plus className="w-4 h-4 inline mr-2" />
             Nova Compra
@@ -1191,7 +1191,7 @@ const ComprasEstoque: React.FC = () => {
                 placeholder="Buscar compras..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-white/20 rounded-lg bg-white/5 text-white focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+                className="w-full pl-10 pr-4 py-2 border border-white/20 rounded-lg bg-white/5 text-white focus:ring-2 focus:ring-wine focus:border-wine"
               />
             </div>
           </div>
@@ -1200,7 +1200,7 @@ const ComprasEstoque: React.FC = () => {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value as any)}
-              className="w-full border border-white/20 rounded-lg px-4 py-2 bg-white/5 text-white focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+              className="w-full border border-white/20 rounded-lg px-4 py-2 bg-white/5 text-white focus:ring-2 focus:ring-wine focus:border-wine"
             >
               <option value="all">Todos os Status</option>
               <option value="pendente">Pendente</option>
@@ -1227,7 +1227,7 @@ const ComprasEstoque: React.FC = () => {
               type="date"
               value={dataInicial}
               onChange={(e) => setDataInicial(e.target.value)}
-              className="w-full border border-white/20 rounded-lg px-4 py-2 bg-white/5 text-white focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+              className="w-full border border-white/20 rounded-lg px-4 py-2 bg-white/5 text-white focus:ring-2 focus:ring-wine focus:border-wine"
             />
           </div>
 
@@ -1236,7 +1236,7 @@ const ComprasEstoque: React.FC = () => {
               type="date"
               value={dataFinal}
               onChange={(e) => setDataFinal(e.target.value)}
-              className="w-full border border-white/20 rounded-lg px-4 py-2 bg-white/5 text-white focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+              className="w-full border border-white/20 rounded-lg px-4 py-2 bg-white/5 text-white focus:ring-2 focus:ring-wine focus:border-wine"
             />
           </div>
         </div>
@@ -1245,7 +1245,7 @@ const ComprasEstoque: React.FC = () => {
       {/* Lista de Compras */}
       {loading ? (
         <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7D1F2C]"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-wine"></div>
         </div>
       ) : (
         <div className="bg-[#12141f] rounded-lg border border-white/10 overflow-hidden">
@@ -1423,7 +1423,7 @@ const ComprasEstoque: React.FC = () => {
                       type="text"
                       value={formData.numero_documento}
                       onChange={(e) => setFormData({ ...formData, numero_documento: e.target.value })}
-                      className="w-full rounded-xl border border-white/20 bg-[#1a1d2e] text-white px-3 py-2.5 text-sm focus:border-[#7D1F2C] focus:outline-none"
+                      className="w-full rounded-xl border border-white/20 bg-[#1a1d2e] text-white px-3 py-2.5 text-sm focus:border-wine focus:outline-none"
                       placeholder="Ex: NF-001, Pedido-123"
                     />
                     <p className="text-xs text-white/30 mt-1">Número da nota fiscal ou pedido (opcional)</p>
@@ -1437,7 +1437,7 @@ const ComprasEstoque: React.FC = () => {
                       type="date"
                       value={formData.data_compra}
                       onChange={(e) => setFormData({ ...formData, data_compra: e.target.value })}
-                      className="w-full rounded-xl border border-white/20 bg-[#1a1d2e] text-white px-3 py-2.5 text-sm focus:border-[#7D1F2C] focus:outline-none"
+                      className="w-full rounded-xl border border-white/20 bg-[#1a1d2e] text-white px-3 py-2.5 text-sm focus:border-wine focus:outline-none"
                       required
                     />
                     <p className="text-xs text-white/30 mt-1">Data em que a compra foi realizada</p>
@@ -1471,7 +1471,7 @@ const ComprasEstoque: React.FC = () => {
                   </h4>
                   <button
                     onClick={adicionarItem}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-[#7D1F2C] text-white rounded-xl text-xs font-semibold hover:bg-[#6a1a25] transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-wine text-white rounded-xl text-xs font-semibold hover:bg-[#6a1a25] transition-colors"
                   >
                     <Plus className="w-3.5 h-3.5" /> Adicionar Item
                   </button>
@@ -1497,7 +1497,7 @@ const ComprasEstoque: React.FC = () => {
                         placeholder="Filtrar lista de produtos ao selecionar..."
                         value={searchItemTerm}
                         onChange={(e) => setSearchItemTerm(e.target.value)}
-                        className="w-full pl-9 pr-4 py-2 border border-white/10 rounded-xl bg-[#1a1d2e] text-white text-sm focus:outline-none focus:border-[#7D1F2C]"
+                        className="w-full pl-9 pr-4 py-2 border border-white/10 rounded-xl bg-[#1a1d2e] text-white text-sm focus:outline-none focus:border-wine"
                       />
                     </div>
 
@@ -1549,7 +1549,7 @@ const ComprasEstoque: React.FC = () => {
                                 min="0.001"
                                 value={item.quantidade || ''}
                                 onChange={(e) => atualizarItem(index, 'quantidade', parseFloat(e.target.value) || 0)}
-                                className="w-full rounded-xl border border-white/20 bg-[#1a1d2e] text-white px-3 py-2.5 text-sm focus:border-[#7D1F2C] focus:outline-none"
+                                className="w-full rounded-xl border border-white/20 bg-[#1a1d2e] text-white px-3 py-2.5 text-sm focus:border-wine focus:outline-none"
                                 placeholder="0"
                                 required
                               />
@@ -1566,7 +1566,7 @@ const ComprasEstoque: React.FC = () => {
                                   min="0"
                                   value={item.custo_unitario || ''}
                                   onChange={(e) => atualizarItem(index, 'custo_unitario', parseFloat(e.target.value) || 0)}
-                                  className="w-full pl-9 rounded-xl border border-white/20 bg-[#1a1d2e] text-white px-3 py-2.5 text-sm focus:border-[#7D1F2C] focus:outline-none"
+                                  className="w-full pl-9 rounded-xl border border-white/20 bg-[#1a1d2e] text-white px-3 py-2.5 text-sm focus:border-wine focus:outline-none"
                                   placeholder="0,00"
                                   required
                                 />
@@ -1580,14 +1580,14 @@ const ComprasEstoque: React.FC = () => {
                                 type="date"
                                 value={item.data_validade || ''}
                                 onChange={(e) => atualizarItem(index, 'data_validade', e.target.value)}
-                                className="w-full rounded-xl border border-white/20 bg-[#1a1d2e] text-white px-3 py-2.5 text-sm focus:border-[#7D1F2C] focus:outline-none"
+                                className="w-full rounded-xl border border-white/20 bg-[#1a1d2e] text-white px-3 py-2.5 text-sm focus:border-wine focus:outline-none"
                               />
                             </div>
 
                             {/* Total + remover */}
                             <div className="md:col-span-1 flex flex-col items-end justify-between h-full gap-2">
                               <label className="block text-[10px] font-semibold text-white/40 uppercase tracking-wide self-start md:self-end">Total</label>
-                              <span className={`text-sm font-bold ${total > 0 ? 'text-[#D4AF37]' : 'text-white/20'}`}>
+                              <span className={`text-sm font-bold ${total > 0 ? 'text-gold' : 'text-white/20'}`}>
                                 {total > 0 ? formatCurrency(total) : '—'}
                               </span>
                             </div>
@@ -1607,13 +1607,13 @@ const ComprasEstoque: React.FC = () => {
                     })}
 
                     {/* Rodapé — total geral */}
-                    <div className="flex items-center justify-between px-4 py-3 bg-[#7D1F2C]/10 border border-[#7D1F2C]/20 rounded-2xl mt-2">
+                    <div className="flex items-center justify-between px-4 py-3 bg-wine/10 border border-wine/20 rounded-2xl mt-2">
                       <div>
                         <p className="text-xs text-white/50">{formData.itens.length} {formData.itens.length === 1 ? 'produto' : 'produtos'} · encargos/descontos podem ser ajustados no recebimento</p>
                       </div>
                       <div className="text-right">
                         <p className="text-xs text-white/40 mb-0.5">Valor total da compra</p>
-                        <p className="text-xl font-bold text-[#D4AF37]">{formatCurrency(calcularValorTotal())}</p>
+                        <p className="text-xl font-bold text-gold">{formatCurrency(calcularValorTotal())}</p>
                       </div>
                     </div>
                   </div>
@@ -1624,7 +1624,7 @@ const ComprasEstoque: React.FC = () => {
                     <p className="text-xs text-white/25 mb-4">Clique em "Adicionar Item" para incluir os produtos comprados</p>
                     <button
                       onClick={adicionarItem}
-                      className="flex items-center gap-2 px-4 py-2.5 bg-[#7D1F2C] text-white rounded-xl text-sm font-semibold hover:bg-[#6a1a25] transition-colors"
+                      className="flex items-center gap-2 px-4 py-2.5 bg-wine text-white rounded-xl text-sm font-semibold hover:bg-[#6a1a25] transition-colors"
                     >
                       <Plus className="w-4 h-4" /> Adicionar Primeiro Item
                     </button>
@@ -1638,7 +1638,7 @@ const ComprasEstoque: React.FC = () => {
                 <textarea
                   value={formData.observacoes}
                   onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
-                  className="w-full rounded-xl border border-white/20 bg-[#1a1d2e] text-white px-3 py-2.5 text-sm focus:border-[#7D1F2C] focus:outline-none"
+                  className="w-full rounded-xl border border-white/20 bg-[#1a1d2e] text-white px-3 py-2.5 text-sm focus:border-wine focus:outline-none"
                   rows={2}
                   placeholder="Informações adicionais sobre esta compra (opcional)..."
                 />
@@ -1662,7 +1662,7 @@ const ComprasEstoque: React.FC = () => {
                 <button
                   onClick={handleSave}
                   disabled={loading || !formData.estoque_destino_id || formData.itens.length === 0}
-                  className="px-5 py-2.5 bg-[#7D1F2C] text-white rounded-xl hover:bg-[#6a1a25] disabled:opacity-50 text-sm font-semibold transition-colors"
+                  className="px-5 py-2.5 bg-wine text-white rounded-xl hover:bg-[#6a1a25] disabled:opacity-50 text-sm font-semibold transition-colors"
                 >
                   {loading ? 'Salvando...' : editingCompra ? 'Salvar Alterações' : 'Registrar Compra'}
                 </button>
@@ -1723,7 +1723,7 @@ const ComprasEstoque: React.FC = () => {
 
             {loading ? (
               <div className="flex justify-center items-center h-32">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#7D1F2C]"></div>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-wine"></div>
               </div>
             ) : (
               <>
@@ -1831,7 +1831,7 @@ const ComprasEstoque: React.FC = () => {
                     <div className="mt-4 flex justify-end">
                       <div className="bg-white/5 p-4 rounded-lg">
                         <div className="text-sm text-white/50 mb-1">Valor Total da Compra</div>
-                        <div className="text-2xl font-bold text-[#7D1F2C]">
+                        <div className="text-2xl font-bold text-wine">
                           {formatCurrency(
                             compraSelecionada.itens.reduce((sum, item) => {
                               const quantidadeRecebida = item.quantidade_recebida ?? (item.quantidade_pedida || item.quantidade);
@@ -1938,7 +1938,7 @@ const ComprasEstoque: React.FC = () => {
                               step="0.01"
                               value={item.quantidade_recebida || 0}
                               onChange={(e) => atualizarQuantidadeRecebida(item.id, parseFloat(e.target.value) || 0)}
-                              className="w-24 px-3 py-2 border border-white/20 rounded-lg bg-white/5 text-white focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C] text-center"
+                              className="w-24 px-3 py-2 border border-white/20 rounded-lg bg-white/5 text-white focus:ring-2 focus:ring-wine focus:border-wine text-center"
                             />
                           </td>
                           <td className="px-4 py-3">
@@ -1948,7 +1948,7 @@ const ComprasEstoque: React.FC = () => {
                               step="0.01"
                               value={item.custo_unitario || 0}
                               onChange={(e) => atualizarCustoUnitarioRecebimento(item.id, parseFloat(e.target.value) || 0)}
-                              className="w-28 px-3 py-2 border border-white/20 rounded-lg bg-white/5 text-white focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C] text-center"
+                              className="w-28 px-3 py-2 border border-white/20 rounded-lg bg-white/5 text-white focus:ring-2 focus:ring-wine focus:border-wine text-center"
                             />
                           </td>
                           <td className="px-4 py-3 text-center">
@@ -1976,7 +1976,7 @@ const ComprasEstoque: React.FC = () => {
                                 placeholder="Informe o motivo..."
                                 value={item.motivo_divergencia || ''}
                                 onChange={(e) => atualizarMotivoDivergencia(item.id, e.target.value)}
-                                className="w-full px-3 py-2 border border-white/20 rounded-lg bg-white/5 text-white focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+                                className="w-full px-3 py-2 border border-white/20 rounded-lg bg-white/5 text-white focus:ring-2 focus:ring-wine focus:border-wine"
                               />
                             )}
                           </td>
@@ -2044,7 +2044,7 @@ const ComprasEstoque: React.FC = () => {
                         setValorEncargosRecebimento(valor);
                         setPercentualEncargosRecebimento(Math.round(percentual * 100) / 100);
                       }}
-                      className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                      className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                       placeholder="0,00"
                     />
                   </div>
@@ -2068,7 +2068,7 @@ const ComprasEstoque: React.FC = () => {
                         setPercentualEncargosRecebimento(percentual);
                         setValorEncargosRecebimento(Math.round(valor * 100) / 100);
                       }}
-                      className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                      className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                       placeholder="0,00"
                     />
                     <p className="text-xs text-white/40 mt-1">Calculado automaticamente</p>
@@ -2082,7 +2082,7 @@ const ComprasEstoque: React.FC = () => {
                       type="text"
                       value={descricaoEncargosRecebimento}
                       onChange={(e) => setDescricaoEncargosRecebimento(e.target.value)}
-                      className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                      className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                       placeholder="Ex: Entrega + 2% financeiro"
                     />
                   </div>
@@ -2229,7 +2229,7 @@ const ComprasEstoque: React.FC = () => {
                   const hasDivergencia = item.quantidade_recebida !== quantidadePedida;
                   return hasDivergencia && !item.motivo_divergencia;
                 })}
-                className="px-4 py-2 bg-[#7D1F2C] text-white rounded-lg hover:bg-[#6a1a25] disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-2 bg-wine text-white rounded-lg hover:bg-[#6a1a25] disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Confirmar Recebimento
               </button>

@@ -191,7 +191,7 @@ export default function ContagemContador({ contagemId, estoqueName, onVoltar, on
 
   if (loading) return (
     <div className="flex flex-col items-center justify-center py-24 gap-3">
-      <Loader2 className="w-8 h-8 animate-spin text-[#7D1F2C]" />
+      <Loader2 className="w-8 h-8 animate-spin text-wine" />
       <p className="text-sm text-white/40">Carregando itens...</p>
     </div>
   );
@@ -231,7 +231,7 @@ export default function ContagemContador({ contagemId, estoqueName, onVoltar, on
         {/* Progresso */}
         <div className="mt-2.5 flex items-center gap-2">
           <div className="flex-1 bg-white/10 rounded-full h-2 overflow-hidden">
-            <div className="h-full bg-gradient-to-r from-[#7D1F2C] to-[#D4AF37] rounded-full transition-all duration-500"
+            <div className="h-full bg-gradient-to-r from-wine to-gold rounded-full transition-all duration-500"
               style={{ width: `${progressPct}%` }} />
           </div>
           <span className="text-xs font-semibold text-white/50 w-9 text-right">{Math.round(progressPct)}%</span>
@@ -293,7 +293,7 @@ export default function ContagemContador({ contagemId, estoqueName, onVoltar, on
         <div className="flex overflow-x-auto scrollbar-hide px-2 py-2 gap-1.5">
           <button onClick={() => setGrupoAtivo('todos')}
             className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border-2 transition-all ${
-              grupoAtivo === 'todos' ? 'bg-[#7D1F2C] text-white border-[#7D1F2C]' : 'bg-white/5 text-white/50 border-white/10 hover:bg-white/10'
+              grupoAtivo === 'todos' ? 'bg-wine text-white border-wine' : 'bg-white/5 text-white/50 border-white/10 hover:bg-white/10'
             }`}>
             Todos
             <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${grupoAtivo === 'todos' ? 'bg-white/20' : 'bg-white/10 text-white/40'}`}>
@@ -344,7 +344,7 @@ export default function ContagemContador({ contagemId, estoqueName, onVoltar, on
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/30" />
           <input type="text" value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
             placeholder="Buscar por nome ou código..."
-            className="w-full pl-8 pr-3 py-2 text-sm border border-white/10 rounded-xl bg-white/5 text-white focus:ring-2 focus:ring-[#7D1F2C]/30 focus:border-[#7D1F2C]" />
+            className="w-full pl-8 pr-3 py-2 text-sm border border-white/10 rounded-xl bg-white/5 text-white focus:ring-2 focus:ring-wine/30 focus:border-wine" />
         </div>
         {grupoAtivo !== 'ignorados' && (
           <button onClick={() => setFiltroPendentes(!filtroPendentes)}
@@ -479,7 +479,7 @@ export default function ContagemContador({ contagemId, estoqueName, onVoltar, on
                         hasError               ? 'border-red-500/50 bg-red-500/10 text-red-300 focus:ring-red-500/20'
                         : isContado && dif === 0 ? 'border-green-500/50 bg-green-500/10 text-green-300 focus:ring-green-500/20'
                         : isContado && dif !== 0 ? 'border-orange-500/50 bg-orange-500/10 text-orange-300 focus:ring-orange-500/20'
-                        : 'border-white/10 bg-white/5 text-white focus:ring-[#7D1F2C]/20 focus:border-[#7D1F2C]'
+                        : 'border-white/10 bg-white/5 text-white focus:ring-wine/20 focus:border-wine'
                       }`} />
                   </div>
 
@@ -508,7 +508,7 @@ export default function ContagemContador({ contagemId, estoqueName, onVoltar, on
                 <input type="text" value={item.observacao || ''}
                   onChange={e => handleObs(item.id, e.target.value)}
                   placeholder="Observação (opcional)..."
-                  className="w-full text-xs border border-white/10 rounded-xl px-3 py-2 focus:ring-2 focus:ring-[#7D1F2C]/20 focus:border-[#7D1F2C] bg-white/5 text-white" />
+                  className="w-full text-xs border border-white/10 rounded-xl px-3 py-2 focus:ring-2 focus:ring-wine/20 focus:border-wine bg-white/5 text-white" />
               </div>
             </div>
           );

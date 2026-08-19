@@ -81,7 +81,7 @@ function ProgressBar({ atual, total }: { atual: number; total: number }) {
       </div>
       <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
         <div
-          className="h-full bg-[#7D1F2C] rounded-full transition-all duration-500"
+          className="h-full bg-wine rounded-full transition-all duration-500"
           style={{ width: `${pct}%` }}
         />
       </div>
@@ -392,7 +392,7 @@ export default function DiscPublico() {
             style={{ background: 'linear-gradient(135deg,#7D1F2C,#D4AF37)' }}>
             <Target className="w-6 h-6 text-white" />
           </div>
-          <p className="text-[#D4AF37] font-bold text-sm tracking-wide">Ditado Popular</p>
+          <p className="text-gold font-bold text-sm tracking-wide">Ditado Popular</p>
         </div>
         {children}
       </div>
@@ -404,7 +404,7 @@ export default function DiscPublico() {
     return (
       <Shell>
         <div className="bg-[#12141f] border border-white/10 rounded-2xl p-8 flex flex-col items-center gap-4">
-          <Loader2 className="w-8 h-8 text-[#D4AF37] animate-spin" />
+          <Loader2 className="w-8 h-8 text-gold animate-spin" />
           <p className="text-white/50 text-sm">Verificando link...</p>
         </div>
       </Shell>
@@ -479,7 +479,7 @@ export default function DiscPublico() {
           <div>
             <p className="text-white font-medium text-center mb-4 leading-relaxed">
               Você foi convidado para realizar o<br />
-              <span className="text-[#D4AF37] font-bold">Mapeamento de Perfil DISC</span>
+              <span className="text-gold font-bold">Mapeamento de Perfil DISC</span>
             </p>
             <div className="space-y-2.5">
               {[
@@ -498,7 +498,7 @@ export default function DiscPublico() {
 
           <button
             onClick={iniciar}
-            className="w-full bg-[#7D1F2C] hover:bg-[#9b2535] text-white font-semibold py-4 rounded-xl text-base transition-colors active:scale-95"
+            className="w-full bg-wine hover:bg-wine-light text-white font-semibold py-4 rounded-xl text-base transition-colors active:scale-95"
           >
             Iniciar Avaliação
           </button>
@@ -517,9 +517,9 @@ export default function DiscPublico() {
       <Shell>
         <div className="bg-[#12141f] border border-white/10 rounded-2xl p-8 flex flex-col items-center gap-5 text-center">
           <div className="relative">
-            <div className="w-16 h-16 rounded-full border-4 border-[#7D1F2C]/20 border-t-[#7D1F2C] animate-spin" />
+            <div className="w-16 h-16 rounded-full border-4 border-wine/20 border-t-[#7D1F2C] animate-spin" />
             <div className="absolute inset-0 flex items-center justify-center">
-              <Target className="w-6 h-6 text-[#D4AF37]" />
+              <Target className="w-6 h-6 text-gold" />
             </div>
           </div>
           <div>
@@ -644,7 +644,7 @@ export default function DiscPublico() {
             <button
               onClick={avancar}
               disabled={!podeAvancar}
-              className="w-full mt-4 bg-[#7D1F2C] hover:bg-[#9b2535] disabled:bg-white/5 disabled:text-white/20 text-white font-semibold py-3.5 rounded-xl text-sm transition-all active:scale-95 disabled:cursor-not-allowed"
+              className="w-full mt-4 bg-wine hover:bg-wine-light disabled:bg-white/5 disabled:text-white/20 text-white font-semibold py-3.5 rounded-xl text-sm transition-all active:scale-95 disabled:cursor-not-allowed"
             >
               {blocoAtual === perguntas.length - 1 ? 'Concluir Avaliação' : 'Próximo'}
             </button>
@@ -670,7 +670,7 @@ export default function DiscPublico() {
               style={{ background: 'linear-gradient(135deg,#7D1F2C,#D4AF37)' }}>
               <Target className="w-6 h-6 text-white" />
             </div>
-            <p className="text-[#D4AF37] text-xs font-semibold tracking-widest uppercase mb-2">Ditado Popular</p>
+            <p className="text-gold text-xs font-semibold tracking-widest uppercase mb-2">Ditado Popular</p>
             <h1 className="text-white text-xl font-bold mb-1">Avaliação concluída!</h1>
             <p className="text-white/50 text-sm">Obrigado, <span className="text-white font-medium">{primeiroNome}</span>!</p>
           </div>
@@ -702,7 +702,7 @@ export default function DiscPublico() {
 
           {/* Resumo IA */}
           {analise.resumo && (
-            <div className="bg-[#12141f] border border-[#D4AF37]/20 rounded-2xl p-5">
+            <div className="bg-[#12141f] border border-gold/20 rounded-2xl p-5">
               <p className="text-white/40 text-xs uppercase tracking-wider mb-2">Seu perfil</p>
               <p className="text-white/80 text-sm leading-relaxed italic">"{analise.resumo}"</p>
             </div>

@@ -60,7 +60,7 @@ const ContagemListView: React.FC<Props> = ({
             <History className="w-4 h-4" /> Histórico
           </button>
           <button onClick={onNovaContagem}
-            className="px-5 py-2.5 bg-gradient-to-r from-[#7D1F2C] to-[#D4AF37] text-white rounded-xl hover:opacity-90 flex items-center gap-2 text-sm font-semibold shadow-md transition-all">
+            className="px-5 py-2.5 bg-gradient-to-r from-wine to-gold text-white rounded-xl hover:opacity-90 flex items-center gap-2 text-sm font-semibold shadow-md transition-all">
             <Plus className="w-4 h-4" /> Nova Contagem
           </button>
         </div>
@@ -158,7 +158,7 @@ const ContagemListView: React.FC<Props> = ({
             Inicie uma nova contagem para comparar quantidades físicas com os saldos do sistema.
           </p>
           <button onClick={onNovaContagem}
-            className="px-6 py-3 bg-gradient-to-r from-[#7D1F2C] to-[#D4AF37] text-white rounded-xl hover:opacity-90 font-semibold shadow-md transition-all">
+            className="px-6 py-3 bg-gradient-to-r from-wine to-gold text-white rounded-xl hover:opacity-90 font-semibold shadow-md transition-all">
             Iniciar Nova Contagem
           </button>
         </div>

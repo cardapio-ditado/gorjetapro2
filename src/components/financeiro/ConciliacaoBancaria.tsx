@@ -276,7 +276,7 @@ export default function ConciliacaoBancaria() {
     setEtapa('upload'); setLinhas([]); setArquivo(null); setPrevia(null); setParsed(null); setImportacaoId(null); setErro(null);
   };
 
-  const inputCls = 'w-full text-xs border border-white/15 rounded-md px-2 py-1.5 bg-white/5 text-white focus:outline-none focus:ring-2 focus:ring-[#7D1F2C]/40';
+  const inputCls = 'w-full text-xs border border-white/15 rounded-md px-2 py-1.5 bg-white/5 text-white focus:outline-none focus:ring-2 focus:ring-wine/40';
   const totalPend = linhas.filter(l => l.status === 'pendente').length;
   const totalConc = linhas.filter(l => l.status === 'conciliada').length;
 
@@ -286,7 +286,7 @@ export default function ConciliacaoBancaria() {
       <div className="max-w-2xl mx-auto space-y-5">
         <div className="bg-[#12141f] rounded-2xl border border-white/10 p-6 space-y-5">
           <div className="flex items-center gap-2">
-            <Upload size={16} className="text-[#7D1F2C]" />
+            <Upload size={16} className="text-wine" />
             <h2 className="font-semibold text-white/90">Importar extrato (OFX / XML)</h2>
           </div>
 
@@ -309,14 +309,14 @@ export default function ConciliacaoBancaria() {
           <div>
             <label className="text-xs font-semibold text-white/40 uppercase tracking-wide mb-1.5 block">Arquivo</label>
             <input type="file" accept=".ofx,.xml,.OFX,.XML" onChange={e => onSelecionarArquivo(e.target.files?.[0] || null)}
-              className="block w-full text-xs text-white/70 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:bg-[#7D1F2C] file:text-white file:text-xs file:cursor-pointer" />
+              className="block w-full text-xs text-white/70 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:bg-wine file:text-white file:text-xs file:cursor-pointer" />
           </div>
 
           {previa && (
             <div className="rounded-xl border border-white/10 bg-white/5 p-3 text-xs text-white/70 flex items-center gap-4">
               <FileText size={14} className="text-white/40" />
               <span>{previa.total} transações</span>
-              <span className="text-[#7D1F2C] font-semibold">{previa.debitos} saídas</span>
+              <span className="text-wine font-semibold">{previa.debitos} saídas</span>
               <span className="text-white/40">{previa.periodo}</span>
             </div>
           )}
@@ -328,7 +328,7 @@ export default function ConciliacaoBancaria() {
           )}
 
           <button onClick={processar} disabled={carregando || !previa || !bancoContaId}
-            className="w-full flex items-center justify-center gap-2 bg-[#7D1F2C] hover:bg-[#6a1a25] disabled:opacity-50 text-white font-semibold py-3 rounded-xl transition-colors">
+            className="w-full flex items-center justify-center gap-2 bg-wine hover:bg-[#6a1a25] disabled:opacity-50 text-white font-semibold py-3 rounded-xl transition-colors">
             {carregando ? <RefreshCw size={16} className="animate-spin" /> : <Sparkles size={16} />}
             {carregando ? 'Conciliando...' : 'Carregar e conciliar'}
           </button>

@@ -731,7 +731,7 @@ const EscalasTrabalho: React.FC = () => {
           </div>
           <button
             onClick={() => setCalendarioMes(dayjs())}
-            className="px-3 py-1 text-sm bg-[#7D1F2C] text-white rounded-md hover:bg-[#6a1a25]"
+            className="px-3 py-1 text-sm bg-wine text-white rounded-md hover:bg-[#6a1a25]"
           >
             Hoje
           </button>
@@ -764,7 +764,7 @@ const EscalasTrabalho: React.FC = () => {
                 <div
                   key={dia}
                   className={`h-24 border border-white/10 rounded-lg p-1 overflow-hidden hover:bg-white/5 cursor-pointer transition-colors ${
-                    isToday ? 'ring-2 ring-[#7D1F2C] bg-blue-500/10' : ''
+                    isToday ? 'ring-2 ring-wine bg-blue-500/10' : ''
                   } ${isPastDay ? 'bg-white/5' : 'bg-[#12141f]'}`}
                   onClick={() => {
                     // Abrir modal para adicionar escala neste dia
@@ -777,7 +777,7 @@ const EscalasTrabalho: React.FC = () => {
                   }}
                 >
                   <div className={`text-sm font-medium mb-1 ${
-                    isToday ? 'text-[#7D1F2C]' : isPastDay ? 'text-white/30' : 'text-white/80'
+                    isToday ? 'text-wine' : isPastDay ? 'text-white/30' : 'text-white/80'
                   }`}>
                     {dia}
                   </div>
@@ -850,7 +850,7 @@ const EscalasTrabalho: React.FC = () => {
               <span>Folga</span>
             </div>
             <div className="flex items-center">
-              <div className="w-3 h-3 border-2 border-[#7D1F2C] rounded mr-1"></div>
+              <div className="w-3 h-3 border-2 border-wine rounded mr-1"></div>
               <span>Hoje</span>
             </div>
           </div>
@@ -870,7 +870,7 @@ const EscalasTrabalho: React.FC = () => {
               onClick={() => setViewMode('table')}
               className={`px-3 py-2 text-sm font-medium transition-colors ${
                 viewMode === 'table'
-                  ? 'bg-[#7D1F2C] text-white'
+                  ? 'bg-wine text-white'
                   : 'bg-[#12141f] text-white/80 hover:bg-white/5'
               }`}
             >
@@ -881,7 +881,7 @@ const EscalasTrabalho: React.FC = () => {
               onClick={() => setViewMode('calendar')}
               className={`px-3 py-2 text-sm font-medium transition-colors ${
                 viewMode === 'calendar'
-                  ? 'bg-[#7D1F2C] text-white'
+                  ? 'bg-wine text-white'
                   : 'bg-[#12141f] text-white/80 hover:bg-white/5'
               }`}
             >
@@ -920,7 +920,7 @@ const EscalasTrabalho: React.FC = () => {
           </Menu>
           <button
             onClick={() => openForm()}
-            className="px-4 py-2 bg-[#7D1F2C] text-white rounded-lg hover:bg-[#6a1a25]"
+            className="px-4 py-2 bg-wine text-white rounded-lg hover:bg-[#6a1a25]"
           >
             <Plus className="w-4 h-4 inline mr-2" />
             Nova Escala
@@ -996,7 +996,7 @@ const EscalasTrabalho: React.FC = () => {
                 placeholder="Buscar..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-white/20 rounded-lg bg-white/5 text-white focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+                className="w-full pl-10 pr-4 py-2 border border-white/20 rounded-lg bg-white/5 text-white focus:ring-2 focus:ring-wine focus:border-wine"
               />
             </div>
           </div>
@@ -1005,7 +1005,7 @@ const EscalasTrabalho: React.FC = () => {
             <select
               value={colaboradorFilter}
               onChange={(e) => setColaboradorFilter(e.target.value)}
-              className="w-full border border-white/20 rounded-lg px-4 py-2 bg-white/5 text-white focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+              className="w-full border border-white/20 rounded-lg px-4 py-2 bg-white/5 text-white focus:ring-2 focus:ring-wine focus:border-wine"
             >
               <option value="all">Todos os Colaboradores</option>
               {colaboradores.map((colaborador) => (
@@ -1023,7 +1023,7 @@ const EscalasTrabalho: React.FC = () => {
                 id="apenas-folgas"
                 checked={apenasfolgas}
                 onChange={(e) => setApenasfolgas(e.target.checked)}
-                className="rounded border-white/20 text-[#7D1F2C] focus:ring-[#7D1F2C]"
+                className="rounded border-white/20 text-wine focus:ring-wine"
               />
               <label htmlFor="apenas-folgas" className="ml-2 text-sm text-white/80">
                 🏖️ Apenas Folgas
@@ -1035,7 +1035,7 @@ const EscalasTrabalho: React.FC = () => {
             <select
               value={setorFilter}
               onChange={(e) => setSetorFilter(e.target.value)}
-              className="w-full border border-white/20 rounded-lg px-4 py-2 bg-white/5 text-white focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+              className="w-full border border-white/20 rounded-lg px-4 py-2 bg-white/5 text-white focus:ring-2 focus:ring-wine focus:border-wine"
             >
               <option value="all">Todos os Setores</option>
               {setores.map((setor) => (
@@ -1050,7 +1050,7 @@ const EscalasTrabalho: React.FC = () => {
             <select
               value={turnoFilter}
               onChange={(e) => setTurnoFilter(e.target.value)}
-              className="w-full border border-white/20 rounded-lg px-4 py-2 bg-white/5 text-white focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+              className="w-full border border-white/20 rounded-lg px-4 py-2 bg-white/5 text-white focus:ring-2 focus:ring-wine focus:border-wine"
             >
               <option value="all">Todos os Turnos</option>
               <option value="diurno">Diurno</option>
@@ -1064,7 +1064,7 @@ const EscalasTrabalho: React.FC = () => {
             <select
               value={semanaFilter}
               onChange={(e) => setSemanaFilter(parseInt(e.target.value))}
-              className="w-full border border-white/20 rounded-lg px-4 py-2 bg-white/5 text-white focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+              className="w-full border border-white/20 rounded-lg px-4 py-2 bg-white/5 text-white focus:ring-2 focus:ring-wine focus:border-wine"
             >
               {Array.from({ length: 52 }, (_, i) => i + 1).map(semana => {
                 const inicioSemana = dayjs().year(anoFilter).isoWeek(semana).startOf('isoWeek');
@@ -1082,7 +1082,7 @@ const EscalasTrabalho: React.FC = () => {
             <select
               value={anoFilter}
               onChange={(e) => setAnoFilter(parseInt(e.target.value))}
-              className="w-full border border-white/20 rounded-lg px-4 py-2 bg-white/5 text-white focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+              className="w-full border border-white/20 rounded-lg px-4 py-2 bg-white/5 text-white focus:ring-2 focus:ring-wine focus:border-wine"
             >
               {Array.from({ length: 3 }, (_, i) => dayjs().year() - 1 + i).map(ano => (
                 <option key={ano} value={ano}>
@@ -1107,7 +1107,7 @@ const EscalasTrabalho: React.FC = () => {
                   placeholder="Buscar colaborador..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-white/20 rounded-lg bg-white/5 text-white focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+                  className="w-full pl-10 pr-4 py-2 border border-white/20 rounded-lg bg-white/5 text-white focus:ring-2 focus:ring-wine focus:border-wine"
                 />
               </div>
             </div>
@@ -1116,7 +1116,7 @@ const EscalasTrabalho: React.FC = () => {
               <select
                 value={colaboradorFilter}
                 onChange={(e) => setColaboradorFilter(e.target.value)}
-                className="w-full border border-white/20 rounded-lg px-4 py-2 bg-white/5 text-white focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+                className="w-full border border-white/20 rounded-lg px-4 py-2 bg-white/5 text-white focus:ring-2 focus:ring-wine focus:border-wine"
               >
                 <option value="all">Todos os Colaboradores</option>
                 {colaboradores.map((colaborador) => (
@@ -1134,7 +1134,7 @@ const EscalasTrabalho: React.FC = () => {
                   id="apenas-folgas-calendario"
                   checked={apenasfolgas}
                   onChange={(e) => setApenasfolgas(e.target.checked)}
-                  className="rounded border-white/20 text-[#7D1F2C] focus:ring-[#7D1F2C]"
+                  className="rounded border-white/20 text-wine focus:ring-wine"
                 />
                 <label htmlFor="apenas-folgas-calendario" className="ml-2 text-sm text-white/80">
                   🏖️ Apenas Folgas
@@ -1146,7 +1146,7 @@ const EscalasTrabalho: React.FC = () => {
               <select
                 value={setorFilter}
                 onChange={(e) => setSetorFilter(e.target.value)}
-                className="w-full border border-white/20 rounded-lg px-4 py-2 bg-white/5 text-white focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+                className="w-full border border-white/20 rounded-lg px-4 py-2 bg-white/5 text-white focus:ring-2 focus:ring-wine focus:border-wine"
               >
                 <option value="all">Todos os Setores</option>
                 {setores.map((setor) => (
@@ -1161,7 +1161,7 @@ const EscalasTrabalho: React.FC = () => {
               <select
                 value={turnoFilter}
                 onChange={(e) => setTurnoFilter(e.target.value)}
-                className="w-full border border-white/20 rounded-lg px-4 py-2 bg-white/5 text-white focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+                className="w-full border border-white/20 rounded-lg px-4 py-2 bg-white/5 text-white focus:ring-2 focus:ring-wine focus:border-wine"
               >
                 <option value="all">Todos os Turnos</option>
                 <option value="diurno">Diurno</option>
@@ -1374,7 +1374,7 @@ const EscalasTrabalho: React.FC = () => {
                     <select
                       value={formData.colaborador_id}
                       onChange={(e) => setFormData({ ...formData, colaborador_id: e.target.value })}
-                      className="w-full border border-white/20 rounded-lg px-4 py-2 bg-white/5 text-white focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+                      className="w-full border border-white/20 rounded-lg px-4 py-2 bg-white/5 text-white focus:ring-2 focus:ring-wine focus:border-wine"
                       required
                     >
                       <option value="">Selecione um colaborador</option>
@@ -1394,7 +1394,7 @@ const EscalasTrabalho: React.FC = () => {
                       type="date"
                       value={formData.data_escala}
                       onChange={(e) => setFormData({ ...formData, data_escala: e.target.value })}
-                      className="w-full border border-white/20 rounded-lg px-4 py-2 bg-white/5 text-white focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+                      className="w-full border border-white/20 rounded-lg px-4 py-2 bg-white/5 text-white focus:ring-2 focus:ring-wine focus:border-wine"
                       required
                     />
                   </div>
@@ -1414,7 +1414,7 @@ const EscalasTrabalho: React.FC = () => {
                         type="date"
                         value={formData.data_inicio_periodo}
                         onChange={(e) => setFormData({ ...formData, data_inicio_periodo: e.target.value })}
-                        className="w-full border border-white/20 rounded-lg px-4 py-2 bg-white/5 text-white focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+                        className="w-full border border-white/20 rounded-lg px-4 py-2 bg-white/5 text-white focus:ring-2 focus:ring-wine focus:border-wine"
                         required
                       />
                     </div>
@@ -1427,7 +1427,7 @@ const EscalasTrabalho: React.FC = () => {
                         type="date"
                         value={formData.data_fim_periodo}
                         onChange={(e) => setFormData({ ...formData, data_fim_periodo: e.target.value })}
-                        className="w-full border border-white/20 rounded-lg px-4 py-2 bg-white/5 text-white focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+                        className="w-full border border-white/20 rounded-lg px-4 py-2 bg-white/5 text-white focus:ring-2 focus:ring-wine focus:border-wine"
                         required
                       />
                     </div>
@@ -1454,7 +1454,7 @@ const EscalasTrabalho: React.FC = () => {
                               type="checkbox"
                               checked={formData.dias_semana.includes(dia.value)}
                               onChange={() => toggleDiaSemana(dia.value)}
-                              className="mr-1 rounded border-white/20 text-[#7D1F2C] focus:ring-[#7D1F2C]"
+                              className="mr-1 rounded border-white/20 text-wine focus:ring-wine"
                             />
                             {dia.label}
                           </label>
@@ -1497,7 +1497,7 @@ const EscalasTrabalho: React.FC = () => {
                                   ? removerColaboradorDoLote(colaborador.id)
                                   : adicionarColaboradorAoLote(colaborador.id)
                               }
-                              className="mr-2 rounded border-white/20 text-[#7D1F2C] focus:ring-[#7D1F2C]"
+                              className="mr-2 rounded border-white/20 text-wine focus:ring-wine"
                             />
                             <div>
                               <div className="text-sm font-medium">{colaborador.nome_completo}</div>
@@ -1572,7 +1572,7 @@ const EscalasTrabalho: React.FC = () => {
                                   type="checkbox"
                                   checked={item.eh_folga}
                                   onChange={(e) => atualizarItemLote(item.colaborador_id, { eh_folga: e.target.checked })}
-                                  className="rounded border-white/20 text-[#7D1F2C] focus:ring-[#7D1F2C]"
+                                  className="rounded border-white/20 text-wine focus:ring-wine"
                                 />
                                 🏖️ Folga
                               </label>
@@ -1622,7 +1622,7 @@ const EscalasTrabalho: React.FC = () => {
                   <select
                     value={formData.setor}
                     onChange={(e) => setFormData({ ...formData, setor: e.target.value, posto_trabalho_id: '' })}
-                    className="w-full border border-white/20 rounded-lg px-4 py-2 bg-white/5 text-white focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+                    className="w-full border border-white/20 rounded-lg px-4 py-2 bg-white/5 text-white focus:ring-2 focus:ring-wine focus:border-wine"
                     required
                   >
                     {setores.map((setor) => (
@@ -1641,7 +1641,7 @@ const EscalasTrabalho: React.FC = () => {
                     <select
                       value={formData.posto_trabalho_id}
                       onChange={(e) => setFormData({ ...formData, posto_trabalho_id: e.target.value })}
-                      className="w-full border border-white/20 rounded-lg px-4 py-2 bg-white/5 text-white focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+                      className="w-full border border-white/20 rounded-lg px-4 py-2 bg-white/5 text-white focus:ring-2 focus:ring-wine focus:border-wine"
                     >
                       <option value="">Sem posto definido</option>
                       {postosTrabalho.filter(p => p.setor === 'Cozinha').map((posto) => (
@@ -1660,7 +1660,7 @@ const EscalasTrabalho: React.FC = () => {
                   <select
                     value={formData.tipo_turno}
                     onChange={(e) => setFormData({ ...formData, tipo_turno: e.target.value as 'diurno' | 'noturno' | 'madrugada' | 'variavel' })}
-                    className="w-full border border-white/20 rounded-lg px-4 py-2 bg-white/5 text-white focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+                    className="w-full border border-white/20 rounded-lg px-4 py-2 bg-white/5 text-white focus:ring-2 focus:ring-wine focus:border-wine"
                   >
                     <option value="diurno">Diurno</option>
                     <option value="noturno">Noturno</option>
@@ -1677,7 +1677,7 @@ const EscalasTrabalho: React.FC = () => {
                     type="checkbox"
                     checked={formData.eh_folga}
                     onChange={(e) => setFormData({ ...formData, eh_folga: e.target.checked })}
-                    className="mr-2 rounded border-white/20 text-[#7D1F2C] focus:ring-[#7D1F2C]"
+                    className="mr-2 rounded border-white/20 text-wine focus:ring-wine"
                   />
                   <span className="text-sm font-medium text-white/80">
                     🏖️ Esta é uma folga (não definir horários)
@@ -1700,7 +1700,7 @@ const EscalasTrabalho: React.FC = () => {
                         horario_inicio: e.target.value,
                         tipo_turno: e.target.value ? detectarTurno(e.target.value) : formData.tipo_turno,
                       })}
-                      className="w-full border border-white/20 rounded-lg px-4 py-2 bg-white/5 text-white focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+                      className="w-full border border-white/20 rounded-lg px-4 py-2 bg-white/5 text-white focus:ring-2 focus:ring-wine focus:border-wine"
                     />
                   </div>
 
@@ -1712,7 +1712,7 @@ const EscalasTrabalho: React.FC = () => {
                       type="time"
                       value={formData.horario_fim}
                       onChange={(e) => setFormData({ ...formData, horario_fim: e.target.value })}
-                      className="w-full border border-white/20 rounded-lg px-4 py-2 bg-white/5 text-white focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+                      className="w-full border border-white/20 rounded-lg px-4 py-2 bg-white/5 text-white focus:ring-2 focus:ring-wine focus:border-wine"
                     />
                   </div>
                 </div>
@@ -1729,7 +1729,7 @@ const EscalasTrabalho: React.FC = () => {
                   value={formData.observacoes}
                   onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
                   rows={3}
-                  className="w-full border border-white/20 rounded-lg px-4 py-2 bg-white/5 text-white focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+                  className="w-full border border-white/20 rounded-lg px-4 py-2 bg-white/5 text-white focus:ring-2 focus:ring-wine focus:border-wine"
                   placeholder="Observações adicionais..."
                 />
               </div>
@@ -1748,7 +1748,7 @@ const EscalasTrabalho: React.FC = () => {
                 type="button"
                 onClick={handleSave}
                 disabled={loading}
-                className="px-4 py-2 bg-[#7D1F2C] text-white rounded-lg hover:bg-[#6a1a25] disabled:opacity-50"
+                className="px-4 py-2 bg-wine text-white rounded-lg hover:bg-[#6a1a25] disabled:opacity-50"
               >
                 {loading ? 'Salvando...' : editingEscala ? 'Atualizar' : 'Salvar'}
               </button>

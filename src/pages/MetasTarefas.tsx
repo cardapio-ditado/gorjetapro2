@@ -338,7 +338,7 @@ const TarefaDrawer: React.FC<TarefaDrawerProps> = ({ tarefa, mode, setorInicial 
           {ABAS_DRAWER.map(a => (
             <button key={a.id} onClick={() => setAba(a.id)}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all ${
-                aba === a.id ? 'bg-[#7D1F2C] text-white' : 'text-white/35 hover:text-white/60 hover:bg-white/5'
+                aba === a.id ? 'bg-wine text-white' : 'text-white/35 hover:text-white/60 hover:bg-white/5'
               }`}>
               {a.label}
               {(a as any).count > 0 && (
@@ -360,7 +360,7 @@ const TarefaDrawer: React.FC<TarefaDrawerProps> = ({ tarefa, mode, setorInicial 
                 <div className="flex flex-wrap gap-1.5">
                   {SETORES.map(s => (
                     <button key={s.id} type="button" onClick={() => setSetor(s.id)}
-                      className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all ${setor === s.id ? 'bg-[#7D1F2C] text-white ring-1 ring-[#9B2535]/50' : 'bg-white/5 text-white/40 hover:bg-white/10 hover:text-white/60'}`}>
+                      className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all ${setor === s.id ? 'bg-wine text-white ring-1 ring-wine-light/50' : 'bg-white/5 text-white/40 hover:bg-white/10 hover:text-white/60'}`}>
                       {s.label}
                     </button>
                   ))}
@@ -474,7 +474,7 @@ const TarefaDrawer: React.FC<TarefaDrawerProps> = ({ tarefa, mode, setorInicial 
                   <p className="text-xs text-white/40 mt-0.5">Bloqueia execução até ser aprovada</p>
                 </div>
                 <button onClick={() => setRequerAprovacao(v => !v)}
-                  className={`relative w-12 h-6 rounded-full transition-all duration-300 ${requerAprovacao ? 'bg-[#7D1F2C]' : 'bg-white/15'}`}>
+                  className={`relative w-12 h-6 rounded-full transition-all duration-300 ${requerAprovacao ? 'bg-wine' : 'bg-white/15'}`}>
                   <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-300 ${requerAprovacao ? 'translate-x-6' : 'translate-x-0'}`} />
                 </button>
               </div>
@@ -608,7 +608,7 @@ const TarefaDrawer: React.FC<TarefaDrawerProps> = ({ tarefa, mode, setorInicial 
             Fechar
           </button>
           <button onClick={salvar} disabled={salvando || !titulo.trim()}
-            className="flex-1 py-2.5 rounded-xl text-sm font-bold bg-[#7D1F2C] text-white hover:bg-[#9B2535] transition-all disabled:opacity-40 flex items-center justify-center gap-2">
+            className="flex-1 py-2.5 rounded-xl text-sm font-bold bg-wine text-white hover:bg-wine-light transition-all disabled:opacity-40 flex items-center justify-center gap-2">
             {salvando ? <><Loader2 className="w-4 h-4 animate-spin" /> Salvando...</> : (isCreate ? 'Criar Tarefa' : 'Salvar Alterações')}
           </button>
         </div>
@@ -1007,7 +1007,7 @@ const SolicitacoesTab: React.FC = () => {
       <div className="flex gap-1 bg-[#12141f] border border-white/10 rounded-xl p-1 flex-wrap">
         {TABS_SOL.map(t => (
           <button key={t.id} onClick={() => setAbaSol(t.id)}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold transition-all ${abaSol === t.id ? 'bg-[#7D1F2C] text-white shadow' : 'text-white/40 hover:text-white/70 hover:bg-white/5'}`}>
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold transition-all ${abaSol === t.id ? 'bg-wine text-white shadow' : 'text-white/40 hover:text-white/70 hover:bg-white/5'}`}>
             {t.label}
             {t.id === 'publicas' && semTriagem > 0 && (
               <span className="ml-0.5 text-[9px] font-black bg-orange-500 text-white px-1.5 py-0.5 rounded-full">{semTriagem}</span>
@@ -1015,7 +1015,7 @@ const SolicitacoesTab: React.FC = () => {
           </button>
         ))}
         <button onClick={() => { setEditando(null); setShowForm(true); }}
-          className="ml-auto flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold bg-[#7D1F2C] text-white hover:bg-[#9B2535] transition-all">
+          className="ml-auto flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold bg-wine text-white hover:bg-wine-light transition-all">
           <Plus className="w-3.5 h-3.5" /> Nova
         </button>
       </div>
@@ -1062,7 +1062,7 @@ const SolicitacoesTab: React.FC = () => {
           </div>
 
           {loading
-            ? <div className="flex justify-center py-16"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#7D1F2C]" /></div>
+            ? <div className="flex justify-center py-16"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-wine" /></div>
             : (
               <div className="flex gap-3 overflow-x-auto pb-4" style={{ minHeight: 300 }}>
                 {COLUNAS_SOL.map(coluna => {
@@ -1269,13 +1269,13 @@ const CreditoFornecedoresTab: React.FC = () => {
       <div className="flex items-center justify-between">
         <p className="text-sm font-bold text-white/60">{creditos.length} acordos de crédito/permuta</p>
         <button onClick={() => setModalCredito(true)}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#7D1F2C] text-white text-sm font-bold hover:bg-[#9B2535] transition-all">
+          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-wine text-white text-sm font-bold hover:bg-wine-light transition-all">
           <Plus className="w-4 h-4" /> Novo Crédito
         </button>
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#7D1F2C]" /></div>
+        <div className="flex justify-center py-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-wine" /></div>
       ) : creditos.length === 0 ? (
         <div className="text-center py-16">
           <CreditCard className="w-12 h-12 text-white/15 mx-auto mb-3" />
@@ -1294,8 +1294,8 @@ const CreditoFornecedoresTab: React.FC = () => {
                 {/* Cabeçalho do crédito */}
                 <button onClick={() => toggleCredito(c.id)}
                   className="w-full flex items-start gap-4 px-5 py-4 hover:bg-white/5 transition-colors text-left">
-                  <div className="w-10 h-10 rounded-xl bg-[#7D1F2C]/20 border border-[#7D1F2C]/30 flex items-center justify-center shrink-0">
-                    <Building2 className="w-5 h-5 text-[#D4AF37]" />
+                  <div className="w-10 h-10 rounded-xl bg-wine/20 border border-wine/30 flex items-center justify-center shrink-0">
+                    <Building2 className="w-5 h-5 text-gold" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap mb-1">
@@ -1326,7 +1326,7 @@ const CreditoFornecedoresTab: React.FC = () => {
                   <div className="flex items-center gap-2 shrink-0">
                     {c.status === 'ativo' && (
                       <button onClick={e => { e.stopPropagation(); setModalConsumo(c.id); }}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#7D1F2C]/40 text-white text-xs font-bold hover:bg-[#7D1F2C] transition-all border border-[#7D1F2C]/40"
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-wine/40 text-white text-xs font-bold hover:bg-wine transition-all border border-wine/40"
                         title="Registrar consumo">
                         <PlusCircle className="w-3.5 h-3.5" /> Consumo
                       </button>
@@ -1343,7 +1343,7 @@ const CreditoFornecedoresTab: React.FC = () => {
                       {c.status === 'ativo' && (
                         <div className="flex gap-2">
                           <button onClick={() => setModalConsumo(c.id)}
-                            className="text-xs text-[#D4AF37] font-bold hover:text-white transition-colors flex items-center gap-1">
+                            className="text-xs text-gold font-bold hover:text-white transition-colors flex items-center gap-1">
                             <Plus className="w-3 h-3" /> Registrar consumo
                           </button>
                           <button onClick={() => encerrarCredito(c.id)}
@@ -1355,7 +1355,7 @@ const CreditoFornecedoresTab: React.FC = () => {
                     </div>
 
                     {!consumos[c.id] ? (
-                      <div className="py-6 text-center"><div className="animate-spin rounded-full h-5 w-5 border-b-2 border-[#7D1F2C] mx-auto" /></div>
+                      <div className="py-6 text-center"><div className="animate-spin rounded-full h-5 w-5 border-b-2 border-wine mx-auto" /></div>
                     ) : consumos[c.id].length === 0 ? (
                       <div className="py-8 text-center">
                         <Wallet className="w-8 h-8 text-white/15 mx-auto mb-2" />
@@ -1446,7 +1446,7 @@ const CreditoFornecedoresTab: React.FC = () => {
               <button onClick={() => setModalCredito(false)}
                 className="flex-1 py-2.5 rounded-xl border border-white/15 text-white/60 hover:bg-white/5 text-sm transition-all">Cancelar</button>
               <button onClick={salvarCredito} disabled={salvando || !formC.nome_fornecedor || !formC.credito_total}
-                className="flex-1 py-2.5 rounded-xl bg-[#7D1F2C] text-white text-sm font-bold hover:bg-[#9B2535] disabled:opacity-50 transition-all">
+                className="flex-1 py-2.5 rounded-xl bg-wine text-white text-sm font-bold hover:bg-wine-light disabled:opacity-50 transition-all">
                 {salvando ? 'Salvando...' : 'Criar Crédito'}
               </button>
             </div>
@@ -1527,7 +1527,7 @@ const CreditoFornecedoresTab: React.FC = () => {
               <button onClick={() => setModalConsumo(null)}
                 className="flex-1 py-2.5 rounded-xl border border-white/15 text-white/60 hover:bg-white/5 text-sm transition-all">Cancelar</button>
               <button onClick={() => salvarConsumo(modalConsumo)} disabled={salvando || uploadando || !formK.descricao || !formK.valor}
-                className="flex-1 py-2.5 rounded-xl bg-[#7D1F2C] text-white text-sm font-bold hover:bg-[#9B2535] disabled:opacity-50 transition-all">
+                className="flex-1 py-2.5 rounded-xl bg-wine text-white text-sm font-bold hover:bg-wine-light disabled:opacity-50 transition-all">
                 {salvando || uploadando ? 'Salvando...' : 'Registrar Consumo'}
               </button>
             </div>
@@ -1636,7 +1636,7 @@ const MetasTarefas: React.FC = () => {
             </div>
             {abaModulo === 'tarefas' && (
               <button onClick={() => abrirNova('gestao')}
-                className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-sm font-bold bg-[#7D1F2C] text-white hover:bg-[#9B2535] transition-all shrink-0">
+                className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-sm font-bold bg-wine text-white hover:bg-wine-light transition-all shrink-0">
                 <Plus className="w-4 h-4" /> Nova Tarefa
               </button>
             )}
@@ -1667,7 +1667,7 @@ const MetasTarefas: React.FC = () => {
           { id: 'credito'      as AbaModulo, label: 'Crédito Fornecedores',      icon: <CreditCard className="w-4 h-4" /> },
         ].map(t => (
           <button key={t.id} onClick={() => setAbaModulo(t.id)}
-            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-bold transition-all ${abaModulo === t.id ? 'bg-[#7D1F2C] text-white shadow-lg' : 'text-white/40 hover:text-white/70 hover:bg-white/5'}`}>
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-bold transition-all ${abaModulo === t.id ? 'bg-wine text-white shadow-lg' : 'text-white/40 hover:text-white/70 hover:bg-white/5'}`}>
             {t.icon}{t.label}
           </button>
         ))}
@@ -1685,7 +1685,7 @@ const MetasTarefas: React.FC = () => {
           </div>
 
           {loading
-            ? <div className="flex justify-center py-20"><div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#7D1F2C]" /></div>
+            ? <div className="flex justify-center py-20"><div className="animate-spin rounded-full h-10 w-10 border-b-2 border-wine" /></div>
             : (
               <div className="space-y-3">
                 {SETORES.map(setor => (

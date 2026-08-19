@@ -375,7 +375,7 @@ const GeneralRegistrations: React.FC = () => {
                   <select
                     value={formData[field.name] || ''}
                     onChange={(e) => setFormData({ ...formData, [field.name]: e.target.value })}
-                    className="w-full rounded-md bg-[#12141f]/5 border-white/20 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                    className="w-full rounded-md bg-[#12141f]/5 border-white/20 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                     required={field.required}
                   >
                     {field.options?.map((option) => (
@@ -388,7 +388,7 @@ const GeneralRegistrations: React.FC = () => {
                   <textarea
                     value={formData[field.name] || ''}
                     onChange={(e) => setFormData({ ...formData, [field.name]: e.target.value })}
-                    className="w-full rounded-md bg-[#12141f]/5 border-white/20 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                    className="w-full rounded-md bg-[#12141f]/5 border-white/20 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                     rows={3}
                     required={field.required}
                   />
@@ -397,14 +397,14 @@ const GeneralRegistrations: React.FC = () => {
                     type="checkbox"
                     checked={formData[field.name] || false}
                     onChange={(e) => setFormData({ ...formData, [field.name]: e.target.checked })}
-                    className="rounded border-white/20 text-[#7D1F2C] focus:ring-[#7D1F2C]"
+                    className="rounded border-white/20 text-wine focus:ring-wine"
                   />
                 ) : (
                   <input
                     type={field.type}
                     value={formData[field.name] ?? ''}
                     onChange={(e) => setFormData({ ...formData, [field.name]: field.type === 'number' ? (e.target.value === '' ? null : parseFloat(e.target.value)) : e.target.value })}
-                    className="w-full rounded-md bg-[#12141f]/5 border-white/20 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                    className="w-full rounded-md bg-[#12141f]/5 border-white/20 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                     required={field.required}
                     step={field.type === 'number' ? '1' : undefined}
                     min={field.type === 'number' ? '1' : undefined}
@@ -427,7 +427,7 @@ const GeneralRegistrations: React.FC = () => {
             <button
               onClick={handleSave}
               disabled={loading || !formData.nome && !formData.banco}
-              className="px-4 py-2 bg-[#7D1F2C] text-white rounded-md hover:bg-[#6a1a25] disabled:opacity-50"
+              className="px-4 py-2 bg-wine text-white rounded-md hover:bg-[#6a1a25] disabled:opacity-50"
             >
               {loading ? 'Salvando...' : 'Salvar'}
             </button>
@@ -563,7 +563,7 @@ const GeneralRegistrations: React.FC = () => {
                   <div className="flex space-x-2">
                     <button
                       onClick={() => openForm(item)}
-                      className="text-[#7D1F2C] hover:text-[#6a1a25]"
+                      className="text-wine hover:text-[#6a1a25]"
                       title="Editar"
                     >
                       <Edit className="w-4 h-4" />
@@ -711,7 +711,7 @@ const GeneralRegistrations: React.FC = () => {
             label: 'Banco/Instituição',
             render: (item: any) => (
               <div className="flex items-center">
-                {item.tipo_conta === 'cofre' && <Vault className="w-4 h-4 mr-2 text-[#7D1F2C]" />}
+                {item.tipo_conta === 'cofre' && <Vault className="w-4 h-4 mr-2 text-wine" />}
                 <span>{item.banco}</span>
               </div>
             )
@@ -785,7 +785,7 @@ const GeneralRegistrations: React.FC = () => {
                     className={({ selected }) =>
                       `flex items-center whitespace-nowrap rounded-lg py-2.5 px-4 text-sm font-medium leading-5 transition-all
                       ${selected
-                        ? 'bg-[#7D1F2C] text-white shadow'
+                        ? 'bg-wine text-white shadow'
                         : 'text-white/80 hover:bg-[#12141f]/10 hover:text-white'
                       }`
                     }
@@ -837,7 +837,7 @@ const GeneralRegistrations: React.FC = () => {
                     className={({ selected }) =>
                       `flex items-center whitespace-nowrap rounded-lg py-2.5 px-4 text-sm font-medium leading-5 transition-all
                       ${selected
-                        ? 'bg-[#7D1F2C] text-white shadow'
+                        ? 'bg-wine text-white shadow'
                         : 'text-white/80 hover:bg-[#12141f]/10 hover:text-white'
                       }`
                     }
@@ -886,7 +886,7 @@ const GeneralRegistrations: React.FC = () => {
             {selectedTab < 6 && selectedTab !== 3 && (
               <button 
                 onClick={() => openForm()}
-                className="px-4 py-2 bg-[#7D1F2C] text-white rounded-lg hover:bg-[#6a1a25]"
+                className="px-4 py-2 bg-wine text-white rounded-lg hover:bg-[#6a1a25]"
               >
                 <Plus className="w-4 h-4 inline mr-2" />
                 Novo {tabTitles[selectedTab]}
@@ -911,7 +911,7 @@ const GeneralRegistrations: React.FC = () => {
                   className={({ selected }) =>
                     `flex items-center whitespace-nowrap rounded-lg py-2.5 px-4 text-sm font-medium leading-5 transition-all
                     ${selected
-                      ? 'bg-[#7D1F2C] text-white shadow'
+                      ? 'bg-wine text-white shadow'
                       : 'text-white/80 hover:bg-[#12141f]/10 hover:text-white'
                     }`
                   }
@@ -942,14 +942,14 @@ const GeneralRegistrations: React.FC = () => {
                             placeholder={`Buscar ${title.toLowerCase()}...`}
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2 bg-[#12141f]/5 border border-white/20 rounded-lg text-white placeholder-white/30 focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+                            className="w-full pl-10 pr-4 py-2 bg-[#12141f]/5 border border-white/20 rounded-lg text-white placeholder-white/30 focus:ring-2 focus:ring-wine focus:border-wine"
                           />
                         </div>
                       </div>
                       <select
                         value={statusFilter}
                         onChange={(e) => setStatusFilter(e.target.value)}
-                        className="border border-white/20 rounded-lg px-4 py-2 focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+                        className="border border-white/20 rounded-lg px-4 py-2 focus:ring-2 focus:ring-wine focus:border-wine"
                       >
                         <option value="all">Todos os Status</option>
                         <option value="ativo">Ativo</option>
@@ -960,7 +960,7 @@ const GeneralRegistrations: React.FC = () => {
                     {/* Loading State */}
                     {loading ? (
                       <div className="flex justify-center items-center h-64">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7D1F2C]"></div>
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-wine"></div>
                       </div>
                     ) : (
                       <>

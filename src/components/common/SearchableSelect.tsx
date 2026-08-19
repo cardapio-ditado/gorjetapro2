@@ -144,9 +144,9 @@ export function SearchableSelect({
             ${isDark ? 'bg-gray-700' : 'bg-white'} border rounded-lg
             text-left text-sm
             transition-colors
-            ${disabled ? 'opacity-50 cursor-not-allowed' : isDark ? 'hover:bg-gray-600 cursor-pointer' : 'hover:border-[#7D1F2C] cursor-pointer'}
+            ${disabled ? 'opacity-50 cursor-not-allowed' : isDark ? 'hover:bg-gray-600 cursor-pointer' : 'hover:border-wine cursor-pointer'}
             ${error ? 'border-red-500' : isDark ? 'border-gray-600' : 'border-gray-300'}
-            ${isOpen ? isDark ? 'ring-2 ring-blue-500 border-blue-500' : 'ring-2 ring-[#7D1F2C] border-[#7D1F2C]' : ''}
+            ${isOpen ? isDark ? 'ring-2 ring-blue-500 border-blue-500' : 'ring-2 ring-wine border-wine' : ''}
           `}
         >
           <Search className={`w-4 h-4 flex-shrink-0 ${isDark ? 'text-gray-400' : 'text-gray-500'}`} />
@@ -175,7 +175,7 @@ export function SearchableSelect({
           >
             <div className={`p-3 ${isDark ? 'border-b-2 border-gray-700 bg-gray-750' : 'border-b-2 border-gray-200 bg-gray-50'}`}>
               <div className="relative">
-                <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${isDark ? 'text-gray-400' : 'text-[#7D1F2C]'}`} />
+                <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${isDark ? 'text-gray-400' : 'text-wine'}`} />
                 <input
                   ref={searchInputRef}
                   type="text"
@@ -187,7 +187,7 @@ export function SearchableSelect({
                   className={`w-full pl-10 pr-3 py-2.5 border-2 rounded-lg text-sm font-medium placeholder-gray-400 focus:outline-none focus:ring-2 ${
                     isDark
                       ? 'bg-gray-700 border-gray-600 text-white focus:ring-blue-500 focus:border-blue-500'
-                      : 'bg-white border-gray-300 text-gray-900 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]'
+                      : 'bg-white border-gray-300 text-gray-900 focus:ring-wine focus:border-wine'
                   }`}
                 />
               </div>
@@ -211,10 +211,10 @@ export function SearchableSelect({
                       w-full px-4 py-3 text-left text-sm border-b last:border-b-0
                       transition-all duration-150
                       ${highlightedIndex === index
-                        ? isDark ? 'bg-blue-600 text-white border-blue-700' : 'bg-[#7D1F2C] text-white border-[#6a1a25]'
+                        ? isDark ? 'bg-blue-600 text-white border-blue-700' : 'bg-wine text-white border-[#6a1a25]'
                         : isDark ? 'text-gray-300 hover:bg-gray-700 border-gray-700' : 'text-gray-900 hover:bg-gray-50 border-gray-100'
                       }
-                      ${option.value === value ? isDark ? 'bg-blue-600/30 font-semibold' : 'bg-[#7D1F2C]/20 font-semibold' : ''}
+                      ${option.value === value ? isDark ? 'bg-blue-600/30 font-semibold' : 'bg-wine/20 font-semibold' : ''}
                     `}
                   >
                     <div className="flex flex-col">

@@ -221,14 +221,14 @@ const BaixaContasPagar: React.FC = () => {
             placeholder="Buscar contas..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/20 rounded-lg text-white placeholder-white/40 focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+            className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/20 rounded-lg text-white placeholder-white/40 focus:ring-2 focus:ring-wine focus:border-wine"
           />
         </div>
       </div>
 
       {loading ? (
         <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7D1F2C]"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-wine"></div>
         </div>
       ) : (
         <div className="bg-[#12141f] rounded-lg border border-white/10 overflow-hidden">
@@ -296,7 +296,7 @@ const BaixaContasPagar: React.FC = () => {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <button
                         onClick={() => abrirModalBaixa(conta)}
-                        className="px-3 py-1 bg-[#7D1F2C] text-white text-sm rounded-lg hover:bg-[#6a1a25]"
+                        className="px-3 py-1 bg-wine text-white text-sm rounded-lg hover:bg-[#6a1a25]"
                       >
                         <DollarSign className="w-4 h-4 inline mr-1" />
                         Dar Baixa
@@ -363,7 +363,7 @@ const BaixaContasPagar: React.FC = () => {
                       ...baixaModal,
                       valorPagamento: parseFloat(e.target.value) || 0
                     })}
-                    className="pl-10 w-full rounded-md bg-white/5 border border-white/20 text-white focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                    className="pl-10 w-full rounded-md bg-white/5 border border-white/20 text-white focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                     required
                   />
                 </div>
@@ -391,7 +391,7 @@ const BaixaContasPagar: React.FC = () => {
                   type="date"
                   value={baixaModal.dataPagamento}
                   onChange={(e) => setBaixaModal({ ...baixaModal, dataPagamento: e.target.value })}
-                  className="w-full rounded-md bg-white/5 border border-white/20 text-white focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                  className="w-full rounded-md bg-white/5 border border-white/20 text-white focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                   required
                 />
               </div>
@@ -403,7 +403,7 @@ const BaixaContasPagar: React.FC = () => {
                 <select
                   value={baixaModal.formaPagamentoId}
                   onChange={(e) => setBaixaModal({ ...baixaModal, formaPagamentoId: e.target.value })}
-                  className="w-full rounded-md bg-white/5 border border-white/20 text-white focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                  className="w-full rounded-md bg-white/5 border border-white/20 text-white focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                   required
                 >
                   <option value="">Selecione...</option>
@@ -422,7 +422,7 @@ const BaixaContasPagar: React.FC = () => {
                 <select
                   value={baixaModal.contaBancariaId}
                   onChange={(e) => setBaixaModal({ ...baixaModal, contaBancariaId: e.target.value })}
-                  className="w-full rounded-md bg-white/5 border border-white/20 text-white focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                  className="w-full rounded-md bg-white/5 border border-white/20 text-white focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                   required
                 >
                   <option value="">Selecione...</option>
@@ -442,7 +442,7 @@ const BaixaContasPagar: React.FC = () => {
                   type="text"
                   value={baixaModal.numeroComprovante}
                   onChange={(e) => setBaixaModal({ ...baixaModal, numeroComprovante: e.target.value })}
-                  className="w-full rounded-md bg-white/5 border border-white/20 text-white focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                  className="w-full rounded-md bg-white/5 border border-white/20 text-white focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                   placeholder="Ex: 123456"
                 />
               </div>
@@ -454,7 +454,7 @@ const BaixaContasPagar: React.FC = () => {
                 <textarea
                   value={baixaModal.observacoes}
                   onChange={(e) => setBaixaModal({ ...baixaModal, observacoes: e.target.value })}
-                  className="w-full rounded-md bg-white/5 border border-white/20 text-white focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                  className="w-full rounded-md bg-white/5 border border-white/20 text-white focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                   rows={3}
                   placeholder="Observações sobre o pagamento"
                 />
@@ -478,7 +478,7 @@ const BaixaContasPagar: React.FC = () => {
                   baixaModal.valorPagamento <= 0 ||
                   baixaModal.valorPagamento > baixaModal.conta.saldo_restante
                 }
-                className="px-4 py-2 bg-[#7D1F2C] text-white rounded-md hover:bg-[#6a1a25] disabled:opacity-50"
+                className="px-4 py-2 bg-wine text-white rounded-md hover:bg-[#6a1a25] disabled:opacity-50"
               >
                 {loading ? 'Processando...' : 'Confirmar Baixa'}
               </button>
