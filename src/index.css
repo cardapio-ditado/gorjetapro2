@@ -49,6 +49,24 @@
   --text-muted:     #3a4560;
   --text-disabled:  #252e3f;
 
+  /* REGRA DA SUPERFICIE VINHO
+   *
+   * Sobre vinho o texto perde quase todo o contraste: --text-secondary cai a
+   * 2,89:1 em --wine e 2,24:1 em --wine-light. Sobre vinho, texto so em:
+   *   --text-primary  8,51:1 em --wine  · sempre seguro.
+   *   --gold          4,75:1 em --wine  · MAS 3,69:1 em --wine-light, onde
+   *                   reprova. Em gradiente que passa por --wine-light, use
+   *                   gold apenas em texto grande (>=24px ou 19px bold, 3:1).
+   *   branco com alfa >= 70%           · 5,64:1 em --wine, 4,56:1 em --wine-light.
+   * Nunca use --text-secondary nem --text-muted sobre vinho.
+   *
+   * Sobre FOTO o contraste nao se resolve escolhendo a cor do texto, porque o
+   * fundo muda a cada pixel: garanta uma camada opaca atras do texto e meca
+   * contra a cor resultante. No Login isso e o veu escuro do card (0,85) mais
+   * o fundo proprio do campo (0,60), que levam o placeholder a 4,96:1 mesmo
+   * sobre a espuma, o pixel mais claro da arte.
+   */
+
   /* Semantic colors */
   --success: #10b981;
   --warning: #f59e0b;

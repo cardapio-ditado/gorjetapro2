@@ -42,14 +42,14 @@ const MeuPainel: React.FC = () => {
         <div className="relative">
           <p className="text-[#D4AF37] text-[10px] font-black uppercase tracking-[0.3em] mb-1">Ditado Popular</p>
           <h1 className="text-2xl font-black text-white leading-none">{saudacao()}, {primeiroNome}</h1>
-          <p className="text-white/50 text-xs mt-1 capitalize">{dataLonga}</p>
+          <p className="text-white/70 text-xs mt-1 capitalize">{dataLonga}</p>
         </div>
       </div>
 
       <div>
         <p className="text-sm font-bold text-white/70 mb-3 px-1">Seus módulos</p>
         {modulosDisponiveis.length === 0 ? (
-          <div className="glass-card rounded-2xl p-6 text-center text-white/40 text-sm">
+          <div className="glass-card rounded-2xl p-6 text-center text-white/70 text-sm">
             Nenhum módulo liberado ainda. Fale com o administrador.
           </div>
         ) : (

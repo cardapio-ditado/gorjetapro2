@@ -263,7 +263,7 @@ const Dashboard: React.FC = () => {
           {vendas ? (
             <>
               <div className="relative flex items-start justify-between flex-wrap gap-2">
-                <p className="text-white/60 text-[11px] font-bold uppercase tracking-[0.2em]">
+                <p className="text-white/75 text-[11px] font-bold uppercase tracking-[0.2em]">
                   Vendas da noite · {fmtData(vendas.data)}
                 </p>
                 {variacaoVendas !== null && (
@@ -300,7 +300,7 @@ const Dashboard: React.FC = () => {
                   { label: 'No mês',    valor: fmtR(Number(vendas.mes)) },
                 ].map(k => (
                   <div key={k.label} className="bg-black/25 border border-white/10 rounded-xl px-3 py-2.5">
-                    <p className="text-white/50 text-[9px] font-bold uppercase tracking-wider">{k.label}</p>
+                    <p className="text-white/75 text-[9px] font-bold uppercase tracking-wider">{k.label}</p>
                     <p className="text-white font-black text-base mt-0.5">{k.valor}</p>
                   </div>
                 ))}
@@ -308,7 +308,7 @@ const Dashboard: React.FC = () => {
             </>
           ) : (
             <div className="relative flex-1 flex items-center justify-center">
-              <p className="text-white/50 text-sm">Sem vendas ZIG sincronizadas ainda</p>
+              <p className="text-white/75 text-sm">Sem vendas ZIG sincronizadas ainda</p>
             </div>
           )}
         </div>
