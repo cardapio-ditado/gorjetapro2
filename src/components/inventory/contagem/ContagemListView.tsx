@@ -52,7 +52,7 @@ const ContagemListView: React.FC<Props> = ({
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h2 className="text-2xl font-bold text-white">Contagem de Estoque</h2>
-          <p className="text-sm text-white/40 mt-1">Gerencie contagens físicas e compare com saldos do sistema</p>
+          <p className="text-sm text-white/60 mt-1">Gerencie contagens físicas e compare com saldos do sistema</p>
         </div>
         <div className="flex gap-3">
           <button onClick={onHistorico}
@@ -69,7 +69,7 @@ const ContagemListView: React.FC<Props> = ({
       {/* Finalizadas aguardando processamento */}
       {finalizadas.length > 0 && (
         <div className="space-y-3">
-          <h3 className="text-sm font-semibold text-white/40 uppercase tracking-wider">Aguardando Processamento</h3>
+          <h3 className="text-sm font-semibold text-white/60 uppercase tracking-wider">Aguardando Processamento</h3>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {finalizadas.map(c => (
               <div key={c.id} className="bg-[#12141f] rounded-2xl border border-amber-500/30 shadow-sm hover:shadow-md transition-all p-5">
@@ -80,7 +80,7 @@ const ContagemListView: React.FC<Props> = ({
                     </div>
                     <div>
                       <h4 className="font-semibold text-white text-sm">{c.estoque_nome}</h4>
-                      <p className="text-xs text-white/40">{c.responsavel}</p>
+                      <p className="text-xs text-white/60">{c.responsavel}</p>
                     </div>
                   </div>
                   <span className="px-2 py-0.5 bg-amber-500/15 text-amber-400 text-xs font-semibold rounded-full">Finalizada</span>
@@ -88,15 +88,15 @@ const ContagemListView: React.FC<Props> = ({
                 <div className="grid grid-cols-3 gap-2 mb-4">
                   <div className="text-center p-2 bg-white/5 rounded-lg">
                     <p className="text-lg font-bold text-white">{c.total_itens_contados}</p>
-                    <p className="text-caption text-white/40 uppercase">Contados</p>
+                    <p className="text-caption text-white/60 uppercase">Contados</p>
                   </div>
                   <div className="text-center p-2 bg-white/5 rounded-lg">
                     <p className="text-lg font-bold text-orange-400">{c.total_diferencas}</p>
-                    <p className="text-caption text-white/40 uppercase">Diferenças</p>
+                    <p className="text-caption text-white/60 uppercase">Diferenças</p>
                   </div>
                   <div className="text-center p-2 bg-white/5 rounded-lg">
                     <p className="text-sm font-bold text-red-400">{formatCurrency(Math.abs(c.valor_total_diferencas))}</p>
-                    <p className="text-caption text-white/40 uppercase">Valor</p>
+                    <p className="text-caption text-white/60 uppercase">Valor</p>
                   </div>
                 </div>
                 <button onClick={() => onVerResultado(c)}
@@ -112,7 +112,7 @@ const ContagemListView: React.FC<Props> = ({
       {/* Em andamento */}
       {emAndamento.length > 0 && (
         <div className="space-y-3">
-          <h3 className="text-sm font-semibold text-white/40 uppercase tracking-wider">Em Andamento</h3>
+          <h3 className="text-sm font-semibold text-white/60 uppercase tracking-wider">Em Andamento</h3>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {emAndamento.map(c => (
               <div key={c.id} className="bg-[#12141f] rounded-2xl border border-blue-500/20 shadow-sm hover:shadow-md transition-all p-5">
@@ -123,12 +123,12 @@ const ContagemListView: React.FC<Props> = ({
                     </div>
                     <div>
                       <h4 className="font-semibold text-white text-sm">{c.estoque_nome}</h4>
-                      <p className="text-xs text-white/40">{c.responsavel}</p>
+                      <p className="text-xs text-white/60">{c.responsavel}</p>
                     </div>
                   </div>
                   <span className="px-2 py-0.5 bg-blue-500/15 text-blue-400 text-xs font-semibold rounded-full">Em Andamento</span>
                 </div>
-                <p className="text-xs text-white/30 mb-4">
+                <p className="text-xs text-white/60 mb-4">
                   Iniciada em {dayjs(c.criado_em).format('DD/MM/YYYY [às] HH:mm')}
                 </p>
                 <div className="flex gap-2">
@@ -154,7 +154,7 @@ const ContagemListView: React.FC<Props> = ({
             <Package className="w-10 h-10 text-gray-300" />
           </div>
           <h3 className="text-lg font-semibold text-white mb-2">Nenhuma contagem em andamento</h3>
-          <p className="text-white/40 text-sm mb-8 max-w-md mx-auto">
+          <p className="text-white/60 text-sm mb-8 max-w-md mx-auto">
             Inicie uma nova contagem para comparar quantidades físicas com os saldos do sistema.
           </p>
           <button onClick={onNovaContagem}

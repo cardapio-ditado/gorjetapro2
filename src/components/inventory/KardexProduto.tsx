@@ -686,7 +686,7 @@ const KardexProduto: React.FC = () => {
           {filteredItens.length === 0 && (
             <div className="text-center py-8">
               <Package className="w-12 h-12 text-white/30 mx-auto mb-4" />
-              <p className="text-white/40">
+              <p className="text-white/60">
                 {searchTerm ? 'Nenhum item encontrado' : 'Nenhum item cadastrado'}
               </p>
             </div>
@@ -1022,7 +1022,7 @@ const KardexProduto: React.FC = () => {
                   {saldo.data_ultima_movimentacao && (
                     <div className="flex justify-between">
                       <span className="text-sm text-white/50">Última Movimentação:</span>
-                      <span className="text-sm text-white/40">
+                      <span className="text-sm text-white/60">
                         {dayjs(saldo.data_ultima_movimentacao).format('DD/MM/YYYY')}
                       </span>
                     </div>
@@ -1098,18 +1098,18 @@ const KardexProduto: React.FC = () => {
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="text-left bg-white/5 border-b">
-                        <th className="px-4 py-3 text-xs font-medium text-white/40 uppercase">Data</th>
-                        <th className="px-4 py-3 text-xs font-medium text-white/40 uppercase">Tipo</th>
-                        <th className="px-4 py-3 text-xs font-medium text-white/40 uppercase">Origem</th>
-                        <th className="px-4 py-3 text-xs font-medium text-white/40 uppercase">Destino</th>
-                        <th className="px-4 py-3 text-xs font-medium text-white/40 uppercase">Entrada</th>
-                        <th className="px-4 py-3 text-xs font-medium text-white/40 uppercase">Saída</th>
-                        <th className="px-4 py-3 text-xs font-medium text-white/40 uppercase">Saldo Qtd</th>
-                        <th className="px-4 py-3 text-xs font-medium text-white/40 uppercase">Custo Unit.</th>
-                        <th className="px-4 py-3 text-xs font-medium text-white/40 uppercase">Custo Médio</th>
-                        <th className="px-4 py-3 text-xs font-medium text-white/40 uppercase">Saldo Valor</th>
-                        <th className="px-4 py-3 text-xs font-medium text-white/40 uppercase">Motivo</th>
-                        <th className="px-4 py-3 text-xs font-medium text-white/40 uppercase">Observações</th>
+                        <th className="px-4 py-3 text-xs font-medium text-white/60 uppercase">Data</th>
+                        <th className="px-4 py-3 text-xs font-medium text-white/60 uppercase">Tipo</th>
+                        <th className="px-4 py-3 text-xs font-medium text-white/60 uppercase">Origem</th>
+                        <th className="px-4 py-3 text-xs font-medium text-white/60 uppercase">Destino</th>
+                        <th className="px-4 py-3 text-xs font-medium text-white/60 uppercase">Entrada</th>
+                        <th className="px-4 py-3 text-xs font-medium text-white/60 uppercase">Saída</th>
+                        <th className="px-4 py-3 text-xs font-medium text-white/60 uppercase">Saldo Qtd</th>
+                        <th className="px-4 py-3 text-xs font-medium text-white/60 uppercase">Custo Unit.</th>
+                        <th className="px-4 py-3 text-xs font-medium text-white/60 uppercase">Custo Médio</th>
+                        <th className="px-4 py-3 text-xs font-medium text-white/60 uppercase">Saldo Valor</th>
+                        <th className="px-4 py-3 text-xs font-medium text-white/60 uppercase">Motivo</th>
+                        <th className="px-4 py-3 text-xs font-medium text-white/60 uppercase">Observações</th>
                       </tr>
                     </thead>
                     <tbody className="bg-[#12141f] divide-y divide-white/5">
@@ -1175,7 +1175,7 @@ const KardexProduto: React.FC = () => {
                 <div className="text-center py-12">
                   <Activity className="w-16 h-16 text-white/30 mx-auto mb-4" />
                   <h3 className="text-lg font-medium text-white mb-2">Nenhuma movimentação encontrada</h3>
-                  <p className="text-white/40">
+                  <p className="text-white/60">
                     Não há movimentações registradas para este produto no período selecionado.
                   </p>
                 </div>

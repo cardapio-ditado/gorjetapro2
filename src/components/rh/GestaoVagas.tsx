@@ -347,7 +347,7 @@ const GestaoVagas: React.FC = () => {
                     ))}
                   </select>
                   {cargos.length > 0 && (
-                    <p className="text-xs text-white/40 mt-1">
+                    <p className="text-xs text-white/60 mt-1">
                       {cargos.length} cargos disponíveis
                     </p>
                   )}

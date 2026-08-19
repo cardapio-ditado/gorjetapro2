@@ -47,7 +47,7 @@ const ModalVerificacaoInsumos: React.FC<ModalVerificacaoInsumosProps> = ({
             <thead className="bg-white/5 sticky top-0">
               <tr>
                 {['Status', 'Insumo', 'Necessário', 'Disponível', 'Estoque'].map(h => (
-                  <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-white/40 uppercase">{h}</th>
+                  <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-white/60 uppercase">{h}</th>
                 ))}
               </tr>
             </thead>

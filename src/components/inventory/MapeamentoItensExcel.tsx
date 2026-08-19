@@ -531,25 +531,25 @@ export default function MapeamentoItensExcel() {
           <table className="min-w-full divide-y divide-white/10">
             <thead className="bg-white/5">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-white/40 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-white/60 uppercase tracking-wider">
                   Nome Externo
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-white/40 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-white/60 uppercase tracking-wider">
                   Item do Estoque
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-white/40 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-white/60 uppercase tracking-wider">
                   Tipo
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-white/40 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-white/60 uppercase tracking-wider">
                   Confiança
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-white/40 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-white/60 uppercase tracking-wider">
                   Usos
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-white/40 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-white/60 uppercase tracking-wider">
                   Último Uso
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-white/40 uppercase tracking-wider">
+                <th className="px-6 py-3 text-right text-xs font-medium text-white/60 uppercase tracking-wider">
                   Ações
                 </th>
               </tr>
@@ -557,7 +557,7 @@ export default function MapeamentoItensExcel() {
             <tbody className="bg-[#12141f] divide-y divide-white/5">
               {mapeamentosFiltrados.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center text-white/40">
+                  <td colSpan={7} className="px-6 py-12 text-center text-white/60">
                     <FileSpreadsheet className="w-12 h-12 mx-auto mb-3 text-white/30" />
                     <p className="font-medium">Nenhum mapeamento encontrado</p>
                     <p className="text-sm mt-1">
@@ -619,7 +619,7 @@ export default function MapeamentoItensExcel() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
                       {mapeamento.total_usos}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-white/40">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-white/60">
                       {mapeamento.ultimo_uso
                         ? new Date(mapeamento.ultimo_uso).toLocaleDateString('pt-BR')
                         : '-'}
@@ -667,7 +667,7 @@ export default function MapeamentoItensExcel() {
                     placeholder="Ex: COCA COLA 2L"
                     className="w-full px-3 py-2 border border-white/20 rounded-lg focus:ring-2 focus:ring-blue-500"
                   />
-                  <p className="text-xs text-white/40 mt-1">
+                  <p className="text-xs text-white/60 mt-1">
                     Nome como aparece no arquivo Excel ou sistema externo
                   </p>
                 </div>
@@ -731,7 +731,7 @@ export default function MapeamentoItensExcel() {
                         : 'Nenhuma ficha encontrada'
                     }
                   />
-                  <p className="text-xs text-white/40 mt-1">
+                  <p className="text-xs text-white/60 mt-1">
                     {formData.tipo_mapeamento === 'item'
                       ? `${itensEstoque.length} itens disponíveis`
                       : `${fichasTecnicas.length} fichas disponíveis`}
@@ -858,13 +858,13 @@ export default function MapeamentoItensExcel() {
                   <table className="min-w-full divide-y divide-white/10">
                     <thead className="bg-white/5">
                       <tr>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-white/40">
+                        <th className="px-4 py-2 text-left text-xs font-medium text-white/60">
                           Nome Externo
                         </th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-white/40">
+                        <th className="px-4 py-2 text-left text-xs font-medium text-white/60">
                           Nome no Estoque
                         </th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-white/40">
+                        <th className="px-4 py-2 text-left text-xs font-medium text-white/60">
                           Confiança
                         </th>
                       </tr>

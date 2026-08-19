@@ -308,7 +308,7 @@ const ConferenciaRecebimentoModal: React.FC<ConferenciaRecebimentoModalProps> = 
         <div className="p-6 border-b border-white/10 flex justify-between items-center">
           <div>
             <h3 className="text-xl font-semibold text-white">Conferência de Recebimento com IA</h3>
-            <p className="text-sm text-white/40 mt-1">
+            <p className="text-sm text-white/60 mt-1">
               Faça upload da nota fiscal recebida para comparar com o pedido
             </p>
           </div>
@@ -371,7 +371,7 @@ const ConferenciaRecebimentoModal: React.FC<ConferenciaRecebimentoModalProps> = 
                       capture="environment"
                     />
                   </label>
-                  <p className="text-xs text-white/40 mt-2">
+                  <p className="text-xs text-white/60 mt-2">
                     JPG, PNG até 20MB
                   </p>
                 </div>

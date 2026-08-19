@@ -76,8 +76,8 @@ function ProgressBar({ atual, total }: { atual: number; total: number }) {
   return (
     <div className="w-full">
       <div className="flex justify-between items-center mb-1.5">
-        <span className="text-white/40 text-xs">{atual} de {total}</span>
-        <span className="text-white/40 text-xs">{pct}%</span>
+        <span className="text-white/60 text-xs">{atual} de {total}</span>
+        <span className="text-white/60 text-xs">{pct}%</span>
       </div>
       <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
         <div
@@ -503,7 +503,7 @@ export default function DiscPublico() {
             Iniciar Avaliação
           </button>
 
-          <p className="text-center text-white/25 text-xs">
+          <p className="text-center text-white/60 text-xs">
             Seja sincero — as respostas refletem seu comportamento natural
           </p>
         </div>
@@ -524,7 +524,7 @@ export default function DiscPublico() {
           </div>
           <div>
             <p className="text-white font-semibold text-lg mb-1">Calculando seu perfil...</p>
-            <p className="text-white/40 text-sm">Analisando suas respostas com IA</p>
+            <p className="text-white/60 text-sm">Analisando suas respostas com IA</p>
           </div>
         </div>
       </Shell>
@@ -559,7 +559,7 @@ export default function DiscPublico() {
           <div className="bg-[#12141f] border border-white/10 rounded-2xl p-5 flex-1 flex flex-col">
 
             <div className="mb-5">
-              <p className="text-white/40 text-xs uppercase tracking-wider mb-1.5">Grupo {blocoAtual + 1}</p>
+              <p className="text-white/60 text-xs uppercase tracking-wider mb-1.5">Grupo {blocoAtual + 1}</p>
               <p className="text-white text-sm leading-relaxed">
                 {pergunta.instrucao || 'Escolha a palavra que MAIS e a que MENOS descreve você:'}
               </p>
@@ -631,7 +631,7 @@ export default function DiscPublico() {
 
             {/* Instrução de validação */}
             {(!maisSelecionado || !menosSelecionado) && (
-              <p className="text-white/30 text-xs text-center mt-4">
+              <p className="text-white/60 text-xs text-center mt-4">
                 {!maisSelecionado && !menosSelecionado
                   ? 'Selecione MAIS e MENOS para continuar'
                   : !maisSelecionado
@@ -677,7 +677,7 @@ export default function DiscPublico() {
 
           {/* Perfil */}
           <div className="bg-[#12141f] border border-white/10 rounded-2xl p-5">
-            <p className="text-white/40 text-xs uppercase tracking-wider mb-3">Seu perfil DISC</p>
+            <p className="text-white/60 text-xs uppercase tracking-wider mb-3">Seu perfil DISC</p>
             <div className="flex items-center gap-3 mb-4">
               <span className={`${dcfg.bg} text-white font-bold text-2xl w-14 h-14 rounded-2xl flex items-center justify-center`}>
                 {dominante}
@@ -703,7 +703,7 @@ export default function DiscPublico() {
           {/* Resumo IA */}
           {analise.resumo && (
             <div className="bg-[#12141f] border border-gold/20 rounded-2xl p-5">
-              <p className="text-white/40 text-xs uppercase tracking-wider mb-2">Seu perfil</p>
+              <p className="text-white/60 text-xs uppercase tracking-wider mb-2">Seu perfil</p>
               <p className="text-white/80 text-sm leading-relaxed italic">"{analise.resumo}"</p>
             </div>
           )}
@@ -711,7 +711,7 @@ export default function DiscPublico() {
           {/* Pontos fortes */}
           {analise.pontos_fortes?.length > 0 && (
             <div className="bg-[#12141f] border border-white/10 rounded-2xl p-5">
-              <p className="text-white/40 text-xs uppercase tracking-wider mb-3">Seus pontos fortes</p>
+              <p className="text-white/60 text-xs uppercase tracking-wider mb-3">Seus pontos fortes</p>
               <div className="space-y-2">
                 {analise.pontos_fortes.map((p, i) => (
                   <div key={i} className="flex items-start gap-2.5">
@@ -730,7 +730,7 @@ export default function DiscPublico() {
             <p className="text-emerald-400 text-sm font-medium">
               Seu resultado já foi enviado ao seu gestor.
             </p>
-            <p className="text-white/40 text-xs mt-1">Obrigado por participar!</p>
+            <p className="text-white/60 text-xs mt-1">Obrigado por participar!</p>
           </div>
 
           {erroMsg && (

@@ -411,7 +411,7 @@ const GeneralRegistrations: React.FC = () => {
                   />
                 )}
                 {(field as any).helpText && (
-                  <p className="mt-1 text-xs text-white/40">{(field as any).helpText}</p>
+                  <p className="mt-1 text-xs text-white/60">{(field as any).helpText}</p>
                 )}
               </div>
             ))}
@@ -542,11 +542,11 @@ const GeneralRegistrations: React.FC = () => {
           <thead>
             <tr className="text-left bg-[#12141f]/5">
               {columns.map((column) => (
-                <th key={column.key} className="px-6 py-3 text-xs font-medium text-white/40 uppercase tracking-wider sticky left-0 bg-[#12141f]/5 z-10">
+                <th key={column.key} className="px-6 py-3 text-xs font-medium text-white/60 uppercase tracking-wider sticky left-0 bg-[#12141f]/5 z-10">
                   {column.label}
                 </th>
               ))}
-              <th className="px-6 py-3 text-xs font-medium text-white/40 uppercase tracking-wider sticky right-0 bg-[#12141f]/5 z-10">
+              <th className="px-6 py-3 text-xs font-medium text-white/60 uppercase tracking-wider sticky right-0 bg-[#12141f]/5 z-10">
                 Ações
               </th>
             </tr>
@@ -806,7 +806,7 @@ const GeneralRegistrations: React.FC = () => {
                     <DRESimplificado />
                   ) : (
                     <div className="text-center py-8">
-                      <p className="text-white/40">Conteúdo em desenvolvimento</p>
+                      <p className="text-white/60">Conteúdo em desenvolvimento</p>
                     </div>
                   )}
                 </Tab.Panel>
@@ -858,7 +858,7 @@ const GeneralRegistrations: React.FC = () => {
                     <DRESimplificado />
                   ) : (
                     <div className="text-center py-8">
-                      <p className="text-white/40">Conteúdo em desenvolvimento</p>
+                      <p className="text-white/60">Conteúdo em desenvolvimento</p>
                     </div>
                   )}
                 </Tab.Panel>
@@ -970,7 +970,7 @@ const GeneralRegistrations: React.FC = () => {
                         ) : (
                           <div className="text-center py-8">
                             <FileText className="w-12 h-12 text-white/30 mx-auto mb-4" />
-                            <p className="text-white/40">
+                            <p className="text-white/60">
                               {searchTerm || statusFilter !== 'all' 
                                 ? 'Nenhum resultado encontrado' 
                                 : `Nenhum ${title.toLowerCase()} cadastrado`

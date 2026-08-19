@@ -499,7 +499,7 @@ const GestaoCandidaturas: React.FC = () => {
             <div className="flex justify-between items-center mb-6">
               <div>
                 <h3 className="text-lg font-bold text-white">Documentos</h3>
-                <p className="text-white/40 text-xs">{docCandidatura.candidato?.nome}</p>
+                <p className="text-white/60 text-xs">{docCandidatura.candidato?.nome}</p>
               </div>
               <button onClick={() => setShowDocModal(false)} className="p-2 hover:bg-white/10 rounded-lg text-white/40 hover:text-white transition-all"><X className="w-5 h-5" /></button>
             </div>
@@ -525,7 +525,7 @@ const GestaoCandidaturas: React.FC = () => {
                     <FileText className="w-5 h-5 text-white/40 flex-shrink-0" />
                     <div className="flex-1 min-w-0">
                       <p className="text-white text-sm truncate">{doc.nome}</p>
-                      {doc.tamanho && <p className="text-white/30 text-xs">{(doc.tamanho / 1024).toFixed(0)} KB</p>}
+                      {doc.tamanho && <p className="text-white/60 text-xs">{(doc.tamanho / 1024).toFixed(0)} KB</p>}
                     </div>
                     <button onClick={() => baixarDocumento(doc)} className="p-1.5 hover:bg-white/10 rounded-lg text-white/50 hover:text-white transition-all">
                       <Download className="w-4 h-4" />

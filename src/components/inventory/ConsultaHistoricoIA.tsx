@@ -230,14 +230,14 @@ const ConsultaHistoricoIA: React.FC<ConsultaHistoricoIAProps> = ({ isOpen, onClo
                         <div>
                           <p className="font-medium text-white">{item.nome}</p>
                           {item.codigo && (
-                            <p className="text-xs text-white/40">Código: {item.codigo}</p>
+                            <p className="text-xs text-white/60">Código: {item.codigo}</p>
                           )}
                         </div>
                         <div className="text-right">
                           <span className="inline-block px-3 py-1 bg-indigo-500/15 text-indigo-300 text-xs font-medium rounded-full">
                             {item.categoria}
                           </span>
-                          <p className="text-xs text-white/40 mt-1">{item.unidade_medida}</p>
+                          <p className="text-xs text-white/60 mt-1">{item.unidade_medida}</p>
                         </div>
                       </div>
                     ))}

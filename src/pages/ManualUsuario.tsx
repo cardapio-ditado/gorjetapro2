@@ -362,7 +362,7 @@ const ManualUsuario: React.FC = () => {
                   <h3 className="text-lg font-medium text-white mb-2">
                     Selecione um tópico
                   </h3>
-                  <p className="text-white/40">
+                  <p className="text-white/60">
                     Escolha um tópico no menu lateral para visualizar o conteúdo
                   </p>
                   {categorias.length > 0 && (

@@ -1183,25 +1183,25 @@ const EscalasTrabalho: React.FC = () => {
             <table className="min-w-full divide-y divide-white/10">
               <thead className="bg-white/5">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-white/40 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-white/60 uppercase tracking-wider">
                     Data
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-white/40 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-white/60 uppercase tracking-wider">
                     Colaborador
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-white/40 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-white/60 uppercase tracking-wider">
                     Setor
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-white/40 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-white/60 uppercase tracking-wider">
                     Horário
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-white/40 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-white/60 uppercase tracking-wider">
                     Turno
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-white/40 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-white/60 uppercase tracking-wider">
                     Status
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-white/40 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-right text-xs font-medium text-white/60 uppercase tracking-wider">
                     Ações
                   </th>
                 </tr>
@@ -1209,13 +1209,13 @@ const EscalasTrabalho: React.FC = () => {
               <tbody className="bg-[#12141f] divide-y divide-white/5">
                 {loading ? (
                   <tr>
-                    <td colSpan={7} className="px-6 py-4 text-center text-white/40">
+                    <td colSpan={7} className="px-6 py-4 text-center text-white/60">
                       Carregando escalas...
                     </td>
                   </tr>
                 ) : filteredEscalas.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-6 py-4 text-center text-white/40">
+                    <td colSpan={7} className="px-6 py-4 text-center text-white/60">
                       Nenhuma escala encontrada
                     </td>
                   </tr>
@@ -1251,7 +1251,7 @@ const EscalasTrabalho: React.FC = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
                         {escala.eh_folga ? (
-                          <span className="text-white/40 italic">Folga</span>
+                          <span className="text-white/60 italic">Folga</span>
                         ) : (
                           <div className="flex items-center">
                             <Clock className="w-4 h-4 text-white/30 mr-1" />
@@ -1525,7 +1525,7 @@ const EscalasTrabalho: React.FC = () => {
                               <div>
                                 <span className="text-sm font-semibold text-white">{item.colaborador_nome}</span>
                                 {item.funcao_nome && (
-                                  <span className="text-xs text-white/40 ml-2">{item.funcao_nome}</span>
+                                  <span className="text-xs text-white/60 ml-2">{item.funcao_nome}</span>
                                 )}
                               </div>
                               <button
@@ -1539,7 +1539,7 @@ const EscalasTrabalho: React.FC = () => {
 
                             <div className="grid grid-cols-2 sm:grid-cols-6 gap-2 items-end">
                               <div>
-                                <label className="block text-caption text-white/40 mb-1">Setor</label>
+                                <label className="block text-caption text-white/60 mb-1">Setor</label>
                                 <select
                                   value={item.setor}
                                   onChange={(e) => atualizarItemLote(item.colaborador_id, { setor: e.target.value })}
@@ -1553,7 +1553,7 @@ const EscalasTrabalho: React.FC = () => {
 
                               {item.setor === 'Cozinha' && (
                                 <div>
-                                  <label className="block text-caption text-white/40 mb-1">Posto</label>
+                                  <label className="block text-caption text-white/60 mb-1">Posto</label>
                                   <select
                                     value={item.posto_trabalho_id}
                                     onChange={(e) => atualizarItemLote(item.colaborador_id, { posto_trabalho_id: e.target.value })}
@@ -1580,7 +1580,7 @@ const EscalasTrabalho: React.FC = () => {
                               {!item.eh_folga && (
                                 <>
                                   <div>
-                                    <label className="block text-caption text-white/40 mb-1">Início</label>
+                                    <label className="block text-caption text-white/60 mb-1">Início</label>
                                     <input
                                       type="time"
                                       value={item.horario_inicio}
@@ -1589,7 +1589,7 @@ const EscalasTrabalho: React.FC = () => {
                                     />
                                   </div>
                                   <div>
-                                    <label className="block text-caption text-white/40 mb-1">Fim</label>
+                                    <label className="block text-caption text-white/60 mb-1">Fim</label>
                                     <input
                                       type="time"
                                       value={item.horario_fim}
@@ -1655,7 +1655,7 @@ const EscalasTrabalho: React.FC = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-white/80 mb-2">
-                    Tipo de Turno <span className="text-white/40 font-normal">(sugerido pelo horário)</span>
+                    Tipo de Turno <span className="text-white/60 font-normal">(sugerido pelo horário)</span>
                   </label>
                   <select
                     value={formData.tipo_turno}

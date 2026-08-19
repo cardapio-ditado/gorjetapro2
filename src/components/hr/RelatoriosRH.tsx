@@ -95,7 +95,7 @@ const Th = ({ children, right }: { children: React.ReactNode; right?: boolean })
 );
 
 const Td = ({ children, right, muted }: { children: React.ReactNode; right?: boolean; muted?: boolean }) => (
-  <td className={`px-4 py-3 border-b border-white/5 ${right ? "text-right" : ""} ${muted ? "text-white/40 text-xs" : "text-white/90"}`}>
+  <td className={`px-4 py-3 border-b border-white/5 ${right ? "text-right" : ""} ${muted ? "text-white/60 text-xs" : "text-white/90"}`}>
     {children}
   </td>
 );
@@ -182,7 +182,7 @@ const AbaColaboradores = () => {
           </div>
         </div>
 
-        {loading ? <p className="text-center py-10 text-white/40 text-sm">Carregando...</p> : (
+        {loading ? <p className="text-center py-10 text-white/60 text-sm">Carregando...</p> : (
           <TableWrapper>
             <thead>
               <tr>
@@ -292,7 +292,7 @@ const AbaOcorrencias = () => {
           </div>
         </div>
 
-        {loading ? <p className="text-center py-10 text-white/40 text-sm">Carregando...</p> : (
+        {loading ? <p className="text-center py-10 text-white/60 text-sm">Carregando...</p> : (
           <TableWrapper>
             <thead>
               <tr>
@@ -310,8 +310,8 @@ const AbaOcorrencias = () => {
                     <Td><span className="text-xs font-medium text-white/70">{d.tipo_ocorrencia.replace(/_/g, " ")}</span></Td>
                     <Td><span className="text-xs text-white/60 line-clamp-2 max-w-xs">{d.descricao}</span></Td>
                     <Td><StatusBadge status={d.status} /></Td>
-                    <Td right>{d.valor_vale ? <span className="font-semibold text-orange-400">{fmtR(d.valor_vale)}</span> : <span className="text-white/30">—</span>}</Td>
-                    <Td right>{d.dias_afastamento ? <span className="font-semibold text-red-400">{d.dias_afastamento}d</span> : <span className="text-white/30">—</span>}</Td>
+                    <Td right>{d.valor_vale ? <span className="font-semibold text-orange-400">{fmtR(d.valor_vale)}</span> : <span className="text-white/60">—</span>}</Td>
+                    <Td right>{d.dias_afastamento ? <span className="font-semibold text-red-400">{d.dias_afastamento}d</span> : <span className="text-white/60">—</span>}</Td>
                   </tr>
                 ))
               }
@@ -382,7 +382,7 @@ const AbaFerias = () => {
           </button>
         </div>
 
-        {loading ? <p className="text-center py-10 text-white/40 text-sm">Carregando...</p> : (
+        {loading ? <p className="text-center py-10 text-white/60 text-sm">Carregando...</p> : (
           <TableWrapper>
             <thead>
               <tr><Th>Colaborador</Th><Th>Início</Th><Th>Fim</Th><Th right>Dias</Th><Th>Status</Th><Th>Observações</Th></tr>
@@ -465,7 +465,7 @@ const AbaAvaliacoes = () => {
           </button>
         </div>
 
-        {loading ? <p className="text-center py-10 text-white/40 text-sm">Carregando...</p> : (
+        {loading ? <p className="text-center py-10 text-white/60 text-sm">Carregando...</p> : (
           <TableWrapper>
             <thead>
               <tr><Th>Colaborador</Th><Th>Data</Th><Th>Tipo</Th><Th>Avaliador</Th><Th right>Nota</Th><Th>Resultado</Th><Th>Status</Th></tr>
@@ -556,7 +556,7 @@ const AbaDISC = () => {
           </button>
         </div>
 
-        {loading ? <p className="text-center py-10 text-white/40 text-sm">Carregando...</p> : (
+        {loading ? <p className="text-center py-10 text-white/60 text-sm">Carregando...</p> : (
           <TableWrapper>
             <thead>
               <tr><Th>Colaborador</Th><Th>Data</Th><Th>Perfil</Th><Th right>D%</Th><Th right>I%</Th><Th right>S%</Th><Th right>C%</Th></tr>
@@ -660,7 +660,7 @@ const AbaExtras = () => {
           </button>
         </div>
 
-        {loading ? <p className="text-center py-10 text-white/40 text-sm">Carregando...</p> : (
+        {loading ? <p className="text-center py-10 text-white/60 text-sm">Carregando...</p> : (
           <TableWrapper>
             <thead>
               <tr><Th>Nome</Th><Th>Função</Th><Th>Data</Th><Th>Setor</Th><Th right>Diária</Th><Th>Pagamento</Th></tr>

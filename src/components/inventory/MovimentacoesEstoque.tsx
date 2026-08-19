@@ -1065,31 +1065,31 @@ const MovimentacoesEstoque: React.FC = () => {
             <table className="w-full">
               <thead>
                 <tr className="text-left bg-white/5 border-b">
-                  <th className="px-6 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">
                     Data
                   </th>
-                  <th className="px-6 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">
                     Tipo
                   </th>
-                  <th className="px-6 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">
                     Origem
                   </th>
-                  <th className="px-6 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">
                     Item
                   </th>
-                  <th className="px-6 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">
                     Origem → Destino
                   </th>
-                  <th className="px-6 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">
                     Quantidade
                   </th>
-                  <th className="px-6 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">
                     Custo
                   </th>
-                  <th className="px-6 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">
                     Motivo
                   </th>
-                  <th className="px-6 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">
                     Ações
                   </th>
                 </tr>
@@ -1213,7 +1213,7 @@ const MovimentacoesEstoque: React.FC = () => {
             <div className="text-center py-12">
               <ArrowLeftRight className="w-16 h-16 text-white/30 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-white mb-2">Nenhuma movimentação encontrada</h3>
-              <p className="text-white/40">
+              <p className="text-white/60">
                 {searchTerm || tipoFilter !== 'all' || estoqueFilter !== 'all' || itemFilter !== 'all'
                   ? 'Nenhuma movimentação corresponde aos filtros aplicados.'
                   : 'Nenhuma movimentação registrada no período.'}
@@ -1396,7 +1396,7 @@ const MovimentacoesEstoque: React.FC = () => {
                   required
                 />
                 {formData.usar_ficha_tecnica ? (
-                  <p className="text-xs text-white/40 mt-1">
+                  <p className="text-xs text-white/60 mt-1">
                     Quantidade de porções/vendas desta ficha técnica
                   </p>
                 ) : (
@@ -1404,7 +1404,7 @@ const MovimentacoesEstoque: React.FC = () => {
                     (() => {
                       const item = getItensParaFormulario().find(i => i.id === formData.item_id);
                       return item && (
-                        <p className="text-xs text-white/40 mt-1">
+                        <p className="text-xs text-white/60 mt-1">
                           Disponível: {item.quantidade_atual.toFixed(3)} {item.unidade_medida}
                         </p>
                       );
@@ -1419,7 +1419,7 @@ const MovimentacoesEstoque: React.FC = () => {
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <span className="text-white/40 sm:text-sm">R$</span>
+                    <span className="text-white/60 sm:text-sm">R$</span>
                   </div>
                   <input
                     type="number"
@@ -1458,11 +1458,11 @@ const MovimentacoesEstoque: React.FC = () => {
                       <table className="w-full">
                         <thead className="bg-white/5">
                           <tr>
-                            <th className="px-4 py-2 text-left text-xs font-medium text-white/40 uppercase">Item</th>
-                            <th className="px-4 py-2 text-left text-xs font-medium text-white/40 uppercase">Quantidade</th>
-                            <th className="px-4 py-2 text-left text-xs font-medium text-white/40 uppercase">Custo Unit.</th>
-                            <th className="px-4 py-2 text-left text-xs font-medium text-white/40 uppercase">Custo Total</th>
-                            <th className="px-4 py-2 text-left text-xs font-medium text-white/40 uppercase">Ações</th>
+                            <th className="px-4 py-2 text-left text-xs font-medium text-white/60 uppercase">Item</th>
+                            <th className="px-4 py-2 text-left text-xs font-medium text-white/60 uppercase">Quantidade</th>
+                            <th className="px-4 py-2 text-left text-xs font-medium text-white/60 uppercase">Custo Unit.</th>
+                            <th className="px-4 py-2 text-left text-xs font-medium text-white/60 uppercase">Custo Total</th>
+                            <th className="px-4 py-2 text-left text-xs font-medium text-white/60 uppercase">Ações</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-white/10">

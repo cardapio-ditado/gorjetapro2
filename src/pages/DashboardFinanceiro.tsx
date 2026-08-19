@@ -92,7 +92,7 @@ function KPICard({
       'border-white/5'
     }`}>
       <div className="flex items-start justify-between mb-3">
-        <p className="text-caption font-bold text-white/30 uppercase tracking-widest">{titulo}</p>
+        <p className="text-caption font-bold text-white/60 uppercase tracking-widest">{titulo}</p>
         <div className={`p-2 rounded-xl ${
           alerta === 'danger'  ? 'bg-red-100'     :
           alerta === 'warning' ? 'bg-amber-100'   :
@@ -121,7 +121,7 @@ function KPICard({
             {Math.abs(variacao).toFixed(1)}% vs mês ant.
           </span>
         ) : <span />}
-        {sub && <p className="text-caption text-white/30 font-medium">{sub}</p>}
+        {sub && <p className="text-caption text-white/60 font-medium">{sub}</p>}
       </div>
     </div>
   );
@@ -306,7 +306,7 @@ export default function DashboardFinanceiro() {
           <h1 className="text-2xl font-extrabold text-white tracking-tight">
             Dashboard <span className="bg-gradient-to-r from-wine to-gold bg-clip-text text-transparent">Financeiro</span>
           </h1>
-          <p className="text-sm text-white/30 mt-0.5">
+          <p className="text-sm text-white/60 mt-0.5">
             {mesAtualNome} {new Date().getFullYear()} · Dados em tempo real
           </p>
         </div>
@@ -337,7 +337,7 @@ export default function DashboardFinanceiro() {
         <h2 className="text-sm font-bold text-white/80 mb-3 flex items-center gap-2">
           <AlertTriangle className="w-4 h-4 text-amber-500" />
           Contas a Pagar em Aberto
-          <span className="text-xs font-normal text-white/30 ml-1">
+          <span className="text-xs font-normal text-white/60 ml-1">
             — {totalQtdAberto} contas · {R(totalAberto)} total
           </span>
         </h2>
@@ -375,9 +375,9 @@ export default function DashboardFinanceiro() {
         {/* Tabela de contas */}
         <div className="bg-[#12141f] rounded-2xl border border-white/10 overflow-hidden">
           <div className="flex items-center justify-between px-5 py-3 border-b border-white/5">
-            <p className="text-xs font-bold text-white/40 uppercase tracking-wide">
+            <p className="text-xs font-bold text-white/60 uppercase tracking-wide">
               {filtroUrg === 'todas' ? 'Todas as contas em aberto' : URG[filtroUrg]?.label}
-              <span className="ml-2 font-normal text-white/30">({contasFiltradas.length})</span>
+              <span className="ml-2 font-normal text-white/60">({contasFiltradas.length})</span>
             </p>
             {filtroUrg !== 'todas' && (
               <button onClick={() => setFiltroUrg('todas')} className="text-xs text-white/30 hover:text-white/60">
@@ -390,7 +390,7 @@ export default function DashboardFinanceiro() {
             {loading
               ? [1,2,3,4,5].map(i => <div key={i} className="h-12 animate-pulse bg-[#12141f]/5 mx-4 my-1 rounded-xl" />)
               : contasVisiveis.length === 0
-              ? <p className="text-sm text-white/30 text-center py-8">Nenhuma conta nesta categoria</p>
+              ? <p className="text-sm text-white/60 text-center py-8">Nenhuma conta nesta categoria</p>
               : contasVisiveis.map((c, i) => {
                   const uc = URG[c.urgencia];
                   return (
@@ -398,11 +398,11 @@ export default function DashboardFinanceiro() {
                       <div className={`w-2 h-2 rounded-full shrink-0 ${uc.dot}`} />
                       <div className="flex-1 min-w-0">
                         <p className="text-xs font-semibold text-white/90 truncate">{c.descricao}</p>
-                        <p className="text-caption text-white/30">{c.categoria}</p>
+                        <p className="text-caption text-white/60">{c.categoria}</p>
                       </div>
                       <div className="text-right shrink-0">
                         <p className="text-sm font-bold text-white">{Rfull(c.saldo_restante)}</p>
-                        <p className="text-caption text-white/30">
+                        <p className="text-caption text-white/60">
                           {new Date(c.data_vencimento + 'T12:00:00').toLocaleDateString('pt-BR')}
                         </p>
                       </div>
@@ -435,7 +435,7 @@ export default function DashboardFinanceiro() {
           <p className="text-sm font-bold text-white">Receita vs Despesa — 6 meses</p>
           <BarChart3 className="w-4 h-4 text-white/20" />
         </div>
-        <p className="text-xs text-white/30 mb-5">Fonte: fluxo_caixa</p>
+        <p className="text-xs text-white/60 mb-5">Fonte: fluxo_caixa</p>
         {loading
           ? <div className="h-56 bg-[#12141f]/10 rounded-xl animate-pulse" />
           : <ResponsiveContainer width="100%" height={220}>
@@ -471,10 +471,10 @@ export default function DashboardFinanceiro() {
         <div className="flex items-center justify-between px-5 py-4 border-b border-white/5">
           <div>
             <p className="text-sm font-bold text-white">Gastos por Categoria</p>
-            <p className="text-xs text-white/30 mt-0.5">Mês atual vs mês anterior · {categorias.length} categorias</p>
+            <p className="text-xs text-white/60 mt-0.5">Mês atual vs mês anterior · {categorias.length} categorias</p>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-caption text-white/30 font-medium">Ordenar:</span>
+            <span className="text-caption text-white/60 font-medium">Ordenar:</span>
             <button
               onClick={() => setSortCat(s => s === 'valor' ? 'nome' : 'valor')}
               className="text-caption font-semibold text-wine hover:underline"
@@ -492,7 +492,7 @@ export default function DashboardFinanceiro() {
           </div>
           <div className="flex items-center gap-1.5">
             <div className="w-3 h-3 rounded-sm bg-white/10" />
-            <span className="text-caption font-semibold text-white/30">Mês anterior</span>
+            <span className="text-caption font-semibold text-white/60">Mês anterior</span>
           </div>
         </div>
 
@@ -522,7 +522,7 @@ export default function DashboardFinanceiro() {
                           </span>
                         )}
                         <span className="text-xs font-bold text-white w-20 text-right font-mono">
-                          {c.mes_atual > 0 ? R(c.mes_atual) : <span className="text-white/20">—</span>}
+                          {c.mes_atual > 0 ? R(c.mes_atual) : <span className="text-white/60">—</span>}
                         </span>
                       </div>
                     </div>
@@ -540,7 +540,7 @@ export default function DashboardFinanceiro() {
                       )}
                     </div>
                     {c.mes_anterior > 0 && (
-                      <p className="text-caption text-white/30 mt-1">
+                      <p className="text-caption text-white/60 mt-1">
                         Mês ant.: {R(c.mes_anterior)}
                       </p>
                     )}

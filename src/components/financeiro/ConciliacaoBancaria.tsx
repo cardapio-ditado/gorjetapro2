@@ -291,7 +291,7 @@ export default function ConciliacaoBancaria() {
           </div>
 
           <div>
-            <label className="text-xs font-semibold text-white/40 uppercase tracking-wide mb-1.5 block">Conta bancária do extrato *</label>
+            <label className="text-xs font-semibold text-white/60 uppercase tracking-wide mb-1.5 block">Conta bancária do extrato *</label>
             <select value={bancoContaId} onChange={e => setBancoContaId(e.target.value)} className={inputCls}>
               <option value="">Selecione a conta...</option>
               {bancos.map(b => <option key={b.id} value={b.id}>{b.banco} — {b.tipo_conta}</option>)}
@@ -299,15 +299,15 @@ export default function ConciliacaoBancaria() {
           </div>
 
           <div>
-            <label className="text-xs font-semibold text-white/40 uppercase tracking-wide mb-1.5 block">Forma de pagamento padrão</label>
+            <label className="text-xs font-semibold text-white/60 uppercase tracking-wide mb-1.5 block">Forma de pagamento padrão</label>
             <select value={formaPadraoId} onChange={e => setFormaPadraoId(e.target.value)} className={inputCls}>
               {formas.map(f => <option key={f.id} value={f.id}>{f.nome}</option>)}
             </select>
-            <p className="text-caption text-white/30 mt-1">Aplicada por padrão em cada lançamento; dá pra mudar linha a linha.</p>
+            <p className="text-caption text-white/60 mt-1">Aplicada por padrão em cada lançamento; dá pra mudar linha a linha.</p>
           </div>
 
           <div>
-            <label className="text-xs font-semibold text-white/40 uppercase tracking-wide mb-1.5 block">Arquivo</label>
+            <label className="text-xs font-semibold text-white/60 uppercase tracking-wide mb-1.5 block">Arquivo</label>
             <input type="file" accept=".ofx,.xml,.OFX,.XML" onChange={e => onSelecionarArquivo(e.target.files?.[0] || null)}
               className="block w-full text-xs text-white/70 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:bg-wine file:text-white file:text-xs file:cursor-pointer" />
           </div>
@@ -317,7 +317,7 @@ export default function ConciliacaoBancaria() {
               <FileText size={14} className="text-white/40" />
               <span>{previa.total} transações</span>
               <span className="text-wine font-semibold">{previa.debitos} saídas</span>
-              <span className="text-white/40">{previa.periodo}</span>
+              <span className="text-white/60">{previa.periodo}</span>
             </div>
           )}
 
@@ -360,12 +360,12 @@ export default function ConciliacaoBancaria() {
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-semibold text-white">{fmt(l.valor)}</span>
-                    <span className="text-xs text-white/40">{dayjs(l.data).format('DD/MM/YY')}</span>
+                    <span className="text-xs text-white/60">{dayjs(l.data).format('DD/MM/YY')}</span>
                     {l.acao === 'ja' && <span className="text-caption px-1.5 py-0.5 rounded border bg-green-500/10 text-green-400 border-green-500/30">já no fluxo</span>}
                     {l.acao === 'baixa' && l.status === 'pendente' && <span className="text-caption px-1.5 py-0.5 rounded border bg-yellow-500/10 text-yellow-400 border-yellow-500/30">baixa sugerida</span>}
                     {l.acao === 'nova' && l.status === 'pendente' && <span className="text-caption px-1.5 py-0.5 rounded border bg-blue-500/10 text-blue-400 border-blue-500/30">nova</span>}
                     {conciliada && <span className="text-caption px-1.5 py-0.5 rounded border bg-green-500/15 text-green-400 border-green-500/30 flex items-center gap-1"><CheckCircle2 size={10} /> conciliada</span>}
-                    {ignorada && <span className="text-caption px-1.5 py-0.5 rounded border bg-white/5 text-white/40 border-white/10">ignorada</span>}
+                    {ignorada && <span className="text-caption px-1.5 py-0.5 rounded border bg-white/5 text-white/60 border-white/10">ignorada</span>}
                   </div>
                   <p className="text-xs text-white/50 truncate max-w-[420px]">{l.descricao || '(sem descrição)'}</p>
                 </div>
@@ -395,7 +395,7 @@ export default function ConciliacaoBancaria() {
               {l.status === 'pendente' && l.acao === 'nova' && (
                 <div className="grid grid-cols-1 sm:grid-cols-4 gap-2 mt-3">
                   <div className="sm:col-span-2">
-                    <label className="block text-caption text-white/40 mb-1">Fornecedor {l.sug.fornecedores[0] && <span className="text-white/25">(sugestão: {l.sug.fornecedores[0].nome})</span>}</label>
+                    <label className="block text-caption text-white/60 mb-1">Fornecedor {l.sug.fornecedores[0] && <span className="text-white/60">(sugestão: {l.sug.fornecedores[0].nome})</span>}</label>
                     <select value={l.fornecedorId} onChange={e => {
                       const f = fornecedores.find(x => x.id === e.target.value);
                       atualizarLinha(idx, { fornecedorId: e.target.value, categoriaId: f?.categoria_padrao_id || l.categoriaId });
@@ -405,14 +405,14 @@ export default function ConciliacaoBancaria() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-caption text-white/40 mb-1">Categoria</label>
+                    <label className="block text-caption text-white/60 mb-1">Categoria</label>
                     <select value={l.categoriaId} onChange={e => atualizarLinha(idx, { categoriaId: e.target.value })} className={inputCls}>
                       <option value="">—</option>
                       {categorias.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
                     </select>
                   </div>
                   <div>
-                    <label className="block text-caption text-white/40 mb-1">Forma pgto</label>
+                    <label className="block text-caption text-white/60 mb-1">Forma pgto</label>
                     <select value={l.formaPagamentoId} onChange={e => atualizarLinha(idx, { formaPagamentoId: e.target.value })} className={inputCls}>
                       {formas.map(f => <option key={f.id} value={f.id}>{f.nome}</option>)}
                     </select>
@@ -423,7 +423,7 @@ export default function ConciliacaoBancaria() {
               {l.status === 'pendente' && l.acao === 'baixa' && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3">
                   <div>
-                    <label className="block text-caption text-white/40 mb-1">Conta a pagar (em aberto)</label>
+                    <label className="block text-caption text-white/60 mb-1">Conta a pagar (em aberto)</label>
                     <select value={l.contaPagarId} onChange={e => atualizarLinha(idx, { contaPagarId: e.target.value })} className={inputCls}>
                       <option value="">Selecione...</option>
                       {l.sug.contas_abertas.map(c => (
@@ -432,7 +432,7 @@ export default function ConciliacaoBancaria() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-caption text-white/40 mb-1">Forma pgto</label>
+                    <label className="block text-caption text-white/60 mb-1">Forma pgto</label>
                     <select value={l.formaPagamentoId} onChange={e => atualizarLinha(idx, { formaPagamentoId: e.target.value })} className={inputCls}>
                       {formas.map(f => <option key={f.id} value={f.id}>{f.nome}</option>)}
                     </select>

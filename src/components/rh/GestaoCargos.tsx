@@ -317,7 +317,7 @@ const GestaoCargos: React.FC = () => {
                           <span className="font-medium text-sm text-white">{ind.nome}</span>
                           <span className="text-xs text-wine font-medium">Meta: {ind.meta}</span>
                         </div>
-                        {ind.descricao && <p className="text-xs text-white/40">{ind.descricao}</p>}
+                        {ind.descricao && <p className="text-xs text-white/60">{ind.descricao}</p>}
                       </div>
                     ))}
                   </div>
@@ -427,7 +427,7 @@ const GestaoCargos: React.FC = () => {
                     <div key={i} className="flex items-start gap-2 bg-white/5 rounded-xl p-2.5">
                       <div className="flex-1 min-w-0">
                         <p className="text-sm text-white font-medium">{ind.nome}</p>
-                        <p className="text-xs text-white/40">Meta: {ind.meta}{ind.descricao && ` · ${ind.descricao}`}</p>
+                        <p className="text-xs text-white/60">Meta: {ind.meta}{ind.descricao && ` · ${ind.descricao}`}</p>
                       </div>
                       <button onClick={() => removerIndicador(i)} className="text-red-400/50 hover:text-red-400 p-1"><X className="w-3.5 h-3.5" /></button>
                     </div>

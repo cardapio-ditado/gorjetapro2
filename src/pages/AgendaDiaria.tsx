@@ -415,7 +415,7 @@ const AgendaDiaria: React.FC = () => {
             <div className={`border rounded-xl p-3 ${saldoLivre >= 0 ? 'bg-white/5 border-white/15' : 'bg-red-500/10 border-red-500/20'}`}>
               <p className="text-caption text-white/50 uppercase font-bold tracking-wide">Saldo Disponível</p>
               <p className={`text-lg font-black mt-0.5 ${saldoLivre >= 0 ? 'text-white' : 'text-red-400'}`}>{fmtR(saldoLivre)}</p>
-              <p className="text-caption text-white/30 mt-0.5">receitas − pagamentos</p>
+              <p className="text-caption text-white/60 mt-0.5">receitas − pagamentos</p>
             </div>
           </div>
         </div>
@@ -447,7 +447,7 @@ const AgendaDiaria: React.FC = () => {
 
             <div className="flex-1 overflow-y-auto max-h-[560px]">
               {Object.entries(grupos).length === 0
-                ? <div className="py-12 text-center"><p className="text-xs text-white/30">Nenhuma conta</p></div>
+                ? <div className="py-12 text-center"><p className="text-xs text-white/60">Nenhuma conta</p></div>
                 : Object.entries(grupos).sort(([a], [b]) => a.localeCompare(b)).map(([cat, items]) => {
                     const aberto = accordion.has(cat);
                     const tot = items.reduce((a, b) => a + Number(b.saldo_restante), 0);
@@ -459,7 +459,7 @@ const AgendaDiaria: React.FC = () => {
                           <div className="flex items-center gap-2">
                             <ChevronRight className={`w-3.5 h-3.5 text-white/30 transition-transform ${aberto ? 'rotate-90' : ''}`} />
                             <span className="text-caption font-bold text-white/60 uppercase tracking-wide">{cat}</span>
-                            <span className="text-caption text-white/30 bg-white/8 px-1.5 py-0.5 rounded-md">{items.length}</span>
+                            <span className="text-caption text-white/60 bg-white/8 px-1.5 py-0.5 rounded-md">{items.length}</span>
                           </div>
                           <span className="text-xs font-bold text-white/50">{fmtR(tot)}</span>
                         </button>
@@ -472,7 +472,7 @@ const AgendaDiaria: React.FC = () => {
                               className="flex items-center gap-3 px-4 py-3 border-t border-white/5 hover:bg-white/5 transition-colors">
                               {/* Data de vencimento */}
                               <div className="w-12 shrink-0 text-center">
-                                <p className={`text-caption font-black ${badge.cls.includes('red') ? 'text-red-400' : badge.cls.includes('orange') ? 'text-orange-400' : badge.cls.includes('yellow') ? 'text-yellow-400' : 'text-white/40'}`}>
+                                <p className={`text-caption font-black ${badge.cls.includes('red') ? 'text-red-400' : badge.cls.includes('orange') ? 'text-orange-400' : badge.cls.includes('yellow') ? 'text-yellow-400' : 'text-white/60'}`}>
                                   {fmtData(c.data_vencimento)}
                                 </p>
                                 <span className={`text-caption font-bold px-1 py-0.5 rounded ${badge.cls}`}>{badge.label}</span>
@@ -481,7 +481,7 @@ const AgendaDiaria: React.FC = () => {
                               <div className="flex-1 min-w-0">
                                 <p className="text-xs font-semibold text-white truncate">{c.descricao}</p>
                                 {c.fornecedores?.nome && (
-                                  <p className="text-caption text-white/40 truncate">{c.fornecedores.nome}</p>
+                                  <p className="text-caption text-white/60 truncate">{c.fornecedores.nome}</p>
                                 )}
                                 {jaAuth && <span className="text-caption text-emerald-400 font-bold">✓ autorizado</span>}
                               </div>
@@ -511,7 +511,7 @@ const AgendaDiaria: React.FC = () => {
             </div>
 
             <div className="px-4 py-3 border-t border-white/10 flex justify-between items-center">
-              <span className="text-xs text-white/40">{contasFiltradas.length} contas</span>
+              <span className="text-xs text-white/60">{contasFiltradas.length} contas</span>
               <span className="text-sm font-black text-white">
                 {fmtR(contasFiltradas.reduce((a, b) => a + Number(b.saldo_restante), 0))}
               </span>
@@ -539,8 +539,8 @@ const AgendaDiaria: React.FC = () => {
               <div className="px-4 py-3 flex flex-col gap-1.5 min-h-[80px]">
                 {receitas.length === 0
                   ? <div className="py-4 text-center">
-                      <p className="text-xs text-white/30">Nenhuma receita registrada</p>
-                      {!somenteLeitura && <p className="text-caption text-white/20 mt-0.5">Clique em Adicionar para registrar uma entrada</p>}
+                      <p className="text-xs text-white/60">Nenhuma receita registrada</p>
+                      {!somenteLeitura && <p className="text-caption text-white/60 mt-0.5">Clique em Adicionar para registrar uma entrada</p>}
                     </div>
                   : receitas.map(r => {
                       const t = tipoInfo(r.tipo);
@@ -598,15 +598,15 @@ const AgendaDiaria: React.FC = () => {
                 {pagamentos.length === 0
                   ? <div className="py-10 text-center">
                       <ClipboardList className="w-8 h-8 text-white/15 mx-auto mb-2" />
-                      <p className="text-xs text-white/30">Nenhum item autorizado</p>
-                      <p className="text-caption text-white/20 mt-1">Abra uma categoria e clique → para autorizar</p>
+                      <p className="text-xs text-white/60">Nenhum item autorizado</p>
+                      <p className="text-caption text-white/60 mt-1">Abra uma categoria e clique → para autorizar</p>
                     </div>
                   : <div className="space-y-4">
                       {gerentesOrd.map(g => (
                         <div key={g}>
                           <div className="flex items-center justify-between mb-2 px-1">
                             <p className="text-caption font-black text-white/50 uppercase tracking-wider">{g}</p>
-                            <p className="text-caption font-bold text-white/40">
+                            <p className="text-caption font-bold text-white/60">
                               {fmtR(porGerente[g].reduce((a, b) => a + b.valor, 0))}
                             </p>
                           </div>
@@ -617,7 +617,7 @@ const AgendaDiaria: React.FC = () => {
                                 {badgeItem(item)}
                                 <div className="flex-1 min-w-0">
                                   <p className="text-xs font-medium text-white truncate">{item.descricao}</p>
-                                  <p className="text-caption text-white/40">{item.categoria_nome ?? '—'}</p>
+                                  <p className="text-caption text-white/60">{item.categoria_nome ?? '—'}</p>
                                 </div>
                                 <p className="text-sm font-bold text-white shrink-0">{fmtR(item.valor)}</p>
                                 {!somenteLeitura && (
@@ -644,12 +644,12 @@ const AgendaDiaria: React.FC = () => {
                   ].map(l => (
                     <div key={l.b} className="flex items-center gap-1">
                       <span className={`text-caption font-black px-1.5 py-0.5 rounded-md ${l.cls}`}>{l.b}</span>
-                      <span className="text-caption text-white/30">{l.t}</span>
+                      <span className="text-caption text-white/60">{l.t}</span>
                     </div>
                   ))}
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-xs text-white/40">{pagamentos.length} itens</span>
+                  <span className="text-xs text-white/60">{pagamentos.length} itens</span>
                   <span className="text-sm font-black text-red-400">{fmtR(totalPago)}</span>
                 </div>
               </div>
@@ -675,13 +675,13 @@ const AgendaDiaria: React.FC = () => {
                 <p className="text-sm font-bold text-white leading-snug">{modalAuth.descricao}</p>
                 <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                   <span className="text-caption text-white/50">{(modalAuth.categorias_financeiras as any)?.nome}</span>
-                  <span className="text-caption text-white/25">·</span>
+                  <span className="text-caption text-white/60">·</span>
                   <span className={`text-caption font-bold px-1.5 py-0.5 rounded-md ${vencBadge(modalAuth.data_vencimento).cls}`}>
                     {fmtData(modalAuth.data_vencimento)} · {vencBadge(modalAuth.data_vencimento).label}
                   </span>
                 </div>
                 {modalAuth.fornecedores?.nome && (
-                  <p className="text-caption text-white/40 mt-1">{modalAuth.fornecedores.nome}</p>
+                  <p className="text-caption text-white/60 mt-1">{modalAuth.fornecedores.nome}</p>
                 )}
               </div>
 
@@ -704,7 +704,7 @@ const AgendaDiaria: React.FC = () => {
               <div>
                 <label className="text-caption font-bold text-white/50 uppercase tracking-wide block mb-1.5">Valor</label>
                 <div className="flex items-center gap-2 bg-white/5 border border-white/20 rounded-xl px-3 py-2.5">
-                  <span className="text-white/40 text-sm font-bold">R$</span>
+                  <span className="text-white/60 text-sm font-bold">R$</span>
                   <input type="number" value={aValor} onChange={e => setAValor(e.target.value)}
                     className="flex-1 bg-transparent text-white text-base font-black focus:outline-none [appearance:textfield]" />
                   <button type="button" onClick={() => setAValor(Number(modalAuth.saldo_restante).toFixed(2))}
@@ -712,7 +712,7 @@ const AgendaDiaria: React.FC = () => {
                     máx
                   </button>
                 </div>
-                <p className="text-caption text-white/30 mt-1">Saldo disponível: {fmtR(Number(modalAuth.saldo_restante))}</p>
+                <p className="text-caption text-white/60 mt-1">Saldo disponível: {fmtR(Number(modalAuth.saldo_restante))}</p>
               </div>
 
               <div>
@@ -761,7 +761,7 @@ const AgendaDiaria: React.FC = () => {
                         ? 'bg-emerald-700/40 text-emerald-300 ring-2 ring-emerald-500/30 border border-emerald-500/30'
                         : 'bg-white/5 text-white/40 hover:bg-white/10 border border-white/10'
                     }`}>
-                    <span className={rTipo === t.id ? 'text-emerald-400' : 'text-white/30'}>{t.icon}</span>
+                    <span className={rTipo === t.id ? 'text-emerald-400' : 'text-white/60'}>{t.icon}</span>
                     {t.label}
                   </button>
                 ))}
@@ -819,7 +819,7 @@ const AgendaDiaria: React.FC = () => {
                 className="w-full bg-white/5 border border-white/20 text-white placeholder-white/25 rounded-xl px-3 py-3 text-sm focus:outline-none focus:border-white/40" />
 
               <div className="flex items-center gap-2 bg-white/5 border border-white/20 rounded-xl px-3 py-2.5">
-                <span className="text-white/40 text-sm font-bold">R$</span>
+                <span className="text-white/60 text-sm font-bold">R$</span>
                 <input type="number" value={mValor} onChange={e => setMValor(e.target.value)}
                   placeholder="0,00"
                   className="flex-1 bg-transparent text-white text-base font-black placeholder-white/25 focus:outline-none [appearance:textfield]" />
@@ -873,7 +873,7 @@ const AgendaDiaria: React.FC = () => {
               <div className="bg-white/5 border border-white/10 rounded-xl p-3 flex justify-between">
                 <div>
                   <p className="text-sm font-bold text-white">{modalLancar.descricao}</p>
-                  <p className="text-caption text-white/40 mt-0.5">{modalLancar.categoria_nome}</p>
+                  <p className="text-caption text-white/60 mt-0.5">{modalLancar.categoria_nome}</p>
                 </div>
                 <p className="text-sm font-black text-white">{fmtR(modalLancar.valor)}</p>
               </div>

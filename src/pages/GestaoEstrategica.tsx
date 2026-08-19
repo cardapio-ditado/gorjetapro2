@@ -137,7 +137,7 @@ export default function GestaoEstrategica() {
             </div>
             <div>
               <h2 className="text-base font-extrabold text-white tracking-tight leading-none">Objetivos</h2>
-              <p className="text-xs text-white/30 mt-0.5">{okrs.length} objetivo{okrs.length!==1?'s':''} ativo{okrs.length!==1?'s':''}</p>
+              <p className="text-xs text-white/60 mt-0.5">{okrs.length} objetivo{okrs.length!==1?'s':''} ativo{okrs.length!==1?'s':''}</p>
             </div>
           </div>
           <button onClick={()=>setShowForm(v=>!v)}
@@ -209,7 +209,7 @@ export default function GestaoEstrategica() {
                       <div className="flex items-start justify-between gap-2">
                         <div>
                           <p className="text-sm font-bold text-white">{okr.titulo}</p>
-                          {okr.descricao&&<p className="text-xs text-white/30 mt-0.5 line-clamp-1">{okr.descricao}</p>}
+                          {okr.descricao&&<p className="text-xs text-white/60 mt-0.5 line-clamp-1">{okr.descricao}</p>}
                         </div>
                         <button onClick={()=>setConfirmDel(confirmDel===okr.id?null:okr.id)}
                           className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg hover:bg-red-500/10 text-white/20 hover:text-red-500 transition-all shrink-0">
@@ -219,8 +219,8 @@ export default function GestaoEstrategica() {
                       <div className="flex items-center gap-2 mt-2 flex-wrap">
                         <span className={`text-caption font-bold px-2 py-0.5 rounded-full ${st.bg} ${st.txt}`}>{st.lbl}</span>
                         <span className="text-caption font-bold px-2 py-0.5 rounded-full bg-white/10 text-white/60">{okr.trimestre}</span>
-                        {okr.responsavel&&<span className="text-caption text-white/30">{okr.responsavel}</span>}
-                        <span className="text-caption text-white/30">{okr.totalKrs} KR{okr.totalKrs!==1?'s':''}</span>
+                        {okr.responsavel&&<span className="text-caption text-white/60">{okr.responsavel}</span>}
+                        <span className="text-caption text-white/60">{okr.totalKrs} KR{okr.totalKrs!==1?'s':''}</span>
                       </div>
                     </div>
                   </div>

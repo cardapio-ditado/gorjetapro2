@@ -250,7 +250,7 @@ const AdvancedInventory: React.FC = () => {
         <div className="relative px-6 lg:px-8 pt-7 pb-0">
           {/* Breadcrumb */}
           <div className="flex items-center gap-1.5 mb-4">
-            <span className="text-white/30 text-xs">Estoque</span>
+            <span className="text-white/60 text-xs">Estoque</span>
             <ChevronRight className="text-white/20" style={{ width: '12px', height: '12px' }} />
             {isAdminOrMaster && (
               <>
@@ -270,7 +270,7 @@ const AdvancedInventory: React.FC = () => {
               </div>
               <div>
                 <h1 className="text-white text-2xl font-bold leading-none tracking-tight">Gestão de Estoque</h1>
-                <p className="text-white/40 text-sm mt-1">Controle completo do estoque e movimentações</p>
+                <p className="text-white/60 text-sm mt-1">Controle completo do estoque e movimentações</p>
               </div>
             </div>
           </div>

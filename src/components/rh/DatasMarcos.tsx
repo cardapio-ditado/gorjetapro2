@@ -215,7 +215,7 @@ export default function DatasMarcos() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
                           <span className={`text-xs px-2 py-0.5 rounded-full border ${cfg.cls}`}>{cfg.label}</span>
-                          <span className="text-white/30 text-xs">dia {m.dia_marco}</span>
+                          <span className="text-white/60 text-xs">dia {m.dia_marco}</span>
                         </div>
                         <p className="text-white text-sm truncate">{m.nome_completo ?? 'Geral'}</p>
                         <p className="text-white/50 text-xs truncate">{m.descricao}</p>
@@ -240,7 +240,7 @@ export default function DatasMarcos() {
             {Object.entries(TIPO_CONFIG).map(([k, v]) => (
               <div key={k} className="flex items-center gap-2">
                 <div className={`w-2 h-2 rounded-full ${v.dot}`} />
-                <span className="text-white/40 text-xs">{v.label}</span>
+                <span className="text-white/60 text-xs">{v.label}</span>
               </div>
             ))}
           </div>

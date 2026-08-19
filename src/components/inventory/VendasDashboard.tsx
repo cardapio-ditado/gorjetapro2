@@ -334,13 +334,13 @@ const VendasDashboard: React.FC = () => {
           {loading ? (
             <div className="p-8 text-center">
               <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-              <p className="text-white/40 mt-2">Carregando...</p>
+              <p className="text-white/60 mt-2">Carregando...</p>
             </div>
           ) : importacoes.length === 0 ? (
             <div className="p-8 text-center">
               <Package className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-              <p className="text-white/40">Nenhuma importação encontrada</p>
-              <p className="text-sm text-white/30 mt-1">
+              <p className="text-white/60">Nenhuma importação encontrada</p>
+              <p className="text-sm text-white/60 mt-1">
                 Clique em "Importar Vendas" para começar
               </p>
             </div>

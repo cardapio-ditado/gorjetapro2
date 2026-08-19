@@ -813,7 +813,7 @@ const GerenciamentoUsuarios: React.FC = () => {
                             </div>
                           </>
                         ) : (
-                          <span className="text-white/30">Nunca acessou</span>
+                          <span className="text-white/60">Nunca acessou</span>
                         )}
                       </div>
                     </td>
@@ -954,7 +954,7 @@ const GerenciamentoUsuarios: React.FC = () => {
                       Gerar
                     </button>
                   </div>
-                  <p className="text-xs text-white/40 mt-1">Copie e repasse à pessoa após salvar.</p>
+                  <p className="text-xs text-white/60 mt-1">Copie e repasse à pessoa após salvar.</p>
                 </div>
               )}
 
@@ -1006,7 +1006,7 @@ const GerenciamentoUsuarios: React.FC = () => {
                     })}
                   </div>
                   {formData.modulosPermitidos.length === 0 && (
-                    <p className="text-xs text-white/40 mt-1">Sem módulo marcado, a pessoa só verá o Dashboard.</p>
+                    <p className="text-xs text-white/60 mt-1">Sem módulo marcado, a pessoa só verá o Dashboard.</p>
                   )}
                 </div>
               )}

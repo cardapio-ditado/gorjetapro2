@@ -309,7 +309,7 @@ function AbaEstoque() {
 
       {/* Sumário */}
       <div className="flex items-center justify-between mb-3 text-sm">
-        <span className="text-white/40">{filtered.length} itens</span>
+        <span className="text-white/60">{filtered.length} itens</span>
         <span className="text-white/60">Valor total em estoque: <span className="text-gold font-semibold">{fmt(totalValor)}</span></span>
       </div>
 
@@ -320,15 +320,15 @@ function AbaEstoque() {
             <thead>
               <tr className="border-b border-white/10">
                 {['Item', 'Cat.', 'Un', 'Entradas', 'Saídas', 'Dev.', 'Saldo', 'Custo Médio', 'Valor Total', ''].map(h => (
-                  <th key={h} className="px-4 py-3 text-left text-xs font-medium text-white/40 uppercase tracking-wide whitespace-nowrap">{h}</th>
+                  <th key={h} className="px-4 py-3 text-left text-xs font-medium text-white/60 uppercase tracking-wide whitespace-nowrap">{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={10} className="px-4 py-8 text-center text-white/30">Carregando...</td></tr>
+                <tr><td colSpan={10} className="px-4 py-8 text-center text-white/60">Carregando...</td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={10} className="px-4 py-8 text-center text-white/30">Nenhum item</td></tr>
+                <tr><td colSpan={10} className="px-4 py-8 text-center text-white/60">Nenhum item</td></tr>
               ) : filtered.map(item => {
                 const neg = (item.saldo_atual ?? 0) < 0;
                 const zero = (item.saldo_atual ?? 0) === 0;
@@ -337,13 +337,13 @@ function AbaEstoque() {
                     className={`border-b border-white/5 last:border-0 transition-colors hover:bg-white/[0.02]
                       ${neg ? 'bg-red-900/10' : ''}`}
                   >
-                    <td className={`px-4 py-3 font-medium ${neg ? 'text-red-300' : zero ? 'text-white/30' : 'text-white'}`}>{item.item}</td>
-                    <td className="px-4 py-3 text-white/40 text-xs">{item.categoria}</td>
+                    <td className={`px-4 py-3 font-medium ${neg ? 'text-red-300' : zero ? 'text-white/60' : 'text-white'}`}>{item.item}</td>
+                    <td className="px-4 py-3 text-white/60 text-xs">{item.categoria}</td>
                     <td className="px-4 py-3 text-white/50">{item.unidade_medida}</td>
                     <td className="px-4 py-3 text-green-400">{fmtQtd(item.total_entradas)}</td>
                     <td className="px-4 py-3 text-red-400">{fmtQtd(item.total_saidas)}</td>
                     <td className="px-4 py-3 text-blue-400">{fmtQtd(item.total_devolvidos)}</td>
-                    <td className={`px-4 py-3 font-semibold ${neg ? 'text-red-400' : zero ? 'text-white/30' : 'text-white'}`}>{fmtQtd(item.saldo_atual)}</td>
+                    <td className={`px-4 py-3 font-semibold ${neg ? 'text-red-400' : zero ? 'text-white/60' : 'text-white'}`}>{fmtQtd(item.saldo_atual)}</td>
                     <td className="px-4 py-3 text-white/50">{fmt(item.custo_medio)}</td>
                     <td className="px-4 py-3 text-gold font-medium">{fmt(item.valor_em_poder)}</td>
                     <td className="px-4 py-3">
@@ -362,27 +362,27 @@ function AbaEstoque() {
       {/* Modal Kardex */}
       {kardexItem && (
         <Modal title={`Kardex — ${kardexItem.item}`} onClose={() => setKardexItem(null)} wide>
-          <p className="text-white/40 text-sm mb-4">Saldo atual: <span className="text-white font-medium">{fmtQtd(kardexItem.saldo_atual)} {kardexItem.unidade_medida}</span></p>
+          <p className="text-white/60 text-sm mb-4">Saldo atual: <span className="text-white font-medium">{fmtQtd(kardexItem.saldo_atual)} {kardexItem.unidade_medida}</span></p>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-white/10">
                   {['Data', 'Tipo', 'Nota', 'Origem', 'Qtd', 'Custo Unit.', 'Valor'].map(h => (
-                    <th key={h} className="px-3 py-2 text-left text-xs font-medium text-white/40 uppercase tracking-wide">{h}</th>
+                    <th key={h} className="px-3 py-2 text-left text-xs font-medium text-white/60 uppercase tracking-wide">{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {kardexLoading ? (
-                  <tr><td colSpan={7} className="py-6 text-center text-white/30">Carregando...</td></tr>
+                  <tr><td colSpan={7} className="py-6 text-center text-white/60">Carregando...</td></tr>
                 ) : kardex.length === 0 ? (
-                  <tr><td colSpan={7} className="py-6 text-center text-white/30">Sem movimentações</td></tr>
+                  <tr><td colSpan={7} className="py-6 text-center text-white/60">Sem movimentações</td></tr>
                 ) : kardex.map(k => (
                   <tr key={k.id} className="border-b border-white/5 last:border-0 hover:bg-white/[0.02]">
                     <td className="px-3 py-2.5 text-white/60 whitespace-nowrap">{fmtDate(k.data_movimento)}</td>
                     <td className="px-3 py-2.5"><BadgeTipo tipo={k.tipo} /></td>
                     <td className="px-3 py-2.5 text-white/50 text-xs">{k.nota ?? '—'}</td>
-                    <td className="px-3 py-2.5 text-white/40 text-xs">{k.origem ?? '—'}</td>
+                    <td className="px-3 py-2.5 text-white/60 text-xs">{k.origem ?? '—'}</td>
                     <td className="px-3 py-2.5 text-white font-medium">{fmtQtd(k.quantidade)}</td>
                     <td className="px-3 py-2.5 text-white/60">{fmt(k.custo_unitario)}</td>
                     <td className="px-3 py-2.5 text-gold">{fmt(k.valor)}</td>
@@ -485,9 +485,9 @@ function AbaNotas() {
           { label: 'Total histórico', value: fmt(totalHist), sub: `${notas.length} notas`, color: 'text-gold' },
         ].map(k => (
           <div key={k.label} className="bg-[#12141f] border border-white/10 rounded-xl p-4">
-            <p className="text-white/40 text-xs mb-1">{k.label}</p>
+            <p className="text-white/60 text-xs mb-1">{k.label}</p>
             <p className={`text-lg font-bold ${k.color}`}>{k.value}</p>
-            <p className="text-white/30 text-xs mt-0.5">{k.sub}</p>
+            <p className="text-white/60 text-xs mt-0.5">{k.sub}</p>
           </div>
         ))}
       </div>
@@ -505,15 +505,15 @@ function AbaNotas() {
             <thead>
               <tr className="border-b border-white/10">
                 {['# Nota', 'Emissão', 'Vencimento', 'Tipo', 'Valor', 'Pago', 'Saldo', 'Status', 'Doc.', 'Ações'].map(h => (
-                  <th key={h} className="px-4 py-3 text-left text-xs font-medium text-white/40 uppercase tracking-wide whitespace-nowrap">{h}</th>
+                  <th key={h} className="px-4 py-3 text-left text-xs font-medium text-white/60 uppercase tracking-wide whitespace-nowrap">{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={10} className="px-4 py-8 text-center text-white/30">Carregando...</td></tr>
+                <tr><td colSpan={10} className="px-4 py-8 text-center text-white/60">Carregando...</td></tr>
               ) : notas.length === 0 ? (
-                <tr><td colSpan={10} className="px-4 py-8 text-center text-white/30">Nenhuma nota registrada</td></tr>
+                <tr><td colSpan={10} className="px-4 py-8 text-center text-white/60">Nenhuma nota registrada</td></tr>
               ) : notas.map(nota => (
                 <tr key={nota.id} className="border-b border-white/5 last:border-0 hover:bg-white/[0.02]">
                   <td className="px-4 py-3 text-white font-medium">{nota.numero_nota || '—'}</td>
@@ -541,7 +541,7 @@ function AbaNotas() {
                         Ver
                       </a>
                     ) : (
-                      <span className="text-white/20 text-xs">—</span>
+                      <span className="text-white/60 text-xs">—</span>
                     )}
                   </td>
                   <td className="px-4 py-3">
@@ -577,7 +577,7 @@ function AbaNotas() {
                 { label: 'Status', value: <BadgeStatus status={notaVer.status_pagamento} diasAtraso={notaVer.dias_atraso} />, cls: '' },
               ].map(k => (
                 <div key={k.label} className="bg-white/5 border border-white/10 rounded-xl p-3">
-                  <p className="text-xs text-white/40 mb-1">{k.label}</p>
+                  <p className="text-xs text-white/60 mb-1">{k.label}</p>
                   <div className={`font-semibold ${k.cls}`}>{k.value}</div>
                 </div>
               ))}
@@ -594,13 +594,13 @@ function AbaNotas() {
                 { label: 'Prazo', value: notaVer.prazo_pagamento || '—' },
               ].map(f => (
                 <div key={f.label}>
-                  <p className="text-xs text-white/40 mb-0.5">{f.label}</p>
+                  <p className="text-xs text-white/60 mb-0.5">{f.label}</p>
                   <p className="text-white font-medium">{f.value}</p>
                 </div>
               ))}
               {notaVer.observacoes && (
                 <div className="col-span-2 md:col-span-3">
-                  <p className="text-xs text-white/40 mb-0.5">Observações</p>
+                  <p className="text-xs text-white/60 mb-0.5">Observações</p>
                   <p className="text-white/70">{notaVer.observacoes}</p>
                 </div>
               )}
@@ -609,7 +609,7 @@ function AbaNotas() {
             {/* Documento anexo */}
             {notaVer.documento_url && (
               <div>
-                <p className="text-xs text-white/40 uppercase tracking-wide mb-2">Documento Anexo</p>
+                <p className="text-xs text-white/60 uppercase tracking-wide mb-2">Documento Anexo</p>
                 {/\.(jpg|jpeg|png|webp|heic|gif)(\?|$)/i.test(notaVer.documento_url) ? (
                   <div className="rounded-xl overflow-hidden border border-white/10 bg-black/30">
                     <img
@@ -646,13 +646,13 @@ function AbaNotas() {
             {/* Items table — only shown if there are items (consignado or normal with items) */}
             {notaItens.length > 0 && (
               <div>
-                <p className="text-xs text-white/40 uppercase tracking-wide mb-2">Itens da Nota</p>
+                <p className="text-xs text-white/60 uppercase tracking-wide mb-2">Itens da Nota</p>
                 <div className="bg-[#12141f] border border-white/10 rounded-xl overflow-hidden">
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-white/10">
                         {['Item', 'Qtd', 'Custo Unit.', 'Total'].map(h => (
-                          <th key={h} className="px-3 py-2.5 text-left text-xs font-medium text-white/40 uppercase tracking-wide">{h}</th>
+                          <th key={h} className="px-3 py-2.5 text-left text-xs font-medium text-white/60 uppercase tracking-wide">{h}</th>
                         ))}
                       </tr>
                     </thead>
@@ -891,7 +891,7 @@ function ModalNovaNota({ onClose, catalogo }: { onClose: () => void; catalogo: C
             <div>
               <label className="block text-xs text-white/50 mb-1.5">Valor da NF *</label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40 text-sm font-medium pointer-events-none">R$</span>
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/60 text-sm font-medium pointer-events-none">R$</span>
                 <input
                   type="number" min="0" step="0.01" placeholder="0,00"
                   className={inputCls + ' pl-9 text-lg font-semibold'}
@@ -911,7 +911,7 @@ function ModalNovaNota({ onClose, catalogo }: { onClose: () => void; catalogo: C
           <div>
             <div className="hidden md:grid grid-cols-[1fr_100px_120px_80px_28px] gap-2 px-1 mb-1">
               {['Produto', 'Qtd', 'R$ Unit.', 'Total', ''].map(h => (
-                <span key={h} className="text-xs text-white/30 font-medium">{h}</span>
+                <span key={h} className="text-xs text-white/60 font-medium">{h}</span>
               ))}
             </div>
             <div className="space-y-2">
@@ -925,13 +925,13 @@ function ModalNovaNota({ onClose, catalogo }: { onClose: () => void; catalogo: C
                         <option value="">Selecionar produto...</option>
                         {catalogo.map(c => <option key={c.item_id} value={c.item_id}>{c.item_nome}</option>)}
                       </select>
-                      {cat?.custo_medio && <p className="text-xs text-white/25 mt-0.5 pl-1">Último: {fmt(cat.custo_medio)}</p>}
+                      {cat?.custo_medio && <p className="text-xs text-white/60 mt-0.5 pl-1">Último: {fmt(cat.custo_medio)}</p>}
                     </div>
                     <div>
                       <input type="number" min="0" step="0.001" placeholder={cat?.unidade_medida ?? 'Qtd'} className={inputCls} value={it.quantidade} onChange={e => updateItem(idx, 'quantidade', e.target.value)} />
                     </div>
                     <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30 text-sm pointer-events-none">R$</span>
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/60 text-sm pointer-events-none">R$</span>
                       <input type="number" min="0" step="0.01" placeholder="0,00" className={inputCls + ' pl-8'} value={it.custo_unitario} onChange={e => updateItem(idx, 'custo_unitario', e.target.value)} />
                     </div>
                     <div className="flex items-center h-[42px]">
@@ -969,7 +969,7 @@ function ModalNovaNota({ onClose, catalogo }: { onClose: () => void; catalogo: C
               <span className="text-xs text-white/50 group-hover:text-white/70 transition-colors font-medium">
                 {tipo === 'normal' ? 'Clique para anexar a foto da NF' : 'Clique para anexar foto, PDF ou documento'}
               </span>
-              <span className="text-xs text-white/25">JPG, PNG, HEIC, PDF — máx. 10MB</span>
+              <span className="text-xs text-white/60">JPG, PNG, HEIC, PDF — máx. 10MB</span>
             </label>
           ) : (
             <div className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/15">
@@ -978,7 +978,7 @@ function ModalNovaNota({ onClose, catalogo }: { onClose: () => void; catalogo: C
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-white text-sm font-medium truncate">{arquivo.name}</p>
-                <p className="text-white/40 text-xs">{(arquivo.size / 1024 / 1024).toFixed(2)} MB</p>
+                <p className="text-white/60 text-xs">{(arquivo.size / 1024 / 1024).toFixed(2)} MB</p>
               </div>
               <button onClick={removeArquivo} className="p-1.5 text-white/30 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors">
                 <X size={14} />
@@ -1131,7 +1131,7 @@ function ModalEditarNota({ nota, onClose }: { nota: Nota; onClose: () => void })
                 </a>
               )}
               <div className="flex items-center justify-between px-3 py-2 border-t border-white/10">
-                <span className="text-xs text-white/40">Documento atual</span>
+                <span className="text-xs text-white/60">Documento atual</span>
                 <button onClick={removerDoc} className="text-xs text-red-400 hover:text-red-300 transition-colors flex items-center gap-1">
                   <X className="w-3 h-3" /> Remover
                 </button>
@@ -1336,8 +1336,8 @@ function AbaConsignados() {
   if (notas.length === 0) return (
     <div className="py-16 text-center">
       <Package className="mx-auto mb-3 text-white/20" size={36} />
-      <p className="text-white/30">Nenhum consignado ativo</p>
-      <p className="text-white/20 text-xs mt-1">Notas do tipo consignado com status "consignado_ativo" aparecerão aqui</p>
+      <p className="text-white/60">Nenhum consignado ativo</p>
+      <p className="text-white/60 text-xs mt-1">Notas do tipo consignado com status "consignado_ativo" aparecerão aqui</p>
     </div>
   );
 
@@ -1355,14 +1355,14 @@ function AbaConsignados() {
               <div className="flex items-center gap-3">
                 <span className="text-blue-400"><Package size={16} /></span>
                 <div>
-                  <p className="text-white font-medium">Nota {nota.numero_nota || <span className="text-white/40 italic">sem número</span>}</p>
-                  <p className="text-white/40 text-xs">Entrada: {fmtDate(nota.data_entrada)} · {nota.itens.length} itens em poder</p>
+                  <p className="text-white font-medium">Nota {nota.numero_nota || <span className="text-white/60 italic">sem número</span>}</p>
+                  <p className="text-white/60 text-xs">Entrada: {fmtDate(nota.data_entrada)} · {nota.itens.length} itens em poder</p>
                 </div>
               </div>
               <div className="flex items-center gap-2 flex-wrap justify-end">
                 <div className="text-right mr-1">
                   <p className="text-gold font-semibold text-sm">{fmt(totalEmPoder)}</p>
-                  <p className="text-white/30 text-xs">em poder</p>
+                  <p className="text-white/60 text-xs">em poder</p>
                 </div>
                 {nota.itens.length > 0 && (
                   <button
@@ -1393,7 +1393,7 @@ function AbaConsignados() {
                     { label: 'Saldo a pagar', val: fmt(nota.saldo_restante), color: nota.saldo_restante > 0 ? 'text-yellow-300' : 'text-green-400' },
                   ].map(k => (
                     <div key={k.label} className="px-4 py-3 bg-[#12141f]">
-                      <p className="text-white/30 text-xs">{k.label}</p>
+                      <p className="text-white/60 text-xs">{k.label}</p>
                       <p className={`font-semibold text-sm ${k.color}`}>{k.val}</p>
                     </div>
                   ))}
@@ -1401,12 +1401,12 @@ function AbaConsignados() {
 
                 {nota.itens.length > 0 && (
                   <div className="overflow-x-auto">
-                    <p className="px-4 pt-3 pb-1 text-xs text-white/30 font-medium uppercase tracking-wide">Itens em poder</p>
+                    <p className="px-4 pt-3 pb-1 text-xs text-white/60 font-medium uppercase tracking-wide">Itens em poder</p>
                     <table className="w-full text-sm">
                       <thead>
                         <tr className="border-b border-white/5">
                           {['Item', 'Un', 'Entrada', 'Usado', 'Dev.', 'Em Poder', 'R$/Un', 'Valor'].map(h => (
-                            <th key={h} className="px-4 py-2 text-left text-xs font-medium text-white/25 uppercase tracking-wide whitespace-nowrap">{h}</th>
+                            <th key={h} className="px-4 py-2 text-left text-xs font-medium text-white/60 uppercase tracking-wide whitespace-nowrap">{h}</th>
                           ))}
                         </tr>
                       </thead>
@@ -1463,13 +1463,13 @@ function RequisicoesDaNota({ notaId, notaValorPago, notaValorTotal }: { notaId: 
   return (
     <>
       <div className="border-t border-white/5 px-4 py-3">
-        <p className="text-xs text-white/25 font-medium uppercase tracking-wide mb-2">Requisições Bar</p>
+        <p className="text-xs text-white/60 font-medium uppercase tracking-wide mb-2">Requisições Bar</p>
         <div className="space-y-1.5">
           {reqs.map(r => (
             <div key={r.id} className="flex items-center justify-between bg-white/[0.03] rounded-lg px-3 py-2">
               <div className="flex items-center gap-3">
                 <span className="text-gold font-mono font-bold text-xs">{r.numero}</span>
-                <span className="text-white/40 text-xs">{fmtDate(r.data_requisicao)}</span>
+                <span className="text-white/60 text-xs">{fmtDate(r.data_requisicao)}</span>
                 <span className={`px-2 py-0.5 rounded-full text-caption font-medium ${r.status === 'paga' ? 'bg-green-500/15 text-green-400' : 'bg-yellow-500/15 text-yellow-400'}`}>
                   {r.status === 'paga' ? 'Paga' : 'Em aberto'}
                 </span>
@@ -1560,8 +1560,8 @@ function ModalPagarRequisicao({
           <p className="text-gold font-bold font-mono">{req.numero}</p>
           <p className="text-white/60 text-xs mt-0.5">Requisição de {fmtDate(req.data_requisicao)}</p>
           <div className="flex gap-4 mt-2 pt-2 border-t border-white/10">
-            <div><p className="text-white/30 text-xs">Valor da requisição</p><p className="text-white font-semibold">{fmt(req.valor_total)}</p></div>
-            {req.observacoes && <div><p className="text-white/30 text-xs">Obs.</p><p className="text-white/70">{req.observacoes}</p></div>}
+            <div><p className="text-white/60 text-xs">Valor da requisição</p><p className="text-white font-semibold">{fmt(req.valor_total)}</p></div>
+            {req.observacoes && <div><p className="text-white/60 text-xs">Obs.</p><p className="text-white/70">{req.observacoes}</p></div>}
           </div>
         </div>
 
@@ -1812,7 +1812,7 @@ function ModalRetirarParaBar({ nota, onClose }: { nota: ConsignadoNota; onClose:
 
         <div className="bg-white/5 rounded-xl p-3 text-sm">
           <p className="text-white/50">Nota: <span className="text-white font-medium">{nota.numero_nota || 'sem número'}</span></p>
-          <p className="text-white/40 text-xs mt-0.5">Entrada: {fmtDate(nota.data_entrada)}</p>
+          <p className="text-white/60 text-xs mt-0.5">Entrada: {fmtDate(nota.data_entrada)}</p>
         </div>
 
         <div className="overflow-x-auto">
@@ -1820,10 +1820,10 @@ function ModalRetirarParaBar({ nota, onClose }: { nota: ConsignadoNota; onClose:
             <thead>
               <tr className="border-b border-white/10">
                 <th className="w-8 py-2" />
-                <th className="px-3 py-2 text-left text-xs text-white/30 uppercase tracking-wide">Item</th>
-                <th className="px-3 py-2 text-center text-xs text-white/30 uppercase tracking-wide">Disponível</th>
-                <th className="px-3 py-2 text-center text-xs text-white/30 uppercase tracking-wide">Qtd a retirar</th>
-                <th className="px-3 py-2 text-right text-xs text-white/30 uppercase tracking-wide">Subtotal</th>
+                <th className="px-3 py-2 text-left text-xs text-white/60 uppercase tracking-wide">Item</th>
+                <th className="px-3 py-2 text-center text-xs text-white/60 uppercase tracking-wide">Disponível</th>
+                <th className="px-3 py-2 text-center text-xs text-white/60 uppercase tracking-wide">Qtd a retirar</th>
+                <th className="px-3 py-2 text-right text-xs text-white/60 uppercase tracking-wide">Subtotal</th>
               </tr>
             </thead>
             <tbody>
@@ -1860,7 +1860,7 @@ function ModalRetirarParaBar({ nota, onClose }: { nota: ConsignadoNota; onClose:
                       />
                     </td>
                     <td className="px-3 py-3 text-right">
-                      {s?.checked && q > 0 ? <span className="text-gold font-semibold">{fmt(sub)}</span> : <span className="text-white/20">—</span>}
+                      {s?.checked && q > 0 ? <span className="text-gold font-semibold">{fmt(sub)}</span> : <span className="text-white/60">—</span>}
                     </td>
                   </tr>
                 );
@@ -1959,18 +1959,18 @@ function ModalPagamentoConsignado({ nota, onClose }: { nota: ConsignadoNota; onC
     <Modal title="Registrar Pagamento — Consignado" onClose={onClose}>
       <div className="space-y-4">
         <div className="bg-white/5 rounded-xl p-3 text-sm space-y-1">
-          <p className="text-white font-medium">Nota {nota.numero_nota || <span className="text-white/40 italic">sem número</span>}</p>
+          <p className="text-white font-medium">Nota {nota.numero_nota || <span className="text-white/60 italic">sem número</span>}</p>
           <p className="text-white/50">Entrada: <span className="text-white">{fmtDate(nota.data_entrada)}</span></p>
           <div className="flex gap-4 mt-2 pt-2 border-t border-white/10">
-            <div><p className="text-white/30 text-xs">Total nota</p><p className="text-white font-medium">{fmt(nota.valor_total)}</p></div>
-            <div><p className="text-white/30 text-xs">Já pago</p><p className="text-green-400 font-medium">{fmt(nota.valor_pago)}</p></div>
-            <div><p className="text-white/30 text-xs">Saldo restante</p><p className="text-yellow-300 font-bold">{fmt(nota.saldo_restante)}</p></div>
+            <div><p className="text-white/60 text-xs">Total nota</p><p className="text-white font-medium">{fmt(nota.valor_total)}</p></div>
+            <div><p className="text-white/60 text-xs">Já pago</p><p className="text-green-400 font-medium">{fmt(nota.valor_pago)}</p></div>
+            <div><p className="text-white/60 text-xs">Saldo restante</p><p className="text-yellow-300 font-bold">{fmt(nota.saldo_restante)}</p></div>
           </div>
         </div>
 
         {requisicoes.length > 0 && (
           <div>
-            <label className="block text-xs text-white/50 mb-1.5">Vincular a uma Requisição Bar <span className="text-white/25">(opcional)</span></label>
+            <label className="block text-xs text-white/50 mb-1.5">Vincular a uma Requisição Bar <span className="text-white/60">(opcional)</span></label>
             <select className={selectCls} value={requisicaoId} onChange={e => setRequisicaoId(e.target.value)}>
               <option value="">— Pagamento geral (sem vincular) —</option>
               {requisicoes.map(r => (
@@ -1985,7 +1985,7 @@ function ModalPagamentoConsignado({ nota, onClose }: { nota: ConsignadoNota; onC
           <input type="date" className={inputCls} value={dataPgto} onChange={e => setDataPgto(e.target.value)} />
         </div>
         <div>
-          <label className="block text-xs text-white/50 mb-1.5">Valor <span className="text-white/25">(parcial permitido)</span></label>
+          <label className="block text-xs text-white/50 mb-1.5">Valor <span className="text-white/60">(parcial permitido)</span></label>
           <input type="number" step="0.01" min="0.01" className={inputCls} value={valor} onChange={e => setValor(e.target.value)} />
         </div>
         <div>
@@ -2256,7 +2256,7 @@ function AbaPagamentos() {
         {periodo === 'personalizado' && (
           <div className="flex items-center gap-2">
             <input type="date" className={inputCls + ' w-auto'} value={dataInicio} onChange={e => setDataInicio(e.target.value)} />
-            <span className="text-white/30 text-sm">até</span>
+            <span className="text-white/60 text-sm">até</span>
             <input type="date" className={inputCls + ' w-auto'} value={dataFim} onChange={e => setDataFim(e.target.value)} />
           </div>
         )}
@@ -2271,11 +2271,11 @@ function AbaPagamentos() {
       {/* KPI total */}
       <div className="bg-[#12141f] border border-white/10 rounded-xl p-4 mb-4 flex items-center justify-between">
         <div>
-          <p className="text-white/40 text-xs">Total pago no período</p>
+          <p className="text-white/60 text-xs">Total pago no período</p>
           <p className="text-gold text-2xl font-bold mt-0.5">{fmt(totalPeriodo)}</p>
         </div>
         <div className="text-right">
-          <p className="text-white/40 text-xs">{pagamentos.length} pagamentos</p>
+          <p className="text-white/60 text-xs">{pagamentos.length} pagamentos</p>
         </div>
       </div>
 
@@ -2285,30 +2285,30 @@ function AbaPagamentos() {
             <thead>
               <tr className="border-b border-white/10">
                 {['Data', 'Nota vinculada', 'Tipo nota', 'Forma', 'Valor', 'Observações', ''].map(h => (
-                  <th key={h} className="px-4 py-3 text-left text-xs font-medium text-white/40 uppercase tracking-wide whitespace-nowrap">{h}</th>
+                  <th key={h} className="px-4 py-3 text-left text-xs font-medium text-white/60 uppercase tracking-wide whitespace-nowrap">{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={7} className="py-8 text-center text-white/30">Carregando...</td></tr>
+                <tr><td colSpan={7} className="py-8 text-center text-white/60">Carregando...</td></tr>
               ) : pagamentos.length === 0 ? (
-                <tr><td colSpan={7} className="py-8 text-center text-white/30">Nenhum pagamento no período</td></tr>
+                <tr><td colSpan={7} className="py-8 text-center text-white/60">Nenhum pagamento no período</td></tr>
               ) : pagamentos.map(p => (
                 <tr key={p.id} className="border-b border-white/5 last:border-0 hover:bg-white/[0.02]">
                   <td className="px-4 py-3 text-white/70 whitespace-nowrap">{fmtDate(p.data_pagamento)}</td>
                   <td className="px-4 py-3">
                     {p.nota_id
-                      ? <span className="text-white font-medium">{(p as any).numero_nota || <span className="text-white/40 italic">s/ número</span>}</span>
-                      : <span className="text-white/25 italic text-xs">Acerto geral</span>
+                      ? <span className="text-white font-medium">{(p as any).numero_nota || <span className="text-white/60 italic">s/ número</span>}</span>
+                      : <span className="text-white/60 italic text-xs">Acerto geral</span>
                     }
                   </td>
                   <td className="px-4 py-3">
                     {(p as any).tipo_nota
-                      ? <span className={`px-2 py-0.5 rounded-full text-xs ${(p as any).tipo_nota === 'consignado' ? 'text-blue-300 bg-blue-900/30' : 'text-white/40 bg-white/5'}`}>
+                      ? <span className={`px-2 py-0.5 rounded-full text-xs ${(p as any).tipo_nota === 'consignado' ? 'text-blue-300 bg-blue-900/30' : 'text-white/60 bg-white/5'}`}>
                           {(p as any).tipo_nota === 'consignado' ? 'Consignado' : 'Normal'}
                         </span>
-                      : <span className="text-white/20 text-xs">—</span>
+                      : <span className="text-white/60 text-xs">—</span>
                     }
                   </td>
                   <td className="px-4 py-3">
@@ -2317,7 +2317,7 @@ function AbaPagamentos() {
                     </span>
                   </td>
                   <td className="px-4 py-3 text-gold font-semibold">{fmt(Number(p.valor))}</td>
-                  <td className="px-4 py-3 text-white/40 text-xs max-w-xs truncate">{p.observacoes || '—'}</td>
+                  <td className="px-4 py-3 text-white/60 text-xs max-w-xs truncate">{p.observacoes || '—'}</td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-1">
                       <button onClick={() => setEditarPgto(p)} className="p-1.5 text-white/30 hover:text-blue-400 transition-colors rounded-lg hover:bg-white/5" title="Editar"><Pencil size={12} /></button>
@@ -2465,7 +2465,7 @@ function ModalNovoPagamento({ onClose }: { onClose: () => void }) {
     <Modal title="Registrar Pagamento — De Ville" onClose={onClose}>
       <div className="space-y-4">
         <div>
-          <label className="block text-xs text-white/50 mb-1.5">Nota <span className="text-white/25">(deixe em branco para acerto geral)</span></label>
+          <label className="block text-xs text-white/50 mb-1.5">Nota <span className="text-white/60">(deixe em branco para acerto geral)</span></label>
           <select className={selectCls} value={notaId} onChange={e => setNotaId(e.target.value)}>
             <option value="">— Acerto geral / sem nota vinculada —</option>
             {notas.map(n => (
@@ -2478,9 +2478,9 @@ function ModalNovoPagamento({ onClose }: { onClose: () => void }) {
 
         {notaSel && (
           <div className="bg-white/5 rounded-xl p-3 text-xs grid grid-cols-3 gap-3">
-            <div><p className="text-white/30">Total</p><p className="text-white font-medium">{fmt(Number(notaSel.valor_total))}</p></div>
-            <div><p className="text-white/30">Pago</p><p className="text-green-400 font-medium">{fmt(Number(notaSel.valor_pago))}</p></div>
-            <div><p className="text-white/30">Saldo</p><p className="text-yellow-300 font-bold">{fmt(Number(notaSel.saldo_restante))}</p></div>
+            <div><p className="text-white/60">Total</p><p className="text-white font-medium">{fmt(Number(notaSel.valor_total))}</p></div>
+            <div><p className="text-white/60">Pago</p><p className="text-green-400 font-medium">{fmt(Number(notaSel.valor_pago))}</p></div>
+            <div><p className="text-white/60">Saldo</p><p className="text-yellow-300 font-bold">{fmt(Number(notaSel.saldo_restante))}</p></div>
           </div>
         )}
 
@@ -2491,7 +2491,7 @@ function ModalNovoPagamento({ onClose }: { onClose: () => void }) {
         <div>
           <label className="block text-xs text-white/50 mb-1.5">
             Valor
-            {notaSel && <span className="text-white/25 ml-1">(parcial permitido — máx. {fmt(Number(notaSel.saldo_restante))})</span>}
+            {notaSel && <span className="text-white/60 ml-1">(parcial permitido — máx. {fmt(Number(notaSel.saldo_restante))})</span>}
           </label>
           <input type="number" step="0.01" min="0.01" placeholder="0,00" className={inputCls} value={valor} onChange={e => setValor(e.target.value)} />
         </div>
@@ -2605,7 +2605,7 @@ function AbaCatalogo() {
 
   return (
     <div>
-      <p className="text-white/40 text-sm mb-4">Defina quais itens do cadastro geral o De Ville vende. Somente itens do catálogo aparecem nos modais de nota.</p>
+      <p className="text-white/60 text-sm mb-4">Defina quais itens do cadastro geral o De Ville vende. Somente itens do catálogo aparecem nos modais de nota.</p>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Todos os itens */}
         <div className="bg-[#12141f] border border-white/10 rounded-xl overflow-hidden flex flex-col">
@@ -2629,7 +2629,7 @@ function AbaCatalogo() {
                   <input type="checkbox" checked={selecionados.includes(item.id)} onChange={() => toggleSel(item.id)} className="w-3.5 h-3.5 rounded" />
                   <div className="flex-1 min-w-0">
                     <p className="text-white text-sm truncate">{item.nome}</p>
-                    <p className="text-white/30 text-xs">{item.categoria} · {item.unidade_medida}</p>
+                    <p className="text-white/60 text-xs">{item.categoria} · {item.unidade_medida}</p>
                   </div>
                 </label>
               ))
@@ -2662,7 +2662,7 @@ function AbaCatalogo() {
                   <CheckCircle size={13} className="text-green-400 flex-shrink-0" />
                   <div className="flex-1 min-w-0">
                     <p className="text-white text-sm truncate">{item.item_nome}</p>
-                    <p className="text-white/30 text-xs">{item.categoria} · {item.unidade_medida}</p>
+                    <p className="text-white/60 text-xs">{item.categoria} · {item.unidade_medida}</p>
                   </div>
                   {item.saldo_atual > 0 && <span className="text-xs text-gold flex-shrink-0">{fmtQtd(item.saldo_atual)}</span>}
                 </label>
@@ -2736,7 +2736,7 @@ const ControleDeville: React.FC = () => {
               </div>
               <div>
                 <h1 className="text-white text-2xl font-bold leading-none tracking-tight">Controle De Ville</h1>
-                <p className="text-white/40 text-sm mt-1">DE VILLE DISTRIBUIDORA DE BEBIDAS · Estoque isolado</p>
+                <p className="text-white/60 text-sm mt-1">DE VILLE DISTRIBUIDORA DE BEBIDAS · Estoque isolado</p>
               </div>
             </div>
             <div className="flex items-center gap-2 mt-1">

@@ -414,7 +414,7 @@ function OcorrenciasFinanceiras() {
                   <thead className="bg-white/5 border-b border-white/10">
                     <tr>
                       {['Colaborador','Data','Tipo','Descrição','Valor / Dias','Status','Ações'].map(h => (
-                        <th key={h} className="px-4 py-3 text-left text-xs font-medium text-white/40 uppercase">{h}</th>
+                        <th key={h} className="px-4 py-3 text-left text-xs font-medium text-white/60 uppercase">{h}</th>
                       ))}
                     </tr>
                   </thead>
@@ -522,7 +522,7 @@ function OcorrenciasFinanceiras() {
                     {isConsumo(form.tipo_ocorrencia) ? 'Valor do Consumo (R$)' : 'Valor do Vale (R$)'}
                   </label>
                   <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40 text-sm font-medium">R$</span>
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/60 text-sm font-medium">R$</span>
                     <input
                       type="number" step="0.01" min="0"
                       value={form.valor_vale || ''}
@@ -932,11 +932,11 @@ function RelatorioFolha({ colaboradores }: { colaboradores: any[] }) {
           ) : (
             <>
               <div>
-                <label className="block text-xs text-white/40 mb-1">Início</label>
+                <label className="block text-xs text-white/60 mb-1">Início</label>
                 <input type="date" value={dataInicio} onChange={e => setDataInicio(e.target.value)} className={inp} />
               </div>
               <div>
-                <label className="block text-xs text-white/40 mb-1">Fim</label>
+                <label className="block text-xs text-white/60 mb-1">Fim</label>
                 <input type="date" value={dataFim} onChange={e => setDataFim(e.target.value)} className={inp} />
               </div>
             </>
@@ -1221,12 +1221,12 @@ function OcorrenciasDisciplinares() {
                     <div className="flex items-center gap-3 flex-wrap mb-1">
                       <span className={`text-xs font-bold px-2 py-0.5 rounded-full border ${c.cls}`}>{c.label}</span>
                       <span className="font-semibold text-white">{r.colaboradores?.nome_completo ?? '—'}</span>
-                      <span className="text-sm text-white/40">{dayjs(r.data_ocorrencia).format('DD/MM/YYYY')}</span>
+                      <span className="text-sm text-white/60">{dayjs(r.data_ocorrencia).format('DD/MM/YYYY')}</span>
                       {r.recibado && <span className="text-xs bg-green-500/20 text-green-400 px-2 py-0.5 rounded-full">Recibado</span>}
                     </div>
                     <p className="text-white/80 text-sm"><span className="font-medium text-white/60">Motivo:</span> {r.motivo}</p>
                     {r.descricao && <p className="text-white/60 text-sm mt-1">{r.descricao}</p>}
-                    {r.registrado_por && <p className="text-xs text-white/40 mt-1">Registrado por: {r.registrado_por}</p>}
+                    {r.registrado_por && <p className="text-xs text-white/60 mt-1">Registrado por: {r.registrado_por}</p>}
                   </div>
                   <div className="flex gap-1 shrink-0">
                     <button onClick={() => setImpressao(r)} className="p-1.5 text-white/40 hover:text-white hover:bg-white/10 rounded-lg" title="Imprimir">

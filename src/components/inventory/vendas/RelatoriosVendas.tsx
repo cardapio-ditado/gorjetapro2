@@ -163,7 +163,7 @@ const RelatoriosVendas: React.FC<Props> = ({ onClose }) => {
                           <div>
                             <p className="text-sm text-white/50 mb-1">{k.label}</p>
                             <p className={`text-3xl font-bold ${k.color}`}>{k.value}</p>
-                            <p className="text-xs text-white/30 mt-1">{k.sub}</p>
+                            <p className="text-xs text-white/60 mt-1">{k.sub}</p>
                           </div>
                           <Icon className={`w-6 h-6 ${k.color} opacity-60`} />
                         </div>
@@ -242,7 +242,7 @@ const RelatoriosVendas: React.FC<Props> = ({ onClose }) => {
                   </h3>
                   <div className="space-y-2.5 max-h-[220px] overflow-y-auto">
                     {topProdutos.length === 0 ? (
-                      <p className="text-white/30 text-sm text-center py-8">Sem dados no período</p>
+                      <p className="text-white/60 text-sm text-center py-8">Sem dados no período</p>
                     ) : topProdutos.map((produto, i) => (
                       <div key={i} className="flex items-center gap-3">
                         <div className="flex-1 min-w-0">

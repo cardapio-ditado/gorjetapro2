@@ -926,7 +926,7 @@ const Musicians: React.FC = () => {
         <div className="relative px-6 lg:px-8 pt-7 pb-0">
           {/* Breadcrumb */}
           <div className="flex items-center gap-1.5 mb-4">
-            <span className="text-white/30 text-xs">Músicos</span>
+            <span className="text-white/60 text-xs">Músicos</span>
             <ChevronRight className="text-white/20" style={{width:'12px',height:'12px'}} />
             <span className="text-white/60 text-xs font-medium">{viewMode === 'table' ? 'Listagem' : 'Calendário'}</span>
           </div>
@@ -944,7 +944,7 @@ const Musicians: React.FC = () => {
                 <h1 className="text-white text-2xl font-bold leading-none tracking-tight">
                   Cadastro de Músicos
                 </h1>
-                <p className="text-white/40 text-sm mt-1">Gerencie apresentações e pagamentos de músicos</p>
+                <p className="text-white/60 text-sm mt-1">Gerencie apresentações e pagamentos de músicos</p>
               </div>
             </div>
 
@@ -1074,7 +1074,7 @@ const Musicians: React.FC = () => {
                   <p className="text-3xl font-bold text-white">
                     {indicadores.apresentacoes_mes}
                   </p>
-                  <p className="text-xs text-white/40 mt-1">
+                  <p className="text-xs text-white/60 mt-1">
                     Total histórico: {indicadores.total_apresentacoes}
                   </p>
                 </div>
@@ -1091,7 +1091,7 @@ const Musicians: React.FC = () => {
                   <p className="text-3xl font-bold text-gold">
                     {formatCurrency(indicadores.valor_total_mes)}
                   </p>
-                  <p className="text-xs text-white/40 mt-1">
+                  <p className="text-xs text-white/60 mt-1">
                     Pago: {formatCurrency(indicadores.valor_pago_mes)}
                   </p>
                 </div>
@@ -1108,7 +1108,7 @@ const Musicians: React.FC = () => {
                   <p className="text-3xl font-bold text-amber-400">
                     {formatCurrency(indicadores.valor_pendente_mes)}
                   </p>
-                  <p className="text-xs text-white/40 mt-1">
+                  <p className="text-xs text-white/60 mt-1">
                     {indicadores.musicos_ativos} músicos ativos
                   </p>
                 </div>
@@ -1489,7 +1489,7 @@ const Musicians: React.FC = () => {
                       className="pl-10 w-full rounded-md bg-[#12141f]/5 border-white/20 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                     />
                   </div>
-                  <p className="text-xs text-white/40 mt-1">
+                  <p className="text-xs text-white/60 mt-1">
                     Ex: Extensão de tempo, repertório especial
                   </p>
                 </div>

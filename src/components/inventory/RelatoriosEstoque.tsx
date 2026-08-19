@@ -579,7 +579,7 @@ const RelatoriosEstoque: React.FC = () => {
               <div className="text-center py-12">
                 <Activity className="w-16 h-16 text-white/30 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-white mb-2">Nenhuma movimentação encontrada</h3>
-                <p className="text-white/40">
+                <p className="text-white/60">
                   Não há movimentações de estoque para o período selecionado.
                 </p>
               </div>
@@ -633,11 +633,11 @@ const RelatoriosEstoque: React.FC = () => {
                       <table className="w-full">
                         <thead>
                           <tr className="text-left bg-white/5 border-b">
-                            <th className="px-4 py-3 text-xs font-medium text-white/40 uppercase">Período</th>
-                            <th className="px-4 py-3 text-xs font-medium text-white/40 uppercase">Receita</th>
-                            <th className="px-4 py-3 text-xs font-medium text-white/40 uppercase">CMV</th>
-                            <th className="px-4 py-3 text-xs font-medium text-white/40 uppercase">Margem Bruta</th>
-                            <th className="px-4 py-3 text-xs font-medium text-white/40 uppercase">% CMV</th>
+                            <th className="px-4 py-3 text-xs font-medium text-white/60 uppercase">Período</th>
+                            <th className="px-4 py-3 text-xs font-medium text-white/60 uppercase">Receita</th>
+                            <th className="px-4 py-3 text-xs font-medium text-white/60 uppercase">CMV</th>
+                            <th className="px-4 py-3 text-xs font-medium text-white/60 uppercase">Margem Bruta</th>
+                            <th className="px-4 py-3 text-xs font-medium text-white/60 uppercase">% CMV</th>
                           </tr>
                         </thead>
                         <tbody className="bg-[#12141f] divide-y divide-white/5">
@@ -668,7 +668,7 @@ const RelatoriosEstoque: React.FC = () => {
               <div className="text-center py-12">
                 <DollarSign className="w-16 h-16 text-white/30 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-white mb-2">Nenhum dado de CMV encontrado</h3>
-                <p className="text-white/40">
+                <p className="text-white/60">
                   Não há saídas de estoque (vendas) para calcular o CMV no período selecionado.
                 </p>
               </div>
@@ -739,11 +739,11 @@ const RelatoriosEstoque: React.FC = () => {
                       <table className="w-full">
                         <thead>
                           <tr className="text-left bg-white/5 border-b">
-                            <th className="px-4 py-3 text-xs font-medium text-white/40 uppercase">Estoque</th>
-                            <th className="px-4 py-3 text-xs font-medium text-white/40 uppercase">Qtd Itens</th>
-                            <th className="px-4 py-3 text-xs font-medium text-white/40 uppercase">Valor Total</th>
-                            <th className="px-4 py-3 text-xs font-medium text-white/40 uppercase">% do Total</th>
-                            <th className="px-4 py-3 text-xs font-medium text-white/40 uppercase">Valor Médio/Item</th>
+                            <th className="px-4 py-3 text-xs font-medium text-white/60 uppercase">Estoque</th>
+                            <th className="px-4 py-3 text-xs font-medium text-white/60 uppercase">Qtd Itens</th>
+                            <th className="px-4 py-3 text-xs font-medium text-white/60 uppercase">Valor Total</th>
+                            <th className="px-4 py-3 text-xs font-medium text-white/60 uppercase">% do Total</th>
+                            <th className="px-4 py-3 text-xs font-medium text-white/60 uppercase">Valor Médio/Item</th>
                           </tr>
                         </thead>
                         <tbody className="bg-[#12141f] divide-y divide-white/5">
@@ -772,7 +772,7 @@ const RelatoriosEstoque: React.FC = () => {
               <div className="text-center py-12">
                 <Package className="w-16 h-16 text-white/30 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-white mb-2">Nenhum dado de valor encontrado</h3>
-                <p className="text-white/40">
+                <p className="text-white/60">
                   Não há itens em estoque para análise de valor.
                 </p>
               </div>
@@ -793,12 +793,12 @@ const RelatoriosEstoque: React.FC = () => {
                     <table className="w-full">
                       <thead>
                         <tr className="text-left bg-white/5 border-b">
-                          <th className="px-4 py-3 text-xs font-medium text-white/40 uppercase">Pos.</th>
-                          <th className="px-4 py-3 text-xs font-medium text-white/40 uppercase">Item</th>
-                          <th className="px-4 py-3 text-xs font-medium text-white/40 uppercase">Tipo</th>
-                          <th className="px-4 py-3 text-xs font-medium text-white/40 uppercase">Movimentações</th>
-                          <th className="px-4 py-3 text-xs font-medium text-white/40 uppercase">Quantidade Total</th>
-                          <th className="px-4 py-3 text-xs font-medium text-white/40 uppercase">Valor Total</th>
+                          <th className="px-4 py-3 text-xs font-medium text-white/60 uppercase">Pos.</th>
+                          <th className="px-4 py-3 text-xs font-medium text-white/60 uppercase">Item</th>
+                          <th className="px-4 py-3 text-xs font-medium text-white/60 uppercase">Tipo</th>
+                          <th className="px-4 py-3 text-xs font-medium text-white/60 uppercase">Movimentações</th>
+                          <th className="px-4 py-3 text-xs font-medium text-white/60 uppercase">Quantidade Total</th>
+                          <th className="px-4 py-3 text-xs font-medium text-white/60 uppercase">Valor Total</th>
                         </tr>
                       </thead>
                       <tbody className="bg-[#12141f] divide-y divide-white/5">
@@ -850,7 +850,7 @@ const RelatoriosEstoque: React.FC = () => {
               <div className="text-center py-12">
                 <Target className="w-16 h-16 text-white/30 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-white mb-2">Nenhum dado de giro encontrado</h3>
-                <p className="text-white/40">
+                <p className="text-white/60">
                   Não há movimentações suficientes para análise de giro de estoque.
                 </p>
               </div>

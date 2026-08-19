@@ -429,11 +429,11 @@ export default function RequisicaoPublica() {
                     <table className="min-w-full divide-y divide-white/10">
                       <thead className="bg-[#1a1d2e]">
                         <tr>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-white/40 uppercase">Item</th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-white/40 uppercase">Unidade</th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-white/40 uppercase">Quantidade</th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-white/40 uppercase">Observação</th>
-                          <th className="px-4 py-3 text-center text-xs font-medium text-white/40 uppercase">Ações</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-white/60 uppercase">Item</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-white/60 uppercase">Unidade</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-white/60 uppercase">Quantidade</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-white/60 uppercase">Observação</th>
+                          <th className="px-4 py-3 text-center text-xs font-medium text-white/60 uppercase">Ações</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-white/10 bg-[#12141f]">
@@ -486,7 +486,7 @@ export default function RequisicaoPublica() {
           </button>
 
           {itens.length === 0 && (
-            <p className="text-sm text-white/40 text-center">
+            <p className="text-sm text-white/60 text-center">
               Adicione pelo menos um item para enviar a requisição
             </p>
           )}

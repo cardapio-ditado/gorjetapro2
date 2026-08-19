@@ -486,7 +486,7 @@ export default function BancoTalentos() {
         ) : filteredTalentos.length === 0 ? (
           <div className="text-center py-12">
             <Users className="w-14 h-14 text-white/20 mx-auto mb-3" />
-            <p className="text-white/40 text-sm">
+            <p className="text-white/60 text-sm">
               {categoriaTab === 'banco_curriculos' ? 'Nenhum currículo cadastrado.' : 'Nenhum talento encontrado.'}
             </p>
           </div>
@@ -524,7 +524,7 @@ export default function BancoTalentos() {
                         {talento.areas_interesse.slice(0, 3).map((a, i) => (
                           <span key={i} className="px-1.5 py-0.5 bg-blue-500/10 text-blue-400 rounded text-xs">{a}</span>
                         ))}
-                        {talento.areas_interesse.length > 3 && <span className="text-white/30 text-xs">+{talento.areas_interesse.length - 3}</span>}
+                        {talento.areas_interesse.length > 3 && <span className="text-white/60 text-xs">+{talento.areas_interesse.length - 3}</span>}
                       </div>
                     </div>
                   )}
@@ -608,13 +608,13 @@ export default function BancoTalentos() {
                   )}
                 </button>
                 {extractingAI && (
-                  <p className="text-xs text-white/30 text-center mt-1">Aguarde, o Claude está analisando o arquivo...</p>
+                  <p className="text-xs text-white/60 text-center mt-1">Aguarde, o Claude está analisando o arquivo...</p>
                 )}
               </div>
 
               <div className="relative">
                 <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-white/10" /></div>
-                <div className="relative flex justify-center"><span className="bg-[#12141f] px-3 text-xs text-white/30">ou preencha manualmente</span></div>
+                <div className="relative flex justify-center"><span className="bg-[#12141f] px-3 text-xs text-white/60">ou preencha manualmente</span></div>
               </div>
 
               {renderFormFields(false)}
@@ -685,7 +685,7 @@ export default function BancoTalentos() {
                       <FileText className="w-4 h-4 text-white/40 shrink-0" />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm text-white truncate">{doc.nome}</p>
-                        <p className="text-xs text-white/30">{(doc.tamanho / 1024).toFixed(1)} KB · {new Date(doc.adicionado_em).toLocaleDateString('pt-BR')}</p>
+                        <p className="text-xs text-white/60">{(doc.tamanho / 1024).toFixed(1)} KB · {new Date(doc.adicionado_em).toLocaleDateString('pt-BR')}</p>
                       </div>
                       <button onClick={() => downloadDoc(doc)} className="p-1.5 text-white/40 hover:text-white transition-colors"><Download className="w-4 h-4" /></button>
                       <button onClick={() => excluirDoc(doc)} className="p-1.5 text-red-400/60 hover:text-red-400 transition-colors"><Trash2 className="w-4 h-4" /></button>

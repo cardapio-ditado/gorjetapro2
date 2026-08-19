@@ -225,7 +225,7 @@ const ItemMappingModal: React.FC<ItemMappingModalProps> = ({
         <div className="p-6 border-b border-white/10 flex justify-between items-center">
           <div>
             <h3 className="text-xl font-semibold text-white">Mapear Itens da Nota</h3>
-            <p className="text-sm text-white/40 mt-1">
+            <p className="text-sm text-white/60 mt-1">
               Associe os itens da nota com itens existentes no estoque ou crie novos
             </p>
           </div>

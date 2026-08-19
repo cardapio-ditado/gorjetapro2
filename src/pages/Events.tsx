@@ -352,7 +352,7 @@ const Events: React.FC = () => {
         <div>
           <label className="block text-sm font-medium text-white/80 mb-1">Valor Total</label>
           <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40 text-sm pointer-events-none">R$</span>
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/60 text-sm pointer-events-none">R$</span>
             <input type="number" step="0.01" min="0" value={formEventoFechado.valor_total}
               onChange={e => setFormEventoFechado({ ...formEventoFechado, valor_total: parseFloat(e.target.value) || 0 })}
               className={inputCls + ' pl-9'} />
@@ -471,7 +471,7 @@ const Events: React.FC = () => {
         <div>
           <label className="block text-sm font-medium text-white/80 mb-1">Valor</label>
           <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40 text-sm pointer-events-none">R$</span>
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/60 text-sm pointer-events-none">R$</span>
             <input type="number" step="0.01" min="0" value={formReservaEspecial.valor_cobrado}
               onChange={e => setFormReservaEspecial({ ...formReservaEspecial, valor_cobrado: parseFloat(e.target.value) || 0 })}
               className={inputCls + ' pl-9'} />
@@ -709,7 +709,7 @@ const Events: React.FC = () => {
         <thead>
           <tr className="text-left bg-white/5 border-b border-white/10">
             {['Evento','Cliente','Data/Hora','Pessoas','Valor','Status','Checklist','Ações'].map(h => (
-              <th key={h} className="px-6 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">{h}</th>
+              <th key={h} className="px-6 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">{h}</th>
             ))}
           </tr>
         </thead>
@@ -747,7 +747,7 @@ const Events: React.FC = () => {
         <thead>
           <tr className="text-left bg-white/5 border-b border-white/10">
             {['Cliente','Data/Hora','Local','Pessoas','Valor','Status','Ações'].map(h => (
-              <th key={h} className="px-6 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">{h}</th>
+              <th key={h} className="px-6 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">{h}</th>
             ))}
           </tr>
         </thead>
@@ -777,7 +777,7 @@ const Events: React.FC = () => {
         <thead>
           <tr className="text-left bg-white/5 border-b border-white/10">
             {['Cliente','Data/Hora','Pessoas','Local','Observações','Ações'].map(h => (
-              <th key={h} className="px-6 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">{h}</th>
+              <th key={h} className="px-6 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">{h}</th>
             ))}
           </tr>
         </thead>
@@ -788,7 +788,7 @@ const Events: React.FC = () => {
               <td className="px-6 py-4"><div className="text-sm text-white">{dayjs(r.data_reserva).format('DD/MM/YYYY')}</div><div className="text-sm text-white/40">{r.horario}</div></td>
               <td className="px-6 py-4 text-sm text-white">{r.numero_pessoas}</td>
               <td className="px-6 py-4 text-sm text-white">{r.local_bar}</td>
-              <td className="px-6 py-4 text-sm text-white/40">{r.observacoes || '-'}</td>
+              <td className="px-6 py-4 text-sm text-white/60">{r.observacoes || '-'}</td>
               <td className="px-6 py-4">
                 <div className="flex gap-2">
                   <button onClick={() => openForm(r)} className="text-blue-400 hover:text-blue-300"><Edit className="w-4 h-4" /></button>
@@ -901,7 +901,7 @@ const Events: React.FC = () => {
                     <div className="text-center py-12">
                       <Calendar className="w-16 h-16 text-white/20 mx-auto mb-4" />
                       <h3 className="text-lg font-medium text-white mb-2">Nenhum registro encontrado</h3>
-                      <p className="text-white/40 text-sm">Ajuste os filtros ou crie um novo registro.</p>
+                      <p className="text-white/60 text-sm">Ajuste os filtros ou crie um novo registro.</p>
                     </div>
                   )}
                 </Tab.Panel>
@@ -955,7 +955,7 @@ const Events: React.FC = () => {
                 <label className="block text-sm text-white/60 mb-1">Data de Vencimento</label>
                 <input type="date" value={dataVencimentoConta} onChange={e => setDataVencimentoConta(e.target.value)}
                   className={inputCls} />
-                <p className="text-xs text-white/30 mt-1">Deixe em branco para usar a data do evento</p>
+                <p className="text-xs text-white/60 mt-1">Deixe em branco para usar a data do evento</p>
               </div>
               {error && <div className="mb-4 p-3 bg-red-500/20 text-red-400 rounded-lg text-sm">{error}</div>}
               <div className="flex gap-3 justify-end">

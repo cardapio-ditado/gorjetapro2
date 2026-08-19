@@ -335,7 +335,7 @@ export default function MapaMesasAdmin() {
                 <Move size={12} /> Arraste · 2× clique para editar · <CopyPlus size={12} /> duplicar
               </p>
             )}
-            {salvandoPos && <span className="text-xs text-white/30">Salvando posição...</span>}
+            {salvandoPos && <span className="text-xs text-white/60">Salvando posição...</span>}
           </div>
 
           <div
@@ -498,9 +498,9 @@ export default function MapaMesasAdmin() {
           </div>
 
           <div className="flex items-center gap-6 mt-3 px-1">
-            <div className="flex items-center gap-2"><div className="w-3 h-3 rounded bg-green-500/50 border border-green-500/70" /><span className="text-xs text-white/40">Disponível</span></div>
-            <div className="flex items-center gap-2"><div className="w-3 h-3 rounded bg-red-500/50 border border-red-500/70" /><span className="text-xs text-white/40">Reservada</span></div>
-            <p className="text-xs text-white/30 ml-auto">{mesas.filter(m => isMesaDisponivel(m)).length}/{mesas.length} disponíveis · {fmtData(data)} {horario}</p>
+            <div className="flex items-center gap-2"><div className="w-3 h-3 rounded bg-green-500/50 border border-green-500/70" /><span className="text-xs text-white/60">Disponível</span></div>
+            <div className="flex items-center gap-2"><div className="w-3 h-3 rounded bg-red-500/50 border border-red-500/70" /><span className="text-xs text-white/60">Reservada</span></div>
+            <p className="text-xs text-white/60 ml-auto">{mesas.filter(m => isMesaDisponivel(m)).length}/{mesas.length} disponíveis · {fmtData(data)} {horario}</p>
           </div>
         </div>
       )}
@@ -542,7 +542,7 @@ export default function MapaMesasAdmin() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <p className="font-semibold text-white/90">{g.nome_cliente}</p>
-                    <span className={`text-caption px-2 py-0.5 rounded-full border ${STATUS_COLOR[g.status] || 'bg-white/10 text-white/40 border-white/10'}`}>{g.status}</span>
+                    <span className={`text-caption px-2 py-0.5 rounded-full border ${STATUS_COLOR[g.status] || 'bg-white/10 text-white/60 border-white/10'}`}>{g.status}</span>
                     {g.mesas.length > 1 && (
                       <span className="text-caption px-2 py-0.5 rounded-full border bg-amber-500/10 text-amber-400 border-amber-500/30">
                         {g.mesas.length} mesas
@@ -556,7 +556,7 @@ export default function MapaMesasAdmin() {
                         {m.nome}
                       </span>
                     ))}
-                    <span className="text-caption text-white/30">· {g.horario} · {g.numero_pessoas} pax</span>
+                    <span className="text-caption text-white/60">· {g.horario} · {g.numero_pessoas} pax</span>
                   </div>
                 </div>
                 {g.telefone && (
@@ -589,7 +589,7 @@ export default function MapaMesasAdmin() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold text-white/90 text-sm">{m.nome || `Mesa ${m.numero}`}</p>
-                  <p className="text-xs text-white/40">{SECAO_LABEL[m.secao] || m.secao} · {m.capacidade}p · {m.formato}</p>
+                  <p className="text-xs text-white/60">{SECAO_LABEL[m.secao] || m.secao} · {m.capacidade}p · {m.formato}</p>
                 </div>
                 <div className="flex gap-1">
                   <button onClick={() => { setEditandoMesa(m); setNovaMesa(false); setFormMesa({ numero: m.numero, nome: m.nome || '', capacidade: m.capacidade, posicao_x: m.posicao_x, posicao_y: m.posicao_y, secao: m.secao, formato: m.formato, rotacao: m.rotacao || 0 }); }}
@@ -615,29 +615,29 @@ export default function MapaMesasAdmin() {
               <h3 className="font-bold text-white">Reservar {novaReserva.mesa.nome}</h3>
               <button onClick={() => setNovaReserva({ mesa: null, aberto: false })} className="text-white/40 hover:text-white/70"><X size={18}/></button>
             </div>
-            <p className="text-xs text-white/40">{fmtData(data)} · {SECAO_LABEL[novaReserva.mesa.secao]} · até {novaReserva.mesa.capacidade} pessoas</p>
+            <p className="text-xs text-white/60">{fmtData(data)} · {SECAO_LABEL[novaReserva.mesa.secao]} · até {novaReserva.mesa.capacidade} pessoas</p>
 
             <div>
-              <label className="text-xs text-white/40 uppercase tracking-wide block mb-1">Horário</label>
+              <label className="text-xs text-white/60 uppercase tracking-wide block mb-1">Horário</label>
               <select value={form.horario} onChange={e => setForm(f => ({ ...f, horario: e.target.value }))}
                 className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:ring-1 focus:ring-wine">
                 {HORARIOS.map(h => <option key={h} value={h} style={{ background: '#12141f' }}>{h}</option>)}
               </select>
             </div>
             <div>
-              <label className="text-xs text-white/40 uppercase tracking-wide block mb-1">Nome do cliente *</label>
+              <label className="text-xs text-white/60 uppercase tracking-wide block mb-1">Nome do cliente *</label>
               <input type="text" value={form.nome_cliente} onChange={e => setForm(f => ({ ...f, nome_cliente: e.target.value }))}
                 placeholder="Nome completo"
                 className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/25 text-sm focus:outline-none focus:ring-1 focus:ring-wine" />
             </div>
             <div>
-              <label className="text-xs text-white/40 uppercase tracking-wide block mb-1">WhatsApp</label>
+              <label className="text-xs text-white/60 uppercase tracking-wide block mb-1">WhatsApp</label>
               <input type="tel" value={form.telefone} onChange={e => setForm(f => ({ ...f, telefone: e.target.value }))}
                 placeholder="(11) 99999-0000"
                 className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/25 text-sm focus:outline-none focus:ring-1 focus:ring-wine" />
             </div>
             <div>
-              <label className="text-xs text-white/40 uppercase tracking-wide block mb-1">Pessoas</label>
+              <label className="text-xs text-white/60 uppercase tracking-wide block mb-1">Pessoas</label>
               <div className="flex gap-1.5 flex-wrap">
                 {Array.from({ length: novaReserva.mesa.capacidade }, (_, i) => i + 1).map(n => (
                   <button key={n} onClick={() => setForm(f => ({ ...f, numero_pessoas: n }))}
@@ -673,10 +673,10 @@ export default function MapaMesasAdmin() {
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3 text-xs">
-                <div className="p-2 rounded-xl bg-white/5"><p className="text-white/40 mb-0.5">Mesa</p><p className="text-white font-medium">{reservaSelecionada.mesas?.nome}</p></div>
-                <div className="p-2 rounded-xl bg-white/5"><p className="text-white/40 mb-0.5">Horário</p><p className="text-white font-medium">{reservaSelecionada.horario}</p></div>
-                <div className="p-2 rounded-xl bg-white/5"><p className="text-white/40 mb-0.5">Pessoas</p><p className="text-white font-medium">{reservaSelecionada.numero_pessoas} pax</p></div>
-                <div className="p-2 rounded-xl bg-white/5"><p className="text-white/40 mb-0.5">Criado</p><p className="text-white font-medium">{new Date(reservaSelecionada.criado_em).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</p></div>
+                <div className="p-2 rounded-xl bg-white/5"><p className="text-white/60 mb-0.5">Mesa</p><p className="text-white font-medium">{reservaSelecionada.mesas?.nome}</p></div>
+                <div className="p-2 rounded-xl bg-white/5"><p className="text-white/60 mb-0.5">Horário</p><p className="text-white font-medium">{reservaSelecionada.horario}</p></div>
+                <div className="p-2 rounded-xl bg-white/5"><p className="text-white/60 mb-0.5">Pessoas</p><p className="text-white font-medium">{reservaSelecionada.numero_pessoas} pax</p></div>
+                <div className="p-2 rounded-xl bg-white/5"><p className="text-white/60 mb-0.5">Criado</p><p className="text-white font-medium">{new Date(reservaSelecionada.criado_em).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</p></div>
               </div>
               {reservaSelecionada.telefone && (
                 <a href={`https://wa.me/55${reservaSelecionada.telefone.replace(/\D/g,'')}`} target="_blank" rel="noopener noreferrer"
@@ -686,7 +686,7 @@ export default function MapaMesasAdmin() {
               )}
               {reservaSelecionada.observacoes && (
                 <div className="p-3 rounded-xl bg-white/5 text-xs text-white/60">
-                  <p className="text-white/30 mb-1">Observação</p>
+                  <p className="text-white/60 mb-1">Observação</p>
                   {reservaSelecionada.observacoes}
                 </div>
               )}
@@ -712,22 +712,22 @@ export default function MapaMesasAdmin() {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-xs text-white/40 block mb-1">Número *</label>
+                <label className="text-xs text-white/60 block mb-1">Número *</label>
                 <input type="text" value={formMesa.numero} onChange={e => setFormMesa(f => ({ ...f, numero: e.target.value }))}
                   placeholder="01" className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:ring-1 focus:ring-wine" />
               </div>
               <div>
-                <label className="text-xs text-white/40 block mb-1">Nome</label>
+                <label className="text-xs text-white/60 block mb-1">Nome</label>
                 <input type="text" value={formMesa.nome} onChange={e => setFormMesa(f => ({ ...f, nome: e.target.value }))}
                   placeholder="Mesa 01" className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:ring-1 focus:ring-wine" />
               </div>
               <div>
-                <label className="text-xs text-white/40 block mb-1">Capacidade</label>
+                <label className="text-xs text-white/60 block mb-1">Capacidade</label>
                 <input type="number" min={1} max={30} value={formMesa.capacidade} onChange={e => setFormMesa(f => ({ ...f, capacidade: +e.target.value }))}
                   className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:ring-1 focus:ring-wine" />
               </div>
               <div>
-                <label className="text-xs text-white/40 block mb-1">Seção</label>
+                <label className="text-xs text-white/60 block mb-1">Seção</label>
                 <select value={formMesa.secao} onChange={e => setFormMesa(f => ({ ...f, secao: e.target.value }))}
                   className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:ring-1 focus:ring-wine">
                   <option value="bar_chopp" style={{ background: '#12141f' }}>Bar de Chopp</option>
@@ -736,7 +736,7 @@ export default function MapaMesasAdmin() {
                 </select>
               </div>
               <div>
-                <label className="text-xs text-white/40 block mb-1">Formato</label>
+                <label className="text-xs text-white/60 block mb-1">Formato</label>
                 <select value={formMesa.formato} onChange={e => setFormMesa(f => ({ ...f, formato: e.target.value as Mesa['formato'] }))}
                   className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:ring-1 focus:ring-wine">
                   <option value="round" style={{ background: '#12141f' }}>Redonda</option>
@@ -745,7 +745,7 @@ export default function MapaMesasAdmin() {
                 </select>
               </div>
               <div>
-                <label className="text-xs text-white/40 block mb-1">Rotação</label>
+                <label className="text-xs text-white/60 block mb-1">Rotação</label>
                 <div className="flex gap-2">
                   {[0, 90, 180, 270].map(deg => (
                     <button key={deg} type="button"
@@ -760,12 +760,12 @@ export default function MapaMesasAdmin() {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-xs text-white/40 block mb-1">Posição X (0-100%)</label>
+                <label className="text-xs text-white/60 block mb-1">Posição X (0-100%)</label>
                 <input type="number" min={0} max={100} value={formMesa.posicao_x} onChange={e => setFormMesa(f => ({ ...f, posicao_x: +e.target.value }))}
                   className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:ring-1 focus:ring-wine" />
               </div>
               <div>
-                <label className="text-xs text-white/40 block mb-1">Posição Y (0-100%)</label>
+                <label className="text-xs text-white/60 block mb-1">Posição Y (0-100%)</label>
                 <input type="number" min={0} max={100} value={formMesa.posicao_y} onChange={e => setFormMesa(f => ({ ...f, posicao_y: +e.target.value }))}
                   className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:ring-1 focus:ring-wine" />
               </div>

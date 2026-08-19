@@ -192,7 +192,7 @@ const Staff: React.FC = () => {
       default:
         return (
           <div className="text-center py-8">
-            <p className="text-white/40">Módulo em desenvolvimento</p>
+            <p className="text-white/60">Módulo em desenvolvimento</p>
           </div>
         );
     }

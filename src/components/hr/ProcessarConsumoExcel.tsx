@@ -440,14 +440,14 @@ const ProcessarConsumoExcel: React.FC<ProcessarConsumoExcelProps> = ({ onClose }
                   {arquivo ? (
                     <>
                       <p className="text-lg font-semibold text-white/80">{arquivo.name}</p>
-                      <p className="text-sm text-white/40 mt-2">Clique para escolher outro arquivo</p>
+                      <p className="text-sm text-white/60 mt-2">Clique para escolher outro arquivo</p>
                     </>
                   ) : (
                     <>
                       <p className="text-lg font-semibold text-white/80">
                         Clique para selecionar o arquivo Excel
                       </p>
-                      <p className="text-sm text-white/40 mt-2">Arquivos .xlsx ou .xls</p>
+                      <p className="text-sm text-white/60 mt-2">Arquivos .xlsx ou .xls</p>
                     </>
                   )}
                 </label>
@@ -571,7 +571,7 @@ const ProcessarConsumoExcel: React.FC<ProcessarConsumoExcelProps> = ({ onClose }
                         </>
                       ) : (
                         <div className="p-4 text-center">
-                          <p className="text-sm text-white/40 mb-2">
+                          <p className="text-sm text-white/60 mb-2">
                             Nenhum colaborador encontrado
                             {buscaNome[item.funcionario] && (
                               <span className="block text-xs mt-1">

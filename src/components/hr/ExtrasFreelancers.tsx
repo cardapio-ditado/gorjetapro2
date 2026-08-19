@@ -635,28 +635,28 @@ const ExtrasFreelancers: React.FC = () => {
             <table className="w-full">
               <thead>
                 <tr className="text-left bg-white/5 border-b border-white/10">
-                  <th className="px-6 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">
                     Pessoa
                   </th>
-                  <th className="px-6 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">
                     Função
                   </th>
-                  <th className="px-6 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">
                     Data Trabalho
                   </th>
-                  <th className="px-6 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">
                     Horário
                   </th>
-                  <th className="px-6 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">
                     Setor
                   </th>
-                  <th className="px-6 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">
                     Valor Diária
                   </th>
-                  <th className="px-6 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">
                     Status Pagamento
                   </th>
-                  <th className="px-6 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">
                     Ações
                   </th>
                 </tr>
@@ -768,7 +768,7 @@ const ExtrasFreelancers: React.FC = () => {
             <div className="text-center py-12">
               <Users className="w-16 h-16 text-white/30 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-white mb-2">Nenhum extra/freelancer encontrado</h3>
-              <p className="text-white/40">
+              <p className="text-white/60">
                 {searchTerm || statusFilter !== 'all' || setorFilter !== 'all'
                   ? 'Nenhum registro corresponde aos filtros aplicados.'
                   : 'Nenhum extra/freelancer cadastrado para este período.'}
@@ -852,7 +852,7 @@ const ExtrasFreelancers: React.FC = () => {
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <span className="text-white/40 sm:text-sm">R$</span>
+                    <span className="text-white/60 sm:text-sm">R$</span>
                   </div>
                   <input
                     type="number"

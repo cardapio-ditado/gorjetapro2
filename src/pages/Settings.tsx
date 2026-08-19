@@ -215,7 +215,7 @@ const Settings: React.FC = () => {
                     <button className="px-4 py-2 bg-wine text-white rounded-md hover:bg-[#5a1720] transition-colors duration-200 mb-2">
                       Alterar foto
                     </button>
-                    <p className="text-sm text-white/40">
+                    <p className="text-sm text-white/60">
                       JPG, GIF ou PNG. Tamanho máximo de 2MB.
                     </p>
                   </div>
@@ -358,7 +358,7 @@ const Settings: React.FC = () => {
                       <div className="p-3 bg-[#12141f]/5 rounded-md border border-white/10 flex justify-between items-center">
                         <div>
                           <p className="font-medium text-white/90">MacBook Pro - São Paulo</p>
-                          <p className="text-xs text-white/40">Último acesso: Hoje, 15:45</p>
+                          <p className="text-xs text-white/60">Último acesso: Hoje, 15:45</p>
                         </div>
                         <button className="text-sm text-red-500 hover:text-red-400">
                           Desconectar
@@ -367,7 +367,7 @@ const Settings: React.FC = () => {
                       <div className="p-3 bg-[#12141f]/5 rounded-md border border-white/10 flex justify-between items-center">
                         <div>
                           <p className="font-medium text-white/90">iPhone 14 - São Paulo</p>
-                          <p className="text-xs text-white/40">Último acesso: Ontem, 19:30</p>
+                          <p className="text-xs text-white/60">Último acesso: Ontem, 19:30</p>
                         </div>
                         <button className="text-sm text-red-500 hover:text-red-400">
                           Desconectar
@@ -390,7 +390,7 @@ const Settings: React.FC = () => {
                       <div className="flex items-center justify-between py-2 border-b border-white/5">
                         <div>
                           <p className="font-medium text-white/90">Notificações financeiras</p>
-                          <p className="text-xs text-white/40">Receba alertas sobre pagamentos e relatórios financeiros</p>
+                          <p className="text-xs text-white/60">Receba alertas sobre pagamentos e relatórios financeiros</p>
                         </div>
                         <label className="relative inline-flex items-center cursor-pointer">
                           <input type="checkbox" value="" className="sr-only peer" checked />
@@ -400,7 +400,7 @@ const Settings: React.FC = () => {
                       <div className="flex items-center justify-between py-2 border-b border-white/5">
                         <div>
                           <p className="font-medium text-white/90">Alertas de estoque</p>
-                          <p className="text-xs text-white/40">Receba alertas quando produtos estiverem abaixo do estoque mínimo</p>
+                          <p className="text-xs text-white/60">Receba alertas quando produtos estiverem abaixo do estoque mínimo</p>
                         </div>
                         <label className="relative inline-flex items-center cursor-pointer">
                           <input type="checkbox" value="" className="sr-only peer" checked />
@@ -410,7 +410,7 @@ const Settings: React.FC = () => {
                       <div className="flex items-center justify-between py-2 border-b border-white/5">
                         <div>
                           <p className="font-medium text-white/90">Escalas de funcionários</p>
-                          <p className="text-xs text-white/40">Receba notificações sobre mudanças nas escalas</p>
+                          <p className="text-xs text-white/60">Receba notificações sobre mudanças nas escalas</p>
                         </div>
                         <label className="relative inline-flex items-center cursor-pointer">
                           <input type="checkbox" value="" className="sr-only peer" />
@@ -426,7 +426,7 @@ const Settings: React.FC = () => {
                       <div className="flex items-center justify-between py-2 border-b border-white/5">
                         <div>
                           <p className="font-medium text-white/90">Eventos próximos</p>
-                          <p className="text-xs text-white/40">Receba lembretes de eventos que acontecerão em breve</p>
+                          <p className="text-xs text-white/60">Receba lembretes de eventos que acontecerão em breve</p>
                         </div>
                         <label className="relative inline-flex items-center cursor-pointer">
                           <input type="checkbox" value="" className="sr-only peer" checked />
@@ -436,7 +436,7 @@ const Settings: React.FC = () => {
                       <div className="flex items-center justify-between py-2 border-b border-white/5">
                         <div>
                           <p className="font-medium text-white/90">Novas reservas</p>
-                          <p className="text-xs text-white/40">Receba notificações quando houver novas reservas</p>
+                          <p className="text-xs text-white/60">Receba notificações quando houver novas reservas</p>
                         </div>
                         <label className="relative inline-flex items-center cursor-pointer">
                           <input type="checkbox" value="" className="sr-only peer" checked />
@@ -529,7 +529,7 @@ const Settings: React.FC = () => {
                         )}
                       </button>
                     </div>
-                    <p className="text-xs text-white/40 mt-2">
+                    <p className="text-xs text-white/60 mt-2">
                       Obtenha sua chave em{' '}
                       <a
                         href="https://platform.openai.com/api-keys"
@@ -556,7 +556,7 @@ const Settings: React.FC = () => {
                       <option value="gpt-4o">GPT-4o (Melhor performance)</option>
                       <option value="gpt-3.5-turbo">GPT-3.5 Turbo (Mais barato)</option>
                     </select>
-                    <p className="text-xs text-white/40 mt-2">
+                    <p className="text-xs text-white/60 mt-2">
                       <strong>Recomendado:</strong> GPT-4o Mini oferece ótimo custo-benefício
                     </p>
                   </div>
@@ -597,7 +597,7 @@ const Settings: React.FC = () => {
                   {activeTab === 'global' && 'Configurações Gerais'}
                 </h3>
                 <div className="py-8 flex items-center justify-center">
-                  <p className="text-white/40">Conteúdo em desenvolvimento</p>
+                  <p className="text-white/60">Conteúdo em desenvolvimento</p>
                 </div>
               </div>
             )}

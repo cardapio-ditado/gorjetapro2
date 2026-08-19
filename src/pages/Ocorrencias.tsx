@@ -506,7 +506,7 @@ const CadernoDia: React.FC = () => {
                 <div className="flex items-center gap-2 min-w-0">
                   <Chip className={getSetorColor(p.setor)}>{getSetorLabel(p.setor)}</Chip>
                   <span className="text-white/80 text-xs truncate">{p.titulo}</span>
-                  <span className="text-white/30 text-xs flex-shrink-0">{p.dias_em_aberto}d</span>
+                  <span className="text-white/60 text-xs flex-shrink-0">{p.dias_em_aberto}d</span>
                 </div>
                 <button
                   onClick={() => resolverPendencia(p.id)}
@@ -647,7 +647,7 @@ const CadernoDia: React.FC = () => {
                   <div key={i} className="flex items-center justify-between px-5 py-3 gap-3">
                     <div className="flex items-center gap-3 min-w-0">
                       <span className="text-white text-sm font-medium">{f.nome}</span>
-                      {f.tipo && <span className="text-white/40 text-xs">· {f.tipo}</span>}
+                      {f.tipo && <span className="text-white/60 text-xs">· {f.tipo}</span>}
                       <span className={`text-xs px-1.5 py-0.5 rounded-full border ${f.justificada ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30' : 'bg-red-500/15 text-red-300 border-red-500/30'}`}>
                         {f.justificada ? 'Justificada' : 'Não justificada'}
                       </span>
@@ -792,10 +792,10 @@ const HistoricoOcorrencias: React.FC = () => {
                   {o.gerado_por_ia && <span className="text-caption px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-400 border border-amber-500/25">IA</span>}
                 </div>
                 <p className="text-white text-sm font-medium truncate">{o.titulo}</p>
-                {o.descricao && <p className="text-white/40 text-xs truncate mt-0.5">{o.descricao}</p>}
+                {o.descricao && <p className="text-white/60 text-xs truncate mt-0.5">{o.descricao}</p>}
               </div>
               <div className="flex-shrink-0 text-right">
-                <p className="text-white/30 text-xs">{dayjs(o.data_ocorrencia).format('DD/MM/YY')}</p>
+                <p className="text-white/60 text-xs">{dayjs(o.data_ocorrencia).format('DD/MM/YY')}</p>
                 {o.diario_id && (
                   <button
                     onClick={() => verDiario(o.diario_id!)}
@@ -853,7 +853,7 @@ const Ocorrencias: React.FC = () => {
             <BookOpen size={22} style={{ color: 'var(--wine)' }} />
             Diário de Bordo
           </h1>
-          <p className="text-white/40 text-sm mt-1">Registro do dia com organização por IA</p>
+          <p className="text-white/60 text-sm mt-1">Registro do dia com organização por IA</p>
         </div>
       </div>
 

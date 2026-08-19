@@ -781,11 +781,11 @@ const SolicitacaoDetalhes: React.FC<SolicitacaoDetalhesProps> = ({
                 <div className="flex justify-between items-center">
                   <h4 className="text-sm font-bold text-white/60 uppercase tracking-wide">
                     Fotos e Arquivos
-                    {anexos.length > 0 && <span className="ml-2 text-white/30 font-normal normal-case tracking-normal">({anexos.length})</span>}
+                    {anexos.length > 0 && <span className="ml-2 text-white/60 font-normal normal-case tracking-normal">({anexos.length})</span>}
                   </h4>
                   <label className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer transition-all ${
                     uploadingFile
-                      ? 'bg-white/5 text-white/30 cursor-not-allowed'
+                      ? 'bg-white/5 text-white/60 cursor-not-allowed'
                       : 'bg-blue-600/20 text-blue-400 hover:bg-blue-600/30'
                   }`}>
                     <Upload className="w-3.5 h-3.5" />
@@ -809,7 +809,7 @@ const SolicitacaoDetalhes: React.FC<SolicitacaoDetalhesProps> = ({
                 {/* Grid de fotos */}
                 {anexos.some(a => a.tipo_arquivo?.startsWith('image/')) && (
                   <div>
-                    <p className="text-xs font-semibold text-white/30 uppercase tracking-wide mb-2">Fotos</p>
+                    <p className="text-xs font-semibold text-white/60 uppercase tracking-wide mb-2">Fotos</p>
                     <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                       {anexos.filter(a => a.tipo_arquivo?.startsWith('image/')).map((anexo) => (
                         <AnexoFoto key={anexo.id} anexo={anexo} onDownload={handleDownloadAnexo} onDelete={handleDeleteAnexo} />
@@ -821,7 +821,7 @@ const SolicitacaoDetalhes: React.FC<SolicitacaoDetalhesProps> = ({
                 {/* Lista de arquivos não-imagem */}
                 {anexos.some(a => !a.tipo_arquivo?.startsWith('image/')) && (
                   <div>
-                    <p className="text-xs font-semibold text-white/30 uppercase tracking-wide mb-2">Arquivos</p>
+                    <p className="text-xs font-semibold text-white/60 uppercase tracking-wide mb-2">Arquivos</p>
                     <div className="space-y-2">
                       {anexos.filter(a => !a.tipo_arquivo?.startsWith('image/')).map((anexo) => (
                         <div key={anexo.id} className="flex items-center justify-between p-3 border border-white/10 rounded-xl hover:bg-white/5 transition-all">
@@ -855,8 +855,8 @@ const SolicitacaoDetalhes: React.FC<SolicitacaoDetalhesProps> = ({
                 {anexos.length === 0 && (
                   <div className="text-center py-12 border-2 border-dashed border-white/8 rounded-xl">
                     <FileText className="w-10 h-10 text-white/15 mx-auto mb-3" />
-                    <p className="text-sm font-medium text-white/30">Nenhum arquivo ainda</p>
-                    <p className="text-xs text-white/20 mt-1">Clique em "Adicionar" para enviar fotos ou documentos</p>
+                    <p className="text-sm font-medium text-white/60">Nenhum arquivo ainda</p>
+                    <p className="text-xs text-white/60 mt-1">Clique em "Adicionar" para enviar fotos ou documentos</p>
                   </div>
                 )}
               </div>
@@ -946,7 +946,7 @@ const SolicitacaoDetalhes: React.FC<SolicitacaoDetalhesProps> = ({
                   <div className="text-center py-12">
                     <Clock className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                     <p className="text-white/50 text-lg mb-2">Nenhum histórico disponível</p>
-                    <p className="text-white/30 text-sm">
+                    <p className="text-white/60 text-sm">
                       As alterações nesta solicitação aparecerão aqui
                     </p>
                   </div>

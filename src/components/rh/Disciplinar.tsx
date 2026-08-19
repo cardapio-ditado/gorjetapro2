@@ -199,8 +199,8 @@ export default function Disciplinar() {
                 </div>
                 <div className="flex items-center gap-3">
                   <div className="text-right">
-                    <p className="text-white/40 text-xs">{dayjs(r.data_ocorrencia).format('DD/MM/YYYY')}</p>
-                    {r.registrado_por && <p className="text-white/30 text-xs">por {r.registrado_por}</p>}
+                    <p className="text-white/60 text-xs">{dayjs(r.data_ocorrencia).format('DD/MM/YYYY')}</p>
+                    {r.registrado_por && <p className="text-white/60 text-xs">por {r.registrado_por}</p>}
                   </div>
                   {['advertencia_escrita', 'suspensao', 'justa_causa'].includes(r.tipo) && (
                     <button onClick={() => imprimir(r)} className="p-2 hover:bg-white/10 rounded-lg text-white/40 hover:text-white transition-all">

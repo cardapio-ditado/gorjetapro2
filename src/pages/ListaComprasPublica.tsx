@@ -98,7 +98,7 @@ export default function ListaComprasPublica() {
     <div className="min-h-screen flex items-center justify-center" style={{ background: '#080c14' }}>
       <div className="flex flex-col items-center gap-4">
         <RefreshCw size={28} className="animate-spin text-white/40" />
-        <p className="text-white/40 text-sm">Carregando lista...</p>
+        <p className="text-white/60 text-sm">Carregando lista...</p>
       </div>
     </div>
   );
@@ -161,7 +161,7 @@ export default function ListaComprasPublica() {
                 <div className="flex items-center gap-2">
                   {isExp ? <ChevronDown size={15} className="text-white/30" /> : <ChevronRight size={15} className="text-white/30" />}
                   <span className="font-semibold text-white/90 text-sm">{cat}</span>
-                  <span className="text-xs text-white/30">{itensCat.length} itens</span>
+                  <span className="text-xs text-white/60">{itensCat.length} itens</span>
                 </div>
                 {comprados > 0 && (
                   <span className="text-xs text-green-400 font-medium">{comprados}/{itensCat.length} ✓</span>
@@ -185,7 +185,7 @@ export default function ListaComprasPublica() {
                         }
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className={`text-sm font-semibold ${item.comprado ? 'line-through text-white/30' : 'text-white/90'}`}>
+                        <p className={`text-sm font-semibold ${item.comprado ? 'line-through text-white/60' : 'text-white/90'}`}>
                           {item.nome_item}
                         </p>
                         <div className="flex items-center gap-2 mt-1 flex-wrap">
@@ -215,7 +215,7 @@ export default function ListaComprasPublica() {
           </div>
         )}
 
-        <p className="text-center text-xs text-white/20 py-4">
+        <p className="text-center text-xs text-white/60 py-4">
           Gerado em {new Date(lista.criado_em).toLocaleString('pt-BR')} · Toque para marcar como comprado
         </p>
       </div>

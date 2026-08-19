@@ -194,18 +194,18 @@ export default function HistoricoCarreira() {
                             <div>
                               <div className="flex items-center gap-2">
                                 <p className={`font-medium text-sm ${cfg.cor}`}>{e.titulo || cfg.label}</p>
-                                <span className="text-white/30 text-xs">{dayjs(e.data_evento).format('DD/MM/YYYY')}</span>
+                                <span className="text-white/60 text-xs">{dayjs(e.data_evento).format('DD/MM/YYYY')}</span>
                               </div>
                               {e.descricao && <p className="text-white/60 text-sm mt-1">{e.descricao}</p>}
                               <div className="flex gap-4 mt-2 flex-wrap">
                                 {(e.funcao_anterior || e.funcao_nova) && (
-                                  <p className="text-white/40 text-xs">
+                                  <p className="text-white/60 text-xs">
                                     {e.funcao_anterior && <span className="line-through mr-1">{e.funcao_anterior}</span>}
                                     {e.funcao_nova && <span className="text-white/60">{e.funcao_nova}</span>}
                                   </p>
                                 )}
                                 {(e.salario_anterior || e.salario_novo) && (
-                                  <p className="text-white/40 text-xs">
+                                  <p className="text-white/60 text-xs">
                                     {e.salario_anterior && <span className="mr-1">{fmt(e.salario_anterior)}</span>}
                                     {e.salario_novo && <span className="text-emerald-400">{fmt(e.salario_novo)}</span>}
                                     {e.percentual_reajuste !== null && e.percentual_reajuste !== undefined && (
@@ -214,7 +214,7 @@ export default function HistoricoCarreira() {
                                   </p>
                                 )}
                               </div>
-                              {e.registrado_por && <p className="text-white/30 text-xs mt-1">por {e.registrado_por}</p>}
+                              {e.registrado_por && <p className="text-white/60 text-xs mt-1">por {e.registrado_por}</p>}
                             </div>
                             <button onClick={() => excluir(e.id)} className="p-1.5 hover:bg-red-500/20 rounded-lg text-white/20 hover:text-red-400 transition-all ml-2">
                               <X className="w-3.5 h-3.5" />

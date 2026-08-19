@@ -61,7 +61,7 @@ const ContagemNovaModal: React.FC<Props> = ({ onClose, onCreated }) => {
             </div>
             <div>
               <h3 className="text-lg font-bold text-white">Nova Contagem</h3>
-              <p className="text-xs text-white/40">Preencha os dados para iniciar</p>
+              <p className="text-xs text-white/60">Preencha os dados para iniciar</p>
             </div>
           </div>
           <button
@@ -134,7 +134,7 @@ const ContagemNovaModal: React.FC<Props> = ({ onClose, onCreated }) => {
             />
             <div>
               <p className="text-sm font-medium text-white/80">Incluir itens sem saldo</p>
-              <p className="text-xs text-white/40">
+              <p className="text-xs text-white/60">
                 Carrega todos os itens do estoque, inclusive os com saldo zero
               </p>
             </div>

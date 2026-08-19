@@ -176,7 +176,7 @@ const ContagemResultado: React.FC<Props> = ({ contagemId, onVoltar, onReconferir
           </button>
           <div>
             <h2 className="text-xl font-bold text-white">Resultado da Contagem</h2>
-            <p className="text-xs text-white/40">
+            <p className="text-xs text-white/60">
               {resultado.contagem.estoque_nome} · {resultado.contagem.responsavel} · {dayjs(resultado.contagem.data_contagem).format('DD/MM/YYYY HH:mm')}
             </p>
           </div>
@@ -224,11 +224,11 @@ const ContagemResultado: React.FC<Props> = ({ contagemId, onVoltar, onReconferir
         ].map(k => (
           <div key={k.label} className="bg-[#12141f] rounded-xl border border-white/5 shadow-sm p-4">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-caption font-medium text-white/40 uppercase">{k.label}</span>
+              <span className="text-caption font-medium text-white/60 uppercase">{k.label}</span>
               <span className={k.color === 'red' ? 'text-red-400' : k.color === 'green' ? 'text-green-400' : k.color === 'orange' ? 'text-orange-400' : 'text-blue-400'}>{k.icon}</span>
             </div>
             <p className={`text-lg font-bold ${k.color === 'red' ? 'text-red-400' : k.color === 'green' ? 'text-green-400' : k.color === 'orange' ? 'text-orange-400' : 'text-white'}`}>{k.value}</p>
-            {k.sub && <p className="text-caption text-white/30 mt-0.5">{k.sub}</p>}
+            {k.sub && <p className="text-caption text-white/60 mt-0.5">{k.sub}</p>}
           </div>
         ))}
       </div>
@@ -257,7 +257,7 @@ const ContagemResultado: React.FC<Props> = ({ contagemId, onVoltar, onReconferir
             <thead className="bg-white/5 border-b border-white/10">
               <tr>
                 {['Item', 'Sistema', 'Contado', 'Diferença', 'Val. Unit.', 'Val. Dif.', 'Obs.'].map(h => (
-                  <th key={h} className="px-4 py-2.5 text-left text-caption font-semibold text-white/40 uppercase">{h}</th>
+                  <th key={h} className="px-4 py-2.5 text-left text-caption font-semibold text-white/60 uppercase">{h}</th>
                 ))}
               </tr>
             </thead>
@@ -279,12 +279,12 @@ const ContagemResultado: React.FC<Props> = ({ contagemId, onVoltar, onReconferir
                         {item.diferenca > 0 ? '+' : ''}{item.diferenca}
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-md text-xs font-medium bg-white/10 text-white/40">
+                      <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-md text-xs font-medium bg-white/10 text-white/60">
                         <Minus className="w-3 h-3" /> OK
                       </span>
                     )}
                   </td>
-                  <td className="px-4 py-2.5 text-xs text-white/40 tabular-nums">{formatCurrency(item.valor_unitario)}</td>
+                  <td className="px-4 py-2.5 text-xs text-white/60 tabular-nums">{formatCurrency(item.valor_unitario)}</td>
                   <td className="px-4 py-2.5">
                     {item.valor_diferenca !== null && item.valor_diferenca !== 0 && (
                       <span className={`text-xs font-bold tabular-nums ${item.valor_diferenca > 0 ? 'text-green-400' : 'text-red-400'}`}>
@@ -292,7 +292,7 @@ const ContagemResultado: React.FC<Props> = ({ contagemId, onVoltar, onReconferir
                       </span>
                     )}
                   </td>
-                  <td className="px-4 py-2.5 text-xs text-white/40 max-w-[200px] truncate">{item.observacao || '—'}</td>
+                  <td className="px-4 py-2.5 text-xs text-white/60 max-w-[200px] truncate">{item.observacao || '—'}</td>
                 </tr>
               ))}
             </tbody>
@@ -302,7 +302,7 @@ const ContagemResultado: React.FC<Props> = ({ contagemId, onVoltar, onReconferir
         {filteredItens.length === 0 && (
           <div className="py-12 text-center">
             <Package className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-            <p className="text-sm text-white/40">Nenhum item neste filtro</p>
+            <p className="text-sm text-white/60">Nenhum item neste filtro</p>
           </div>
         )}
       </div>

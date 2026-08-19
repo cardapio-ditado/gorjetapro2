@@ -69,7 +69,7 @@ const CategoriaEditavel: React.FC<CategoriaEditavelProps> = ({
                   onChange={(e) => setPercentual(e.target.value)}
                   className="w-full px-3 py-2 border border-white/20 rounded-lg focus:ring-2 focus:ring-wine focus:border-wine"
                 />
-                <span className="absolute right-3 top-2 text-white/40">%</span>
+                <span className="absolute right-3 top-2 text-white/60">%</span>
               </div>
             </div>
             <div className="w-32">
@@ -111,7 +111,7 @@ const CategoriaEditavel: React.FC<CategoriaEditavelProps> = ({
           <div>
             <h4 className="font-medium text-white">{categoria.nome}</h4>
             {semanaAtual && (
-              <p className="text-sm text-white/40">
+              <p className="text-sm text-white/60">
                 Orçamento: {formatCurrency((semanaAtual.faturamento * categoria.percentual) / 100)}
               </p>
             )}
@@ -151,7 +151,7 @@ const CategoriaEditavel: React.FC<CategoriaEditavelProps> = ({
             {categoria.subcategorias.map(sub => (
               <div key={sub.id} className="flex items-center justify-between text-xs bg-[#12141f] px-2 py-1 rounded border border-white/10">
                 <span className="text-white/80">{sub.nome}</span>
-                <span className="text-white/40 font-medium">{sub.percentual}%</span>
+                <span className="text-white/60 font-medium">{sub.percentual}%</span>
               </div>
             ))}
           </div>
@@ -574,7 +574,7 @@ const VisaoEstrategica: React.FC = () => {
                 <div className="bg-[#12141f] rounded-lg border border-white/10 p-6">
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex-1">
-                      <h3 className="text-sm font-medium text-white/40">Faturamento Base</h3>
+                      <h3 className="text-sm font-medium text-white/60">Faturamento Base</h3>
                       {editandoFaturamento ? (
                         <div className="flex items-center gap-2 mt-2">
                           <input
@@ -609,11 +609,11 @@ const VisaoEstrategica: React.FC = () => {
                     </div>
                     <div className="flex items-center gap-4">
                       <div className="text-right">
-                        <p className="text-sm text-white/40">Período da Semana</p>
+                        <p className="text-sm text-white/60">Período da Semana</p>
                         <p className="text-lg font-medium text-white">
                           {dayjs(semanaAtual.data_inicio).format('DD/MM/YYYY')} - {dayjs(semanaAtual.data_inicio).add(6, 'days').format('DD/MM/YYYY')}
                         </p>
-                        <p className="text-xs text-white/30 mt-1">
+                        <p className="text-xs text-white/60 mt-1">
                           Última dia: {dayjs(semanaAtual.data_inicio).add(6, 'days').format('dddd, DD/MM')}
                         </p>
                       </div>
@@ -651,7 +651,7 @@ const VisaoEstrategica: React.FC = () => {
                             <div className="w-3 h-3 rounded-full" style={{ backgroundColor: cat.cor }} />
                             <h3 className="font-medium text-white">{cat.nome}</h3>
                           </div>
-                          <span className="text-xs font-medium text-white/40">{cat.percentual}%</span>
+                          <span className="text-xs font-medium text-white/60">{cat.percentual}%</span>
                         </div>
 
                         <div className="space-y-2 mb-4">
@@ -691,7 +691,7 @@ const VisaoEstrategica: React.FC = () => {
                         {/* Subcategorias */}
                         {cat.subcategorias && cat.subcategorias.length > 0 && (
                           <div className="mt-4 pt-4 border-t border-white/10">
-                            <h4 className="text-xs font-semibold text-white/40 uppercase mb-3">Subcategorias</h4>
+                            <h4 className="text-xs font-semibold text-white/60 uppercase mb-3">Subcategorias</h4>
                             <div className="space-y-2">
                               {cat.subcategorias.map((sub) => {
                                 const subKey = `${cat.id}_${sub.id}`;
@@ -704,10 +704,10 @@ const VisaoEstrategica: React.FC = () => {
                                   <div key={sub.id} className="space-y-1">
                                     <div className="flex justify-between items-center text-xs">
                                       <span className="text-white/80 font-medium">{sub.nome}</span>
-                                      <span className="text-white/40">{sub.percentual}%</span>
+                                      <span className="text-white/60">{sub.percentual}%</span>
                                     </div>
                                     <div className="flex justify-between items-center text-xs">
-                                      <span className="text-white/40">
+                                      <span className="text-white/60">
                                         {formatCurrency(subGasto)} / {formatCurrency(subOrc)}
                                       </span>
                                       <span className={`font-medium ${
@@ -770,31 +770,31 @@ const VisaoEstrategica: React.FC = () => {
               <table className="min-w-full divide-y divide-white/10">
                 <thead className="bg-[#1a1d2e]">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-white/40 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-white/60 uppercase tracking-wider">
                       Fornecedor
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-white/40 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-white/60 uppercase tracking-wider">
                       Descrição
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-white/40 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-white/60 uppercase tracking-wider">
                       Categoria
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-white/40 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-white/60 uppercase tracking-wider">
                       Vencimento
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-white/40 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-white/60 uppercase tracking-wider">
                       Data Pagamento
                     </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-white/40 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-right text-xs font-medium text-white/60 uppercase tracking-wider">
                       Valor Pago
                     </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-white/40 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-right text-xs font-medium text-white/60 uppercase tracking-wider">
                       Valor Total
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-white/40 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-white/60 uppercase tracking-wider">
                       Semana
                     </th>
-                    <th className="px-6 py-3 text-center text-xs font-medium text-white/40 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-center text-xs font-medium text-white/60 uppercase tracking-wider">
                       Ações
                     </th>
                   </tr>
@@ -802,7 +802,7 @@ const VisaoEstrategica: React.FC = () => {
                 <tbody className="bg-[#12141f] divide-y divide-white/10">
                   {todosPagamentosInformativos.length === 0 ? (
                     <tr>
-                      <td colSpan={9} className="px-6 py-12 text-center text-sm text-white/40">
+                      <td colSpan={9} className="px-6 py-12 text-center text-sm text-white/60">
                         Nenhum pagamento registrado ainda
                       </td>
                     </tr>
@@ -819,7 +819,7 @@ const VisaoEstrategica: React.FC = () => {
                           <div className="flex flex-col">
                             <span className="font-medium">{pagamento.categoria_nome}</span>
                             {pagamento.subcategoria_nome && (
-                              <span className="text-xs text-white/40">{pagamento.subcategoria_nome}</span>
+                              <span className="text-xs text-white/60">{pagamento.subcategoria_nome}</span>
                             )}
                           </div>
                         </td>
@@ -838,7 +838,7 @@ const VisaoEstrategica: React.FC = () => {
                         <td className="px-6 py-4 text-sm text-white/60">
                           <div className="flex flex-col">
                             <span>{dayjs(pagamento.semana_data_inicio).format('DD/MM/YYYY')}</span>
-                            <span className="text-xs text-white/40">{formatCurrency(pagamento.semana_faturamento)}</span>
+                            <span className="text-xs text-white/60">{formatCurrency(pagamento.semana_faturamento)}</span>
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
@@ -892,7 +892,7 @@ const VisaoEstrategica: React.FC = () => {
                         className="w-full px-3 py-2 border border-white/20 rounded-lg focus:ring-2 focus:ring-wine focus:border-wine"
                         autoFocus
                       />
-                      <p className="text-xs text-white/40 mt-1">
+                      <p className="text-xs text-white/60 mt-1">
                         Valor total da conta: {formatCurrency(pagamentoEditando.valor_total_conta)}
                       </p>
                     </div>
@@ -1032,7 +1032,7 @@ const VisaoEstrategica: React.FC = () => {
                   ))}
                 </div>
               ) : (
-                <p className="text-center text-white/40 py-4">
+                <p className="text-center text-white/60 py-4">
                   Nenhuma semana futura criada
                 </p>
               )}
@@ -1090,7 +1090,7 @@ const VisaoEstrategica: React.FC = () => {
               </div>
 
               {categorias.length === 0 && (
-                <p className="text-center text-white/40 py-8">
+                <p className="text-center text-white/60 py-8">
                   Nenhuma categoria configurada. Clique em "Adicionar Categoria" para começar.
                 </p>
               )}
@@ -1179,7 +1179,7 @@ const VisaoEstrategica: React.FC = () => {
                   ))}
                 </div>
               ) : (
-                <p className="text-center text-white/40 py-8">Nenhuma conta vencida</p>
+                <p className="text-center text-white/60 py-8">Nenhuma conta vencida</p>
               )}
             </div>
           </div>
@@ -1196,7 +1196,7 @@ const VisaoEstrategica: React.FC = () => {
               <div className="bg-[#12141f] rounded-lg border border-white/10 p-12 text-center">
                 <Calendar className="w-16 h-16 text-white/20 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-white mb-2">Nenhuma semana futura criada</h3>
-                <p className="text-white/40">Crie semanas futuras na aba "Configurações" para visualizar os compromissos</p>
+                <p className="text-white/60">Crie semanas futuras na aba "Configurações" para visualizar os compromissos</p>
               </div>
             ) : (
               <>
@@ -1415,8 +1415,8 @@ const VisaoEstrategica: React.FC = () => {
             <div className="p-6 overflow-y-auto max-h-[calc(80vh-140px)]">
               {categoriasDisponiveis.length === 0 ? (
                 <div className="text-center py-8">
-                  <p className="text-white/40">Todas as categorias de despesa já estão configuradas!</p>
-                  <p className="text-sm text-white/30 mt-2">
+                  <p className="text-white/60">Todas as categorias de despesa já estão configuradas!</p>
+                  <p className="text-sm text-white/60 mt-2">
                     Para adicionar novas categorias, vá até Cadastros Gerais - Categorias Financeiras.
                   </p>
                 </div>
@@ -1444,7 +1444,7 @@ const VisaoEstrategica: React.FC = () => {
                       <div>
                         <h4 className="font-medium text-white">{cat.nome}</h4>
                         {cat.descricao && (
-                          <p className="text-sm text-white/40 mt-1">{cat.descricao}</p>
+                          <p className="text-sm text-white/60 mt-1">{cat.descricao}</p>
                         )}
                         {cat.tem_filhas && (
                           <p className="text-xs text-wine mt-1">Possui subcategorias</p>
@@ -1504,7 +1504,7 @@ const VisaoEstrategica: React.FC = () => {
                   <span className="text-sm text-white/60 font-mono">{corCategoria}</span>
                 </div>
                 <div className="flex gap-2">
-                  <span className="text-xs text-white/40">Sugestões:</span>
+                  <span className="text-xs text-white/60">Sugestões:</span>
                   {['#ef4444', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#ec4899', '#6b7280'].map((cor) => (
                     <button
                       key={cor}
@@ -1523,7 +1523,7 @@ const VisaoEstrategica: React.FC = () => {
                   <label className="block text-sm font-medium text-white/80 mb-3">
                     Configure o percentual de cada subcategoria
                   </label>
-                  <p className="text-xs text-white/40 mb-4">
+                  <p className="text-xs text-white/60 mb-4">
                     O percentual da categoria principal será a soma dos percentuais das subcategorias.
                   </p>
 
@@ -1549,7 +1549,7 @@ const VisaoEstrategica: React.FC = () => {
                             className="w-full px-3 py-2 border border-white/20 rounded-lg focus:ring-2 focus:ring-wine focus:border-wine text-right pr-8"
                             placeholder="0"
                           />
-                          <span className="absolute right-3 top-2.5 text-white/40 text-sm">%</span>
+                          <span className="absolute right-3 top-2.5 text-white/60 text-sm">%</span>
                         </div>
                       </div>
                     ))}
@@ -1582,9 +1582,9 @@ const VisaoEstrategica: React.FC = () => {
                       className="w-full px-4 py-3 bg-[#12141f]/5 border border-white/20 rounded-lg text-white placeholder-white/30 focus:ring-2 focus:ring-wine focus:border-wine text-right pr-12 text-lg"
                       placeholder="Ex: 35"
                     />
-                    <span className="absolute right-4 top-3.5 text-white/40 text-lg">%</span>
+                    <span className="absolute right-4 top-3.5 text-white/60 text-lg">%</span>
                   </div>
-                  <p className="text-xs text-white/40 mt-2">
+                  <p className="text-xs text-white/60 mt-2">
                     Este percentual será aplicado sobre o faturamento semanal.
                   </p>
                 </div>
@@ -1714,7 +1714,7 @@ const VisaoEstrategica: React.FC = () => {
                   return (
                     <div className="text-center py-12">
                       <Calendar className="w-16 h-16 text-white/20 mx-auto mb-4" />
-                      <p className="text-white/40">
+                      <p className="text-white/60">
                         Nenhuma semana {tipoVisualizacao === 'futura' ? 'futura' : 'atual'} disponível
                       </p>
                     </div>
@@ -1725,7 +1725,7 @@ const VisaoEstrategica: React.FC = () => {
                   return (
                     <div className="text-center py-12">
                       <FileText className="w-16 h-16 text-white/20 mx-auto mb-4" />
-                      <p className="text-white/40">Erro ao carregar categoria</p>
+                      <p className="text-white/60">Erro ao carregar categoria</p>
                     </div>
                   );
                 }
@@ -1807,11 +1807,11 @@ const VisaoEstrategica: React.FC = () => {
                           <table className="min-w-full">
                             <thead className="bg-[#1a1d2e]">
                               <tr>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-white/40 uppercase">Tipo</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-white/40 uppercase">Fornecedor</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-white/40 uppercase">Descrição</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-white/40 uppercase">Vencimento</th>
-                                <th className="px-4 py-3 text-right text-xs font-medium text-white/40 uppercase">Valor</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-white/60 uppercase">Tipo</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-white/60 uppercase">Fornecedor</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-white/60 uppercase">Descrição</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-white/60 uppercase">Vencimento</th>
+                                <th className="px-4 py-3 text-right text-xs font-medium text-white/60 uppercase">Valor</th>
                               </tr>
                             </thead>
                             <tbody className="divide-y divide-white/10">
@@ -1864,10 +1864,10 @@ const VisaoEstrategica: React.FC = () => {
                           <table className="min-w-full">
                             <thead className="bg-[#1a1d2e]">
                               <tr>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-white/40 uppercase">Fornecedor</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-white/40 uppercase">Descrição</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-white/40 uppercase">Subcategoria</th>
-                                <th className="px-4 py-3 text-right text-xs font-medium text-white/40 uppercase">Valor</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-white/60 uppercase">Fornecedor</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-white/60 uppercase">Descrição</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-white/60 uppercase">Subcategoria</th>
+                                <th className="px-4 py-3 text-right text-xs font-medium text-white/60 uppercase">Valor</th>
                               </tr>
                             </thead>
                             <tbody className="divide-y divide-white/10">
@@ -1905,13 +1905,13 @@ const VisaoEstrategica: React.FC = () => {
                           <table className="min-w-full">
                             <thead className="bg-[#1a1d2e]">
                               <tr>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-white/40 uppercase">Status</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-white/40 uppercase">Fornecedor</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-white/40 uppercase">Descrição</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-white/40 uppercase">Vencimento</th>
-                                <th className="px-4 py-3 text-right text-xs font-medium text-white/40 uppercase">Valor Total</th>
-                                <th className="px-4 py-3 text-right text-xs font-medium text-white/40 uppercase">Saldo Restante</th>
-                                <th className="px-4 py-3 text-right text-xs font-medium text-white/40 uppercase">Pago na Semana</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-white/60 uppercase">Status</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-white/60 uppercase">Fornecedor</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-white/60 uppercase">Descrição</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-white/60 uppercase">Vencimento</th>
+                                <th className="px-4 py-3 text-right text-xs font-medium text-white/60 uppercase">Valor Total</th>
+                                <th className="px-4 py-3 text-right text-xs font-medium text-white/60 uppercase">Saldo Restante</th>
+                                <th className="px-4 py-3 text-right text-xs font-medium text-white/60 uppercase">Pago na Semana</th>
                               </tr>
                             </thead>
                             <tbody className="divide-y divide-white/10">
@@ -1971,7 +1971,7 @@ const VisaoEstrategica: React.FC = () => {
                     {despesasManuaisCat.length === 0 && pagamentosCat.length === 0 && contasCat.length === 0 && (
                       <div className="text-center py-12">
                         <FileText className="w-16 h-16 text-white/20 mx-auto mb-4" />
-                        <p className="text-white/40">Nenhum lançamento nesta categoria para a semana selecionada</p>
+                        <p className="text-white/60">Nenhum lançamento nesta categoria para a semana selecionada</p>
                       </div>
                     )}
                   </div>
@@ -2070,7 +2070,7 @@ const RelatoriosTab: React.FC = () => {
 
       {loading ? (
         <div className="bg-[#12141f] rounded-lg border border-white/10 p-12 text-center">
-          <p className="text-white/40">Carregando...</p>
+          <p className="text-white/60">Carregando...</p>
         </div>
       ) : pagamentosDia.length === 0 ? (
         <div className="bg-[#12141f] rounded-lg border border-white/10 p-12 text-center">
@@ -2078,7 +2078,7 @@ const RelatoriosTab: React.FC = () => {
           <h3 className="text-lg font-medium text-white mb-2">
             Nenhum pagamento informativo
           </h3>
-          <p className="text-white/40">
+          <p className="text-white/60">
             Não há pagamentos informativos registrados para {dayjs(dataFiltro).format('DD/MM/YYYY')}
           </p>
         </div>
@@ -2100,19 +2100,19 @@ const RelatoriosTab: React.FC = () => {
                 <table className="min-w-full">
                   <thead className="bg-[#1a1d2e]">
                     <tr>
-                      <th className="px-4 py-2 text-left text-xs font-medium text-white/40 uppercase">
+                      <th className="px-4 py-2 text-left text-xs font-medium text-white/60 uppercase">
                         Fornecedor
                       </th>
-                      <th className="px-4 py-2 text-left text-xs font-medium text-white/40 uppercase">
+                      <th className="px-4 py-2 text-left text-xs font-medium text-white/60 uppercase">
                         Descrição
                       </th>
-                      <th className="px-4 py-2 text-left text-xs font-medium text-white/40 uppercase">
+                      <th className="px-4 py-2 text-left text-xs font-medium text-white/60 uppercase">
                         Vencimento
                       </th>
-                      <th className="px-4 py-2 text-right text-xs font-medium text-white/40 uppercase">
+                      <th className="px-4 py-2 text-right text-xs font-medium text-white/60 uppercase">
                         Valor Pago
                       </th>
-                      <th className="px-4 py-2 text-left text-xs font-medium text-white/40 uppercase">
+                      <th className="px-4 py-2 text-left text-xs font-medium text-white/60 uppercase">
                         Observação
                       </th>
                     </tr>
@@ -2625,19 +2625,19 @@ const DespesasTab: React.FC<DespesasTabProps> = ({
           <table className="min-w-full">
             <thead className="bg-[#1a1d2e]">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-white/40 uppercase">Tipo</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-white/40 uppercase">Fornecedor</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-white/40 uppercase">Categoria</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-white/40 uppercase">Vencimento</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-white/40 uppercase">Semana</th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-white/40 uppercase">Valor</th>
-                <th className="px-4 py-3 text-center text-xs font-medium text-white/40 uppercase">Ações</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-white/60 uppercase">Tipo</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-white/60 uppercase">Fornecedor</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-white/60 uppercase">Categoria</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-white/60 uppercase">Vencimento</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-white/60 uppercase">Semana</th>
+                <th className="px-4 py-3 text-right text-xs font-medium text-white/60 uppercase">Valor</th>
+                <th className="px-4 py-3 text-center text-xs font-medium text-white/60 uppercase">Ações</th>
               </tr>
             </thead>
             <tbody className="bg-[#12141f] divide-y divide-white/5">
               {despesasManuaisAtivas.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-12 text-center text-white/40">
+                  <td colSpan={7} className="px-4 py-12 text-center text-white/60">
                     Nenhuma despesa lançada nesta semana
                   </td>
                 </tr>
@@ -2686,7 +2686,7 @@ const DespesasTab: React.FC<DespesasTabProps> = ({
                             {semana.data_inicio ? ` - ${dayjs(semana.data_inicio).format('DD/MM')}` : ''}
                           </span>
                         ) : (
-                          <span className="text-xs text-white/30">Sem semana</span>
+                          <span className="text-xs text-white/60">Sem semana</span>
                         )}
                       </td>
                       <td className="px-4 py-3 text-right text-sm font-bold text-white">
@@ -2755,7 +2755,7 @@ const DespesasTab: React.FC<DespesasTabProps> = ({
           <h3 className="text-lg font-medium text-white mb-2">
             Nenhuma despesa {subTab === 'vencidas' ? 'vencida' : 'vencendo'}
           </h3>
-          <p className="text-white/40">
+          <p className="text-white/60">
             Não há contas {subTab === 'vencidas' ? 'vencidas' : 'a vencer'}
           </p>
         </div>
@@ -2806,22 +2806,22 @@ const DespesasTab: React.FC<DespesasTabProps> = ({
                               className="rounded border-white/20"
                             />
                           </th>
-                          <th className="px-4 py-2 text-left text-xs font-medium text-white/40 uppercase">
+                          <th className="px-4 py-2 text-left text-xs font-medium text-white/60 uppercase">
                             Fornecedor
                           </th>
-                          <th className="px-4 py-2 text-left text-xs font-medium text-white/40 uppercase">
+                          <th className="px-4 py-2 text-left text-xs font-medium text-white/60 uppercase">
                             Descrição
                           </th>
-                          <th className="px-4 py-2 text-left text-xs font-medium text-white/40 uppercase">
+                          <th className="px-4 py-2 text-left text-xs font-medium text-white/60 uppercase">
                             Vencimento
                           </th>
-                          <th className="px-4 py-2 text-right text-xs font-medium text-white/40 uppercase">
+                          <th className="px-4 py-2 text-right text-xs font-medium text-white/60 uppercase">
                             Valor
                           </th>
-                          <th className="px-4 py-2 text-center text-xs font-medium text-white/40 uppercase">
+                          <th className="px-4 py-2 text-center text-xs font-medium text-white/60 uppercase">
                             Status
                           </th>
-                          <th className="px-4 py-2 text-center text-xs font-medium text-white/40 uppercase">
+                          <th className="px-4 py-2 text-center text-xs font-medium text-white/60 uppercase">
                             Ações
                           </th>
                         </tr>
@@ -2865,7 +2865,7 @@ const DespesasTab: React.FC<DespesasTabProps> = ({
                                     {formatCurrency(valorRestante)}
                                   </span>
                                   {isParcialmentePago && (
-                                    <span className="text-xs text-white/40">
+                                    <span className="text-xs text-white/60">
                                       Pago: {formatCurrency(conta.valor_pago_planejamento)}
                                     </span>
                                   )}
@@ -3069,7 +3069,7 @@ const DespesasTab: React.FC<DespesasTabProps> = ({
               <h3 className="text-lg font-medium text-white mb-2">
                 Nenhuma despesa lançada manualmente
               </h3>
-              <p className="text-white/40">
+              <p className="text-white/60">
                 Despesas lançadas manualmente aparecem aqui. Use o dashboard para adicionar despesas.
               </p>
             </div>
@@ -3085,22 +3085,22 @@ const DespesasTab: React.FC<DespesasTabProps> = ({
                 <table className="min-w-full">
                   <thead className="bg-[#1a1d2e]">
                     <tr>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-white/40 uppercase">
+                      <th className="px-4 py-3 text-left text-xs font-medium text-white/60 uppercase">
                         Fornecedor
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-white/40 uppercase">
+                      <th className="px-4 py-3 text-left text-xs font-medium text-white/60 uppercase">
                         Vencimento
                       </th>
-                      <th className="px-4 py-3 text-right text-xs font-medium text-white/40 uppercase">
+                      <th className="px-4 py-3 text-right text-xs font-medium text-white/60 uppercase">
                         Valor
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-white/40 uppercase">
+                      <th className="px-4 py-3 text-left text-xs font-medium text-white/60 uppercase">
                         Categoria
                       </th>
-                      <th className="px-4 py-3 text-center text-xs font-medium text-white/40 uppercase">
+                      <th className="px-4 py-3 text-center text-xs font-medium text-white/60 uppercase">
                         Status
                       </th>
-                      <th className="px-4 py-3 text-center text-xs font-medium text-white/40 uppercase">
+                      <th className="px-4 py-3 text-center text-xs font-medium text-white/60 uppercase">
                         Ações
                       </th>
                     </tr>
@@ -3504,7 +3504,7 @@ const DespesasTab: React.FC<DespesasTabProps> = ({
               {historicoPagamentos.length === 0 ? (
                 <div className="text-center py-8">
                   <Receipt className="w-12 h-12 text-white/20 mx-auto mb-3" />
-                  <p className="text-white/40">Nenhum pagamento registrado</p>
+                  <p className="text-white/60">Nenhum pagamento registrado</p>
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -3632,7 +3632,7 @@ const DespesasTab: React.FC<DespesasTabProps> = ({
                     return (
                       <div className="text-center py-12">
                         <FileText className="w-16 h-16 text-white/20 mx-auto mb-4" />
-                        <p className="text-white/40">
+                        <p className="text-white/60">
                           {buscaVincular ? 'Nenhuma conta encontrada com este termo' : 'Nenhuma conta a pagar disponível'}
                         </p>
                       </div>
@@ -3762,7 +3762,7 @@ const DespesasTab: React.FC<DespesasTabProps> = ({
                     return (
                       <div className="text-center py-12">
                         <FileText className="w-16 h-16 text-white/20 mx-auto mb-4" />
-                        <p className="text-white/40">
+                        <p className="text-white/60">
                           {buscaFuturas ? 'Nenhuma conta encontrada' : 'Nenhuma conta futura disponível'}
                         </p>
                       </div>

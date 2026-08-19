@@ -90,7 +90,7 @@ function RadarRow({
       <span className="flex-1 min-w-0 text-label font-semibold text-white/80 truncate">{label}</span>
       <span className="text-right shrink-0">
         <span className={`block text-sm font-black ${sev === 'red' ? 'text-red-400' : 'text-white'}`}>{valor}</span>
-        {sub && <span className="block text-caption text-white/40">{sub}</span>}
+        {sub && <span className="block text-caption text-white/60">{sub}</span>}
       </span>
     </button>
   );
@@ -248,7 +248,7 @@ const Dashboard: React.FC = () => {
         <div>
           <p className="text-gold text-caption font-black uppercase tracking-[0.3em] mb-1">Ditado Popular</p>
           <h1 className="text-2xl font-black text-white leading-none">{saudacao()}, {primeiroNome}</h1>
-          <p className="text-white/40 text-xs mt-1 capitalize">{dataLonga}</p>
+          <p className="text-white/60 text-xs mt-1 capitalize">{dataLonga}</p>
         </div>
         <button onClick={refresh} disabled={refreshing}
           className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold text-white/60 glass-soft hover:bg-white/10 transition-colors">
@@ -633,11 +633,11 @@ const Dashboard: React.FC = () => {
                     <p className="text-sm font-semibold text-white">{item.nome}</p>
                     <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                       <span className="text-caption text-white/50">{item.estoque_nome}</span>
-                      <span className="text-caption text-white/30">·</span>
+                      <span className="text-caption text-white/60">·</span>
                       <span className="text-caption text-white/50">{item.categoria}</span>
                       {item.ultima_mov && (
                         <>
-                          <span className="text-caption text-white/30">·</span>
+                          <span className="text-caption text-white/60">·</span>
                           <span className="text-caption text-white/50">
                             mov: {new Date(item.ultima_mov + 'T12:00').toLocaleDateString('pt-BR')}
                           </span>
@@ -648,13 +648,13 @@ const Dashboard: React.FC = () => {
                   <div className="text-right shrink-0">
                     <p className={`text-sm font-black ${
                       Number(item.saldo_real) < 0 ? 'text-red-400'
-                      : Number(item.saldo_real) === 0 ? 'text-white/30'
+                      : Number(item.saldo_real) === 0 ? 'text-white/60'
                       : 'text-yellow-400'
                     }`}>
                       {parseFloat(Number(item.saldo_real ?? 0).toFixed(3)).toLocaleString('pt-BR', { maximumFractionDigits: 3 })} {item.unidade_medida}
                     </p>
                     {item.estoque_minimo > 0 && (
-                      <p className="text-caption text-white/40 mt-0.5">min: {item.estoque_minimo}</p>
+                      <p className="text-caption text-white/60 mt-0.5">min: {item.estoque_minimo}</p>
                     )}
                   </div>
                 </div>

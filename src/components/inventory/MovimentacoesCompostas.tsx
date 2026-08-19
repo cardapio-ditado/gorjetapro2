@@ -209,7 +209,7 @@ const MovimentacoesCompostas: React.FC = () => {
       ) : filteredMovimentacoes.length === 0 ? (
         <div className="text-center py-12 bg-white/5 rounded-lg border-2 border-dashed border-white/20">
           <Package className="w-12 h-12 text-white/30 mx-auto mb-4" />
-          <p className="text-white/40">Nenhuma movimentação composta encontrada</p>
+          <p className="text-white/60">Nenhuma movimentação composta encontrada</p>
         </div>
       ) : (
         <div className="bg-[#12141f] rounded-lg shadow overflow-hidden border border-white/10">
@@ -217,19 +217,19 @@ const MovimentacoesCompostas: React.FC = () => {
             <table className="min-w-full divide-y divide-white/10">
               <thead className="bg-white/5">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-white/40 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-white/60 uppercase tracking-wider">
                     Tipo
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-white/40 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-white/60 uppercase tracking-wider">
                     Descrição
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-white/40 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-white/60 uppercase tracking-wider">
                     Itens
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-white/40 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-white/60 uppercase tracking-wider">
                     Data
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-white/40 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-right text-xs font-medium text-white/60 uppercase tracking-wider">
                     Ações
                   </th>
                 </tr>
@@ -294,7 +294,7 @@ const MovimentacoesCompostas: React.FC = () => {
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-wine"></div>
                 </div>
               ) : itensDetalhes.length === 0 ? (
-                <p className="text-center text-white/40 py-8">Nenhum item encontrado</p>
+                <p className="text-center text-white/60 py-8">Nenhum item encontrado</p>
               ) : (
                 <div className="space-y-3">
                   {itensDetalhes.map((item) => (

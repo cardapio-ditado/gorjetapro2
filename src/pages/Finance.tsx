@@ -126,7 +126,7 @@ const Finance: React.FC = () => {
         <div className="relative px-6 lg:px-8 pt-7 pb-0">
           {/* Breadcrumb */}
           <div className="flex items-center gap-1.5 mb-4">
-            <span className="text-white/30 text-xs">Financeiro</span>
+            <span className="text-white/60 text-xs">Financeiro</span>
             <ChevronRight className="text-white/20" style={{width:'12px',height:'12px'}} />
             <span className="text-white/60 text-xs font-medium">{current.label}</span>
           </div>
@@ -144,11 +144,11 @@ const Finance: React.FC = () => {
                 <h1 className="text-white text-2xl font-bold leading-none tracking-tight">
                   {current.label}
                 </h1>
-                <p className="text-white/40 text-sm mt-1">{current.description}</p>
+                <p className="text-white/60 text-sm mt-1">{current.description}</p>
               </div>
             </div>
             <div className="hidden md:block text-right flex-shrink-0">
-              <p className="text-white/25 text-xs capitalize">{hoje}</p>
+              <p className="text-white/60 text-xs capitalize">{hoje}</p>
             </div>
           </div>
 
@@ -183,7 +183,7 @@ const Finance: React.FC = () => {
       <div className="flex-1 px-6 lg:px-8 py-6" style={{ background: '#0d0f1a' }}>
         {CONTENT[current.slug] ?? (
           <div className="flex items-center justify-center py-24">
-            <p className="text-white/30 text-sm">Módulo em desenvolvimento</p>
+            <p className="text-white/60 text-sm">Módulo em desenvolvimento</p>
           </div>
         )}
       </div>

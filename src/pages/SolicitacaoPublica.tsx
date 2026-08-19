@@ -143,7 +143,7 @@ export default function SolicitacaoPublica() {
           <h2 className="text-2xl font-bold text-white mb-2">Solicitação Enviada!</h2>
           <p className="text-white/50 mb-5">Sua solicitação foi registrada com sucesso.</p>
           <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4 mb-6">
-            <p className="text-xs text-white/40 mb-1 uppercase tracking-wide font-bold">Número da Solicitação</p>
+            <p className="text-xs text-white/60 mb-1 uppercase tracking-wide font-bold">Número da Solicitação</p>
             <p className="text-3xl font-black text-blue-400">{numeroSolicitacao}</p>
           </div>
           <p className="text-sm text-white/35 mb-6">
@@ -198,7 +198,7 @@ export default function SolicitacaoPublica() {
 
             {/* Dados do Solicitante */}
             <div className="space-y-4">
-              <h3 className="text-sm font-black text-white/40 uppercase tracking-widest">Seus Dados</h3>
+              <h3 className="text-sm font-black text-white/60 uppercase tracking-widest">Seus Dados</h3>
 
               <div>
                 <label className="block text-sm font-semibold text-white/70 mb-2">
@@ -243,7 +243,7 @@ export default function SolicitacaoPublica() {
 
             {/* Detalhes da Solicitação */}
             <div className="space-y-4">
-              <h3 className="text-sm font-black text-white/40 uppercase tracking-widest">Detalhes da Solicitação</h3>
+              <h3 className="text-sm font-black text-white/60 uppercase tracking-widest">Detalhes da Solicitação</h3>
 
               <div>
                 <label className="block text-sm font-semibold text-white/70 mb-2">
@@ -273,7 +273,7 @@ export default function SolicitacaoPublica() {
                   className="w-full px-4 py-3 bg-white/5 border border-white/15 rounded-xl text-white placeholder-white/25 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500/50 transition-all resize-none"
                   placeholder="Descreva detalhadamente o que você precisa, incluindo o motivo e qualquer informação relevante..."
                 />
-                <p className="text-xs text-white/30 mt-1">Quanto mais detalhes, mais rápido atendemos</p>
+                <p className="text-xs text-white/60 mt-1">Quanto mais detalhes, mais rápido atendemos</p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -305,10 +305,10 @@ export default function SolicitacaoPublica() {
             {/* Upload de Fotos */}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <h3 className="text-sm font-black text-white/40 uppercase tracking-widest">
-                  Fotos <span className="text-white/20 font-normal normal-case tracking-normal">(opcional)</span>
+                <h3 className="text-sm font-black text-white/60 uppercase tracking-widest">
+                  Fotos <span className="text-white/60 font-normal normal-case tracking-normal">(opcional)</span>
                 </h3>
-                <span className="text-xs text-white/30">{fotos.length}/{MAX_FOTOS} fotos</span>
+                <span className="text-xs text-white/60">{fotos.length}/{MAX_FOTOS} fotos</span>
               </div>
 
               {/* Área de drop / botão */}
@@ -326,10 +326,10 @@ export default function SolicitacaoPublica() {
                     <div className="w-10 h-10 rounded-xl bg-white/8 flex items-center justify-center group-hover:bg-blue-500/15 transition-all">
                       <Camera className="w-5 h-5 text-white/30 group-hover:text-blue-400 transition-all" />
                     </div>
-                    <p className="text-sm font-semibold text-white/40 group-hover:text-white/60 transition-all">
+                    <p className="text-sm font-semibold text-white/60 group-hover:text-white/60 transition-all">
                       Clique para adicionar fotos
                     </p>
-                    <p className="text-xs text-white/20">
+                    <p className="text-xs text-white/60">
                       Até {MAX_FOTOS} fotos · máx. {MAX_SIZE_MB}MB cada · JPG, PNG, WEBP
                     </p>
                   </div>
@@ -368,7 +368,7 @@ export default function SolicitacaoPublica() {
                         onChange={handleFotoSelect}
                       />
                       <ImageIcon className="w-5 h-5 text-white/20" />
-                      <span className="text-caption text-white/25 mt-1">Mais</span>
+                      <span className="text-caption text-white/60 mt-1">Mais</span>
                     </label>
                   )}
                 </div>

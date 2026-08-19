@@ -542,7 +542,7 @@ const SolicitacaoForm: React.FC<SolicitacaoFormProps> = ({
                     <label className="text-sm font-medium text-white/80">
                       Fotos <span className="text-white/35 font-normal">(opcional — máx. {MAX_FOTOS})</span>
                     </label>
-                    <span className="text-xs text-white/30">{fotos.length}/{MAX_FOTOS}</span>
+                    <span className="text-xs text-white/60">{fotos.length}/{MAX_FOTOS}</span>
                   </div>
 
                   {fotos.length < MAX_FOTOS && (
@@ -560,8 +560,8 @@ const SolicitacaoForm: React.FC<SolicitacaoFormProps> = ({
                           <Camera className="w-4 h-4 text-white/30 group-hover:text-wine/80 transition-all" />
                         </div>
                         <div>
-                          <p className="text-sm text-white/40 group-hover:text-white/60 transition-all font-medium">Adicionar fotos da situação</p>
-                          <p className="text-xs text-white/20">JPG, PNG, WEBP · máx. 10MB cada</p>
+                          <p className="text-sm text-white/60 group-hover:text-white/60 transition-all font-medium">Adicionar fotos da situação</p>
+                          <p className="text-xs text-white/60">JPG, PNG, WEBP · máx. 10MB cada</p>
                         </div>
                       </div>
                     </label>

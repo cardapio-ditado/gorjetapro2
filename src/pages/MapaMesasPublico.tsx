@@ -179,7 +179,7 @@ export default function MapaMesasPublico() {
     <div className="min-h-screen flex items-center justify-center" style={{ background: '#080c14' }}>
       <div className="text-center">
         <div className="w-10 h-10 rounded-full border-2 border-white/10 border-t-[#7D1F2C] animate-spin mx-auto mb-4" />
-        <p className="text-white/40 text-sm">Carregando mapa de mesas...</p>
+        <p className="text-white/60 text-sm">Carregando mapa de mesas...</p>
       </div>
     </div>
   );
@@ -199,12 +199,12 @@ export default function MapaMesasPublico() {
           <div className="flex items-start gap-3">
             <MapPin size={16} className="text-wine flex-shrink-0 mt-0.5" />
             <div>
-              <p className="text-xs text-white/40 mb-1">
+              <p className="text-xs text-white/60 mb-1">
                 {mesasSelecionadas.length > 1 ? 'Mesas' : 'Mesa'}
               </p>
               {mesasSelecionadas.map(m => (
                 <p key={m.id} className="text-white font-semibold text-sm">
-                  {m.nome} <span className="text-white/40 font-normal">({SECAO_LABEL[m.secao] || m.secao})</span>
+                  {m.nome} <span className="text-white/60 font-normal">({SECAO_LABEL[m.secao] || m.secao})</span>
                 </p>
               ))}
             </div>
@@ -212,21 +212,21 @@ export default function MapaMesasPublico() {
           <div className="flex items-center gap-3">
             <Calendar size={16} className="text-wine flex-shrink-0" />
             <div>
-              <p className="text-xs text-white/40">Data</p>
+              <p className="text-xs text-white/60">Data</p>
               <p className="text-white font-semibold capitalize">{fmtData(data)}</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
             <Clock size={16} className="text-wine flex-shrink-0" />
             <div>
-              <p className="text-xs text-white/40">Horário</p>
+              <p className="text-xs text-white/60">Horário</p>
               <p className="text-white font-semibold">{horario}</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
             <Users size={16} className="text-wine flex-shrink-0" />
             <div>
-              <p className="text-xs text-white/40">Pessoas</p>
+              <p className="text-xs text-white/60">Pessoas</p>
               <p className="text-white font-semibold">{form.numero_pessoas} {form.numero_pessoas === 1 ? 'pessoa' : 'pessoas'}</p>
             </div>
           </div>
@@ -260,7 +260,7 @@ export default function MapaMesasPublico() {
                 <div>
                   <p className="font-bold text-white">{mesasSelecionadas[0].nome}</p>
                   <p className="text-sm text-white/50">{SECAO_LABEL[mesasSelecionadas[0].secao] || mesasSelecionadas[0].secao} · até {mesasSelecionadas[0].capacidade} pessoas</p>
-                  <p className="text-xs text-white/30 mt-0.5 capitalize">{fmtData(data)} às {horario}</p>
+                  <p className="text-xs text-white/60 mt-0.5 capitalize">{fmtData(data)} às {horario}</p>
                 </div>
               </div>
             ) : (
@@ -282,7 +282,7 @@ export default function MapaMesasPublico() {
                     </span>
                   ))}
                 </div>
-                <p className="text-xs text-white/30 mt-2 capitalize">{fmtData(data)} às {horario}</p>
+                <p className="text-xs text-white/60 mt-2 capitalize">{fmtData(data)} às {horario}</p>
               </div>
             )}
           </div>
@@ -291,7 +291,7 @@ export default function MapaMesasPublico() {
             <h2 className="font-bold text-white text-lg">Seus dados</h2>
 
             <div>
-              <label className="text-xs font-semibold text-white/40 uppercase tracking-wide block mb-1.5">Nome completo *</label>
+              <label className="text-xs font-semibold text-white/60 uppercase tracking-wide block mb-1.5">Nome completo *</label>
               <input type="text" value={form.nome_cliente}
                 onChange={e => setForm(f => ({ ...f, nome_cliente: e.target.value }))}
                 placeholder="Seu nome"
@@ -299,7 +299,7 @@ export default function MapaMesasPublico() {
             </div>
 
             <div>
-              <label className="text-xs font-semibold text-white/40 uppercase tracking-wide block mb-1.5">WhatsApp</label>
+              <label className="text-xs font-semibold text-white/60 uppercase tracking-wide block mb-1.5">WhatsApp</label>
               <input type="tel" value={form.telefone}
                 onChange={e => setForm(f => ({ ...f, telefone: e.target.value }))}
                 placeholder="(11) 99999-0000"
@@ -307,8 +307,8 @@ export default function MapaMesasPublico() {
             </div>
 
             <div>
-              <label className="text-xs font-semibold text-white/40 uppercase tracking-wide block mb-1.5">
-                Quantas pessoas? <span className="text-white/20 font-normal">(min. 2)</span>
+              <label className="text-xs font-semibold text-white/60 uppercase tracking-wide block mb-1.5">
+                Quantas pessoas? <span className="text-white/60 font-normal">(min. 2)</span>
               </label>
               <div className="flex gap-2 flex-wrap">
                 {Array.from({ length: maxPessoas - 1 }, (_, i) => i + 2).map(n => (
@@ -321,7 +321,7 @@ export default function MapaMesasPublico() {
             </div>
 
             <div>
-              <label className="text-xs font-semibold text-white/40 uppercase tracking-wide block mb-1.5">Observação (opcional)</label>
+              <label className="text-xs font-semibold text-white/60 uppercase tracking-wide block mb-1.5">Observação (opcional)</label>
               <textarea value={form.observacoes}
                 onChange={e => setForm(f => ({ ...f, observacoes: e.target.value }))}
                 placeholder="Aniversário, decoração especial..."
@@ -501,10 +501,10 @@ export default function MapaMesasPublico() {
 
         {/* Contador */}
         <div className="flex items-center justify-between mt-3 px-1">
-          <p className="text-xs text-white/30">
+          <p className="text-xs text-white/60">
             {mesasFiltradas.filter(m => isMesaDisponivel(m)).length} mesas disponíveis de {mesasFiltradas.length}
           </p>
-          <p className="text-xs text-white/30 capitalize">{fmtData(data)}, {horario}</p>
+          <p className="text-xs text-white/60 capitalize">{fmtData(data)}, {horario}</p>
         </div>
 
         {mesasFiltradas.length > 0 && mesasFiltradas.every(m => !isMesaDisponivel(m)) && (

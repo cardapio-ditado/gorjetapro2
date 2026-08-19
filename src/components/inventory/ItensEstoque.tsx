@@ -352,7 +352,7 @@ const ItensEstoque: React.FC = () => {
       <div className="flex justify-between items-start">
         <div>
           <h3 className="text-lg font-medium text-white">Itens de Estoque</h3>
-          <p className="text-sm text-white/40 mt-1">
+          <p className="text-sm text-white/60 mt-1">
             {estoqueFilter === 'all'
               ? 'Quantidades somadas de todos os estoques'
               : `Estoque: ${estoques.find(e => e.id === estoqueFilter)?.nome || ''}`}
@@ -387,9 +387,9 @@ const ItensEstoque: React.FC = () => {
               <div className="flex items-center">
                 <Icon className={`w-7 h-7 text-${color}-600 mr-3`} />
                 <div>
-                  <p className="text-xs font-medium text-white/40">{label}</p>
+                  <p className="text-xs font-medium text-white/60">{label}</p>
                   <p className={`text-xl font-bold text-${color}-600`}>{value}</p>
-                  <p className="text-xs text-white/40">{sub}</p>
+                  <p className="text-xs text-white/60">{sub}</p>
                 </div>
               </div>
             </div>
@@ -486,7 +486,7 @@ const ItensEstoque: React.FC = () => {
                   {['Item','Código','Tipo','Categoria','Grupo Contagem','Não Contar',
                     'Unidade','Custo Médio','Qtd.',`Valor Total`,'Est. Mínimo','Status','Criado em','Ações']
                     .map(h => (
-                      <th key={h} className="px-4 py-3 text-xs font-medium text-white/40 uppercase tracking-wider whitespace-nowrap">
+                      <th key={h} className="px-4 py-3 text-xs font-medium text-white/60 uppercase tracking-wider whitespace-nowrap">
                         {h}
                       </th>
                     ))}
@@ -556,7 +556,7 @@ const ItensEstoque: React.FC = () => {
                         {item.status === 'ativo' ? 'Ativo' : 'Inativo'}
                       </span>
                     </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-sm text-white/40">
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-white/60">
                       {dayjs(item.criado_em).format('DD/MM/YYYY')}
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap">
@@ -588,7 +588,7 @@ const ItensEstoque: React.FC = () => {
                 ? <button onClick={clearAllFilters} className="px-4 py-2 bg-wine text-white rounded-lg hover:bg-[#6a1a25]">
                     Limpar filtros
                   </button>
-                : <p className="text-white/40">Nenhum item cadastrado.</p>}
+                : <p className="text-white/60">Nenhum item cadastrado.</p>}
             </div>
           )}
         </div>
@@ -678,7 +678,7 @@ const ItensEstoque: React.FC = () => {
                   className="w-full rounded-xl border-white/20 shadow-sm focus:border-wine focus:ring focus:ring-wine/20">
                   {GRUPOS_CONTAGEM.map(g => <option key={g.value} value={g.value}>{g.label}</option>)}
                 </select>
-                <p className="text-xs text-white/30 mt-1">
+                <p className="text-xs text-white/60 mt-1">
                   Define em qual aba este item aparece durante a contagem.
                 </p>
               </div>
@@ -706,7 +706,7 @@ const ItensEstoque: React.FC = () => {
               <div>
                 <label className="block text-sm font-medium text-white/80 mb-1">Custo Médio</label>
                 <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40 text-sm">R$</span>
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/60 text-sm">R$</span>
                   <input type="number" step="0.01" min="0" value={formData.custo_medio}
                     onChange={e => setFormData({ ...formData, custo_medio: parseFloat(e.target.value) || 0 })}
                     className="pl-10 w-full rounded-xl border-white/20 shadow-sm focus:border-wine focus:ring focus:ring-wine/20" />
@@ -776,7 +776,7 @@ const ItensEstoque: React.FC = () => {
                     className="w-4 h-4 rounded text-wine border-white/20 focus:ring-wine" />
                   <div>
                     <p className="text-sm font-medium text-white/80">Tem validade</p>
-                    <p className="text-xs text-white/40">Controlar vencimento</p>
+                    <p className="text-xs text-white/60">Controlar vencimento</p>
                   </div>
                 </label>
 
@@ -787,7 +787,7 @@ const ItensEstoque: React.FC = () => {
                     className="w-4 h-4 rounded text-wine border-white/20 focus:ring-wine" />
                   <div>
                     <p className="text-sm font-medium text-white/80">Item ativo</p>
-                    <p className="text-xs text-white/40">Visível no sistema</p>
+                    <p className="text-xs text-white/60">Visível no sistema</p>
                   </div>
                 </label>
 
@@ -804,7 +804,7 @@ const ItensEstoque: React.FC = () => {
                     <p className={`text-sm font-medium ${formData.entra_no_cmv ? 'text-emerald-400' : 'text-white/50'}`}>
                       Entra no CMV
                     </p>
-                    <p className="text-xs text-white/40">
+                    <p className="text-xs text-white/60">
                       {formData.entra_no_cmv ? 'Impacta custo das mercadorias' : 'Não compõe o CMV'}
                     </p>
                   </div>
@@ -823,7 +823,7 @@ const ItensEstoque: React.FC = () => {
                     <p className={`text-sm font-medium ${formData.ignorar_contagem ? 'text-red-400' : 'text-white/80'}`}>
                       Não contar
                     </p>
-                    <p className="text-xs text-white/40">
+                    <p className="text-xs text-white/60">
                       {formData.ignorar_contagem ? 'Excluído das contagens' : 'Aparece na contagem'}
                     </p>
                   </div>

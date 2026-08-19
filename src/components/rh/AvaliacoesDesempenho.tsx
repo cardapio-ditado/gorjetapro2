@@ -190,7 +190,7 @@ export default function AvaliacoesDesempenho() {
                 <div key={d.colaborador_id} className="flex items-center gap-2 bg-black/20 rounded-lg px-3 py-1.5">
                   <span className="text-white/80 text-xs font-medium">{d.nome_completo.split(' ')[0]}</span>
                   <span className={`text-xs px-1.5 py-0.5 rounded-full ${badge.cls}`}>{badge.label}</span>
-                  {prox && <span className="text-white/40 text-xs">próx: {prox.format('MM/YYYY')}</span>}
+                  {prox && <span className="text-white/60 text-xs">próx: {prox.format('MM/YYYY')}</span>}
                   <button onClick={() => setModal({ open: true, colaboradorId: d.colaborador_id })}
                     className="text-xs text-wine hover:text-red-400 font-medium">Avaliar</button>
                 </div>
@@ -254,13 +254,13 @@ export default function AvaliacoesDesempenho() {
                     <p className="text-white font-medium">{d.nome_completo}</p>
                     <p className="text-white/50 text-xs">
                       {d.funcao_nome} · {d.anos_empresa ?? 0} ano(s)
-                      {prox && <span className="ml-2 text-white/30">próxima: {prox.format('MM/YYYY')}</span>}
+                      {prox && <span className="ml-2 text-white/60">próxima: {prox.format('MM/YYYY')}</span>}
                     </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
                   <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${badge.cls}`}>{badge.label}</span>
-                  {d.ultima_avaliacao && <span className="text-white/40 text-xs">Última: {dayjs(d.ultima_avaliacao).format('DD/MM/YYYY')}</span>}
+                  {d.ultima_avaliacao && <span className="text-white/60 text-xs">Última: {dayjs(d.ultima_avaliacao).format('DD/MM/YYYY')}</span>}
                   <button onClick={() => setModal({ open: true, colaboradorId: d.colaborador_id })}
                     className="flex items-center gap-1 px-3 py-1.5 bg-wine/30 hover:bg-wine/60 text-white/80 hover:text-white rounded-lg text-xs font-medium transition-all">
                     <Plus className="w-3 h-3" /> Avaliar
@@ -292,7 +292,7 @@ export default function AvaliacoesDesempenho() {
                         <span className="text-white/70 font-medium">{a.tipo}</span>
                         {a.periodo_referencia && <span>{a.periodo_referencia}</span>}
                         <span>{dayjs(a.data_avaliacao).format('DD/MM/YYYY')}</span>
-                        {a.avaliador && <span className="text-white/30">por {a.avaliador}</span>}
+                        {a.avaliador && <span className="text-white/60">por {a.avaliador}</span>}
                       </p>
                     </div>
                   </div>
@@ -300,11 +300,11 @@ export default function AvaliacoesDesempenho() {
                     {media > 0 && (
                       <div className="text-center">
                         <p className={`text-xl font-bold ${notaCor(media)}`}>{media.toFixed(1)}</p>
-                        <p className="text-white/40 text-xs">média</p>
+                        <p className="text-white/60 text-xs">média</p>
                       </div>
                     )}
                     <span className="text-xs px-2 py-1 rounded-full bg-white/10 text-white/60">{resultadoLabel(a.resultado)}</span>
-                    <span className="text-xs px-2 py-1 rounded-full bg-white/5 text-white/40">{recomendacaoLabel(a.recomendacao)}</span>
+                    <span className="text-xs px-2 py-1 rounded-full bg-white/5 text-white/60">{recomendacaoLabel(a.recomendacao)}</span>
                     <div className="flex gap-1" onClick={e => e.stopPropagation()}>
                       <button onClick={() => setModal({ open: true, avaliacao: a, colaboradorId: a.colaborador_id })}
                         className="p-2 hover:bg-white/10 rounded-lg text-white/50 hover:text-white transition-all" title="Editar">
@@ -324,7 +324,7 @@ export default function AvaliacoesDesempenho() {
                     {/* Critérios com notas */}
                     {a.criterios_notas.length > 0 ? (
                       <>
-                        <p className="text-white/40 text-xs uppercase tracking-wide font-medium">Critérios Avaliados</p>
+                        <p className="text-white/60 text-xs uppercase tracking-wide font-medium">Critérios Avaliados</p>
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                           {a.criterios_notas.map(c => (
                             <div key={c.criterio_id} className={`rounded-lg border px-3 py-2.5 ${notaBg(c.nota)}`}>
@@ -342,7 +342,7 @@ export default function AvaliacoesDesempenho() {
                         </div>
                       </>
                     ) : (
-                      <p className="text-white/30 text-sm">Nenhum critério registrado nesta avaliação.</p>
+                      <p className="text-white/60 text-sm">Nenhum critério registrado nesta avaliação.</p>
                     )}
 
                     {/* Textos qualitativos */}
@@ -370,7 +370,7 @@ export default function AvaliacoesDesempenho() {
                     )}
                     {a.observacoes && (
                       <div className="bg-white/5 rounded-lg px-3 py-2.5">
-                        <p className="text-white/40 text-xs font-medium mb-1">Observações</p>
+                        <p className="text-white/60 text-xs font-medium mb-1">Observações</p>
                         <p className="text-white/70 text-xs leading-relaxed">{a.observacoes}</p>
                       </div>
                     )}
@@ -498,7 +498,7 @@ function ModalAvaliacao({
             </div>
             <div>
               <h2 className="text-white font-semibold">{avaliacao ? 'Editar Avaliação' : 'Nova Avaliação de Desempenho'}</h2>
-              <p className="text-white/40 text-xs">Preencha todos os critérios do tipo selecionado</p>
+              <p className="text-white/60 text-xs">Preencha todos os critérios do tipo selecionado</p>
             </div>
           </div>
           <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-lg text-white/50 hover:text-white transition-all">
@@ -546,7 +546,7 @@ function ModalAvaliacao({
           {/* Descrição do tipo selecionado */}
           {tipoSel?.descricao && (
             <div className="bg-white/5 border border-white/10 rounded-xl px-4 py-3">
-              <p className="text-white/40 text-xs uppercase tracking-wide mb-1">Sobre este tipo</p>
+              <p className="text-white/60 text-xs uppercase tracking-wide mb-1">Sobre este tipo</p>
               <p className="text-white/70 text-sm">{tipoSel.descricao}</p>
             </div>
           )}
@@ -699,7 +699,7 @@ function ConfigPanel({ config, tipos, onRefresh }: {
       {/* Intervalo */}
       <div className="bg-white/5 border border-white/10 rounded-xl p-5">
         <h3 className="text-white font-semibold mb-1">Intervalo entre Avaliações</h3>
-        <p className="text-white/40 text-sm mb-4">De quantos em quantos meses cada colaborador deve ser avaliado.</p>
+        <p className="text-white/60 text-sm mb-4">De quantos em quantos meses cada colaborador deve ser avaliado.</p>
         <div className="flex items-center gap-4">
           <input type="number" min={1} max={24} value={intervalo}
             onChange={e => setIntervalo(parseInt(e.target.value) || 6)}
@@ -718,7 +718,7 @@ function ConfigPanel({ config, tipos, onRefresh }: {
         <div className="flex items-center justify-between mb-4">
           <div>
             <h3 className="text-white font-semibold">Tipos de Avaliação</h3>
-            <p className="text-white/40 text-sm mt-0.5">Defina os tipos e os critérios de cada um.</p>
+            <p className="text-white/60 text-sm mt-0.5">Defina os tipos e os critérios de cada um.</p>
           </div>
           <button onClick={() => setCriandoTipo(true)}
             className="flex items-center gap-2 px-4 py-2 bg-wine hover:bg-wine-light text-white rounded-xl text-sm font-medium transition-all">
@@ -732,8 +732,8 @@ function ConfigPanel({ config, tipos, onRefresh }: {
               <div className="px-4 py-3 flex items-center justify-between">
                 <div>
                   <p className="text-white font-medium">{t.nome}</p>
-                  {t.descricao && <p className="text-white/40 text-xs mt-0.5">{t.descricao}</p>}
-                  <p className="text-white/30 text-xs mt-1">{t.criterios.length} critério(s)</p>
+                  {t.descricao && <p className="text-white/60 text-xs mt-0.5">{t.descricao}</p>}
+                  <p className="text-white/60 text-xs mt-1">{t.criterios.length} critério(s)</p>
                 </div>
                 <div className="flex gap-1">
                   <button onClick={() => setEditandoTipo(t)}

@@ -661,7 +661,7 @@ const GorjetaGarcons: React.FC = () => {
               <thead>
                 <tr className="text-left bg-white/5 border-b border-white/10">
                   {['Colaborador','Função','Total Vendas','Comissão Base','Bônus Meta','Adicionais','Descontos','Total Líquido','Ações'].map(h => (
-                    <th key={h} className="px-6 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">{h}</th>
+                    <th key={h} className="px-6 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -695,7 +695,7 @@ const GorjetaGarcons: React.FC = () => {
             <div className="text-center py-12">
               <Calculator className="w-16 h-16 text-white/30 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-white mb-2">Nenhum saldo de gorjeta encontrado</h3>
-              <p className="text-white/40">{searchTerm || colaboradorFilter !== 'all' ? 'Nenhum colaborador corresponde aos filtros.' : 'Não há dados de gorjetas para esta semana.'}</p>
+              <p className="text-white/60">{searchTerm || colaboradorFilter !== 'all' ? 'Nenhum colaborador corresponde aos filtros.' : 'Não há dados de gorjetas para esta semana.'}</p>
             </div>
           )}
         </div>
@@ -714,7 +714,7 @@ const GorjetaGarcons: React.FC = () => {
                 <div className="p-2 bg-amber-500/10 rounded-lg"><Zap className="w-5 h-5 text-amber-500" /></div>
                 <div>
                   <h3 className="text-base font-semibold text-white">Importar Vendas da ZIG</h3>
-                  <p className="text-xs text-white/40">Semana {semanaAtual.semana}/{semanaAtual.ano} · {weekDates.startFormatted} a {weekDates.endFormatted}</p>
+                  <p className="text-xs text-white/60">Semana {semanaAtual.semana}/{semanaAtual.ano} · {weekDates.startFormatted} a {weekDates.endFormatted}</p>
                 </div>
               </div>
               <button onClick={() => setShowZigModal(false)} className="text-white/30 hover:text-white/50"><X className="w-5 h-5" /></button>
@@ -727,7 +727,7 @@ const GorjetaGarcons: React.FC = () => {
               {zigLoading && (
                 <div className="flex flex-col items-center py-12 gap-3">
                   <Loader2 className="w-8 h-8 text-amber-500 animate-spin" />
-                  <p className="text-sm text-white/40">Buscando vendas na ZIG...</p>
+                  <p className="text-sm text-white/60">Buscando vendas na ZIG...</p>
                 </div>
               )}
 
@@ -767,7 +767,7 @@ const GorjetaGarcons: React.FC = () => {
                     </div>
                   )}
 
-                  <p className="text-xs text-white/40">
+                  <p className="text-xs text-white/60">
                     Marque os garçons cujas vendas deseja importar. Valores em R$ (ZIG retorna em centavos e já convertemos).
                   </p>
 
@@ -795,7 +795,7 @@ const GorjetaGarcons: React.FC = () => {
                                   : <span className="text-xs text-amber-400 bg-amber-500/15 px-2 py-0.5 rounded-full">Sem vínculo</span>
                                 }
                               </div>
-                              <p className="text-xs text-white/30 mt-0.5">{g.qtd_transacoes} comandas · {g.qtd_itens} itens</p>
+                              <p className="text-xs text-white/60 mt-0.5">{g.qtd_transacoes} comandas · {g.qtd_itens} itens</p>
                             </div>
 
                             {/* valor */}
@@ -811,7 +811,7 @@ const GorjetaGarcons: React.FC = () => {
                           {/* expandido: vincular colaborador */}
                           {aberto && (
                             <div className="px-4 pb-4 pt-0 border-t border-white/5">
-                              <p className="text-xs text-white/40 mb-2 mt-2 flex items-center gap-1">
+                              <p className="text-xs text-white/60 mb-2 mt-2 flex items-center gap-1">
                                 <Link2 className="w-3 h-3" /> Vincular ao colaborador (salvo permanentemente)
                               </p>
                               <div className="flex gap-2">
@@ -857,7 +857,7 @@ const GorjetaGarcons: React.FC = () => {
             {/* rodapé */}
             {!zigLoading && !zigResultado && zigVendas.length > 0 && (
               <div className="px-6 py-4 border-t border-white/5 flex items-center justify-between bg-white/5 rounded-b-2xl">
-                <p className="text-xs text-white/40">
+                <p className="text-xs text-white/60">
                   {zigSelecionados} de {zigVendas.length} garçom(ns) selecionado(s)
                   {zigSemVinculo > 0 && <span className="text-amber-600 ml-1">· {zigSemVinculo} sem vínculo</span>}
                 </p>
@@ -910,7 +910,7 @@ const GorjetaGarcons: React.FC = () => {
               <div>
                 <label className="block text-sm font-medium text-white/80 mb-1">Valor das Vendas *</label>
                 <div className="relative">
-                  <span className="absolute inset-y-0 left-3 flex items-center text-white/40 text-sm">R$</span>
+                  <span className="absolute inset-y-0 left-3 flex items-center text-white/60 text-sm">R$</span>
                   <input type="number" step="0.01" min="0" value={formVenda.valor_vendas}
                     onChange={e => setFormVenda({...formVenda, valor_vendas: parseFloat(e.target.value)||0})}
                     className="pl-10 w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50" required />
@@ -964,7 +964,7 @@ const GorjetaGarcons: React.FC = () => {
               <div>
                 <label className="block text-sm font-medium text-white/80 mb-1">Valor *</label>
                 <div className="relative">
-                  <span className="absolute inset-y-0 left-3 flex items-center text-white/40 text-sm">R$</span>
+                  <span className="absolute inset-y-0 left-3 flex items-center text-white/60 text-sm">R$</span>
                   <input type="number" step="0.01" min="0" value={formAdicional.valor}
                     onChange={e => setFormAdicional({...formAdicional, valor: parseFloat(e.target.value)||0})}
                     className="pl-10 w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50" required />
@@ -1021,7 +1021,7 @@ const GorjetaGarcons: React.FC = () => {
               <div>
                 <label className="block text-sm font-medium text-white/80 mb-1">Valor do Desconto *</label>
                 <div className="relative">
-                  <span className="absolute inset-y-0 left-3 flex items-center text-white/40 text-sm">R$</span>
+                  <span className="absolute inset-y-0 left-3 flex items-center text-white/60 text-sm">R$</span>
                   <input type="number" step="0.01" min="0" value={formDesconto.valor_desconto}
                     onChange={e => setFormDesconto({...formDesconto, valor_desconto: parseFloat(e.target.value)||0})}
                     className="pl-10 w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50" required />

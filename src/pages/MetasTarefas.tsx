@@ -299,7 +299,7 @@ const TarefaDrawer: React.FC<TarefaDrawerProps> = ({ tarefa, mode, setorInicial 
         {/* Header */}
         <div className="flex items-start gap-3 px-5 py-4 border-b border-white/10 shrink-0">
           <div className="flex-1 min-w-0">
-            {tarefa?.numero_tarefa && <span className="text-caption font-bold text-white/30 font-mono">#{tarefa.numero_tarefa}</span>}
+            {tarefa?.numero_tarefa && <span className="text-caption font-bold text-white/60 font-mono">#{tarefa.numero_tarefa}</span>}
             <div className="flex items-center gap-2 mt-0.5 flex-wrap">
               <span className={`flex items-center gap-1 text-caption font-bold px-2 py-0.5 rounded-full ${faseCurrent.badgeCls}`}>
                 <span className={`w-1.5 h-1.5 rounded-full ${faseCurrent.dot}`} />{faseCurrent.label}
@@ -342,7 +342,7 @@ const TarefaDrawer: React.FC<TarefaDrawerProps> = ({ tarefa, mode, setorInicial 
               }`}>
               {a.label}
               {(a as any).count > 0 && (
-                <span className={`text-caption px-1.5 py-0.5 rounded-full ${aba === a.id ? 'bg-white/20 text-white' : 'bg-white/10 text-white/40'}`}>
+                <span className={`text-caption px-1.5 py-0.5 rounded-full ${aba === a.id ? 'bg-white/20 text-white' : 'bg-white/10 text-white/60'}`}>
                   {(a as any).count}
                 </span>
               )}
@@ -356,7 +356,7 @@ const TarefaDrawer: React.FC<TarefaDrawerProps> = ({ tarefa, mode, setorInicial 
           {aba === 'info' && (
             <>
               <div>
-                <label className="block text-caption font-bold text-white/40 uppercase tracking-wide mb-2">Setor</label>
+                <label className="block text-caption font-bold text-white/60 uppercase tracking-wide mb-2">Setor</label>
                 <div className="flex flex-wrap gap-1.5">
                   {SETORES.map(s => (
                     <button key={s.id} type="button" onClick={() => setSetor(s.id)}
@@ -367,19 +367,19 @@ const TarefaDrawer: React.FC<TarefaDrawerProps> = ({ tarefa, mode, setorInicial 
                 </div>
               </div>
               <div>
-                <label className="block text-caption font-bold text-white/40 uppercase tracking-wide mb-1.5">Título *</label>
+                <label className="block text-caption font-bold text-white/60 uppercase tracking-wide mb-1.5">Título *</label>
                 <input type="text" value={titulo} onChange={e => setTitulo(e.target.value)} autoFocus
                   placeholder="Descreva a tarefa ou meta..." className={inputCls} />
               </div>
               <div>
-                <label className="block text-caption font-bold text-white/40 uppercase tracking-wide mb-1.5">Descrição</label>
+                <label className="block text-caption font-bold text-white/60 uppercase tracking-wide mb-1.5">Descrição</label>
                 <textarea value={descricao} onChange={e => setDescricao(e.target.value)} rows={3}
                   placeholder="Contexto, detalhes, observações importantes..."
                   className={inputCls + ' resize-none'} />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-caption font-bold text-white/40 uppercase tracking-wide mb-1.5">Prioridade</label>
+                  <label className="block text-caption font-bold text-white/60 uppercase tracking-wide mb-1.5">Prioridade</label>
                   <div className="flex flex-col gap-1">
                     {PRIORIDADES.map(p => (
                       <button key={p.id} type="button" onClick={() => setPrioridade(p.id)}
@@ -390,7 +390,7 @@ const TarefaDrawer: React.FC<TarefaDrawerProps> = ({ tarefa, mode, setorInicial 
                   </div>
                 </div>
                 <div>
-                  <label className="block text-caption font-bold text-white/40 uppercase tracking-wide mb-1.5">Fase</label>
+                  <label className="block text-caption font-bold text-white/60 uppercase tracking-wide mb-1.5">Fase</label>
                   <div className="flex flex-col gap-1">
                     {FASES.map(f => (
                       <button key={f.id} type="button" onClick={() => setFase(f.id)}
@@ -403,19 +403,19 @@ const TarefaDrawer: React.FC<TarefaDrawerProps> = ({ tarefa, mode, setorInicial 
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-caption font-bold text-white/40 uppercase tracking-wide mb-1.5"><User className="w-3 h-3 inline mr-1" />Responsável</label>
+                  <label className="block text-caption font-bold text-white/60 uppercase tracking-wide mb-1.5"><User className="w-3 h-3 inline mr-1" />Responsável</label>
                   <select value={responsavel} onChange={e => setResponsavel(e.target.value)} className={selectCls}>
                     <option value="">— ninguém —</option>
                     {RESPONSAVEIS.map(r => <option key={r} value={r}>{r}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-caption font-bold text-white/40 uppercase tracking-wide mb-1.5"><Tag className="w-3 h-3 inline mr-1" />Solicitante</label>
+                  <label className="block text-caption font-bold text-white/60 uppercase tracking-wide mb-1.5"><Tag className="w-3 h-3 inline mr-1" />Solicitante</label>
                   <input type="text" value={solicitante} onChange={e => setSolicitante(e.target.value)} placeholder="Quem solicitou..." className={inputCls} />
                 </div>
               </div>
               <div>
-                <label className="block text-caption font-bold text-white/40 uppercase tracking-wide mb-1.5"><Calendar className="w-3 h-3 inline mr-1" />Data Limite</label>
+                <label className="block text-caption font-bold text-white/60 uppercase tracking-wide mb-1.5"><Calendar className="w-3 h-3 inline mr-1" />Data Limite</label>
                 <input type="date" value={dataLimite} onChange={e => setDataLimite(e.target.value)} className={inputCls} />
               </div>
               {erro && <p className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-xl px-3 py-2">{erro}</p>}
@@ -427,7 +427,7 @@ const TarefaDrawer: React.FC<TarefaDrawerProps> = ({ tarefa, mode, setorInicial 
               <div className="flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-2xl">
                 <div>
                   <p className="text-sm font-bold text-white">Esta tarefa tem custo?</p>
-                  <p className="text-xs text-white/40 mt-0.5">Ative para registrar valores e orçamentos</p>
+                  <p className="text-xs text-white/60 mt-0.5">Ative para registrar valores e orçamentos</p>
                 </div>
                 <button onClick={() => setTemCusto(v => !v)}
                   className={`relative w-12 h-6 rounded-full transition-all duration-300 ${temCusto ? 'bg-emerald-500' : 'bg-white/15'}`}>
@@ -438,17 +438,17 @@ const TarefaDrawer: React.FC<TarefaDrawerProps> = ({ tarefa, mode, setorInicial 
                 <>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-caption font-bold text-white/40 uppercase tracking-wide mb-1.5">Valor Estimado</label>
+                      <label className="block text-caption font-bold text-white/60 uppercase tracking-wide mb-1.5">Valor Estimado</label>
                       <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40 text-sm font-bold">R$</span>
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/60 text-sm font-bold">R$</span>
                         <input type="number" min="0" step="0.01" value={valorEstimado} onChange={e => setValorEstimado(e.target.value)}
                           placeholder="0,00" className={inputCls + ' pl-9'} />
                       </div>
                     </div>
                     <div>
-                      <label className="block text-caption font-bold text-white/40 uppercase tracking-wide mb-1.5">Custo Real</label>
+                      <label className="block text-caption font-bold text-white/60 uppercase tracking-wide mb-1.5">Custo Real</label>
                       <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40 text-sm font-bold">R$</span>
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/60 text-sm font-bold">R$</span>
                         <input type="number" min="0" step="0.01" value={valorReal} onChange={e => setValorReal(e.target.value)}
                           placeholder="0,00" className={inputCls + ' pl-9'} />
                       </div>
@@ -471,7 +471,7 @@ const TarefaDrawer: React.FC<TarefaDrawerProps> = ({ tarefa, mode, setorInicial 
               <div className="flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-2xl">
                 <div>
                   <p className="text-sm font-bold text-white">Requer aprovação?</p>
-                  <p className="text-xs text-white/40 mt-0.5">Bloqueia execução até ser aprovada</p>
+                  <p className="text-xs text-white/60 mt-0.5">Bloqueia execução até ser aprovada</p>
                 </div>
                 <button onClick={() => setRequerAprovacao(v => !v)}
                   className={`relative w-12 h-6 rounded-full transition-all duration-300 ${requerAprovacao ? 'bg-wine' : 'bg-white/15'}`}>
@@ -481,7 +481,7 @@ const TarefaDrawer: React.FC<TarefaDrawerProps> = ({ tarefa, mode, setorInicial 
               {requerAprovacao && (
                 <>
                   <div>
-                    <label className="block text-caption font-bold text-white/40 uppercase tracking-wide mb-2">Status de Aprovação</label>
+                    <label className="block text-caption font-bold text-white/60 uppercase tracking-wide mb-2">Status de Aprovação</label>
                     <div className="flex gap-2">
                       {(['pendente', 'aprovado', 'rejeitado'] as const).map(s => (
                         <button key={s} type="button" onClick={() => setStatusAprovacao(s)}
@@ -534,7 +534,7 @@ const TarefaDrawer: React.FC<TarefaDrawerProps> = ({ tarefa, mode, setorInicial 
                       className={`shrink-0 w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${item.concluido ? 'bg-emerald-500 border-emerald-500' : 'border-white/25 hover:border-white/50'}`}>
                       {item.concluido && <Check className="w-3 h-3 text-white" />}
                     </button>
-                    <span className={`flex-1 text-sm transition-all ${item.concluido ? 'line-through text-white/30' : 'text-white'}`}>{item.texto}</span>
+                    <span className={`flex-1 text-sm transition-all ${item.concluido ? 'line-through text-white/60' : 'text-white'}`}>{item.texto}</span>
                     <button onClick={() => setChecklist(c => c.filter(x => x.id !== item.id))}
                       className="opacity-0 group-hover:opacity-100 p-1 text-white/25 hover:text-red-400 transition-all">
                       <X className="w-3.5 h-3.5" />
@@ -569,8 +569,8 @@ const TarefaDrawer: React.FC<TarefaDrawerProps> = ({ tarefa, mode, setorInicial 
                       onChange={e => { const f = e.target.files?.[0]; if (f) uploadAnexo(f); e.target.value = ''; }} />
                     {uploadando ? <Loader2 className="w-8 h-8 text-white/30 animate-spin mx-auto mb-2" />
                       : <Upload className="w-8 h-8 text-white/25 group-hover:text-white/50 mx-auto mb-2 transition-all" />}
-                    <p className="text-sm text-white/40 font-medium">{uploadando ? 'Enviando...' : 'Clique para anexar arquivo'}</p>
-                    <p className="text-xs text-white/20 mt-1">PDF, Word, Excel, imagens — máx. 20 MB</p>
+                    <p className="text-sm text-white/60 font-medium">{uploadando ? 'Enviando...' : 'Clique para anexar arquivo'}</p>
+                    <p className="text-xs text-white/60 mt-1">PDF, Word, Excel, imagens — máx. 20 MB</p>
                   </div>
                   {anexos.length > 0 && (
                     <div className="space-y-2">
@@ -579,7 +579,7 @@ const TarefaDrawer: React.FC<TarefaDrawerProps> = ({ tarefa, mode, setorInicial 
                           <div className="shrink-0">{fileIcon(a.tipo_mime)}</div>
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium text-white truncate">{a.nome_arquivo}</p>
-                            <p className="text-caption text-white/30 mt-0.5">{formatBytes(a.tamanho_bytes)} · {new Date(a.criado_em).toLocaleDateString('pt-BR')}</p>
+                            <p className="text-caption text-white/60 mt-0.5">{formatBytes(a.tamanho_bytes)} · {new Date(a.criado_em).toLocaleDateString('pt-BR')}</p>
                           </div>
                           <div className="flex gap-1.5 opacity-0 group-hover:opacity-100 transition-all">
                             <a href={a.url_arquivo} target="_blank" rel="noopener noreferrer"
@@ -655,9 +655,9 @@ const KanbanCard: React.FC<KanbanCardProps> = ({ tarefa, onOpen, onMove, onDelet
         <p className="text-caption text-white/35 mb-2 line-clamp-2 leading-relaxed">{tarefa.descricao}</p>
       )}
       <div className="flex flex-wrap items-center gap-1.5">
-        {tarefa.responsavel && <span className="text-caption text-white/40 bg-white/8 px-1.5 py-0.5 rounded-md">{tarefa.responsavel}</span>}
+        {tarefa.responsavel && <span className="text-caption text-white/60 bg-white/8 px-1.5 py-0.5 rounded-md">{tarefa.responsavel}</span>}
         {tarefa.data_limite && (
-          <span className={`text-caption font-bold px-1.5 py-0.5 rounded-md ${vencida ? 'bg-red-500/20 text-red-400' : 'bg-white/6 text-white/30'}`}>
+          <span className={`text-caption font-bold px-1.5 py-0.5 rounded-md ${vencida ? 'bg-red-500/20 text-red-400' : 'bg-white/6 text-white/60'}`}>
             {fmtData(tarefa.data_limite)}
           </span>
         )}
@@ -665,12 +665,12 @@ const KanbanCard: React.FC<KanbanCardProps> = ({ tarefa, onOpen, onMove, onDelet
           <span className="text-caption font-bold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded-md">{fmtR(tarefa.valor_estimado)}</span>
         )}
         {checkTotal > 0 && (
-          <span className={`text-caption font-bold px-1.5 py-0.5 rounded-md ${checkDone === checkTotal ? 'bg-emerald-500/15 text-emerald-400' : 'bg-white/6 text-white/30'}`}>
+          <span className={`text-caption font-bold px-1.5 py-0.5 rounded-md ${checkDone === checkTotal ? 'bg-emerald-500/15 text-emerald-400' : 'bg-white/6 text-white/60'}`}>
             {checkDone}/{checkTotal}
           </span>
         )}
         {(tarefa.anexos?.length ?? 0) > 0 && (
-          <span className="text-caption text-white/30 bg-white/5 px-1.5 py-0.5 rounded-md flex items-center gap-0.5">
+          <span className="text-caption text-white/60 bg-white/5 px-1.5 py-0.5 rounded-md flex items-center gap-0.5">
             <Paperclip className="w-2.5 h-2.5" />{tarefa.anexos!.length}
           </span>
         )}
@@ -726,7 +726,7 @@ const KanbanSetor: React.FC<KanbanSetorProps> = ({ setor, tarefas, onAdd, onOpen
         </div>
         <div className="flex-1 text-left">
           <p className="text-sm font-bold text-white">{setor.label}</p>
-          <p className="text-caption text-white/40">{setor.sub}</p>
+          <p className="text-caption text-white/60">{setor.sub}</p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
           {urgentes > 0 && <span className="text-caption font-bold px-2 py-0.5 rounded-full bg-red-500/15 text-red-400">{urgentes}u</span>}
@@ -857,14 +857,14 @@ const SolCard: React.FC<SolCardProps> = ({ sol, onOpen, onMover, onDelete, onArq
           <span className={`w-1.5 h-1.5 rounded-full ${pr.dot}`} />{pr.label}
         </span>
       </div>
-      <p className="text-caption text-white/25 font-mono mb-0.5">#{sol.numero_solicitacao}</p>
+      <p className="text-caption text-white/60 font-mono mb-0.5">#{sol.numero_solicitacao}</p>
       <p className="text-caption font-semibold text-white leading-snug mb-2">{sol.titulo}</p>
       {sol.setor_solicitante && <p className="text-caption text-white/35 mb-2 truncate">{sol.setor_solicitante}</p>}
       <div className="flex flex-wrap items-center gap-1">
         <span className={`text-caption font-bold px-1.5 py-0.5 rounded-md ${st.cls}`}>{st.label}</span>
         {sol.solicitante_nome && <span className="text-caption text-white/35 bg-white/6 px-1.5 py-0.5 rounded-md truncate max-w-[80px]">{sol.solicitante_nome}</span>}
         {sol.data_limite && (
-          <span className={`text-caption font-bold px-1.5 py-0.5 rounded-md ${vencida ? 'bg-red-500/20 text-red-400' : 'bg-white/6 text-white/30'}`}>{fmtData(sol.data_limite)}</span>
+          <span className={`text-caption font-bold px-1.5 py-0.5 rounded-md ${vencida ? 'bg-red-500/20 text-red-400' : 'bg-white/6 text-white/60'}`}>{fmtData(sol.data_limite)}</span>
         )}
         {sol.valor_estimado && sol.valor_estimado > 0 && (
           <span className="text-caption font-bold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded-md">{fmtR(sol.valor_estimado)}</span>
@@ -1259,7 +1259,7 @@ const CreditoFornecedoresTab: React.FC = () => {
           { label: 'Saldo disponível',  val: fmtR(totalCreditoSaldo), cls: 'text-emerald-400' },
         ].map(k => (
           <div key={k.label} className="bg-[#12141f] border border-white/10 rounded-xl p-4">
-            <p className="text-caption text-white/40 uppercase font-bold tracking-wide mb-1">{k.label}</p>
+            <p className="text-caption text-white/60 uppercase font-bold tracking-wide mb-1">{k.label}</p>
             <p className={`text-lg font-black ${k.cls}`}>{k.val}</p>
           </div>
         ))}
@@ -1279,8 +1279,8 @@ const CreditoFornecedoresTab: React.FC = () => {
       ) : creditos.length === 0 ? (
         <div className="text-center py-16">
           <CreditCard className="w-12 h-12 text-white/15 mx-auto mb-3" />
-          <p className="text-white/30 text-sm">Nenhum crédito cadastrado</p>
-          <p className="text-white/20 text-xs mt-1">Clique em "Novo Crédito" para registrar uma permuta</p>
+          <p className="text-white/60 text-sm">Nenhum crédito cadastrado</p>
+          <p className="text-white/60 text-xs mt-1">Clique em "Novo Crédito" para registrar uma permuta</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -1305,22 +1305,22 @@ const CreditoFornecedoresTab: React.FC = () => {
                       </span>
                       {vencido && <span className="text-caption font-bold px-1.5 py-0.5 rounded-md bg-red-500/20 text-red-400">Vencido</span>}
                     </div>
-                    {c.descricao && <p className="text-xs text-white/40 mb-2 truncate">{c.descricao}</p>}
+                    {c.descricao && <p className="text-xs text-white/60 mb-2 truncate">{c.descricao}</p>}
                     {/* Barra de progresso */}
                     <div className="flex items-center gap-3">
                       <div className="flex-1 h-2 bg-white/10 rounded-full overflow-hidden">
                         <div className={`h-full rounded-full transition-all duration-500 ${pct >= 100 ? 'bg-red-500' : pct >= 80 ? 'bg-orange-500' : 'bg-emerald-500'}`}
                           style={{ width: `${pct}%` }} />
                       </div>
-                      <span className="text-caption text-white/40 shrink-0">{pct.toFixed(0)}%</span>
+                      <span className="text-caption text-white/60 shrink-0">{pct.toFixed(0)}%</span>
                     </div>
                     <div className="flex items-center gap-4 mt-1.5 text-xs">
-                      <span className="text-white/40">Total: <span className="text-white font-bold">{fmtR(Number(c.credito_total))}</span></span>
-                      <span className="text-white/40">Usado: <span className="text-orange-400 font-bold">{fmtR(Number(c.credito_usado))}</span></span>
-                      <span className="text-white/40">Saldo: <span className="text-emerald-400 font-bold">{fmtR(Number(c.credito_saldo))}</span></span>
+                      <span className="text-white/60">Total: <span className="text-white font-bold">{fmtR(Number(c.credito_total))}</span></span>
+                      <span className="text-white/60">Usado: <span className="text-orange-400 font-bold">{fmtR(Number(c.credito_usado))}</span></span>
+                      <span className="text-white/60">Saldo: <span className="text-emerald-400 font-bold">{fmtR(Number(c.credito_saldo))}</span></span>
                     </div>
                     {c.data_validade && (
-                      <p className="text-caption text-white/30 mt-1">Validade: {fmtData(c.data_validade)}</p>
+                      <p className="text-caption text-white/60 mt-1">Validade: {fmtData(c.data_validade)}</p>
                     )}
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
@@ -1359,14 +1359,14 @@ const CreditoFornecedoresTab: React.FC = () => {
                     ) : consumos[c.id].length === 0 ? (
                       <div className="py-8 text-center">
                         <Wallet className="w-8 h-8 text-white/15 mx-auto mb-2" />
-                        <p className="text-xs text-white/30">Nenhum consumo registrado</p>
+                        <p className="text-xs text-white/60">Nenhum consumo registrado</p>
                       </div>
                     ) : (
                       <div className="divide-y divide-white/5">
                         {consumos[c.id].map(k => (
                           <div key={k.id} className="flex items-center gap-3 px-5 py-3 hover:bg-white/5 transition-colors group">
                             <div className="shrink-0">
-                              <p className="text-caption font-bold text-white/40">{fmtData(k.data_consumo)}</p>
+                              <p className="text-caption font-bold text-white/60">{fmtData(k.data_consumo)}</p>
                             </div>
                             <div className="flex-1 min-w-0">
                               <p className="text-sm font-medium text-white">{k.descricao}</p>
@@ -1412,32 +1412,32 @@ const CreditoFornecedoresTab: React.FC = () => {
             </div>
             <div className="px-6 py-4 space-y-3">
               <div>
-                <label className="block text-xs font-bold text-white/40 uppercase tracking-wide mb-1.5">Nome do Fornecedor *</label>
+                <label className="block text-xs font-bold text-white/60 uppercase tracking-wide mb-1.5">Nome do Fornecedor *</label>
                 <input value={formC.nome_fornecedor} onChange={e => setFormC(f => ({ ...f, nome_fornecedor: e.target.value }))}
                   placeholder="Ex: Rádio FM, Portal de Notícias..." className={inputCls} />
               </div>
               <div>
-                <label className="block text-xs font-bold text-white/40 uppercase tracking-wide mb-1.5">Descrição do Acordo</label>
+                <label className="block text-xs font-bold text-white/60 uppercase tracking-wide mb-1.5">Descrição do Acordo</label>
                 <textarea value={formC.descricao} onChange={e => setFormC(f => ({ ...f, descricao: e.target.value }))} rows={2}
                   placeholder="Contexto da permuta, o que foi combinado..." className={inputCls + ' resize-none'} />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-white/40 uppercase tracking-wide mb-1.5">Crédito Total *</label>
+                  <label className="block text-xs font-bold text-white/60 uppercase tracking-wide mb-1.5">Crédito Total *</label>
                   <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40 text-sm font-bold">R$</span>
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/60 text-sm font-bold">R$</span>
                     <input type="number" step="0.01" min="0" value={formC.credito_total}
                       onChange={e => setFormC(f => ({ ...f, credito_total: e.target.value }))}
                       placeholder="0,00" className={inputCls + ' pl-9'} />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-white/40 uppercase tracking-wide mb-1.5">Validade</label>
+                  <label className="block text-xs font-bold text-white/60 uppercase tracking-wide mb-1.5">Validade</label>
                   <input type="date" value={formC.data_validade} onChange={e => setFormC(f => ({ ...f, data_validade: e.target.value }))} className={inputCls} />
                 </div>
               </div>
               <div>
-                <label className="block text-xs font-bold text-white/40 uppercase tracking-wide mb-1.5">Observações</label>
+                <label className="block text-xs font-bold text-white/60 uppercase tracking-wide mb-1.5">Observações</label>
                 <textarea value={formC.obs} onChange={e => setFormC(f => ({ ...f, obs: e.target.value }))} rows={2}
                   className={inputCls + ' resize-none'} />
               </div>
@@ -1461,7 +1461,7 @@ const CreditoFornecedoresTab: React.FC = () => {
             <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
               <div>
                 <h3 className="text-white font-bold">Registrar Consumo</h3>
-                <p className="text-xs text-white/40 mt-0.5">{creditos.find(c => c.id === modalConsumo)?.nome_fornecedor}</p>
+                <p className="text-xs text-white/60 mt-0.5">{creditos.find(c => c.id === modalConsumo)?.nome_fornecedor}</p>
               </div>
               <button onClick={() => setModalConsumo(null)} className="text-white/40 hover:text-white"><X className="w-4 h-4" /></button>
             </div>
@@ -1479,13 +1479,13 @@ const CreditoFornecedoresTab: React.FC = () => {
               })()}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-white/40 uppercase tracking-wide mb-1.5">Data *</label>
+                  <label className="block text-xs font-bold text-white/60 uppercase tracking-wide mb-1.5">Data *</label>
                   <input type="date" value={formK.data_consumo} onChange={e => setFormK(f => ({ ...f, data_consumo: e.target.value }))} className={inputCls} />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-white/40 uppercase tracking-wide mb-1.5">Valor *</label>
+                  <label className="block text-xs font-bold text-white/60 uppercase tracking-wide mb-1.5">Valor *</label>
                   <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40 text-sm font-bold">R$</span>
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/60 text-sm font-bold">R$</span>
                     <input type="number" step="0.01" min="0" value={formK.valor}
                       onChange={e => setFormK(f => ({ ...f, valor: e.target.value }))}
                       placeholder="0,00" className={inputCls + ' pl-9'} />
@@ -1493,18 +1493,18 @@ const CreditoFornecedoresTab: React.FC = () => {
                 </div>
               </div>
               <div>
-                <label className="block text-xs font-bold text-white/40 uppercase tracking-wide mb-1.5">Descrição *</label>
+                <label className="block text-xs font-bold text-white/60 uppercase tracking-wide mb-1.5">Descrição *</label>
                 <input value={formK.descricao} onChange={e => setFormK(f => ({ ...f, descricao: e.target.value }))}
                   placeholder="O que foi consumido do crédito..." className={inputCls} />
               </div>
               <div>
-                <label className="block text-xs font-bold text-white/40 uppercase tracking-wide mb-1.5">Observações</label>
+                <label className="block text-xs font-bold text-white/60 uppercase tracking-wide mb-1.5">Observações</label>
                 <textarea value={formK.obs} onChange={e => setFormK(f => ({ ...f, obs: e.target.value }))} rows={2}
                   className={inputCls + ' resize-none'} />
               </div>
               {/* Upload comprovante */}
               <div>
-                <label className="block text-xs font-bold text-white/40 uppercase tracking-wide mb-1.5">Comprovante</label>
+                <label className="block text-xs font-bold text-white/60 uppercase tracking-wide mb-1.5">Comprovante</label>
                 <input ref={comprovanteRef} type="file" className="hidden"
                   accept="image/*,.pdf,.jpg,.jpeg,.png,.webp"
                   onChange={e => { const f = e.target.files?.[0]; if (f) setArquivoComprovante(f); }} />
@@ -1631,7 +1631,7 @@ const MetasTarefas: React.FC = () => {
               </div>
               <div>
                 <h1 className="text-xl font-black text-white leading-none">Metas, Tarefas & Créditos</h1>
-                <p className="text-xs text-white/40 mt-0.5">Gestão por setor · Solicitações · Permuta de fornecedores</p>
+                <p className="text-xs text-white/60 mt-0.5">Gestão por setor · Solicitações · Permuta de fornecedores</p>
               </div>
             </div>
             {abaModulo === 'tarefas' && (
@@ -1650,7 +1650,7 @@ const MetasTarefas: React.FC = () => {
                 { label: 'Concluídas',    val: concluidas, cls: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20' },
               ].map(k => (
                 <div key={k.label} className={`border rounded-xl p-3 text-center ${k.bg}`}>
-                  <p className="text-caption text-white/40 uppercase font-bold tracking-wide">{k.label}</p>
+                  <p className="text-caption text-white/60 uppercase font-bold tracking-wide">{k.label}</p>
                   <p className={`text-2xl font-black mt-0.5 ${k.cls}`}>{k.val}</p>
                 </div>
               ))}

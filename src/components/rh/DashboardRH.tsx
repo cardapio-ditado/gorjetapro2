@@ -138,7 +138,7 @@ const DashboardRH: React.FC = () => {
                       <h4 className="font-semibold text-white mb-1">{vaga.titulo}</h4>
                       <p className="text-sm text-white/50">{vaga.cargo?.nome}</p>
                       <div className="flex items-center gap-2 mt-2">
-                        <span className="text-xs text-white/40">
+                        <span className="text-xs text-white/60">
                           {new Date(vaga.data_abertura).toLocaleDateString('pt-BR')}
                         </span>
                         <span className="px-2 py-0.5 bg-green-500/15 text-green-400 text-xs rounded-full">
@@ -179,7 +179,7 @@ const DashboardRH: React.FC = () => {
                       </h4>
                       <p className="text-sm text-white/50">{candidatura.vaga?.titulo}</p>
                       <div className="flex items-center gap-2 mt-2">
-                        <span className="text-xs text-white/40">
+                        <span className="text-xs text-white/60">
                           {new Date(candidatura.data_aplicacao).toLocaleDateString('pt-BR')}
                         </span>
                         <span

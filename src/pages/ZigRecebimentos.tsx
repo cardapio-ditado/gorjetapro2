@@ -219,7 +219,7 @@ export default function ZigRecebimentos() {
           </div>
           <div>
             <h1 className="text-2xl font-bold text-white">ZIG → Faturamento</h1>
-            <p className="text-sm text-white/40">Importação por forma de pagamento</p>
+            <p className="text-sm text-white/60">Importação por forma de pagamento</p>
           </div>
         </div>
         {/* abas */}
@@ -244,7 +244,7 @@ export default function ZigRecebimentos() {
         <div className="bg-[#12141f] border border-white/10 rounded-xl overflow-hidden">
           <div className="px-5 py-4 border-b border-white/5">
             <h2 className="font-semibold text-white/90">Conta destino por forma de pagamento</h2>
-            <p className="text-xs text-white/40 mt-0.5">
+            <p className="text-xs text-white/60 mt-0.5">
               Defina em qual conta bancária cada forma de pagamento é depositada.
               Ex: Dinheiro → Cofre · Crédito/PIX → PagSeguro
             </p>
@@ -319,7 +319,7 @@ export default function ZigRecebimentos() {
                   <span className={`px-3 py-1 rounded-full font-medium transition-all ${
                     ativo ? 'bg-wine text-white' :
                     feito ? 'bg-emerald-500/15 text-emerald-400' :
-                    'bg-[#12141f]/10 text-white/30'
+                    'bg-[#12141f]/10 text-white/60'
                   }`}>{labels[idx]}</span>
                   {idx < 2 && <ChevronRight className="w-4 h-4 text-white/20" />}
                 </div>
@@ -345,14 +345,14 @@ export default function ZigRecebimentos() {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs text-white/40 mb-1">De</label>
+                    <label className="block text-xs text-white/60 mb-1">De</label>
                     <input type="date" value={dtinicio} max={hoje}
                       onChange={e => setDtinicio(e.target.value)}
                       className="w-full bg-[#12141f]/5 border border-white/20 rounded-lg px-3 py-2 text-sm text-white
                                  focus:outline-none focus:ring-2 focus:ring-wine/30" />
                   </div>
                   <div>
-                    <label className="block text-xs text-white/40 mb-1">Até</label>
+                    <label className="block text-xs text-white/60 mb-1">Até</label>
                     <input type="date" value={dtfim} max={hoje}
                       onChange={e => setDtfim(e.target.value)}
                       className="w-full bg-[#12141f]/5 border border-white/20 rounded-lg px-3 py-2 text-sm text-white
@@ -383,7 +383,7 @@ export default function ZigRecebimentos() {
                   </button>
                 </div>
                 {historico.length === 0 ? (
-                  <p className="text-sm text-white/30 text-center py-4">
+                  <p className="text-sm text-white/60 text-center py-4">
                     {loadingHist ? 'Carregando...' : 'Nenhuma importação — clique em ↺ para carregar'}
                   </p>
                 ) : (
@@ -395,12 +395,12 @@ export default function ZigRecebimentos() {
                           <p className="text-sm font-medium text-white/80">
                             {h.dtinicio === h.dtfim ? h.dtinicio : `${h.dtinicio} → ${h.dtfim}`}
                           </p>
-                          <p className="text-xs text-white/30">
+                          <p className="text-xs text-white/60">
                             {h.total_inseridos} inseridos · {h.total_duplicados} já existiam
                           </p>
                         </div>
                         <div className="text-right space-y-1">
-                          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${BADGE[h.status] || 'bg-[#12141f]/10 text-white/40'}`}>
+                          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${BADGE[h.status] || 'bg-[#12141f]/10 text-white/60'}`}>
                             {BADGE_LABEL[h.status] || h.status}
                           </span>
                           <p className="text-xs font-semibold text-white/80">{moeda(h.total_valor || 0)}</p>
@@ -439,7 +439,7 @@ export default function ZigRecebimentos() {
                 <div className="px-5 py-4 border-b border-white/5 flex items-center justify-between">
                   <div>
                     <h2 className="font-semibold text-white/90">Revisar lançamentos</h2>
-                    <p className="text-xs text-white/40 mt-0.5">
+                    <p className="text-xs text-white/60 mt-0.5">
                       {dtinicio === dtfim ? dtinicio : `${dtinicio} → ${dtfim}`} ·{' '}
                       {itens.filter(i => i.selecionado).length} de {itens.length} selecionados
                     </p>
@@ -468,10 +468,10 @@ export default function ZigRecebimentos() {
                           <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${corForma(item.formaLabel)}`}>
                             <IconeForma label={item.formaLabel} /> {item.formaLabel}
                           </span>
-                          <span className="text-xs text-white/30">{item.dataRef}</span>
+                          <span className="text-xs text-white/60">{item.dataRef}</span>
                         </div>
                         {/* conta destino */}
-                        <p className="text-xs text-white/30 flex items-center gap-1">
+                        <p className="text-xs text-white/60 flex items-center gap-1">
                           <Building2 className="w-3 h-3" />
                           {item.contaBancariaNome
                             ? <span className="text-white/60 font-medium">{item.contaBancariaNome}</span>
@@ -480,7 +480,7 @@ export default function ZigRecebimentos() {
                       </div>
 
                       <p className={`text-sm font-bold tabular-nums shrink-0
-                        ${item.selecionado ? 'text-emerald-400' : 'text-white/30'}`}>
+                        ${item.selecionado ? 'text-emerald-400' : 'text-white/60'}`}>
                         {moeda(item.valor)}
                       </p>
                     </div>
@@ -500,7 +500,7 @@ export default function ZigRecebimentos() {
 
                 <div className="px-5 py-4 bg-[#12141f]/5 border-t border-white/5 flex items-center justify-between">
                   <div>
-                    <p className="text-xs text-white/40">Total selecionado</p>
+                    <p className="text-xs text-white/60">Total selecionado</p>
                     <p className="text-xl font-bold text-white">{moeda(totalSelecionado)}</p>
                   </div>
                   <div className="flex gap-3">
@@ -538,7 +538,7 @@ export default function ZigRecebimentos() {
                   </div>
                   <div>
                     <h2 className="font-bold text-white">Importação concluída</h2>
-                    <p className="text-xs text-white/40">
+                    <p className="text-xs text-white/60">
                       {dtinicio === dtfim ? dtinicio : `${dtinicio} → ${dtfim}`}
                     </p>
                   </div>
@@ -595,12 +595,12 @@ export default function ZigRecebimentos() {
                           <p className="text-sm font-medium text-white/80">
                             {h.dtinicio === h.dtfim ? h.dtinicio : `${h.dtinicio} → ${h.dtfim}`}
                           </p>
-                          <p className="text-xs text-white/30">
+                          <p className="text-xs text-white/60">
                             {h.total_inseridos} inseridos · {h.total_duplicados} já existiam
                           </p>
                         </div>
                         <div className="text-right space-y-1">
-                          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${BADGE[h.status] || 'bg-[#12141f]/10 text-white/40'}`}>
+                          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${BADGE[h.status] || 'bg-[#12141f]/10 text-white/60'}`}>
                             {BADGE_LABEL[h.status] || h.status}
                           </span>
                           <p className="text-xs font-semibold text-white/80">{moeda(h.total_valor || 0)}</p>

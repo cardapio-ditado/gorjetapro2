@@ -452,7 +452,7 @@ const AprovacoesSolicitacoes: React.FC = () => {
                           </div>
                         )}
                         {solicitacao.valor_estimado === 0 && solicitacao.valor_total_orcado === 0 && (
-                          <span className="text-sm text-white/30">Sem valor</span>
+                          <span className="text-sm text-white/60">Sem valor</span>
                         )}
                       </div>
                     </td>

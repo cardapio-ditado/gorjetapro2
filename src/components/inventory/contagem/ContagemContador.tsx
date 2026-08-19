@@ -192,7 +192,7 @@ export default function ContagemContador({ contagemId, estoqueName, onVoltar, on
   if (loading) return (
     <div className="flex flex-col items-center justify-center py-24 gap-3">
       <Loader2 className="w-8 h-8 animate-spin text-wine" />
-      <p className="text-sm text-white/40">Carregando itens...</p>
+      <p className="text-sm text-white/60">Carregando itens...</p>
     </div>
   );
 
@@ -208,9 +208,9 @@ export default function ContagemContador({ contagemId, estoqueName, onVoltar, on
             </button>
             <div className="min-w-0">
               <h2 className="text-base font-bold text-white truncate">{estoqueName}</h2>
-              <p className="text-xs text-white/40">
+              <p className="text-xs text-white/60">
                 {statsGeral.contados}/{statsGeral.total} contados
-                {statsGeral.ignorados > 0 && <span className="text-white/30 ml-1">· {statsGeral.ignorados} ignorados</span>}
+                {statsGeral.ignorados > 0 && <span className="text-white/60 ml-1">· {statsGeral.ignorados} ignorados</span>}
               </p>
             </div>
           </div>
@@ -274,7 +274,7 @@ export default function ContagemContador({ contagemId, estoqueName, onVoltar, on
                   className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-blue-500/10 border-b border-blue-500/10 last:border-0 transition-colors disabled:opacity-50 text-left">
                   <div className="min-w-0">
                     <p className="font-semibold text-white text-sm truncate">{item.nome}</p>
-                    <p className="text-caption text-white/30 mt-0.5">{item.codigo} · {item.unidade_medida}</p>
+                    <p className="text-caption text-white/60 mt-0.5">{item.codigo} · {item.unidade_medida}</p>
                   </div>
                   <div className="ml-3 shrink-0">
                     {adicionando === item.id
@@ -296,7 +296,7 @@ export default function ContagemContador({ contagemId, estoqueName, onVoltar, on
               grupoAtivo === 'todos' ? 'bg-wine text-white border-wine' : 'bg-white/5 text-white/50 border-white/10 hover:bg-white/10'
             }`}>
             Todos
-            <span className={`text-caption px-1.5 py-0.5 rounded-full ${grupoAtivo === 'todos' ? 'bg-white/20' : 'bg-white/10 text-white/40'}`}>
+            <span className={`text-caption px-1.5 py-0.5 rounded-full ${grupoAtivo === 'todos' ? 'bg-white/20' : 'bg-white/10 text-white/60'}`}>
               {statsGeral.contados}/{statsGeral.total}
             </span>
           </button>
@@ -315,7 +315,7 @@ export default function ContagemContador({ contagemId, estoqueName, onVoltar, on
                 }`}>
                 {g.emoji} {g.label}
                 <span className={`text-caption px-1.5 py-0.5 rounded-full ${
-                  ativo ? COR_BADGE[g.cor] : completo ? 'bg-green-500/15 text-green-300' : 'bg-white/10 text-white/40'
+                  ativo ? COR_BADGE[g.cor] : completo ? 'bg-green-500/15 text-green-300' : 'bg-white/10 text-white/60'
                 }`}>
                   {s.contados}/{s.total}
                 </span>
@@ -330,7 +330,7 @@ export default function ContagemContador({ contagemId, estoqueName, onVoltar, on
                 grupoAtivo === 'ignorados' ? 'bg-gray-600 text-white border-gray-600' : 'bg-white/5 text-white/30 border-white/10 hover:bg-white/10'
               }`}>
               <EyeOff className="w-3 h-3" /> Ignorados
-              <span className={`text-caption px-1.5 py-0.5 rounded-full ${grupoAtivo === 'ignorados' ? 'bg-white/20' : 'bg-white/10 text-white/30'}`}>
+              <span className={`text-caption px-1.5 py-0.5 rounded-full ${grupoAtivo === 'ignorados' ? 'bg-white/20' : 'bg-white/10 text-white/60'}`}>
                 {statsGeral.ignorados}
               </span>
             </button>
@@ -392,7 +392,7 @@ export default function ContagemContador({ contagemId, estoqueName, onVoltar, on
                 <div className="min-w-0">
                   <p className="text-sm font-medium text-white/50 line-through truncate">{item.item_nome}</p>
                   <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                    {item.item_codigo && <span className="text-caption text-white/30">{item.item_codigo}</span>}
+                    {item.item_codigo && <span className="text-caption text-white/60">{item.item_codigo}</span>}
                     {grupo && <span className={`text-caption px-1.5 py-0.5 rounded-full border ${COR_BADGE[grupo.cor]}`}>{grupo.emoji} {grupo.label}</span>}
                   </div>
                 </div>
@@ -430,7 +430,7 @@ export default function ContagemContador({ contagemId, estoqueName, onVoltar, on
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold text-white text-sm leading-tight">{item.item_nome}</p>
                   <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                    {item.item_codigo && <span className="text-caption text-white/30">{item.item_codigo}</span>}
+                    {item.item_codigo && <span className="text-caption text-white/60">{item.item_codigo}</span>}
                     {grupo && <span className={`text-caption px-1.5 py-0.5 rounded-full border ${COR_BADGE[grupo.cor]}`}>{grupo.emoji} {grupo.label}</span>}
                     {item.quantidade_sistema === 0 && !isContado && (
                       <span className="text-caption text-blue-300 bg-blue-500/15 px-1.5 py-0.5 rounded-full font-semibold">Adicionado manualmente</span>
@@ -461,16 +461,16 @@ export default function ContagemContador({ contagemId, estoqueName, onVoltar, on
                 <div className="flex items-center gap-3">
                   {/* Sistema */}
                   <div className="flex-1 bg-white/5 rounded-xl px-3 py-2 text-center">
-                    <p className="text-caption text-white/40 uppercase font-medium">Sistema</p>
+                    <p className="text-caption text-white/60 uppercase font-medium">Sistema</p>
                     <p className={`text-lg font-bold tabular-nums leading-tight ${item.quantidade_sistema === 0 ? 'text-orange-500' : 'text-white/80'}`}>
                       {formatarQuantidade(item.quantidade_sistema)}
                     </p>
-                    <p className="text-caption text-white/30">{item.unidade_medida}</p>
+                    <p className="text-caption text-white/60">{item.unidade_medida}</p>
                   </div>
 
                   {/* Input contado */}
                   <div className="flex-1">
-                    <p className="text-caption text-white/40 uppercase font-medium text-center mb-1">Contado</p>
+                    <p className="text-caption text-white/60 uppercase font-medium text-center mb-1">Contado</p>
                     <input type="number" inputMode="decimal" step="0.001"
                       value={item.quantidade_contada === null ? '' : item.quantidade_contada}
                       onChange={e => handleQtd(item.id, e.target.value)}
@@ -486,7 +486,7 @@ export default function ContagemContador({ contagemId, estoqueName, onVoltar, on
                   {/* Diferença */}
                   {isContado && dif !== null && (
                     <div className="w-20 text-center">
-                      <p className="text-caption text-white/40 uppercase font-medium mb-1">Dif.</p>
+                      <p className="text-caption text-white/60 uppercase font-medium mb-1">Dif.</p>
                       <div className={`rounded-xl px-2 py-2 ${dif > 0 ? 'bg-green-500/15' : dif < 0 ? 'bg-red-500/15' : 'bg-white/10'}`}>
                         <p className={`text-sm font-bold tabular-nums ${dif > 0 ? 'text-green-300' : dif < 0 ? 'text-red-300' : 'text-white/40'}`}>
                           {dif > 0 && <TrendingUp className="w-3 h-3 inline mr-0.5" />}

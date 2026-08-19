@@ -635,13 +635,13 @@ const ProducaoEstoque: React.FC = () => {
             <table className="w-full">
               <thead className="bg-white/5 border-b border-white/10">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-white/40 uppercase">Lote</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-white/40 uppercase">Ficha</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-white/40 uppercase">Qtd</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-white/40 uppercase">Data</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-white/40 uppercase">Responsável</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-white/40 uppercase">Status</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-white/40 uppercase">Ações</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-white/60 uppercase">Lote</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-white/60 uppercase">Ficha</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-white/60 uppercase">Qtd</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-white/60 uppercase">Data</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-white/60 uppercase">Responsável</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-white/60 uppercase">Status</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-white/60 uppercase">Ações</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/10">
@@ -778,10 +778,10 @@ const ProducaoEstoque: React.FC = () => {
                   <table className="w-full">
                     <thead className="bg-white/5">
                       <tr>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-white/40 uppercase">Ficha Técnica</th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-white/40 uppercase">Quantidade</th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-white/40 uppercase">Custo Total</th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-white/40 uppercase">Ações</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-white/60 uppercase">Ficha Técnica</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-white/60 uppercase">Quantidade</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-white/60 uppercase">Custo Total</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-white/60 uppercase">Ações</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-white/10">
@@ -944,10 +944,10 @@ const ProducaoEstoque: React.FC = () => {
                   <table className="min-w-full divide-y divide-white/10">
                     <thead className="bg-white/5">
                       <tr>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-white/40 uppercase">Insumo</th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-white/40 uppercase">Quantidade</th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-white/40 uppercase">Estoque</th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-white/40 uppercase">Status</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-white/60 uppercase">Insumo</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-white/60 uppercase">Quantidade</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-white/60 uppercase">Estoque</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-white/60 uppercase">Status</th>
                       </tr>
                     </thead>
                     <tbody className="bg-[#12141f] divide-y divide-white/5">

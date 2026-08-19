@@ -946,25 +946,25 @@ const FichasTecnicas: React.FC = () => {
             <table className="w-full">
               <thead>
                 <tr className="text-left bg-white/5 border-b">
-                  <th className="px-6 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">
                     Nome
                   </th>
-                  <th className="px-6 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">
                     Porções
                   </th>
-                  <th className="px-6 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">
                     Custo Total
                   </th>
-                  <th className="px-6 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">
                     Custo por Porção
                   </th>
-                  <th className="px-6 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">
                     Status
                   </th>
-                  <th className="px-6 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">
                     Criado em
                   </th>
-                  <th className="px-6 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">
                     Ações
                   </th>
                 </tr>
@@ -1097,7 +1097,7 @@ const FichasTecnicas: React.FC = () => {
             <div className="text-center py-12">
               <FileText className="w-16 h-16 text-white/30 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-white mb-2">Nenhuma ficha encontrada</h3>
-              <p className="text-white/40">
+              <p className="text-white/60">
                 {searchTerm || statusFilter !== 'all' || custoFilter !== 'all'
                   ? 'Nenhuma ficha corresponde aos filtros aplicados.'
                   : 'Nenhuma ficha técnica cadastrada.'}
@@ -1177,7 +1177,7 @@ const FichasTecnicas: React.FC = () => {
                     <p className="text-sm text-white/50">
                       Requer ordem de produção. Insumos são baixados na produção, produto final baixado na venda.
                       <br />
-                      <span className="text-xs text-white/40">Ex: Picanha 400g, Hambúrguer, Torta</span>
+                      <span className="text-xs text-white/60">Ex: Picanha 400g, Hambúrguer, Torta</span>
                     </p>
                   </div>
                 </label>
@@ -1195,7 +1195,7 @@ const FichasTecnicas: React.FC = () => {
                     <p className="text-sm text-white/50">
                       Sem ordem de produção. Insumos são baixados automaticamente a cada venda.
                       <br />
-                      <span className="text-xs text-white/40">Ex: Drinks, Caipirinhas, Porções preparadas no bar</span>
+                      <span className="text-xs text-white/60">Ex: Drinks, Caipirinhas, Porções preparadas no bar</span>
                     </p>
                   </div>
                 </label>
@@ -1217,7 +1217,7 @@ const FichasTecnicas: React.FC = () => {
                   rows={6}
                   placeholder="Descreva o passo a passo do preparo da receita..."
                 />
-                <p className="text-xs text-white/40 mt-1">
+                <p className="text-xs text-white/60 mt-1">
                   Instruções detalhadas para padronizar o preparo
                 </p>
               </div>
@@ -1316,12 +1316,12 @@ const FichasTecnicas: React.FC = () => {
                             required
                           />
                           {ingrediente.tipo === 'item' && ingrediente.item_estoque_id && (
-                            <p className="text-xs text-white/40 mt-1">
+                            <p className="text-xs text-white/60 mt-1">
                               {itensEstoque.find(i => i.id === ingrediente.item_estoque_id)?.unidade_medida}
                             </p>
                           )}
                           {ingrediente.tipo === 'ficha' && (
-                            <p className="text-xs text-white/40 mt-1">porções</p>
+                            <p className="text-xs text-white/60 mt-1">porções</p>
                           )}
                         </div>
 
@@ -1405,7 +1405,7 @@ const FichasTecnicas: React.FC = () => {
               ) : (
                 <div className="text-center py-8 bg-white/5 rounded-lg">
                   <Package className="w-12 h-12 text-white/30 mx-auto mb-4" />
-                  <p className="text-white/40">Nenhum ingrediente adicionado</p>
+                  <p className="text-white/60">Nenhum ingrediente adicionado</p>
                   <button
                     onClick={adicionarIngrediente}
                     className="mt-2 px-4 py-2 bg-wine text-white rounded-lg hover:bg-[#6a1a25]"

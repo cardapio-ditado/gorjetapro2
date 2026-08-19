@@ -1253,25 +1253,25 @@ const ComprasEstoque: React.FC = () => {
             <table className="w-full">
               <thead>
                 <tr className="text-left bg-white/5 border-b">
-                  <th className="px-6 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">
                     Fornecedor
                   </th>
-                  <th className="px-6 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">
                     Documento
                   </th>
-                  <th className="px-6 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">
                     Data Compra
                   </th>
-                  <th className="px-6 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">
                     Estoque Destino
                   </th>
-                  <th className="px-6 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">
                     Valor Total
                   </th>
-                  <th className="px-6 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">
                     Status
                   </th>
-                  <th className="px-6 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">
                     Ações
                   </th>
                 </tr>
@@ -1368,7 +1368,7 @@ const ComprasEstoque: React.FC = () => {
             <div className="text-center py-12">
               <ShoppingCart className="w-16 h-16 text-white/30 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-white mb-2">Nenhuma compra encontrada</h3>
-              <p className="text-white/40">
+              <p className="text-white/60">
                 {searchTerm || statusFilter !== 'all' || fornecedorFilter !== 'all'
                   ? 'Nenhuma compra corresponde aos filtros aplicados.'
                   : 'Nenhuma compra cadastrada.'}
@@ -1389,7 +1389,7 @@ const ComprasEstoque: React.FC = () => {
                 <h3 className="text-lg font-bold text-white">
                   {editingCompra ? 'Editar Compra' : 'Nova Compra'}
                 </h3>
-                <p className="text-xs text-white/40 mt-0.5">Preencha os dados da compra e adicione os itens recebidos</p>
+                <p className="text-xs text-white/60 mt-0.5">Preencha os dados da compra e adicione os itens recebidos</p>
               </div>
               <button onClick={() => setShowForm(false)} className="p-2 hover:bg-white/10 rounded-xl transition-colors">
                 <X className="w-5 h-5 text-white/40" />
@@ -1400,7 +1400,7 @@ const ComprasEstoque: React.FC = () => {
 
               {/* Seção 1 — Dados da compra */}
               <div>
-                <h4 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-3 flex items-center gap-2">
+                <h4 className="text-xs font-semibold text-white/60 uppercase tracking-wider mb-3 flex items-center gap-2">
                   <ShoppingCart className="w-3.5 h-3.5" /> Dados da Compra
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1426,7 +1426,7 @@ const ComprasEstoque: React.FC = () => {
                       className="w-full rounded-xl border border-white/20 bg-[#1a1d2e] text-white px-3 py-2.5 text-sm focus:border-wine focus:outline-none"
                       placeholder="Ex: NF-001, Pedido-123"
                     />
-                    <p className="text-xs text-white/30 mt-1">Número da nota fiscal ou pedido (opcional)</p>
+                    <p className="text-xs text-white/60 mt-1">Número da nota fiscal ou pedido (opcional)</p>
                   </div>
 
                   <div>
@@ -1440,7 +1440,7 @@ const ComprasEstoque: React.FC = () => {
                       className="w-full rounded-xl border border-white/20 bg-[#1a1d2e] text-white px-3 py-2.5 text-sm focus:border-wine focus:outline-none"
                       required
                     />
-                    <p className="text-xs text-white/30 mt-1">Data em que a compra foi realizada</p>
+                    <p className="text-xs text-white/60 mt-1">Data em que a compra foi realizada</p>
                   </div>
 
                   <div>
@@ -1453,7 +1453,7 @@ const ComprasEstoque: React.FC = () => {
                       required
                       className="w-full"
                     />
-                    <p className="text-xs text-white/30 mt-1">Local onde os produtos serão armazenados</p>
+                    <p className="text-xs text-white/60 mt-1">Local onde os produtos serão armazenados</p>
                   </div>
                 </div>
               </div>
@@ -1461,7 +1461,7 @@ const ComprasEstoque: React.FC = () => {
               {/* Seção 2 — Itens da Compra */}
               <div className="border-t border-white/8 pt-5">
                 <div className="flex items-center justify-between mb-3">
-                  <h4 className="text-xs font-semibold text-white/40 uppercase tracking-wider flex items-center gap-2">
+                  <h4 className="text-xs font-semibold text-white/60 uppercase tracking-wider flex items-center gap-2">
                     <Package className="w-3.5 h-3.5" /> Itens da Compra
                     {formData.itens.length > 0 && (
                       <span className="ml-1 px-2 py-0.5 bg-white/10 rounded-full text-white/60 normal-case text-caption font-bold">
@@ -1517,7 +1517,7 @@ const ComprasEstoque: React.FC = () => {
 
                             {/* Item */}
                             <div className="md:col-span-4">
-                              <label className="block text-caption font-semibold text-white/40 uppercase tracking-wide mb-1 md:hidden">Produto</label>
+                              <label className="block text-caption font-semibold text-white/60 uppercase tracking-wide mb-1 md:hidden">Produto</label>
                               <SearchableSelect
                                 options={itensFilteredForSelect.map(ie => ({
                                   value: ie.id,
@@ -1531,7 +1531,7 @@ const ComprasEstoque: React.FC = () => {
                                 className="w-full"
                               />
                               {itemInfo && (
-                                <p className="text-caption text-white/30 mt-1">
+                                <p className="text-caption text-white/60 mt-1">
                                   Unidade: <span className="text-white/50">{itemInfo.unidade_medida}</span>
                                   {itemInfo.custo_medio > 0 && <> · Último custo: <span className="text-white/50">{formatCurrency(itemInfo.custo_medio)}</span></>}
                                 </p>
@@ -1540,8 +1540,8 @@ const ComprasEstoque: React.FC = () => {
 
                             {/* Quantidade */}
                             <div className="md:col-span-2">
-                              <label className="block text-caption font-semibold text-white/40 uppercase tracking-wide mb-1">
-                                Quantidade {itemInfo && <span className="text-white/30 normal-case">({itemInfo.unidade_medida})</span>}
+                              <label className="block text-caption font-semibold text-white/60 uppercase tracking-wide mb-1">
+                                Quantidade {itemInfo && <span className="text-white/60 normal-case">({itemInfo.unidade_medida})</span>}
                               </label>
                               <input
                                 type="number"
@@ -1557,9 +1557,9 @@ const ComprasEstoque: React.FC = () => {
 
                             {/* Custo unitário */}
                             <div className="md:col-span-2">
-                              <label className="block text-caption font-semibold text-white/40 uppercase tracking-wide mb-1">Custo Unitário (R$)</label>
+                              <label className="block text-caption font-semibold text-white/60 uppercase tracking-wide mb-1">Custo Unitário (R$)</label>
                               <div className="relative">
-                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40 text-sm">R$</span>
+                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/60 text-sm">R$</span>
                                 <input
                                   type="number"
                                   step="0.01"
@@ -1575,7 +1575,7 @@ const ComprasEstoque: React.FC = () => {
 
                             {/* Validade */}
                             <div className="md:col-span-2">
-                              <label className="block text-caption font-semibold text-white/40 uppercase tracking-wide mb-1">Validade <span className="text-white/25 normal-case">(opcional)</span></label>
+                              <label className="block text-caption font-semibold text-white/60 uppercase tracking-wide mb-1">Validade <span className="text-white/60 normal-case">(opcional)</span></label>
                               <input
                                 type="date"
                                 value={item.data_validade || ''}
@@ -1586,7 +1586,7 @@ const ComprasEstoque: React.FC = () => {
 
                             {/* Total + remover */}
                             <div className="md:col-span-1 flex flex-col items-end justify-between h-full gap-2">
-                              <label className="block text-caption font-semibold text-white/40 uppercase tracking-wide self-start md:self-end">Total</label>
+                              <label className="block text-caption font-semibold text-white/60 uppercase tracking-wide self-start md:self-end">Total</label>
                               <span className={`text-sm font-bold ${total > 0 ? 'text-gold' : 'text-white/20'}`}>
                                 {total > 0 ? formatCurrency(total) : '—'}
                               </span>
@@ -1612,7 +1612,7 @@ const ComprasEstoque: React.FC = () => {
                         <p className="text-xs text-white/50">{formData.itens.length} {formData.itens.length === 1 ? 'produto' : 'produtos'} · encargos/descontos podem ser ajustados no recebimento</p>
                       </div>
                       <div className="text-right">
-                        <p className="text-xs text-white/40 mb-0.5">Valor total da compra</p>
+                        <p className="text-xs text-white/60 mb-0.5">Valor total da compra</p>
                         <p className="text-xl font-bold text-gold">{formatCurrency(calcularValorTotal())}</p>
                       </div>
                     </div>
@@ -1620,8 +1620,8 @@ const ComprasEstoque: React.FC = () => {
                 ) : (
                   <div className="flex flex-col items-center justify-center py-10 bg-white/3 border border-dashed border-white/10 rounded-2xl">
                     <Package className="w-10 h-10 text-white/20 mb-3" />
-                    <p className="text-sm text-white/40 mb-1">Nenhum produto adicionado</p>
-                    <p className="text-xs text-white/25 mb-4">Clique em "Adicionar Item" para incluir os produtos comprados</p>
+                    <p className="text-sm text-white/60 mb-1">Nenhum produto adicionado</p>
+                    <p className="text-xs text-white/60 mb-4">Clique em "Adicionar Item" para incluir os produtos comprados</p>
                     <button
                       onClick={adicionarItem}
                       className="flex items-center gap-2 px-4 py-2.5 bg-wine text-white rounded-xl text-sm font-semibold hover:bg-[#6a1a25] transition-colors"
@@ -1634,7 +1634,7 @@ const ComprasEstoque: React.FC = () => {
 
               {/* Seção 3 — Observações */}
               <div className="border-t border-white/8 pt-5">
-                <h4 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-3">Observações</h4>
+                <h4 className="text-xs font-semibold text-white/60 uppercase tracking-wider mb-3">Observações</h4>
                 <textarea
                   value={formData.observacoes}
                   onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
@@ -1647,7 +1647,7 @@ const ComprasEstoque: React.FC = () => {
 
             {/* Footer */}
             <div className="px-6 py-4 border-t border-white/5 flex items-center justify-between gap-3 sticky bottom-0 bg-[#0f1020]">
-              <p className="text-xs text-white/30">
+              <p className="text-xs text-white/60">
                 {!formData.estoque_destino_id && <span className="text-amber-400">Selecione o estoque de destino · </span>}
                 {formData.itens.length === 0 && <span className="text-amber-400">Adicione pelo menos 1 item</span>}
                 {formData.estoque_destino_id && formData.itens.length > 0 && <span className="text-emerald-400">Pronto para salvar</span>}
@@ -1732,28 +1732,28 @@ const ComprasEstoque: React.FC = () => {
                     <table className="w-full">
                       <thead>
                         <tr className="text-left bg-white/5 border-b">
-                          <th className="px-4 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">
+                          <th className="px-4 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">
                             Item
                           </th>
-                          <th className="px-4 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">
+                          <th className="px-4 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">
                             Código
                           </th>
-                          <th className="px-4 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">
+                          <th className="px-4 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">
                             Qtd Pedida
                           </th>
-                          <th className="px-4 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">
+                          <th className="px-4 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">
                             Qtd Recebida
                           </th>
-                          <th className="px-4 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">
+                          <th className="px-4 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">
                             Unidade
                           </th>
-                          <th className="px-4 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">
+                          <th className="px-4 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">
                             Custo Unit.
                           </th>
-                          <th className="px-4 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">
+                          <th className="px-4 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">
                             Custo Total
                           </th>
-                          <th className="px-4 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">
+                          <th className="px-4 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">
                             Validade
                           </th>
                         </tr>
@@ -1850,7 +1850,7 @@ const ComprasEstoque: React.FC = () => {
                 ) : (
                   <div className="text-center py-8">
                     <Package className="w-12 h-12 text-white/30 mx-auto mb-4" />
-                    <p className="text-white/40">Nenhum item encontrado para esta compra</p>
+                    <p className="text-white/60">Nenhum item encontrado para esta compra</p>
                   </div>
                 )}
               </>
@@ -1900,14 +1900,14 @@ const ComprasEstoque: React.FC = () => {
                 <table className="w-full">
                   <thead>
                     <tr className="text-left bg-white/5 border-b">
-                      <th className="px-4 py-3 text-xs font-medium text-white/40 uppercase">Item</th>
-                      <th className="px-4 py-3 text-xs font-medium text-white/40 uppercase text-center">Unidade</th>
-                      <th className="px-4 py-3 text-xs font-medium text-white/40 uppercase text-center">Qtd Pedida</th>
-                      <th className="px-4 py-3 text-xs font-medium text-white/40 uppercase text-center">Qtd Recebida</th>
-                      <th className="px-4 py-3 text-xs font-medium text-white/40 uppercase text-center">Custo Unit.</th>
-                      <th className="px-4 py-3 text-xs font-medium text-white/40 uppercase text-center">Total</th>
-                      <th className="px-4 py-3 text-xs font-medium text-white/40 uppercase text-center">Status</th>
-                      <th className="px-4 py-3 text-xs font-medium text-white/40 uppercase">Motivo (se divergente)</th>
+                      <th className="px-4 py-3 text-xs font-medium text-white/60 uppercase">Item</th>
+                      <th className="px-4 py-3 text-xs font-medium text-white/60 uppercase text-center">Unidade</th>
+                      <th className="px-4 py-3 text-xs font-medium text-white/60 uppercase text-center">Qtd Pedida</th>
+                      <th className="px-4 py-3 text-xs font-medium text-white/60 uppercase text-center">Qtd Recebida</th>
+                      <th className="px-4 py-3 text-xs font-medium text-white/60 uppercase text-center">Custo Unit.</th>
+                      <th className="px-4 py-3 text-xs font-medium text-white/60 uppercase text-center">Total</th>
+                      <th className="px-4 py-3 text-xs font-medium text-white/60 uppercase text-center">Status</th>
+                      <th className="px-4 py-3 text-xs font-medium text-white/60 uppercase">Motivo (se divergente)</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1921,7 +1921,7 @@ const ComprasEstoque: React.FC = () => {
                             <div>
                               <p className="font-medium text-white">{item.item_nome}</p>
                               {item.item_codigo && (
-                                <p className="text-sm text-white/40">Cód: {item.item_codigo}</p>
+                                <p className="text-sm text-white/60">Cód: {item.item_codigo}</p>
                               )}
                             </div>
                           </td>
@@ -2071,7 +2071,7 @@ const ComprasEstoque: React.FC = () => {
                       className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                       placeholder="0,00"
                     />
-                    <p className="text-xs text-white/40 mt-1">Calculado automaticamente</p>
+                    <p className="text-xs text-white/60 mt-1">Calculado automaticamente</p>
                   </div>
 
                   <div className="md:col-span-3">
@@ -2142,7 +2142,7 @@ const ComprasEstoque: React.FC = () => {
                       className="w-full rounded-md border-white/20 shadow-sm focus:border-green-600 focus:ring focus:ring-green-600 focus:ring-opacity-50"
                       placeholder="0,00"
                     />
-                    <p className="text-xs text-white/40 mt-1">Calculado automaticamente</p>
+                    <p className="text-xs text-white/60 mt-1">Calculado automaticamente</p>
                   </div>
 
                   <div className="md:col-span-3">
@@ -2266,7 +2266,7 @@ const ComprasEstoque: React.FC = () => {
             <div className="p-6 border-b border-white/10 flex justify-between items-center">
               <div>
                 <h3 className="text-xl font-semibold text-white">Métricas e Análises de Compras</h3>
-                <p className="text-sm text-white/40 mt-1">
+                <p className="text-sm text-white/60 mt-1">
                   Visão completa das compras com filtros e indicadores
                 </p>
               </div>

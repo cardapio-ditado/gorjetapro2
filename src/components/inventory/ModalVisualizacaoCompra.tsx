@@ -288,13 +288,13 @@ const ModalVisualizacaoCompra: React.FC<ModalVisualizacaoCompraProps> = ({ compr
                 <table className="w-full">
                   <thead>
                     <tr className="bg-white/5 border-b border-white/10">
-                      <th className="px-4 py-3 text-left text-xs font-medium text-white/40 uppercase">Item</th>
-                      <th className="px-4 py-3 text-center text-xs font-medium text-white/40 uppercase">Qtd Pedida</th>
-                      <th className="px-4 py-3 text-center text-xs font-medium text-white/40 uppercase">Qtd Recebida</th>
-                      <th className="px-4 py-3 text-right text-xs font-medium text-white/40 uppercase">Custo Orig.</th>
-                      <th className="px-4 py-3 text-right text-xs font-medium text-white/40 uppercase">Desconto</th>
-                      <th className="px-4 py-3 text-right text-xs font-medium text-white/40 uppercase">Custo Final</th>
-                      <th className="px-4 py-3 text-right text-xs font-medium text-white/40 uppercase">Total</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-white/60 uppercase">Item</th>
+                      <th className="px-4 py-3 text-center text-xs font-medium text-white/60 uppercase">Qtd Pedida</th>
+                      <th className="px-4 py-3 text-center text-xs font-medium text-white/60 uppercase">Qtd Recebida</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-white/60 uppercase">Custo Orig.</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-white/60 uppercase">Desconto</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-white/60 uppercase">Custo Final</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-white/60 uppercase">Total</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/10">
@@ -304,7 +304,7 @@ const ModalVisualizacaoCompra: React.FC<ModalVisualizacaoCompraProps> = ({ compr
                           <div>
                             <p className="font-medium text-white">{item.item_nome}</p>
                             {item.item_codigo && (
-                              <p className="text-xs text-white/40">Cód: {item.item_codigo}</p>
+                              <p className="text-xs text-white/60">Cód: {item.item_codigo}</p>
                             )}
                           </div>
                         </td>
@@ -346,7 +346,7 @@ const ModalVisualizacaoCompra: React.FC<ModalVisualizacaoCompraProps> = ({ compr
                               )}
                             </div>
                           ) : (
-                            <span className="text-sm text-white/30">-</span>
+                            <span className="text-sm text-white/60">-</span>
                           )}
                         </td>
                         <td className="px-4 py-3 text-right">

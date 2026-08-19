@@ -279,7 +279,7 @@ export default function Onboarding() {
             <div className="flex items-center justify-between p-6 border-b border-white/10">
               <div>
                 <h2 className="text-white font-semibold">{instanciaAberta.colaboradores?.nome_completo}</h2>
-                <p className="text-white/40 text-xs">{instanciaAberta.nome_template}</p>
+                <p className="text-white/60 text-xs">{instanciaAberta.nome_template}</p>
               </div>
               <button onClick={() => setInstanciaAberta(null)} className="p-2 hover:bg-white/10 rounded-lg text-white/50 hover:text-white transition-all"><X className="w-5 h-5" /></button>
             </div>
@@ -289,10 +289,10 @@ export default function Onboarding() {
                   className="w-full flex items-start gap-3 p-3 rounded-xl hover:bg-white/5 transition-all text-left">
                   {t.concluida ? <CheckCircle className="w-5 h-5 text-emerald-400 mt-0.5 flex-shrink-0" /> : <Circle className="w-5 h-5 text-white/30 mt-0.5 flex-shrink-0" />}
                   <div className="flex-1">
-                    <p className={`text-sm ${t.concluida ? 'text-white/40 line-through' : 'text-white/80'}`}>{t.titulo}</p>
-                    {t.responsavel && <p className="text-white/30 text-xs">{t.responsavel}</p>}
+                    <p className={`text-sm ${t.concluida ? 'text-white/60 line-through' : 'text-white/80'}`}>{t.titulo}</p>
+                    {t.responsavel && <p className="text-white/60 text-xs">{t.responsavel}</p>}
                     {t.prazo_data && !t.concluida && (
-                      <p className={`text-xs mt-0.5 ${dayjs(t.prazo_data).isBefore(dayjs()) ? 'text-red-400' : 'text-white/30'}`}>
+                      <p className={`text-xs mt-0.5 ${dayjs(t.prazo_data).isBefore(dayjs()) ? 'text-red-400' : 'text-white/60'}`}>
                         Prazo: {dayjs(t.prazo_data).format('DD/MM')}
                       </p>
                     )}
@@ -386,7 +386,7 @@ export default function Onboarding() {
                           <input type="number" value={t.prazo_dias || 1} min={1}
                             onChange={e => setTemplateTarefas(tt => tt.map((x, j) => j === i ? { ...x, prazo_dias: parseInt(e.target.value) } : x))}
                             className="bg-transparent text-white/50 text-xs w-16 focus:outline-none" />
-                          <span className="text-white/30 text-xs">dias</span>
+                          <span className="text-white/60 text-xs">dias</span>
                         </div>
                       </div>
                       <button onClick={() => setTemplateTarefas(tt => tt.filter((_, j) => j !== i))} className="p-1 hover:bg-red-500/20 rounded text-white/30 hover:text-red-400 transition-all">

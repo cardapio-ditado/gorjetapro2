@@ -790,22 +790,22 @@ const EstoquesGerenciamento: React.FC = () => {
             <table className="w-full">
               <thead>
                 <tr className="text-left bg-white/5 border-b">
-                  <th className="px-6 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">
                     Estoque
                   </th>
-                  <th className="px-6 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">
                     Tipo
                   </th>
-                  <th className="px-6 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">
                     Localização
                   </th>
-                  <th className="px-6 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">
                     Status
                   </th>
-                  <th className="px-6 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">
                     Criado em
                   </th>
-                  <th className="px-6 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">
                     Ações
                   </th>
                 </tr>
@@ -835,7 +835,7 @@ const EstoquesGerenciamento: React.FC = () => {
                           </>
                         )}
                         {!estoque.localizacao && (
-                          <span className="text-white/30">-</span>
+                          <span className="text-white/60">-</span>
                         )}
                       </div>
                     </td>
@@ -900,7 +900,7 @@ const EstoquesGerenciamento: React.FC = () => {
             <div className="text-center py-12">
               <Warehouse className="w-16 h-16 text-white/30 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-white mb-2">Nenhum estoque encontrado</h3>
-              <p className="text-white/40">
+              <p className="text-white/60">
                 {searchTerm || tipoFilter !== 'all' || statusFilter !== 'all'
                   ? 'Nenhum estoque corresponde aos filtros aplicados.'
                   : 'Nenhum estoque cadastrado.'}
@@ -1045,25 +1045,25 @@ const EstoquesGerenciamento: React.FC = () => {
                     <table className="w-full">
                       <thead>
                         <tr className="text-left bg-white/5 border-b">
-                          <th className="px-6 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">
+                          <th className="px-6 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">
                             Item
                           </th>
-                          <th className="px-6 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">
+                          <th className="px-6 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">
                             Código
                           </th>
-                          <th className="px-6 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">
+                          <th className="px-6 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">
                             Quantidade
                           </th>
-                          <th className="px-6 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">
+                          <th className="px-6 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">
                             Unidade
                           </th>
-                          <th className="px-6 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">
+                          <th className="px-6 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">
                             Valor Total
                           </th>
-                          <th className="px-6 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">
+                          <th className="px-6 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">
                             Custo Médio
                           </th>
-                          <th className="px-6 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">
+                          <th className="px-6 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">
                             Status
                           </th>
                         </tr>
@@ -1130,7 +1130,7 @@ const EstoquesGerenciamento: React.FC = () => {
                   <div className="text-center py-12">
                     <Package className="w-16 h-16 text-white/30 mx-auto mb-4" />
                     <h3 className="text-lg font-medium text-white mb-2">Estoque vazio</h3>
-                    <p className="text-white/40">
+                    <p className="text-white/60">
                       Este estoque não possui itens cadastrados.
                     </p>
                   </div>
@@ -1202,7 +1202,7 @@ const EstoquesGerenciamento: React.FC = () => {
             {itensParaCompra.length === 0 ? (
               <div className="text-center py-8">
                 <ShoppingCart className="w-16 h-16 text-white/30 mx-auto mb-4" />
-                <p className="text-white/40">
+                <p className="text-white/60">
                   Não há itens que precisam de reposição neste estoque.
                 </p>
               </div>
@@ -1211,28 +1211,28 @@ const EstoquesGerenciamento: React.FC = () => {
                 <table className="min-w-full divide-y divide-white/10">
                   <thead className="bg-white/5">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-white/40 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-white/60 uppercase tracking-wider">
                         Status
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-white/40 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-white/60 uppercase tracking-wider">
                         Item
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-white/40 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-white/60 uppercase tracking-wider">
                         Categoria
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-white/40 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-white/60 uppercase tracking-wider">
                         Fornecedor
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-white/40 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-white/60 uppercase tracking-wider">
                         Atual
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-white/40 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-white/60 uppercase tracking-wider">
                         Mínimo
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-white/40 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-white/60 uppercase tracking-wider">
                         Sugerido
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-white/40 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-white/60 uppercase tracking-wider">
                         Valor Est.
                       </th>
                     </tr>

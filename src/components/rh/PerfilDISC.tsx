@@ -173,13 +173,13 @@ function PerfilDetalhadoModal({
             <p className="text-white font-bold text-lg truncate">{nome}</p>
             <div className="flex items-center gap-2 mt-1">
               <span className={`${dcfg.bg} text-white text-xs font-bold px-2.5 py-0.5 rounded-lg`}>{detalhe.perfil_dominante}</span>
-              <span className="text-white/30 text-xs">/</span>
+              <span className="text-white/60 text-xs">/</span>
               <span className={`${scfg.bgLight} ${scfg.cor} ${scfg.border} border text-xs font-medium px-2.5 py-0.5 rounded-lg`}>{detalhe.perfil_secundario}</span>
-              <span className="text-white/40 text-xs">{dcfg.label} · {scfg.label}</span>
+              <span className="text-white/60 text-xs">{dcfg.label} · {scfg.label}</span>
             </div>
           </div>
           {detalhe.data_aplicacao && (
-            <span className="text-white/30 text-xs flex-shrink-0">{dayjs(detalhe.data_aplicacao).format('DD/MM/YYYY')}</span>
+            <span className="text-white/60 text-xs flex-shrink-0">{dayjs(detalhe.data_aplicacao).format('DD/MM/YYYY')}</span>
           )}
           <button onClick={onClose} className="p-2 rounded-xl bg-white/5 text-white/40 hover:text-white transition-colors flex-shrink-0">
             <X size={16} />
@@ -390,7 +390,7 @@ function ResultadoInlineCard({ resultado, onNova }: { resultado: ResultadoInline
         <CheckCircle size={18} className="text-emerald-400 flex-shrink-0" />
         <div>
           <p className="text-emerald-300 font-semibold text-sm">Avaliação concluída!</p>
-          <p className="text-white/40 text-xs">Perfil de <span className="text-white">{nomeColaborador}</span> salvo automaticamente</p>
+          <p className="text-white/60 text-xs">Perfil de <span className="text-white">{nomeColaborador}</span> salvo automaticamente</p>
         </div>
       </div>
 
@@ -400,7 +400,7 @@ function ResultadoInlineCard({ resultado, onNova }: { resultado: ResultadoInline
           <span className={`${dcfg.bg} text-white font-bold text-xl w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0`}>{dominante}</span>
           <div>
             <p className={`font-bold text-base ${dcfg.cor}`}>{dcfg.label}</p>
-            <p className="text-white/40 text-sm">com influência de <span className={scfg.cor}>{scfg.label}</span></p>
+            <p className="text-white/60 text-sm">com influência de <span className={scfg.cor}>{scfg.label}</span></p>
           </div>
         </div>
         <div className="grid grid-cols-2 gap-x-4 gap-y-3">
@@ -613,7 +613,7 @@ function QuestionarioInline({ colaboradorId, nomeColaborador, onConcluido, onCan
   if (carregando) return (
     <div className="flex flex-col items-center justify-center py-16 gap-4">
       <Loader2 className="w-8 h-8 text-gold animate-spin" />
-      <p className="text-white/40 text-sm">Carregando questionário...</p>
+      <p className="text-white/60 text-sm">Carregando questionário...</p>
     </div>
   );
 
@@ -658,7 +658,7 @@ function QuestionarioInline({ colaboradorId, nomeColaborador, onConcluido, onCan
         <p className="text-gold/80 text-xs">Respondendo por: <span className="font-semibold text-gold">{nomeColaborador}</span></p>
       </div>
 
-      <p className="text-white/40 text-xs bg-white/3 rounded-xl px-4 py-3">
+      <p className="text-white/60 text-xs bg-white/3 rounded-xl px-4 py-3">
         {pergunta.instrucao || 'Escolha a palavra que MAIS e a que MENOS descreve esta pessoa:'}
       </p>
 
@@ -696,7 +696,7 @@ function QuestionarioInline({ colaboradorId, nomeColaborador, onConcluido, onCan
       </div>
 
       {(!mais || !menos) && (
-        <p className="text-white/25 text-xs text-center">{!mais && !menos ? 'Selecione MAIS e MENOS para continuar' : !mais ? 'Selecione MAIS' : 'Selecione MENOS'}</p>
+        <p className="text-white/60 text-xs text-center">{!mais && !menos ? 'Selecione MAIS e MENOS para continuar' : !mais ? 'Selecione MAIS' : 'Selecione MENOS'}</p>
       )}
 
       <button onClick={avancar} disabled={!mais || !menos}
@@ -904,15 +904,15 @@ export default function PerfilDISC() {
               <div key={k} className={`${cfg.bgLight} border ${cfg.border} rounded-xl p-5`}>
                 <div className="flex items-center gap-3 mb-4">
                   <div className={`w-10 h-10 ${cfg.bg} rounded-xl flex items-center justify-center text-white font-bold text-lg`}>{k}</div>
-                  <div><p className={`font-semibold ${cfg.cor}`}>{cfg.label}</p><p className="text-white/40 text-xs">{cfg.desc}</p></div>
+                  <div><p className={`font-semibold ${cfg.cor}`}>{cfg.label}</p><p className="text-white/60 text-xs">{cfg.desc}</p></div>
                 </div>
-                {lista.length === 0 ? <p className="text-white/30 text-sm text-center py-4">Nenhum colaborador</p> : (
+                {lista.length === 0 ? <p className="text-white/60 text-sm text-center py-4">Nenhum colaborador</p> : (
                   <div className="space-y-2">
                     {lista.map(c => (
                       <div key={c.colaborador_id} className="flex items-center justify-between bg-black/20 rounded-lg px-3 py-2">
                         <div>
                           <p className="text-white text-sm">{c.nome_completo}</p>
-                          <p className="text-white/40 text-xs">{c.funcao_nome}</p>
+                          <p className="text-white/60 text-xs">{c.funcao_nome}</p>
                         </div>
                         <div className="flex gap-1.5 items-center">
                           {(['D', 'I', 'S', 'C'] as const).map(dk => {
@@ -951,14 +951,14 @@ export default function PerfilDISC() {
                 <button onClick={() => setModoAplicar('questionario_select')}
                   className="flex flex-col items-start gap-3 p-5 bg-white/5 border border-white/10 rounded-2xl hover:border-wine/40 hover:bg-wine/8 transition-all text-left">
                   <div className="w-10 h-10 rounded-xl bg-wine/20 border border-wine/30 flex items-center justify-center"><ClipboardList size={18} className="text-gold" /></div>
-                  <div><p className="text-white font-semibold text-sm mb-1">Questionário completo</p><p className="text-white/40 text-xs leading-relaxed">28 blocos de palavras — aplica direto no sistema, presencialmente</p></div>
+                  <div><p className="text-white font-semibold text-sm mb-1">Questionário completo</p><p className="text-white/60 text-xs leading-relaxed">28 blocos de palavras — aplica direto no sistema, presencialmente</p></div>
                   <span className="text-xs font-medium px-2.5 py-1 bg-gold/10 border border-gold/20 text-gold rounded-lg">Recomendado</span>
                 </button>
                 <button onClick={() => setModoAplicar('sliders')}
                   className="flex flex-col items-start gap-3 p-5 bg-white/5 border border-white/10 rounded-2xl hover:border-white/25 hover:bg-white/8 transition-all text-left">
                   <div className="w-10 h-10 rounded-xl bg-white/8 border border-white/15 flex items-center justify-center"><SlidersHorizontal size={18} className="text-white/60" /></div>
-                  <div><p className="text-white font-semibold text-sm mb-1">Inserção manual</p><p className="text-white/40 text-xs leading-relaxed">Ajuste direto dos scores D/I/S/C — para importar resultado externo</p></div>
-                  <span className="text-xs font-medium px-2.5 py-1 bg-white/5 border border-white/10 text-white/40 rounded-lg">Avançado</span>
+                  <div><p className="text-white font-semibold text-sm mb-1">Inserção manual</p><p className="text-white/60 text-xs leading-relaxed">Ajuste direto dos scores D/I/S/C — para importar resultado externo</p></div>
+                  <span className="text-xs font-medium px-2.5 py-1 bg-white/5 border border-white/10 text-white/60 rounded-lg">Avançado</span>
                 </button>
               </div>
             </div>
@@ -969,7 +969,7 @@ export default function PerfilDISC() {
               <div className="bg-white/5 border border-white/10 rounded-2xl p-6 space-y-5">
                 <div className="flex items-center gap-3">
                   <button onClick={() => setModoAplicar('escolha')} className="p-1.5 rounded-lg bg-white/5 text-white/40 hover:text-white transition-colors"><ChevronLeft size={16} /></button>
-                  <div><p className="text-white font-semibold">Questionário Completo</p><p className="text-white/40 text-xs">Selecione o colaborador</p></div>
+                  <div><p className="text-white font-semibold">Questionário Completo</p><p className="text-white/60 text-xs">Selecione o colaborador</p></div>
                 </div>
                 <div>
                   <label className="text-white/60 text-xs mb-1.5 block">Colaborador *</label>
@@ -980,7 +980,7 @@ export default function PerfilDISC() {
                 </div>
                 {qColaboradorId && (
                   <div className="bg-gold/8 border border-gold/20 rounded-xl px-4 py-3">
-                    <p className="text-white/40 text-xs">Respondendo por</p>
+                    <p className="text-white/60 text-xs">Respondendo por</p>
                     <p className="text-gold font-semibold">{colaboradores.find(c => c.id === qColaboradorId)?.nome_completo}</p>
                   </div>
                 )}
@@ -1013,7 +1013,7 @@ export default function PerfilDISC() {
               <div className="bg-white/5 border border-white/10 rounded-2xl p-6 space-y-5">
                 <div className="flex items-center gap-3">
                   <button onClick={() => setModoAplicar('escolha')} className="p-1.5 rounded-lg bg-white/5 text-white/40 hover:text-white transition-colors"><ChevronLeft size={16} /></button>
-                  <div><p className="text-white font-semibold">Inserção Manual</p><p className="text-white/40 text-xs">Ajuste os scores via sliders</p></div>
+                  <div><p className="text-white font-semibold">Inserção Manual</p><p className="text-white/60 text-xs">Ajuste os scores via sliders</p></div>
                 </div>
                 <div>
                   <label className="text-white/60 text-xs mb-1.5 block">Colaborador</label>
@@ -1048,9 +1048,9 @@ export default function PerfilDISC() {
                   return (
                     <div className="p-4 bg-white/5 rounded-xl flex items-center gap-3">
                       <span className={`${dc.bg} text-white font-bold px-3 py-1 rounded-lg`}>{dominante}</span>
-                      <span className="text-white/40">/</span>
+                      <span className="text-white/60">/</span>
                       <span className={`${sc.bgLight} border ${sc.border} ${sc.cor} font-medium px-3 py-1 rounded-lg`}>{secundario}</span>
-                      <span className="text-white/40 text-sm">{dc.label} · {sc.label}</span>
+                      <span className="text-white/60 text-sm">{dc.label} · {sc.label}</span>
                     </div>
                   );
                 })()}
@@ -1113,7 +1113,7 @@ export default function PerfilDISC() {
                         <span className={`${dcfg.bg} text-white text-xs font-bold px-2.5 py-1 rounded-lg`}>{c.perfil_dominante}</span>
                         <span className={`${scfg.bgLight} ${scfg.cor} text-xs font-medium px-2.5 py-1 rounded-lg border ${scfg.border}`}>{c.perfil_secundario}</span>
                       </div>
-                      {c.data_aplicacao && <span className="text-white/25 text-xs hidden md:block">{dayjs(c.data_aplicacao).format('DD/MM/YY')}</span>}
+                      {c.data_aplicacao && <span className="text-white/60 text-xs hidden md:block">{dayjs(c.data_aplicacao).format('DD/MM/YY')}</span>}
                       <ChevronRight size={14} className="text-white/30" />
                     </div>
                   </div>
@@ -1131,7 +1131,7 @@ export default function PerfilDISC() {
               <div className="bg-white/5 border border-white/10 rounded-2xl p-6 space-y-5">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center"><MessageSquare size={18} className="text-emerald-400" /></div>
-                  <div><p className="text-white font-semibold">Enviar Avaliação DISC por WhatsApp</p><p className="text-white/40 text-xs">Gera link único — colaborador responde no celular</p></div>
+                  <div><p className="text-white font-semibold">Enviar Avaliação DISC por WhatsApp</p><p className="text-white/60 text-xs">Gera link único — colaborador responde no celular</p></div>
                 </div>
                 <div>
                   <label className="text-white/60 text-xs mb-2 block">Para quem é a avaliação?</label>
@@ -1148,7 +1148,7 @@ export default function PerfilDISC() {
                         </div>
                         <div>
                           <p className={`text-sm font-medium ${modo === opt.value ? 'text-white' : 'text-white/60'}`}>{opt.label}</p>
-                          <p className="text-white/30 text-xs">{opt.desc}</p>
+                          <p className="text-white/60 text-xs">{opt.desc}</p>
                         </div>
                       </button>
                     ))}
@@ -1181,10 +1181,10 @@ export default function PerfilDISC() {
               <div className="bg-white/5 border border-emerald-500/20 rounded-2xl p-6 space-y-4">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center"><CheckCircle size={18} className="text-emerald-400" /></div>
-                  <div><p className="text-white font-semibold">Link gerado para {wpNomeGerado}</p><p className="text-white/40 text-xs">Válido até {new Date(Date.now() + wpDias * 86400000).toLocaleDateString('pt-BR')}</p></div>
+                  <div><p className="text-white font-semibold">Link gerado para {wpNomeGerado}</p><p className="text-white/60 text-xs">Válido até {new Date(Date.now() + wpDias * 86400000).toLocaleDateString('pt-BR')}</p></div>
                 </div>
                 <div className="bg-black/30 border border-white/10 rounded-xl px-4 py-3">
-                  <p className="text-white/40 text-xs mb-1">Link da avaliação</p>
+                  <p className="text-white/60 text-xs mb-1">Link da avaliação</p>
                   <p className="text-white/80 text-xs break-all font-mono">{wpLinkGerado}</p>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
@@ -1217,7 +1217,7 @@ export default function PerfilDISC() {
               <button onClick={fetchSessoes} className="p-1.5 text-white/30 hover:text-white/60 transition-colors rounded-lg hover:bg-white/5"><RefreshCw size={14} className={loadingSessoes ? 'animate-spin' : ''} /></button>
             </div>
             {sessoes.length === 0 ? (
-              <div className="bg-white/3 border border-white/8 rounded-xl px-5 py-6 text-center"><p className="text-white/30 text-sm">Nenhuma avaliação enviada ainda.</p></div>
+              <div className="bg-white/3 border border-white/8 rounded-xl px-5 py-6 text-center"><p className="text-white/60 text-sm">Nenhuma avaliação enviada ainda.</p></div>
             ) : (
               <div className="space-y-2">
                 {sessoes.map(s => {
@@ -1228,7 +1228,7 @@ export default function PerfilDISC() {
                     <div key={s.id} className="bg-white/3 border border-white/8 rounded-xl px-4 py-3 flex items-center justify-between gap-3 hover:bg-white/5 transition-all">
                       <div className="flex-1 min-w-0">
                         <p className="text-white text-sm font-medium truncate">{s.nome}</p>
-                        <p className="text-white/30 text-xs">{s.tipo === 'candidato' ? 'Candidato' : s.nome_respondente ? 'Externo' : 'Equipe'} · {dayjs(s.criado_em).format('DD/MM HH:mm')}</p>
+                        <p className="text-white/60 text-xs">{s.tipo === 'candidato' ? 'Candidato' : s.nome_respondente ? 'Externo' : 'Equipe'} · {dayjs(s.criado_em).format('DD/MM HH:mm')}</p>
                       </div>
                       <div className={`flex items-center gap-1.5 ${sc}`}>
                         <SI size={13} className={s.statusExibicao === 'andamento' ? 'animate-spin' : ''} />

@@ -61,7 +61,7 @@ const ModalConcluirProducao: React.FC<ModalConcluirProducaoProps> = ({
             <input type="number" min="0" step="0.001" value={quantidadeProduzida}
               onChange={e => setQuantidadeProduzida(parseFloat(e.target.value) || 0)}
               className="w-full rounded-xl border border-white/20 bg-white/5 text-white px-3 py-2.5 focus:border-wine focus:ring-2 focus:ring-wine/30 focus:outline-none" />
-            <p className="text-xs text-white/40 mt-1">Total produzido (aprovados + rejeitados)</p>
+            <p className="text-xs text-white/60 mt-1">Total produzido (aprovados + rejeitados)</p>
           </div>
 
           <div>
@@ -69,7 +69,7 @@ const ModalConcluirProducao: React.FC<ModalConcluirProducaoProps> = ({
             <input type="number" min="0" max={quantidadeProduzida} step="0.001" value={quantidadeAprovada}
               onChange={e => setQuantidadeAprovada(parseFloat(e.target.value) || 0)}
               className="w-full rounded-xl border border-white/20 bg-white/5 text-white px-3 py-2.5 focus:border-wine focus:ring-2 focus:ring-wine/30 focus:outline-none" />
-            <p className="text-xs text-white/40 mt-1">Aprovada pelo controle de qualidade</p>
+            <p className="text-xs text-white/60 mt-1">Aprovada pelo controle de qualidade</p>
           </div>
 
           <div>

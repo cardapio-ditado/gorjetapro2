@@ -194,13 +194,13 @@ const ListaComprasMetricas: React.FC = () => {
             <tbody className="divide-y divide-white/10">
               {loading ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-8 text-center text-sm text-white/40">
+                  <td colSpan={5} className="px-4 py-8 text-center text-sm text-white/60">
                     Carregando...
                   </td>
                 </tr>
               ) : compras.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-8 text-center text-sm text-white/40">
+                  <td colSpan={5} className="px-4 py-8 text-center text-sm text-white/60">
                     Nenhuma compra encontrada
                   </td>
                 </tr>

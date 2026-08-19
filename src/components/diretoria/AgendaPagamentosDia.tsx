@@ -1007,7 +1007,7 @@ const AgendaPagamentosDia: React.FC<AgendaPagamentosDiaProps> = ({
                             </div>
                           )}
                           {item.status !== 'proposto' && (
-                            <span className="text-sm text-white/30">-</span>
+                            <span className="text-sm text-white/60">-</span>
                           )}
                         </td>
                       )}

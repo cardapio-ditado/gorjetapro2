@@ -130,7 +130,7 @@ const Entradas: React.FC = () => {
     return (
       <div className="flex flex-col items-center justify-center h-64">
         <p className="text-white/60 mb-4">Nenhuma semana ativa encontrada</p>
-        <p className="text-sm text-white/40">Crie uma semana na Visão Estratégica primeiro</p>
+        <p className="text-sm text-white/60">Crie uma semana na Visão Estratégica primeiro</p>
       </div>
     );
   }
@@ -196,7 +196,7 @@ const Entradas: React.FC = () => {
               style={{ width: `${Math.min(entradas.percentualRealizado, 100)}%` }}
             />
           </div>
-          <p className="text-xs text-white/40 mt-1">{entradas.percentualRealizado.toFixed(1)}% realizado</p>
+          <p className="text-xs text-white/60 mt-1">{entradas.percentualRealizado.toFixed(1)}% realizado</p>
         </div>
       </div>
 
@@ -244,7 +244,7 @@ const Entradas: React.FC = () => {
               </div>
             ))}
             {entradas.previstos.length === 0 && (
-              <p className="text-center text-white/40 py-8">Nenhuma provisão cadastrada</p>
+              <p className="text-center text-white/60 py-8">Nenhuma provisão cadastrada</p>
             )}
           </div>
         </div>
@@ -292,7 +292,7 @@ const Entradas: React.FC = () => {
               </div>
             ))}
             {entradas.realizados.length === 0 && (
-              <p className="text-center text-white/40 py-8">Nenhuma entrada real cadastrada</p>
+              <p className="text-center text-white/60 py-8">Nenhuma entrada real cadastrada</p>
             )}
           </div>
         </div>

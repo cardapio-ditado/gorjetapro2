@@ -459,22 +459,22 @@ const FuncoesRH: React.FC = () => {
             <table className="w-full">
               <thead>
                 <tr className="text-left bg-white/5 border-b border-white/10">
-                  <th className="px-6 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">
                     Função
                   </th>
-                  <th className="px-6 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">
                     Salário Base
                   </th>
-                  <th className="px-6 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">
                     Comissão
                   </th>
-                  <th className="px-6 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">
                     Status
                   </th>
-                  <th className="px-6 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">
                     Criado em
                   </th>
-                  <th className="px-6 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">
                     Ações
                   </th>
                 </tr>
@@ -555,7 +555,7 @@ const FuncoesRH: React.FC = () => {
             <div className="text-center py-12">
               <Briefcase className="w-16 h-16 text-white/30 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-white mb-2">Nenhuma função encontrada</h3>
-              <p className="text-white/40">
+              <p className="text-white/60">
                 {searchTerm || statusFilter !== 'all' || comissaoFilter !== 'all'
                   ? 'Nenhuma função corresponde aos filtros aplicados.'
                   : 'Nenhuma função cadastrada.'}
@@ -594,7 +594,7 @@ const FuncoesRH: React.FC = () => {
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <span className="text-white/40 sm:text-sm">R$</span>
+                    <span className="text-white/60 sm:text-sm">R$</span>
                   </div>
                   <input
                     type="number"
@@ -622,7 +622,7 @@ const FuncoesRH: React.FC = () => {
                     className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                   />
                   <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                    <span className="text-white/40 sm:text-sm">%</span>
+                    <span className="text-white/60 sm:text-sm">%</span>
                   </div>
                 </div>
               </div>
