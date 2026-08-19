@@ -81,10 +81,27 @@ const Login: React.FC = () => {
   const busy = isLoading || loading;
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'radial-gradient(760px 720px at 8% 12%, rgba(155,37,53,0.6), transparent 65%), radial-gradient(640px 640px at 92% 88%, rgba(212,175,55,0.25), transparent 65%), radial-gradient(500px 500px at 90% 8%, rgba(125,31,44,0.3), transparent 65%), linear-gradient(160deg, #10131f 0%, #0a0d17 50%, #140a12 100%)' }}>
+    <div className="min-h-screen flex">
+      {/* Painel da imagem — intocado, sem overlay, só ocupa o lado esquerdo em telas maiores */}
+      <div
+        className="hidden lg:block lg:w-[46%] xl:w-[44%] relative"
+        style={{ borderRight: '1px solid rgba(212,175,55,0.35)', boxShadow: '4px 0 40px rgba(0,0,0,0.45)' }}
+      >
+        <img
+          src="/images/login-hero-ditado-bar.jpg"
+          alt="Ditado Bar — Sistema de Gestão Inteligente"
+          className="absolute inset-0 w-full h-full object-cover object-left"
+        />
+      </div>
+
+      {/* Painel do formulário */}
+      <div
+        className="flex-1 flex items-center justify-center p-4"
+        style={{ background: 'radial-gradient(760px 720px at 8% 12%, rgba(155,37,53,0.6), transparent 65%), radial-gradient(640px 640px at 92% 88%, rgba(212,175,55,0.25), transparent 65%), radial-gradient(500px 500px at 90% 8%, rgba(125,31,44,0.3), transparent 65%), linear-gradient(160deg, #10131f 0%, #0a0d17 50%, #140a12 100%)' }}
+      >
       <div className="w-full max-w-md">
-        {/* Logo e Título */}
-        <div className="text-center mb-8">
+        {/* Logo e Título — só aparece quando a imagem não está visível (mobile/tablet) */}
+        <div className="text-center mb-8 lg:hidden">
           <div className="flex justify-center mb-6">
             <div className="p-4 rounded-2xl shadow-lg" style={{ background: 'linear-gradient(135deg, #7D1F2C, #D4AF37)' }}>
               <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center">
@@ -92,7 +109,7 @@ const Login: React.FC = () => {
               </div>
             </div>
           </div>
-          <h1 className="text-3xl font-bold mb-2" style={{ color: '#eef1f8' }}>
+          <h1 className="text-3xl font-display font-bold mb-2 tracking-wide" style={{ color: '#eef1f8' }}>
             Ditado Popular
           </h1>
           <p className="text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>Sistema de Gestão Integrada</p>
@@ -101,7 +118,7 @@ const Login: React.FC = () => {
         {/* Formulário de Login */}
         <div className="rounded-2xl p-8" style={{ background: 'linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0.05))', backdropFilter: 'blur(24px) saturate(150%)', WebkitBackdropFilter: 'blur(24px) saturate(150%)', border: '1px solid rgba(255,255,255,0.14)', borderTopColor: 'rgba(255,255,255,0.28)', boxShadow: '0 32px 90px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.1)' }}>
           <div className="text-center mb-6">
-            <h2 className="text-xl font-semibold mb-1" style={{ color: '#eef1f8' }}>Fazer Login</h2>
+            <h2 className="text-2xl font-display font-bold mb-1 tracking-wide" style={{ color: '#eef1f8' }}>Fazer Login</h2>
             <p className="text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>Acesse sua conta para continuar</p>
           </div>
 
@@ -251,6 +268,7 @@ const Login: React.FC = () => {
             Sistema de Gestão Integrada v1.0 — © 2025 Ditado Popular
           </p>
         </div>
+      </div>
       </div>
     </div>
   );
