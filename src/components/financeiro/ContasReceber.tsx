@@ -4,6 +4,8 @@ import { supabase } from '../../lib/supabase';
 import { ReportGenerator, exportToExcel } from '../../utils/reportGenerator';
 import dayjs from 'dayjs';
 import { SearchableSelect } from '../common/SearchableSelect';
+import { EmptyState } from '../ui/EmptyState';
+import { TableSkeleton } from '../ui/Skeleton';
 
 interface ContaReceber {
   id: string; cliente_id: string; cliente_nome: string; cliente_documento?: string;

@@ -4,6 +4,8 @@ import { Menu } from '@headlessui/react';
 import { supabase } from '../../lib/supabase';
 import dayjs from 'dayjs';
 import { ReportGenerator, exportToExcel } from '../../utils/reportGenerator';
+import { EmptyState } from '../ui/EmptyState';
+import { TableSkeleton } from '../ui/Skeleton';
 
 interface ExtratoDia {
   data: string; saldo_anterior: number; total_entradas: number;

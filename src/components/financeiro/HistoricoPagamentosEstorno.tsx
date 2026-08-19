@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { RotateCcw, AlertTriangle, DollarSign, Calendar, FileText, Trash2, Search, Filter, X } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import dayjs from 'dayjs';
+import { EmptyState } from '../ui/EmptyState';
+import { TableSkeleton } from '../ui/Skeleton';
 
 interface PagamentoRealizado {
   id: string; valor: number; data: string; descricao: string;
@@ -210,7 +212,7 @@ const HistoricoPagamentosEstorno: React.FC = () => {
                 })}
               </tbody>
             </table>
-            {filtrados.length === 0 && <EmptyState icon={ArrowLeftRight} title="Nenhum pagamento encontrado" description="Nenhum pagamento ou estorno corresponde aos filtros aplicados." />}
+            {filtrados.length === 0 && <EmptyState icon={RotateCcw} title="Nenhum pagamento encontrado" description="Nenhum pagamento ou estorno corresponde aos filtros aplicados." />}
           </div>
         </div>
       )}

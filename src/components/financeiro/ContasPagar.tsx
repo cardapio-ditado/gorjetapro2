@@ -9,6 +9,8 @@ import ModalVisualizarConta from './ModalVisualizarConta';
 import { sugerirCategoria } from '../../services/aiCategorizacao';
 import { detectarDuplicatas } from '../../services/aiDetectorDuplicatas';
 import { SearchableSelect } from '../common/SearchableSelect';
+import { EmptyState } from '../ui/EmptyState';
+import { TableSkeleton } from '../ui/Skeleton';
 
 interface ContaPagar {
   id: string; fornecedor_id: string; fornecedor_nome: string; descricao: string;
@@ -439,7 +441,7 @@ const ContasPagar: React.FC = () => {
                 })}
               </tbody>
             </table>
-            {filteredContas.length===0 && <EmptyState icon={CreditCard} title="Nenhuma conta a pagar" description="Nao ha obrigacoes em aberto para os filtros aplicados neste periodo." />}
+            {filteredContas.length===0 && <EmptyState icon={Receipt} title="Nenhuma conta a pagar" description="Nao ha obrigacoes em aberto para os filtros aplicados neste periodo." />}
           </div>
         </div>
       )}

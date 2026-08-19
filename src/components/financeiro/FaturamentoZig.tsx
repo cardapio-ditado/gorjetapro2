@@ -5,6 +5,8 @@ import {
 } from 'recharts';
 import { supabase } from '../../lib/supabase';
 import dayjs from 'dayjs';
+import { EmptyState } from '../ui/EmptyState';
+import { TableSkeleton } from '../ui/Skeleton';
 
 interface DiaFaturamento {
   data: string;
