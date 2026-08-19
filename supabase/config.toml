@@ -1,0 +1,10 @@
+# Configuração por função.
+#
+# O webhook do Brasa Food chega sem token de login — quem garante a origem é a
+# assinatura HMAC conferida dentro da própria função (validade de 5 minutos,
+# comparação de tempo constante). Sem esta linha, o Supabase barraria a
+# entrega com 401 antes de o nosso código rodar, e a ponte morreria em
+# silêncio: o Brasa registraria "HTTP 401 — sem nova tentativa" no log de
+# entregas e nenhuma reserva chegaria ao mapa.
+[functions.receber-reserva-brasa]
+verify_jwt = false
