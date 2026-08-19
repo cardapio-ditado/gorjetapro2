@@ -3,6 +3,8 @@ import { Plus, Search, ArrowUpRight, ArrowDownRight, Download, FileText, DollarS
 import { supabase, testConnection } from '../../lib/supabase';
 import { ReportGenerator, exportToExcel } from '../../utils/reportGenerator';
 import dayjs from 'dayjs';
+import { EmptyState } from '../ui/EmptyState';
+import { TableSkeleton } from '../ui/Skeleton';
 import { SearchableSelect } from '../common/SearchableSelect';
 
 interface Transaction {
@@ -26,8 +28,8 @@ interface ContaBancaria { id: string; banco: string; tipo_conta: string; numero_
 const fmt = (v: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
 
 const S = {
-  card: '#12141f', border: 'rgba(255,255,255,0.06)', label: 'rgba(255,255,255,0.35)',
-  text: 'rgba(255,255,255,0.85)', muted: 'rgba(255,255,255,0.5)',
+  card: '#12141f', border: 'rgba(255,255,255,0.06)', label: 'var(--text-secondary)',
+  text: 'var(--text-primary)', muted: 'rgba(255,255,255,0.5)',
   green: '#4ade80', red: '#f87171', blue: '#60a5fa', gold: '#D4AF37',
   greenBg: 'rgba(74,222,128,0.08)', redBg: 'rgba(248,113,113,0.08)',
   blueBg: 'rgba(96,165,250,0.08)', goldBg: 'rgba(212,175,55,0.08)',
@@ -204,7 +206,7 @@ const FluxoCaixa: React.FC = () => {
             <TrendingUp style={{ width:32, height:32, color:'rgba(96,165,250,0.4)' }} />
           </div>
 
-          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:10 }}>
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(200px, 1fr))', gap:'var(--sp-3)' }}>
             <div style={{ background:S.greenBg, border:`1px solid ${S.greenBorder}`, borderRadius:12, padding:'14px 16px' }}>
               <p style={{ color:'rgba(74,222,128,0.55)', fontSize:10, margin:'0 0 6px', textTransform:'uppercase', letterSpacing:'0.6px' }}>Entradas</p>
               <p style={{ color:S.green, fontSize:20, fontWeight:800, margin:'0 0 4px', letterSpacing:'-0.5px' }}>{fmt(indicadores.entradas_mes)}</p>
@@ -261,7 +263,7 @@ const FluxoCaixa: React.FC = () => {
       )}
 
       {/* Filtros */}
-      <div style={{ background:S.card, borderRadius:12, padding:'12px 14px', border:`1px solid ${S.border}`, display:'grid', gridTemplateColumns:'2fr 1fr 1fr 1fr 1fr', gap:10 }}>
+      <div style={{ background:S.card, borderRadius:12, padding:'12px 14px', border:`1px solid ${S.border}`, display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(160px, 1fr))', gap:'var(--sp-3)' }}>
         <div style={{ position:'relative' }}>
           <Search style={{ position:'absolute', left:10, top:'50%', transform:'translateY(-50%)', width:13, height:13, color:S.label }} />
           <input type="text" placeholder="Buscar transações..." value={searchTerm} onChange={e=>setSearchTerm(e.target.value)} style={{ ...inputStyle, paddingLeft:30 }} />
@@ -274,12 +276,11 @@ const FluxoCaixa: React.FC = () => {
 
       {/* Extrato */}
       {loading ? (
-        <div style={{ display:'flex', justifyContent:'center', padding:48 }}>
-          <div style={{ width:32, height:32, borderRadius:'50%', border:`2px solid rgba(212,175,55,0.15)`, borderTop:`2px solid ${S.gold}`, animation:'spin 0.8s linear infinite' }} />
-          <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+        <div style={{ background:S.card, border:`1px solid ${S.border}`, borderRadius:'var(--r-card)', overflow:'hidden' }}>
+          <TableSkeleton rows={7} cols={[14,40,14,14,18]} />
         </div>
       ) : (
-        <div style={{ background:S.card, border:`1px solid ${S.border}`, borderRadius:12, overflow:'hidden' }}>
+        <div style={{ background:S.card, border:`1px solid ${S.border}`, borderRadius:'var(--r-card)', overflow:'hidden' }}>
           {/* Header da tabela */}
           <div style={{ background:`linear-gradient(135deg, ${S.wine} 0%, #5a1520 100%)`, padding:'14px 18px', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
             <div>
@@ -299,7 +300,7 @@ const FluxoCaixa: React.FC = () => {
               <thead>
                 <tr style={{ background:'rgba(255,255,255,0.03)' }}>
                   {['Data','Descrição','Entrada (+)','Saída (−)','Saldo','Ações'].map((h,i) => (
-                    <th key={i} style={{ padding:'9px 14px', textAlign:i>=2&&i<5?'right':'left', fontSize:10, fontWeight:600, color:S.label, textTransform:'uppercase', letterSpacing:'0.6px', borderBottom:`1px solid ${S.border}`, whiteSpace:'nowrap', background:i===4?'rgba(212,175,55,0.05)':'transparent' }}>{h}</th>
+                    <th key={i} className="t-caps" style={{ padding:'var(--sp-3) var(--sp-4)', textAlign:i>=2&&i<5?'right':'left', color:'var(--text-secondary)', borderBottom:'1px solid var(--border-strong)', whiteSpace:'nowrap', background:i===4?'rgba(212,175,55,0.05)':'rgba(255,255,255,0.02)' }}>{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -324,13 +325,13 @@ const FluxoCaixa: React.FC = () => {
                       </div>
                     </td>
                     <td style={{ padding:'9px 14px', textAlign:'right', whiteSpace:'nowrap' }}>
-                      {t.tipo==='entrada' ? <span style={{ color:S.green, fontWeight:700, fontSize:12, fontFamily:'monospace' }}>{fmt(t.valor)}</span> : <span style={{ color:'rgba(255,255,255,0.15)', fontSize:12 }}>—</span>}
+                      {t.tipo==='entrada' ? <span className="num" style={{ color:S.green, fontWeight:700, fontSize:'var(--fs-body)' }}>{fmt(t.valor)}</span> : <span style={{ color:'rgba(255,255,255,0.15)', fontSize:12 }}>—</span>}
                     </td>
                     <td style={{ padding:'9px 14px', textAlign:'right', whiteSpace:'nowrap' }}>
-                      {t.tipo==='saida' ? <span style={{ color:S.red, fontWeight:700, fontSize:12, fontFamily:'monospace' }}>{fmt(t.valor)}</span> : <span style={{ color:'rgba(255,255,255,0.15)', fontSize:12 }}>—</span>}
+                      {t.tipo==='saida' ? <span className="num" style={{ color:S.red, fontWeight:700, fontSize:'var(--fs-body)' }}>{fmt(t.valor)}</span> : <span style={{ color:'rgba(255,255,255,0.15)', fontSize:12 }}>—</span>}
                     </td>
                     <td style={{ padding:'9px 14px', textAlign:'right', whiteSpace:'nowrap', background:'rgba(212,175,55,0.04)' }}>
-                      <span style={{ color:(t.saldo_acumulado||0)>=0?S.gold:S.red, fontWeight:800, fontSize:12, fontFamily:'monospace' }}>{fmt(t.saldo_acumulado||0)}</span>
+                      <span className="num" style={{ color:(t.saldo_acumulado||0)>=0?S.gold:S.red, fontWeight:800, fontSize:'var(--fs-body)' }}>{fmt(t.saldo_acumulado||0)}</span>
                     </td>
                     <td style={{ padding:'9px 14px', whiteSpace:'nowrap' }}>
                       <div style={{ display:'flex', gap:6, justifyContent:'center' }}>
@@ -345,11 +346,37 @@ const FluxoCaixa: React.FC = () => {
                   </tr>
                 ))}
               </tbody>
+              {/* Linha de total — soma o que esta visivel apos os filtros. */}
+              {filteredTransactions.length>0 && (
+                <tfoot>
+                  <tr style={{ borderTop:'2px solid var(--gold)', background:'rgba(212,175,55,0.06)' }}>
+                    <td className="t-caps" colSpan={2} style={{ padding:'var(--sp-4)', color:'var(--text-primary)' }}>
+                      Total do período · {filteredTransactions.length} {filteredTransactions.length===1?'lançamento':'lançamentos'}
+                    </td>
+                    <td className="num num-total" style={{ padding:'var(--sp-4)', color:S.green, whiteSpace:'nowrap' }}>
+                      {fmt(filteredTransactions.filter(t=>t.tipo==='entrada').reduce((a,t)=>a+Number(t.valor||0),0))}
+                    </td>
+                    <td className="num num-total" style={{ padding:'var(--sp-4)', color:S.red, whiteSpace:'nowrap' }}>
+                      {fmt(filteredTransactions.filter(t=>t.tipo==='saida').reduce((a,t)=>a+Number(t.valor||0),0))}
+                    </td>
+                    <td className="num num-total" style={{ padding:'var(--sp-4)', color:'var(--gold)', background:'rgba(212,175,55,0.05)', whiteSpace:'nowrap' }}>
+                      {fmt(filteredTransactions[filteredTransactions.length-1]?.saldo_acumulado||0)}
+                    </td>
+                    <td />
+                  </tr>
+                </tfoot>
+              )}
             </table>
             {filteredTransactions.length===0 && (
-              <div style={{ textAlign:'center', padding:48, color:S.label, fontSize:13 }}>
-                {searchTerm||tipoFilter!=='all'||contaBancariaFilter!=='all' ? 'Nenhuma transação corresponde aos filtros.' : 'Nenhuma transação no período.'}
-              </div>
+              (searchTerm||tipoFilter!=='all'||contaBancariaFilter!=='all'
+                ? <EmptyState icon={Search} variant="filtered"
+                    title="Nenhuma transação encontrada"
+                    description="Nenhum lançamento corresponde aos filtros aplicados. Limpe os filtros para ver o período inteiro."
+                    action={{ label:'Limpar filtros', onClick:()=>{setSearchTerm('');setTipoFilter('all');setContaBancariaFilter('all');} }} />
+                : <EmptyState icon={FileText}
+                    title="Nenhuma transação no período"
+                    description="Não há entradas nem saídas registradas entre as datas selecionadas."
+                    action={{ label:'Novo lançamento', onClick:()=>openForm() }} />)
             )}
           </div>
         </div>
