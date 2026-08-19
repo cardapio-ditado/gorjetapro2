@@ -11,6 +11,8 @@ interface EmptyStateProps {
   action?: { label: string; onClick: () => void };
   /** Vazio por filtro pede tom diferente de vazio por falta de cadastro. */
   variant?: 'empty' | 'filtered';
+  /** Compacto: para card de lista pequeno, onde o icone de 56px domina. */
+  compact?: boolean;
 }
 
 /**
@@ -29,26 +31,27 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
   description,
   action,
   variant = 'empty',
+  compact = false,
 }) => (
   <div
     className="flex flex-col items-center justify-center text-center"
-    style={{ padding: 'var(--sp-12) var(--sp-6)' }}
+    style={{ padding: compact ? 'var(--sp-6) var(--sp-4)' : 'var(--sp-12) var(--sp-6)' }}
   >
     <div
       className="flex items-center justify-center"
       style={{
-        width: 56,
-        height: 56,
+        width: compact ? 36 : 56,
+        height: compact ? 36 : 56,
         borderRadius: 'var(--r-pill)',
         background: 'rgba(255,255,255,0.04)',
         border: '1px solid var(--border)',
-        marginBottom: 'var(--sp-4)',
+        marginBottom: compact ? 'var(--sp-3)' : 'var(--sp-4)',
       }}
     >
-      <Icon size={22} style={{ color: 'var(--text-secondary)' }} strokeWidth={1.75} />
+      <Icon size={compact ? 16 : 22} style={{ color: 'var(--text-secondary)' }} strokeWidth={1.75} />
     </div>
 
-    <p className="t-subsec" style={{ color: 'var(--text-primary)', margin: 0 }}>
+    <p className={compact ? 't-label' : 't-subsec'} style={{ color: 'var(--text-primary)', margin: 0 }}>
       {title}
     </p>
 

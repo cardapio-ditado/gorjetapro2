@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   Music, Calendar, AlertTriangle, X, RefreshCw,
-  UserCheck, UserX, Gift, Briefcase, MessageSquare, Package, BookOpen,
+  UserCheck, UserX, Gift, Briefcase, MessageSquare, Package, BookOpen, Inbox,
 } from 'lucide-react';
+import { EmptyState } from '../components/ui/EmptyState';
+import { CardSkeleton } from '../components/ui/Skeleton';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import ChatFinanceiroIA from '../components/financeiro/ChatFinanceiroIA';
@@ -109,9 +111,7 @@ function ListaScroll({
         <span className="text-xs text-white/50 font-medium">{lista.length} item{lista.length !== 1 ? 's' : ''}</span>
       </div>
       {lista.length === 0 ? (
-        <div className="py-8 text-center">
-          <p className="text-xs text-white/40">{emptyMsg}</p>
-        </div>
+        <EmptyState icon={Inbox} title={emptyMsg} compact />
       ) : (
         <div className={`${maxH} overflow-y-auto divide-y divide-white/5`}>
           {lista.map(renderItem)}
@@ -198,8 +198,14 @@ const Dashboard: React.FC = () => {
   const refresh = () => { setRefreshing(true); load(); };
 
   if (loading || !painel) return (
-    <div className="flex items-center justify-center min-h-96">
-      <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-wine" />
+    <div className="space-y-4">
+      <div className="grid grid-cols-12 gap-4">
+        <div className="col-span-12 lg:col-span-8 skeleton" style={{ height: 280, borderRadius: 'var(--r-card)' }} />
+        <div className="col-span-12 lg:col-span-4 skeleton" style={{ height: 280, borderRadius: 'var(--r-card)' }} />
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <CardSkeleton count={3} />
+      </div>
     </div>
   );
 
