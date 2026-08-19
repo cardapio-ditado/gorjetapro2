@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogOut } from 'lucide-react';
+import { LogOut, ChevronRight } from 'lucide-react';
 import { AREAS, MODULES } from '../components/layout/SidebarModern';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -18,8 +18,60 @@ import { useAuth } from '../contexts/AuthContext';
  * porta trancada.
  */
 
-/** O hexágono. Recorte CSS puro — sem imagem, escala em qualquer tela. */
-const HEXAGONO = 'polygon(25% 3%, 75% 3%, 100% 50%, 75% 97%, 25% 97%, 0% 50%)';
+/** Hexágono "ponta pra cima" — lados retos na esquerda/direita, ponta em
+ *  cima e embaixo. É essa orientação que permite empilhar em fileiras que
+ *  se encaixam de verdade (a fileira de baixo entra no vão da de cima),
+ *  em vez de depender de deslocar item a item dentro de uma flexbox que
+ *  quebra linha sozinha.
+ */
+const HEXAGONO = 'polygon(50% 0%, 97% 25%, 97% 75%, 50% 100%, 3% 75%, 3% 25%)';
+const HEX_W = 186;
+const HEX_H = 200;
+const HEX_GAP = 14;
+const HEX_BORDA = 2;
+
+const Hexagono: React.FC<{
+  area: { id: string; nome: string; descricao: string; icone: React.ElementType };
+  onClick: () => void;
+}> = ({ area, onClick }) => (
+  <button
+    onClick={onClick}
+    className="group relative shrink-0 transition-transform duration-200 hover:scale-[1.06] focus:outline-none"
+    style={{ width: HEX_W, height: HEX_H }}
+  >
+    {/* Camada 1: a borda dourada — um hexágono levemente maior, cheio de cor. */}
+    <div className="absolute inset-0" style={{ clipPath: HEXAGONO, background: 'linear-gradient(160deg, var(--gold), rgba(212,175,55,0.25))' }} />
+    {/* Camada 2: o preenchimento — hexágono recuado pela espessura da borda,
+        por cima da camada 1. As duas usam o MESMO clip-path percentual, então
+        a borda sai com espessura uniforme nos seis lados, ponta inclusa. */}
+    <div
+      className="absolute flex flex-col items-center justify-center text-center px-6"
+      style={{
+        inset: HEX_BORDA,
+        clipPath: HEXAGONO,
+        background: 'linear-gradient(160deg, rgba(125,31,44,0.55) 0%, rgba(61,14,22,0.92) 55%, rgba(12,16,24,0.96) 100%)',
+      }}
+    >
+      <span
+        className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+        style={{ background: 'linear-gradient(160deg, rgba(125,31,44,0.65), rgba(212,175,55,0.16))' }}
+      />
+      <area.icone size={24} className="relative mb-2.5" style={{ color: 'var(--gold)' }} strokeWidth={1.75} />
+      <span className="relative text-[14px] font-display font-bold leading-tight" style={{ color: 'var(--text-primary)' }}>
+        {area.nome}
+      </span>
+      <span className="relative text-[10.5px] leading-snug mt-1.5" style={{ color: 'var(--text-secondary)' }}>
+        {area.descricao}
+      </span>
+      <span
+        className="relative text-[9px] uppercase tracking-widest mt-2.5 opacity-0 group-hover:opacity-100 transition-opacity"
+        style={{ color: 'var(--gold)' }}
+      >
+        Entrar
+      </span>
+    </div>
+  </button>
+);
 
 const Saguao: React.FC = () => {
   const navigate = useNavigate();
@@ -34,6 +86,12 @@ const Saguao: React.FC = () => {
     modulos: permitidos.filter((m) => m.group === area.id),
   })).filter((a) => a.modulos.length > 0);
 
+  // Duas fileiras fixas — 3 em cima, o resto embaixo deslocado meio passo —
+  // é o arranjo de colmeia de verdade pra até 5 favos (o total de áreas que
+  // existem). Sem depender de quebra de linha automática pra decidir o
+  // deslocamento, que era a causa do desalinhamento.
+  const fileiras = areas.length > 3 ? [areas.slice(0, 3), areas.slice(3)] : [areas];
+
   const iniciais =
     usuario?.nome_completo
       ?.split(' ')
@@ -43,106 +101,93 @@ const Saguao: React.FC = () => {
       .toUpperCase() ?? 'U';
 
   return (
-    <div className="min-h-screen ambient-glow overflow-y-auto" style={{ background: 'var(--bg-dark)' }}>
-      {/* Cabeçalho enxuto: o saguão é passagem, não morada. */}
-      <header className="flex items-center justify-between px-6 py-5 max-w-4xl mx-auto">
-        <div className="flex items-center gap-3">
-          <div
-            className="w-9 h-9 flex items-center justify-center"
-            style={{
-              clipPath: HEXAGONO,
-              background: 'linear-gradient(135deg, var(--wine), var(--gold))',
-            }}
-          >
-            <span className="text-white text-[10px] font-black tracking-tighter">DP</span>
-          </div>
-          <div>
-            <p className="text-[15px] font-bold leading-none" style={{ color: 'var(--text-primary)' }}>
-              Ditado Popular
-            </p>
-            <p
-              className="text-[9px] mt-0.5 tracking-widest uppercase font-medium"
+    <div className="min-h-screen relative overflow-y-auto">
+      {/* A imagem inteira, sem corte de painel — é o pano de fundo da tela toda. */}
+      <img
+        src="/images/login-hero-ditado-bar.jpg"
+        alt="Ditado Bar — Sistema de Gestão Inteligente"
+        className="fixed inset-0 w-full h-full object-cover"
+        style={{ objectPosition: '22% center' }}
+      />
+      {/* Sombra só no canto onde os favos pousam — o resto da foto fica vívido. */}
+      <div
+        className="fixed inset-0"
+        style={{ background: 'radial-gradient(900px 800px at 100% 62%, rgba(6,4,8,0.8), transparent 62%), linear-gradient(200deg, transparent 35%, rgba(6,4,8,0.42) 100%)' }}
+      />
+      {/* No celular a lista ocupa a largura toda e a arte passaria por trás do
+          texto — aqui ela vira fundo mesmo, bem apagada. */}
+      <div className="fixed inset-0 sm:hidden" style={{ background: 'rgba(6,4,8,0.72)' }} />
+
+      <div className="relative min-h-screen flex flex-col">
+        {/* Cabeçalho enxuto: o saguão é passagem, não morada. A marca já está na foto. */}
+        <header className="flex items-center justify-end px-6 py-5">
+          <div className="flex items-center gap-2.5">
+            <div
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-xs font-bold"
+              style={{ background: 'linear-gradient(135deg, var(--wine), var(--gold))' }}
+            >
+              {iniciais}
+            </div>
+            <button
+              onClick={logout}
+              title="Sair"
+              className="w-8 h-8 flex items-center justify-center rounded-lg transition-all hover:bg-white/[0.06]"
               style={{ color: 'var(--text-muted)' }}
             >
-              Gestão
-            </p>
+              <LogOut size={14} />
+            </button>
           </div>
-        </div>
+        </header>
 
-        <div className="flex items-center gap-2.5">
-          <div
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-xs font-bold"
-            style={{ background: 'linear-gradient(135deg, var(--wine), var(--gold))' }}
-          >
-            {iniciais}
-          </div>
-          <button
-            onClick={logout}
-            title="Sair"
-            className="w-8 h-8 flex items-center justify-center rounded-lg transition-all hover:bg-white/[0.06]"
+        <main className="flex-1 flex flex-col justify-center items-end px-6 sm:px-10 lg:px-16 pb-16 max-w-full">
+          <p
+            className="text-right text-[11px] uppercase tracking-[0.18em] font-semibold mb-8"
             style={{ color: 'var(--text-muted)' }}
           >
-            <LogOut size={14} />
-          </button>
-        </div>
-      </header>
+            Onde você vai trabalhar agora?
+          </p>
 
-      <main className="max-w-4xl mx-auto px-6 pb-20 pt-6">
-        <p
-          className="text-center text-[11px] uppercase tracking-[0.18em] font-semibold mb-10"
-          style={{ color: 'var(--text-muted)' }}
-        >
-          Onde você vai trabalhar agora?
-        </p>
-
-        {/* pb compensa o meio passo dos favos ímpares. */}
-        <div className="flex flex-wrap justify-center gap-x-3 gap-y-12 pb-10">
-          {areas.map((area, i) => (
-            <button
-              key={area.id}
-              onClick={() => navigate(area.modulos[0].path)}
-              className="group relative flex flex-col items-center justify-center text-center transition-transform duration-200 hover:scale-[1.05] focus:outline-none"
-              style={{
-                width: 208,
-                height: 182,
-                clipPath: HEXAGONO,
-                background: 'linear-gradient(160deg, rgba(125,31,44,0.36), rgba(125,31,44,0.10))',
-                border: '1px solid rgba(212,175,55,0.15)',
-                // O deslocamento alternado é o que faz colmeia, e não grade:
-                // cada favo ímpar desce meio passo e encaixa na fileira.
-                transform: i % 2 === 1 ? 'translateY(42px)' : undefined,
-              }}
-            >
-              <span
-                className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+          {/* Colmeia — telas sm e maiores. */}
+          <div className="hidden sm:flex flex-col items-center">
+            {fileiras.map((fileira, fi) => (
+              <div
+                key={fi}
+                className="flex justify-center"
                 style={{
-                  clipPath: HEXAGONO,
-                  background: 'linear-gradient(160deg, rgba(125,31,44,0.6), rgba(212,175,55,0.14))',
+                  gap: HEX_GAP,
+                  marginTop: fi === 0 ? 0 : -(HEX_H * 0.26),
+                  marginLeft: fi % 2 === 1 ? (HEX_W + HEX_GAP) / 2 : 0,
                 }}
-              />
-              <area.icone size={26} className="relative mb-2" style={{ color: 'var(--gold)' }} />
-              <span
-                className="relative text-[14px] font-bold leading-tight px-6"
-                style={{ color: 'var(--text-primary)' }}
               >
-                {area.nome}
-              </span>
-              <span
-                className="relative text-[10px] leading-snug px-8 mt-1.5"
-                style={{ color: 'var(--text-secondary)' }}
+                {fileira.map((area) => (
+                  <Hexagono key={area.id} area={area} onClick={() => navigate(area.modulos[0].path)} />
+                ))}
+              </div>
+            ))}
+          </div>
+
+          {/* Lista — mobile. Hexágono espremido em tela estreita vira ruim; aqui é
+              o mesmo cartão em vidro usado no resto do sistema. */}
+          <div className="sm:hidden w-full flex flex-col gap-3">
+            {areas.map((area) => (
+              <button
+                key={area.id}
+                onClick={() => navigate(area.modulos[0].path)}
+                className="glass-card rounded-2xl p-4 flex items-center gap-3.5 text-left group"
               >
-                {area.descricao}
-              </span>
-              <span
-                className="relative text-[9px] uppercase tracking-widest mt-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                style={{ color: 'var(--gold)' }}
-              >
-                Entrar
-              </span>
-            </button>
-          ))}
-        </div>
-      </main>
+                <div className="w-11 h-11 shrink-0 rounded-xl flex items-center justify-center bg-gradient-to-br from-wine/25 to-gold/10 border border-gold/15">
+                  <area.icone className="w-5 h-5" style={{ color: 'var(--gold)' }} strokeWidth={1.75} />
+                </div>
+                <span className="flex-1 min-w-0">
+                  <span className="block text-sm font-display font-bold" style={{ color: 'var(--text-primary)' }}>{area.nome}</span>
+                  <span className="block text-xs mt-0.5" style={{ color: 'var(--text-secondary)' }}>{area.descricao}</span>
+                </span>
+                <ChevronRight className="w-4 h-4 shrink-0" style={{ color: 'var(--text-muted)' }} />
+              </button>
+            ))}
+          </div>
+        </main>
+      </div>
     </div>
   );
 };
