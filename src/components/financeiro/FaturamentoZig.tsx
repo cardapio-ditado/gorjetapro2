@@ -177,7 +177,7 @@ const FaturamentoZig: React.FC = () => {
             <div key={i} style={{ background: c.bg, borderRadius: 12, padding: '12px 14px', border: `1px solid ${S.border}` }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
                 <c.icon style={{ width: 12, height: 12, color: c.color, opacity: 0.7 }} />
-                <p style={{ color: c.color, opacity: 0.7, fontSize: 9.5, margin: 0, textTransform: 'uppercase', letterSpacing: '0.5px' }}>{c.label}</p>
+                <p style={{ color: c.color, opacity: 0.7, fontSize:'var(--fs-caption)', margin: 0, textTransform: 'uppercase', letterSpacing: '0.5px' }}>{c.label}</p>
               </div>
               <p style={{ color: c.color, fontSize: 17, fontWeight: 800, margin: 0, letterSpacing: '-0.5px' }}>{c.value}</p>
             </div>

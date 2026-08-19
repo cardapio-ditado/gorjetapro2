@@ -1539,7 +1539,7 @@ const EscalasTrabalho: React.FC = () => {
 
                             <div className="grid grid-cols-2 sm:grid-cols-6 gap-2 items-end">
                               <div>
-                                <label className="block text-[10px] text-white/40 mb-1">Setor</label>
+                                <label className="block text-caption text-white/40 mb-1">Setor</label>
                                 <select
                                   value={item.setor}
                                   onChange={(e) => atualizarItemLote(item.colaborador_id, { setor: e.target.value })}
@@ -1553,7 +1553,7 @@ const EscalasTrabalho: React.FC = () => {
 
                               {item.setor === 'Cozinha' && (
                                 <div>
-                                  <label className="block text-[10px] text-white/40 mb-1">Posto</label>
+                                  <label className="block text-caption text-white/40 mb-1">Posto</label>
                                   <select
                                     value={item.posto_trabalho_id}
                                     onChange={(e) => atualizarItemLote(item.colaborador_id, { posto_trabalho_id: e.target.value })}
@@ -1580,7 +1580,7 @@ const EscalasTrabalho: React.FC = () => {
                               {!item.eh_folga && (
                                 <>
                                   <div>
-                                    <label className="block text-[10px] text-white/40 mb-1">Início</label>
+                                    <label className="block text-caption text-white/40 mb-1">Início</label>
                                     <input
                                       type="time"
                                       value={item.horario_inicio}
@@ -1589,7 +1589,7 @@ const EscalasTrabalho: React.FC = () => {
                                     />
                                   </div>
                                   <div>
-                                    <label className="block text-[10px] text-white/40 mb-1">Fim</label>
+                                    <label className="block text-caption text-white/40 mb-1">Fim</label>
                                     <input
                                       type="time"
                                       value={item.horario_fim}
@@ -1597,7 +1597,7 @@ const EscalasTrabalho: React.FC = () => {
                                       className="w-full text-xs border border-white/20 rounded-md px-2 py-1.5 bg-white/5 text-white"
                                     />
                                   </div>
-                                  <div className="text-[10px] text-white/40 capitalize pb-1.5">
+                                  <div className="text-caption text-white/40 capitalize pb-1.5">
                                     {item.tipo_turno}
                                   </div>
                                 </>

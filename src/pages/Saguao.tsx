@@ -57,14 +57,14 @@ const Hexagono: React.FC<{
         style={{ background: 'linear-gradient(160deg, rgba(125,31,44,0.65), rgba(212,175,55,0.16))' }}
       />
       <area.icone size={24} className="relative mb-2.5" style={{ color: 'var(--gold)' }} strokeWidth={1.75} />
-      <span className="relative text-[14px] font-display font-bold leading-tight" style={{ color: 'var(--text-primary)' }}>
+      <span className="relative text-body font-display font-bold leading-tight" style={{ color: 'var(--text-primary)' }}>
         {area.nome}
       </span>
-      <span className="relative text-[10.5px] leading-snug mt-1.5" style={{ color: 'var(--text-secondary)' }}>
+      <span className="relative text-caption leading-snug mt-1.5" style={{ color: 'var(--text-secondary)' }}>
         {area.descricao}
       </span>
       <span
-        className="relative text-[9px] uppercase tracking-widest mt-2.5 opacity-0 group-hover:opacity-100 transition-opacity"
+        className="relative text-caption uppercase tracking-widest mt-2.5 opacity-0 group-hover:opacity-100 transition-opacity"
         style={{ color: 'var(--gold)' }}
       >
         Entrar
@@ -142,7 +142,7 @@ const Saguao: React.FC = () => {
 
         <main className="flex-1 flex flex-col justify-center items-end px-6 sm:px-10 lg:px-16 pb-16 max-w-full">
           <p
-            className="text-right text-[11px] uppercase tracking-[0.18em] font-semibold mb-8"
+            className="text-right text-caption uppercase tracking-[0.18em] font-semibold mb-8"
             style={{ color: 'var(--text-secondary)' }}
           >
             Onde você vai trabalhar agora?

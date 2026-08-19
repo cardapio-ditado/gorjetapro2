@@ -556,7 +556,7 @@ const ColaboradoresRH: React.FC = () => {
       {indicadores && (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="kpi-card">
-            <p className="text-[11px] font-semibold uppercase tracking-widest text-text-secondary mb-3">Total Colaboradores</p>
+            <p className="text-caption font-semibold uppercase tracking-widest text-text-secondary mb-3">Total Colaboradores</p>
             <div className="flex items-end justify-between">
               <p className="stat-value">{indicadores.total_colaboradores}</p>
               <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: 'rgba(59,130,246,0.12)' }}>
@@ -567,7 +567,7 @@ const ColaboradoresRH: React.FC = () => {
           </div>
 
           <div className="kpi-card">
-            <p className="text-[11px] font-semibold uppercase tracking-widest text-text-secondary mb-3">Colaboradores Ativos</p>
+            <p className="text-caption font-semibold uppercase tracking-widest text-text-secondary mb-3">Colaboradores Ativos</p>
             <div className="flex items-end justify-between">
               <p className="stat-value">{indicadores.colaboradores_ativos}</p>
               <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: 'rgba(16,185,129,0.12)' }}>
@@ -578,7 +578,7 @@ const ColaboradoresRH: React.FC = () => {
           </div>
 
           <div className="kpi-card">
-            <p className="text-[11px] font-semibold uppercase tracking-widest text-text-secondary mb-3">Salário Médio</p>
+            <p className="text-caption font-semibold uppercase tracking-widest text-text-secondary mb-3">Salário Médio</p>
             <div className="flex items-end justify-between">
               <p className="stat-value text-2xl">{formatCurrency(indicadores.salario_medio)}</p>
               <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: 'rgba(212,175,55,0.12)' }}>
@@ -589,7 +589,7 @@ const ColaboradoresRH: React.FC = () => {
           </div>
 
           <div className="kpi-card">
-            <p className="text-[11px] font-semibold uppercase tracking-widest text-text-secondary mb-3">Com Comissão</p>
+            <p className="text-caption font-semibold uppercase tracking-widest text-text-secondary mb-3">Com Comissão</p>
             <div className="flex items-end justify-between">
               <p className="stat-value">{indicadores.colaboradores_com_comissao}</p>
               <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: 'rgba(245,158,11,0.12)' }}>

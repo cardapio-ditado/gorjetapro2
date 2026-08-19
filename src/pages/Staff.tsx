@@ -270,7 +270,7 @@ const Staff: React.FC = () => {
                   <Tab
                     key={title}
                     className={({ selected }) =>
-                      `flex items-center whitespace-nowrap px-3 py-2.5 text-[12px] font-medium transition-all duration-150 focus:outline-none border-b-2 select-none ${
+                      `flex items-center whitespace-nowrap px-3 py-2.5 text-label font-medium transition-all duration-150 focus:outline-none border-b-2 select-none ${
                         selected
                           ? 'border-wine text-white'
                           : 'border-transparent text-white/50 hover:text-white hover:bg-white/[0.05]'

@@ -70,7 +70,7 @@ const AnexoFoto: React.FC<{ anexo: any; onDownload: (a: any) => void; onDelete: 
           </div>
         </div>
         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent px-1.5 py-1 opacity-0 group-hover:opacity-100 transition-all">
-          <p className="text-[9px] text-white/80 truncate">{anexo.nome_arquivo}</p>
+          <p className="text-caption text-white/80 truncate">{anexo.nome_arquivo}</p>
         </div>
       </div>
 

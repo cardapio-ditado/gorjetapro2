@@ -64,7 +64,7 @@ export const DataTable = <T extends Record<string, any>>({
             {columns.map((column) => (
               <th
                 key={column.key}
-                className={`px-4 py-3 text-white font-sans text-[11px] font-semibold uppercase tracking-wider ${getAlignment(column.align)}`}
+                className={`px-4 py-3 text-white font-sans text-caption font-semibold uppercase tracking-wider ${getAlignment(column.align)}`}
                 style={{ width: column.width }}
               >
                 {column.label}

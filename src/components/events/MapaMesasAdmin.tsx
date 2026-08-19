@@ -525,13 +525,13 @@ export default function MapaMesasAdmin() {
                   {g.mesas.length === 1 ? (
                     <div className="w-12 h-12 rounded-xl flex flex-col items-center justify-center text-white font-bold"
                       style={{ background: 'linear-gradient(135deg,#7D1F2C,#5a1520)' }}>
-                      <span className="text-[9px] leading-none opacity-60">mesa</span>
+                      <span className="text-caption leading-none opacity-60">mesa</span>
                       <span className="text-base leading-none">{g.mesas[0].numero}</span>
                     </div>
                   ) : (
                     <div className="flex flex-wrap gap-1 max-w-[52px]">
                       {g.mesas.map(m => (
-                        <div key={m.numero} className="w-5 h-5 rounded flex items-center justify-center text-white font-bold text-[9px]"
+                        <div key={m.numero} className="w-5 h-5 rounded flex items-center justify-center text-white font-bold text-caption"
                           style={{ background: 'linear-gradient(135deg,#7D1F2C,#5a1520)' }}>
                           {m.numero}
                         </div>
@@ -542,9 +542,9 @@ export default function MapaMesasAdmin() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <p className="font-semibold text-white/90">{g.nome_cliente}</p>
-                    <span className={`text-[10px] px-2 py-0.5 rounded-full border ${STATUS_COLOR[g.status] || 'bg-white/10 text-white/40 border-white/10'}`}>{g.status}</span>
+                    <span className={`text-caption px-2 py-0.5 rounded-full border ${STATUS_COLOR[g.status] || 'bg-white/10 text-white/40 border-white/10'}`}>{g.status}</span>
                     {g.mesas.length > 1 && (
-                      <span className="text-[10px] px-2 py-0.5 rounded-full border bg-amber-500/10 text-amber-400 border-amber-500/30">
+                      <span className="text-caption px-2 py-0.5 rounded-full border bg-amber-500/10 text-amber-400 border-amber-500/30">
                         {g.mesas.length} mesas
                       </span>
                     )}
@@ -552,11 +552,11 @@ export default function MapaMesasAdmin() {
                   {/* Números das mesas em linha */}
                   <div className="flex items-center gap-1.5 mt-1 flex-wrap">
                     {g.mesas.map(m => (
-                      <span key={m.numero} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold text-white/70 border border-white/10 bg-white/5">
+                      <span key={m.numero} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-caption font-semibold text-white/70 border border-white/10 bg-white/5">
                         {m.nome}
                       </span>
                     ))}
-                    <span className="text-[10px] text-white/30">· {g.horario} · {g.numero_pessoas} pax</span>
+                    <span className="text-caption text-white/30">· {g.horario} · {g.numero_pessoas} pax</span>
                   </div>
                 </div>
                 {g.telefone && (
@@ -669,7 +669,7 @@ export default function MapaMesasAdmin() {
                 </div>
                 <div>
                   <p className="font-bold text-white">{reservaSelecionada.nome_cliente}</p>
-                  <span className={`text-[10px] px-2 py-0.5 rounded-full border ${STATUS_COLOR[reservaSelecionada.status] || ''}`}>{reservaSelecionada.status}</span>
+                  <span className={`text-caption px-2 py-0.5 rounded-full border ${STATUS_COLOR[reservaSelecionada.status] || ''}`}>{reservaSelecionada.status}</span>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3 text-xs">

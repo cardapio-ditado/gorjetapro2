@@ -158,7 +158,7 @@ export default function ContagemMobile() {
               <div className="w-6 h-6 rounded-lg bg-wine/20 flex items-center justify-center shrink-0">
                 <ClipboardList className="w-3.5 h-3.5 text-wine" />
               </div>
-              <span className="text-[11px] text-white/40 uppercase tracking-wider font-semibold">Contagem de Estoque</span>
+              <span className="text-caption text-white/40 uppercase tracking-wider font-semibold">Contagem de Estoque</span>
             </div>
             <h1 className="text-lg font-bold text-white truncate">{contagem?.estoque_nome}</h1>
             <p className="text-xs text-white/40 mt-0.5">
@@ -167,7 +167,7 @@ export default function ContagemMobile() {
           </div>
           <div className="shrink-0 text-right">
             <p className="text-2xl font-bold text-white tabular-nums">{stats.contados}</p>
-            <p className="text-[11px] text-white/40">de {stats.total}</p>
+            <p className="text-caption text-white/40">de {stats.total}</p>
           </div>
         </div>
 
@@ -257,10 +257,10 @@ export default function ContagemMobile() {
                   <p className="font-semibold text-white text-sm leading-tight">{item.item_nome}</p>
                   <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                     {item.item_codigo && (
-                      <span className="text-[11px] text-white/30">{item.item_codigo}</span>
+                      <span className="text-caption text-white/30">{item.item_codigo}</span>
                     )}
                     {grupo && (
-                      <span className={`text-[10px] px-1.5 py-0.5 rounded-full border ${COR_BADGE[grupo.cor]}`}>
+                      <span className={`text-caption px-1.5 py-0.5 rounded-full border ${COR_BADGE[grupo.cor]}`}>
                         {grupo.emoji} {grupo.label}
                       </span>
                     )}
@@ -287,18 +287,18 @@ export default function ContagemMobile() {
                 <div className="flex items-center gap-3">
                   {/* Sistema */}
                   <div className="flex-1 bg-white/5 rounded-xl px-3 py-2 text-center">
-                    <p className="text-[10px] text-white/40 uppercase font-medium">Sistema</p>
+                    <p className="text-caption text-white/40 uppercase font-medium">Sistema</p>
                     <p className={`text-lg font-bold tabular-nums leading-tight ${
                       item.quantidade_sistema === 0 ? 'text-orange-400' : 'text-white/70'
                     }`}>
                       {item.quantidade_sistema}
                     </p>
-                    <p className="text-[10px] text-white/30">{item.unidade_medida}</p>
+                    <p className="text-caption text-white/30">{item.unidade_medida}</p>
                   </div>
 
                   {/* Input contado */}
                   <div className="flex-1">
-                    <p className="text-[10px] text-white/40 uppercase font-medium text-center mb-1">Contado</p>
+                    <p className="text-caption text-white/40 uppercase font-medium text-center mb-1">Contado</p>
                     <input
                       type="number"
                       inputMode="decimal"
@@ -321,7 +321,7 @@ export default function ContagemMobile() {
                   {/* Diferença */}
                   {isContado && dif !== null && (
                     <div className="w-20 text-center">
-                      <p className="text-[10px] text-white/40 uppercase font-medium mb-1">Dif.</p>
+                      <p className="text-caption text-white/40 uppercase font-medium mb-1">Dif.</p>
                       <div className={`rounded-xl px-2 py-2 ${
                         dif > 0 ? 'bg-green-500/15' : dif < 0 ? 'bg-red-500/15' : 'bg-white/10'
                       }`}>
@@ -334,7 +334,7 @@ export default function ContagemMobile() {
                           {dif > 0 ? '+' : ''}{dif.toFixed(2)}
                         </p>
                         {item.valor_diferenca !== null && item.valor_diferenca !== 0 && (
-                          <p className={`text-[10px] font-medium ${dif > 0 ? 'text-green-400' : 'text-red-400'}`}>
+                          <p className={`text-caption font-medium ${dif > 0 ? 'text-green-400' : 'text-red-400'}`}>
                             {item.valor_diferenca > 0 ? '+' : ''}{formatCurrency(item.valor_diferenca)}
                           </p>
                         )}

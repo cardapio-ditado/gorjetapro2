@@ -240,7 +240,7 @@ const OcorrenciaCard: React.FC<OcorrenciaCardProps> = ({ ocorrencia: o, onUpdate
         </div>
         <div className="flex items-center gap-1 flex-shrink-0">
           {o.gerado_por_ia && (
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-400 border border-amber-500/25 font-medium">IA</span>
+            <span className="text-caption px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-400 border border-amber-500/25 font-medium">IA</span>
           )}
           <button onClick={() => setEditing(!editing)} className="p-1.5 text-white/30 hover:text-white rounded-lg hover:bg-white/5 transition-colors">
             <Edit2 size={12} />
@@ -789,7 +789,7 @@ const HistoricoOcorrencias: React.FC = () => {
                   <Chip className={getSetorColor(o.setor)}>{getSetorLabel(o.setor)}</Chip>
                   <Chip className={getGravColor(o.gravidade)}>{GRAVIDADES.find(g => g.value === o.gravidade)?.label}</Chip>
                   <Chip className={getStatusColor(o.status)}>{STATUS_OPTIONS.find(s => s.value === o.status)?.label}</Chip>
-                  {o.gerado_por_ia && <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-400 border border-amber-500/25">IA</span>}
+                  {o.gerado_por_ia && <span className="text-caption px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-400 border border-amber-500/25">IA</span>}
                 </div>
                 <p className="text-white text-sm font-medium truncate">{o.titulo}</p>
                 {o.descricao && <p className="text-white/40 text-xs truncate mt-0.5">{o.descricao}</p>}

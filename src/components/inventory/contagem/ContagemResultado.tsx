@@ -224,11 +224,11 @@ const ContagemResultado: React.FC<Props> = ({ contagemId, onVoltar, onReconferir
         ].map(k => (
           <div key={k.label} className="bg-[#12141f] rounded-xl border border-white/5 shadow-sm p-4">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-[11px] font-medium text-white/40 uppercase">{k.label}</span>
+              <span className="text-caption font-medium text-white/40 uppercase">{k.label}</span>
               <span className={k.color === 'red' ? 'text-red-400' : k.color === 'green' ? 'text-green-400' : k.color === 'orange' ? 'text-orange-400' : 'text-blue-400'}>{k.icon}</span>
             </div>
             <p className={`text-lg font-bold ${k.color === 'red' ? 'text-red-400' : k.color === 'green' ? 'text-green-400' : k.color === 'orange' ? 'text-orange-400' : 'text-white'}`}>{k.value}</p>
-            {k.sub && <p className="text-[10px] text-white/30 mt-0.5">{k.sub}</p>}
+            {k.sub && <p className="text-caption text-white/30 mt-0.5">{k.sub}</p>}
           </div>
         ))}
       </div>
@@ -257,7 +257,7 @@ const ContagemResultado: React.FC<Props> = ({ contagemId, onVoltar, onReconferir
             <thead className="bg-white/5 border-b border-white/10">
               <tr>
                 {['Item', 'Sistema', 'Contado', 'Diferença', 'Val. Unit.', 'Val. Dif.', 'Obs.'].map(h => (
-                  <th key={h} className="px-4 py-2.5 text-left text-[11px] font-semibold text-white/40 uppercase">{h}</th>
+                  <th key={h} className="px-4 py-2.5 text-left text-caption font-semibold text-white/40 uppercase">{h}</th>
                 ))}
               </tr>
             </thead>
@@ -266,7 +266,7 @@ const ContagemResultado: React.FC<Props> = ({ contagemId, onVoltar, onReconferir
                 <tr key={item.id} className="hover:bg-white/5 transition-colors">
                   <td className="px-4 py-2.5">
                     <div className="font-medium text-white text-sm">{item.item_nome}</div>
-                    <div className="text-[11px] text-white/30">{item.item_codigo}</div>
+                    <div className="text-caption text-white/30">{item.item_codigo}</div>
                   </td>
                   <td className="px-4 py-2.5 text-sm text-white/80 tabular-nums">{item.quantidade_sistema} {item.unidade_medida}</td>
                   <td className="px-4 py-2.5 text-sm font-semibold text-white tabular-nums">{item.quantidade_contada} {item.unidade_medida}</td>

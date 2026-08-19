@@ -27,7 +27,7 @@ const statusColors: Record<string, string> = {
   a_pagar:    "bg-blue-500/15 text-blue-400 border-blue-500/30",
 };
 const StatusBadge = ({ status }: { status: string }) => (
-  <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold border ${statusColors[status] ?? "bg-white/10 text-white/60 border-white/20"}`}>
+  <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-caption font-semibold border ${statusColors[status] ?? "bg-white/10 text-white/60 border-white/20"}`}>
     {status.replace(/_/g, " ")}
   </span>
 );
@@ -89,7 +89,7 @@ const TableWrapper = ({ children }: { children: React.ReactNode }) => (
 );
 
 const Th = ({ children, right }: { children: React.ReactNode; right?: boolean }) => (
-  <th className={`px-4 py-3 text-[11px] font-bold uppercase tracking-wide text-white/60 bg-white/5 border-b border-white/10 ${right ? "text-right" : "text-left"}`}>
+  <th className={`px-4 py-3 text-caption font-bold uppercase tracking-wide text-white/60 bg-white/5 border-b border-white/10 ${right ? "text-right" : "text-left"}`}>
     {children}
   </th>
 );

@@ -923,7 +923,7 @@ export default function PerfilDISC() {
                                 <div className="w-8 h-8 flex items-end justify-center bg-black/30 rounded overflow-hidden">
                                   <div className={`${dc.bg} w-full`} style={{ height: `${val}%` }} />
                                 </div>
-                                <p className={`text-[10px] ${dc.cor} mt-0.5`}>{val}%</p>
+                                <p className={`text-caption ${dc.cor} mt-0.5`}>{val}%</p>
                               </div>
                             );
                           })}
@@ -1103,7 +1103,7 @@ export default function PerfilDISC() {
                               <div className="w-10 h-10 flex items-end justify-center bg-white/5 rounded-lg overflow-hidden">
                                 <div className={`${kc.bg} w-full`} style={{ height: `${val}%` }} />
                               </div>
-                              <p className={`text-[10px] ${kc.cor} mt-0.5 font-semibold`}>{val}%</p>
+                              <p className={`text-caption ${kc.cor} mt-0.5 font-semibold`}>{val}%</p>
                             </div>
                           );
                         })}

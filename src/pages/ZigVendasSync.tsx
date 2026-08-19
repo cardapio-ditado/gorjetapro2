@@ -599,7 +599,7 @@ function AbaRevisao({
                     <p className="font-semibold text-white text-sm">{prod.productName}</p>
                     <p className="text-xs text-white/30 flex items-center gap-2 flex-wrap">
                       {prod.expandido_de && (
-                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-purple-500/15 text-purple-400 rounded-md text-[10px] font-semibold">
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-purple-500/15 text-purple-400 rounded-md text-caption font-semibold">
                           🧩 de: {prod.expandido_de}
                         </span>
                       )}
@@ -1009,7 +1009,7 @@ export default function ZigVendasSync() {
                                   ].map(s=>(
                                     <div key={s.label} className="bg-white/5 rounded-xl p-2">
                                       <p className={`text-lg font-bold ${s.color}`}>{s.val}</p>
-                                      <p className="text-[10px] text-white/30 leading-tight">{s.label}</p>
+                                      <p className="text-caption text-white/30 leading-tight">{s.label}</p>
                                     </div>
                                   ))}
                                 </div>

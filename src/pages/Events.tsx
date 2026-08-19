@@ -657,13 +657,13 @@ const Events: React.FC = () => {
                     <div className="space-y-0.5">
                       {dayEvents.slice(0, 3).map((ev, idx) => (
                         <div key={idx} title={`${ev._label}${ev._hora ? ' — ' + ev._hora : ''}`}
-                          className={`rounded px-1 py-0.5 text-[10px] font-medium border truncate cursor-default leading-tight ${typeStyle(ev._type, ev.status_pagamento)}`}>
+                          className={`rounded px-1 py-0.5 text-caption font-medium border truncate cursor-default leading-tight ${typeStyle(ev._type, ev.status_pagamento)}`}>
                           <span className="mr-0.5">{typeIcon(ev._type)}</span>
                           {ev._label}
                         </div>
                       ))}
                       {dayEvents.length > 3 && (
-                        <div className="text-[10px] text-white/30 text-center">
+                        <div className="text-caption text-white/30 text-center">
                           +{dayEvents.length - 3} mais
                         </div>
                       )}

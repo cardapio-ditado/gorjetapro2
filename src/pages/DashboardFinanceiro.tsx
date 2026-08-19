@@ -92,7 +92,7 @@ function KPICard({
       'border-white/5'
     }`}>
       <div className="flex items-start justify-between mb-3">
-        <p className="text-[11px] font-bold text-white/30 uppercase tracking-widest">{titulo}</p>
+        <p className="text-caption font-bold text-white/30 uppercase tracking-widest">{titulo}</p>
         <div className={`p-2 rounded-xl ${
           alerta === 'danger'  ? 'bg-red-100'     :
           alerta === 'warning' ? 'bg-amber-100'   :
@@ -114,14 +114,14 @@ function KPICard({
 
       <div className="flex items-center justify-between mt-2 gap-2">
         {variacao !== null && variacao !== undefined ? (
-          <span className={`flex items-center gap-0.5 text-[11px] font-semibold ${
+          <span className={`flex items-center gap-0.5 text-caption font-semibold ${
             variacao > 0 ? 'text-emerald-600' : variacao < 0 ? 'text-red-500' : 'text-white/30'
           }`}>
             {variacao > 0 ? <ArrowUp className="w-3 h-3" /> : variacao < 0 ? <ArrowDown className="w-3 h-3" /> : <Minus className="w-3 h-3" />}
             {Math.abs(variacao).toFixed(1)}% vs mês ant.
           </span>
         ) : <span />}
-        {sub && <p className="text-[10px] text-white/30 font-medium">{sub}</p>}
+        {sub && <p className="text-caption text-white/30 font-medium">{sub}</p>}
       </div>
     </div>
   );
@@ -398,15 +398,15 @@ export default function DashboardFinanceiro() {
                       <div className={`w-2 h-2 rounded-full shrink-0 ${uc.dot}`} />
                       <div className="flex-1 min-w-0">
                         <p className="text-xs font-semibold text-white/90 truncate">{c.descricao}</p>
-                        <p className="text-[10px] text-white/30">{c.categoria}</p>
+                        <p className="text-caption text-white/30">{c.categoria}</p>
                       </div>
                       <div className="text-right shrink-0">
                         <p className="text-sm font-bold text-white">{Rfull(c.saldo_restante)}</p>
-                        <p className="text-[10px] text-white/30">
+                        <p className="text-caption text-white/30">
                           {new Date(c.data_vencimento + 'T12:00:00').toLocaleDateString('pt-BR')}
                         </p>
                       </div>
-                      <span className={`text-[9px] font-bold border rounded-full px-2 py-0.5 shrink-0 ${uc.badge}`}>
+                      <span className={`text-caption font-bold border rounded-full px-2 py-0.5 shrink-0 ${uc.badge}`}>
                         {uc.label}
                       </span>
                     </div>
@@ -452,7 +452,7 @@ export default function DashboardFinanceiro() {
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                 <XAxis dataKey="mes" tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 10, fill: '#9ca3af' }} axisLine={false} tickLine={false}
+                <YAxis tick={{ fontSize:'var(--fs-caption)', fill: '#9ca3af' }} axisLine={false} tickLine={false}
                   tickFormatter={v => `R$${(v/1000).toFixed(0)}k`} />
                 <Tooltip
                   formatter={(v: number, name: string) => [Rfull(v), name]}
@@ -474,10 +474,10 @@ export default function DashboardFinanceiro() {
             <p className="text-xs text-white/30 mt-0.5">Mês atual vs mês anterior · {categorias.length} categorias</p>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-[10px] text-white/30 font-medium">Ordenar:</span>
+            <span className="text-caption text-white/30 font-medium">Ordenar:</span>
             <button
               onClick={() => setSortCat(s => s === 'valor' ? 'nome' : 'valor')}
-              className="text-[10px] font-semibold text-wine hover:underline"
+              className="text-caption font-semibold text-wine hover:underline"
             >
               {sortCat === 'valor' ? 'Por valor' : 'A–Z'}
             </button>
@@ -488,11 +488,11 @@ export default function DashboardFinanceiro() {
         <div className="flex items-center gap-4 px-5 py-2 bg-[#12141f]/5 border-b border-white/5">
           <div className="flex items-center gap-1.5">
             <div className="w-3 h-3 rounded-sm bg-wine" />
-            <span className="text-[10px] font-semibold text-white/60">Mês atual</span>
+            <span className="text-caption font-semibold text-white/60">Mês atual</span>
           </div>
           <div className="flex items-center gap-1.5">
             <div className="w-3 h-3 rounded-sm bg-white/10" />
-            <span className="text-[10px] font-semibold text-white/30">Mês anterior</span>
+            <span className="text-caption font-semibold text-white/30">Mês anterior</span>
           </div>
         </div>
 
@@ -514,7 +514,7 @@ export default function DashboardFinanceiro() {
                       <span className="text-xs font-semibold text-white/80">{c.categoria}</span>
                       <div className="flex items-center gap-3 shrink-0 ml-4">
                         {varPct !== null && (
-                          <span className={`text-[10px] font-bold flex items-center gap-0.5 ${
+                          <span className={`text-caption font-bold flex items-center gap-0.5 ${
                             varPct > 10 ? 'text-red-500' : varPct < -10 ? 'text-emerald-600' : 'text-white/30'
                           }`}>
                             {varPct > 0 ? <ArrowUp className="w-2.5 h-2.5" /> : varPct < 0 ? <ArrowDown className="w-2.5 h-2.5" /> : <Minus className="w-2.5 h-2.5" />}
@@ -540,7 +540,7 @@ export default function DashboardFinanceiro() {
                       )}
                     </div>
                     {c.mes_anterior > 0 && (
-                      <p className="text-[9px] text-white/30 mt-1">
+                      <p className="text-caption text-white/30 mt-1">
                         Mês ant.: {R(c.mes_anterior)}
                       </p>
                     )}

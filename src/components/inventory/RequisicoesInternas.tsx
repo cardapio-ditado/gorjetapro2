@@ -439,7 +439,7 @@ export default function RequisicoesInternas() {
                     <td className="px-4 py-3 text-sm font-semibold text-white whitespace-nowrap">
                       {req.numero_requisicao}
                       {req.criado_anonimamente && (
-                        <span className="ml-2 px-1.5 py-0.5 bg-blue-500/15 text-blue-300 text-[10px] rounded-full">Público</span>
+                        <span className="ml-2 px-1.5 py-0.5 bg-blue-500/15 text-blue-300 text-caption rounded-full">Público</span>
                       )}
                     </td>
                     <td className="px-4 py-3 text-sm text-white/50 whitespace-nowrap">
@@ -648,7 +648,7 @@ export default function RequisicoesInternas() {
                       placeholder="Qtd"
                       className="w-full bg-white/5 border border-white/20 text-white rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-wine/30" />
                     {itemAtualSaldo && itemAtualSaldo.saldo !== null && (
-                      <p className={`text-[11px] mt-1 ${(itemAtualSaldo.saldo ?? 0) < 0 ? 'text-red-400' : 'text-white/40'}`}>
+                      <p className={`text-caption mt-1 ${(itemAtualSaldo.saldo ?? 0) < 0 ? 'text-red-400' : 'text-white/40'}`}>
                         Saldo: {fmtQtd(itemAtualSaldo.saldo)} {itemAtualSaldo.unidade_medida}
                       </p>
                     )}

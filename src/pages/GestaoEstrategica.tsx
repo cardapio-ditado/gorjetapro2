@@ -101,7 +101,7 @@ export default function GestaoEstrategica() {
 
         <div className="relative flex items-start justify-between gap-4 flex-wrap">
           <div>
-            <p className="text-gold text-[10px] font-black uppercase tracking-[0.3em] mb-2">Ditado Popular</p>
+            <p className="text-gold text-caption font-black uppercase tracking-[0.3em] mb-2">Ditado Popular</p>
             <h1 className="text-3xl font-black text-white tracking-tight">OKRs Estratégicos</h1>
             <p className="text-white/50 text-sm mt-1">Objetivos e resultados-chave por trimestre</p>
           </div>
@@ -119,7 +119,7 @@ export default function GestaoEstrategica() {
               const n = okrs.filter(o=>(OKR_ST[o.status]?st===OKR_ST[o.status]:key==='on-track')).length;
               if (n===0) return null;
               return (
-                <span key={key} className={`text-[10px] font-bold px-3 py-1 rounded-full border border-white/15 ${st.bg} ${st.txt}`}>
+                <span key={key} className={`text-caption font-bold px-3 py-1 rounded-full border border-white/15 ${st.bg} ${st.txt}`}>
                   {n} {st.lbl}
                 </span>
               );
@@ -201,7 +201,7 @@ export default function GestaoEstrategica() {
                     {/* Ring */}
                     <div className="relative shrink-0 cursor-default">
                       <Ring p={okr.progresso} color={st.clr}/>
-                      <span className="absolute inset-0 flex items-center justify-center text-[9px] font-black text-white/80 rotate-90">
+                      <span className="absolute inset-0 flex items-center justify-center text-caption font-black text-white/80 rotate-90">
                         {okr.progresso.toFixed(0)}%
                       </span>
                     </div>
@@ -217,10 +217,10 @@ export default function GestaoEstrategica() {
                         </button>
                       </div>
                       <div className="flex items-center gap-2 mt-2 flex-wrap">
-                        <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${st.bg} ${st.txt}`}>{st.lbl}</span>
-                        <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-white/10 text-white/60">{okr.trimestre}</span>
-                        {okr.responsavel&&<span className="text-[9px] text-white/30">{okr.responsavel}</span>}
-                        <span className="text-[9px] text-white/30">{okr.totalKrs} KR{okr.totalKrs!==1?'s':''}</span>
+                        <span className={`text-caption font-bold px-2 py-0.5 rounded-full ${st.bg} ${st.txt}`}>{st.lbl}</span>
+                        <span className="text-caption font-bold px-2 py-0.5 rounded-full bg-white/10 text-white/60">{okr.trimestre}</span>
+                        {okr.responsavel&&<span className="text-caption text-white/30">{okr.responsavel}</span>}
+                        <span className="text-caption text-white/30">{okr.totalKrs} KR{okr.totalKrs!==1?'s':''}</span>
                       </div>
                     </div>
                   </div>

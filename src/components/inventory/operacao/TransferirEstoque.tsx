@@ -220,7 +220,7 @@ export default function TransferirEstoque({ onVoltar }: Props) {
                 ${passo === n ? 'bg-gold text-black' : passo > n ? 'bg-green-500/30 text-green-400 border border-green-500/40' : 'bg-white/5 text-white/30 border border-white/10'}`}>
                 {passo > n ? <Check className="w-4 h-4" /> : n}
               </div>
-              <span className={`text-[9px] font-semibold uppercase tracking-wide hidden sm:block ${passo === n ? 'text-white/60' : 'text-white/20'}`}>{label}</span>
+              <span className={`text-caption font-semibold uppercase tracking-wide hidden sm:block ${passo === n ? 'text-white/60' : 'text-white/20'}`}>{label}</span>
             </div>
             {n < 4 && <div className={`flex-1 h-px mb-4 ${passo > n ? 'bg-green-500/40' : 'bg-white/10'}`} />}
           </React.Fragment>

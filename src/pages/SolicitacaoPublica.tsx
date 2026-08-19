@@ -354,7 +354,7 @@ export default function SolicitacaoPublica() {
                         <X className="w-3 h-3" />
                       </button>
                       <div className="absolute bottom-0 left-0 right-0 bg-black/50 rounded-b-lg px-1 py-0.5">
-                        <p className="text-[9px] text-white/60 truncate">{foto.file.name}</p>
+                        <p className="text-caption text-white/60 truncate">{foto.file.name}</p>
                       </div>
                     </div>
                   ))}
@@ -368,7 +368,7 @@ export default function SolicitacaoPublica() {
                         onChange={handleFotoSelect}
                       />
                       <ImageIcon className="w-5 h-5 text-white/20" />
-                      <span className="text-[9px] text-white/25 mt-1">Mais</span>
+                      <span className="text-caption text-white/25 mt-1">Mais</span>
                     </label>
                   )}
                 </div>

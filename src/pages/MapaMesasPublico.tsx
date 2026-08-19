@@ -491,7 +491,7 @@ export default function MapaMesasPublico() {
                   <span className="text-white font-bold leading-none" style={{ fontSize: 'clamp(5px, 1.0vw, 10px)', transform: rot === 90 ? 'rotate(-90deg)' : undefined }}>{mesa.numero}</span>
                   <span className="text-white/50 leading-none" style={{ fontSize: 'clamp(4px, 0.8vw, 8px)', transform: rot === 90 ? 'rotate(-90deg)' : undefined }}>{mesa.capacidade}p</span>
                 </div>
-                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-0.5 rounded-lg bg-black/90 text-white text-[9px] whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20 border border-white/10">
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-0.5 rounded-lg bg-black/90 text-white text-caption whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20 border border-white/10">
                   {mesa.nome} · {mesa.capacidade}p · {disponivel ? (isSelected ? 'Selecionada' : 'Disponível') : 'Reservada'}
                 </div>
               </button>

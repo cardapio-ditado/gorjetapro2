@@ -203,7 +203,7 @@ export default function OperacaoHome({ onAcao }: Props) {
               return (
                 <div key={m.id} className="px-5 py-3">
                   <div className="flex items-center gap-3">
-                    <span className={`text-[11px] font-bold px-2 py-0.5 rounded-lg shrink-0 ${bgCor} ${textCor}`}>
+                    <span className={`text-caption font-bold px-2 py-0.5 rounded-lg shrink-0 ${bgCor} ${textCor}`}>
                       {TIPO_LABEL[m.tipo_movimentacao] || m.tipo_movimentacao}
                     </span>
                     <div className="flex-1 min-w-0">
@@ -215,11 +215,11 @@ export default function OperacaoHome({ onAcao }: Props) {
                         {m.tipo_movimentacao === 'transferencia' ? '↔' : m.tipo_movimentacao === 'entrada' ? '+' : '−'}
                         {Number(m.quantidade).toLocaleString('pt-BR', { maximumFractionDigits: 3 })}
                       </p>
-                      <p className="text-[10px] text-white/25">{fmtHora(m.criado_em)}</p>
+                      <p className="text-caption text-white/25">{fmtHora(m.criado_em)}</p>
                     </div>
                   </div>
                   {req && (
-                    <p className="text-[11px] text-blue-400/60 mt-1 ml-[52px] truncate">
+                    <p className="text-caption text-blue-400/60 mt-1 ml-[52px] truncate">
                       Req. por {req.funcionario_nome} · {req.setor}
                     </p>
                   )}

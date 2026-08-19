@@ -85,10 +85,10 @@ function RadarRow({
       className="w-full flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-white/[0.06] transition-colors text-left">
       <span className={`w-2 h-2 rounded-full shrink-0 ${cor}`} />
       <Icon className="w-4 h-4 text-white/35 shrink-0" />
-      <span className="flex-1 min-w-0 text-[12.5px] font-semibold text-white/80 truncate">{label}</span>
+      <span className="flex-1 min-w-0 text-label font-semibold text-white/80 truncate">{label}</span>
       <span className="text-right shrink-0">
         <span className={`block text-sm font-black ${sev === 'red' ? 'text-red-400' : 'text-white'}`}>{valor}</span>
-        {sub && <span className="block text-[10px] text-white/40">{sub}</span>}
+        {sub && <span className="block text-caption text-white/40">{sub}</span>}
       </span>
     </button>
   );
@@ -139,7 +139,7 @@ function ModalRH({ contas, onClose }: { contas: PainelDono['equipe']['rh_contas'
               <div key={i} className={`px-5 py-3.5 flex items-center gap-3 ${vencido ? 'bg-red-500/5' : ''}`}>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-white truncate">{c.descricao}</p>
-                  <p className="text-[10px] text-white/50 mt-0.5">
+                  <p className="text-caption text-white/50 mt-0.5">
                     {c.categoria} · vence {fmtData(c.vencimento)}
                     {vencido && <span className="text-red-400 ml-1">· {diasAtraso(c.vencimento)}d atraso</span>}
                   </p>
@@ -240,7 +240,7 @@ const Dashboard: React.FC = () => {
       {/* ── SAUDAÇÃO SLIM ─────────────────────────────────────────────── */}
       <div className="flex items-end justify-between flex-wrap gap-3">
         <div>
-          <p className="text-gold text-[10px] font-black uppercase tracking-[0.3em] mb-1">Ditado Popular</p>
+          <p className="text-gold text-caption font-black uppercase tracking-[0.3em] mb-1">Ditado Popular</p>
           <h1 className="text-2xl font-black text-white leading-none">{saudacao()}, {primeiroNome}</h1>
           <p className="text-white/40 text-xs mt-1 capitalize">{dataLonga}</p>
         </div>
@@ -263,11 +263,11 @@ const Dashboard: React.FC = () => {
           {vendas ? (
             <>
               <div className="relative flex items-start justify-between flex-wrap gap-2">
-                <p className="text-white/75 text-[11px] font-bold uppercase tracking-[0.2em]">
+                <p className="text-white/75 text-caption font-bold uppercase tracking-[0.2em]">
                   Vendas da noite · {fmtData(vendas.data)}
                 </p>
                 {variacaoVendas !== null && (
-                  <span className={`text-[11px] font-black px-2.5 py-1 rounded-lg ${
+                  <span className={`text-caption font-black px-2.5 py-1 rounded-lg ${
                     variacaoVendas >= 0 ? 'bg-emerald-500/25 text-emerald-300' : 'bg-red-500/25 text-red-300'
                   }`}>
                     {variacaoVendas >= 0 ? '▲ +' : '▼ '}{variacaoVendas.toFixed(0)}% vs {fmtData(vendas.anterior!.data)}
@@ -300,7 +300,7 @@ const Dashboard: React.FC = () => {
                   { label: 'No mês',    valor: fmtR(Number(vendas.mes)) },
                 ].map(k => (
                   <div key={k.label} className="bg-black/25 border border-white/10 rounded-xl px-3 py-2.5">
-                    <p className="text-white/75 text-[9px] font-bold uppercase tracking-wider">{k.label}</p>
+                    <p className="text-white/75 text-caption font-bold uppercase tracking-wider">{k.label}</p>
                     <p className="text-white font-black text-base mt-0.5">{k.valor}</p>
                   </div>
                 ))}
@@ -344,7 +344,7 @@ const Dashboard: React.FC = () => {
 
         {/* CAIXA DO MÊS */}
         <div className="col-span-12 sm:col-span-6 lg:col-span-4 glass-card rounded-3xl p-5">
-          <p className="text-[10px] font-bold text-white/55 uppercase tracking-widest mb-3">Caixa do mês</p>
+          <p className="text-caption font-bold text-white/55 uppercase tracking-widest mb-3">Caixa do mês</p>
           <div className="space-y-1.5">
             <div className="flex justify-between items-baseline">
               <span className="text-xs text-white/50">Entradas</span>
@@ -367,12 +367,12 @@ const Dashboard: React.FC = () => {
               </div>
             ))}
           </div>
-          <p className="text-[9px] text-white/35 mt-1">últimos 14 dias · sem transferências</p>
+          <p className="text-caption text-white/35 mt-1">últimos 14 dias · sem transferências</p>
         </div>
 
         {/* CMV + ESTOQUE */}
         <div className="col-span-12 sm:col-span-6 lg:col-span-4 glass-card rounded-3xl p-5">
-          <p className="text-[10px] font-bold text-white/55 uppercase tracking-widest mb-3">CMV do mês</p>
+          <p className="text-caption font-bold text-white/55 uppercase tracking-widest mb-3">CMV do mês</p>
           <p className="text-3xl font-black text-white leading-none">{fmtR(Number(cmv.cmv))}</p>
           {cmv.cmv_percentual !== null ? (
             <p className={`text-xs mt-2 font-semibold ${Number(cmv.cmv_percentual) > 35 ? 'text-yellow-400' : 'text-emerald-400'}`}>
@@ -397,7 +397,7 @@ const Dashboard: React.FC = () => {
 
         {/* EQUIPE */}
         <div className="col-span-12 lg:col-span-4 glass-card rounded-3xl p-5 flex flex-col">
-          <p className="text-[10px] font-bold text-white/55 uppercase tracking-widest mb-3">Equipe</p>
+          <p className="text-caption font-bold text-white/55 uppercase tracking-widest mb-3">Equipe</p>
           <div className="flex flex-wrap gap-2">
             {[
               { icon: UserCheck, label: 'Ativos',    value: equipe.colaboradores.ativos,    color: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30' },
@@ -413,10 +413,10 @@ const Dashboard: React.FC = () => {
           <button onClick={() => setShowModalRH(true)}
             className="mt-auto pt-4 flex items-center justify-between text-left group">
             <div>
-              <p className="text-[10px] font-bold text-white/45 uppercase tracking-wider">Custo RH em aberto</p>
+              <p className="text-caption font-bold text-white/45 uppercase tracking-wider">Custo RH em aberto</p>
               <p className="text-xl font-black text-white mt-0.5">{fmtR(Number(equipe.rh_contas.valor))}</p>
             </div>
-            <span className="text-[10px] font-bold text-teal-400 group-hover:text-teal-300 transition-colors">
+            <span className="text-caption font-bold text-teal-400 group-hover:text-teal-300 transition-colors">
               {equipe.rh_contas.qtd} conta{equipe.rh_contas.qtd !== 1 ? 's' : ''} →
             </span>
           </button>
@@ -434,7 +434,7 @@ const Dashboard: React.FC = () => {
               <div key={i} className="flex items-center gap-3 px-4 py-3 hover:bg-red-500/5 transition-colors">
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-semibold text-white truncate">{c.descricao}</p>
-                  <p className="text-[10px] text-white/50 mt-0.5">
+                  <p className="text-caption text-white/50 mt-0.5">
                     {c.categoria}
                     <span className="text-red-400 ml-1">· {diasAtraso(c.vencimento)}d atraso</span>
                   </p>
@@ -445,7 +445,7 @@ const Dashboard: React.FC = () => {
           />
           {(contas.lista_vencidas ?? []).length > 0 && (
             <div className="mt-1 px-4 py-2 glass-soft rounded-xl flex justify-between">
-              <p className="text-[10px] text-white/50">Total atrasado</p>
+              <p className="text-caption text-white/50">Total atrasado</p>
               <p className="text-xs font-black text-red-400">{fmtR(Number(contas.vencidas.valor))}</p>
             </div>
           )}
@@ -459,11 +459,11 @@ const Dashboard: React.FC = () => {
             renderItem={(c, i) => (
               <div key={i} className="flex items-center gap-3 px-4 py-3 hover:bg-blue-500/5 transition-colors">
                 <div className="w-10 shrink-0 text-center">
-                  <p className="text-[10px] font-black text-blue-400">{fmtData(c.vencimento)}</p>
+                  <p className="text-caption font-black text-blue-400">{fmtData(c.vencimento)}</p>
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-semibold text-white truncate">{c.descricao}</p>
-                  <p className="text-[10px] text-white/50">{c.categoria}</p>
+                  <p className="text-caption text-white/50">{c.categoria}</p>
                 </div>
                 <p className="text-sm font-bold text-white shrink-0">{fmtR(Number(c.valor))}</p>
               </div>
@@ -471,7 +471,7 @@ const Dashboard: React.FC = () => {
           />
           {(contas.lista_semana ?? []).length > 0 && (
             <div className="mt-1 px-4 py-2 glass-soft rounded-xl flex justify-between">
-              <p className="text-[10px] text-white/50">Total da semana</p>
+              <p className="text-caption text-white/50">Total da semana</p>
               <p className="text-xs font-black text-blue-400">{fmtR(Number(contas.semana.valor))}</p>
             </div>
           )}
@@ -490,14 +490,14 @@ const Dashboard: React.FC = () => {
               return (
                 <div key={i} className={`flex items-center gap-3 px-4 py-3 hover:bg-pink-500/5 transition-colors ${vencido ? 'bg-red-500/5' : ''}`}>
                   <div className="w-10 shrink-0 text-center">
-                    <p className={`text-[10px] font-black ${vencido ? 'text-red-400' : 'text-pink-400'}`}>
+                    <p className={`text-caption font-black ${vencido ? 'text-red-400' : 'text-pink-400'}`}>
                       {fmtData(m.data)}
                     </p>
-                    {vencido && <p className="text-[9px] text-red-400">{diasAtraso(m.data)}d</p>}
+                    {vencido && <p className="text-caption text-red-400">{diasAtraso(m.data)}d</p>}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-semibold text-white truncate">{m.nome}</p>
-                    <p className="text-[10px] text-white/50">
+                    <p className="text-caption text-white/50">
                       Total: {fmtR(Number(m.total))}
                       {Number(m.pago) > 0 && ` · Pago: ${fmtR(Number(m.pago))}`}
                     </p>
@@ -511,7 +511,7 @@ const Dashboard: React.FC = () => {
           />
           {(equipe.caches.lista ?? []).length > 0 && (
             <div className="mt-1 px-4 py-2 glass-soft rounded-xl flex justify-between">
-              <p className="text-[10px] text-white/50">Total em aberto</p>
+              <p className="text-caption text-white/50">Total em aberto</p>
               <p className="text-xs font-black text-pink-400">{fmtR(Number(equipe.caches.valor))}</p>
             </div>
           )}
@@ -527,14 +527,14 @@ const Dashboard: React.FC = () => {
               return (
                 <div key={i} className={`flex items-center gap-3 px-4 py-3 hover:bg-orange-500/5 transition-colors ${vencido ? 'bg-red-500/5' : ''}`}>
                   <div className="w-10 shrink-0 text-center">
-                    <p className={`text-[10px] font-black ${vencido ? 'text-red-400' : 'text-orange-400'}`}>
+                    <p className={`text-caption font-black ${vencido ? 'text-red-400' : 'text-orange-400'}`}>
                       {fmtData(e.data)}
                     </p>
-                    {vencido && <p className="text-[9px] text-red-400">{diasAtraso(e.data)}d</p>}
+                    {vencido && <p className="text-caption text-red-400">{diasAtraso(e.data)}d</p>}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-semibold text-white truncate">{e.nome}</p>
-                    <p className="text-[10px] text-white/50">
+                    <p className="text-caption text-white/50">
                       {e.funcao}{e.setor ? ` · ${e.setor}` : ''}
                     </p>
                   </div>
@@ -547,7 +547,7 @@ const Dashboard: React.FC = () => {
           />
           {(equipe.extras.lista ?? []).length > 0 && (
             <div className="mt-1 px-4 py-2 glass-soft rounded-xl flex justify-between">
-              <p className="text-[10px] text-white/50">Total em aberto</p>
+              <p className="text-caption text-white/50">Total em aberto</p>
               <p className="text-xs font-black text-orange-400">{fmtR(Number(equipe.extras.valor))}</p>
             </div>
           )}
@@ -563,11 +563,11 @@ const Dashboard: React.FC = () => {
           renderItem={(ev, i) => (
             <div key={i} className="flex items-center gap-3 px-4 py-3 hover:bg-purple-500/5 transition-colors">
               <div className="w-10 shrink-0 text-center">
-                <p className="text-[10px] font-black text-purple-400">{fmtData(ev.data)}</p>
+                <p className="text-caption font-black text-purple-400">{fmtData(ev.data)}</p>
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-semibold text-white truncate">{ev.nome}</p>
-                <p className="text-[10px] text-white/50">
+                <p className="text-caption text-white/50">
                   {ev.pessoas ? `${ev.pessoas} pessoas` : ''}
                   {ev.pagamento && ev.pagamento !== 'pago' && <span className="text-yellow-400 ml-1">· pgto {ev.pagamento}</span>}
                 </p>
@@ -584,7 +584,7 @@ const Dashboard: React.FC = () => {
             emptyMsg="Nenhuma pendência aberta"
             renderItem={(p, i) => (
               <div key={i} className="flex items-center gap-3 px-4 py-3 hover:bg-yellow-500/5 transition-colors">
-                <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-md shrink-0 uppercase ${
+                <span className={`text-caption font-black px-1.5 py-0.5 rounded-md shrink-0 uppercase ${
                   p.gravidade === 'critica' || p.gravidade === 'alta'
                     ? 'bg-red-500/20 text-red-400'
                     : 'bg-yellow-500/20 text-yellow-400'
@@ -593,9 +593,9 @@ const Dashboard: React.FC = () => {
                 </span>
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-semibold text-white truncate">{p.titulo}</p>
-                  <p className="text-[10px] text-white/50">gravidade {p.gravidade}</p>
+                  <p className="text-caption text-white/50">gravidade {p.gravidade}</p>
                 </div>
-                <p className="text-[10px] font-bold text-white/50 shrink-0">{p.dias}d aberto</p>
+                <p className="text-caption font-bold text-white/50 shrink-0">{p.dias}d aberto</p>
               </div>
             )}
           />
@@ -626,13 +626,13 @@ const Dashboard: React.FC = () => {
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-white">{item.nome}</p>
                     <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                      <span className="text-[10px] text-white/50">{item.estoque_nome}</span>
-                      <span className="text-[10px] text-white/30">·</span>
-                      <span className="text-[10px] text-white/50">{item.categoria}</span>
+                      <span className="text-caption text-white/50">{item.estoque_nome}</span>
+                      <span className="text-caption text-white/30">·</span>
+                      <span className="text-caption text-white/50">{item.categoria}</span>
                       {item.ultima_mov && (
                         <>
-                          <span className="text-[10px] text-white/30">·</span>
-                          <span className="text-[10px] text-white/50">
+                          <span className="text-caption text-white/30">·</span>
+                          <span className="text-caption text-white/50">
                             mov: {new Date(item.ultima_mov + 'T12:00').toLocaleDateString('pt-BR')}
                           </span>
                         </>
@@ -648,7 +648,7 @@ const Dashboard: React.FC = () => {
                       {parseFloat(Number(item.saldo_real ?? 0).toFixed(3)).toLocaleString('pt-BR', { maximumFractionDigits: 3 })} {item.unidade_medida}
                     </p>
                     {item.estoque_minimo > 0 && (
-                      <p className="text-[10px] text-white/40 mt-0.5">min: {item.estoque_minimo}</p>
+                      <p className="text-caption text-white/40 mt-0.5">min: {item.estoque_minimo}</p>
                     )}
                   </div>
                 </div>
@@ -662,7 +662,7 @@ const Dashboard: React.FC = () => {
               ].map(s => (
                 <div key={s.label}>
                   <p className={`text-lg font-black ${s.color}`}>{s.count}</p>
-                  <p className="text-[10px] text-white/50">{s.label}</p>
+                  <p className="text-caption text-white/50">{s.label}</p>
                 </div>
               ))}
             </div>

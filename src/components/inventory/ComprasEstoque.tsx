@@ -1464,7 +1464,7 @@ const ComprasEstoque: React.FC = () => {
                   <h4 className="text-xs font-semibold text-white/40 uppercase tracking-wider flex items-center gap-2">
                     <Package className="w-3.5 h-3.5" /> Itens da Compra
                     {formData.itens.length > 0 && (
-                      <span className="ml-1 px-2 py-0.5 bg-white/10 rounded-full text-white/60 normal-case text-[10px] font-bold">
+                      <span className="ml-1 px-2 py-0.5 bg-white/10 rounded-full text-white/60 normal-case text-caption font-bold">
                         {formData.itens.length} {formData.itens.length === 1 ? 'item' : 'itens'}
                       </span>
                     )}
@@ -1481,11 +1481,11 @@ const ComprasEstoque: React.FC = () => {
                   <div className="space-y-2">
                     {/* Cabeçalho das colunas */}
                     <div className="hidden md:grid grid-cols-12 gap-2 px-3 pb-1">
-                      <div className="col-span-4 text-[10px] font-semibold text-white/30 uppercase tracking-wide">Produto / Insumo</div>
-                      <div className="col-span-2 text-[10px] font-semibold text-white/30 uppercase tracking-wide">Qtd recebida</div>
-                      <div className="col-span-2 text-[10px] font-semibold text-white/30 uppercase tracking-wide">Custo unitário (R$)</div>
-                      <div className="col-span-2 text-[10px] font-semibold text-white/30 uppercase tracking-wide">Data validade</div>
-                      <div className="col-span-1 text-[10px] font-semibold text-white/30 uppercase tracking-wide text-right">Total</div>
+                      <div className="col-span-4 text-caption font-semibold text-white/30 uppercase tracking-wide">Produto / Insumo</div>
+                      <div className="col-span-2 text-caption font-semibold text-white/30 uppercase tracking-wide">Qtd recebida</div>
+                      <div className="col-span-2 text-caption font-semibold text-white/30 uppercase tracking-wide">Custo unitário (R$)</div>
+                      <div className="col-span-2 text-caption font-semibold text-white/30 uppercase tracking-wide">Data validade</div>
+                      <div className="col-span-1 text-caption font-semibold text-white/30 uppercase tracking-wide text-right">Total</div>
                       <div className="col-span-1" />
                     </div>
 
@@ -1517,7 +1517,7 @@ const ComprasEstoque: React.FC = () => {
 
                             {/* Item */}
                             <div className="md:col-span-4">
-                              <label className="block text-[10px] font-semibold text-white/40 uppercase tracking-wide mb-1 md:hidden">Produto</label>
+                              <label className="block text-caption font-semibold text-white/40 uppercase tracking-wide mb-1 md:hidden">Produto</label>
                               <SearchableSelect
                                 options={itensFilteredForSelect.map(ie => ({
                                   value: ie.id,
@@ -1531,7 +1531,7 @@ const ComprasEstoque: React.FC = () => {
                                 className="w-full"
                               />
                               {itemInfo && (
-                                <p className="text-[10px] text-white/30 mt-1">
+                                <p className="text-caption text-white/30 mt-1">
                                   Unidade: <span className="text-white/50">{itemInfo.unidade_medida}</span>
                                   {itemInfo.custo_medio > 0 && <> · Último custo: <span className="text-white/50">{formatCurrency(itemInfo.custo_medio)}</span></>}
                                 </p>
@@ -1540,7 +1540,7 @@ const ComprasEstoque: React.FC = () => {
 
                             {/* Quantidade */}
                             <div className="md:col-span-2">
-                              <label className="block text-[10px] font-semibold text-white/40 uppercase tracking-wide mb-1">
+                              <label className="block text-caption font-semibold text-white/40 uppercase tracking-wide mb-1">
                                 Quantidade {itemInfo && <span className="text-white/30 normal-case">({itemInfo.unidade_medida})</span>}
                               </label>
                               <input
@@ -1557,7 +1557,7 @@ const ComprasEstoque: React.FC = () => {
 
                             {/* Custo unitário */}
                             <div className="md:col-span-2">
-                              <label className="block text-[10px] font-semibold text-white/40 uppercase tracking-wide mb-1">Custo Unitário (R$)</label>
+                              <label className="block text-caption font-semibold text-white/40 uppercase tracking-wide mb-1">Custo Unitário (R$)</label>
                               <div className="relative">
                                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40 text-sm">R$</span>
                                 <input
@@ -1575,7 +1575,7 @@ const ComprasEstoque: React.FC = () => {
 
                             {/* Validade */}
                             <div className="md:col-span-2">
-                              <label className="block text-[10px] font-semibold text-white/40 uppercase tracking-wide mb-1">Validade <span className="text-white/25 normal-case">(opcional)</span></label>
+                              <label className="block text-caption font-semibold text-white/40 uppercase tracking-wide mb-1">Validade <span className="text-white/25 normal-case">(opcional)</span></label>
                               <input
                                 type="date"
                                 value={item.data_validade || ''}
@@ -1586,7 +1586,7 @@ const ComprasEstoque: React.FC = () => {
 
                             {/* Total + remover */}
                             <div className="md:col-span-1 flex flex-col items-end justify-between h-full gap-2">
-                              <label className="block text-[10px] font-semibold text-white/40 uppercase tracking-wide self-start md:self-end">Total</label>
+                              <label className="block text-caption font-semibold text-white/40 uppercase tracking-wide self-start md:self-end">Total</label>
                               <span className={`text-sm font-bold ${total > 0 ? 'text-gold' : 'text-white/20'}`}>
                                 {total > 0 ? formatCurrency(total) : '—'}
                               </span>

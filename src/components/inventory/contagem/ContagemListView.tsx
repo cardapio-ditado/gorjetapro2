@@ -88,15 +88,15 @@ const ContagemListView: React.FC<Props> = ({
                 <div className="grid grid-cols-3 gap-2 mb-4">
                   <div className="text-center p-2 bg-white/5 rounded-lg">
                     <p className="text-lg font-bold text-white">{c.total_itens_contados}</p>
-                    <p className="text-[10px] text-white/40 uppercase">Contados</p>
+                    <p className="text-caption text-white/40 uppercase">Contados</p>
                   </div>
                   <div className="text-center p-2 bg-white/5 rounded-lg">
                     <p className="text-lg font-bold text-orange-400">{c.total_diferencas}</p>
-                    <p className="text-[10px] text-white/40 uppercase">Diferenças</p>
+                    <p className="text-caption text-white/40 uppercase">Diferenças</p>
                   </div>
                   <div className="text-center p-2 bg-white/5 rounded-lg">
                     <p className="text-sm font-bold text-red-400">{formatCurrency(Math.abs(c.valor_total_diferencas))}</p>
-                    <p className="text-[10px] text-white/40 uppercase">Valor</p>
+                    <p className="text-caption text-white/40 uppercase">Valor</p>
                   </div>
                 </div>
                 <button onClick={() => onVerResultado(c)}

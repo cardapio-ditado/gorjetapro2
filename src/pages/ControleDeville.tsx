@@ -1470,7 +1470,7 @@ function RequisicoesDaNota({ notaId, notaValorPago, notaValorTotal }: { notaId: 
               <div className="flex items-center gap-3">
                 <span className="text-gold font-mono font-bold text-xs">{r.numero}</span>
                 <span className="text-white/40 text-xs">{fmtDate(r.data_requisicao)}</span>
-                <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${r.status === 'paga' ? 'bg-green-500/15 text-green-400' : 'bg-yellow-500/15 text-yellow-400'}`}>
+                <span className={`px-2 py-0.5 rounded-full text-caption font-medium ${r.status === 'paga' ? 'bg-green-500/15 text-green-400' : 'bg-yellow-500/15 text-yellow-400'}`}>
                   {r.status === 'paga' ? 'Paga' : 'Em aberto'}
                 </span>
               </div>

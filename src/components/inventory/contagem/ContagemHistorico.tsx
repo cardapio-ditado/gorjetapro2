@@ -160,25 +160,25 @@ const ContagemHistorico: React.FC<Props> = ({ onVoltar, onVerContagem }) => {
             <table className="w-full">
               <thead className="bg-white/5 border-b border-white/10">
                 <tr>
-                  <th className="px-4 py-2.5 text-left text-[11px] font-semibold text-white/40 uppercase">
+                  <th className="px-4 py-2.5 text-left text-caption font-semibold text-white/40 uppercase">
                     Data
                   </th>
-                  <th className="px-4 py-2.5 text-left text-[11px] font-semibold text-white/40 uppercase">
+                  <th className="px-4 py-2.5 text-left text-caption font-semibold text-white/40 uppercase">
                     Estoque
                   </th>
-                  <th className="px-4 py-2.5 text-left text-[11px] font-semibold text-white/40 uppercase">
+                  <th className="px-4 py-2.5 text-left text-caption font-semibold text-white/40 uppercase">
                     Responsavel
                   </th>
-                  <th className="px-4 py-2.5 text-center text-[11px] font-semibold text-white/40 uppercase">
+                  <th className="px-4 py-2.5 text-center text-caption font-semibold text-white/40 uppercase">
                     Itens
                   </th>
-                  <th className="px-4 py-2.5 text-center text-[11px] font-semibold text-white/40 uppercase">
+                  <th className="px-4 py-2.5 text-center text-caption font-semibold text-white/40 uppercase">
                     Divergencias
                   </th>
-                  <th className="px-4 py-2.5 text-right text-[11px] font-semibold text-white/40 uppercase">
+                  <th className="px-4 py-2.5 text-right text-caption font-semibold text-white/40 uppercase">
                     Valor Ajustes
                   </th>
-                  <th className="px-4 py-2.5 text-center text-[11px] font-semibold text-white/40 uppercase w-16">
+                  <th className="px-4 py-2.5 text-center text-caption font-semibold text-white/40 uppercase w-16">
                     Acoes
                   </th>
                 </tr>

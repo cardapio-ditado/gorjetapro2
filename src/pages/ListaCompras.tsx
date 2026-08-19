@@ -430,7 +430,7 @@ ${grupos.map(grupo => `
                   ))}
                 </div>
                 {tipoFiltro === 'fornecedor' && (
-                  <p className="text-[11px] text-white/30 mt-1.5">A lista será agrupada por fornecedor, pra facilitar ligar/mandar pedido pra cada um.</p>
+                  <p className="text-caption text-white/30 mt-1.5">A lista será agrupada por fornecedor, pra facilitar ligar/mandar pedido pra cada um.</p>
                 )}
               </div>
 
@@ -444,7 +444,7 @@ ${grupos.map(grupo => `
                     <button key={op.v} onClick={() => setNivelAlvo(op.v)}
                       className={`text-left p-3 rounded-xl border transition-all ${nivelAlvo === op.v ? 'bg-wine text-white border-wine' : 'bg-[#12141f]/5 text-white/60 border-white/10 hover:bg-[#12141f]/10'}`}>
                       <p className="text-sm font-semibold">{op.titulo}</p>
-                      <p className={`text-[11px] mt-0.5 ${nivelAlvo === op.v ? 'text-white/70' : 'text-white/40'}`}>{op.desc}</p>
+                      <p className={`text-caption mt-0.5 ${nivelAlvo === op.v ? 'text-white/70' : 'text-white/40'}`}>{op.desc}</p>
                     </button>
                   ))}
                 </div>
@@ -503,12 +503,12 @@ ${grupos.map(grupo => `
                           <tr key={s.item_id} className="hover:bg-white/[0.02]">
                             <td className="px-3 py-2">
                               <div className="flex items-center gap-1.5">
-                                <span className={`text-[9px] px-1 py-0.5 rounded border flex-shrink-0 ${TIPO_COLOR[s.tipo_compra]}`}>
+                                <span className={`text-caption px-1 py-0.5 rounded border flex-shrink-0 ${TIPO_COLOR[s.tipo_compra]}`}>
                                   {s.tipo_compra === 'rua' ? 'Rua' : s.tipo_compra === 'fornecedor' ? 'Forn.' : 'Amb.'}
                                 </span>
                                 <p className="text-white/80 font-medium truncate max-w-[140px]">{s.nome}</p>
                               </div>
-                              {s.fornecedor_nome && <p className="text-white/30 text-[10px] ml-6">{s.fornecedor_nome}</p>}
+                              {s.fornecedor_nome && <p className="text-white/30 text-caption ml-6">{s.fornecedor_nome}</p>}
                             </td>
                             <td className="px-3 py-2 text-right text-red-400/80">
                               {fmt(s.saldo_atual, s.saldo_atual % 1 === 0 ? 0 : 2)} {s.unidade_medida}
@@ -653,7 +653,7 @@ ${grupos.map(grupo => `
                             <div className="flex-1 min-w-0">
                               <div className="flex items-start justify-between gap-2">
                                 <p className={`text-sm font-medium ${item.comprado ? 'line-through text-white/30' : 'text-white/90'}`}>{item.nome_item}</p>
-                                <span className={`flex-shrink-0 text-[10px] px-1.5 py-0.5 rounded-md border ${TIPO_COLOR[item.tipo_compra] || 'bg-[#12141f]/10 text-white/40 border-white/10'}`}>
+                                <span className={`flex-shrink-0 text-caption px-1.5 py-0.5 rounded-md border ${TIPO_COLOR[item.tipo_compra] || 'bg-[#12141f]/10 text-white/40 border-white/10'}`}>
                                   {item.tipo_compra === 'rua' ? '🛒 Rua' : item.tipo_compra === 'fornecedor' ? '🚚 Forn.' : '🔀 Ambos'}
                                 </span>
                               </div>

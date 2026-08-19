@@ -199,7 +199,7 @@ const FluxoCaixa: React.FC = () => {
         <>
           <div style={{ background:S.blueBg, border:`1px solid ${S.blueBorder}`, borderRadius:12, padding:'14px 18px', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
             <div>
-              <p style={{ color:'rgba(96,165,250,0.6)', fontSize:10, margin:'0 0 6px', textTransform:'uppercase', letterSpacing:'0.6px' }}>Saldo Anterior ao Período</p>
+              <p style={{ color:'rgba(96,165,250,0.6)', fontSize:'var(--fs-caption)', margin:'0 0 6px', textTransform:'uppercase', letterSpacing:'0.6px' }}>Saldo Anterior ao Período</p>
               <p style={{ color:S.blue, fontSize:26, fontWeight:800, margin:0, letterSpacing:'-0.5px' }}>{fmt(indicadores.saldo_anterior)}</p>
               <p style={{ color:'rgba(96,165,250,0.4)', fontSize:11, margin:'4px 0 0' }}>acumulado até {dayjs(dataInicial).subtract(1,'day').format('DD/MM/YYYY')}</p>
             </div>
@@ -208,27 +208,27 @@ const FluxoCaixa: React.FC = () => {
 
           <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(200px, 1fr))', gap:'var(--sp-3)' }}>
             <div style={{ background:S.greenBg, border:`1px solid ${S.greenBorder}`, borderRadius:12, padding:'14px 16px' }}>
-              <p style={{ color:'rgba(74,222,128,0.55)', fontSize:10, margin:'0 0 6px', textTransform:'uppercase', letterSpacing:'0.6px' }}>Entradas</p>
+              <p style={{ color:'rgba(74,222,128,0.55)', fontSize:'var(--fs-caption)', margin:'0 0 6px', textTransform:'uppercase', letterSpacing:'0.6px' }}>Entradas</p>
               <p style={{ color:S.green, fontSize:20, fontWeight:800, margin:'0 0 4px', letterSpacing:'-0.5px' }}>{fmt(indicadores.entradas_mes)}</p>
-              <p style={{ color:'rgba(74,222,128,0.4)', fontSize:10, margin:0 }}>{dayjs(dataInicial).format('DD/MM')} a {dayjs(dataFinal).format('DD/MM')}</p>
+              <p style={{ color:'rgba(74,222,128,0.4)', fontSize:'var(--fs-caption)', margin:0 }}>{dayjs(dataInicial).format('DD/MM')} a {dayjs(dataFinal).format('DD/MM')}</p>
             </div>
             <div style={{ background:S.redBg, border:`1px solid ${S.redBorder}`, borderRadius:12, padding:'14px 16px' }}>
-              <p style={{ color:'rgba(248,113,113,0.55)', fontSize:10, margin:'0 0 6px', textTransform:'uppercase', letterSpacing:'0.6px' }}>Saídas</p>
+              <p style={{ color:'rgba(248,113,113,0.55)', fontSize:'var(--fs-caption)', margin:'0 0 6px', textTransform:'uppercase', letterSpacing:'0.6px' }}>Saídas</p>
               <p style={{ color:S.red, fontSize:20, fontWeight:800, margin:'0 0 4px', letterSpacing:'-0.5px' }}>{fmt(indicadores.saidas_mes)}</p>
-              <p style={{ color:'rgba(248,113,113,0.4)', fontSize:10, margin:0 }}>{dayjs(dataInicial).format('DD/MM')} a {dayjs(dataFinal).format('DD/MM')}</p>
+              <p style={{ color:'rgba(248,113,113,0.4)', fontSize:'var(--fs-caption)', margin:0 }}>{dayjs(dataInicial).format('DD/MM')} a {dayjs(dataFinal).format('DD/MM')}</p>
             </div>
             <div style={{ background: indicadores.saldo_mes>=0?S.greenBg:S.redBg, border:`1px solid ${indicadores.saldo_mes>=0?S.greenBorder:S.redBorder}`, borderRadius:12, padding:'14px 16px' }}>
-              <p style={{ color: indicadores.saldo_mes>=0?'rgba(74,222,128,0.55)':'rgba(248,113,113,0.55)', fontSize:10, margin:'0 0 6px', textTransform:'uppercase', letterSpacing:'0.6px' }}>Resultado</p>
+              <p style={{ color: indicadores.saldo_mes>=0?'rgba(74,222,128,0.55)':'rgba(248,113,113,0.55)', fontSize:'var(--fs-caption)', margin:'0 0 6px', textTransform:'uppercase', letterSpacing:'0.6px' }}>Resultado</p>
               <p style={{ color: indicadores.saldo_mes>=0?S.green:S.red, fontSize:20, fontWeight:800, margin:'0 0 4px', letterSpacing:'-0.5px' }}>{indicadores.saldo_mes>=0?'+':''}{fmt(indicadores.saldo_mes)}</p>
-              <p style={{ color: indicadores.saldo_mes>=0?'rgba(74,222,128,0.4)':'rgba(248,113,113,0.4)', fontSize:10, margin:0 }}>período selecionado</p>
+              <p style={{ color: indicadores.saldo_mes>=0?'rgba(74,222,128,0.4)':'rgba(248,113,113,0.4)', fontSize:'var(--fs-caption)', margin:0 }}>período selecionado</p>
             </div>
           </div>
 
           <div style={{ background:S.goldBg, border:`1px solid ${S.goldBorder}`, borderRadius:12, padding:'14px 18px', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
             <div>
               <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:6 }}>
-                <p style={{ color:'rgba(212,175,55,0.6)', fontSize:10, margin:0, textTransform:'uppercase', letterSpacing:'0.6px' }}>Saldo Acumulado</p>
-                <span style={{ background:'rgba(212,175,55,0.15)', color:S.gold, fontSize:9, padding:'2px 8px', borderRadius:20, fontWeight:600 }}>TOTAL GERAL</span>
+                <p style={{ color:'rgba(212,175,55,0.6)', fontSize:'var(--fs-caption)', margin:0, textTransform:'uppercase', letterSpacing:'0.6px' }}>Saldo Acumulado</p>
+                <span style={{ background:'rgba(212,175,55,0.15)', color:S.gold, fontSize:'var(--fs-caption)', padding:'2px 8px', borderRadius:20, fontWeight:600 }}>TOTAL GERAL</span>
               </div>
               <p style={{ color:S.gold, fontSize:26, fontWeight:800, margin:0, letterSpacing:'-0.5px' }}>{fmt(indicadores.saldo_total)}</p>
               <p style={{ color:'rgba(212,175,55,0.4)', fontSize:11, margin:'4px 0 0' }}>posição em {dayjs(dataFinal).format('DD/MM/YYYY')}</p>
@@ -240,7 +240,7 @@ const FluxoCaixa: React.FC = () => {
           <div style={{ background:S.card, border:`1px solid ${S.border}`, borderRadius:12, padding:'14px 18px' }}>
             <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:12 }}>
               <Calculator style={{ width:14, height:14, color:S.label }} />
-              <p style={{ color:S.label, fontSize:10, margin:0, textTransform:'uppercase', letterSpacing:'0.6px', fontWeight:600 }}>Demonstrativo do Cálculo</p>
+              <p style={{ color:S.label, fontSize:'var(--fs-caption)', margin:0, textTransform:'uppercase', letterSpacing:'0.6px', fontWeight:600 }}>Demonstrativo do Cálculo</p>
             </div>
             <div style={{ display:'flex', flexDirection:'column', gap:4 }}>
               {[
@@ -311,7 +311,7 @@ const FluxoCaixa: React.FC = () => {
                     onMouseLeave={e=>(e.currentTarget as HTMLElement).style.background=i%2===0?'transparent':'rgba(255,255,255,0.01)'}>
                     <td style={{ padding:'9px 14px', whiteSpace:'nowrap' }}>
                       <p style={{ color:S.text, fontSize:12, fontWeight:500, margin:0 }}>{dayjs(t.data).format('DD/MM/YYYY')}</p>
-                      <p style={{ color:S.label, fontSize:10, margin:0 }}>{dayjs(t.data).format('ddd')}</p>
+                      <p style={{ color:S.label, fontSize:'var(--fs-caption)', margin:0 }}>{dayjs(t.data).format('ddd')}</p>
                     </td>
                     <td style={{ padding:'9px 14px' }}>
                       <div style={{ display:'flex', alignItems:'flex-start', gap:8 }}>
@@ -320,7 +320,7 @@ const FluxoCaixa: React.FC = () => {
                           : <ArrowDownRight style={{ width:14, height:14, color:S.red, flexShrink:0, marginTop:1 }} />}
                         <div>
                           <p style={{ color:S.text, fontSize:12, fontWeight:500, margin:0 }}>{t.descricao}</p>
-                          {t.observacoes && <p style={{ color:S.label, fontSize:10, margin:0 }}>{t.observacoes}</p>}
+                          {t.observacoes && <p style={{ color:S.label, fontSize:'var(--fs-caption)', margin:0 }}>{t.observacoes}</p>}
                         </div>
                       </div>
                     </td>
@@ -440,8 +440,8 @@ const FluxoCaixa: React.FC = () => {
                   <span>Upload de comprovante</span>
                   <input type="file" style={{ display:'none' }} onChange={handleFileUpload} accept=".pdf,.jpg,.jpeg,.png" />
                 </label>
-                <p style={{ color:S.label, fontSize:10, margin:'4px 0 0' }}>PDF ou imagem até 10MB</p>
-                {formData.comprovante && <p style={{ color:S.green, fontSize:10, margin:'4px 0 0' }}>✓ Arquivo carregado</p>}
+                <p style={{ color:S.label, fontSize:'var(--fs-caption)', margin:'4px 0 0' }}>PDF ou imagem até 10MB</p>
+                {formData.comprovante && <p style={{ color:S.green, fontSize:'var(--fs-caption)', margin:'4px 0 0' }}>✓ Arquivo carregado</p>}
               </div>
             </div>
             <div style={{ display:'flex', justifyContent:'flex-end', gap:8, marginTop:20 }}>

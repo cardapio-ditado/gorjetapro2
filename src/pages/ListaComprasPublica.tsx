@@ -191,7 +191,7 @@ export default function ListaComprasPublica() {
                         <div className="flex items-center gap-2 mt-1 flex-wrap">
                           <span className="text-base font-bold text-white">{fmt(item.quantidade_comprar, item.quantidade_comprar % 1 === 0 ? 0 : 2)} <span className="text-xs font-normal text-white/50">{item.unidade_medida}</span></span>
                           {item.tipo_compra && item.tipo_compra !== 'todos' && (
-                            <span className={`text-[10px] px-1.5 py-0.5 rounded border ${TIPO_COLOR[item.tipo_compra] || ''}`}>
+                            <span className={`text-caption px-1.5 py-0.5 rounded border ${TIPO_COLOR[item.tipo_compra] || ''}`}>
                               {item.tipo_compra === 'rua' ? 'Rua' : 'Fornecedor'}
                             </span>
                           )}
