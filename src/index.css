@@ -569,3 +569,147 @@
     z-index: 9999 !important;
   }
 }
+/* ===========================================================================
+   SISTEMA DE DESIGN — extraido da arte da campanha (login-hero-ditado-bar.jpg)
+   ===========================================================================
+   Linguagem da marca: vermelho acetinado profundo como fundo; dourado como
+   ACENTO parcimonioso (fio, borda, numero-heroi) e nunca como preenchimento
+   largo; serifada display contra sans em caixa alta com tracking largo.
+
+   Este bloco e a fonte da verdade. Ao estilizar, use os degraus abaixo em vez
+   de cravar pixel, raio ou duracao na mao.
+   =========================================================================== */
+:root {
+  /* -- Escala tipografica ---------------------------------------------------
+     Fechada: um papel por degrau. Piso de 11px, e 11px SO para legenda.
+     Substitui os 303 tamanhos cravados (text-[8px] a text-[14px]).          */
+  --fs-display:  2.5rem;    /* 40px - Playfair 700 - so capa: Login, Saguao  */
+  --fs-title:    1.75rem;   /* 28px - Playfair 700 - titulo de pagina (h1)   */
+  --fs-section:  1.25rem;   /* 20px - Playfair 700 - titulo de secao (h2)    */
+  --fs-subsec:   1rem;      /* 16px - DM Sans 600  - subtitulo (h3)          */
+  --fs-body:     0.875rem;  /* 14px - DM Sans 400  - corpo, celula de tabela */
+  --fs-label:    0.75rem;   /* 12px - DM Sans 600  - rotulo, cabecalho, badge*/
+  --fs-caption:  0.6875rem; /* 11px - DM Sans 500  - legenda: o piso         */
+
+  --lh-tight: 1.15;  /* display e titulos */
+  --lh-snug:  1.35;  /* subtitulo, rotulo */
+  --lh-body:  1.55;  /* corpo corrido     */
+
+  --tracking-display: -0.02em;  /* serifada grande fecha o espacejamento */
+  --tracking-body:    -0.005em;
+  --tracking-caps:     0.14em;  /* caixa alta SEMPRE com tracking largo  */
+
+  /* -- Espacamento: multiplos de 4 ---------------------------------------- */
+  --sp-1: 4px;   --sp-2: 8px;   --sp-3: 12px;  --sp-4: 16px;
+  --sp-5: 20px;  --sp-6: 24px;  --sp-8: 32px;  --sp-10: 40px;  --sp-12: 48px;
+
+  /* Densidade: mais respiro ENTRE blocos, menos DENTRO de uma mesma lista.  */
+  --gap-section: var(--sp-8);  /* entre blocos da pagina    */
+  --gap-card:    var(--sp-4);  /* entre cards de uma grade  */
+  --gap-row:     var(--sp-2);  /* entre itens de uma lista  */
+
+  /* -- Raio: um por tipo de elemento ---------------------------------------
+     Substitui os 7 raios em uso (lg 1374, xl 812, full 456, md 320, 2xl 166,
+     3xl 8, sm 2), que hoje variam sem criterio.                             */
+  --r-badge:   6px;    /* badge, chip, tag              */
+  --r-control: 10px;   /* botao, campo, select          */
+  --r-card:    14px;   /* card, painel, linha destacada */
+  --r-modal:   18px;   /* modal, drawer, popover        */
+  --r-pill:    999px;  /* avatar, pilula, ponto         */
+
+  /* -- Sombra: tres niveis, cada um com um significado ----------------------
+     O nivel comunica ALTURA. Nao use um nivel alto so para chamar atencao.  */
+  --shadow-rest:    0 1px 3px rgba(0,0,0,0.30);      /* apoiado na superficie */
+  --shadow-raised:  0 4px 16px rgba(0,0,0,0.40);     /* elevado: card, menu   */
+  --shadow-overlay: 0 12px 40px rgba(0,0,0,0.55);    /* flutuante: modal      */
+  --shadow-focus:   0 0 0 3px rgba(212,175,55,0.35); /* foco de teclado       */
+
+  /* -- Movimento ------------------------------------------------------------
+     Teto de 350ms. Nada anima em tabela de dados nem em numero financeiro.  */
+  --dur-instant: 100ms;  /* realce sob o cursor        */
+  --dur-fast:    160ms;  /* hover, press, foco         */
+  --dur-base:    220ms;  /* abrir/fechar, troca de aba */
+  --dur-slow:    320ms;  /* transicao de tela, modal   */
+
+  --ease-standard:   cubic-bezier(0.2, 0, 0, 1);  /* padrao   */
+  --ease-decelerate: cubic-bezier(0, 0, 0, 1);    /* entrando */
+  --ease-accelerate: cubic-bezier(0.3, 0, 1, 1);  /* saindo   */
+
+  --stagger: 40ms;  /* escalonamento: SO em lista curta (ate 8 itens) */
+}
+
+/* -- REGRA DA SERIFADA -------------------------------------------------------
+   Playfair Display (font-display): SO em display, titulo de pagina e titulo
+   de secao. Ela nomeia as coisas; nao explica nem opera.
+   DM Sans: todo o resto - subtitulo, corpo, rotulo, legenda, botao, formulario.
+   DM Mono (font-mono): SO numero que se compara em coluna (ver .num abaixo).
+   Caixa alta: apenas em rotulo e legenda, sempre com --tracking-caps, nunca
+   em frase de corpo.
+   -------------------------------------------------------------------------- */
+
+/* -- REGRA DO DOURADO --------------------------------------------------------
+   O dourado e ACENTO. Entra em: fio e borda fina, numero-heroi de um card,
+   icone de item ativo, foco de teclado, ornamento.
+   E PROIBIDO em: preenchimento largo de area, fundo de card, fundo de botao
+   primario, faixa, e como cor de corpo de texto. Sobre --wine-light ele mede
+   3,69:1 e so vale para texto grande.
+   -------------------------------------------------------------------------- */
+
+@layer components {
+  /* -- Tipografia aplicada -- */
+  .t-display { font-family:'Playfair Display',Georgia,serif; font-size:var(--fs-display); font-weight:700; line-height:var(--lh-tight); letter-spacing:var(--tracking-display); }
+  .t-title   { font-family:'Playfair Display',Georgia,serif; font-size:var(--fs-title);   font-weight:700; line-height:var(--lh-tight); letter-spacing:var(--tracking-display); }
+  .t-section { font-family:'Playfair Display',Georgia,serif; font-size:var(--fs-section); font-weight:700; line-height:var(--lh-tight); }
+  .t-subsec  { font-size:var(--fs-subsec);  font-weight:600; line-height:var(--lh-snug); }
+  .t-body    { font-size:var(--fs-body);    font-weight:400; line-height:var(--lh-body); letter-spacing:var(--tracking-body); }
+  .t-label   { font-size:var(--fs-label);   font-weight:600; line-height:var(--lh-snug); }
+  .t-caps    { font-size:var(--fs-label);   font-weight:700; line-height:var(--lh-snug); text-transform:uppercase; letter-spacing:var(--tracking-caps); }
+  .t-caption { font-size:var(--fs-caption); font-weight:500; line-height:var(--lh-snug); color:var(--text-secondary); }
+
+  /* -- Numero tabular -------------------------------------------------------
+     Todo valor que se compara em coluna. DM Mono com numeral tabular faz o
+     ponto decimal cair no mesmo lugar em todas as linhas.                   */
+  .num {
+    font-family:'DM Mono',monospace;
+    font-variant-numeric: tabular-nums;
+    font-feature-settings:"tnum" 1;
+    text-align:right;
+    letter-spacing:-0.01em;
+  }
+  .num-total { font-weight:700; color:var(--text-primary); }
+
+  /* -- Fio dourado: o ornamento da marca -- */
+  .rule-gold { height:1px; border:0; background:linear-gradient(90deg,transparent,rgba(212,175,55,0.55),transparent); }
+
+  /* -- Foco de teclado visivel, em qualquer clicavel -- */
+  .focus-ring:focus-visible { outline:none; box-shadow:var(--shadow-focus); border-radius:var(--r-control); }
+
+  /* -- Skeleton: imita a forma do conteudo que vem -- */
+  .skeleton {
+    background:linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.09) 37%, rgba(255,255,255,0.04) 63%);
+    background-size:400% 100%;
+    animation: skeleton-sweep 1.4s ease-in-out infinite;
+    border-radius:var(--r-badge);
+  }
+  .skeleton-line  { height:12px; }
+  .skeleton-title { height:20px; width:40%; }
+}
+
+@keyframes skeleton-sweep {
+  0%   { background-position:100% 50%; }
+  100% { background-position:0 50%; }
+}
+
+/* -- prefers-reduced-motion: vale para TODO o sistema ---------------------- */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-instant:0ms; --dur-fast:0ms; --dur-base:0ms; --dur-slow:0ms; --stagger:0ms;
+  }
+  .skeleton { animation:none; background:rgba(255,255,255,0.06); }
+  *, *::before, *::after {
+    animation-duration:0.01ms !important;
+    animation-iteration-count:1 !important;
+    transition-duration:0.01ms !important;
+    scroll-behavior:auto !important;
+  }
+}
