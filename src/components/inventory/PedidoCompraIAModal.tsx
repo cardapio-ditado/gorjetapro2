@@ -356,7 +356,7 @@ const PedidoCompraIAModal: React.FC<PedidoCompraIAModalProps> = ({
                   Itens ({extractionData.extracted.itens.length})
                 </h4>
                 <div className="border border-white/10 rounded-lg overflow-hidden">
-                  <div className="max-h-64 overflow-y-auto">
+                  <div className="max-h-64 overflow-auto">
                     <table className="w-full">
                       <thead className="bg-white/5 sticky top-0">
                         <tr>

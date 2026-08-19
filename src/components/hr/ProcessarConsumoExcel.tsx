@@ -650,7 +650,7 @@ const ProcessarConsumoExcel: React.FC<ProcessarConsumoExcelProps> = ({ onClose }
                       Exportar Resultado
                     </button>
                   </div>
-                  <div className="max-h-60 overflow-y-auto border rounded-lg">
+                  <div className="max-h-60 overflow-auto border rounded-lg">
                     <table className="w-full text-sm">
                       <thead className="bg-white/5 sticky top-0">
                         <tr>

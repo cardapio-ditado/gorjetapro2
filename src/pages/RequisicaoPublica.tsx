@@ -425,7 +425,7 @@ export default function RequisicaoPublica() {
 
                 {/* Lista de Itens */}
                 {itens.length > 0 && (
-                  <div className="border border-white/10 rounded-lg overflow-hidden">
+                  <div className="border border-white/10 rounded-lg overflow-x-auto">
                     <table className="min-w-full divide-y divide-white/10">
                       <thead className="bg-[#1a1d2e]">
                         <tr>

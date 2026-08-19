@@ -42,7 +42,7 @@ const ModalVerificacaoInsumos: React.FC<ModalVerificacaoInsumosProps> = ({
         </div>
 
         {/* Tabela */}
-        <div className="flex-1 overflow-y-auto rounded-xl border border-white/10">
+        <div className="flex-1 overflow-auto rounded-xl border border-white/10">
           <table className="w-full">
             <thead className="bg-white/5 sticky top-0">
               <tr>
