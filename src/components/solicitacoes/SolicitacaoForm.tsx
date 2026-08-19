@@ -364,19 +364,19 @@ const SolicitacaoForm: React.FC<SolicitacaoFormProps> = ({
           <div className="flex items-center justify-center mb-6">
             <div className="flex items-center space-x-4">
               <div className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium ${
-                step >= 1 ? 'bg-[#7D1F2C] text-white' : 'bg-gray-200 text-white/70'
+                step >= 1 ? 'bg-wine text-white' : 'bg-gray-200 text-white/70'
               }`}>
                 1
               </div>
-              <div className={`w-16 h-1 ${step >= 2 ? 'bg-[#7D1F2C]' : 'bg-gray-200'}`}></div>
+              <div className={`w-16 h-1 ${step >= 2 ? 'bg-wine' : 'bg-gray-200'}`}></div>
               <div className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium ${
-                step >= 2 ? 'bg-[#7D1F2C] text-white' : 'bg-gray-200 text-white/70'
+                step >= 2 ? 'bg-wine text-white' : 'bg-gray-200 text-white/70'
               }`}>
                 2
               </div>
-              <div className={`w-16 h-1 ${step >= 3 ? 'bg-[#7D1F2C]' : 'bg-gray-200'}`}></div>
+              <div className={`w-16 h-1 ${step >= 3 ? 'bg-wine' : 'bg-gray-200'}`}></div>
               <div className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium ${
-                step >= 3 ? 'bg-[#7D1F2C] text-white' : 'bg-gray-200 text-white/70'
+                step >= 3 ? 'bg-wine text-white' : 'bg-gray-200 text-white/70'
               }`}>
                 3
               </div>
@@ -398,7 +398,7 @@ const SolicitacaoForm: React.FC<SolicitacaoFormProps> = ({
                   <select
                     value={formData.tipo_solicitacao_id}
                     onChange={(e) => setFormData({ ...formData, tipo_solicitacao_id: e.target.value })}
-                    className="w-full rounded-md border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                    className="w-full rounded-md border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                     required
                   >
                     <option value="">Selecione o tipo de solicitação...</option>
@@ -418,7 +418,7 @@ const SolicitacaoForm: React.FC<SolicitacaoFormProps> = ({
                     type="text"
                     value={formData.titulo}
                     onChange={(e) => setFormData({ ...formData, titulo: e.target.value })}
-                    className="w-full rounded-md border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                    className="w-full rounded-md border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                     required
                     placeholder="Ex: Manutenção do ar condicionado da cozinha"
                   />
@@ -431,7 +431,7 @@ const SolicitacaoForm: React.FC<SolicitacaoFormProps> = ({
                   <select
                     value={formData.prioridade}
                     onChange={(e) => setFormData({ ...formData, prioridade: e.target.value as any })}
-                    className="w-full rounded-md border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                    className="w-full rounded-md border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                     required
                   >
                     <option value="baixa">Baixa</option>
@@ -449,7 +449,7 @@ const SolicitacaoForm: React.FC<SolicitacaoFormProps> = ({
                   <select
                     value={formData.setor_solicitante}
                     onChange={(e) => setFormData({ ...formData, setor_solicitante: e.target.value })}
-                    className="w-full rounded-md border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                    className="w-full rounded-md border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                     required
                   >
                     {setores.map((setor) => (
@@ -467,7 +467,7 @@ const SolicitacaoForm: React.FC<SolicitacaoFormProps> = ({
                   <textarea
                     value={formData.descricao}
                     onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
-                    className="w-full rounded-md border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                    className="w-full rounded-md border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                     rows={4}
                     required
                     placeholder="Descreva detalhadamente o que precisa ser feito..."
@@ -482,7 +482,7 @@ const SolicitacaoForm: React.FC<SolicitacaoFormProps> = ({
                     type="text"
                     value={formData.local_servico}
                     onChange={(e) => setFormData({ ...formData, local_servico: e.target.value })}
-                    className="w-full rounded-md border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                    className="w-full rounded-md border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                     placeholder="Ex: Cozinha, Salão principal, Área externa"
                   />
                 </div>
@@ -495,7 +495,7 @@ const SolicitacaoForm: React.FC<SolicitacaoFormProps> = ({
                     type="text"
                     value={formData.equipamento_afetado}
                     onChange={(e) => setFormData({ ...formData, equipamento_afetado: e.target.value })}
-                    className="w-full rounded-md border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                    className="w-full rounded-md border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                     placeholder="Ex: Ar condicionado Split 18000 BTU"
                   />
                 </div>
@@ -508,7 +508,7 @@ const SolicitacaoForm: React.FC<SolicitacaoFormProps> = ({
                     type="date"
                     value={formData.data_limite}
                     onChange={(e) => setFormData({ ...formData, data_limite: e.target.value })}
-                    className="w-full rounded-md border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                    className="w-full rounded-md border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                   />
                   {getTipoSelecionado() && (
                     <p className="text-xs text-white/50 mt-1">
@@ -531,7 +531,7 @@ const SolicitacaoForm: React.FC<SolicitacaoFormProps> = ({
                       min="0"
                       value={formData.valor_estimado}
                       onChange={(e) => setFormData({ ...formData, valor_estimado: parseFloat(e.target.value) || 0 })}
-                      className="pl-10 w-full rounded-md border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                      className="pl-10 w-full rounded-md border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                     />
                   </div>
                 </div>
@@ -542,7 +542,7 @@ const SolicitacaoForm: React.FC<SolicitacaoFormProps> = ({
                     <label className="text-sm font-medium text-white/80">
                       Fotos <span className="text-white/35 font-normal">(opcional — máx. {MAX_FOTOS})</span>
                     </label>
-                    <span className="text-xs text-white/30">{fotos.length}/{MAX_FOTOS}</span>
+                    <span className="text-xs text-white/60">{fotos.length}/{MAX_FOTOS}</span>
                   </div>
 
                   {fotos.length < MAX_FOTOS && (
@@ -555,13 +555,13 @@ const SolicitacaoForm: React.FC<SolicitacaoFormProps> = ({
                         className="hidden"
                         onChange={handleFotoSelect}
                       />
-                      <div className="border-2 border-dashed border-white/15 rounded-lg p-4 flex items-center gap-3 hover:border-[#7D1F2C]/40 hover:bg-[#7D1F2C]/5 transition-all group">
-                        <div className="w-8 h-8 rounded-lg bg-white/8 flex items-center justify-center group-hover:bg-[#7D1F2C]/15 transition-all shrink-0">
-                          <Camera className="w-4 h-4 text-white/30 group-hover:text-[#7D1F2C]/80 transition-all" />
+                      <div className="border-2 border-dashed border-white/15 rounded-lg p-4 flex items-center gap-3 hover:border-wine/40 hover:bg-wine/5 transition-all group">
+                        <div className="w-8 h-8 rounded-lg bg-white/8 flex items-center justify-center group-hover:bg-wine/15 transition-all shrink-0">
+                          <Camera className="w-4 h-4 text-white/30 group-hover:text-wine/80 transition-all" />
                         </div>
                         <div>
-                          <p className="text-sm text-white/40 group-hover:text-white/60 transition-all font-medium">Adicionar fotos da situação</p>
-                          <p className="text-xs text-white/20">JPG, PNG, WEBP · máx. 10MB cada</p>
+                          <p className="text-sm text-white/60 group-hover:text-white/60 transition-all font-medium">Adicionar fotos da situação</p>
+                          <p className="text-xs text-white/60">JPG, PNG, WEBP · máx. 10MB cada</p>
                         </div>
                       </div>
                     </label>
@@ -582,7 +582,7 @@ const SolicitacaoForm: React.FC<SolicitacaoFormProps> = ({
                         </div>
                       ))}
                       {fotos.length < MAX_FOTOS && (
-                        <label className="aspect-square border-2 border-dashed border-white/10 rounded-lg flex items-center justify-center cursor-pointer hover:border-[#7D1F2C]/30 hover:bg-[#7D1F2C]/5 transition-all">
+                        <label className="aspect-square border-2 border-dashed border-white/10 rounded-lg flex items-center justify-center cursor-pointer hover:border-wine/30 hover:bg-wine/5 transition-all">
                           <input type="file" accept="image/*" multiple className="hidden" onChange={handleFotoSelect} />
                           <ImageIcon className="w-4 h-4 text-white/20" />
                         </label>
@@ -603,7 +603,7 @@ const SolicitacaoForm: React.FC<SolicitacaoFormProps> = ({
                 <button
                   onClick={() => setStep(2)}
                   disabled={!formData.titulo || !formData.descricao || !formData.tipo_solicitacao_id}
-                  className="px-4 py-2 bg-[#7D1F2C] text-white rounded-md hover:bg-[#6a1a25] disabled:opacity-50"
+                  className="px-4 py-2 bg-wine text-white rounded-md hover:bg-[#6a1a25] disabled:opacity-50"
                 >
                   Próximo: Detalhes Técnicos
                 </button>
@@ -626,7 +626,7 @@ const SolicitacaoForm: React.FC<SolicitacaoFormProps> = ({
                   <textarea
                     value={formData.detalhes_tecnicos}
                     onChange={(e) => setFormData({ ...formData, detalhes_tecnicos: e.target.value })}
-                    className="w-full rounded-md border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                    className="w-full rounded-md border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                     rows={3}
                     placeholder="Especificações técnicas, modelos, marcas preferidas, etc."
                   />
@@ -640,7 +640,7 @@ const SolicitacaoForm: React.FC<SolicitacaoFormProps> = ({
                     type="text"
                     value={formData.fornecedor_responsavel}
                     onChange={(e) => setFormData({ ...formData, fornecedor_responsavel: e.target.value })}
-                    className="w-full rounded-md border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                    className="w-full rounded-md border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                     placeholder="Nome do fornecedor"
                   />
                 </div>
@@ -653,7 +653,7 @@ const SolicitacaoForm: React.FC<SolicitacaoFormProps> = ({
                     type="text"
                     value={formData.contato_fornecedor}
                     onChange={(e) => setFormData({ ...formData, contato_fornecedor: e.target.value })}
-                    className="w-full rounded-md border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                    className="w-full rounded-md border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                     placeholder="Telefone ou email"
                   />
                 </div>
@@ -666,7 +666,7 @@ const SolicitacaoForm: React.FC<SolicitacaoFormProps> = ({
                     type="text"
                     value={formData.solicitante_nome}
                     onChange={(e) => setFormData({ ...formData, solicitante_nome: e.target.value })}
-                    className="w-full rounded-md border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                    className="w-full rounded-md border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                     required
                   />
                 </div>
@@ -679,7 +679,7 @@ const SolicitacaoForm: React.FC<SolicitacaoFormProps> = ({
                     type="email"
                     value={formData.solicitante_email}
                     onChange={(e) => setFormData({ ...formData, solicitante_email: e.target.value })}
-                    className="w-full rounded-md border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                    className="w-full rounded-md border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                   />
                 </div>
               </div>
@@ -693,7 +693,7 @@ const SolicitacaoForm: React.FC<SolicitacaoFormProps> = ({
                 </button>
                 <button
                   onClick={() => setStep(3)}
-                  className="px-4 py-2 bg-[#7D1F2C] text-white rounded-md hover:bg-[#6a1a25]"
+                  className="px-4 py-2 bg-wine text-white rounded-md hover:bg-[#6a1a25]"
                 >
                   {isAquisicao() ? 'Próximo: Itens' : 'Finalizar'}
                 </button>
@@ -744,7 +744,7 @@ const SolicitacaoForm: React.FC<SolicitacaoFormProps> = ({
                                 type="text"
                                 value={item.item_nome}
                                 onChange={(e) => atualizarItem(index, 'item_nome', e.target.value)}
-                                className="w-full text-sm rounded-md border-white/20 shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                                className="w-full text-sm rounded-md border-white/20 shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                                 required
                               />
                             </div>
@@ -759,7 +759,7 @@ const SolicitacaoForm: React.FC<SolicitacaoFormProps> = ({
                                 min="0.01"
                                 value={item.quantidade}
                                 onChange={(e) => atualizarItem(index, 'quantidade', parseFloat(e.target.value) || 1)}
-                                className="w-full text-sm rounded-md border-white/20 shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                                className="w-full text-sm rounded-md border-white/20 shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                               />
                             </div>
 
@@ -770,7 +770,7 @@ const SolicitacaoForm: React.FC<SolicitacaoFormProps> = ({
                               <select
                                 value={item.unidade_medida}
                                 onChange={(e) => atualizarItem(index, 'unidade_medida', e.target.value)}
-                                className="w-full text-sm rounded-md border-white/20 shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                                className="w-full text-sm rounded-md border-white/20 shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                               >
                                 {unidadesMedida.map((unidade) => (
                                   <option key={unidade} value={unidade}>
@@ -790,7 +790,7 @@ const SolicitacaoForm: React.FC<SolicitacaoFormProps> = ({
                                 min="0"
                                 value={item.valor_unitario_estimado}
                                 onChange={(e) => atualizarItem(index, 'valor_unitario_estimado', parseFloat(e.target.value) || 0)}
-                                className="w-full text-sm rounded-md border-white/20 shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                                className="w-full text-sm rounded-md border-white/20 shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                               />
                             </div>
 
@@ -802,7 +802,7 @@ const SolicitacaoForm: React.FC<SolicitacaoFormProps> = ({
                                 type="text"
                                 value={item.marca_sugerida}
                                 onChange={(e) => atualizarItem(index, 'marca_sugerida', e.target.value)}
-                                className="w-full text-sm rounded-md border-white/20 shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                                className="w-full text-sm rounded-md border-white/20 shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                                 placeholder="Marca/Modelo sugerido"
                               />
                             </div>
@@ -815,7 +815,7 @@ const SolicitacaoForm: React.FC<SolicitacaoFormProps> = ({
                                 type="text"
                                 value={item.fornecedor_sugerido}
                                 onChange={(e) => atualizarItem(index, 'fornecedor_sugerido', e.target.value)}
-                                className="w-full text-sm rounded-md border-white/20 shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                                className="w-full text-sm rounded-md border-white/20 shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                               />
                             </div>
 
@@ -826,7 +826,7 @@ const SolicitacaoForm: React.FC<SolicitacaoFormProps> = ({
                               <textarea
                                 value={item.especificacao_tecnica}
                                 onChange={(e) => atualizarItem(index, 'especificacao_tecnica', e.target.value)}
-                                className="w-full text-sm rounded-md border-white/20 shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                                className="w-full text-sm rounded-md border-white/20 shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                                 rows={2}
                                 placeholder="Especificações técnicas detalhadas..."
                               />
@@ -835,7 +835,7 @@ const SolicitacaoForm: React.FC<SolicitacaoFormProps> = ({
                             <div className="md:col-span-3 flex justify-end">
                               <div className="text-right">
                                 <span className="text-sm text-white/70">Valor Total:</span>
-                                <span className="ml-2 text-lg font-bold text-[#7D1F2C]">
+                                <span className="ml-2 text-lg font-bold text-wine">
                                   {new Intl.NumberFormat('pt-BR', {
                                     style: 'currency',
                                     currency: 'BRL'
@@ -850,7 +850,7 @@ const SolicitacaoForm: React.FC<SolicitacaoFormProps> = ({
                       <div className="flex justify-end pt-3 border-t border-white/10">
                         <div className="text-right">
                           <span className="text-sm text-white/70">Valor Total da Solicitação:</span>
-                          <span className="ml-2 text-xl font-bold text-[#7D1F2C]">
+                          <span className="ml-2 text-xl font-bold text-wine">
                             {new Intl.NumberFormat('pt-BR', {
                               style: 'currency',
                               currency: 'BRL'
@@ -865,7 +865,7 @@ const SolicitacaoForm: React.FC<SolicitacaoFormProps> = ({
                       <p className="text-white/50 mb-4">Nenhum item adicionado</p>
                       <button
                         onClick={adicionarItem}
-                        className="px-4 py-2 bg-[#7D1F2C] text-white rounded-lg hover:bg-[#6a1a25]"
+                        className="px-4 py-2 bg-wine text-white rounded-lg hover:bg-[#6a1a25]"
                       >
                         Adicionar Primeiro Item
                       </button>
@@ -900,7 +900,7 @@ const SolicitacaoForm: React.FC<SolicitacaoFormProps> = ({
                   <button
                     onClick={() => handleSave(false)}
                     disabled={loading || (!isAquisicao() ? false : formData.itens.length === 0)}
-                    className="px-4 py-2 bg-[#7D1F2C] text-white rounded-md hover:bg-[#6a1a25] disabled:opacity-50"
+                    className="px-4 py-2 bg-wine text-white rounded-md hover:bg-[#6a1a25] disabled:opacity-50"
                   >
                     {loading ? 'Enviando...' : 'Enviar Solicitação'}
                   </button>

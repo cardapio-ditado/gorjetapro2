@@ -30,10 +30,10 @@ const TIPOS = [
   { key: 'justa_causa', label: 'Justa Causa', icon: Ban, cls: 'bg-red-900/30 text-red-300 border-red-800/50' },
   { key: 'elogio', label: 'Elogio', icon: ThumbsUp, cls: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' },
   { key: 'reconhecimento', label: 'Reconhecimento', icon: Award, cls: 'bg-blue-500/20 text-blue-400 border-blue-500/30' },
-  { key: 'premio', label: 'Prêmio', icon: Award, cls: 'bg-[#D4AF37]/20 text-[#D4AF37] border-[#D4AF37]/30' },
+  { key: 'premio', label: 'Prêmio', icon: Award, cls: 'bg-gold/20 text-gold border-gold/30' },
 ];
 
-const inp = 'w-full bg-white/5 border border-white/15 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-[#7D1F2C]/60 focus:ring-1 focus:ring-[#7D1F2C]/40';
+const inp = 'w-full bg-white/5 border border-white/15 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-wine/60 focus:ring-1 focus:ring-wine/40';
 const sel = inp + ' appearance-none';
 
 const tipoCfg = (tipo: string) => TIPOS.find(t => t.key === tipo) ?? TIPOS[0];
@@ -199,8 +199,8 @@ export default function Disciplinar() {
                 </div>
                 <div className="flex items-center gap-3">
                   <div className="text-right">
-                    <p className="text-white/40 text-xs">{dayjs(r.data_ocorrencia).format('DD/MM/YYYY')}</p>
-                    {r.registrado_por && <p className="text-white/30 text-xs">por {r.registrado_por}</p>}
+                    <p className="text-white/60 text-xs">{dayjs(r.data_ocorrencia).format('DD/MM/YYYY')}</p>
+                    {r.registrado_por && <p className="text-white/60 text-xs">por {r.registrado_por}</p>}
                   </div>
                   {['advertencia_escrita', 'suspensao', 'justa_causa'].includes(r.tipo) && (
                     <button onClick={() => imprimir(r)} className="p-2 hover:bg-white/10 rounded-lg text-white/40 hover:text-white transition-all">
@@ -284,7 +284,7 @@ export default function Disciplinar() {
             <div className="p-6 border-t border-white/10 flex justify-end gap-3">
               <button onClick={() => setModal({ open: false })} className="px-4 py-2 rounded-xl text-white/60 hover:text-white hover:bg-white/5 text-sm transition-all">Cancelar</button>
               <button onClick={salvar} disabled={salvando || !form.colaborador_id || !form.motivo}
-                className="px-6 py-2 bg-[#7D1F2C] hover:bg-[#9b2535] text-white rounded-xl text-sm font-medium transition-all disabled:opacity-50">
+                className="px-6 py-2 bg-wine hover:bg-wine-light text-white rounded-xl text-sm font-medium transition-all disabled:opacity-50">
                 {salvando ? 'Salvando...' : 'Registrar'}
               </button>
             </div>

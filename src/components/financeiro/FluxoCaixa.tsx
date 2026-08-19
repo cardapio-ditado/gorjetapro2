@@ -3,6 +3,8 @@ import { Plus, Search, ArrowUpRight, ArrowDownRight, Download, FileText, DollarS
 import { supabase, testConnection } from '../../lib/supabase';
 import { ReportGenerator, exportToExcel } from '../../utils/reportGenerator';
 import dayjs from 'dayjs';
+import { EmptyState } from '../ui/EmptyState';
+import { TableSkeleton } from '../ui/Skeleton';
 import { SearchableSelect } from '../common/SearchableSelect';
 
 interface Transaction {
@@ -26,8 +28,8 @@ interface ContaBancaria { id: string; banco: string; tipo_conta: string; numero_
 const fmt = (v: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
 
 const S = {
-  card: '#12141f', border: 'rgba(255,255,255,0.06)', label: 'rgba(255,255,255,0.35)',
-  text: 'rgba(255,255,255,0.85)', muted: 'rgba(255,255,255,0.5)',
+  card: '#12141f', border: 'rgba(255,255,255,0.06)', label: 'var(--text-secondary)',
+  text: 'var(--text-primary)', muted: 'rgba(255,255,255,0.5)',
   green: '#4ade80', red: '#f87171', blue: '#60a5fa', gold: '#D4AF37',
   greenBg: 'rgba(74,222,128,0.08)', redBg: 'rgba(248,113,113,0.08)',
   blueBg: 'rgba(96,165,250,0.08)', goldBg: 'rgba(212,175,55,0.08)',
@@ -35,8 +37,8 @@ const S = {
   blueBorder: 'rgba(96,165,250,0.15)', goldBorder: 'rgba(212,175,55,0.15)',
   wine: '#7D1F2C', modalBg: '#0f1020',
 };
-const inputStyle: React.CSSProperties = { background: 'rgba(255,255,255,0.05)', border: `1px solid ${S.border}`, borderRadius: 8, padding: '7px 12px', color: S.text, fontSize: 12, outline: 'none', width: '100%', boxSizing: 'border-box' };
-const labelStyle: React.CSSProperties = { color: S.label, fontSize: 11, marginBottom: 4, display: 'block' };
+const inputStyle: React.CSSProperties = { background: 'rgba(255,255,255,0.05)', border: `1px solid ${S.border}`, borderRadius: 'var(--r-control)', padding: '9px 12px', color: S.text, fontSize: 'var(--fs-body)', outline: 'none', width: '100%', boxSizing: 'border-box' };
+const labelStyle: React.CSSProperties = { color: 'var(--text-secondary)', fontSize: 'var(--fs-label)', fontWeight: 600, marginBottom: 'var(--sp-1)', display: 'block' };
 const fieldStyle: React.CSSProperties = { display: 'flex', flexDirection: 'column', gap: 2 };
 
 const FluxoCaixa: React.FC = () => {
@@ -163,21 +165,21 @@ const FluxoCaixa: React.FC = () => {
     (t.centro_custo||'').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const modalOverlay: React.CSSProperties = { position:'fixed', inset:0, background:'rgba(0,0,0,0.75)', backdropFilter:'blur(4px)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:50, padding:16 };
-  const modalCard: React.CSSProperties = { background:S.modalBg, border:`1px solid ${S.border}`, borderRadius:16, padding:24, width:'100%', maxWidth:480, maxHeight:'90vh', overflowY:'auto' };
+  const modalOverlay: React.CSSProperties = { position:'fixed', inset:0, background:'rgba(0,0,0,0.75)', backdropFilter:'blur(4px)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:50, padding:'var(--sp-4)' };
+  const modalCard: React.CSSProperties = { background:S.modalBg, border:`1px solid ${S.border}`, borderRadius:'var(--r-modal)', padding:'var(--sp-6)', width:'100%', maxWidth:480, maxHeight:'90vh', overflowY:'auto' };
 
   return (
-    <div style={{ display:'flex', flexDirection:'column', gap:16, fontFamily:'-apple-system,BlinkMacSystemFont,"Inter",sans-serif' }}>
+    <div style={{ display:'flex', flexDirection:'column', gap:'var(--gap-section)' }}>
 
       {/* Header */}
-      <div style={{ display:'flex', justifyContent:'flex-end', gap:8 }}>
-        <button onClick={gerarRelatorioPDF} style={{ display:'flex', alignItems:'center', gap:6, background:'rgba(255,255,255,0.05)', border:`1px solid ${S.border}`, borderRadius:8, padding:'7px 14px', color:S.muted, fontSize:12, cursor:'pointer' }}>
+      <div style={{ display:'flex', justifyContent:'flex-end', gap:'var(--sp-2)', flexWrap:'wrap' }}>
+        <button onClick={gerarRelatorioPDF} className="btn-secondary" style={{ fontSize:'var(--fs-label)', padding:'8px 14px' }}>
           <FileText style={{ width:13, height:13 }} /> PDF
         </button>
-        <button onClick={exportData} style={{ display:'flex', alignItems:'center', gap:6, background:'rgba(255,255,255,0.05)', border:`1px solid ${S.border}`, borderRadius:8, padding:'7px 14px', color:S.muted, fontSize:12, cursor:'pointer' }}>
+        <button onClick={exportData} className="btn-secondary" style={{ fontSize:'var(--fs-label)', padding:'8px 14px' }}>
           <Download style={{ width:13, height:13 }} /> Excel
         </button>
-        <button onClick={()=>openForm()} style={{ display:'flex', alignItems:'center', gap:6, background:S.wine, border:'none', borderRadius:8, padding:'7px 14px', color:'white', fontSize:12, cursor:'pointer', fontWeight:500 }}>
+        <button onClick={()=>openForm()} className="btn-primary" style={{ fontSize:'var(--fs-label)', padding:'8px 14px' }}>
           <Plus style={{ width:13, height:13 }} /> Novo Lançamento
         </button>
       </div>
@@ -197,36 +199,36 @@ const FluxoCaixa: React.FC = () => {
         <>
           <div style={{ background:S.blueBg, border:`1px solid ${S.blueBorder}`, borderRadius:12, padding:'14px 18px', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
             <div>
-              <p style={{ color:'rgba(96,165,250,0.6)', fontSize:10, margin:'0 0 6px', textTransform:'uppercase', letterSpacing:'0.6px' }}>Saldo Anterior ao Período</p>
+              <p style={{ color:'rgba(96,165,250,0.6)', fontSize:'var(--fs-caption)', margin:'0 0 6px', textTransform:'uppercase', letterSpacing:'0.6px' }}>Saldo Anterior ao Período</p>
               <p style={{ color:S.blue, fontSize:26, fontWeight:800, margin:0, letterSpacing:'-0.5px' }}>{fmt(indicadores.saldo_anterior)}</p>
               <p style={{ color:'rgba(96,165,250,0.4)', fontSize:11, margin:'4px 0 0' }}>acumulado até {dayjs(dataInicial).subtract(1,'day').format('DD/MM/YYYY')}</p>
             </div>
             <TrendingUp style={{ width:32, height:32, color:'rgba(96,165,250,0.4)' }} />
           </div>
 
-          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:10 }}>
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(200px, 1fr))', gap:'var(--sp-3)' }}>
             <div style={{ background:S.greenBg, border:`1px solid ${S.greenBorder}`, borderRadius:12, padding:'14px 16px' }}>
-              <p style={{ color:'rgba(74,222,128,0.55)', fontSize:10, margin:'0 0 6px', textTransform:'uppercase', letterSpacing:'0.6px' }}>Entradas</p>
+              <p style={{ color:'rgba(74,222,128,0.55)', fontSize:'var(--fs-caption)', margin:'0 0 6px', textTransform:'uppercase', letterSpacing:'0.6px' }}>Entradas</p>
               <p style={{ color:S.green, fontSize:20, fontWeight:800, margin:'0 0 4px', letterSpacing:'-0.5px' }}>{fmt(indicadores.entradas_mes)}</p>
-              <p style={{ color:'rgba(74,222,128,0.4)', fontSize:10, margin:0 }}>{dayjs(dataInicial).format('DD/MM')} a {dayjs(dataFinal).format('DD/MM')}</p>
+              <p style={{ color:'rgba(74,222,128,0.4)', fontSize:'var(--fs-caption)', margin:0 }}>{dayjs(dataInicial).format('DD/MM')} a {dayjs(dataFinal).format('DD/MM')}</p>
             </div>
             <div style={{ background:S.redBg, border:`1px solid ${S.redBorder}`, borderRadius:12, padding:'14px 16px' }}>
-              <p style={{ color:'rgba(248,113,113,0.55)', fontSize:10, margin:'0 0 6px', textTransform:'uppercase', letterSpacing:'0.6px' }}>Saídas</p>
+              <p style={{ color:'rgba(248,113,113,0.55)', fontSize:'var(--fs-caption)', margin:'0 0 6px', textTransform:'uppercase', letterSpacing:'0.6px' }}>Saídas</p>
               <p style={{ color:S.red, fontSize:20, fontWeight:800, margin:'0 0 4px', letterSpacing:'-0.5px' }}>{fmt(indicadores.saidas_mes)}</p>
-              <p style={{ color:'rgba(248,113,113,0.4)', fontSize:10, margin:0 }}>{dayjs(dataInicial).format('DD/MM')} a {dayjs(dataFinal).format('DD/MM')}</p>
+              <p style={{ color:'rgba(248,113,113,0.4)', fontSize:'var(--fs-caption)', margin:0 }}>{dayjs(dataInicial).format('DD/MM')} a {dayjs(dataFinal).format('DD/MM')}</p>
             </div>
             <div style={{ background: indicadores.saldo_mes>=0?S.greenBg:S.redBg, border:`1px solid ${indicadores.saldo_mes>=0?S.greenBorder:S.redBorder}`, borderRadius:12, padding:'14px 16px' }}>
-              <p style={{ color: indicadores.saldo_mes>=0?'rgba(74,222,128,0.55)':'rgba(248,113,113,0.55)', fontSize:10, margin:'0 0 6px', textTransform:'uppercase', letterSpacing:'0.6px' }}>Resultado</p>
+              <p style={{ color: indicadores.saldo_mes>=0?'rgba(74,222,128,0.55)':'rgba(248,113,113,0.55)', fontSize:'var(--fs-caption)', margin:'0 0 6px', textTransform:'uppercase', letterSpacing:'0.6px' }}>Resultado</p>
               <p style={{ color: indicadores.saldo_mes>=0?S.green:S.red, fontSize:20, fontWeight:800, margin:'0 0 4px', letterSpacing:'-0.5px' }}>{indicadores.saldo_mes>=0?'+':''}{fmt(indicadores.saldo_mes)}</p>
-              <p style={{ color: indicadores.saldo_mes>=0?'rgba(74,222,128,0.4)':'rgba(248,113,113,0.4)', fontSize:10, margin:0 }}>período selecionado</p>
+              <p style={{ color: indicadores.saldo_mes>=0?'rgba(74,222,128,0.4)':'rgba(248,113,113,0.4)', fontSize:'var(--fs-caption)', margin:0 }}>período selecionado</p>
             </div>
           </div>
 
           <div style={{ background:S.goldBg, border:`1px solid ${S.goldBorder}`, borderRadius:12, padding:'14px 18px', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
             <div>
               <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:6 }}>
-                <p style={{ color:'rgba(212,175,55,0.6)', fontSize:10, margin:0, textTransform:'uppercase', letterSpacing:'0.6px' }}>Saldo Acumulado</p>
-                <span style={{ background:'rgba(212,175,55,0.15)', color:S.gold, fontSize:9, padding:'2px 8px', borderRadius:20, fontWeight:600 }}>TOTAL GERAL</span>
+                <p style={{ color:'rgba(212,175,55,0.6)', fontSize:'var(--fs-caption)', margin:0, textTransform:'uppercase', letterSpacing:'0.6px' }}>Saldo Acumulado</p>
+                <span style={{ background:'rgba(212,175,55,0.15)', color:S.gold, fontSize:'var(--fs-caption)', padding:'2px 8px', borderRadius:20, fontWeight:600 }}>TOTAL GERAL</span>
               </div>
               <p style={{ color:S.gold, fontSize:26, fontWeight:800, margin:0, letterSpacing:'-0.5px' }}>{fmt(indicadores.saldo_total)}</p>
               <p style={{ color:'rgba(212,175,55,0.4)', fontSize:11, margin:'4px 0 0' }}>posição em {dayjs(dataFinal).format('DD/MM/YYYY')}</p>
@@ -238,7 +240,7 @@ const FluxoCaixa: React.FC = () => {
           <div style={{ background:S.card, border:`1px solid ${S.border}`, borderRadius:12, padding:'14px 18px' }}>
             <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:12 }}>
               <Calculator style={{ width:14, height:14, color:S.label }} />
-              <p style={{ color:S.label, fontSize:10, margin:0, textTransform:'uppercase', letterSpacing:'0.6px', fontWeight:600 }}>Demonstrativo do Cálculo</p>
+              <p style={{ color:S.label, fontSize:'var(--fs-caption)', margin:0, textTransform:'uppercase', letterSpacing:'0.6px', fontWeight:600 }}>Demonstrativo do Cálculo</p>
             </div>
             <div style={{ display:'flex', flexDirection:'column', gap:4 }}>
               {[
@@ -248,12 +250,12 @@ const FluxoCaixa: React.FC = () => {
               ].map((r,i) => (
                 <div key={i} style={{ display:'flex', justifyContent:'space-between', background:'rgba(255,255,255,0.02)', padding:'8px 10px', borderRadius:7 }}>
                   <span style={{ color:S.label, fontSize:11 }}>{r.label}</span>
-                  <span style={{ color:r.color, fontWeight:700, fontSize:12, fontFamily:'monospace' }}>{r.value}</span>
+                  <span style={{ color:r.color, fontWeight:700, fontSize:12, fontFamily:'DM Mono, monospace', fontVariantNumeric:'tabular-nums' }}>{r.value}</span>
                 </div>
               ))}
               <div style={{ borderTop:`1px solid ${S.border}`, paddingTop:8, marginTop:2, display:'flex', justifyContent:'space-between', padding:'10px 10px 0' }}>
                 <span style={{ color:S.text, fontSize:13, fontWeight:600 }}>= Saldo Acumulado Final</span>
-                <span style={{ color:indicadores.saldo_total>=0?S.gold:S.red, fontWeight:800, fontSize:15, fontFamily:'monospace' }}>{fmt(indicadores.saldo_total)}</span>
+                <span style={{ color:indicadores.saldo_total>=0?S.gold:S.red, fontWeight:800, fontSize:15, fontFamily:'DM Mono, monospace', fontVariantNumeric:'tabular-nums' }}>{fmt(indicadores.saldo_total)}</span>
               </div>
             </div>
           </div>
@@ -261,25 +263,24 @@ const FluxoCaixa: React.FC = () => {
       )}
 
       {/* Filtros */}
-      <div style={{ background:S.card, borderRadius:12, padding:'12px 14px', border:`1px solid ${S.border}`, display:'grid', gridTemplateColumns:'2fr 1fr 1fr 1fr 1fr', gap:10 }}>
+      <div style={{ background:S.card, borderRadius:12, padding:'12px 14px', border:`1px solid ${S.border}`, display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(160px, 1fr))', gap:'var(--sp-3)' }}>
         <div style={{ position:'relative' }}>
           <Search style={{ position:'absolute', left:10, top:'50%', transform:'translateY(-50%)', width:13, height:13, color:S.label }} />
-          <input type="text" placeholder="Buscar transações..." value={searchTerm} onChange={e=>setSearchTerm(e.target.value)} style={{ ...inputStyle, paddingLeft:30 }} />
+          <input type="text" aria-label="Buscar transações por descrição ou centro de custo" placeholder="Buscar transações..." value={searchTerm} onChange={e=>setSearchTerm(e.target.value)} style={{ ...inputStyle, paddingLeft:30 }} />
         </div>
         <SearchableSelect options={[{value:'all',label:'Todos os Tipos'},{value:'entrada',label:'Entradas'},{value:'saida',label:'Saídas'}]} value={tipoFilter} onChange={v=>setTipoFilter(v as any)} placeholder="Tipo" theme="dark" />
         <SearchableSelect options={[{value:'all',label:'Todas as Contas'},...contasBancarias.map(c=>({value:c.id,label:`${c.banco} - ${c.tipo_conta}`}))]} value={contaBancariaFilter} onChange={v=>setContaBancariaFilter(v)} placeholder="Conta" theme="dark" />
-        <input type="date" value={dataInicial} onChange={e=>setDataInicial(e.target.value)} style={inputStyle} />
-        <input type="date" value={dataFinal} onChange={e=>setDataFinal(e.target.value)} style={inputStyle} />
+        <input type="date" aria-label="Data inicial do período" value={dataInicial} onChange={e=>setDataInicial(e.target.value)} style={inputStyle} />
+        <input type="date" aria-label="Data final do período" value={dataFinal} onChange={e=>setDataFinal(e.target.value)} style={inputStyle} />
       </div>
 
       {/* Extrato */}
       {loading ? (
-        <div style={{ display:'flex', justifyContent:'center', padding:48 }}>
-          <div style={{ width:32, height:32, borderRadius:'50%', border:`2px solid rgba(212,175,55,0.15)`, borderTop:`2px solid ${S.gold}`, animation:'spin 0.8s linear infinite' }} />
-          <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+        <div style={{ background:S.card, border:`1px solid ${S.border}`, borderRadius:'var(--r-card)', overflow:'hidden' }}>
+          <TableSkeleton rows={7} cols={[14,40,14,14,18]} />
         </div>
       ) : (
-        <div style={{ background:S.card, border:`1px solid ${S.border}`, borderRadius:12, overflow:'hidden' }}>
+        <div style={{ background:S.card, border:`1px solid ${S.border}`, borderRadius:'var(--r-card)', overflow:'hidden' }}>
           {/* Header da tabela */}
           <div style={{ background:`linear-gradient(135deg, ${S.wine} 0%, #5a1520 100%)`, padding:'14px 18px', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
             <div>
@@ -289,17 +290,17 @@ const FluxoCaixa: React.FC = () => {
               <p style={{ color:'rgba(255,255,255,0.45)', fontSize:11, margin:'2px 0 0' }}>Saldo acumulado progressivo</p>
             </div>
             <button onClick={()=>setOrdemVisualizacao(o=>o==='asc'?'desc':'asc')}
-              style={{ display:'flex', alignItems:'center', gap:5, background:'rgba(255,255,255,0.1)', border:'1px solid rgba(255,255,255,0.15)', borderRadius:8, padding:'6px 12px', color:'white', fontSize:11, cursor:'pointer' }}>
+              className="btn-secondary" style={{ fontSize:'var(--fs-label)', padding:'7px 12px', background:'rgba(255,255,255,0.12)', borderColor:'rgba(255,255,255,0.22)', color:'#fff' }}>
               <ArrowUpDown style={{ width:12, height:12 }} />
               {ordemVisualizacao==='asc'?'Mais antigas primeiro':'Mais recentes primeiro'}
             </button>
           </div>
           <div style={{ overflowX:'auto' }}>
-            <table style={{ width:'100%', borderCollapse:'collapse' }}>
+            <table style={{ width:'100%', borderCollapse:'collapse', minWidth:760 }}>
               <thead>
                 <tr style={{ background:'rgba(255,255,255,0.03)' }}>
                   {['Data','Descrição','Entrada (+)','Saída (−)','Saldo','Ações'].map((h,i) => (
-                    <th key={i} style={{ padding:'9px 14px', textAlign:i>=2&&i<5?'right':'left', fontSize:10, fontWeight:600, color:S.label, textTransform:'uppercase', letterSpacing:'0.6px', borderBottom:`1px solid ${S.border}`, whiteSpace:'nowrap', background:i===4?'rgba(212,175,55,0.05)':'transparent' }}>{h}</th>
+                    <th key={i} className="t-caps" style={{ padding:'var(--sp-3) var(--sp-4)', textAlign:i>=2&&i<5?'right':'left', color:'var(--text-secondary)', borderBottom:'1px solid var(--border-strong)', whiteSpace:'nowrap', background:i===4?'rgba(212,175,55,0.05)':'rgba(255,255,255,0.02)' }}>{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -310,7 +311,7 @@ const FluxoCaixa: React.FC = () => {
                     onMouseLeave={e=>(e.currentTarget as HTMLElement).style.background=i%2===0?'transparent':'rgba(255,255,255,0.01)'}>
                     <td style={{ padding:'9px 14px', whiteSpace:'nowrap' }}>
                       <p style={{ color:S.text, fontSize:12, fontWeight:500, margin:0 }}>{dayjs(t.data).format('DD/MM/YYYY')}</p>
-                      <p style={{ color:S.label, fontSize:10, margin:0 }}>{dayjs(t.data).format('ddd')}</p>
+                      <p style={{ color:S.label, fontSize:'var(--fs-caption)', margin:0 }}>{dayjs(t.data).format('ddd')}</p>
                     </td>
                     <td style={{ padding:'9px 14px' }}>
                       <div style={{ display:'flex', alignItems:'flex-start', gap:8 }}>
@@ -319,25 +320,25 @@ const FluxoCaixa: React.FC = () => {
                           : <ArrowDownRight style={{ width:14, height:14, color:S.red, flexShrink:0, marginTop:1 }} />}
                         <div>
                           <p style={{ color:S.text, fontSize:12, fontWeight:500, margin:0 }}>{t.descricao}</p>
-                          {t.observacoes && <p style={{ color:S.label, fontSize:10, margin:0 }}>{t.observacoes}</p>}
+                          {t.observacoes && <p style={{ color:S.label, fontSize:'var(--fs-caption)', margin:0 }}>{t.observacoes}</p>}
                         </div>
                       </div>
                     </td>
                     <td style={{ padding:'9px 14px', textAlign:'right', whiteSpace:'nowrap' }}>
-                      {t.tipo==='entrada' ? <span style={{ color:S.green, fontWeight:700, fontSize:12, fontFamily:'monospace' }}>{fmt(t.valor)}</span> : <span style={{ color:'rgba(255,255,255,0.15)', fontSize:12 }}>—</span>}
+                      {t.tipo==='entrada' ? <span className="num" style={{ color:S.green, fontWeight:700, fontSize:'var(--fs-body)' }}>{fmt(t.valor)}</span> : <span style={{ color:'rgba(255,255,255,0.15)', fontSize:12 }}>—</span>}
                     </td>
                     <td style={{ padding:'9px 14px', textAlign:'right', whiteSpace:'nowrap' }}>
-                      {t.tipo==='saida' ? <span style={{ color:S.red, fontWeight:700, fontSize:12, fontFamily:'monospace' }}>{fmt(t.valor)}</span> : <span style={{ color:'rgba(255,255,255,0.15)', fontSize:12 }}>—</span>}
+                      {t.tipo==='saida' ? <span className="num" style={{ color:S.red, fontWeight:700, fontSize:'var(--fs-body)' }}>{fmt(t.valor)}</span> : <span style={{ color:'rgba(255,255,255,0.15)', fontSize:12 }}>—</span>}
                     </td>
                     <td style={{ padding:'9px 14px', textAlign:'right', whiteSpace:'nowrap', background:'rgba(212,175,55,0.04)' }}>
-                      <span style={{ color:(t.saldo_acumulado||0)>=0?S.gold:S.red, fontWeight:800, fontSize:12, fontFamily:'monospace' }}>{fmt(t.saldo_acumulado||0)}</span>
+                      <span className="num" style={{ color:(t.saldo_acumulado||0)>=0?S.gold:S.red, fontWeight:800, fontSize:'var(--fs-body)' }}>{fmt(t.saldo_acumulado||0)}</span>
                     </td>
                     <td style={{ padding:'9px 14px', whiteSpace:'nowrap' }}>
                       <div style={{ display:'flex', gap:6, justifyContent:'center' }}>
-                        <button onClick={()=>openForm(t)} title="Editar" style={{ background:'rgba(96,165,250,0.1)', border:`1px solid rgba(96,165,250,0.2)`, borderRadius:6, padding:'4px 6px', cursor:'pointer', color:S.blue }}>
+                        <button onClick={()=>openForm(t)} className="btn-icon btn-icon-accent" aria-label={`Editar lançamento: ${t.descricao}`} title="Editar" style={{ color:S.blue }}>
                           <Edit style={{ width:12, height:12 }} />
                         </button>
-                        <button onClick={()=>handleDelete(t.id)} title="Excluir" style={{ background:S.redBg, border:`1px solid ${S.redBorder}`, borderRadius:6, padding:'4px 6px', cursor:'pointer', color:S.red }}>
+                        <button onClick={()=>handleDelete(t.id)} className="btn-icon btn-icon-danger" aria-label={`Excluir lançamento: ${t.descricao}`} title="Excluir" style={{ color:S.red }}>
                           <Trash2 style={{ width:12, height:12 }} />
                         </button>
                       </div>
@@ -345,11 +346,37 @@ const FluxoCaixa: React.FC = () => {
                   </tr>
                 ))}
               </tbody>
+              {/* Linha de total — soma o que esta visivel apos os filtros. */}
+              {filteredTransactions.length>0 && (
+                <tfoot>
+                  <tr style={{ borderTop:'2px solid var(--gold)', background:'rgba(212,175,55,0.06)' }}>
+                    <td className="t-caps" colSpan={2} style={{ padding:'var(--sp-4)', color:'var(--text-primary)' }}>
+                      Total do período · {filteredTransactions.length} {filteredTransactions.length===1?'lançamento':'lançamentos'}
+                    </td>
+                    <td className="num num-total" style={{ padding:'var(--sp-4)', color:S.green, whiteSpace:'nowrap' }}>
+                      {fmt(filteredTransactions.filter(t=>t.tipo==='entrada').reduce((a,t)=>a+Number(t.valor||0),0))}
+                    </td>
+                    <td className="num num-total" style={{ padding:'var(--sp-4)', color:S.red, whiteSpace:'nowrap' }}>
+                      {fmt(filteredTransactions.filter(t=>t.tipo==='saida').reduce((a,t)=>a+Number(t.valor||0),0))}
+                    </td>
+                    <td className="num num-total" style={{ padding:'var(--sp-4)', color:'var(--gold)', background:'rgba(212,175,55,0.05)', whiteSpace:'nowrap' }}>
+                      {fmt(filteredTransactions[filteredTransactions.length-1]?.saldo_acumulado||0)}
+                    </td>
+                    <td />
+                  </tr>
+                </tfoot>
+              )}
             </table>
             {filteredTransactions.length===0 && (
-              <div style={{ textAlign:'center', padding:48, color:S.label, fontSize:13 }}>
-                {searchTerm||tipoFilter!=='all'||contaBancariaFilter!=='all' ? 'Nenhuma transação corresponde aos filtros.' : 'Nenhuma transação no período.'}
-              </div>
+              (searchTerm||tipoFilter!=='all'||contaBancariaFilter!=='all'
+                ? <EmptyState icon={Search} variant="filtered"
+                    title="Nenhuma transação encontrada"
+                    description="Nenhum lançamento corresponde aos filtros aplicados. Limpe os filtros para ver o período inteiro."
+                    action={{ label:'Limpar filtros', onClick:()=>{setSearchTerm('');setTipoFilter('all');setContaBancariaFilter('all');} }} />
+                : <EmptyState icon={FileText}
+                    title="Nenhuma transação no período"
+                    description="Não há entradas nem saídas registradas entre as datas selecionadas."
+                    action={{ label:'Novo lançamento', onClick:()=>openForm() }} />)
             )}
           </div>
         </div>
@@ -360,7 +387,7 @@ const FluxoCaixa: React.FC = () => {
         <div style={modalOverlay}>
           <div style={modalCard}>
             <h3 style={{ color:S.text, fontSize:15, fontWeight:700, margin:'0 0 18px' }}>{editingTransaction?'Editar Lançamento':'Novo Lançamento'}</h3>
-            <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
+            <div style={{ display:'flex', flexDirection:'column', gap:'var(--gap-row)' }}>
               <div style={fieldStyle}>
                 <label style={labelStyle}>Tipo *</label>
                 <select value={formData.tipo} onChange={e=>setFormData({...formData,tipo:e.target.value as any})} disabled={!!editingTransaction}
@@ -413,14 +440,14 @@ const FluxoCaixa: React.FC = () => {
                   <span>Upload de comprovante</span>
                   <input type="file" style={{ display:'none' }} onChange={handleFileUpload} accept=".pdf,.jpg,.jpeg,.png" />
                 </label>
-                <p style={{ color:S.label, fontSize:10, margin:'4px 0 0' }}>PDF ou imagem até 10MB</p>
-                {formData.comprovante && <p style={{ color:S.green, fontSize:10, margin:'4px 0 0' }}>✓ Arquivo carregado</p>}
+                <p style={{ color:S.label, fontSize:'var(--fs-caption)', margin:'4px 0 0' }}>PDF ou imagem até 10MB</p>
+                {formData.comprovante && <p style={{ color:S.green, fontSize:'var(--fs-caption)', margin:'4px 0 0' }}>✓ Arquivo carregado</p>}
               </div>
             </div>
             <div style={{ display:'flex', justifyContent:'flex-end', gap:8, marginTop:20 }}>
-              <button onClick={()=>setShowForm(false)} style={{ background:'rgba(255,255,255,0.05)', border:`1px solid ${S.border}`, borderRadius:8, padding:'8px 16px', color:S.muted, fontSize:12, cursor:'pointer' }}>Cancelar</button>
+              <button onClick={()=>setShowForm(false)} className="btn-secondary" style={{ fontSize:'var(--fs-label)' }}>Cancelar</button>
               <button onClick={handleSave} disabled={loading||!formData.descricao||!formData.valor||formData.valor<=0}
-                style={{ background:S.wine, border:'none', borderRadius:8, padding:'8px 16px', color:'white', fontSize:12, cursor:'pointer', fontWeight:500, opacity:loading||!formData.descricao||!formData.valor?0.5:1 }}>
+                className="btn-primary" style={{ fontSize:'var(--fs-label)' }}>
                 {loading?'Salvando...':'Salvar'}
               </button>
             </div>

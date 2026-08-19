@@ -27,7 +27,7 @@ const statusColors: Record<string, string> = {
   a_pagar:    "bg-blue-500/15 text-blue-400 border-blue-500/30",
 };
 const StatusBadge = ({ status }: { status: string }) => (
-  <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold border ${statusColors[status] ?? "bg-white/10 text-white/60 border-white/20"}`}>
+  <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-caption font-semibold border ${statusColors[status] ?? "bg-white/10 text-white/60 border-white/20"}`}>
     {status.replace(/_/g, " ")}
   </span>
 );
@@ -89,13 +89,13 @@ const TableWrapper = ({ children }: { children: React.ReactNode }) => (
 );
 
 const Th = ({ children, right }: { children: React.ReactNode; right?: boolean }) => (
-  <th className={`px-4 py-3 text-[11px] font-bold uppercase tracking-wide text-white/60 bg-white/5 border-b border-white/10 ${right ? "text-right" : "text-left"}`}>
+  <th className={`px-4 py-3 text-caption font-bold uppercase tracking-wide text-white/60 bg-white/5 border-b border-white/10 ${right ? "text-right" : "text-left"}`}>
     {children}
   </th>
 );
 
 const Td = ({ children, right, muted }: { children: React.ReactNode; right?: boolean; muted?: boolean }) => (
-  <td className={`px-4 py-3 border-b border-white/5 ${right ? "text-right" : ""} ${muted ? "text-white/40 text-xs" : "text-white/90"}`}>
+  <td className={`px-4 py-3 border-b border-white/5 ${right ? "text-right" : ""} ${muted ? "text-white/60 text-xs" : "text-white/90"}`}>
     {children}
   </td>
 );
@@ -153,7 +153,7 @@ const AbaColaboradores = () => {
   return (
     <div className="space-y-5">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <KPI label="Total"        value={dados.length} icon={Users}      color="bg-[#7D1F2C]/10 text-[#7D1F2C]" />
+        <KPI label="Total"        value={dados.length} icon={Users}      color="bg-wine/10 text-wine" />
         <KPI label="Ativos"       value={ativos}       icon={TrendingUp}  color="bg-emerald-50 text-emerald-600" />
         <KPI label="CLT"          value={clt}          icon={FileText}    color="bg-blue-50 text-blue-600" />
         <KPI label="Freelancers"  value={freelance}    icon={UserPlus}    color="bg-orange-50 text-orange-600" />
@@ -164,7 +164,7 @@ const AbaColaboradores = () => {
           <div className="flex gap-2 flex-wrap">
             {["todos", "ativo", "inativo", "afastado"].map(s => (
               <button key={s} onClick={() => setFiltroStatus(s)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${filtroStatus === s ? "bg-[#7D1F2C] text-white" : "bg-white/10 text-white/70 hover:bg-white/20"}`}>
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${filtroStatus === s ? "bg-wine text-white" : "bg-white/10 text-white/70 hover:bg-white/20"}`}>
                 {s === "todos" ? "Todos" : s.charAt(0).toUpperCase() + s.slice(1)}
               </button>
             ))}
@@ -173,7 +173,7 @@ const AbaColaboradores = () => {
             <div className="relative">
               <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-white/40" />
               <input value={busca} onChange={e => setBusca(e.target.value)} placeholder="Buscar..."
-                className="pl-9 pr-3 py-1.5 border border-white/20 rounded-lg text-sm text-white placeholder-white/40 bg-white/5 focus:outline-none focus:border-[#7D1F2C]/50 w-52" />
+                className="pl-9 pr-3 py-1.5 border border-white/20 rounded-lg text-sm text-white placeholder-white/40 bg-white/5 focus:outline-none focus:border-wine/50 w-52" />
             </div>
             <button onClick={() => exportCSV("colaboradores.csv", csvRows)}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white/10 text-white/70 hover:bg-white/20 transition-all">
@@ -182,7 +182,7 @@ const AbaColaboradores = () => {
           </div>
         </div>
 
-        {loading ? <p className="text-center py-10 text-white/40 text-sm">Carregando...</p> : (
+        {loading ? <p className="text-center py-10 text-white/60 text-sm">Carregando...</p> : (
           <TableWrapper>
             <thead>
               <tr>
@@ -269,12 +269,12 @@ const AbaOcorrencias = () => {
             <div>
               <label className="text-xs text-gray-500 block mb-1">De</label>
               <input type="date" value={dtInicio} onChange={e => setDtInicio(e.target.value)}
-                className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-[#7D1F2C]/50" />
+                className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-wine/50" />
             </div>
             <div>
               <label className="text-xs text-gray-500 block mb-1">Até</label>
               <input type="date" value={dtFim} onChange={e => setDtFim(e.target.value)}
-                className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-[#7D1F2C]/50" />
+                className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-wine/50" />
             </div>
             <button onClick={load} className="mt-4 p-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-all">
               <RefreshCw className="w-4 h-4 text-gray-600" />
@@ -292,7 +292,7 @@ const AbaOcorrencias = () => {
           </div>
         </div>
 
-        {loading ? <p className="text-center py-10 text-white/40 text-sm">Carregando...</p> : (
+        {loading ? <p className="text-center py-10 text-white/60 text-sm">Carregando...</p> : (
           <TableWrapper>
             <thead>
               <tr>
@@ -310,8 +310,8 @@ const AbaOcorrencias = () => {
                     <Td><span className="text-xs font-medium text-white/70">{d.tipo_ocorrencia.replace(/_/g, " ")}</span></Td>
                     <Td><span className="text-xs text-white/60 line-clamp-2 max-w-xs">{d.descricao}</span></Td>
                     <Td><StatusBadge status={d.status} /></Td>
-                    <Td right>{d.valor_vale ? <span className="font-semibold text-orange-400">{fmtR(d.valor_vale)}</span> : <span className="text-white/30">—</span>}</Td>
-                    <Td right>{d.dias_afastamento ? <span className="font-semibold text-red-400">{d.dias_afastamento}d</span> : <span className="text-white/30">—</span>}</Td>
+                    <Td right>{d.valor_vale ? <span className="font-semibold text-orange-400">{fmtR(d.valor_vale)}</span> : <span className="text-white/60">—</span>}</Td>
+                    <Td right>{d.dias_afastamento ? <span className="font-semibold text-red-400">{d.dias_afastamento}d</span> : <span className="text-white/60">—</span>}</Td>
                   </tr>
                 ))
               }
@@ -360,7 +360,7 @@ const AbaFerias = () => {
   return (
     <div className="space-y-5">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <KPI label="Total registros" value={dados.length}  icon={Umbrella}  color="bg-[#7D1F2C]/10 text-[#7D1F2C]" />
+        <KPI label="Total registros" value={dados.length}  icon={Umbrella}  color="bg-wine/10 text-wine" />
         <KPI label="Aprovadas"       value={agendadas}     icon={Calendar}  color="bg-emerald-50 text-emerald-600" />
         <KPI label="Pendentes"       value={pendentes}     icon={AlertTriangle} color="bg-yellow-50 text-yellow-600" />
         <KPI label="Dias (filtro)"   value={totalDias}     icon={TrendingUp} color="bg-blue-50 text-blue-600" />
@@ -371,7 +371,7 @@ const AbaFerias = () => {
           <div className="flex gap-2 flex-wrap">
             {["todos", "aprovado", "pendente", "rejeitado", "cancelado"].map(s => (
               <button key={s} onClick={() => setFiltroStatus(s)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${filtroStatus === s ? "bg-[#7D1F2C] text-white" : "bg-white/10 text-white/70 hover:bg-white/20"}`}>
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${filtroStatus === s ? "bg-wine text-white" : "bg-white/10 text-white/70 hover:bg-white/20"}`}>
                 {s === "todos" ? "Todas" : s.charAt(0).toUpperCase() + s.slice(1)}
               </button>
             ))}
@@ -382,7 +382,7 @@ const AbaFerias = () => {
           </button>
         </div>
 
-        {loading ? <p className="text-center py-10 text-white/40 text-sm">Carregando...</p> : (
+        {loading ? <p className="text-center py-10 text-white/60 text-sm">Carregando...</p> : (
           <TableWrapper>
             <thead>
               <tr><Th>Colaborador</Th><Th>Início</Th><Th>Fim</Th><Th right>Dias</Th><Th>Status</Th><Th>Observações</Th></tr>
@@ -451,7 +451,7 @@ const AbaAvaliacoes = () => {
   return (
     <div className="space-y-5">
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-        <KPI label="Total avaliações"  value={dados.length}           icon={Star}     color="bg-[#7D1F2C]/10 text-[#7D1F2C]" />
+        <KPI label="Total avaliações"  value={dados.length}           icon={Star}     color="bg-wine/10 text-wine" />
         <KPI label="Nota média"        value={media.toFixed(1)}       icon={TrendingUp} color="bg-emerald-50 text-emerald-600" />
         <KPI label="Concluídas"        value={dados.filter(d => d.status === "concluida" || d.status === "aprovado").length} icon={FileText} color="bg-blue-50 text-blue-600" />
       </div>
@@ -465,7 +465,7 @@ const AbaAvaliacoes = () => {
           </button>
         </div>
 
-        {loading ? <p className="text-center py-10 text-white/40 text-sm">Carregando...</p> : (
+        {loading ? <p className="text-center py-10 text-white/60 text-sm">Carregando...</p> : (
           <TableWrapper>
             <thead>
               <tr><Th>Colaborador</Th><Th>Data</Th><Th>Tipo</Th><Th>Avaliador</Th><Th right>Nota</Th><Th>Resultado</Th><Th>Status</Th></tr>
@@ -556,7 +556,7 @@ const AbaDISC = () => {
           </button>
         </div>
 
-        {loading ? <p className="text-center py-10 text-white/40 text-sm">Carregando...</p> : (
+        {loading ? <p className="text-center py-10 text-white/60 text-sm">Carregando...</p> : (
           <TableWrapper>
             <thead>
               <tr><Th>Colaborador</Th><Th>Data</Th><Th>Perfil</Th><Th right>D%</Th><Th right>I%</Th><Th right>S%</Th><Th right>C%</Th></tr>
@@ -578,7 +578,7 @@ const AbaDISC = () => {
                       <Td key={i} right>
                         <div className="flex items-center justify-end gap-1.5">
                           <div className="w-16 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                            <div className="h-full bg-[#7D1F2C] rounded-full" style={{ width: `${sc}%` }} />
+                            <div className="h-full bg-wine rounded-full" style={{ width: `${sc}%` }} />
                           </div>
                           <span className="text-xs font-semibold text-white/70 w-8">{sc}%</span>
                         </div>
@@ -632,7 +632,7 @@ const AbaExtras = () => {
   return (
     <div className="space-y-5">
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-        <KPI label="Extras no período"  value={dados.length}   icon={UserPlus}  color="bg-[#7D1F2C]/10 text-[#7D1F2C]" />
+        <KPI label="Extras no período"  value={dados.length}   icon={UserPlus}  color="bg-wine/10 text-wine" />
         <KPI label="Total pago"         value={fmtR(totalPago)} icon={FileText} color="bg-emerald-50 text-emerald-600" />
         <KPI label="A pagar"            value={fmtR(aPagar)}   icon={AlertTriangle} color="bg-orange-50 text-orange-600" />
       </div>
@@ -643,12 +643,12 @@ const AbaExtras = () => {
             <div>
               <label className="text-xs text-gray-500 block mb-1">De</label>
               <input type="date" value={dtInicio} onChange={e => setDtInicio(e.target.value)}
-                className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-[#7D1F2C]/50" />
+                className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-wine/50" />
             </div>
             <div>
               <label className="text-xs text-gray-500 block mb-1">Até</label>
               <input type="date" value={dtFim} onChange={e => setDtFim(e.target.value)}
-                className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-[#7D1F2C]/50" />
+                className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-wine/50" />
             </div>
             <button onClick={load} className="mt-4 p-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-all">
               <RefreshCw className="w-4 h-4 text-gray-600" />
@@ -660,7 +660,7 @@ const AbaExtras = () => {
           </button>
         </div>
 
-        {loading ? <p className="text-center py-10 text-white/40 text-sm">Carregando...</p> : (
+        {loading ? <p className="text-center py-10 text-white/60 text-sm">Carregando...</p> : (
           <TableWrapper>
             <thead>
               <tr><Th>Nome</Th><Th>Função</Th><Th>Data</Th><Th>Setor</Th><Th right>Diária</Th><Th>Pagamento</Th></tr>
@@ -721,7 +721,7 @@ const RelatoriosRH: React.FC = () => {
             onClick={() => setAba(a.key)}
             className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-semibold rounded-t-lg border-b-2 transition-all ${
               aba === a.key
-                ? "border-[#7D1F2C] text-[#7D1F2C] bg-[#7D1F2C]/5"
+                ? "border-wine text-wine bg-wine/5"
                 : "border-transparent text-white/60 hover:text-white/80 hover:bg-white/5"
             }`}
           >

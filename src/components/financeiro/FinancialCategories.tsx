@@ -262,7 +262,7 @@ const FinancialCategories: React.FC = () => {
         <h3 className="text-lg font-medium text-white">Categorias Financeiras</h3>
         <button
           onClick={() => openForm()}
-          className="px-4 py-2 bg-[#7D1F2C] text-white rounded-lg hover:bg-[#6a1a25]"
+          className="px-4 py-2 bg-wine text-white rounded-lg hover:bg-[#6a1a25]"
         >
           <Plus className="w-4 h-4 inline mr-2" />
           Nova Categoria
@@ -285,7 +285,7 @@ const FinancialCategories: React.FC = () => {
               placeholder="Buscar categorias..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/20 rounded-lg text-white placeholder-white/40 focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+              className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/20 rounded-lg text-white placeholder-white/40 focus:ring-2 focus:ring-wine focus:border-wine"
             />
           </div>
         </div>
@@ -315,8 +315,14 @@ const FinancialCategories: React.FC = () => {
 
       {/* Categories Tree */}
       {loading ? (
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7D1F2C]"></div>
+        <div className="w-full">
+          <div className="w-full space-y-3" aria-busy="true">
+                    <div className="skeleton" style={{ height: 14, width: '32%' }} />
+                    <div className="skeleton" style={{ height: 44, width: '100%' }} />
+                    <div className="skeleton" style={{ height: 44, width: '100%' }} />
+                    <div className="skeleton" style={{ height: 44, width: '100%' }} />
+                    <div className="skeleton" style={{ height: 44, width: '82%' }} />
+                  </div>
         </div>
       ) : (
         <div className="bg-[#12141f] rounded-lg border border-white/10">
@@ -371,7 +377,7 @@ const FinancialCategories: React.FC = () => {
                       <div className="flex space-x-2">
                         <button
                           onClick={() => openForm(category)}
-                          className="text-[#7D1F2C] hover:text-[#6a1a25]"
+                          className="text-wine hover:text-[#6a1a25]"
                           title="Editar"
                         >
                           <Edit className="w-4 h-4" />
@@ -417,7 +423,7 @@ const FinancialCategories: React.FC = () => {
                   type="text"
                   value={formData.nome}
                   onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
-                  className="w-full rounded-md bg-white/5 border border-white/20 text-white focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                  className="w-full rounded-md bg-white/5 border border-white/20 text-white focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                   required
                 />
               </div>
@@ -429,7 +435,7 @@ const FinancialCategories: React.FC = () => {
                 <select
                   value={formData.tipo}
                   onChange={(e) => setFormData({ ...formData, tipo: e.target.value as 'receita' | 'despesa', categoria_pai_id: '' })}
-                  className="w-full rounded-md bg-white/5 border border-white/20 text-white focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                  className="w-full rounded-md bg-white/5 border border-white/20 text-white focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                   required
                 >
                   <option value="receita">Receita</option>
@@ -444,7 +450,7 @@ const FinancialCategories: React.FC = () => {
                 <select
                   value={formData.categoria_pai_id}
                   onChange={(e) => setFormData({ ...formData, categoria_pai_id: e.target.value })}
-                  className="w-full rounded-md bg-white/5 border border-white/20 text-white focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                  className="w-full rounded-md bg-white/5 border border-white/20 text-white focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                 >
                   <option value="">Categoria Principal</option>
                   {getParentCategories().map((cat) => (
@@ -462,7 +468,7 @@ const FinancialCategories: React.FC = () => {
                 <textarea
                   value={formData.descricao}
                   onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
-                  className="w-full rounded-md bg-white/5 border border-white/20 text-white focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                  className="w-full rounded-md bg-white/5 border border-white/20 text-white focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                   rows={3}
                 />
               </div>
@@ -475,7 +481,7 @@ const FinancialCategories: React.FC = () => {
                   type="number"
                   value={formData.ordem}
                   onChange={(e) => setFormData({ ...formData, ordem: parseInt(e.target.value) || 0 })}
-                  className="w-full rounded-md bg-white/5 border border-white/20 text-white focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                  className="w-full rounded-md bg-white/5 border border-white/20 text-white focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                 />
               </div>
 
@@ -486,7 +492,7 @@ const FinancialCategories: React.FC = () => {
                 <select
                   value={formData.status}
                   onChange={(e) => setFormData({ ...formData, status: e.target.value as 'ativo' | 'inativo' })}
-                  className="w-full rounded-md bg-white/5 border border-white/20 text-white focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                  className="w-full rounded-md bg-white/5 border border-white/20 text-white focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                 >
                   <option value="ativo">Ativo</option>
                   <option value="inativo">Inativo</option>
@@ -504,7 +510,7 @@ const FinancialCategories: React.FC = () => {
               <button
                 onClick={handleSave}
                 disabled={loading || !formData.nome}
-                className="px-4 py-2 bg-[#7D1F2C] text-white rounded-md hover:bg-[#6a1a25] disabled:opacity-50"
+                className="px-4 py-2 bg-wine text-white rounded-md hover:bg-[#6a1a25] disabled:opacity-50"
               >
                 {loading ? 'Salvando...' : 'Salvar'}
               </button>

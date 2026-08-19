@@ -786,7 +786,7 @@ const FichasTecnicas: React.FC = () => {
           </button>
           <button
             onClick={() => openForm()}
-            className="px-4 py-2 bg-[#7D1F2C] text-white rounded-lg hover:bg-[#6a1a25]"
+            className="px-4 py-2 bg-wine text-white rounded-lg hover:bg-[#6a1a25]"
           >
             <Plus className="w-4 h-4 inline mr-2" />
             Nova Ficha
@@ -894,7 +894,7 @@ const FichasTecnicas: React.FC = () => {
                 placeholder="Buscar fichas..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-white/20 rounded-lg bg-white/5 text-white focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+                className="w-full pl-10 pr-4 py-2 border border-white/20 rounded-lg bg-white/5 text-white focus:ring-2 focus:ring-wine focus:border-wine"
               />
             </div>
           </div>
@@ -903,7 +903,7 @@ const FichasTecnicas: React.FC = () => {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value as any)}
-              className="w-full border border-white/20 rounded-lg px-4 py-2 bg-white/5 text-white focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+              className="w-full border border-white/20 rounded-lg px-4 py-2 bg-white/5 text-white focus:ring-2 focus:ring-wine focus:border-wine"
             >
               <option value="all">Todos os Status</option>
               <option value="ativo">Ativo</option>
@@ -915,7 +915,7 @@ const FichasTecnicas: React.FC = () => {
             <select
               value={custoFilter}
               onChange={(e) => setCustoFilter(e.target.value as any)}
-              className="w-full border border-white/20 rounded-lg px-4 py-2 bg-white/5 text-white focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+              className="w-full border border-white/20 rounded-lg px-4 py-2 bg-white/5 text-white focus:ring-2 focus:ring-wine focus:border-wine"
             >
               <option value="all">Todos os Custos</option>
               <option value="com_custo">Com Custo</option>
@@ -926,7 +926,7 @@ const FichasTecnicas: React.FC = () => {
           <div>
             <button
               onClick={fetchData}
-              className="w-full px-4 py-2 bg-[#7D1F2C] text-white rounded-md hover:bg-[#6a1a25]"
+              className="w-full px-4 py-2 bg-wine text-white rounded-md hover:bg-[#6a1a25]"
             >
               <Filter className="w-4 h-4 inline mr-2" />
               Filtrar
@@ -937,8 +937,14 @@ const FichasTecnicas: React.FC = () => {
 
       {/* Lista de Fichas */}
       {loading ? (
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7D1F2C]"></div>
+        <div className="w-full">
+          <div className="w-full space-y-3" aria-busy="true">
+                    <div className="skeleton" style={{ height: 14, width: '32%' }} />
+                    <div className="skeleton" style={{ height: 44, width: '100%' }} />
+                    <div className="skeleton" style={{ height: 44, width: '100%' }} />
+                    <div className="skeleton" style={{ height: 44, width: '100%' }} />
+                    <div className="skeleton" style={{ height: 44, width: '82%' }} />
+                  </div>
         </div>
       ) : (
         <div className="bg-[#12141f] rounded-lg border border-white/10 overflow-hidden">
@@ -946,25 +952,25 @@ const FichasTecnicas: React.FC = () => {
             <table className="w-full">
               <thead>
                 <tr className="text-left bg-white/5 border-b">
-                  <th className="px-6 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">
                     Nome
                   </th>
-                  <th className="px-6 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">
                     Porções
                   </th>
-                  <th className="px-6 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">
                     Custo Total
                   </th>
-                  <th className="px-6 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">
                     Custo por Porção
                   </th>
-                  <th className="px-6 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">
                     Status
                   </th>
-                  <th className="px-6 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">
                     Criado em
                   </th>
-                  <th className="px-6 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">
                     Ações
                   </th>
                 </tr>
@@ -1054,7 +1060,7 @@ const FichasTecnicas: React.FC = () => {
                                   }}
                                   className="w-full text-left px-4 py-2 hover:bg-white/10/5 flex items-center text-sm text-white/80"
                                 >
-                                  <ChefHat className="w-4 h-4 mr-3 text-[#7D1F2C]" />
+                                  <ChefHat className="w-4 h-4 mr-3 text-wine" />
                                   <div>
                                     <div className="font-medium">Receita para Cozinha</div>
                                     <div className="text-xs text-white/40">Apenas ingredientes e preparo</div>
@@ -1097,7 +1103,7 @@ const FichasTecnicas: React.FC = () => {
             <div className="text-center py-12">
               <FileText className="w-16 h-16 text-white/30 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-white mb-2">Nenhuma ficha encontrada</h3>
-              <p className="text-white/40">
+              <p className="text-white/60">
                 {searchTerm || statusFilter !== 'all' || custoFilter !== 'all'
                   ? 'Nenhuma ficha corresponde aos filtros aplicados.'
                   : 'Nenhuma ficha técnica cadastrada.'}
@@ -1124,7 +1130,7 @@ const FichasTecnicas: React.FC = () => {
                   type="text"
                   value={formData.nome}
                   onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
-                  className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                  className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                   required
                   placeholder="Ex: Hambúrguer Artesanal, Caipirinha de Limão"
                 />
@@ -1139,7 +1145,7 @@ const FichasTecnicas: React.FC = () => {
                   min="1"
                   value={formData.porcoes}
                   onChange={(e) => setFormData({ ...formData, porcoes: parseInt(e.target.value) || 1 })}
-                  className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                  className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                   required
                 />
               </div>
@@ -1150,7 +1156,7 @@ const FichasTecnicas: React.FC = () => {
                   id="ativo"
                   checked={formData.ativo}
                   onChange={(e) => setFormData({ ...formData, ativo: e.target.checked })}
-                  className="rounded border-white/20 text-[#7D1F2C] focus:ring-[#7D1F2C]"
+                  className="rounded border-white/20 text-wine focus:ring-wine"
                 />
                 <label htmlFor="ativo" className="ml-2 text-sm text-white/80">
                   Ficha ativa
@@ -1170,14 +1176,14 @@ const FichasTecnicas: React.FC = () => {
                     value="producao"
                     checked={formData.tipo_consumo === 'producao'}
                     onChange={(e) => setFormData({ ...formData, tipo_consumo: e.target.value as 'producao' })}
-                    className="mt-1 text-[#7D1F2C] focus:ring-[#7D1F2C]"
+                    className="mt-1 text-wine focus:ring-wine"
                   />
                   <div className="ml-3">
                     <span className="font-medium text-white">Produção Prévia</span>
                     <p className="text-sm text-white/50">
                       Requer ordem de produção. Insumos são baixados na produção, produto final baixado na venda.
                       <br />
-                      <span className="text-xs text-white/40">Ex: Picanha 400g, Hambúrguer, Torta</span>
+                      <span className="text-xs text-white/60">Ex: Picanha 400g, Hambúrguer, Torta</span>
                     </p>
                   </div>
                 </label>
@@ -1188,14 +1194,14 @@ const FichasTecnicas: React.FC = () => {
                     value="venda_direta"
                     checked={formData.tipo_consumo === 'venda_direta'}
                     onChange={(e) => setFormData({ ...formData, tipo_consumo: e.target.value as 'venda_direta' })}
-                    className="mt-1 text-[#7D1F2C] focus:ring-[#7D1F2C]"
+                    className="mt-1 text-wine focus:ring-wine"
                   />
                   <div className="ml-3">
                     <span className="font-medium text-white">Venda Direta</span>
                     <p className="text-sm text-white/50">
                       Sem ordem de produção. Insumos são baixados automaticamente a cada venda.
                       <br />
-                      <span className="text-xs text-white/40">Ex: Drinks, Caipirinhas, Porções preparadas no bar</span>
+                      <span className="text-xs text-white/60">Ex: Drinks, Caipirinhas, Porções preparadas no bar</span>
                     </p>
                   </div>
                 </label>
@@ -1213,11 +1219,11 @@ const FichasTecnicas: React.FC = () => {
                 <textarea
                   value={formData.modo_preparo}
                   onChange={(e) => setFormData({ ...formData, modo_preparo: e.target.value })}
-                  className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                  className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                   rows={6}
                   placeholder="Descreva o passo a passo do preparo da receita..."
                 />
-                <p className="text-xs text-white/40 mt-1">
+                <p className="text-xs text-white/60 mt-1">
                   Instruções detalhadas para padronizar o preparo
                 </p>
               </div>
@@ -1229,7 +1235,7 @@ const FichasTecnicas: React.FC = () => {
                 <textarea
                   value={formData.observacoes_preparo}
                   onChange={(e) => setFormData({ ...formData, observacoes_preparo: e.target.value })}
-                  className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                  className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                   rows={3}
                   placeholder="Dicas, cuidados especiais, tempo de preparo..."
                 />
@@ -1259,7 +1265,7 @@ const FichasTecnicas: React.FC = () => {
                           <select
                             value={ingrediente.tipo}
                             onChange={(e) => atualizarIngrediente(index, 'tipo', e.target.value)}
-                            className="w-full text-sm rounded-md border-white/20 shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                            className="w-full text-sm rounded-md border-white/20 shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                           >
                             <option value="item">Item de Estoque</option>
                             <option value="ficha">Ficha Técnica</option>
@@ -1274,7 +1280,7 @@ const FichasTecnicas: React.FC = () => {
                             <select
                               value={ingrediente.item_estoque_id || ''}
                               onChange={(e) => atualizarIngrediente(index, 'item_estoque_id', e.target.value)}
-                              className="w-full text-sm rounded-md border-white/20 shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                              className="w-full text-sm rounded-md border-white/20 shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                               required
                             >
                               <option value="">Selecione um item...</option>
@@ -1288,7 +1294,7 @@ const FichasTecnicas: React.FC = () => {
                             <select
                               value={ingrediente.ficha_tecnica_ingrediente_id || ''}
                               onChange={(e) => atualizarIngrediente(index, 'ficha_tecnica_ingrediente_id', e.target.value)}
-                              className="w-full text-sm rounded-md border-white/20 shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                              className="w-full text-sm rounded-md border-white/20 shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                               required
                             >
                               <option value="">Selecione uma ficha...</option>
@@ -1312,16 +1318,16 @@ const FichasTecnicas: React.FC = () => {
                             placeholder="Qtd"
                             value={ingrediente.quantidade}
                             onChange={(e) => atualizarIngrediente(index, 'quantidade', parseFloat(e.target.value) || 0)}
-                            className="w-full text-sm rounded-md border-white/20 shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                            className="w-full text-sm rounded-md border-white/20 shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                             required
                           />
                           {ingrediente.tipo === 'item' && ingrediente.item_estoque_id && (
-                            <p className="text-xs text-white/40 mt-1">
+                            <p className="text-xs text-white/60 mt-1">
                               {itensEstoque.find(i => i.id === ingrediente.item_estoque_id)?.unidade_medida}
                             </p>
                           )}
                           {ingrediente.tipo === 'ficha' && (
-                            <p className="text-xs text-white/40 mt-1">porções</p>
+                            <p className="text-xs text-white/60 mt-1">porções</p>
                           )}
                         </div>
 
@@ -1330,7 +1336,7 @@ const FichasTecnicas: React.FC = () => {
                             {ingrediente.tipo === 'item' && ingrediente.item_estoque_id && ingrediente.quantidade > 0 && (
                               <div>
                                 <span className="text-xs text-white/50">Custo:</span>
-                                <div className="font-medium text-[#7D1F2C] text-sm">
+                                <div className="font-medium text-wine text-sm">
                                   {formatCurrency(
                                     (itensEstoque.find(i => i.id === ingrediente.item_estoque_id)?.custo_medio || 0) * ingrediente.quantidade
                                   )}
@@ -1340,7 +1346,7 @@ const FichasTecnicas: React.FC = () => {
                             {ingrediente.tipo === 'ficha' && ingrediente.ficha_tecnica_ingrediente_id && ingrediente.quantidade > 0 && (
                               <div>
                                 <span className="text-xs text-white/50">Custo:</span>
-                                <div className="font-medium text-[#7D1F2C] text-sm">
+                                <div className="font-medium text-wine text-sm">
                                   {(() => {
                                     const ficha = fichasDisponiveis.find(f => f.id === ingrediente.ficha_tecnica_ingrediente_id);
                                     if (ficha && ficha.porcoes) {
@@ -1381,7 +1387,7 @@ const FichasTecnicas: React.FC = () => {
                           type="text"
                           value={ingrediente.observacoes || ''}
                           onChange={(e) => atualizarIngrediente(index, 'observacoes', e.target.value)}
-                          className="w-full text-sm rounded-md border-white/20 shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                          className="w-full text-sm rounded-md border-white/20 shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                           placeholder="Ex: picado, ralado, sem pele..."
                         />
                       </div>
@@ -1391,7 +1397,7 @@ const FichasTecnicas: React.FC = () => {
                   <div className="flex justify-end pt-3 border-t border-white/10">
                     <div className="text-right">
                       <span className="text-sm text-white/50">Custo Total da Ficha:</span>
-                      <span className="ml-2 text-lg font-bold text-[#7D1F2C]">
+                      <span className="ml-2 text-lg font-bold text-wine">
                         {formatCurrency(calcularCustoTotal())}
                       </span>
                       {formData.porcoes > 0 && (
@@ -1405,10 +1411,10 @@ const FichasTecnicas: React.FC = () => {
               ) : (
                 <div className="text-center py-8 bg-white/5 rounded-lg">
                   <Package className="w-12 h-12 text-white/30 mx-auto mb-4" />
-                  <p className="text-white/40">Nenhum ingrediente adicionado</p>
+                  <p className="text-white/60">Nenhum ingrediente adicionado</p>
                   <button
                     onClick={adicionarIngrediente}
-                    className="mt-2 px-4 py-2 bg-[#7D1F2C] text-white rounded-lg hover:bg-[#6a1a25]"
+                    className="mt-2 px-4 py-2 bg-wine text-white rounded-lg hover:bg-[#6a1a25]"
                   >
                     Adicionar Primeiro Ingrediente
                   </button>
@@ -1426,7 +1432,7 @@ const FichasTecnicas: React.FC = () => {
               <button
                 onClick={handleSave}
                 disabled={loading || !formData.nome || formData.ingredientes.length === 0}
-                className="px-4 py-2 bg-[#7D1F2C] text-white rounded-md hover:bg-[#6a1a25] disabled:opacity-50"
+                className="px-4 py-2 bg-wine text-white rounded-md hover:bg-[#6a1a25] disabled:opacity-50"
               >
                 {loading ? 'Salvando...' : 'Salvar'}
               </button>

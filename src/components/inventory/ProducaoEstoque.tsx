@@ -568,7 +568,7 @@ const ProducaoEstoque: React.FC = () => {
           </button>
           <button
             onClick={() => setShowForm(true)}
-            className="px-4 py-2 bg-[#7D1F2C] text-white rounded-lg hover:bg-[#6a1a25]"
+            className="px-4 py-2 bg-wine text-white rounded-lg hover:bg-[#6a1a25]"
           >
             <Plus className="w-4 h-4 inline mr-2" />
             Nova Produção
@@ -590,7 +590,7 @@ const ProducaoEstoque: React.FC = () => {
               placeholder="Buscar produções..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-white/20 rounded-lg bg-white/5 text-white focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+              className="w-full pl-10 pr-4 py-2 border border-white/20 rounded-lg bg-white/5 text-white focus:ring-2 focus:ring-wine focus:border-wine"
             />
           </div>
 
@@ -612,22 +612,28 @@ const ProducaoEstoque: React.FC = () => {
             type="date"
             value={dataInicial}
             onChange={(e) => setDataInicial(e.target.value)}
-            className="border border-white/20 rounded-lg px-4 py-2 focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+            className="border border-white/20 rounded-lg px-4 py-2 focus:ring-2 focus:ring-wine focus:border-wine"
           />
 
           <input
             type="date"
             value={dataFinal}
             onChange={(e) => setDataFinal(e.target.value)}
-            className="border border-white/20 rounded-lg px-4 py-2 focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+            className="border border-white/20 rounded-lg px-4 py-2 focus:ring-2 focus:ring-wine focus:border-wine"
           />
         </div>
       </div>
 
       {/* Tabela de Produções */}
       {loading ? (
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7D1F2C]"></div>
+        <div className="w-full">
+          <div className="w-full space-y-3" aria-busy="true">
+                    <div className="skeleton" style={{ height: 14, width: '32%' }} />
+                    <div className="skeleton" style={{ height: 44, width: '100%' }} />
+                    <div className="skeleton" style={{ height: 44, width: '100%' }} />
+                    <div className="skeleton" style={{ height: 44, width: '100%' }} />
+                    <div className="skeleton" style={{ height: 44, width: '82%' }} />
+                  </div>
         </div>
       ) : (
         <div className="bg-[#12141f] rounded-lg border border-white/10 overflow-hidden">
@@ -635,13 +641,13 @@ const ProducaoEstoque: React.FC = () => {
             <table className="w-full">
               <thead className="bg-white/5 border-b border-white/10">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-white/40 uppercase">Lote</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-white/40 uppercase">Ficha</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-white/40 uppercase">Qtd</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-white/40 uppercase">Data</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-white/40 uppercase">Responsável</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-white/40 uppercase">Status</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-white/40 uppercase">Ações</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-white/60 uppercase">Lote</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-white/60 uppercase">Ficha</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-white/60 uppercase">Qtd</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-white/60 uppercase">Data</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-white/60 uppercase">Responsável</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-white/60 uppercase">Status</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-white/60 uppercase">Ações</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/10">
@@ -649,7 +655,7 @@ const ProducaoEstoque: React.FC = () => {
                   <tr key={producao.id} className="hover:bg-white/10/5">
                     <td className="px-6 py-4">
                       <div className="flex items-center">
-                        <Package className="w-4 h-4 text-[#7D1F2C] mr-2" />
+                        <Package className="w-4 h-4 text-wine mr-2" />
                         <span className="font-mono text-sm font-medium">{producao.lote_producao}</span>
                       </div>
                     </td>
@@ -755,7 +761,7 @@ const ProducaoEstoque: React.FC = () => {
                   min="1"
                   value={formData.quantidade}
                   onChange={(e) => setFormData({ ...formData, quantidade: parseInt(e.target.value) || 1 })}
-                  className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                  className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                 />
               </div>
 
@@ -778,10 +784,10 @@ const ProducaoEstoque: React.FC = () => {
                   <table className="w-full">
                     <thead className="bg-white/5">
                       <tr>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-white/40 uppercase">Ficha Técnica</th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-white/40 uppercase">Quantidade</th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-white/40 uppercase">Custo Total</th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-white/40 uppercase">Ações</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-white/60 uppercase">Ficha Técnica</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-white/60 uppercase">Quantidade</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-white/60 uppercase">Custo Total</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-white/60 uppercase">Ações</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-white/10">
@@ -823,7 +829,7 @@ const ProducaoEstoque: React.FC = () => {
                   type="date"
                   value={formData.data_producao}
                   onChange={(e) => setFormData({ ...formData, data_producao: e.target.value })}
-                  className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                  className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                 />
               </div>
 
@@ -859,7 +865,7 @@ const ProducaoEstoque: React.FC = () => {
                 <textarea
                   value={formData.observacoes}
                   onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
-                  className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                  className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                   rows={3}
                 />
               </div>
@@ -875,7 +881,7 @@ const ProducaoEstoque: React.FC = () => {
               <button
                 onClick={handleVerificarInsumos}
                 disabled={loading || itensProducao.length === 0 || !formData.estoque_destino_id}
-                className="px-4 py-2 bg-[#7D1F2C] text-white rounded-md hover:bg-[#6a1a25] disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-2 bg-wine text-white rounded-md hover:bg-[#6a1a25] disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? 'Processando...' : `Confirmar Produção (${itensProducao.length} ${itensProducao.length === 1 ? 'item' : 'itens'})`}
               </button>
@@ -944,10 +950,10 @@ const ProducaoEstoque: React.FC = () => {
                   <table className="min-w-full divide-y divide-white/10">
                     <thead className="bg-white/5">
                       <tr>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-white/40 uppercase">Insumo</th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-white/40 uppercase">Quantidade</th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-white/40 uppercase">Estoque</th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-white/40 uppercase">Status</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-white/60 uppercase">Insumo</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-white/60 uppercase">Quantidade</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-white/60 uppercase">Estoque</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-white/60 uppercase">Status</th>
                       </tr>
                     </thead>
                     <tbody className="bg-[#12141f] divide-y divide-white/5">

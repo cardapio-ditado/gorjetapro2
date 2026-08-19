@@ -586,7 +586,7 @@ const KardexFornecedor: React.FC = () => {
                 placeholder="Buscar por nome, CNPJ ou email..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/20 rounded-lg text-white placeholder-white/40 focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+                className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/20 rounded-lg text-white placeholder-white/40 focus:ring-2 focus:ring-wine focus:border-wine"
               />
             </div>
           </div>
@@ -596,7 +596,7 @@ const KardexFornecedor: React.FC = () => {
               <div
                 key={fornecedor.id}
                 onClick={() => setFornecedorSelecionado(fornecedor)}
-                className="p-4 border border-white/10 rounded-lg hover:border-[#7D1F2C] hover:shadow-md cursor-pointer transition-all duration-200"
+                className="p-4 border border-white/10 rounded-lg hover:border-wine hover:shadow-md cursor-pointer transition-all duration-200"
               >
                 <div className="flex items-start">
                   <div className="p-2 bg-blue-500/15 rounded-lg mr-3">
@@ -657,7 +657,7 @@ const KardexFornecedor: React.FC = () => {
           </button>
           <button
             onClick={exportarKardex}
-            className="px-4 py-2 bg-[#7D1F2C] text-white rounded-lg hover:bg-[#6a1a25]"
+            className="px-4 py-2 bg-wine text-white rounded-lg hover:bg-[#6a1a25]"
           >
             <FileText className="w-4 h-4 inline mr-2" />
             PDF
@@ -674,7 +674,7 @@ const KardexFornecedor: React.FC = () => {
       {/* Dados do Fornecedor */}
       <div className="bg-[#12141f] p-6 rounded-lg border border-white/10">
         <h4 className="text-md font-medium text-white mb-4 flex items-center">
-          <Building2 className="w-5 h-5 mr-2 text-[#7D1F2C]" />
+          <Building2 className="w-5 h-5 mr-2 text-wine" />
           Dados do Fornecedor
         </h4>
         
@@ -840,7 +840,7 @@ const KardexFornecedor: React.FC = () => {
               type="date"
               value={dataInicial}
               onChange={(e) => setDataInicial(e.target.value)}
-              className="w-full rounded-md bg-white/5 border border-white/20 text-white focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+              className="w-full rounded-md bg-white/5 border border-white/20 text-white focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
             />
           </div>
 
@@ -852,7 +852,7 @@ const KardexFornecedor: React.FC = () => {
               type="date"
               value={dataFinal}
               onChange={(e) => setDataFinal(e.target.value)}
-              className="w-full rounded-md bg-white/5 border border-white/20 text-white focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+              className="w-full rounded-md bg-white/5 border border-white/20 text-white focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
             />
           </div>
 
@@ -863,7 +863,7 @@ const KardexFornecedor: React.FC = () => {
             <select
               value={tipoLancamentoFilter}
               onChange={(e) => setTipoLancamentoFilter(e.target.value)}
-              className="w-full rounded-md bg-white/5 border border-white/20 text-white focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+              className="w-full rounded-md bg-white/5 border border-white/20 text-white focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
             >
               <option value="all">Todos os Lançamentos</option>
               <option value="conta_pagar">Compras</option>
@@ -878,7 +878,7 @@ const KardexFornecedor: React.FC = () => {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="w-full rounded-md bg-white/5 border border-white/20 text-white focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+              className="w-full rounded-md bg-white/5 border border-white/20 text-white focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
             >
               <option value="all">Todos os Status</option>
               <option value="em_aberto">Em Aberto</option>
@@ -896,7 +896,7 @@ const KardexFornecedor: React.FC = () => {
             <select
               value={categoriaFilter}
               onChange={(e) => setCategoriaFilter(e.target.value)}
-              className="w-full rounded-md bg-white/5 border border-white/20 text-white focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+              className="w-full rounded-md bg-white/5 border border-white/20 text-white focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
             >
               <option value="all">Todas as Categorias</option>
               {categorias.map((cat) => (
@@ -910,7 +910,7 @@ const KardexFornecedor: React.FC = () => {
           <div className="flex items-end">
             <button
               onClick={fetchKardexFornecedor}
-              className="w-full px-4 py-2 bg-[#7D1F2C] text-white rounded-md hover:bg-[#6a1a25]"
+              className="w-full px-4 py-2 bg-wine text-white rounded-md hover:bg-[#6a1a25]"
             >
               <Filter className="w-4 h-4 inline mr-2" />
               Filtrar
@@ -960,13 +960,19 @@ const KardexFornecedor: React.FC = () => {
       <div className="bg-[#12141f] rounded-lg border border-white/10">
         <div className="p-6">
           <h4 className="text-lg font-medium text-white mb-4 flex items-center">
-            <FileText className="w-5 h-5 mr-2 text-[#7D1F2C]" />
+            <FileText className="w-5 h-5 mr-2 text-wine" />
             Kardex Detalhado (Estilo Extrato Bancário)
           </h4>
 
           {loading ? (
-            <div className="flex justify-center items-center h-64">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7D1F2C]"></div>
+            <div className="w-full">
+              <div className="w-full space-y-3" aria-busy="true">
+                    <div className="skeleton" style={{ height: 14, width: '32%' }} />
+                    <div className="skeleton" style={{ height: 44, width: '100%' }} />
+                    <div className="skeleton" style={{ height: 44, width: '100%' }} />
+                    <div className="skeleton" style={{ height: 44, width: '100%' }} />
+                    <div className="skeleton" style={{ height: 44, width: '82%' }} />
+                  </div>
             </div>
           ) : (
             <>
@@ -1055,7 +1061,7 @@ const KardexFornecedor: React.FC = () => {
                   </table>
                   
                   {/* Totalizadores */}
-                  <div className="mt-4 p-4 bg-white/5 rounded-lg border-t-2 border-[#7D1F2C]">
+                  <div className="mt-4 p-4 bg-white/5 rounded-lg border-t-2 border-wine">
                     <div className="grid grid-cols-3 gap-4 text-center">
                       <div>
                         <span className="text-sm text-white/60">Total Débitos (Compras)</span>

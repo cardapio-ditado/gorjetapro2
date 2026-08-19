@@ -35,7 +35,7 @@ const Recruitment: React.FC = () => {
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-2">
-          <div className="p-3 bg-gradient-to-br from-[#7D1F2C] to-[#D4AF37] rounded-xl">
+          <div className="p-3 bg-gradient-to-br from-wine to-gold rounded-xl">
             <UserPlus className="w-8 h-8 text-white" />
           </div>
           <div>
@@ -62,7 +62,7 @@ const Recruitment: React.FC = () => {
                     transition-colors duration-200
                     ${
                       activeTab === tab.id
-                        ? 'border-[#7D1F2C] text-[#7D1F2C]'
+                        ? 'border-wine text-wine'
                         : 'border-transparent text-white/40 hover:text-white/80 hover:border-white/20'
                     }
                   `}

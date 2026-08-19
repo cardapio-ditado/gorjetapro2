@@ -36,7 +36,7 @@ export const KPICard: React.FC<KPICardProps> = ({
 
   const getVariationColor = () => {
     if (!variation) return '';
-    if (trend === 'neutral') return 'text-text-muted';
+    if (trend === 'neutral') return 'text-text-secondary';
     return variation > 0 ? 'text-success' : 'text-danger';
   };
 
@@ -46,7 +46,7 @@ export const KPICard: React.FC<KPICardProps> = ({
     <div className="card p-6 hover:shadow-wine transition-all duration-200 relative overflow-hidden">
       <div className="flex items-start justify-between mb-3">
         <div className="flex-1">
-          <p className="text-[11px] font-sans font-semibold uppercase tracking-widest text-text-secondary mb-2">
+          <p className="text-caption font-sans font-semibold uppercase tracking-widest text-text-secondary mb-2">
             {label}
           </p>
           <h2 className="font-display text-4xl font-bold text-white leading-none">

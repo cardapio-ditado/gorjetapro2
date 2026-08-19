@@ -876,7 +876,7 @@ const MovimentacoesEstoque: React.FC = () => {
           </button>
           <button
             onClick={() => openForm()}
-            className="px-4 py-2 bg-[#7D1F2C] text-white rounded-lg hover:bg-[#6a1a25]"
+            className="px-4 py-2 bg-wine text-white rounded-lg hover:bg-[#6a1a25]"
           >
             <Plus className="w-4 h-4 inline mr-2" />
             Nova Movimentação
@@ -984,7 +984,7 @@ const MovimentacoesEstoque: React.FC = () => {
                 placeholder="Buscar movimentações..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-white/20 rounded-lg bg-white/5 text-white focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+                className="w-full pl-10 pr-4 py-2 border border-white/20 rounded-lg bg-white/5 text-white focus:ring-2 focus:ring-wine focus:border-wine"
               />
             </div>
           </div>
@@ -993,7 +993,7 @@ const MovimentacoesEstoque: React.FC = () => {
             <select
               value={tipoFilter}
               onChange={(e) => setTipoFilter(e.target.value as any)}
-              className="w-full border border-white/20 rounded-lg px-4 py-2 bg-white/5 text-white focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+              className="w-full border border-white/20 rounded-lg px-4 py-2 bg-white/5 text-white focus:ring-2 focus:ring-wine focus:border-wine"
             >
               <option value="all">Todos os Tipos</option>
               <option value="entrada">Entradas</option>
@@ -1007,7 +1007,7 @@ const MovimentacoesEstoque: React.FC = () => {
             <select
               value={estoqueFilter}
               onChange={(e) => setEstoqueFilter(e.target.value)}
-              className="w-full border border-white/20 rounded-lg px-4 py-2 bg-white/5 text-white focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+              className="w-full border border-white/20 rounded-lg px-4 py-2 bg-white/5 text-white focus:ring-2 focus:ring-wine focus:border-wine"
             >
               <option value="all">Todos os Estoques</option>
               {estoques.map((estoque) => (
@@ -1022,7 +1022,7 @@ const MovimentacoesEstoque: React.FC = () => {
             <select
               value={itemFilter}
               onChange={(e) => setItemFilter(e.target.value)}
-              className="w-full border border-white/20 rounded-lg px-4 py-2 bg-white/5 text-white focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+              className="w-full border border-white/20 rounded-lg px-4 py-2 bg-white/5 text-white focus:ring-2 focus:ring-wine focus:border-wine"
             >
               <option value="all">Todos os Itens</option>
               {Array.from(new Set(itensDisponiveis.map(item => ({ id: item.id, nome: item.nome }))))
@@ -1039,7 +1039,7 @@ const MovimentacoesEstoque: React.FC = () => {
               type="date"
               value={dataInicial}
               onChange={(e) => setDataInicial(e.target.value)}
-              className="w-full border border-white/20 rounded-lg px-4 py-2 bg-white/5 text-white focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+              className="w-full border border-white/20 rounded-lg px-4 py-2 bg-white/5 text-white focus:ring-2 focus:ring-wine focus:border-wine"
             />
           </div>
 
@@ -1048,7 +1048,7 @@ const MovimentacoesEstoque: React.FC = () => {
               type="date"
               value={dataFinal}
               onChange={(e) => setDataFinal(e.target.value)}
-              className="w-full border border-white/20 rounded-lg px-4 py-2 bg-white/5 text-white focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+              className="w-full border border-white/20 rounded-lg px-4 py-2 bg-white/5 text-white focus:ring-2 focus:ring-wine focus:border-wine"
             />
           </div>
         </div>
@@ -1056,8 +1056,14 @@ const MovimentacoesEstoque: React.FC = () => {
 
       {/* Lista de Movimentações */}
       {loading ? (
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7D1F2C]"></div>
+        <div className="w-full">
+          <div className="w-full space-y-3" aria-busy="true">
+                    <div className="skeleton" style={{ height: 14, width: '32%' }} />
+                    <div className="skeleton" style={{ height: 44, width: '100%' }} />
+                    <div className="skeleton" style={{ height: 44, width: '100%' }} />
+                    <div className="skeleton" style={{ height: 44, width: '100%' }} />
+                    <div className="skeleton" style={{ height: 44, width: '82%' }} />
+                  </div>
         </div>
       ) : (
         <div className="bg-[#12141f] rounded-lg border border-white/10 overflow-hidden">
@@ -1065,31 +1071,31 @@ const MovimentacoesEstoque: React.FC = () => {
             <table className="w-full">
               <thead>
                 <tr className="text-left bg-white/5 border-b">
-                  <th className="px-6 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">
                     Data
                   </th>
-                  <th className="px-6 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">
                     Tipo
                   </th>
-                  <th className="px-6 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">
                     Origem
                   </th>
-                  <th className="px-6 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">
                     Item
                   </th>
-                  <th className="px-6 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">
                     Origem → Destino
                   </th>
-                  <th className="px-6 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">
                     Quantidade
                   </th>
-                  <th className="px-6 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">
                     Custo
                   </th>
-                  <th className="px-6 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">
                     Motivo
                   </th>
-                  <th className="px-6 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">
                     Ações
                   </th>
                 </tr>
@@ -1213,7 +1219,7 @@ const MovimentacoesEstoque: React.FC = () => {
             <div className="text-center py-12">
               <ArrowLeftRight className="w-16 h-16 text-white/30 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-white mb-2">Nenhuma movimentação encontrada</h3>
-              <p className="text-white/40">
+              <p className="text-white/60">
                 {searchTerm || tipoFilter !== 'all' || estoqueFilter !== 'all' || itemFilter !== 'all'
                   ? 'Nenhuma movimentação corresponde aos filtros aplicados.'
                   : 'Nenhuma movimentação registrada no período.'}
@@ -1247,7 +1253,7 @@ const MovimentacoesEstoque: React.FC = () => {
                       estoque_destino_id: ''
                     });
                   }}
-                  className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                  className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                   required
                 >
                   <option value="entrada">Entrada</option>
@@ -1265,7 +1271,7 @@ const MovimentacoesEstoque: React.FC = () => {
                   type="date"
                   value={formData.data_movimentacao}
                   onChange={(e) => setFormData({ ...formData, data_movimentacao: e.target.value })}
-                  className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                  className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                   required
                 />
               </div>
@@ -1283,7 +1289,7 @@ const MovimentacoesEstoque: React.FC = () => {
                         item_id: '',
                         ficha_tecnica_id: ''
                       })}
-                      className="rounded border-white/20 text-[#7D1F2C] focus:ring-[#7D1F2C]"
+                      className="rounded border-white/20 text-wine focus:ring-wine"
                     />
                     <span className="ml-2 text-sm font-medium text-white">
                       Usar Ficha Técnica de Venda Direta
@@ -1392,11 +1398,11 @@ const MovimentacoesEstoque: React.FC = () => {
                   min={formData.usar_ficha_tecnica ? "1" : "0.001"}
                   value={formData.quantidade}
                   onChange={(e) => setFormData({ ...formData, quantidade: parseFloat(e.target.value) || 0 })}
-                  className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                  className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                   required
                 />
                 {formData.usar_ficha_tecnica ? (
-                  <p className="text-xs text-white/40 mt-1">
+                  <p className="text-xs text-white/60 mt-1">
                     Quantidade de porções/vendas desta ficha técnica
                   </p>
                 ) : (
@@ -1404,7 +1410,7 @@ const MovimentacoesEstoque: React.FC = () => {
                     (() => {
                       const item = getItensParaFormulario().find(i => i.id === formData.item_id);
                       return item && (
-                        <p className="text-xs text-white/40 mt-1">
+                        <p className="text-xs text-white/60 mt-1">
                           Disponível: {item.quantidade_atual.toFixed(3)} {item.unidade_medida}
                         </p>
                       );
@@ -1419,7 +1425,7 @@ const MovimentacoesEstoque: React.FC = () => {
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <span className="text-white/40 sm:text-sm">R$</span>
+                    <span className="text-white/60 sm:text-sm">R$</span>
                   </div>
                   <input
                     type="number"
@@ -1427,7 +1433,7 @@ const MovimentacoesEstoque: React.FC = () => {
                     min="0"
                     value={formData.custo_unitario}
                     onChange={(e) => setFormData({ ...formData, custo_unitario: parseFloat(e.target.value) || 0 })}
-                    className="pl-10 w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                    className="pl-10 w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                     required
                   />
                 </div>
@@ -1458,11 +1464,11 @@ const MovimentacoesEstoque: React.FC = () => {
                       <table className="w-full">
                         <thead className="bg-white/5">
                           <tr>
-                            <th className="px-4 py-2 text-left text-xs font-medium text-white/40 uppercase">Item</th>
-                            <th className="px-4 py-2 text-left text-xs font-medium text-white/40 uppercase">Quantidade</th>
-                            <th className="px-4 py-2 text-left text-xs font-medium text-white/40 uppercase">Custo Unit.</th>
-                            <th className="px-4 py-2 text-left text-xs font-medium text-white/40 uppercase">Custo Total</th>
-                            <th className="px-4 py-2 text-left text-xs font-medium text-white/40 uppercase">Ações</th>
+                            <th className="px-4 py-2 text-left text-xs font-medium text-white/60 uppercase">Item</th>
+                            <th className="px-4 py-2 text-left text-xs font-medium text-white/60 uppercase">Quantidade</th>
+                            <th className="px-4 py-2 text-left text-xs font-medium text-white/60 uppercase">Custo Unit.</th>
+                            <th className="px-4 py-2 text-left text-xs font-medium text-white/60 uppercase">Custo Total</th>
+                            <th className="px-4 py-2 text-left text-xs font-medium text-white/60 uppercase">Ações</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-white/10">
@@ -1491,7 +1497,7 @@ const MovimentacoesEstoque: React.FC = () => {
                         <tfoot className="bg-white/5">
                           <tr>
                             <td colSpan={3} className="px-4 py-2 text-sm font-medium text-right">Total:</td>
-                            <td className="px-4 py-2 text-sm font-bold text-[#7D1F2C]">
+                            <td className="px-4 py-2 text-sm font-bold text-wine">
                               {formatCurrency(itensMovimentacao.reduce((sum, item) => sum + item.custo_total, 0))}
                             </td>
                             <td></td>
@@ -1511,7 +1517,7 @@ const MovimentacoesEstoque: React.FC = () => {
                   type="text"
                   value={formData.motivo}
                   onChange={(e) => setFormData({ ...formData, motivo: e.target.value })}
-                  className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                  className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                   placeholder="Ex: Reposição, Venda, Defeito, etc."
                 />
               </div>
@@ -1523,7 +1529,7 @@ const MovimentacoesEstoque: React.FC = () => {
                 <textarea
                   value={formData.observacoes}
                   onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
-                  className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                  className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                   rows={2}
                   placeholder="Observações sobre a movimentação..."
                 />
@@ -1577,7 +1583,7 @@ const MovimentacoesEstoque: React.FC = () => {
                     (formData.usar_ficha_tecnica ? !formData.ficha_tecnica_id : (!formData.item_id || formData.custo_unitario < 0))
                   ))
                 }
-                className="px-4 py-2 bg-[#7D1F2C] text-white rounded-md hover:bg-[#6a1a25] disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-2 bg-wine text-white rounded-md hover:bg-[#6a1a25] disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? 'Salvando...' : itensMovimentacao.length > 0 ? `Salvar Movimentação (${itensMovimentacao.length} ${itensMovimentacao.length === 1 ? 'item' : 'itens'})` : 'Salvar'}
               </button>

@@ -184,7 +184,7 @@ export default function DashboardEstoque({ onNavigate }: { onNavigate?: (tab: st
           <div key={label} className="bg-[#12141f] border border-white/10 rounded-xl p-5">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <p className="text-xs font-semibold text-white/40 uppercase tracking-wide mb-1">{label}</p>
+                <p className="text-xs font-semibold text-white/60 uppercase tracking-wide mb-1">{label}</p>
                 <p className="text-xl font-bold text-white truncate">{value}</p>
               </div>
               <div className={`${bg} p-2.5 rounded-xl shrink-0`}>
@@ -256,7 +256,7 @@ export default function DashboardEstoque({ onNavigate }: { onNavigate?: (tab: st
             </button>
           </div>
           {movsRecentes.length === 0 ? (
-            <p className="text-white/30 text-sm text-center py-8">Nenhuma movimentação hoje</p>
+            <p className="text-white/60 text-sm text-center py-8">Nenhuma movimentação hoje</p>
           ) : (
             <div className="space-y-2">
               {movsRecentes.map(mov => (
@@ -268,7 +268,7 @@ export default function DashboardEstoque({ onNavigate }: { onNavigate?: (tab: st
                     <p className="text-sm font-medium text-white truncate">
                       {mov.item?.nome || '—'}
                     </p>
-                    <p className="text-xs text-white/30 truncate">
+                    <p className="text-xs text-white/60 truncate">
                       {mov.estoque_origem?.nome && `De: ${mov.estoque_origem.nome}`}
                       {mov.estoque_destino?.nome && ` Para: ${mov.estoque_destino.nome}`}
                     </p>

@@ -307,7 +307,7 @@ export default function RequisicaoPublica() {
                   type="text"
                   value={funcionarioNome}
                   onChange={(e) => setFuncionarioNome(e.target.value)}
-                  className="w-full px-4 py-2 bg-[#12141f]/5 border border-white/20 rounded-lg text-white placeholder-white/30 focus:ring-2 focus:ring-[#7D1F2C] focus:border-transparent"
+                  className="w-full px-4 py-2 bg-[#12141f]/5 border border-white/20 rounded-lg text-white placeholder-white/30 focus:ring-2 focus:ring-wine focus:border-transparent"
                   placeholder="Digite seu nome completo"
                 />
               </div>
@@ -319,7 +319,7 @@ export default function RequisicaoPublica() {
                   type="tel"
                   value={whatsapp}
                   onChange={(e) => setWhatsapp(e.target.value)}
-                  className="w-full px-4 py-2 bg-[#12141f]/5 border border-white/20 rounded-lg text-white placeholder-white/30 focus:ring-2 focus:ring-[#7D1F2C] focus:border-transparent"
+                  className="w-full px-4 py-2 bg-[#12141f]/5 border border-white/20 rounded-lg text-white placeholder-white/30 focus:ring-2 focus:ring-wine focus:border-transparent"
                   placeholder="(00) 00000-0000"
                 />
               </div>
@@ -331,7 +331,7 @@ export default function RequisicaoPublica() {
                   type="text"
                   value={setor}
                   onChange={(e) => setSetor(e.target.value)}
-                  className="w-full px-4 py-2 bg-[#12141f]/5 border border-white/20 rounded-lg text-white placeholder-white/30 focus:ring-2 focus:ring-[#7D1F2C] focus:border-transparent"
+                  className="w-full px-4 py-2 bg-[#12141f]/5 border border-white/20 rounded-lg text-white placeholder-white/30 focus:ring-2 focus:ring-wine focus:border-transparent"
                   placeholder="Ex: Cozinha, Bar, Salão..."
                 />
               </div>
@@ -400,7 +400,7 @@ export default function RequisicaoPublica() {
                       value={quantidadeItem}
                       onChange={(e) => setQuantidadeItem(e.target.value)}
                       placeholder="Quantidade"
-                      className="w-full px-4 py-2 bg-[#12141f]/5 border border-white/20 rounded-lg text-white placeholder-white/30 focus:ring-2 focus:ring-[#7D1F2C] focus:border-transparent"
+                      className="w-full px-4 py-2 bg-[#12141f]/5 border border-white/20 rounded-lg text-white placeholder-white/30 focus:ring-2 focus:ring-wine focus:border-transparent"
                     />
                   </div>
                   <div className="md:col-span-3">
@@ -409,7 +409,7 @@ export default function RequisicaoPublica() {
                       value={observacaoItem}
                       onChange={(e) => setObservacaoItem(e.target.value)}
                       placeholder="Observação (opcional)"
-                      className="w-full px-4 py-2 bg-[#12141f]/5 border border-white/20 rounded-lg text-white placeholder-white/30 focus:ring-2 focus:ring-[#7D1F2C] focus:border-transparent"
+                      className="w-full px-4 py-2 bg-[#12141f]/5 border border-white/20 rounded-lg text-white placeholder-white/30 focus:ring-2 focus:ring-wine focus:border-transparent"
                     />
                   </div>
                   <div className="md:col-span-2">
@@ -425,15 +425,15 @@ export default function RequisicaoPublica() {
 
                 {/* Lista de Itens */}
                 {itens.length > 0 && (
-                  <div className="border border-white/10 rounded-lg overflow-hidden">
+                  <div className="border border-white/10 rounded-lg overflow-x-auto">
                     <table className="min-w-full divide-y divide-white/10">
                       <thead className="bg-[#1a1d2e]">
                         <tr>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-white/40 uppercase">Item</th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-white/40 uppercase">Unidade</th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-white/40 uppercase">Quantidade</th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-white/40 uppercase">Observação</th>
-                          <th className="px-4 py-3 text-center text-xs font-medium text-white/40 uppercase">Ações</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-white/60 uppercase">Item</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-white/60 uppercase">Unidade</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-white/60 uppercase">Quantidade</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-white/60 uppercase">Observação</th>
+                          <th className="px-4 py-3 text-center text-xs font-medium text-white/60 uppercase">Ações</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-white/10 bg-[#12141f]">
@@ -470,7 +470,7 @@ export default function RequisicaoPublica() {
               value={observacoes}
               onChange={(e) => setObservacoes(e.target.value)}
               rows={3}
-              className="w-full px-4 py-2 bg-[#12141f]/5 border border-white/20 rounded-lg text-white placeholder-white/30 focus:ring-2 focus:ring-[#7D1F2C] focus:border-transparent"
+              className="w-full px-4 py-2 bg-[#12141f]/5 border border-white/20 rounded-lg text-white placeholder-white/30 focus:ring-2 focus:ring-wine focus:border-transparent"
               placeholder="Informações adicionais sobre sua requisição..."
             />
           </div>
@@ -486,7 +486,7 @@ export default function RequisicaoPublica() {
           </button>
 
           {itens.length === 0 && (
-            <p className="text-sm text-white/40 text-center">
+            <p className="text-sm text-white/60 text-center">
               Adicione pelo menos um item para enviar a requisição
             </p>
           )}

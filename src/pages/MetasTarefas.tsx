@@ -299,14 +299,14 @@ const TarefaDrawer: React.FC<TarefaDrawerProps> = ({ tarefa, mode, setorInicial 
         {/* Header */}
         <div className="flex items-start gap-3 px-5 py-4 border-b border-white/10 shrink-0">
           <div className="flex-1 min-w-0">
-            {tarefa?.numero_tarefa && <span className="text-[10px] font-bold text-white/30 font-mono">#{tarefa.numero_tarefa}</span>}
+            {tarefa?.numero_tarefa && <span className="text-caption font-bold text-white/60 font-mono">#{tarefa.numero_tarefa}</span>}
             <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-              <span className={`flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${faseCurrent.badgeCls}`}>
+              <span className={`flex items-center gap-1 text-caption font-bold px-2 py-0.5 rounded-full ${faseCurrent.badgeCls}`}>
                 <span className={`w-1.5 h-1.5 rounded-full ${faseCurrent.dot}`} />{faseCurrent.label}
               </span>
-              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${prioCurrent.badge}`}>{prioCurrent.label}</span>
+              <span className={`text-caption font-bold px-2 py-0.5 rounded-full ${prioCurrent.badge}`}>{prioCurrent.label}</span>
               {requerAprovacao && statusAprovacao && (
-                <span className={`flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${APROVACAO_STATUS[statusAprovacao]?.cls}`}>
+                <span className={`flex items-center gap-1 text-caption font-bold px-2 py-0.5 rounded-full ${APROVACAO_STATUS[statusAprovacao]?.cls}`}>
                   {APROVACAO_STATUS[statusAprovacao]?.icon}{APROVACAO_STATUS[statusAprovacao]?.label}
                 </span>
               )}
@@ -338,11 +338,11 @@ const TarefaDrawer: React.FC<TarefaDrawerProps> = ({ tarefa, mode, setorInicial 
           {ABAS_DRAWER.map(a => (
             <button key={a.id} onClick={() => setAba(a.id)}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all ${
-                aba === a.id ? 'bg-[#7D1F2C] text-white' : 'text-white/35 hover:text-white/60 hover:bg-white/5'
+                aba === a.id ? 'bg-wine text-white' : 'text-white/35 hover:text-white/60 hover:bg-white/5'
               }`}>
               {a.label}
               {(a as any).count > 0 && (
-                <span className={`text-[9px] px-1.5 py-0.5 rounded-full ${aba === a.id ? 'bg-white/20 text-white' : 'bg-white/10 text-white/40'}`}>
+                <span className={`text-caption px-1.5 py-0.5 rounded-full ${aba === a.id ? 'bg-white/20 text-white' : 'bg-white/10 text-white/60'}`}>
                   {(a as any).count}
                 </span>
               )}
@@ -356,30 +356,30 @@ const TarefaDrawer: React.FC<TarefaDrawerProps> = ({ tarefa, mode, setorInicial 
           {aba === 'info' && (
             <>
               <div>
-                <label className="block text-[10px] font-bold text-white/40 uppercase tracking-wide mb-2">Setor</label>
+                <label className="block text-caption font-bold text-white/60 uppercase tracking-wide mb-2">Setor</label>
                 <div className="flex flex-wrap gap-1.5">
                   {SETORES.map(s => (
                     <button key={s.id} type="button" onClick={() => setSetor(s.id)}
-                      className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all ${setor === s.id ? 'bg-[#7D1F2C] text-white ring-1 ring-[#9B2535]/50' : 'bg-white/5 text-white/40 hover:bg-white/10 hover:text-white/60'}`}>
+                      className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all ${setor === s.id ? 'bg-wine text-white ring-1 ring-wine-light/50' : 'bg-white/5 text-white/40 hover:bg-white/10 hover:text-white/60'}`}>
                       {s.label}
                     </button>
                   ))}
                 </div>
               </div>
               <div>
-                <label className="block text-[10px] font-bold text-white/40 uppercase tracking-wide mb-1.5">Título *</label>
+                <label className="block text-caption font-bold text-white/60 uppercase tracking-wide mb-1.5">Título *</label>
                 <input type="text" value={titulo} onChange={e => setTitulo(e.target.value)} autoFocus
                   placeholder="Descreva a tarefa ou meta..." className={inputCls} />
               </div>
               <div>
-                <label className="block text-[10px] font-bold text-white/40 uppercase tracking-wide mb-1.5">Descrição</label>
+                <label className="block text-caption font-bold text-white/60 uppercase tracking-wide mb-1.5">Descrição</label>
                 <textarea value={descricao} onChange={e => setDescricao(e.target.value)} rows={3}
                   placeholder="Contexto, detalhes, observações importantes..."
                   className={inputCls + ' resize-none'} />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-[10px] font-bold text-white/40 uppercase tracking-wide mb-1.5">Prioridade</label>
+                  <label className="block text-caption font-bold text-white/60 uppercase tracking-wide mb-1.5">Prioridade</label>
                   <div className="flex flex-col gap-1">
                     {PRIORIDADES.map(p => (
                       <button key={p.id} type="button" onClick={() => setPrioridade(p.id)}
@@ -390,7 +390,7 @@ const TarefaDrawer: React.FC<TarefaDrawerProps> = ({ tarefa, mode, setorInicial 
                   </div>
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-white/40 uppercase tracking-wide mb-1.5">Fase</label>
+                  <label className="block text-caption font-bold text-white/60 uppercase tracking-wide mb-1.5">Fase</label>
                   <div className="flex flex-col gap-1">
                     {FASES.map(f => (
                       <button key={f.id} type="button" onClick={() => setFase(f.id)}
@@ -403,19 +403,19 @@ const TarefaDrawer: React.FC<TarefaDrawerProps> = ({ tarefa, mode, setorInicial 
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-[10px] font-bold text-white/40 uppercase tracking-wide mb-1.5"><User className="w-3 h-3 inline mr-1" />Responsável</label>
+                  <label className="block text-caption font-bold text-white/60 uppercase tracking-wide mb-1.5"><User className="w-3 h-3 inline mr-1" />Responsável</label>
                   <select value={responsavel} onChange={e => setResponsavel(e.target.value)} className={selectCls}>
                     <option value="">— ninguém —</option>
                     {RESPONSAVEIS.map(r => <option key={r} value={r}>{r}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-white/40 uppercase tracking-wide mb-1.5"><Tag className="w-3 h-3 inline mr-1" />Solicitante</label>
+                  <label className="block text-caption font-bold text-white/60 uppercase tracking-wide mb-1.5"><Tag className="w-3 h-3 inline mr-1" />Solicitante</label>
                   <input type="text" value={solicitante} onChange={e => setSolicitante(e.target.value)} placeholder="Quem solicitou..." className={inputCls} />
                 </div>
               </div>
               <div>
-                <label className="block text-[10px] font-bold text-white/40 uppercase tracking-wide mb-1.5"><Calendar className="w-3 h-3 inline mr-1" />Data Limite</label>
+                <label className="block text-caption font-bold text-white/60 uppercase tracking-wide mb-1.5"><Calendar className="w-3 h-3 inline mr-1" />Data Limite</label>
                 <input type="date" value={dataLimite} onChange={e => setDataLimite(e.target.value)} className={inputCls} />
               </div>
               {erro && <p className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-xl px-3 py-2">{erro}</p>}
@@ -427,7 +427,7 @@ const TarefaDrawer: React.FC<TarefaDrawerProps> = ({ tarefa, mode, setorInicial 
               <div className="flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-2xl">
                 <div>
                   <p className="text-sm font-bold text-white">Esta tarefa tem custo?</p>
-                  <p className="text-xs text-white/40 mt-0.5">Ative para registrar valores e orçamentos</p>
+                  <p className="text-xs text-white/60 mt-0.5">Ative para registrar valores e orçamentos</p>
                 </div>
                 <button onClick={() => setTemCusto(v => !v)}
                   className={`relative w-12 h-6 rounded-full transition-all duration-300 ${temCusto ? 'bg-emerald-500' : 'bg-white/15'}`}>
@@ -438,17 +438,17 @@ const TarefaDrawer: React.FC<TarefaDrawerProps> = ({ tarefa, mode, setorInicial 
                 <>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-[10px] font-bold text-white/40 uppercase tracking-wide mb-1.5">Valor Estimado</label>
+                      <label className="block text-caption font-bold text-white/60 uppercase tracking-wide mb-1.5">Valor Estimado</label>
                       <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40 text-sm font-bold">R$</span>
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/60 text-sm font-bold">R$</span>
                         <input type="number" min="0" step="0.01" value={valorEstimado} onChange={e => setValorEstimado(e.target.value)}
                           placeholder="0,00" className={inputCls + ' pl-9'} />
                       </div>
                     </div>
                     <div>
-                      <label className="block text-[10px] font-bold text-white/40 uppercase tracking-wide mb-1.5">Custo Real</label>
+                      <label className="block text-caption font-bold text-white/60 uppercase tracking-wide mb-1.5">Custo Real</label>
                       <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40 text-sm font-bold">R$</span>
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/60 text-sm font-bold">R$</span>
                         <input type="number" min="0" step="0.01" value={valorReal} onChange={e => setValorReal(e.target.value)}
                           placeholder="0,00" className={inputCls + ' pl-9'} />
                       </div>
@@ -471,17 +471,17 @@ const TarefaDrawer: React.FC<TarefaDrawerProps> = ({ tarefa, mode, setorInicial 
               <div className="flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-2xl">
                 <div>
                   <p className="text-sm font-bold text-white">Requer aprovação?</p>
-                  <p className="text-xs text-white/40 mt-0.5">Bloqueia execução até ser aprovada</p>
+                  <p className="text-xs text-white/60 mt-0.5">Bloqueia execução até ser aprovada</p>
                 </div>
                 <button onClick={() => setRequerAprovacao(v => !v)}
-                  className={`relative w-12 h-6 rounded-full transition-all duration-300 ${requerAprovacao ? 'bg-[#7D1F2C]' : 'bg-white/15'}`}>
+                  className={`relative w-12 h-6 rounded-full transition-all duration-300 ${requerAprovacao ? 'bg-wine' : 'bg-white/15'}`}>
                   <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-300 ${requerAprovacao ? 'translate-x-6' : 'translate-x-0'}`} />
                 </button>
               </div>
               {requerAprovacao && (
                 <>
                   <div>
-                    <label className="block text-[10px] font-bold text-white/40 uppercase tracking-wide mb-2">Status de Aprovação</label>
+                    <label className="block text-caption font-bold text-white/60 uppercase tracking-wide mb-2">Status de Aprovação</label>
                     <div className="flex gap-2">
                       {(['pendente', 'aprovado', 'rejeitado'] as const).map(s => (
                         <button key={s} type="button" onClick={() => setStatusAprovacao(s)}
@@ -534,7 +534,7 @@ const TarefaDrawer: React.FC<TarefaDrawerProps> = ({ tarefa, mode, setorInicial 
                       className={`shrink-0 w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${item.concluido ? 'bg-emerald-500 border-emerald-500' : 'border-white/25 hover:border-white/50'}`}>
                       {item.concluido && <Check className="w-3 h-3 text-white" />}
                     </button>
-                    <span className={`flex-1 text-sm transition-all ${item.concluido ? 'line-through text-white/30' : 'text-white'}`}>{item.texto}</span>
+                    <span className={`flex-1 text-sm transition-all ${item.concluido ? 'line-through text-white/60' : 'text-white'}`}>{item.texto}</span>
                     <button onClick={() => setChecklist(c => c.filter(x => x.id !== item.id))}
                       className="opacity-0 group-hover:opacity-100 p-1 text-white/25 hover:text-red-400 transition-all">
                       <X className="w-3.5 h-3.5" />
@@ -569,8 +569,8 @@ const TarefaDrawer: React.FC<TarefaDrawerProps> = ({ tarefa, mode, setorInicial 
                       onChange={e => { const f = e.target.files?.[0]; if (f) uploadAnexo(f); e.target.value = ''; }} />
                     {uploadando ? <Loader2 className="w-8 h-8 text-white/30 animate-spin mx-auto mb-2" />
                       : <Upload className="w-8 h-8 text-white/25 group-hover:text-white/50 mx-auto mb-2 transition-all" />}
-                    <p className="text-sm text-white/40 font-medium">{uploadando ? 'Enviando...' : 'Clique para anexar arquivo'}</p>
-                    <p className="text-xs text-white/20 mt-1">PDF, Word, Excel, imagens — máx. 20 MB</p>
+                    <p className="text-sm text-white/60 font-medium">{uploadando ? 'Enviando...' : 'Clique para anexar arquivo'}</p>
+                    <p className="text-xs text-white/60 mt-1">PDF, Word, Excel, imagens — máx. 20 MB</p>
                   </div>
                   {anexos.length > 0 && (
                     <div className="space-y-2">
@@ -579,7 +579,7 @@ const TarefaDrawer: React.FC<TarefaDrawerProps> = ({ tarefa, mode, setorInicial 
                           <div className="shrink-0">{fileIcon(a.tipo_mime)}</div>
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium text-white truncate">{a.nome_arquivo}</p>
-                            <p className="text-[10px] text-white/30 mt-0.5">{formatBytes(a.tamanho_bytes)} · {new Date(a.criado_em).toLocaleDateString('pt-BR')}</p>
+                            <p className="text-caption text-white/60 mt-0.5">{formatBytes(a.tamanho_bytes)} · {new Date(a.criado_em).toLocaleDateString('pt-BR')}</p>
                           </div>
                           <div className="flex gap-1.5 opacity-0 group-hover:opacity-100 transition-all">
                             <a href={a.url_arquivo} target="_blank" rel="noopener noreferrer"
@@ -608,7 +608,7 @@ const TarefaDrawer: React.FC<TarefaDrawerProps> = ({ tarefa, mode, setorInicial 
             Fechar
           </button>
           <button onClick={salvar} disabled={salvando || !titulo.trim()}
-            className="flex-1 py-2.5 rounded-xl text-sm font-bold bg-[#7D1F2C] text-white hover:bg-[#9B2535] transition-all disabled:opacity-40 flex items-center justify-center gap-2">
+            className="flex-1 py-2.5 rounded-xl text-sm font-bold bg-wine text-white hover:bg-wine-light transition-all disabled:opacity-40 flex items-center justify-center gap-2">
             {salvando ? <><Loader2 className="w-4 h-4 animate-spin" /> Salvando...</> : (isCreate ? 'Criar Tarefa' : 'Salvar Alterações')}
           </button>
         </div>
@@ -642,35 +642,35 @@ const KanbanCard: React.FC<KanbanCardProps> = ({ tarefa, onOpen, onMove, onDelet
       onClick={() => onOpen(tarefa)}>
       <div className="flex items-center gap-1.5 mb-2">
         <span className={`w-2 h-2 rounded-full shrink-0 ${prio.dot}`} />
-        <span className={`text-[9px] font-bold ${prio.cls}`}>{prio.label}</span>
+        <span className={`text-caption font-bold ${prio.cls}`}>{prio.label}</span>
         <div className="flex-1" />
         {aprovSt && (
-          <span className={`flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.5 rounded-md ${aprovSt.cls}`}>
+          <span className={`flex items-center gap-0.5 text-caption font-bold px-1.5 py-0.5 rounded-md ${aprovSt.cls}`}>
             {aprovSt.icon}{aprovSt.label}
           </span>
         )}
       </div>
-      <p className="text-[11px] font-semibold text-white leading-snug mb-2">{tarefa.titulo}</p>
+      <p className="text-caption font-semibold text-white leading-snug mb-2">{tarefa.titulo}</p>
       {tarefa.descricao && (
-        <p className="text-[9px] text-white/35 mb-2 line-clamp-2 leading-relaxed">{tarefa.descricao}</p>
+        <p className="text-caption text-white/35 mb-2 line-clamp-2 leading-relaxed">{tarefa.descricao}</p>
       )}
       <div className="flex flex-wrap items-center gap-1.5">
-        {tarefa.responsavel && <span className="text-[9px] text-white/40 bg-white/8 px-1.5 py-0.5 rounded-md">{tarefa.responsavel}</span>}
+        {tarefa.responsavel && <span className="text-caption text-white/60 bg-white/8 px-1.5 py-0.5 rounded-md">{tarefa.responsavel}</span>}
         {tarefa.data_limite && (
-          <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md ${vencida ? 'bg-red-500/20 text-red-400' : 'bg-white/6 text-white/30'}`}>
+          <span className={`text-caption font-bold px-1.5 py-0.5 rounded-md ${vencida ? 'bg-red-500/20 text-red-400' : 'bg-white/6 text-white/60'}`}>
             {fmtData(tarefa.data_limite)}
           </span>
         )}
         {tarefa.tem_custo && tarefa.valor_estimado && (
-          <span className="text-[9px] font-bold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded-md">{fmtR(tarefa.valor_estimado)}</span>
+          <span className="text-caption font-bold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded-md">{fmtR(tarefa.valor_estimado)}</span>
         )}
         {checkTotal > 0 && (
-          <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md ${checkDone === checkTotal ? 'bg-emerald-500/15 text-emerald-400' : 'bg-white/6 text-white/30'}`}>
+          <span className={`text-caption font-bold px-1.5 py-0.5 rounded-md ${checkDone === checkTotal ? 'bg-emerald-500/15 text-emerald-400' : 'bg-white/6 text-white/60'}`}>
             {checkDone}/{checkTotal}
           </span>
         )}
         {(tarefa.anexos?.length ?? 0) > 0 && (
-          <span className="text-[9px] text-white/30 bg-white/5 px-1.5 py-0.5 rounded-md flex items-center gap-0.5">
+          <span className="text-caption text-white/60 bg-white/5 px-1.5 py-0.5 rounded-md flex items-center gap-0.5">
             <Paperclip className="w-2.5 h-2.5" />{tarefa.anexos!.length}
           </span>
         )}
@@ -678,18 +678,18 @@ const KanbanCard: React.FC<KanbanCardProps> = ({ tarefa, onOpen, onMove, onDelet
       <div className="mt-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-all flex-wrap" onClick={e => e.stopPropagation()}>
         {FASES.filter(f => f.id !== faseAtual).map(f => (
           <button key={f.id} onClick={() => onMove(tarefa.id, f.id)}
-            className="text-[8px] px-2 py-0.5 rounded-md bg-white/8 text-white/35 hover:bg-white/15 hover:text-white/70 transition-all">
+            className="text-caption px-2 py-0.5 rounded-md bg-white/8 text-white/35 hover:bg-white/15 hover:text-white/70 transition-all">
             → {f.label}
           </button>
         ))}
         {(faseAtual === 'concluido' || faseAtual === 'cancelado') && (
           <button onClick={() => onArquivar(tarefa.id)}
-            className="text-[8px] px-2 py-0.5 rounded-md bg-yellow-500/15 text-yellow-400 hover:bg-yellow-500/25 transition-all flex items-center gap-0.5">
+            className="text-caption px-2 py-0.5 rounded-md bg-yellow-500/15 text-yellow-400 hover:bg-yellow-500/25 transition-all flex items-center gap-0.5">
             <Archive className="w-2.5 h-2.5" /> Arquivar
           </button>
         )}
         <button onClick={() => { if (confirm('Excluir tarefa?')) onDelete(tarefa.id); }}
-          className="text-[8px] px-1.5 py-0.5 rounded-md bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-all ml-auto">
+          className="text-caption px-1.5 py-0.5 rounded-md bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-all ml-auto">
           <Trash2 className="w-2.5 h-2.5" />
         </button>
       </div>
@@ -726,16 +726,16 @@ const KanbanSetor: React.FC<KanbanSetorProps> = ({ setor, tarefas, onAdd, onOpen
         </div>
         <div className="flex-1 text-left">
           <p className="text-sm font-bold text-white">{setor.label}</p>
-          <p className="text-[10px] text-white/40">{setor.sub}</p>
+          <p className="text-caption text-white/60">{setor.sub}</p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          {urgentes > 0 && <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-red-500/15 text-red-400">{urgentes}u</span>}
+          {urgentes > 0 && <span className="text-caption font-bold px-2 py-0.5 rounded-full bg-red-500/15 text-red-400">{urgentes}u</span>}
           {aguardAprov > 0 && (
-            <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-yellow-500/15 text-yellow-400 flex items-center gap-1">
+            <span className="text-caption font-bold px-2 py-0.5 rounded-full bg-yellow-500/15 text-yellow-400 flex items-center gap-1">
               <Shield className="w-2.5 h-2.5" />{aguardAprov}
             </span>
           )}
-          {pendentes > 0 && <span className="text-[9px] font-bold px-2 py-0.5 rounded-full text-white/50 bg-white/10">{pendentes} pend.</span>}
+          {pendentes > 0 && <span className="text-caption font-bold px-2 py-0.5 rounded-full text-white/50 bg-white/10">{pendentes} pend.</span>}
           <button onClick={e => { e.stopPropagation(); onAdd(setor.id); }}
             className="p-1.5 rounded-lg hover:bg-white/15 transition-all" style={{ color: setor.corAccent }}>
             <Plus className="w-3.5 h-3.5" />
@@ -752,11 +752,11 @@ const KanbanSetor: React.FC<KanbanSetorProps> = ({ setor, tarefas, onAdd, onOpen
               return (
                 <div key={fase.id} className={`rounded-xl border p-2.5 flex flex-col gap-2 min-h-[100px] ${fase.cor}`}>
                   <div className="flex items-center justify-between mb-0.5">
-                    <p className="text-[10px] font-black text-white/55 uppercase tracking-wide">{fase.label}</p>
-                    <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md ${fase.badgeCls}`}>{itens.length}</span>
+                    <p className="text-caption font-black text-white/55 uppercase tracking-wide">{fase.label}</p>
+                    <span className={`text-caption font-bold px-1.5 py-0.5 rounded-md ${fase.badgeCls}`}>{itens.length}</span>
                   </div>
                   {itens.length === 0 && (
-                    <div className="flex-1 flex items-center justify-center"><p className="text-[9px] text-white/12">vazio</p></div>
+                    <div className="flex-1 flex items-center justify-center"><p className="text-caption text-white/12">vazio</p></div>
                   )}
                   {itens.map(t => (
                     <KanbanCard key={t.id} tarefa={t} onOpen={onOpen} onMove={onMove} onDelete={onDelete} onArquivar={onArquivar} faseAtual={fase.id} />
@@ -846,55 +846,55 @@ const SolCard: React.FC<SolCardProps> = ({ sol, onOpen, onMover, onDelete, onArq
       className="bg-[#0d0f1a]/90 border border-white/10 rounded-xl p-3 group hover:border-white/25 transition-all cursor-pointer">
       <div className="flex items-center gap-1.5 mb-2">
         {isPublica ? (
-          <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-md ${naoEnriquecida ? 'bg-orange-500/20 text-orange-400' : 'bg-violet-500/15 text-violet-400'}`}>
+          <span className={`text-caption font-black px-1.5 py-0.5 rounded-md ${naoEnriquecida ? 'bg-orange-500/20 text-orange-400' : 'bg-violet-500/15 text-violet-400'}`}>
             {naoEnriquecida ? 'Via Link ⚠️' : 'Via Link'}
           </span>
         ) : (
-          <span className="text-[9px] font-black px-1.5 py-0.5 rounded-md bg-sky-500/10 text-sky-400">Manual</span>
+          <span className="text-caption font-black px-1.5 py-0.5 rounded-md bg-sky-500/10 text-sky-400">Manual</span>
         )}
         <div className="flex-1" />
-        <span className={`flex items-center gap-1 text-[9px] font-bold ${pr.cls}`}>
+        <span className={`flex items-center gap-1 text-caption font-bold ${pr.cls}`}>
           <span className={`w-1.5 h-1.5 rounded-full ${pr.dot}`} />{pr.label}
         </span>
       </div>
-      <p className="text-[9px] text-white/25 font-mono mb-0.5">#{sol.numero_solicitacao}</p>
-      <p className="text-[11px] font-semibold text-white leading-snug mb-2">{sol.titulo}</p>
-      {sol.setor_solicitante && <p className="text-[9px] text-white/35 mb-2 truncate">{sol.setor_solicitante}</p>}
+      <p className="text-caption text-white/60 font-mono mb-0.5">#{sol.numero_solicitacao}</p>
+      <p className="text-caption font-semibold text-white leading-snug mb-2">{sol.titulo}</p>
+      {sol.setor_solicitante && <p className="text-caption text-white/35 mb-2 truncate">{sol.setor_solicitante}</p>}
       <div className="flex flex-wrap items-center gap-1">
-        <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md ${st.cls}`}>{st.label}</span>
-        {sol.solicitante_nome && <span className="text-[9px] text-white/35 bg-white/6 px-1.5 py-0.5 rounded-md truncate max-w-[80px]">{sol.solicitante_nome}</span>}
+        <span className={`text-caption font-bold px-1.5 py-0.5 rounded-md ${st.cls}`}>{st.label}</span>
+        {sol.solicitante_nome && <span className="text-caption text-white/35 bg-white/6 px-1.5 py-0.5 rounded-md truncate max-w-[80px]">{sol.solicitante_nome}</span>}
         {sol.data_limite && (
-          <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md ${vencida ? 'bg-red-500/20 text-red-400' : 'bg-white/6 text-white/30'}`}>{fmtData(sol.data_limite)}</span>
+          <span className={`text-caption font-bold px-1.5 py-0.5 rounded-md ${vencida ? 'bg-red-500/20 text-red-400' : 'bg-white/6 text-white/60'}`}>{fmtData(sol.data_limite)}</span>
         )}
         {sol.valor_estimado && sol.valor_estimado > 0 && (
-          <span className="text-[9px] font-bold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded-md">{fmtR(sol.valor_estimado)}</span>
+          <span className="text-caption font-bold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded-md">{fmtR(sol.valor_estimado)}</span>
         )}
       </div>
       <div className="mt-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-all flex-wrap" onClick={e => e.stopPropagation()}>
         {colunaAtual.nextStatus && (
           <button onClick={() => onMover(sol.id, colunaAtual.nextStatus!)}
-            className="text-[8px] px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25 transition-all font-bold">
+            className="text-caption px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25 transition-all font-bold">
             {colunaAtual.nextLabel}
           </button>
         )}
         {COLUNAS_SOL.filter(c => c.id !== colunaAtual.id && c.id !== 'fechado').map(c => (
           <button key={c.id} onClick={() => onMover(sol.id, c.statuses[0])}
-            className="text-[8px] px-2 py-0.5 rounded-md bg-white/8 text-white/35 hover:bg-white/15 hover:text-white/70 transition-all">
+            className="text-caption px-2 py-0.5 rounded-md bg-white/8 text-white/35 hover:bg-white/15 hover:text-white/70 transition-all">
             → {c.label}
           </button>
         ))}
         {(colunaAtual.id === 'concluido' || colunaAtual.id === 'fechado') && (
           <button onClick={() => onArquivar(sol.id)}
-            className="text-[8px] px-2 py-0.5 rounded-md bg-yellow-500/15 text-yellow-400 hover:bg-yellow-500/25 transition-all flex items-center gap-0.5">
+            className="text-caption px-2 py-0.5 rounded-md bg-yellow-500/15 text-yellow-400 hover:bg-yellow-500/25 transition-all flex items-center gap-0.5">
             <Archive className="w-2.5 h-2.5" /> Arquivar
           </button>
         )}
         <button onClick={() => onMover(sol.id, 'cancelado')}
-          className="text-[8px] px-2 py-0.5 rounded-md bg-white/5 text-white/25 hover:bg-white/10 transition-all">
+          className="text-caption px-2 py-0.5 rounded-md bg-white/5 text-white/25 hover:bg-white/10 transition-all">
           Cancelar
         </button>
         <button onClick={() => { if (confirm('Excluir?')) onDelete(sol.id); }}
-          className="text-[8px] px-1.5 py-0.5 rounded-md bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-all ml-auto">
+          className="text-caption px-1.5 py-0.5 rounded-md bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-all ml-auto">
           <Trash2 className="w-2.5 h-2.5" />
         </button>
       </div>
@@ -998,7 +998,7 @@ const SolicitacoesTab: React.FC = () => {
           { label: 'Sem Triagem',    val: semTriagem,     cls: 'text-orange-400', bg: `bg-orange-500/8 border-orange-500/15 ${semTriagem > 0 ? 'ring-1 ring-orange-500/30' : ''}` },
         ].map(k => (
           <div key={k.label} className={`border rounded-xl p-3 text-center ${k.bg}`}>
-            <p className="text-[10px] text-white/35 uppercase font-bold tracking-wide">{k.label}</p>
+            <p className="text-caption text-white/35 uppercase font-bold tracking-wide">{k.label}</p>
             <p className={`text-xl font-black mt-0.5 ${k.cls}`}>{k.val}</p>
           </div>
         ))}
@@ -1007,15 +1007,15 @@ const SolicitacoesTab: React.FC = () => {
       <div className="flex gap-1 bg-[#12141f] border border-white/10 rounded-xl p-1 flex-wrap">
         {TABS_SOL.map(t => (
           <button key={t.id} onClick={() => setAbaSol(t.id)}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold transition-all ${abaSol === t.id ? 'bg-[#7D1F2C] text-white shadow' : 'text-white/40 hover:text-white/70 hover:bg-white/5'}`}>
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold transition-all ${abaSol === t.id ? 'bg-wine text-white shadow' : 'text-white/40 hover:text-white/70 hover:bg-white/5'}`}>
             {t.label}
             {t.id === 'publicas' && semTriagem > 0 && (
-              <span className="ml-0.5 text-[9px] font-black bg-orange-500 text-white px-1.5 py-0.5 rounded-full">{semTriagem}</span>
+              <span className="ml-0.5 text-caption font-black bg-orange-500 text-white px-1.5 py-0.5 rounded-full">{semTriagem}</span>
             )}
           </button>
         ))}
         <button onClick={() => { setEditando(null); setShowForm(true); }}
-          className="ml-auto flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold bg-[#7D1F2C] text-white hover:bg-[#9B2535] transition-all">
+          className="ml-auto flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold bg-wine text-white hover:bg-wine-light transition-all">
           <Plus className="w-3.5 h-3.5" /> Nova
         </button>
       </div>
@@ -1062,7 +1062,7 @@ const SolicitacoesTab: React.FC = () => {
           </div>
 
           {loading
-            ? <div className="flex justify-center py-16"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#7D1F2C]" /></div>
+            ? <div className="flex justify-center py-16"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-wine" /></div>
             : (
               <div className="flex gap-3 overflow-x-auto pb-4" style={{ minHeight: 300 }}>
                 {COLUNAS_SOL.map(coluna => {
@@ -1073,13 +1073,13 @@ const SolicitacoesTab: React.FC = () => {
                       style={{ minWidth: 240, maxWidth: 280 }}>
                       <div className="px-3 py-2.5 border-b border-white/8">
                         <div className="flex items-center justify-between">
-                          <p className="text-[10px] font-black text-white/60 uppercase tracking-wide">{coluna.label}</p>
-                          <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md ${coluna.badgeCls}`}>{itens.length}</span>
+                          <p className="text-caption font-black text-white/60 uppercase tracking-wide">{coluna.label}</p>
+                          <span className={`text-caption font-bold px-1.5 py-0.5 rounded-md ${coluna.badgeCls}`}>{itens.length}</span>
                         </div>
                       </div>
                       <div className="flex-1 overflow-y-auto p-2.5 space-y-2" style={{ maxHeight: 600 }}>
                         {itens.length === 0 && (
-                          <div className="flex items-center justify-center h-16"><p className="text-[9px] text-white/12">vazio</p></div>
+                          <div className="flex items-center justify-center h-16"><p className="text-caption text-white/12">vazio</p></div>
                         )}
                         {itens.map(s => (
                           <SolCard key={s.id} sol={s} onOpen={s => setEditando(s)} onMover={moverStatus} onDelete={handleDelete} onArquivar={arquivarSol} colunaAtual={coluna} />
@@ -1259,7 +1259,7 @@ const CreditoFornecedoresTab: React.FC = () => {
           { label: 'Saldo disponível',  val: fmtR(totalCreditoSaldo), cls: 'text-emerald-400' },
         ].map(k => (
           <div key={k.label} className="bg-[#12141f] border border-white/10 rounded-xl p-4">
-            <p className="text-[10px] text-white/40 uppercase font-bold tracking-wide mb-1">{k.label}</p>
+            <p className="text-caption text-white/60 uppercase font-bold tracking-wide mb-1">{k.label}</p>
             <p className={`text-lg font-black ${k.cls}`}>{k.val}</p>
           </div>
         ))}
@@ -1269,18 +1269,18 @@ const CreditoFornecedoresTab: React.FC = () => {
       <div className="flex items-center justify-between">
         <p className="text-sm font-bold text-white/60">{creditos.length} acordos de crédito/permuta</p>
         <button onClick={() => setModalCredito(true)}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#7D1F2C] text-white text-sm font-bold hover:bg-[#9B2535] transition-all">
+          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-wine text-white text-sm font-bold hover:bg-wine-light transition-all">
           <Plus className="w-4 h-4" /> Novo Crédito
         </button>
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#7D1F2C]" /></div>
+        <div className="flex justify-center py-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-wine" /></div>
       ) : creditos.length === 0 ? (
         <div className="text-center py-16">
           <CreditCard className="w-12 h-12 text-white/15 mx-auto mb-3" />
-          <p className="text-white/30 text-sm">Nenhum crédito cadastrado</p>
-          <p className="text-white/20 text-xs mt-1">Clique em "Novo Crédito" para registrar uma permuta</p>
+          <p className="text-white/60 text-sm">Nenhum crédito cadastrado</p>
+          <p className="text-white/60 text-xs mt-1">Clique em "Novo Crédito" para registrar uma permuta</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -1294,39 +1294,39 @@ const CreditoFornecedoresTab: React.FC = () => {
                 {/* Cabeçalho do crédito */}
                 <button onClick={() => toggleCredito(c.id)}
                   className="w-full flex items-start gap-4 px-5 py-4 hover:bg-white/5 transition-colors text-left">
-                  <div className="w-10 h-10 rounded-xl bg-[#7D1F2C]/20 border border-[#7D1F2C]/30 flex items-center justify-center shrink-0">
-                    <Building2 className="w-5 h-5 text-[#D4AF37]" />
+                  <div className="w-10 h-10 rounded-xl bg-wine/20 border border-wine/30 flex items-center justify-center shrink-0">
+                    <Building2 className="w-5 h-5 text-gold" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap mb-1">
                       <p className="text-sm font-bold text-white">{c.nome_fornecedor}</p>
-                      <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md ${statusCor(c.status)}`}>
+                      <span className={`text-caption font-bold px-1.5 py-0.5 rounded-md ${statusCor(c.status)}`}>
                         {c.status === 'ativo' ? 'Ativo' : c.status === 'encerrado' ? 'Encerrado' : 'Suspenso'}
                       </span>
-                      {vencido && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-red-500/20 text-red-400">Vencido</span>}
+                      {vencido && <span className="text-caption font-bold px-1.5 py-0.5 rounded-md bg-red-500/20 text-red-400">Vencido</span>}
                     </div>
-                    {c.descricao && <p className="text-xs text-white/40 mb-2 truncate">{c.descricao}</p>}
+                    {c.descricao && <p className="text-xs text-white/60 mb-2 truncate">{c.descricao}</p>}
                     {/* Barra de progresso */}
                     <div className="flex items-center gap-3">
                       <div className="flex-1 h-2 bg-white/10 rounded-full overflow-hidden">
                         <div className={`h-full rounded-full transition-all duration-500 ${pct >= 100 ? 'bg-red-500' : pct >= 80 ? 'bg-orange-500' : 'bg-emerald-500'}`}
                           style={{ width: `${pct}%` }} />
                       </div>
-                      <span className="text-[10px] text-white/40 shrink-0">{pct.toFixed(0)}%</span>
+                      <span className="text-caption text-white/60 shrink-0">{pct.toFixed(0)}%</span>
                     </div>
                     <div className="flex items-center gap-4 mt-1.5 text-xs">
-                      <span className="text-white/40">Total: <span className="text-white font-bold">{fmtR(Number(c.credito_total))}</span></span>
-                      <span className="text-white/40">Usado: <span className="text-orange-400 font-bold">{fmtR(Number(c.credito_usado))}</span></span>
-                      <span className="text-white/40">Saldo: <span className="text-emerald-400 font-bold">{fmtR(Number(c.credito_saldo))}</span></span>
+                      <span className="text-white/60">Total: <span className="text-white font-bold">{fmtR(Number(c.credito_total))}</span></span>
+                      <span className="text-white/60">Usado: <span className="text-orange-400 font-bold">{fmtR(Number(c.credito_usado))}</span></span>
+                      <span className="text-white/60">Saldo: <span className="text-emerald-400 font-bold">{fmtR(Number(c.credito_saldo))}</span></span>
                     </div>
                     {c.data_validade && (
-                      <p className="text-[10px] text-white/30 mt-1">Validade: {fmtData(c.data_validade)}</p>
+                      <p className="text-caption text-white/60 mt-1">Validade: {fmtData(c.data_validade)}</p>
                     )}
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     {c.status === 'ativo' && (
                       <button onClick={e => { e.stopPropagation(); setModalConsumo(c.id); }}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#7D1F2C]/40 text-white text-xs font-bold hover:bg-[#7D1F2C] transition-all border border-[#7D1F2C]/40"
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-wine/40 text-white text-xs font-bold hover:bg-wine transition-all border border-wine/40"
                         title="Registrar consumo">
                         <PlusCircle className="w-3.5 h-3.5" /> Consumo
                       </button>
@@ -1343,7 +1343,7 @@ const CreditoFornecedoresTab: React.FC = () => {
                       {c.status === 'ativo' && (
                         <div className="flex gap-2">
                           <button onClick={() => setModalConsumo(c.id)}
-                            className="text-xs text-[#D4AF37] font-bold hover:text-white transition-colors flex items-center gap-1">
+                            className="text-xs text-gold font-bold hover:text-white transition-colors flex items-center gap-1">
                             <Plus className="w-3 h-3" /> Registrar consumo
                           </button>
                           <button onClick={() => encerrarCredito(c.id)}
@@ -1355,22 +1355,22 @@ const CreditoFornecedoresTab: React.FC = () => {
                     </div>
 
                     {!consumos[c.id] ? (
-                      <div className="py-6 text-center"><div className="animate-spin rounded-full h-5 w-5 border-b-2 border-[#7D1F2C] mx-auto" /></div>
+                      <div className="py-6 text-center"><div className="animate-spin rounded-full h-5 w-5 border-b-2 border-wine mx-auto" /></div>
                     ) : consumos[c.id].length === 0 ? (
                       <div className="py-8 text-center">
                         <Wallet className="w-8 h-8 text-white/15 mx-auto mb-2" />
-                        <p className="text-xs text-white/30">Nenhum consumo registrado</p>
+                        <p className="text-xs text-white/60">Nenhum consumo registrado</p>
                       </div>
                     ) : (
                       <div className="divide-y divide-white/5">
                         {consumos[c.id].map(k => (
                           <div key={k.id} className="flex items-center gap-3 px-5 py-3 hover:bg-white/5 transition-colors group">
                             <div className="shrink-0">
-                              <p className="text-[10px] font-bold text-white/40">{fmtData(k.data_consumo)}</p>
+                              <p className="text-caption font-bold text-white/60">{fmtData(k.data_consumo)}</p>
                             </div>
                             <div className="flex-1 min-w-0">
                               <p className="text-sm font-medium text-white">{k.descricao}</p>
-                              {k.obs && <p className="text-[10px] text-white/35 mt-0.5">{k.obs}</p>}
+                              {k.obs && <p className="text-caption text-white/35 mt-0.5">{k.obs}</p>}
                             </div>
                             <div className="flex items-center gap-2 shrink-0">
                               <p className="text-sm font-bold text-orange-400">{fmtR(Number(k.valor))}</p>
@@ -1412,32 +1412,32 @@ const CreditoFornecedoresTab: React.FC = () => {
             </div>
             <div className="px-6 py-4 space-y-3">
               <div>
-                <label className="block text-xs font-bold text-white/40 uppercase tracking-wide mb-1.5">Nome do Fornecedor *</label>
+                <label className="block text-xs font-bold text-white/60 uppercase tracking-wide mb-1.5">Nome do Fornecedor *</label>
                 <input value={formC.nome_fornecedor} onChange={e => setFormC(f => ({ ...f, nome_fornecedor: e.target.value }))}
                   placeholder="Ex: Rádio FM, Portal de Notícias..." className={inputCls} />
               </div>
               <div>
-                <label className="block text-xs font-bold text-white/40 uppercase tracking-wide mb-1.5">Descrição do Acordo</label>
+                <label className="block text-xs font-bold text-white/60 uppercase tracking-wide mb-1.5">Descrição do Acordo</label>
                 <textarea value={formC.descricao} onChange={e => setFormC(f => ({ ...f, descricao: e.target.value }))} rows={2}
                   placeholder="Contexto da permuta, o que foi combinado..." className={inputCls + ' resize-none'} />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-white/40 uppercase tracking-wide mb-1.5">Crédito Total *</label>
+                  <label className="block text-xs font-bold text-white/60 uppercase tracking-wide mb-1.5">Crédito Total *</label>
                   <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40 text-sm font-bold">R$</span>
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/60 text-sm font-bold">R$</span>
                     <input type="number" step="0.01" min="0" value={formC.credito_total}
                       onChange={e => setFormC(f => ({ ...f, credito_total: e.target.value }))}
                       placeholder="0,00" className={inputCls + ' pl-9'} />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-white/40 uppercase tracking-wide mb-1.5">Validade</label>
+                  <label className="block text-xs font-bold text-white/60 uppercase tracking-wide mb-1.5">Validade</label>
                   <input type="date" value={formC.data_validade} onChange={e => setFormC(f => ({ ...f, data_validade: e.target.value }))} className={inputCls} />
                 </div>
               </div>
               <div>
-                <label className="block text-xs font-bold text-white/40 uppercase tracking-wide mb-1.5">Observações</label>
+                <label className="block text-xs font-bold text-white/60 uppercase tracking-wide mb-1.5">Observações</label>
                 <textarea value={formC.obs} onChange={e => setFormC(f => ({ ...f, obs: e.target.value }))} rows={2}
                   className={inputCls + ' resize-none'} />
               </div>
@@ -1446,7 +1446,7 @@ const CreditoFornecedoresTab: React.FC = () => {
               <button onClick={() => setModalCredito(false)}
                 className="flex-1 py-2.5 rounded-xl border border-white/15 text-white/60 hover:bg-white/5 text-sm transition-all">Cancelar</button>
               <button onClick={salvarCredito} disabled={salvando || !formC.nome_fornecedor || !formC.credito_total}
-                className="flex-1 py-2.5 rounded-xl bg-[#7D1F2C] text-white text-sm font-bold hover:bg-[#9B2535] disabled:opacity-50 transition-all">
+                className="flex-1 py-2.5 rounded-xl bg-wine text-white text-sm font-bold hover:bg-wine-light disabled:opacity-50 transition-all">
                 {salvando ? 'Salvando...' : 'Criar Crédito'}
               </button>
             </div>
@@ -1461,7 +1461,7 @@ const CreditoFornecedoresTab: React.FC = () => {
             <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
               <div>
                 <h3 className="text-white font-bold">Registrar Consumo</h3>
-                <p className="text-xs text-white/40 mt-0.5">{creditos.find(c => c.id === modalConsumo)?.nome_fornecedor}</p>
+                <p className="text-xs text-white/60 mt-0.5">{creditos.find(c => c.id === modalConsumo)?.nome_fornecedor}</p>
               </div>
               <button onClick={() => setModalConsumo(null)} className="text-white/40 hover:text-white"><X className="w-4 h-4" /></button>
             </div>
@@ -1479,13 +1479,13 @@ const CreditoFornecedoresTab: React.FC = () => {
               })()}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-white/40 uppercase tracking-wide mb-1.5">Data *</label>
+                  <label className="block text-xs font-bold text-white/60 uppercase tracking-wide mb-1.5">Data *</label>
                   <input type="date" value={formK.data_consumo} onChange={e => setFormK(f => ({ ...f, data_consumo: e.target.value }))} className={inputCls} />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-white/40 uppercase tracking-wide mb-1.5">Valor *</label>
+                  <label className="block text-xs font-bold text-white/60 uppercase tracking-wide mb-1.5">Valor *</label>
                   <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40 text-sm font-bold">R$</span>
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/60 text-sm font-bold">R$</span>
                     <input type="number" step="0.01" min="0" value={formK.valor}
                       onChange={e => setFormK(f => ({ ...f, valor: e.target.value }))}
                       placeholder="0,00" className={inputCls + ' pl-9'} />
@@ -1493,18 +1493,18 @@ const CreditoFornecedoresTab: React.FC = () => {
                 </div>
               </div>
               <div>
-                <label className="block text-xs font-bold text-white/40 uppercase tracking-wide mb-1.5">Descrição *</label>
+                <label className="block text-xs font-bold text-white/60 uppercase tracking-wide mb-1.5">Descrição *</label>
                 <input value={formK.descricao} onChange={e => setFormK(f => ({ ...f, descricao: e.target.value }))}
                   placeholder="O que foi consumido do crédito..." className={inputCls} />
               </div>
               <div>
-                <label className="block text-xs font-bold text-white/40 uppercase tracking-wide mb-1.5">Observações</label>
+                <label className="block text-xs font-bold text-white/60 uppercase tracking-wide mb-1.5">Observações</label>
                 <textarea value={formK.obs} onChange={e => setFormK(f => ({ ...f, obs: e.target.value }))} rows={2}
                   className={inputCls + ' resize-none'} />
               </div>
               {/* Upload comprovante */}
               <div>
-                <label className="block text-xs font-bold text-white/40 uppercase tracking-wide mb-1.5">Comprovante</label>
+                <label className="block text-xs font-bold text-white/60 uppercase tracking-wide mb-1.5">Comprovante</label>
                 <input ref={comprovanteRef} type="file" className="hidden"
                   accept="image/*,.pdf,.jpg,.jpeg,.png,.webp"
                   onChange={e => { const f = e.target.files?.[0]; if (f) setArquivoComprovante(f); }} />
@@ -1527,7 +1527,7 @@ const CreditoFornecedoresTab: React.FC = () => {
               <button onClick={() => setModalConsumo(null)}
                 className="flex-1 py-2.5 rounded-xl border border-white/15 text-white/60 hover:bg-white/5 text-sm transition-all">Cancelar</button>
               <button onClick={() => salvarConsumo(modalConsumo)} disabled={salvando || uploadando || !formK.descricao || !formK.valor}
-                className="flex-1 py-2.5 rounded-xl bg-[#7D1F2C] text-white text-sm font-bold hover:bg-[#9B2535] disabled:opacity-50 transition-all">
+                className="flex-1 py-2.5 rounded-xl bg-wine text-white text-sm font-bold hover:bg-wine-light disabled:opacity-50 transition-all">
                 {salvando || uploadando ? 'Salvando...' : 'Registrar Consumo'}
               </button>
             </div>
@@ -1631,12 +1631,12 @@ const MetasTarefas: React.FC = () => {
               </div>
               <div>
                 <h1 className="text-xl font-black text-white leading-none">Metas, Tarefas & Créditos</h1>
-                <p className="text-xs text-white/40 mt-0.5">Gestão por setor · Solicitações · Permuta de fornecedores</p>
+                <p className="text-xs text-white/60 mt-0.5">Gestão por setor · Solicitações · Permuta de fornecedores</p>
               </div>
             </div>
             {abaModulo === 'tarefas' && (
               <button onClick={() => abrirNova('gestao')}
-                className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-sm font-bold bg-[#7D1F2C] text-white hover:bg-[#9B2535] transition-all shrink-0">
+                className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-sm font-bold bg-wine text-white hover:bg-wine-light transition-all shrink-0">
                 <Plus className="w-4 h-4" /> Nova Tarefa
               </button>
             )}
@@ -1650,7 +1650,7 @@ const MetasTarefas: React.FC = () => {
                 { label: 'Concluídas',    val: concluidas, cls: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20' },
               ].map(k => (
                 <div key={k.label} className={`border rounded-xl p-3 text-center ${k.bg}`}>
-                  <p className="text-[10px] text-white/40 uppercase font-bold tracking-wide">{k.label}</p>
+                  <p className="text-caption text-white/60 uppercase font-bold tracking-wide">{k.label}</p>
                   <p className={`text-2xl font-black mt-0.5 ${k.cls}`}>{k.val}</p>
                 </div>
               ))}
@@ -1667,7 +1667,7 @@ const MetasTarefas: React.FC = () => {
           { id: 'credito'      as AbaModulo, label: 'Crédito Fornecedores',      icon: <CreditCard className="w-4 h-4" /> },
         ].map(t => (
           <button key={t.id} onClick={() => setAbaModulo(t.id)}
-            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-bold transition-all ${abaModulo === t.id ? 'bg-[#7D1F2C] text-white shadow-lg' : 'text-white/40 hover:text-white/70 hover:bg-white/5'}`}>
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-bold transition-all ${abaModulo === t.id ? 'bg-wine text-white shadow-lg' : 'text-white/40 hover:text-white/70 hover:bg-white/5'}`}>
             {t.icon}{t.label}
           </button>
         ))}
@@ -1685,7 +1685,7 @@ const MetasTarefas: React.FC = () => {
           </div>
 
           {loading
-            ? <div className="flex justify-center py-20"><div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#7D1F2C]" /></div>
+            ? <div className="flex justify-center py-20"><div className="animate-spin rounded-full h-10 w-10 border-b-2 border-wine" /></div>
             : (
               <div className="space-y-3">
                 {SETORES.map(setor => (

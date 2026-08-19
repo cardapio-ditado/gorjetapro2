@@ -138,8 +138,14 @@ const CategorizarLancamentos: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7D1F2C]"></div>
+      <div className="w-full">
+        <div className="w-full space-y-3" aria-busy="true">
+                    <div className="skeleton" style={{ height: 14, width: '32%' }} />
+                    <div className="skeleton" style={{ height: 44, width: '100%' }} />
+                    <div className="skeleton" style={{ height: 44, width: '100%' }} />
+                    <div className="skeleton" style={{ height: 44, width: '100%' }} />
+                    <div className="skeleton" style={{ height: 44, width: '82%' }} />
+                  </div>
       </div>
     );
   }
@@ -200,7 +206,7 @@ const CategorizarLancamentos: React.FC = () => {
             <select
               value={filtroTipo}
               onChange={(e) => setFiltroTipo(e.target.value as any)}
-              className="w-full rounded-md bg-white/5 border border-white/20 text-white focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+              className="w-full rounded-md bg-white/5 border border-white/20 text-white focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
             >
               <option value="all">Todos</option>
               <option value="entrada">Receitas</option>
@@ -217,7 +223,7 @@ const CategorizarLancamentos: React.FC = () => {
               type="month"
               value={filtroMes}
               onChange={(e) => setFiltroMes(e.target.value)}
-              className="w-full rounded-md bg-white/5 border border-white/20 text-white focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+              className="w-full rounded-md bg-white/5 border border-white/20 text-white focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
             />
           </div>
 
@@ -229,7 +235,7 @@ const CategorizarLancamentos: React.FC = () => {
             <select
               value={categoriaSelecionada}
               onChange={(e) => setCategoriaSelecionada(e.target.value)}
-              className="w-full rounded-md bg-white/5 border border-white/20 text-white focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+              className="w-full rounded-md bg-white/5 border border-white/20 text-white focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
             >
               <option value="">Selecione uma categoria...</option>
               {categorias.map((cat) => (
@@ -256,7 +262,7 @@ const CategorizarLancamentos: React.FC = () => {
           <button
             onClick={handleCategorizar}
             disabled={!categoriaSelecionada || processando}
-            className="px-6 py-2 bg-[#7D1F2C] text-white rounded-lg hover:bg-[#6a1a25] disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            className="px-6 py-2 bg-wine text-white rounded-lg hover:bg-[#6a1a25] disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
             <Check className="w-4 h-4" />
             {processando ? 'Processando...' : 'Categorizar Selecionados'}

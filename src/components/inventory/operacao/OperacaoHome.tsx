@@ -154,7 +154,7 @@ export default function OperacaoHome({ onAcao }: Props) {
             </div>
             <div>
               <p className="text-white font-semibold text-sm leading-tight">{label}</p>
-              <p className="text-white/40 text-xs mt-0.5">{desc}</p>
+              <p className="text-white/60 text-xs mt-0.5">{desc}</p>
             </div>
           </button>
         ))}
@@ -171,7 +171,7 @@ export default function OperacaoHome({ onAcao }: Props) {
           </div>
           <div className="text-left">
             <p className="text-white font-semibold text-sm">Requisições internas</p>
-            <p className="text-white/30 text-xs mt-0.5">Gerenciar requisições de transferência</p>
+            <p className="text-white/60 text-xs mt-0.5">Gerenciar requisições de transferência</p>
           </div>
         </div>
         {pendentes > 0 && (
@@ -192,7 +192,7 @@ export default function OperacaoHome({ onAcao }: Props) {
             <Loader2 className="w-6 h-6 text-white/20 animate-spin" />
           </div>
         ) : movs.length === 0 ? (
-          <p className="text-white/30 text-sm text-center py-8">Nenhuma ação registrada hoje.</p>
+          <p className="text-white/60 text-sm text-center py-8">Nenhuma ação registrada hoje.</p>
         ) : (
           <div className="divide-y divide-white/[0.05]">
             {movs.map((m) => {
@@ -203,23 +203,23 @@ export default function OperacaoHome({ onAcao }: Props) {
               return (
                 <div key={m.id} className="px-5 py-3">
                   <div className="flex items-center gap-3">
-                    <span className={`text-[11px] font-bold px-2 py-0.5 rounded-lg shrink-0 ${bgCor} ${textCor}`}>
+                    <span className={`text-caption font-bold px-2 py-0.5 rounded-lg shrink-0 ${bgCor} ${textCor}`}>
                       {TIPO_LABEL[m.tipo_movimentacao] || m.tipo_movimentacao}
                     </span>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm text-white/80 truncate">{m.item?.nome || '—'}</p>
-                      <p className="text-xs text-white/30 truncate">{estoque}</p>
+                      <p className="text-xs text-white/60 truncate">{estoque}</p>
                     </div>
                     <div className="text-right shrink-0">
                       <p className="text-sm font-semibold text-white/70">
                         {m.tipo_movimentacao === 'transferencia' ? '↔' : m.tipo_movimentacao === 'entrada' ? '+' : '−'}
                         {Number(m.quantidade).toLocaleString('pt-BR', { maximumFractionDigits: 3 })}
                       </p>
-                      <p className="text-[10px] text-white/25">{fmtHora(m.criado_em)}</p>
+                      <p className="text-caption text-white/60">{fmtHora(m.criado_em)}</p>
                     </div>
                   </div>
                   {req && (
-                    <p className="text-[11px] text-blue-400/60 mt-1 ml-[52px] truncate">
+                    <p className="text-caption text-blue-400/60 mt-1 ml-[52px] truncate">
                       Req. por {req.funcionario_nome} · {req.setor}
                     </p>
                   )}

@@ -23,7 +23,7 @@ interface Colaborador {
 }
 
 const TIPO_CONFIG = {
-  aniversario_empresa: { label: 'Aniversário na Empresa', cls: 'bg-[#D4AF37]/20 text-[#D4AF37] border-[#D4AF37]/30', dot: 'bg-[#D4AF37]' },
+  aniversario_empresa: { label: 'Aniversário na Empresa', cls: 'bg-gold/20 text-gold border-gold/30', dot: 'bg-gold' },
   aniversario_pessoal: { label: 'Aniversário Pessoal', cls: 'bg-pink-500/20 text-pink-400 border-pink-500/30', dot: 'bg-pink-400' },
   avaliacao_devida: { label: 'Avaliação', cls: 'bg-orange-500/20 text-orange-400 border-orange-500/30', dot: 'bg-orange-400' },
   outro: { label: 'Outro', cls: 'bg-white/10 text-white/60 border-white/20', dot: 'bg-white/40' },
@@ -31,7 +31,7 @@ const TIPO_CONFIG = {
 
 const tipoCfg = (tipo: string) => TIPO_CONFIG[tipo as keyof typeof TIPO_CONFIG] ?? TIPO_CONFIG.outro;
 
-const inp = 'w-full bg-white/5 border border-white/15 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-[#7D1F2C]/60';
+const inp = 'w-full bg-white/5 border border-white/15 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-wine/60';
 const sel = inp + ' appearance-none';
 
 const MESES = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
@@ -128,7 +128,7 @@ export default function DatasMarcos() {
             Hoje
           </button>
           <button onClick={() => { setForm({ tipo: 'outro', data_marco: dayjs().format('YYYY-MM-DD'), descricao: '' }); setModal(true); }}
-            className="flex items-center gap-2 px-4 py-2 bg-[#7D1F2C] hover:bg-[#9b2535] text-white rounded-xl text-sm font-medium transition-all">
+            className="flex items-center gap-2 px-4 py-2 bg-wine hover:bg-wine-light text-white rounded-xl text-sm font-medium transition-all">
             <Plus className="w-4 h-4" />Novo Marco
           </button>
         </div>
@@ -152,7 +152,7 @@ export default function DatasMarcos() {
                 return (
                   <button key={idx} onClick={() => setDiaSel(d => d === dia ? null : dia)}
                     className={`h-14 rounded-xl flex flex-col items-center justify-start pt-2 transition-all relative ${
-                      selecionado ? 'bg-[#7D1F2C] ring-2 ring-[#7D1F2C]/50' :
+                      selecionado ? 'bg-wine ring-2 ring-wine/50' :
                       hoje ? 'bg-white/10 ring-1 ring-white/30' :
                       marcosHoje.length > 0 ? 'bg-white/5 hover:bg-white/10' :
                       'hover:bg-white/5'
@@ -215,14 +215,14 @@ export default function DatasMarcos() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
                           <span className={`text-xs px-2 py-0.5 rounded-full border ${cfg.cls}`}>{cfg.label}</span>
-                          <span className="text-white/30 text-xs">dia {m.dia_marco}</span>
+                          <span className="text-white/60 text-xs">dia {m.dia_marco}</span>
                         </div>
                         <p className="text-white text-sm truncate">{m.nome_completo ?? 'Geral'}</p>
                         <p className="text-white/50 text-xs truncate">{m.descricao}</p>
                       </div>
                       <div className="flex flex-col items-center gap-1">
                         <button onClick={() => notificar(m)} className="p-1.5 hover:bg-white/10 rounded-lg transition-all" title={m.notificado ? 'Notificado' : 'Notificar'}>
-                          {m.notificado ? <Bell className="w-3.5 h-3.5 text-[#D4AF37]" /> : <BellOff className="w-3.5 h-3.5 text-white/30" />}
+                          {m.notificado ? <Bell className="w-3.5 h-3.5 text-gold" /> : <BellOff className="w-3.5 h-3.5 text-white/30" />}
                         </button>
                         <button onClick={() => excluir(m.id)} className="p-1.5 hover:bg-red-500/20 rounded-lg transition-all">
                           <X className="w-3.5 h-3.5 text-white/20 hover:text-red-400" />
@@ -240,7 +240,7 @@ export default function DatasMarcos() {
             {Object.entries(TIPO_CONFIG).map(([k, v]) => (
               <div key={k} className="flex items-center gap-2">
                 <div className={`w-2 h-2 rounded-full ${v.dot}`} />
-                <span className="text-white/40 text-xs">{v.label}</span>
+                <span className="text-white/60 text-xs">{v.label}</span>
               </div>
             ))}
           </div>
@@ -281,7 +281,7 @@ export default function DatasMarcos() {
             <div className="p-6 border-t border-white/10 flex justify-end gap-3">
               <button onClick={() => setModal(false)} className="px-4 py-2 rounded-xl text-white/60 hover:text-white hover:bg-white/5 text-sm transition-all">Cancelar</button>
               <button onClick={salvar} disabled={salvando || !form.tipo || !form.data_marco || !form.descricao}
-                className="px-6 py-2 bg-[#7D1F2C] hover:bg-[#9b2535] text-white rounded-xl text-sm font-medium transition-all disabled:opacity-50">
+                className="px-6 py-2 bg-wine hover:bg-wine-light text-white rounded-xl text-sm font-medium transition-all disabled:opacity-50">
                 {salvando ? 'Salvando...' : 'Salvar'}
               </button>
             </div>

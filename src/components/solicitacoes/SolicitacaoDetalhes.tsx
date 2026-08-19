@@ -70,7 +70,7 @@ const AnexoFoto: React.FC<{ anexo: any; onDownload: (a: any) => void; onDelete: 
           </div>
         </div>
         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent px-1.5 py-1 opacity-0 group-hover:opacity-100 transition-all">
-          <p className="text-[9px] text-white/80 truncate">{anexo.nome_arquivo}</p>
+          <p className="text-caption text-white/80 truncate">{anexo.nome_arquivo}</p>
         </div>
       </div>
 
@@ -491,7 +491,7 @@ const SolicitacaoDetalhes: React.FC<SolicitacaoDetalhesProps> = ({
                 onClick={() => setActiveTab('detalhes')}
                 className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
                   activeTab === 'detalhes'
-                    ? 'bg-[#7D1F2C] text-white'
+                    ? 'bg-wine text-white'
                     : 'text-white/80 hover:bg-white/10'
                 }`}
               >
@@ -502,7 +502,7 @@ const SolicitacaoDetalhes: React.FC<SolicitacaoDetalhesProps> = ({
                 onClick={() => setActiveTab('comentarios')}
                 className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
                   activeTab === 'comentarios'
-                    ? 'bg-[#7D1F2C] text-white'
+                    ? 'bg-wine text-white'
                     : 'text-white/80 hover:bg-white/10'
                 }`}
               >
@@ -513,7 +513,7 @@ const SolicitacaoDetalhes: React.FC<SolicitacaoDetalhesProps> = ({
                 onClick={() => setActiveTab('anexos')}
                 className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
                   activeTab === 'anexos'
-                    ? 'bg-[#7D1F2C] text-white'
+                    ? 'bg-wine text-white'
                     : 'text-white/80 hover:bg-white/10'
                 }`}
               >
@@ -524,7 +524,7 @@ const SolicitacaoDetalhes: React.FC<SolicitacaoDetalhesProps> = ({
                 onClick={() => setActiveTab('historico')}
                 className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
                   activeTab === 'historico'
-                    ? 'bg-[#7D1F2C] text-white'
+                    ? 'bg-wine text-white'
                     : 'text-white/80 hover:bg-white/10'
                 }`}
               >
@@ -718,7 +718,7 @@ const SolicitacaoDetalhes: React.FC<SolicitacaoDetalhesProps> = ({
                         <textarea
                           value={novoComentario}
                           onChange={(e) => setNovoComentario(e.target.value)}
-                          className="w-full rounded-md border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                          className="w-full rounded-md border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                           rows={3}
                           placeholder="Adicionar comentário..."
                         />
@@ -727,7 +727,7 @@ const SolicitacaoDetalhes: React.FC<SolicitacaoDetalhesProps> = ({
                         <select
                           value={tipoComentario}
                           onChange={(e) => setTipoComentario(e.target.value)}
-                          className="w-full text-sm rounded-md border-white/20 shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                          className="w-full text-sm rounded-md border-white/20 shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                         >
                           <option value="geral">Geral</option>
                           <option value="tecnico">Técnico</option>
@@ -738,7 +738,7 @@ const SolicitacaoDetalhes: React.FC<SolicitacaoDetalhesProps> = ({
                         <button
                           onClick={adicionarComentario}
                           disabled={loading || !novoComentario.trim()}
-                          className="w-full px-3 py-2 bg-[#7D1F2C] text-white text-sm rounded-md hover:bg-[#6a1a25] disabled:opacity-50"
+                          className="w-full px-3 py-2 bg-wine text-white text-sm rounded-md hover:bg-[#6a1a25] disabled:opacity-50"
                         >
                           Adicionar
                         </button>
@@ -781,11 +781,11 @@ const SolicitacaoDetalhes: React.FC<SolicitacaoDetalhesProps> = ({
                 <div className="flex justify-between items-center">
                   <h4 className="text-sm font-bold text-white/60 uppercase tracking-wide">
                     Fotos e Arquivos
-                    {anexos.length > 0 && <span className="ml-2 text-white/30 font-normal normal-case tracking-normal">({anexos.length})</span>}
+                    {anexos.length > 0 && <span className="ml-2 text-white/60 font-normal normal-case tracking-normal">({anexos.length})</span>}
                   </h4>
                   <label className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer transition-all ${
                     uploadingFile
-                      ? 'bg-white/5 text-white/30 cursor-not-allowed'
+                      ? 'bg-white/5 text-white/60 cursor-not-allowed'
                       : 'bg-blue-600/20 text-blue-400 hover:bg-blue-600/30'
                   }`}>
                     <Upload className="w-3.5 h-3.5" />
@@ -809,7 +809,7 @@ const SolicitacaoDetalhes: React.FC<SolicitacaoDetalhesProps> = ({
                 {/* Grid de fotos */}
                 {anexos.some(a => a.tipo_arquivo?.startsWith('image/')) && (
                   <div>
-                    <p className="text-xs font-semibold text-white/30 uppercase tracking-wide mb-2">Fotos</p>
+                    <p className="text-xs font-semibold text-white/60 uppercase tracking-wide mb-2">Fotos</p>
                     <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                       {anexos.filter(a => a.tipo_arquivo?.startsWith('image/')).map((anexo) => (
                         <AnexoFoto key={anexo.id} anexo={anexo} onDownload={handleDownloadAnexo} onDelete={handleDeleteAnexo} />
@@ -821,7 +821,7 @@ const SolicitacaoDetalhes: React.FC<SolicitacaoDetalhesProps> = ({
                 {/* Lista de arquivos não-imagem */}
                 {anexos.some(a => !a.tipo_arquivo?.startsWith('image/')) && (
                   <div>
-                    <p className="text-xs font-semibold text-white/30 uppercase tracking-wide mb-2">Arquivos</p>
+                    <p className="text-xs font-semibold text-white/60 uppercase tracking-wide mb-2">Arquivos</p>
                     <div className="space-y-2">
                       {anexos.filter(a => !a.tipo_arquivo?.startsWith('image/')).map((anexo) => (
                         <div key={anexo.id} className="flex items-center justify-between p-3 border border-white/10 rounded-xl hover:bg-white/5 transition-all">
@@ -855,8 +855,8 @@ const SolicitacaoDetalhes: React.FC<SolicitacaoDetalhesProps> = ({
                 {anexos.length === 0 && (
                   <div className="text-center py-12 border-2 border-dashed border-white/8 rounded-xl">
                     <FileText className="w-10 h-10 text-white/15 mx-auto mb-3" />
-                    <p className="text-sm font-medium text-white/30">Nenhum arquivo ainda</p>
-                    <p className="text-xs text-white/20 mt-1">Clique em "Adicionar" para enviar fotos ou documentos</p>
+                    <p className="text-sm font-medium text-white/60">Nenhum arquivo ainda</p>
+                    <p className="text-xs text-white/60 mt-1">Clique em "Adicionar" para enviar fotos ou documentos</p>
                   </div>
                 )}
               </div>
@@ -946,7 +946,7 @@ const SolicitacaoDetalhes: React.FC<SolicitacaoDetalhesProps> = ({
                   <div className="text-center py-12">
                     <Clock className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                     <p className="text-white/50 text-lg mb-2">Nenhum histórico disponível</p>
-                    <p className="text-white/30 text-sm">
+                    <p className="text-white/60 text-sm">
                       As alterações nesta solicitação aparecerão aqui
                     </p>
                   </div>

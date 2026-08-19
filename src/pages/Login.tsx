@@ -97,10 +97,10 @@ const Login: React.FC = () => {
 
       <div className="relative w-full max-w-md">
         {/* Formulário de Login */}
-        <div className="rounded-2xl p-8" style={{ background: 'linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0.05))', backdropFilter: 'blur(24px) saturate(150%)', WebkitBackdropFilter: 'blur(24px) saturate(150%)', border: '1px solid rgba(255,255,255,0.14)', borderTopColor: 'rgba(255,255,255,0.28)', boxShadow: '0 32px 90px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.1)' }}>
+        <div className="rounded-2xl p-8" style={{ background: 'linear-gradient(180deg, rgba(12,16,24,0.85), rgba(8,12,20,0.89))', backdropFilter: 'blur(24px) saturate(150%)', WebkitBackdropFilter: 'blur(24px) saturate(150%)', border: '1px solid rgba(255,255,255,0.14)', borderTopColor: 'rgba(255,255,255,0.28)', boxShadow: '0 32px 90px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.1)' }}>
           <div className="text-center mb-6">
             <h2 className="text-2xl font-display font-bold mb-1 tracking-wide" style={{ color: '#eef1f8' }}>Fazer Login</h2>
-            <p className="text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>Acesse sua conta para continuar</p>
+            <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Acesse sua conta para continuar</p>
           </div>
 
           {resetSent && (
@@ -120,7 +120,7 @@ const Login: React.FC = () => {
           {showReset ? (
             <form onSubmit={handleResetPassword} className="space-y-5">
               <div>
-                <label className="block text-sm font-medium mb-2" style={{ color: 'rgba(255,255,255,0.75)' }}>Email para redefinição</label>
+                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-primary)' }}>Email para redefinição</label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <Mail className="h-5 w-5" style={{ color: 'rgba(255,255,255,0.4)' }} />
@@ -129,8 +129,8 @@ const Login: React.FC = () => {
                     type="email"
                     value={resetEmail}
                     onChange={(e) => setResetEmail(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 rounded-xl focus:ring-2 focus:ring-[#D4AF37] transition-all duration-200"
-                    style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.14)', color: '#eef1f8' }}
+                    className="w-full pl-10 pr-4 py-3 rounded-xl focus:ring-2 focus:ring-gold transition-all duration-200"
+                    style={{ background: 'rgba(8,12,20,0.60)', border: '1px solid rgba(255,255,255,0.14)', color: 'var(--text-primary)' }}
                     placeholder="seu.email@ditadopopular.com"
                     required
                     disabled={busy}
@@ -155,7 +155,7 @@ const Login: React.FC = () => {
                 type="button"
                 onClick={() => { setShowReset(false); setLoginError(null); }}
                 className="w-full text-sm transition-colors"
-                style={{ color: 'rgba(255,255,255,0.5)' }}
+                style={{ color: 'var(--text-secondary)' }}
               >
                 Voltar para o login
               </button>
@@ -164,7 +164,7 @@ const Login: React.FC = () => {
             <>
               <form onSubmit={handleSubmit} className="space-y-5">
                 <div>
-                  <label className="block text-sm font-medium mb-2" style={{ color: 'rgba(255,255,255,0.75)' }}>Email</label>
+                  <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-primary)' }}>Email</label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                       <User className="h-5 w-5" style={{ color: 'rgba(255,255,255,0.4)' }} />
@@ -173,8 +173,8 @@ const Login: React.FC = () => {
                       type="email"
                       value={formData.email}
                       onChange={(e) => handleInputChange('email', e.target.value)}
-                      className="w-full pl-10 pr-4 py-3 rounded-xl focus:ring-2 focus:ring-[#D4AF37] transition-all duration-200"
-                      style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.14)', color: '#eef1f8' }}
+                      className="w-full pl-10 pr-4 py-3 rounded-xl focus:ring-2 focus:ring-gold transition-all duration-200"
+                      style={{ background: 'rgba(8,12,20,0.60)', border: '1px solid rgba(255,255,255,0.14)', color: 'var(--text-primary)' }}
                       placeholder="seu.email@ditadopopular.com"
                       required
                       disabled={busy}
@@ -183,7 +183,7 @@ const Login: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-2" style={{ color: 'rgba(255,255,255,0.75)' }}>Senha</label>
+                  <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-primary)' }}>Senha</label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                       <Lock className="h-5 w-5" style={{ color: 'rgba(255,255,255,0.4)' }} />
@@ -192,8 +192,8 @@ const Login: React.FC = () => {
                       type={showPassword ? 'text' : 'password'}
                       value={formData.senha}
                       onChange={(e) => handleInputChange('senha', e.target.value)}
-                      className="w-full pl-10 pr-12 py-3 rounded-xl focus:ring-2 focus:ring-[#D4AF37] transition-all duration-200"
-                      style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.14)', color: '#eef1f8' }}
+                      className="w-full pl-10 pr-12 py-3 rounded-xl focus:ring-2 focus:ring-gold transition-all duration-200"
+                      style={{ background: 'rgba(8,12,20,0.60)', border: '1px solid rgba(255,255,255,0.14)', color: 'var(--text-primary)' }}
                       placeholder="••••••••"
                       required
                       disabled={busy}
@@ -245,7 +245,7 @@ const Login: React.FC = () => {
         </div>
 
         <div className="mt-6 text-center">
-          <p className="text-xs" style={{ color: 'rgba(255,255,255,0.3)' }}>
+          <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
             Sistema de Gestão Integrada v1.0 — © 2025 Ditado Popular
           </p>
         </div>

@@ -308,7 +308,7 @@ const ConferenciaRecebimentoModal: React.FC<ConferenciaRecebimentoModalProps> = 
         <div className="p-6 border-b border-white/10 flex justify-between items-center">
           <div>
             <h3 className="text-xl font-semibold text-white">Conferência de Recebimento com IA</h3>
-            <p className="text-sm text-white/40 mt-1">
+            <p className="text-sm text-white/60 mt-1">
               Faça upload da nota fiscal recebida para comparar com o pedido
             </p>
           </div>
@@ -371,7 +371,7 @@ const ConferenciaRecebimentoModal: React.FC<ConferenciaRecebimentoModalProps> = 
                       capture="environment"
                     />
                   </label>
-                  <p className="text-xs text-white/40 mt-2">
+                  <p className="text-xs text-white/60 mt-2">
                     JPG, PNG até 20MB
                   </p>
                 </div>
@@ -391,7 +391,7 @@ const ConferenciaRecebimentoModal: React.FC<ConferenciaRecebimentoModalProps> = 
                 <button
                   onClick={handleConferir}
                   disabled={loading}
-                  className="w-full px-4 py-3 bg-[#7D1F2C] text-white rounded-lg hover:bg-[#6a1a25] disabled:opacity-50 flex items-center justify-center"
+                  className="w-full px-4 py-3 bg-wine text-white rounded-lg hover:bg-[#6a1a25] disabled:opacity-50 flex items-center justify-center"
                 >
                   {loading ? (
                     <>
@@ -583,7 +583,7 @@ const ConferenciaRecebimentoModal: React.FC<ConferenciaRecebimentoModalProps> = 
             </button>
             <button
               onClick={handleConfirm}
-              className="px-6 py-2 bg-[#7D1F2C] text-white rounded-lg hover:bg-[#6a1a25] flex items-center"
+              className="px-6 py-2 bg-wine text-white rounded-lg hover:bg-[#6a1a25] flex items-center"
             >
               <CheckCircle className="w-5 h-5 mr-2" />
               Confirmar Recebimento

@@ -329,10 +329,10 @@ const AgendaDiaria: React.FC = () => {
 
   const badgeItem = (p: Pagamento) => {
     if (p.origem === 'contas_pagar')
-      return <span className="text-[9px] font-black px-1.5 py-0.5 rounded-md shrink-0 bg-blue-500/20 text-blue-300">SIS</span>;
+      return <span className="text-caption font-black px-1.5 py-0.5 rounded-md shrink-0 bg-blue-500/20 text-blue-300">SIS</span>;
     if (p.lancado_contas_pagar)
-      return <span className="text-[9px] font-black px-1.5 py-0.5 rounded-md shrink-0 bg-emerald-500/20 text-emerald-300">MAN✓</span>;
-    return <span className="text-[9px] font-black px-1.5 py-0.5 rounded-md shrink-0 bg-yellow-500/20 text-yellow-400">MAN!</span>;
+      return <span className="text-caption font-black px-1.5 py-0.5 rounded-md shrink-0 bg-emerald-500/20 text-emerald-300">MAN✓</span>;
+    return <span className="text-caption font-black px-1.5 py-0.5 rounded-md shrink-0 bg-yellow-500/20 text-yellow-400">MAN!</span>;
   };
 
   const tipoInfo = (tipo: string) => TIPOS_RECEITA.find(t => t.id === tipo) ?? TIPOS_RECEITA[2];
@@ -343,7 +343,7 @@ const AgendaDiaria: React.FC = () => {
 
   if (loading) return (
     <div className="flex items-center justify-center min-h-96">
-      <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#7D1F2C]" />
+      <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-wine" />
     </div>
   );
 
@@ -365,8 +365,8 @@ const AgendaDiaria: React.FC = () => {
             <div className="text-center min-w-[200px]">
               <p className="text-base font-black text-white capitalize">{labelData}</p>
               {!isHoje
-                ? <button onClick={() => setDataAtual(hoje)} className="text-[10px] text-[#D4AF37] font-bold hover:underline mt-0.5">voltar para hoje</button>
-                : <p className="text-[10px] text-[#D4AF37]/70 font-semibold mt-0.5">Hoje</p>
+                ? <button onClick={() => setDataAtual(hoje)} className="text-caption text-gold font-bold hover:underline mt-0.5">voltar para hoje</button>
+                : <p className="text-caption text-gold/70 font-semibold mt-0.5">Hoje</p>
               }
             </div>
             <button onClick={() => irParaDia(+1)} disabled={isHoje}
@@ -378,7 +378,7 @@ const AgendaDiaria: React.FC = () => {
           {/* Botões ação */}
           <div className="flex items-center gap-2 flex-wrap">
             {sessao && (
-              <span className={`text-[10px] font-bold px-2.5 py-1 rounded-lg border ${
+              <span className={`text-caption font-bold px-2.5 py-1 rounded-lg border ${
                 sessao.status === 'finalizada'
                   ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
                   : 'bg-white/8 text-white/50 border-white/15'
@@ -403,19 +403,19 @@ const AgendaDiaria: React.FC = () => {
         <div className="relative mt-4 pt-4 border-t border-white/8">
           <div className="grid grid-cols-3 gap-3">
             <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3">
-              <p className="text-[10px] text-emerald-400/70 uppercase font-bold tracking-wide">Receitas</p>
+              <p className="text-caption text-emerald-400/70 uppercase font-bold tracking-wide">Receitas</p>
               <p className="text-lg font-black text-emerald-400 mt-0.5">{fmtR(totalEntrou)}</p>
-              <p className="text-[10px] text-emerald-400/50 mt-0.5">{receitas.length} entr.</p>
+              <p className="text-caption text-emerald-400/50 mt-0.5">{receitas.length} entr.</p>
             </div>
             <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-3">
-              <p className="text-[10px] text-red-400/70 uppercase font-bold tracking-wide">Pagamentos</p>
+              <p className="text-caption text-red-400/70 uppercase font-bold tracking-wide">Pagamentos</p>
               <p className="text-lg font-black text-red-400 mt-0.5">{fmtR(totalPago)}</p>
-              <p className="text-[10px] text-red-400/50 mt-0.5">{pagamentos.length} itens</p>
+              <p className="text-caption text-red-400/50 mt-0.5">{pagamentos.length} itens</p>
             </div>
             <div className={`border rounded-xl p-3 ${saldoLivre >= 0 ? 'bg-white/5 border-white/15' : 'bg-red-500/10 border-red-500/20'}`}>
-              <p className="text-[10px] text-white/50 uppercase font-bold tracking-wide">Saldo Disponível</p>
+              <p className="text-caption text-white/50 uppercase font-bold tracking-wide">Saldo Disponível</p>
               <p className={`text-lg font-black mt-0.5 ${saldoLivre >= 0 ? 'text-white' : 'text-red-400'}`}>{fmtR(saldoLivre)}</p>
-              <p className="text-[10px] text-white/30 mt-0.5">receitas − pagamentos</p>
+              <p className="text-caption text-white/60 mt-0.5">receitas − pagamentos</p>
             </div>
           </div>
         </div>
@@ -433,8 +433,8 @@ const AgendaDiaria: React.FC = () => {
               <div className="flex gap-1.5 mb-2.5">
                 {(['vencidas', '7dias', 'todas'] as const).map(f => (
                   <button key={f} onClick={() => setFiltro(f)}
-                    className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all ${
-                      filtro === f ? 'bg-[#7D1F2C] text-white' : 'bg-white/8 text-white/40 hover:bg-white/12'
+                    className={`px-2.5 py-1 rounded-lg text-caption font-bold transition-all ${
+                      filtro === f ? 'bg-wine text-white' : 'bg-white/8 text-white/40 hover:bg-white/12'
                     }`}>
                     {f === 'vencidas' ? 'Vencidas' : f === '7dias' ? 'Próx. 7d' : 'Todas'}
                   </button>
@@ -447,7 +447,7 @@ const AgendaDiaria: React.FC = () => {
 
             <div className="flex-1 overflow-y-auto max-h-[560px]">
               {Object.entries(grupos).length === 0
-                ? <div className="py-12 text-center"><p className="text-xs text-white/30">Nenhuma conta</p></div>
+                ? <div className="py-12 text-center"><p className="text-xs text-white/60">Nenhuma conta</p></div>
                 : Object.entries(grupos).sort(([a], [b]) => a.localeCompare(b)).map(([cat, items]) => {
                     const aberto = accordion.has(cat);
                     const tot = items.reduce((a, b) => a + Number(b.saldo_restante), 0);
@@ -458,8 +458,8 @@ const AgendaDiaria: React.FC = () => {
                           className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-white/5 transition-colors">
                           <div className="flex items-center gap-2">
                             <ChevronRight className={`w-3.5 h-3.5 text-white/30 transition-transform ${aberto ? 'rotate-90' : ''}`} />
-                            <span className="text-[11px] font-bold text-white/60 uppercase tracking-wide">{cat}</span>
-                            <span className="text-[10px] text-white/30 bg-white/8 px-1.5 py-0.5 rounded-md">{items.length}</span>
+                            <span className="text-caption font-bold text-white/60 uppercase tracking-wide">{cat}</span>
+                            <span className="text-caption text-white/60 bg-white/8 px-1.5 py-0.5 rounded-md">{items.length}</span>
                           </div>
                           <span className="text-xs font-bold text-white/50">{fmtR(tot)}</span>
                         </button>
@@ -472,18 +472,18 @@ const AgendaDiaria: React.FC = () => {
                               className="flex items-center gap-3 px-4 py-3 border-t border-white/5 hover:bg-white/5 transition-colors">
                               {/* Data de vencimento */}
                               <div className="w-12 shrink-0 text-center">
-                                <p className={`text-[10px] font-black ${badge.cls.includes('red') ? 'text-red-400' : badge.cls.includes('orange') ? 'text-orange-400' : badge.cls.includes('yellow') ? 'text-yellow-400' : 'text-white/40'}`}>
+                                <p className={`text-caption font-black ${badge.cls.includes('red') ? 'text-red-400' : badge.cls.includes('orange') ? 'text-orange-400' : badge.cls.includes('yellow') ? 'text-yellow-400' : 'text-white/60'}`}>
                                   {fmtData(c.data_vencimento)}
                                 </p>
-                                <span className={`text-[9px] font-bold px-1 py-0.5 rounded ${badge.cls}`}>{badge.label}</span>
+                                <span className={`text-caption font-bold px-1 py-0.5 rounded ${badge.cls}`}>{badge.label}</span>
                               </div>
 
                               <div className="flex-1 min-w-0">
                                 <p className="text-xs font-semibold text-white truncate">{c.descricao}</p>
                                 {c.fornecedores?.nome && (
-                                  <p className="text-[10px] text-white/40 truncate">{c.fornecedores.nome}</p>
+                                  <p className="text-caption text-white/60 truncate">{c.fornecedores.nome}</p>
                                 )}
-                                {jaAuth && <span className="text-[9px] text-emerald-400 font-bold">✓ autorizado</span>}
+                                {jaAuth && <span className="text-caption text-emerald-400 font-bold">✓ autorizado</span>}
                               </div>
 
                               <p className="text-sm font-bold text-white shrink-0">{fmtR(Number(c.saldo_restante))}</p>
@@ -497,7 +497,7 @@ const AgendaDiaria: React.FC = () => {
                                     ? 'bg-emerald-500/10 text-emerald-500/40 cursor-not-allowed'
                                     : somenteLeitura
                                     ? 'bg-white/5 text-white/20 cursor-not-allowed'
-                                    : 'bg-[#7D1F2C] text-white hover:bg-[#9B2535] active:scale-95 cursor-pointer shadow-lg'
+                                    : 'bg-wine text-white hover:bg-wine-light active:scale-95 cursor-pointer shadow-lg'
                                 }`}>
                                 <ArrowRight className="w-4 h-4" />
                               </button>
@@ -511,7 +511,7 @@ const AgendaDiaria: React.FC = () => {
             </div>
 
             <div className="px-4 py-3 border-t border-white/10 flex justify-between items-center">
-              <span className="text-xs text-white/40">{contasFiltradas.length} contas</span>
+              <span className="text-xs text-white/60">{contasFiltradas.length} contas</span>
               <span className="text-sm font-black text-white">
                 {fmtR(contasFiltradas.reduce((a, b) => a + Number(b.saldo_restante), 0))}
               </span>
@@ -526,7 +526,7 @@ const AgendaDiaria: React.FC = () => {
               <div className="px-4 py-3 border-b border-emerald-500/15 flex items-center justify-between">
                 <div>
                   <p className="text-sm font-bold text-emerald-400">Receitas do Dia</p>
-                  <p className="text-[10px] text-emerald-400/50 mt-0.5">entradas de caixa (PIX, dinheiro, etc.)</p>
+                  <p className="text-caption text-emerald-400/50 mt-0.5">entradas de caixa (PIX, dinheiro, etc.)</p>
                 </div>
                 {!somenteLeitura && (
                   <button onClick={() => setModalReceita(true)}
@@ -539,8 +539,8 @@ const AgendaDiaria: React.FC = () => {
               <div className="px-4 py-3 flex flex-col gap-1.5 min-h-[80px]">
                 {receitas.length === 0
                   ? <div className="py-4 text-center">
-                      <p className="text-xs text-white/30">Nenhuma receita registrada</p>
-                      {!somenteLeitura && <p className="text-[10px] text-white/20 mt-0.5">Clique em Adicionar para registrar uma entrada</p>}
+                      <p className="text-xs text-white/60">Nenhuma receita registrada</p>
+                      {!somenteLeitura && <p className="text-caption text-white/60 mt-0.5">Clique em Adicionar para registrar uma entrada</p>}
                     </div>
                   : receitas.map(r => {
                       const t = tipoInfo(r.tipo);
@@ -549,7 +549,7 @@ const AgendaDiaria: React.FC = () => {
                           <span className={t.cor}>{t.icon}</span>
                           <div className="flex-1 min-w-0">
                             <p className="text-xs font-medium text-white truncate">{r.descricao}</p>
-                            <span className={`text-[10px] font-bold ${t.cor}`}>{t.label}</span>
+                            <span className={`text-caption font-bold ${t.cor}`}>{t.label}</span>
                           </div>
                           <p className="text-sm font-bold text-emerald-400 shrink-0">{fmtR(Number(r.valor))}</p>
                           {!somenteLeitura && (
@@ -580,13 +580,13 @@ const AgendaDiaria: React.FC = () => {
                   <div className="flex gap-2">
                     {pagamentos.length > 0 && (
                       <button onClick={() => setShowRelatorio(true)}
-                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[11px] font-bold text-white/60 bg-white/8 hover:bg-white/12 border border-white/10 transition-all">
+                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-caption font-bold text-white/60 bg-white/8 hover:bg-white/12 border border-white/10 transition-all">
                         <Printer className="w-3 h-3" /> Relatório
                       </button>
                     )}
                     {!somenteLeitura && (
                       <button onClick={() => setModalManual(true)}
-                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[11px] font-bold text-white bg-[#7D1F2C] hover:bg-[#9B2535] transition-all">
+                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-caption font-bold text-white bg-wine hover:bg-wine-light transition-all">
                         <Plus className="w-3 h-3" /> Manual
                       </button>
                     )}
@@ -598,15 +598,15 @@ const AgendaDiaria: React.FC = () => {
                 {pagamentos.length === 0
                   ? <div className="py-10 text-center">
                       <ClipboardList className="w-8 h-8 text-white/15 mx-auto mb-2" />
-                      <p className="text-xs text-white/30">Nenhum item autorizado</p>
-                      <p className="text-[10px] text-white/20 mt-1">Abra uma categoria e clique → para autorizar</p>
+                      <p className="text-xs text-white/60">Nenhum item autorizado</p>
+                      <p className="text-caption text-white/60 mt-1">Abra uma categoria e clique → para autorizar</p>
                     </div>
                   : <div className="space-y-4">
                       {gerentesOrd.map(g => (
                         <div key={g}>
                           <div className="flex items-center justify-between mb-2 px-1">
-                            <p className="text-[11px] font-black text-white/50 uppercase tracking-wider">{g}</p>
-                            <p className="text-[11px] font-bold text-white/40">
+                            <p className="text-caption font-black text-white/50 uppercase tracking-wider">{g}</p>
+                            <p className="text-caption font-bold text-white/60">
                               {fmtR(porGerente[g].reduce((a, b) => a + b.valor, 0))}
                             </p>
                           </div>
@@ -617,7 +617,7 @@ const AgendaDiaria: React.FC = () => {
                                 {badgeItem(item)}
                                 <div className="flex-1 min-w-0">
                                   <p className="text-xs font-medium text-white truncate">{item.descricao}</p>
-                                  <p className="text-[10px] text-white/40">{item.categoria_nome ?? '—'}</p>
+                                  <p className="text-caption text-white/60">{item.categoria_nome ?? '—'}</p>
                                 </div>
                                 <p className="text-sm font-bold text-white shrink-0">{fmtR(item.valor)}</p>
                                 {!somenteLeitura && (
@@ -643,13 +643,13 @@ const AgendaDiaria: React.FC = () => {
                     { b: 'MAN!', cls: 'bg-yellow-500/20 text-yellow-400',   t: 'sem lançamento' },
                   ].map(l => (
                     <div key={l.b} className="flex items-center gap-1">
-                      <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-md ${l.cls}`}>{l.b}</span>
-                      <span className="text-[10px] text-white/30">{l.t}</span>
+                      <span className={`text-caption font-black px-1.5 py-0.5 rounded-md ${l.cls}`}>{l.b}</span>
+                      <span className="text-caption text-white/60">{l.t}</span>
                     </div>
                   ))}
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-xs text-white/40">{pagamentos.length} itens</span>
+                  <span className="text-xs text-white/60">{pagamentos.length} itens</span>
                   <span className="text-sm font-black text-red-400">{fmtR(totalPago)}</span>
                 </div>
               </div>
@@ -674,25 +674,25 @@ const AgendaDiaria: React.FC = () => {
               <div className="bg-white/5 rounded-xl p-3 border border-white/10">
                 <p className="text-sm font-bold text-white leading-snug">{modalAuth.descricao}</p>
                 <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                  <span className="text-[10px] text-white/50">{(modalAuth.categorias_financeiras as any)?.nome}</span>
-                  <span className="text-[10px] text-white/25">·</span>
-                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${vencBadge(modalAuth.data_vencimento).cls}`}>
+                  <span className="text-caption text-white/50">{(modalAuth.categorias_financeiras as any)?.nome}</span>
+                  <span className="text-caption text-white/60">·</span>
+                  <span className={`text-caption font-bold px-1.5 py-0.5 rounded-md ${vencBadge(modalAuth.data_vencimento).cls}`}>
                     {fmtData(modalAuth.data_vencimento)} · {vencBadge(modalAuth.data_vencimento).label}
                   </span>
                 </div>
                 {modalAuth.fornecedores?.nome && (
-                  <p className="text-[10px] text-white/40 mt-1">{modalAuth.fornecedores.nome}</p>
+                  <p className="text-caption text-white/60 mt-1">{modalAuth.fornecedores.nome}</p>
                 )}
               </div>
 
               <div>
-                <label className="text-[11px] font-bold text-white/50 uppercase tracking-wide block mb-2">Autorizado por</label>
+                <label className="text-caption font-bold text-white/50 uppercase tracking-wide block mb-2">Autorizado por</label>
                 <div className="grid grid-cols-3 gap-2">
                   {GERENTES.map(g => (
                     <button key={g} type="button" onClick={() => setAGerente(g)}
                       className={`py-2.5 rounded-xl text-sm font-bold transition-all ${
                         aGerente === g
-                          ? 'bg-[#7D1F2C] text-white ring-2 ring-[#9B2535]/50'
+                          ? 'bg-wine text-white ring-2 ring-wine-light/50'
                           : 'bg-white/8 text-white/50 hover:bg-white/12 hover:text-white/80'
                       }`}>
                       {g}
@@ -702,21 +702,21 @@ const AgendaDiaria: React.FC = () => {
               </div>
 
               <div>
-                <label className="text-[11px] font-bold text-white/50 uppercase tracking-wide block mb-1.5">Valor</label>
+                <label className="text-caption font-bold text-white/50 uppercase tracking-wide block mb-1.5">Valor</label>
                 <div className="flex items-center gap-2 bg-white/5 border border-white/20 rounded-xl px-3 py-2.5">
-                  <span className="text-white/40 text-sm font-bold">R$</span>
+                  <span className="text-white/60 text-sm font-bold">R$</span>
                   <input type="number" value={aValor} onChange={e => setAValor(e.target.value)}
                     className="flex-1 bg-transparent text-white text-base font-black focus:outline-none [appearance:textfield]" />
                   <button type="button" onClick={() => setAValor(Number(modalAuth.saldo_restante).toFixed(2))}
-                    className="text-[10px] text-white/30 hover:text-white/60 transition-all px-1">
+                    className="text-caption text-white/30 hover:text-white/60 transition-all px-1">
                     máx
                   </button>
                 </div>
-                <p className="text-[10px] text-white/30 mt-1">Saldo disponível: {fmtR(Number(modalAuth.saldo_restante))}</p>
+                <p className="text-caption text-white/60 mt-1">Saldo disponível: {fmtR(Number(modalAuth.saldo_restante))}</p>
               </div>
 
               <div>
-                <label className="text-[11px] font-bold text-white/50 uppercase tracking-wide block mb-1.5">Obs. (opcional)</label>
+                <label className="text-caption font-bold text-white/50 uppercase tracking-wide block mb-1.5">Obs. (opcional)</label>
                 <input type="text" value={aObs} onChange={e => setAObs(e.target.value)}
                   placeholder="Ex: pagar no Bradesco"
                   className="w-full bg-white/5 border border-white/15 text-white placeholder-white/20 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-white/35" />
@@ -729,7 +729,7 @@ const AgendaDiaria: React.FC = () => {
                 Cancelar
               </button>
               <button onClick={confirmarAuth} disabled={salvando || !aGerente || !aValor}
-                className="flex-1 py-2.5 rounded-xl text-sm font-bold bg-[#7D1F2C] text-white hover:bg-[#9B2535] transition-all disabled:opacity-40 active:scale-95">
+                className="flex-1 py-2.5 rounded-xl text-sm font-bold bg-wine text-white hover:bg-wine-light transition-all disabled:opacity-40 active:scale-95">
                 {salvando ? 'Salvando...' : 'Autorizar'}
               </button>
             </div>
@@ -744,7 +744,7 @@ const AgendaDiaria: React.FC = () => {
             <div className="px-5 py-4 border-b border-emerald-500/15 flex justify-between items-center">
               <div>
                 <h3 className="font-bold text-white text-sm">Adicionar Receita</h3>
-                <p className="text-[11px] text-emerald-400/70 mt-0.5">entrada de caixa do dia</p>
+                <p className="text-caption text-emerald-400/70 mt-0.5">entrada de caixa do dia</p>
               </div>
               <button onClick={() => setModalReceita(false)} className="p-1.5 hover:bg-white/10 rounded-xl">
                 <X className="w-4 h-4 text-white/40" />
@@ -761,7 +761,7 @@ const AgendaDiaria: React.FC = () => {
                         ? 'bg-emerald-700/40 text-emerald-300 ring-2 ring-emerald-500/30 border border-emerald-500/30'
                         : 'bg-white/5 text-white/40 hover:bg-white/10 border border-white/10'
                     }`}>
-                    <span className={rTipo === t.id ? 'text-emerald-400' : 'text-white/30'}>{t.icon}</span>
+                    <span className={rTipo === t.id ? 'text-emerald-400' : 'text-white/60'}>{t.icon}</span>
                     {t.label}
                   </button>
                 ))}
@@ -803,7 +803,7 @@ const AgendaDiaria: React.FC = () => {
             <div className="px-5 py-4 border-b border-white/10 flex justify-between items-center">
               <div>
                 <h3 className="font-bold text-white text-sm">Lançamento Manual</h3>
-                <p className="text-[11px] text-yellow-400/70 mt-0.5 flex items-center gap-1">
+                <p className="text-caption text-yellow-400/70 mt-0.5 flex items-center gap-1">
                   <AlertTriangle className="w-3 h-3" /> fora do sistema
                 </p>
               </div>
@@ -819,7 +819,7 @@ const AgendaDiaria: React.FC = () => {
                 className="w-full bg-white/5 border border-white/20 text-white placeholder-white/25 rounded-xl px-3 py-3 text-sm focus:outline-none focus:border-white/40" />
 
               <div className="flex items-center gap-2 bg-white/5 border border-white/20 rounded-xl px-3 py-2.5">
-                <span className="text-white/40 text-sm font-bold">R$</span>
+                <span className="text-white/60 text-sm font-bold">R$</span>
                 <input type="number" value={mValor} onChange={e => setMValor(e.target.value)}
                   placeholder="0,00"
                   className="flex-1 bg-transparent text-white text-base font-black placeholder-white/25 focus:outline-none [appearance:textfield]" />
@@ -836,7 +836,7 @@ const AgendaDiaria: React.FC = () => {
                   <button key={g} type="button" onClick={() => setMGerente(g)}
                     className={`py-2.5 rounded-xl text-sm font-bold transition-all ${
                       mGerente === g
-                        ? 'bg-[#7D1F2C] text-white'
+                        ? 'bg-wine text-white'
                         : 'bg-white/8 text-white/50 hover:bg-white/12 hover:text-white/80'
                     }`}>
                     {g}
@@ -851,7 +851,7 @@ const AgendaDiaria: React.FC = () => {
                 Cancelar
               </button>
               <button onClick={confirmarManual} disabled={salvando || !mDesc || !mValor}
-                className="flex-1 py-2.5 rounded-xl text-sm font-bold bg-[#7D1F2C] text-white hover:bg-[#9B2535] transition-all disabled:opacity-40">
+                className="flex-1 py-2.5 rounded-xl text-sm font-bold bg-wine text-white hover:bg-wine-light transition-all disabled:opacity-40">
                 {salvando ? 'Salvando...' : 'Adicionar'}
               </button>
             </div>
@@ -873,12 +873,12 @@ const AgendaDiaria: React.FC = () => {
               <div className="bg-white/5 border border-white/10 rounded-xl p-3 flex justify-between">
                 <div>
                   <p className="text-sm font-bold text-white">{modalLancar.descricao}</p>
-                  <p className="text-[10px] text-white/40 mt-0.5">{modalLancar.categoria_nome}</p>
+                  <p className="text-caption text-white/60 mt-0.5">{modalLancar.categoria_nome}</p>
                 </div>
                 <p className="text-sm font-black text-white">{fmtR(modalLancar.valor)}</p>
               </div>
               <div>
-                <label className="text-[11px] font-bold text-white/50 uppercase tracking-wide block mb-1.5">Vencimento</label>
+                <label className="text-caption font-bold text-white/50 uppercase tracking-wide block mb-1.5">Vencimento</label>
                 <input type="date" value={lVenc} onChange={e => setLVenc(e.target.value)}
                   className="w-full bg-white/5 border border-white/20 text-white rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-white/40" />
               </div>
@@ -917,7 +917,7 @@ const AgendaDiaria: React.FC = () => {
             {/* Toolbar (não imprime) */}
             <div className="print:hidden fixed top-4 right-4 z-[60] flex gap-2">
               <button onClick={() => window.print()}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold bg-[#7D1F2C] text-white hover:bg-[#9B2535] shadow-xl transition-all">
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold bg-wine text-white hover:bg-wine-light shadow-xl transition-all">
                 <Printer className="w-4 h-4" /> Imprimir
               </button>
               <button onClick={() => setShowRelatorio(false)}
@@ -936,12 +936,12 @@ const AgendaDiaria: React.FC = () => {
               <div className="px-8 pt-8 pb-5 border-b-2 border-gray-800">
                 <div className="flex items-start justify-between">
                   <div>
-                    <p className="text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-1">Ditado Popular</p>
+                    <p className="text-caption font-bold uppercase tracking-widest text-gray-500 mb-1">Ditado Popular</p>
                     <h1 className="text-2xl font-black text-gray-900 leading-none">Agenda de Pagamentos</h1>
                     <p className="text-base font-semibold text-gray-700 mt-1 capitalize">{labelData}</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-[11px] text-gray-500">Emitido em</p>
+                    <p className="text-caption text-gray-500">Emitido em</p>
                     <p className="text-sm font-bold text-gray-700">
                       {new Date().toLocaleDateString('pt-BR')} {new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                     </p>
@@ -951,15 +951,15 @@ const AgendaDiaria: React.FC = () => {
                 {/* KPIs no cabeçalho */}
                 <div className="grid grid-cols-3 gap-3 mt-5">
                   <div className="border border-gray-200 rounded-lg px-4 py-2.5 text-center">
-                    <p className="text-[10px] font-bold uppercase text-gray-500 tracking-wide">Receitas</p>
+                    <p className="text-caption font-bold uppercase text-gray-500 tracking-wide">Receitas</p>
                     <p className="text-lg font-black text-gray-900 mt-0.5">{fmtR(totalEntrou)}</p>
                   </div>
                   <div className="border border-gray-200 rounded-lg px-4 py-2.5 text-center">
-                    <p className="text-[10px] font-bold uppercase text-gray-500 tracking-wide">Pagamentos</p>
+                    <p className="text-caption font-bold uppercase text-gray-500 tracking-wide">Pagamentos</p>
                     <p className="text-lg font-black text-gray-900 mt-0.5">{fmtR(totalPago)}</p>
                   </div>
                   <div className={`border-2 rounded-lg px-4 py-2.5 text-center ${saldoLivre >= 0 ? 'border-gray-800' : 'border-gray-400'}`}>
-                    <p className="text-[10px] font-bold uppercase text-gray-500 tracking-wide">Saldo Disponível</p>
+                    <p className="text-caption font-bold uppercase text-gray-500 tracking-wide">Saldo Disponível</p>
                     <p className="text-lg font-black text-gray-900 mt-0.5">{fmtR(saldoLivre)}</p>
                   </div>
                 </div>
@@ -970,7 +970,7 @@ const AgendaDiaria: React.FC = () => {
                 {/* ── RECEITAS ── */}
                 {receitas.length > 0 && (
                   <section>
-                    <h2 className="text-[11px] font-black uppercase tracking-widest text-gray-500 mb-2 flex items-center gap-2">
+                    <h2 className="text-caption font-black uppercase tracking-widest text-gray-500 mb-2 flex items-center gap-2">
                       <span className="flex-1 h-px bg-gray-200" />
                       Receitas do Dia
                       <span className="flex-1 h-px bg-gray-200" />
@@ -1009,7 +1009,7 @@ const AgendaDiaria: React.FC = () => {
 
                 {/* ── DESPESAS POR CATEGORIA — uma única tabela com linhas de categoria ── */}
                 <section>
-                  <h2 className="text-[11px] font-black uppercase tracking-widest text-gray-500 mb-2 flex items-center gap-2">
+                  <h2 className="text-caption font-black uppercase tracking-widest text-gray-500 mb-2 flex items-center gap-2">
                     <span className="flex-1 h-px bg-gray-200" />
                     Despesas Autorizadas
                     <span className="flex-1 h-px bg-gray-200" />
@@ -1089,7 +1089,7 @@ const AgendaDiaria: React.FC = () => {
                 {/* ── RESUMO POR GERENTE ── */}
                 {gerentesOrd.length > 0 && (
                   <section>
-                    <h2 className="text-[11px] font-black uppercase tracking-widest text-gray-500 mb-2 flex items-center gap-2">
+                    <h2 className="text-caption font-black uppercase tracking-widest text-gray-500 mb-2 flex items-center gap-2">
                       <span className="flex-1 h-px bg-gray-200" />
                       Resumo por Gerente
                       <span className="flex-1 h-px bg-gray-200" />
@@ -1134,14 +1134,14 @@ const AgendaDiaria: React.FC = () => {
                 {/* ── ASSINATURA ── */}
                 <section className="grid grid-cols-2 gap-10 pt-2">
                   <div>
-                    <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-6">Visto Financeiro</p>
+                    <p className="text-caption font-bold text-gray-500 uppercase tracking-wide mb-6">Visto Financeiro</p>
                     <div className="border-b border-gray-400" />
-                    <p className="text-[10px] text-gray-400 mt-1">Assinatura</p>
+                    <p className="text-caption text-gray-400 mt-1">Assinatura</p>
                   </div>
                   <div>
-                    <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-6">Data</p>
+                    <p className="text-caption font-bold text-gray-500 uppercase tracking-wide mb-6">Data</p>
                     <div className="border-b border-gray-400" />
-                    <p className="text-[10px] text-gray-400 mt-1">_____ / _____ / __________</p>
+                    <p className="text-caption text-gray-400 mt-1">_____ / _____ / __________</p>
                   </div>
                 </section>
 

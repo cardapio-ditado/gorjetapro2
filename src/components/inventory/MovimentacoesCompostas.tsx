@@ -177,7 +177,7 @@ const MovimentacoesCompostas: React.FC = () => {
             placeholder="Buscar por descrição ou tipo..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 w-full rounded-lg border-white/20 shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+            className="pl-10 w-full rounded-lg border-white/20 shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
           />
         </div>
 
@@ -185,7 +185,7 @@ const MovimentacoesCompostas: React.FC = () => {
           <select
             value={tipoFilter}
             onChange={(e) => setTipoFilter(e.target.value)}
-            className="w-full rounded-lg border-white/20 shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+            className="w-full rounded-lg border-white/20 shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
           >
             <option value="all">Todos os tipos</option>
             <option value="venda">Vendas</option>
@@ -204,12 +204,18 @@ const MovimentacoesCompostas: React.FC = () => {
 
       {loading ? (
         <div className="flex justify-center items-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7D1F2C]"></div>
+          <div className="w-full space-y-3" aria-busy="true">
+                    <div className="skeleton" style={{ height: 14, width: '32%' }} />
+                    <div className="skeleton" style={{ height: 44, width: '100%' }} />
+                    <div className="skeleton" style={{ height: 44, width: '100%' }} />
+                    <div className="skeleton" style={{ height: 44, width: '100%' }} />
+                    <div className="skeleton" style={{ height: 44, width: '82%' }} />
+                  </div>
         </div>
       ) : filteredMovimentacoes.length === 0 ? (
         <div className="text-center py-12 bg-white/5 rounded-lg border-2 border-dashed border-white/20">
           <Package className="w-12 h-12 text-white/30 mx-auto mb-4" />
-          <p className="text-white/40">Nenhuma movimentação composta encontrada</p>
+          <p className="text-white/60">Nenhuma movimentação composta encontrada</p>
         </div>
       ) : (
         <div className="bg-[#12141f] rounded-lg shadow overflow-hidden border border-white/10">
@@ -217,19 +223,19 @@ const MovimentacoesCompostas: React.FC = () => {
             <table className="min-w-full divide-y divide-white/10">
               <thead className="bg-white/5">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-white/40 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-white/60 uppercase tracking-wider">
                     Tipo
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-white/40 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-white/60 uppercase tracking-wider">
                     Descrição
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-white/40 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-white/60 uppercase tracking-wider">
                     Itens
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-white/40 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-white/60 uppercase tracking-wider">
                     Data
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-white/40 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-right text-xs font-medium text-white/60 uppercase tracking-wider">
                     Ações
                   </th>
                 </tr>
@@ -291,10 +297,10 @@ const MovimentacoesCompostas: React.FC = () => {
             <div className="flex-1 overflow-y-auto p-6">
               {loadingDetalhes ? (
                 <div className="flex justify-center items-center py-12">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#7D1F2C]"></div>
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-wine"></div>
                 </div>
               ) : itensDetalhes.length === 0 ? (
-                <p className="text-center text-white/40 py-8">Nenhum item encontrado</p>
+                <p className="text-center text-white/60 py-8">Nenhum item encontrado</p>
               ) : (
                 <div className="space-y-3">
                   {itensDetalhes.map((item) => (

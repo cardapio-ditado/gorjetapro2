@@ -449,7 +449,7 @@ Verifique as movimentações de estoque para confirmar as baixas.
                   <label htmlFor="file-upload" className="cursor-pointer">
                     <FileSpreadsheet className="w-12 h-12 text-white/30 mx-auto mb-4" />
                     <p className="text-sm text-white/50">{arquivo ? arquivo.name : 'Clique para selecionar XLS ou PDF'}</p>
-                    <p className="text-xs text-white/40 mt-2">Planilha Excel ou PDF de relatório de vendas</p>
+                    <p className="text-xs text-white/60 mt-2">Planilha Excel ou PDF de relatório de vendas</p>
                   </label>
                 </div>
               </div>

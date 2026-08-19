@@ -100,7 +100,7 @@ const DISC_CONFIG = {
 
 const DIAS_VALIDADE = [{ valor: 3, label: '3 dias' }, { valor: 7, label: '7 dias' }, { valor: 15, label: '15 dias' }];
 
-const inp = 'w-full bg-white/5 border border-white/15 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-[#7D1F2C]/60';
+const inp = 'w-full bg-white/5 border border-white/15 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-wine/60';
 const sel = inp + ' appearance-none';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -173,13 +173,13 @@ function PerfilDetalhadoModal({
             <p className="text-white font-bold text-lg truncate">{nome}</p>
             <div className="flex items-center gap-2 mt-1">
               <span className={`${dcfg.bg} text-white text-xs font-bold px-2.5 py-0.5 rounded-lg`}>{detalhe.perfil_dominante}</span>
-              <span className="text-white/30 text-xs">/</span>
+              <span className="text-white/60 text-xs">/</span>
               <span className={`${scfg.bgLight} ${scfg.cor} ${scfg.border} border text-xs font-medium px-2.5 py-0.5 rounded-lg`}>{detalhe.perfil_secundario}</span>
-              <span className="text-white/40 text-xs">{dcfg.label} · {scfg.label}</span>
+              <span className="text-white/60 text-xs">{dcfg.label} · {scfg.label}</span>
             </div>
           </div>
           {detalhe.data_aplicacao && (
-            <span className="text-white/30 text-xs flex-shrink-0">{dayjs(detalhe.data_aplicacao).format('DD/MM/YYYY')}</span>
+            <span className="text-white/60 text-xs flex-shrink-0">{dayjs(detalhe.data_aplicacao).format('DD/MM/YYYY')}</span>
           )}
           <button onClick={onClose} className="p-2 rounded-xl bg-white/5 text-white/40 hover:text-white transition-colors flex-shrink-0">
             <X size={16} />
@@ -202,7 +202,7 @@ function PerfilDetalhadoModal({
             return (
               <button key={s.key} onClick={() => setSecao(s.key)}
                 className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
-                  secao === s.key ? 'bg-[#7D1F2C]/30 text-white border border-[#7D1F2C]/40' : 'text-white/40 hover:text-white/70 hover:bg-white/5'
+                  secao === s.key ? 'bg-wine/30 text-white border border-wine/40' : 'text-white/40 hover:text-white/70 hover:bg-white/5'
                 }`}>
                 <Icon size={12} />
                 {s.label}
@@ -310,7 +310,7 @@ function PerfilDetalhadoModal({
                   <div className="space-y-2">
                     {detalhe.areas_desenvolvimento.map((a, i) => (
                       <div key={i} className="flex items-start gap-2">
-                        <div className="w-1.5 h-1.5 rounded-full bg-[#D4AF37] mt-1.5 flex-shrink-0" />
+                        <div className="w-1.5 h-1.5 rounded-full bg-gold mt-1.5 flex-shrink-0" />
                         <p className="text-white/60 text-xs leading-relaxed">{a}</p>
                       </div>
                     ))}
@@ -324,7 +324,7 @@ function PerfilDetalhadoModal({
             <>
               {detalhe.estilo_lideranca && (
                 <InfoCard
-                  icon={Shield} cor="text-[#D4AF37]" borda="border-[#D4AF37]/20" bg="bg-[#D4AF37]/8"
+                  icon={Shield} cor="text-gold" borda="border-gold/20" bg="bg-gold/8"
                   titulo="Estilo de Liderança"
                   texto={detalhe.estilo_lideranca}
                 />
@@ -390,7 +390,7 @@ function ResultadoInlineCard({ resultado, onNova }: { resultado: ResultadoInline
         <CheckCircle size={18} className="text-emerald-400 flex-shrink-0" />
         <div>
           <p className="text-emerald-300 font-semibold text-sm">Avaliação concluída!</p>
-          <p className="text-white/40 text-xs">Perfil de <span className="text-white">{nomeColaborador}</span> salvo automaticamente</p>
+          <p className="text-white/60 text-xs">Perfil de <span className="text-white">{nomeColaborador}</span> salvo automaticamente</p>
         </div>
       </div>
 
@@ -400,7 +400,7 @@ function ResultadoInlineCard({ resultado, onNova }: { resultado: ResultadoInline
           <span className={`${dcfg.bg} text-white font-bold text-xl w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0`}>{dominante}</span>
           <div>
             <p className={`font-bold text-base ${dcfg.cor}`}>{dcfg.label}</p>
-            <p className="text-white/40 text-sm">com influência de <span className={scfg.cor}>{scfg.label}</span></p>
+            <p className="text-white/60 text-sm">com influência de <span className={scfg.cor}>{scfg.label}</span></p>
           </div>
         </div>
         <div className="grid grid-cols-2 gap-x-4 gap-y-3">
@@ -419,7 +419,7 @@ function ResultadoInlineCard({ resultado, onNova }: { resultado: ResultadoInline
         ].map(t => (
           <button key={t.key} onClick={() => setSecao(t.key as any)}
             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-              secao === t.key ? 'bg-[#7D1F2C]/30 text-white border border-[#7D1F2C]/40' : 'text-white/40 hover:text-white/60 hover:bg-white/5'
+              secao === t.key ? 'bg-wine/30 text-white border border-wine/40' : 'text-white/40 hover:text-white/60 hover:bg-white/5'
             }`}>
             {t.label}
           </button>
@@ -482,12 +482,12 @@ function ResultadoInlineCard({ resultado, onNova }: { resultado: ResultadoInline
       {secao === 'equipe' && (
         <div className="space-y-3">
           {analise.visao_equipe && <InfoCard icon={Users} cor="text-emerald-400" borda="border-emerald-500/20" bg="bg-emerald-500/8" titulo="Na Equipe" texto={analise.visao_equipe} />}
-          {analise.estilo_lideranca && <InfoCard icon={Shield} cor="text-[#D4AF37]" borda="border-[#D4AF37]/20" bg="bg-[#D4AF37]/8" titulo="Liderança" texto={analise.estilo_lideranca} />}
+          {analise.estilo_lideranca && <InfoCard icon={Shield} cor="text-gold" borda="border-gold/20" bg="bg-gold/8" titulo="Liderança" texto={analise.estilo_lideranca} />}
         </div>
       )}
 
       <button onClick={onNova}
-        className="w-full flex items-center justify-center gap-2 py-2.5 bg-[#7D1F2C] hover:bg-[#9b2535] text-white rounded-xl text-sm font-medium transition-all">
+        className="w-full flex items-center justify-center gap-2 py-2.5 bg-wine hover:bg-wine-light text-white rounded-xl text-sm font-medium transition-all">
         <Plus size={14} /> Nova avaliação
       </button>
     </div>
@@ -612,16 +612,16 @@ function QuestionarioInline({ colaboradorId, nomeColaborador, onConcluido, onCan
 
   if (carregando) return (
     <div className="flex flex-col items-center justify-center py-16 gap-4">
-      <Loader2 className="w-8 h-8 text-[#D4AF37] animate-spin" />
-      <p className="text-white/40 text-sm">Carregando questionário...</p>
+      <Loader2 className="w-8 h-8 text-gold animate-spin" />
+      <p className="text-white/60 text-sm">Carregando questionário...</p>
     </div>
   );
 
   if (salvando) return (
     <div className="flex flex-col items-center justify-center py-16 gap-4">
       <div className="relative w-14 h-14">
-        <div className="w-14 h-14 rounded-full border-4 border-[#7D1F2C]/20 border-t-[#7D1F2C] animate-spin" />
-        <div className="absolute inset-0 flex items-center justify-center"><Target className="w-6 h-6 text-[#D4AF37]" /></div>
+        <div className="w-14 h-14 rounded-full border-4 border-wine/20 border-t-[#7D1F2C] animate-spin" />
+        <div className="absolute inset-0 flex items-center justify-center"><Target className="w-6 h-6 text-gold" /></div>
       </div>
       <p className="text-white/60 text-sm">Calculando perfil e gerando análise com IA...</p>
     </div>
@@ -645,7 +645,7 @@ function QuestionarioInline({ colaboradorId, nomeColaborador, onConcluido, onCan
             <span>{pct}%</span>
           </div>
           <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
-            <div className="h-full bg-[#7D1F2C] rounded-full transition-all duration-300" style={{ width: `${pct}%` }} />
+            <div className="h-full bg-wine rounded-full transition-all duration-300" style={{ width: `${pct}%` }} />
           </div>
         </div>
         <button onClick={onCancelar} className="p-2 rounded-xl bg-white/5 text-white/30 hover:text-red-400 hover:bg-red-500/10 transition-colors flex-shrink-0">
@@ -653,12 +653,12 @@ function QuestionarioInline({ colaboradorId, nomeColaborador, onConcluido, onCan
         </button>
       </div>
 
-      <div className="flex items-center gap-2 bg-[#D4AF37]/8 border border-[#D4AF37]/20 rounded-xl px-4 py-2.5">
-        <Target size={13} className="text-[#D4AF37]" />
-        <p className="text-[#D4AF37]/80 text-xs">Respondendo por: <span className="font-semibold text-[#D4AF37]">{nomeColaborador}</span></p>
+      <div className="flex items-center gap-2 bg-gold/8 border border-gold/20 rounded-xl px-4 py-2.5">
+        <Target size={13} className="text-gold" />
+        <p className="text-gold/80 text-xs">Respondendo por: <span className="font-semibold text-gold">{nomeColaborador}</span></p>
       </div>
 
-      <p className="text-white/40 text-xs bg-white/3 rounded-xl px-4 py-3">
+      <p className="text-white/60 text-xs bg-white/3 rounded-xl px-4 py-3">
         {pergunta.instrucao || 'Escolha a palavra que MAIS e a que MENOS descreve esta pessoa:'}
       </p>
 
@@ -696,11 +696,11 @@ function QuestionarioInline({ colaboradorId, nomeColaborador, onConcluido, onCan
       </div>
 
       {(!mais || !menos) && (
-        <p className="text-white/25 text-xs text-center">{!mais && !menos ? 'Selecione MAIS e MENOS para continuar' : !mais ? 'Selecione MAIS' : 'Selecione MENOS'}</p>
+        <p className="text-white/60 text-xs text-center">{!mais && !menos ? 'Selecione MAIS e MENOS para continuar' : !mais ? 'Selecione MAIS' : 'Selecione MENOS'}</p>
       )}
 
       <button onClick={avancar} disabled={!mais || !menos}
-        className="w-full py-3 bg-[#7D1F2C] hover:bg-[#9b2535] disabled:bg-white/5 disabled:text-white/20 text-white font-semibold rounded-xl text-sm transition-all disabled:cursor-not-allowed">
+        className="w-full py-3 bg-wine hover:bg-wine-light disabled:bg-white/5 disabled:text-white/20 text-white font-semibold rounded-xl text-sm transition-all disabled:cursor-not-allowed">
         {blocoAtual === perguntas.length - 1 ? 'Concluir e Calcular Perfil' : 'Próxima palavra'}
       </button>
     </div>
@@ -879,7 +879,7 @@ export default function PerfilDISC() {
         <div className="flex gap-1.5 flex-wrap">
           {ABAS.map(t => (
             <button key={t.key} onClick={() => { setAba(t.key); if (t.key === 'aplicar') resetAplicar(); }}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${aba === t.key ? 'bg-[#7D1F2C] text-white' : 'bg-white/5 text-white/60 hover:text-white hover:bg-white/10'}`}>
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${aba === t.key ? 'bg-wine text-white' : 'bg-white/5 text-white/60 hover:text-white hover:bg-white/10'}`}>
               {t.key === 'whatsapp' && <MessageSquare size={13} className="inline mr-1.5 mb-0.5" />}
               {t.label}
             </button>
@@ -904,15 +904,15 @@ export default function PerfilDISC() {
               <div key={k} className={`${cfg.bgLight} border ${cfg.border} rounded-xl p-5`}>
                 <div className="flex items-center gap-3 mb-4">
                   <div className={`w-10 h-10 ${cfg.bg} rounded-xl flex items-center justify-center text-white font-bold text-lg`}>{k}</div>
-                  <div><p className={`font-semibold ${cfg.cor}`}>{cfg.label}</p><p className="text-white/40 text-xs">{cfg.desc}</p></div>
+                  <div><p className={`font-semibold ${cfg.cor}`}>{cfg.label}</p><p className="text-white/60 text-xs">{cfg.desc}</p></div>
                 </div>
-                {lista.length === 0 ? <p className="text-white/30 text-sm text-center py-4">Nenhum colaborador</p> : (
+                {lista.length === 0 ? <p className="text-white/60 text-sm text-center py-4">Nenhum colaborador</p> : (
                   <div className="space-y-2">
                     {lista.map(c => (
                       <div key={c.colaborador_id} className="flex items-center justify-between bg-black/20 rounded-lg px-3 py-2">
                         <div>
                           <p className="text-white text-sm">{c.nome_completo}</p>
-                          <p className="text-white/40 text-xs">{c.funcao_nome}</p>
+                          <p className="text-white/60 text-xs">{c.funcao_nome}</p>
                         </div>
                         <div className="flex gap-1.5 items-center">
                           {(['D', 'I', 'S', 'C'] as const).map(dk => {
@@ -923,7 +923,7 @@ export default function PerfilDISC() {
                                 <div className="w-8 h-8 flex items-end justify-center bg-black/30 rounded overflow-hidden">
                                   <div className={`${dc.bg} w-full`} style={{ height: `${val}%` }} />
                                 </div>
-                                <p className={`text-[10px] ${dc.cor} mt-0.5`}>{val}%</p>
+                                <p className={`text-caption ${dc.cor} mt-0.5`}>{val}%</p>
                               </div>
                             );
                           })}
@@ -949,16 +949,16 @@ export default function PerfilDISC() {
               <p className="text-white/50 text-sm text-center">Como deseja aplicar o DISC?</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <button onClick={() => setModoAplicar('questionario_select')}
-                  className="flex flex-col items-start gap-3 p-5 bg-white/5 border border-white/10 rounded-2xl hover:border-[#7D1F2C]/40 hover:bg-[#7D1F2C]/8 transition-all text-left">
-                  <div className="w-10 h-10 rounded-xl bg-[#7D1F2C]/20 border border-[#7D1F2C]/30 flex items-center justify-center"><ClipboardList size={18} className="text-[#D4AF37]" /></div>
-                  <div><p className="text-white font-semibold text-sm mb-1">Questionário completo</p><p className="text-white/40 text-xs leading-relaxed">28 blocos de palavras — aplica direto no sistema, presencialmente</p></div>
-                  <span className="text-xs font-medium px-2.5 py-1 bg-[#D4AF37]/10 border border-[#D4AF37]/20 text-[#D4AF37] rounded-lg">Recomendado</span>
+                  className="flex flex-col items-start gap-3 p-5 bg-white/5 border border-white/10 rounded-2xl hover:border-wine/40 hover:bg-wine/8 transition-all text-left">
+                  <div className="w-10 h-10 rounded-xl bg-wine/20 border border-wine/30 flex items-center justify-center"><ClipboardList size={18} className="text-gold" /></div>
+                  <div><p className="text-white font-semibold text-sm mb-1">Questionário completo</p><p className="text-white/60 text-xs leading-relaxed">28 blocos de palavras — aplica direto no sistema, presencialmente</p></div>
+                  <span className="text-xs font-medium px-2.5 py-1 bg-gold/10 border border-gold/20 text-gold rounded-lg">Recomendado</span>
                 </button>
                 <button onClick={() => setModoAplicar('sliders')}
                   className="flex flex-col items-start gap-3 p-5 bg-white/5 border border-white/10 rounded-2xl hover:border-white/25 hover:bg-white/8 transition-all text-left">
                   <div className="w-10 h-10 rounded-xl bg-white/8 border border-white/15 flex items-center justify-center"><SlidersHorizontal size={18} className="text-white/60" /></div>
-                  <div><p className="text-white font-semibold text-sm mb-1">Inserção manual</p><p className="text-white/40 text-xs leading-relaxed">Ajuste direto dos scores D/I/S/C — para importar resultado externo</p></div>
-                  <span className="text-xs font-medium px-2.5 py-1 bg-white/5 border border-white/10 text-white/40 rounded-lg">Avançado</span>
+                  <div><p className="text-white font-semibold text-sm mb-1">Inserção manual</p><p className="text-white/60 text-xs leading-relaxed">Ajuste direto dos scores D/I/S/C — para importar resultado externo</p></div>
+                  <span className="text-xs font-medium px-2.5 py-1 bg-white/5 border border-white/10 text-white/60 rounded-lg">Avançado</span>
                 </button>
               </div>
             </div>
@@ -969,7 +969,7 @@ export default function PerfilDISC() {
               <div className="bg-white/5 border border-white/10 rounded-2xl p-6 space-y-5">
                 <div className="flex items-center gap-3">
                   <button onClick={() => setModoAplicar('escolha')} className="p-1.5 rounded-lg bg-white/5 text-white/40 hover:text-white transition-colors"><ChevronLeft size={16} /></button>
-                  <div><p className="text-white font-semibold">Questionário Completo</p><p className="text-white/40 text-xs">Selecione o colaborador</p></div>
+                  <div><p className="text-white font-semibold">Questionário Completo</p><p className="text-white/60 text-xs">Selecione o colaborador</p></div>
                 </div>
                 <div>
                   <label className="text-white/60 text-xs mb-1.5 block">Colaborador *</label>
@@ -979,13 +979,13 @@ export default function PerfilDISC() {
                   </select>
                 </div>
                 {qColaboradorId && (
-                  <div className="bg-[#D4AF37]/8 border border-[#D4AF37]/20 rounded-xl px-4 py-3">
-                    <p className="text-white/40 text-xs">Respondendo por</p>
-                    <p className="text-[#D4AF37] font-semibold">{colaboradores.find(c => c.id === qColaboradorId)?.nome_completo}</p>
+                  <div className="bg-gold/8 border border-gold/20 rounded-xl px-4 py-3">
+                    <p className="text-white/60 text-xs">Respondendo por</p>
+                    <p className="text-gold font-semibold">{colaboradores.find(c => c.id === qColaboradorId)?.nome_completo}</p>
                   </div>
                 )}
                 <button onClick={iniciarQuestionario} disabled={!qColaboradorId}
-                  className="w-full flex items-center justify-center gap-2 py-3 bg-[#7D1F2C] hover:bg-[#9b2535] disabled:bg-white/5 disabled:text-white/20 text-white font-semibold rounded-xl text-sm transition-all disabled:cursor-not-allowed">
+                  className="w-full flex items-center justify-center gap-2 py-3 bg-wine hover:bg-wine-light disabled:bg-white/5 disabled:text-white/20 text-white font-semibold rounded-xl text-sm transition-all disabled:cursor-not-allowed">
                   <Play size={15} /> Iniciar Questionário
                 </button>
               </div>
@@ -1013,7 +1013,7 @@ export default function PerfilDISC() {
               <div className="bg-white/5 border border-white/10 rounded-2xl p-6 space-y-5">
                 <div className="flex items-center gap-3">
                   <button onClick={() => setModoAplicar('escolha')} className="p-1.5 rounded-lg bg-white/5 text-white/40 hover:text-white transition-colors"><ChevronLeft size={16} /></button>
-                  <div><p className="text-white font-semibold">Inserção Manual</p><p className="text-white/40 text-xs">Ajuste os scores via sliders</p></div>
+                  <div><p className="text-white font-semibold">Inserção Manual</p><p className="text-white/60 text-xs">Ajuste os scores via sliders</p></div>
                 </div>
                 <div>
                   <label className="text-white/60 text-xs mb-1.5 block">Colaborador</label>
@@ -1048,9 +1048,9 @@ export default function PerfilDISC() {
                   return (
                     <div className="p-4 bg-white/5 rounded-xl flex items-center gap-3">
                       <span className={`${dc.bg} text-white font-bold px-3 py-1 rounded-lg`}>{dominante}</span>
-                      <span className="text-white/40">/</span>
+                      <span className="text-white/60">/</span>
                       <span className={`${sc.bgLight} border ${sc.border} ${sc.cor} font-medium px-3 py-1 rounded-lg`}>{secundario}</span>
-                      <span className="text-white/40 text-sm">{dc.label} · {sc.label}</span>
+                      <span className="text-white/60 text-sm">{dc.label} · {sc.label}</span>
                     </div>
                   );
                 })()}
@@ -1058,7 +1058,7 @@ export default function PerfilDISC() {
                 <div className="flex gap-2">
                   <button onClick={() => setModoAplicar('escolha')} className="flex-1 py-2.5 rounded-xl border border-white/15 text-white/50 hover:text-white hover:bg-white/5 text-sm transition-all">Voltar</button>
                   <button onClick={salvarSliders} disabled={salvando || !form.colaborador_id}
-                    className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-[#7D1F2C] hover:bg-[#9b2535] text-white rounded-xl text-sm font-medium transition-all disabled:opacity-50">
+                    className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-wine hover:bg-wine-light text-white rounded-xl text-sm font-medium transition-all disabled:opacity-50">
                     <Save size={14} />{salvando ? 'Salvando...' : 'Salvar'}
                   </button>
                 </div>
@@ -1103,7 +1103,7 @@ export default function PerfilDISC() {
                               <div className="w-10 h-10 flex items-end justify-center bg-white/5 rounded-lg overflow-hidden">
                                 <div className={`${kc.bg} w-full`} style={{ height: `${val}%` }} />
                               </div>
-                              <p className={`text-[10px] ${kc.cor} mt-0.5 font-semibold`}>{val}%</p>
+                              <p className={`text-caption ${kc.cor} mt-0.5 font-semibold`}>{val}%</p>
                             </div>
                           );
                         })}
@@ -1113,7 +1113,7 @@ export default function PerfilDISC() {
                         <span className={`${dcfg.bg} text-white text-xs font-bold px-2.5 py-1 rounded-lg`}>{c.perfil_dominante}</span>
                         <span className={`${scfg.bgLight} ${scfg.cor} text-xs font-medium px-2.5 py-1 rounded-lg border ${scfg.border}`}>{c.perfil_secundario}</span>
                       </div>
-                      {c.data_aplicacao && <span className="text-white/25 text-xs hidden md:block">{dayjs(c.data_aplicacao).format('DD/MM/YY')}</span>}
+                      {c.data_aplicacao && <span className="text-white/60 text-xs hidden md:block">{dayjs(c.data_aplicacao).format('DD/MM/YY')}</span>}
                       <ChevronRight size={14} className="text-white/30" />
                     </div>
                   </div>
@@ -1131,7 +1131,7 @@ export default function PerfilDISC() {
               <div className="bg-white/5 border border-white/10 rounded-2xl p-6 space-y-5">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center"><MessageSquare size={18} className="text-emerald-400" /></div>
-                  <div><p className="text-white font-semibold">Enviar Avaliação DISC por WhatsApp</p><p className="text-white/40 text-xs">Gera link único — colaborador responde no celular</p></div>
+                  <div><p className="text-white font-semibold">Enviar Avaliação DISC por WhatsApp</p><p className="text-white/60 text-xs">Gera link único — colaborador responde no celular</p></div>
                 </div>
                 <div>
                   <label className="text-white/60 text-xs mb-2 block">Para quem é a avaliação?</label>
@@ -1142,13 +1142,13 @@ export default function PerfilDISC() {
                       { value: 'externo',     label: 'Pessoa externa',        desc: 'Sem cadastro no sistema' },
                     ] as { value: ModoEnvio; label: string; desc: string }[]).map(opt => (
                       <button key={opt.value} onClick={() => setModo(opt.value)}
-                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border text-left transition-all ${modo === opt.value ? 'border-[#7D1F2C]/60 bg-[#7D1F2C]/15' : 'border-white/10 bg-white/3 hover:border-white/20'}`}>
-                        <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${modo === opt.value ? 'border-[#D4AF37]' : 'border-white/30'}`}>
-                          {modo === opt.value && <div className="w-2 h-2 rounded-full bg-[#D4AF37]" />}
+                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border text-left transition-all ${modo === opt.value ? 'border-wine/60 bg-wine/15' : 'border-white/10 bg-white/3 hover:border-white/20'}`}>
+                        <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${modo === opt.value ? 'border-gold' : 'border-white/30'}`}>
+                          {modo === opt.value && <div className="w-2 h-2 rounded-full bg-gold" />}
                         </div>
                         <div>
                           <p className={`text-sm font-medium ${modo === opt.value ? 'text-white' : 'text-white/60'}`}>{opt.label}</p>
-                          <p className="text-white/30 text-xs">{opt.desc}</p>
+                          <p className="text-white/60 text-xs">{opt.desc}</p>
                         </div>
                       </button>
                     ))}
@@ -1163,7 +1163,7 @@ export default function PerfilDISC() {
                   <div className="flex gap-2">
                     {DIAS_VALIDADE.map(d => (
                       <button key={d.valor} onClick={() => setWpDias(d.valor)}
-                        className={`flex-1 py-2 rounded-xl border text-sm font-medium transition-all ${wpDias === d.valor ? 'bg-[#7D1F2C]/30 border-[#7D1F2C]/60 text-white' : 'border-white/10 text-white/40 hover:border-white/25'}`}>
+                        className={`flex-1 py-2 rounded-xl border text-sm font-medium transition-all ${wpDias === d.valor ? 'bg-wine/30 border-wine/60 text-white' : 'border-white/10 text-white/40 hover:border-white/25'}`}>
                         {d.label}
                       </button>
                     ))}
@@ -1171,7 +1171,7 @@ export default function PerfilDISC() {
                 </div>
                 <button onClick={gerarLink}
                   disabled={wpGerandoLink || (modo === 'colaborador' && !wpColaboradorId) || (modo === 'candidato' && !wpCandidatoId) || (modo === 'externo' && !wpNomeExterno.trim())}
-                  className="w-full flex items-center justify-center gap-2 py-3 bg-[#7D1F2C] hover:bg-[#9b2535] text-white rounded-xl font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed">
+                  className="w-full flex items-center justify-center gap-2 py-3 bg-wine hover:bg-wine-light text-white rounded-xl font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed">
                   <Send size={16} />{wpGerandoLink ? 'Gerando...' : 'Gerar Link'}
                 </button>
               </div>
@@ -1181,10 +1181,10 @@ export default function PerfilDISC() {
               <div className="bg-white/5 border border-emerald-500/20 rounded-2xl p-6 space-y-4">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center"><CheckCircle size={18} className="text-emerald-400" /></div>
-                  <div><p className="text-white font-semibold">Link gerado para {wpNomeGerado}</p><p className="text-white/40 text-xs">Válido até {new Date(Date.now() + wpDias * 86400000).toLocaleDateString('pt-BR')}</p></div>
+                  <div><p className="text-white font-semibold">Link gerado para {wpNomeGerado}</p><p className="text-white/60 text-xs">Válido até {new Date(Date.now() + wpDias * 86400000).toLocaleDateString('pt-BR')}</p></div>
                 </div>
                 <div className="bg-black/30 border border-white/10 rounded-xl px-4 py-3">
-                  <p className="text-white/40 text-xs mb-1">Link da avaliação</p>
+                  <p className="text-white/60 text-xs mb-1">Link da avaliação</p>
                   <p className="text-white/80 text-xs break-all font-mono">{wpLinkGerado}</p>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
@@ -1217,7 +1217,7 @@ export default function PerfilDISC() {
               <button onClick={fetchSessoes} className="p-1.5 text-white/30 hover:text-white/60 transition-colors rounded-lg hover:bg-white/5"><RefreshCw size={14} className={loadingSessoes ? 'animate-spin' : ''} /></button>
             </div>
             {sessoes.length === 0 ? (
-              <div className="bg-white/3 border border-white/8 rounded-xl px-5 py-6 text-center"><p className="text-white/30 text-sm">Nenhuma avaliação enviada ainda.</p></div>
+              <div className="bg-white/3 border border-white/8 rounded-xl px-5 py-6 text-center"><p className="text-white/60 text-sm">Nenhuma avaliação enviada ainda.</p></div>
             ) : (
               <div className="space-y-2">
                 {sessoes.map(s => {
@@ -1228,7 +1228,7 @@ export default function PerfilDISC() {
                     <div key={s.id} className="bg-white/3 border border-white/8 rounded-xl px-4 py-3 flex items-center justify-between gap-3 hover:bg-white/5 transition-all">
                       <div className="flex-1 min-w-0">
                         <p className="text-white text-sm font-medium truncate">{s.nome}</p>
-                        <p className="text-white/30 text-xs">{s.tipo === 'candidato' ? 'Candidato' : s.nome_respondente ? 'Externo' : 'Equipe'} · {dayjs(s.criado_em).format('DD/MM HH:mm')}</p>
+                        <p className="text-white/60 text-xs">{s.tipo === 'candidato' ? 'Candidato' : s.nome_respondente ? 'Externo' : 'Equipe'} · {dayjs(s.criado_em).format('DD/MM HH:mm')}</p>
                       </div>
                       <div className={`flex items-center gap-1.5 ${sc}`}>
                         <SI size={13} className={s.statusExibicao === 'andamento' ? 'animate-spin' : ''} />

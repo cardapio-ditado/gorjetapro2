@@ -94,14 +94,14 @@ export default function GestaoEstrategica() {
     <div className="space-y-6 pb-12">
 
       {/* ══ HEADER HERO ═══════════════════════════════════════════════════ */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#7D1F2C] via-[#9B2535] to-[#3d0e16] p-6 shadow-2xl">
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-wine via-wine-light to-wine-deepest p-6 shadow-2xl">
         <div className="absolute inset-0 opacity-[0.07]"
           style={{backgroundImage:`repeating-linear-gradient(45deg, #D4AF37 0px, #D4AF37 1px, transparent 0px, transparent 50%),repeating-linear-gradient(-45deg, #D4AF37 0px, #D4AF37 1px, transparent 0px, transparent 50%)`, backgroundSize:'30px 30px'}}/>
-        <div className="absolute top-0 right-0 w-72 h-72 rounded-full bg-[#D4AF37] opacity-5 -translate-y-1/2 translate-x-1/3"/>
+        <div className="absolute top-0 right-0 w-72 h-72 rounded-full bg-gold opacity-5 -translate-y-1/2 translate-x-1/3"/>
 
         <div className="relative flex items-start justify-between gap-4 flex-wrap">
           <div>
-            <p className="text-[#D4AF37] text-[10px] font-black uppercase tracking-[0.3em] mb-2">Ditado Popular</p>
+            <p className="text-gold text-caption font-black uppercase tracking-[0.3em] mb-2">Ditado Popular</p>
             <h1 className="text-3xl font-black text-white tracking-tight">OKRs Estratégicos</h1>
             <p className="text-white/50 text-sm mt-1">Objetivos e resultados-chave por trimestre</p>
           </div>
@@ -119,7 +119,7 @@ export default function GestaoEstrategica() {
               const n = okrs.filter(o=>(OKR_ST[o.status]?st===OKR_ST[o.status]:key==='on-track')).length;
               if (n===0) return null;
               return (
-                <span key={key} className={`text-[10px] font-bold px-3 py-1 rounded-full border border-white/15 ${st.bg} ${st.txt}`}>
+                <span key={key} className={`text-caption font-bold px-3 py-1 rounded-full border border-white/15 ${st.bg} ${st.txt}`}>
                   {n} {st.lbl}
                 </span>
               );
@@ -132,16 +132,16 @@ export default function GestaoEstrategica() {
       <section className="bg-[#12141f] rounded-3xl border border-white/10 p-6">
         <div className="flex items-start justify-between mb-5 flex-wrap gap-3">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-gradient-to-br from-[#7D1F2C] to-[#c94454] shadow-sm">
+            <div className="p-2.5 rounded-xl bg-gradient-to-br from-wine to-[#c94454] shadow-sm">
               <Target className="w-5 h-5 text-white" />
             </div>
             <div>
               <h2 className="text-base font-extrabold text-white tracking-tight leading-none">Objetivos</h2>
-              <p className="text-xs text-white/30 mt-0.5">{okrs.length} objetivo{okrs.length!==1?'s':''} ativo{okrs.length!==1?'s':''}</p>
+              <p className="text-xs text-white/60 mt-0.5">{okrs.length} objetivo{okrs.length!==1?'s':''} ativo{okrs.length!==1?'s':''}</p>
             </div>
           </div>
           <button onClick={()=>setShowForm(v=>!v)}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-[#7D1F2C] to-[#9B2535] shadow-sm hover:shadow-md transition-all h-fit">
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-wine to-wine-light shadow-sm hover:shadow-md transition-all h-fit">
             <Plus className="w-3.5 h-3.5"/>
             Novo Objetivo
           </button>
@@ -149,23 +149,23 @@ export default function GestaoEstrategica() {
 
         {/* Formulário */}
         {showForm&&(
-          <div className="mb-5 border-2 border-dashed border-[#D4AF37]/40 rounded-2xl p-4 bg-white/5">
+          <div className="mb-5 border-2 border-dashed border-gold/40 rounded-2xl p-4 bg-white/5">
             <p className="text-xs font-bold text-white/60 mb-3 uppercase tracking-wide">Novo Objetivo</p>
             <div className="grid gap-3">
               <input value={newOkr.titulo} onChange={e=>setNewOkr(v=>({...v,titulo:e.target.value}))}
                 placeholder="Título do objetivo *"
-                className="w-full text-sm text-white border border-white/10 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#7D1F2C]/40 bg-[#0d0f1a]"/>
+                className="w-full text-sm text-white border border-white/10 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-wine/40 bg-[#0d0f1a]"/>
               <textarea value={newOkr.descricao} onChange={e=>setNewOkr(v=>({...v,descricao:e.target.value}))}
                 placeholder="Descrição (opcional)" rows={2}
-                className="w-full text-sm text-white border border-white/10 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#7D1F2C]/40 bg-[#0d0f1a] resize-none"/>
+                className="w-full text-sm text-white border border-white/10 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-wine/40 bg-[#0d0f1a] resize-none"/>
               <div className="grid grid-cols-2 gap-3">
                 <select value={newOkr.trimestre} onChange={e=>setNewOkr(v=>({...v,trimestre:e.target.value}))}
-                  className="text-sm text-white border border-white/10 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#7D1F2C]/40 bg-[#0d0f1a]">
+                  className="text-sm text-white border border-white/10 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-wine/40 bg-[#0d0f1a]">
                   {trimestres.map(t=><option key={t}>{t}</option>)}
                 </select>
                 <input value={newOkr.responsavel} onChange={e=>setNewOkr(v=>({...v,responsavel:e.target.value}))}
                   placeholder="Responsável"
-                  className="text-sm text-white border border-white/10 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#7D1F2C]/40 bg-[#0d0f1a]"/>
+                  className="text-sm text-white border border-white/10 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-wine/40 bg-[#0d0f1a]"/>
               </div>
               <div className="flex gap-2 justify-end">
                 <button onClick={()=>setShowForm(false)}
@@ -173,7 +173,7 @@ export default function GestaoEstrategica() {
                   Cancelar
                 </button>
                 <button onClick={saveOkr} disabled={saving||!newOkr.titulo.trim()}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-[#7D1F2C] to-[#9B2535] disabled:opacity-50 hover:shadow-md transition-all">
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-wine to-wine-light disabled:opacity-50 hover:shadow-md transition-all">
                   {saving?<Loader2 className="w-3.5 h-3.5 animate-spin"/>:<Check className="w-3.5 h-3.5"/>}
                   Salvar
                 </button>
@@ -201,7 +201,7 @@ export default function GestaoEstrategica() {
                     {/* Ring */}
                     <div className="relative shrink-0 cursor-default">
                       <Ring p={okr.progresso} color={st.clr}/>
-                      <span className="absolute inset-0 flex items-center justify-center text-[9px] font-black text-white/80 rotate-90">
+                      <span className="absolute inset-0 flex items-center justify-center text-caption font-black text-white/80 rotate-90">
                         {okr.progresso.toFixed(0)}%
                       </span>
                     </div>
@@ -209,7 +209,7 @@ export default function GestaoEstrategica() {
                       <div className="flex items-start justify-between gap-2">
                         <div>
                           <p className="text-sm font-bold text-white">{okr.titulo}</p>
-                          {okr.descricao&&<p className="text-xs text-white/30 mt-0.5 line-clamp-1">{okr.descricao}</p>}
+                          {okr.descricao&&<p className="text-xs text-white/60 mt-0.5 line-clamp-1">{okr.descricao}</p>}
                         </div>
                         <button onClick={()=>setConfirmDel(confirmDel===okr.id?null:okr.id)}
                           className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg hover:bg-red-500/10 text-white/20 hover:text-red-500 transition-all shrink-0">
@@ -217,10 +217,10 @@ export default function GestaoEstrategica() {
                         </button>
                       </div>
                       <div className="flex items-center gap-2 mt-2 flex-wrap">
-                        <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${st.bg} ${st.txt}`}>{st.lbl}</span>
-                        <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-white/10 text-white/60">{okr.trimestre}</span>
-                        {okr.responsavel&&<span className="text-[9px] text-white/30">{okr.responsavel}</span>}
-                        <span className="text-[9px] text-white/30">{okr.totalKrs} KR{okr.totalKrs!==1?'s':''}</span>
+                        <span className={`text-caption font-bold px-2 py-0.5 rounded-full ${st.bg} ${st.txt}`}>{st.lbl}</span>
+                        <span className="text-caption font-bold px-2 py-0.5 rounded-full bg-white/10 text-white/60">{okr.trimestre}</span>
+                        {okr.responsavel&&<span className="text-caption text-white/60">{okr.responsavel}</span>}
+                        <span className="text-caption text-white/60">{okr.totalKrs} KR{okr.totalKrs!==1?'s':''}</span>
                       </div>
                     </div>
                   </div>

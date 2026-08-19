@@ -626,14 +626,14 @@ const AgendaPagamentosDia: React.FC<AgendaPagamentosDiaProps> = ({
                 type="date"
                 value={dataISO}
                 onChange={(e) => setDataISO(e.target.value)}
-                className="rounded-md border-white/20 shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                className="rounded-md border-white/20 shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
               />
             </div>
             <div className="pt-6">
               <button
                 onClick={handleImportarAP}
                 disabled={loading}
-                className="px-4 py-2 bg-[#7D1F2C] text-white rounded-lg hover:bg-[#6a1a25] disabled:opacity-50"
+                className="px-4 py-2 bg-wine text-white rounded-lg hover:bg-[#6a1a25] disabled:opacity-50"
               >
                 <Download className="w-4 h-4 inline mr-2" />
                 {loading ? 'Processando...' : 'Importar do Contas a Pagar'}
@@ -681,7 +681,7 @@ const AgendaPagamentosDia: React.FC<AgendaPagamentosDiaProps> = ({
                       });
                     }
                   }}
-                  className="w-full rounded-md border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                  className="w-full rounded-md border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                   required
                 >
                   <option value="">Selecione um fornecedor</option>
@@ -695,7 +695,7 @@ const AgendaPagamentosDia: React.FC<AgendaPagamentosDiaProps> = ({
                     type="text"
                     value={formAdHoc.novo_fornecedor_nome}
                     onChange={(e) => setFormAdHoc({ ...formAdHoc, novo_fornecedor_nome: e.target.value })}
-                    className="mt-2 w-full rounded-md border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                    className="mt-2 w-full rounded-md border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                     placeholder="Nome do novo fornecedor"
                     required
                   />
@@ -716,7 +716,7 @@ const AgendaPagamentosDia: React.FC<AgendaPagamentosDiaProps> = ({
                     min="0.01"
                     value={formAdHoc.valor}
                     onChange={(e) => setFormAdHoc({ ...formAdHoc, valor: parseFloat(e.target.value) || 0 })}
-                    className="pl-10 w-full rounded-md border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                    className="pl-10 w-full rounded-md border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                     required
                   />
                 </div>
@@ -730,7 +730,7 @@ const AgendaPagamentosDia: React.FC<AgendaPagamentosDiaProps> = ({
                   type="text"
                   value={formAdHoc.descricao}
                   onChange={(e) => setFormAdHoc({ ...formAdHoc, descricao: e.target.value })}
-                  className="w-full rounded-md border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                  className="w-full rounded-md border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                   placeholder="Descrição do pagamento"
                   required
                 />
@@ -744,7 +744,7 @@ const AgendaPagamentosDia: React.FC<AgendaPagamentosDiaProps> = ({
                   type="date"
                   value={formAdHoc.vencimento}
                   onChange={(e) => setFormAdHoc({ ...formAdHoc, vencimento: e.target.value })}
-                  className="w-full rounded-md border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                  className="w-full rounded-md border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                 />
               </div>
 
@@ -755,7 +755,7 @@ const AgendaPagamentosDia: React.FC<AgendaPagamentosDiaProps> = ({
                 <textarea
                   value={formAdHoc.observacao}
                   onChange={(e) => setFormAdHoc({ ...formAdHoc, observacao: e.target.value })}
-                  className="w-full rounded-md border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                  className="w-full rounded-md border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                   rows={2}
                   placeholder="Observações sobre o pagamento"
                 />
@@ -868,8 +868,14 @@ const AgendaPagamentosDia: React.FC<AgendaPagamentosDiaProps> = ({
         </div>
 
         {loading ? (
-          <div className="flex justify-center items-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7D1F2C]"></div>
+          <div className="w-full">
+            <div className="w-full space-y-3" aria-busy="true">
+                    <div className="skeleton" style={{ height: 14, width: '32%' }} />
+                    <div className="skeleton" style={{ height: 44, width: '100%' }} />
+                    <div className="skeleton" style={{ height: 44, width: '100%' }} />
+                    <div className="skeleton" style={{ height: 44, width: '100%' }} />
+                    <div className="skeleton" style={{ height: 44, width: '82%' }} />
+                  </div>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -1007,7 +1013,7 @@ const AgendaPagamentosDia: React.FC<AgendaPagamentosDiaProps> = ({
                             </div>
                           )}
                           {item.status !== 'proposto' && (
-                            <span className="text-sm text-white/30">-</span>
+                            <span className="text-sm text-white/60">-</span>
                           )}
                         </td>
                       )}
@@ -1029,7 +1035,7 @@ const AgendaPagamentosDia: React.FC<AgendaPagamentosDiaProps> = ({
                 <button
                   onClick={handleImportarAP}
                   disabled={loading}
-                  className="px-4 py-2 bg-[#7D1F2C] text-white rounded-lg hover:bg-[#6a1a25] disabled:opacity-50"
+                  className="px-4 py-2 bg-wine text-white rounded-lg hover:bg-[#6a1a25] disabled:opacity-50"
                 >
                   <Download className="w-4 h-4 inline mr-2" />
                   {loading ? 'Processando...' : 'Importar do Contas a Pagar'}
@@ -1103,7 +1109,7 @@ const AgendaPagamentosDia: React.FC<AgendaPagamentosDiaProps> = ({
                     ...aprovacaoModal,
                     valorAprovado: parseFloat(e.target.value) || 0
                   })}
-                  className="pl-10 w-full rounded-md border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                  className="pl-10 w-full rounded-md border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                   required
                 />
               </div>

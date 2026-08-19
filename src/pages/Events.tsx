@@ -90,7 +90,7 @@ const getStatusText = (status: string) => {
   }
 };
 
-const inputCls = 'w-full rounded-md bg-white/5 border border-white/20 text-white px-3 py-2 text-sm focus:outline-none focus:border-[#7D1F2C]';
+const inputCls = 'w-full rounded-md bg-white/5 border border-white/20 text-white px-3 py-2 text-sm focus:outline-none focus:border-wine';
 const selectCls = inputCls;
 
 // ─── Componente Principal ─────────────────────────────────────────────────────
@@ -352,7 +352,7 @@ const Events: React.FC = () => {
         <div>
           <label className="block text-sm font-medium text-white/80 mb-1">Valor Total</label>
           <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40 text-sm pointer-events-none">R$</span>
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/60 text-sm pointer-events-none">R$</span>
             <input type="number" step="0.01" min="0" value={formEventoFechado.valor_total}
               onChange={e => setFormEventoFechado({ ...formEventoFechado, valor_total: parseFloat(e.target.value) || 0 })}
               className={inputCls + ' pl-9'} />
@@ -360,7 +360,7 @@ const Events: React.FC = () => {
         </div>
         <div className="md:col-span-2 p-4 bg-white/5 rounded-lg border border-white/10">
           <h4 className="font-medium text-white mb-3 flex items-center gap-2">
-            <CheckSquare className="w-5 h-5 text-[#7D1F2C]" /> Checklist do Evento
+            <CheckSquare className="w-5 h-5 text-wine" /> Checklist do Evento
           </h4>
           <div className="space-y-3">
             <label className="flex items-center gap-2 cursor-pointer">
@@ -370,7 +370,7 @@ const Events: React.FC = () => {
                   setFormEventoFechado({ ...formEventoFechado, contrato_assinado: c, data_pagamento_contrato: c ? formEventoFechado.data_pagamento_contrato : '' });
                   if (c && editingItem && !editingItem.conta_receber_id) { setEventoParaGerarConta(editingItem); setDataVencimentoConta(formEventoFechado.data_evento); setShowGerarContaModal(true); }
                 }}
-                className="rounded border-white/20 text-[#7D1F2C]" />
+                className="rounded border-white/20 text-wine" />
               <span className="text-sm text-white/80">📄 Contrato Assinado</span>
             </label>
             {formEventoFechado.contrato_assinado && (
@@ -384,7 +384,7 @@ const Events: React.FC = () => {
             <label className="flex items-center gap-2 cursor-pointer">
               <input type="checkbox" checked={formEventoFechado.convite_impresso}
                 onChange={e => setFormEventoFechado({ ...formEventoFechado, convite_impresso: e.target.checked, data_retirada_convite: e.target.checked ? formEventoFechado.data_retirada_convite : '' })}
-                className="rounded border-white/20 text-[#7D1F2C]" />
+                className="rounded border-white/20 text-wine" />
               <span className="text-sm text-white/80">🎟️ Ingressos Entregues</span>
             </label>
             {formEventoFechado.convite_impresso && (
@@ -471,7 +471,7 @@ const Events: React.FC = () => {
         <div>
           <label className="block text-sm font-medium text-white/80 mb-1">Valor</label>
           <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40 text-sm pointer-events-none">R$</span>
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/60 text-sm pointer-events-none">R$</span>
             <input type="number" step="0.01" min="0" value={formReservaEspecial.valor_cobrado}
               onChange={e => setFormReservaEspecial({ ...formReservaEspecial, valor_cobrado: parseFloat(e.target.value) || 0 })}
               className={inputCls + ' pl-9'} />
@@ -585,7 +585,7 @@ const Events: React.FC = () => {
         if (status === 'pago_total')  return 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30';
         if (status === 'cancelado')   return 'bg-red-500/15 text-red-300/60 border-red-500/20';
         if (status === 'pago_parcial')return 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30';
-        return 'bg-[#7D1F2C]/40 text-rose-200 border-[#7D1F2C]/50';
+        return 'bg-wine/40 text-rose-200 border-wine/50';
       }
       if (type === 'especial') return 'bg-purple-500/20 text-purple-300 border-purple-500/30';
       return 'bg-blue-500/15 text-blue-300 border-blue-500/25';
@@ -615,12 +615,12 @@ const Events: React.FC = () => {
               <ChevronRight className="w-5 h-5" />
             </button>
             <button onClick={() => setCalendarMonth(dayjs().startOf('month'))}
-              className="px-3 py-1 rounded-lg text-xs font-medium bg-[#7D1F2C] text-white hover:bg-[#9B2535] transition-colors">
+              className="px-3 py-1 rounded-lg text-xs font-medium bg-wine text-white hover:bg-wine-light transition-colors">
               Hoje
             </button>
           </div>
           <div className="hidden md:flex items-center gap-3 text-xs text-white/40">
-            <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-[#7D1F2C]" />Evento Fechado</span>
+            <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-wine" />Evento Fechado</span>
             <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-purple-500/70" />Reserva Especial</span>
             <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-blue-500/60" />Reserva Normal</span>
           </div>
@@ -648,7 +648,7 @@ const Events: React.FC = () => {
                   } ${i % 7 === 6 ? 'border-r-0' : ''}`}
                 >
                   <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold mb-1 mx-auto ${
-                    isToday ? 'bg-[#7D1F2C] text-white' : isCurrentMonth ? 'text-white/70' : 'text-white/20'
+                    isToday ? 'bg-wine text-white' : isCurrentMonth ? 'text-white/70' : 'text-white/20'
                   }`}>
                     {day.format('D')}
                   </div>
@@ -657,13 +657,13 @@ const Events: React.FC = () => {
                     <div className="space-y-0.5">
                       {dayEvents.slice(0, 3).map((ev, idx) => (
                         <div key={idx} title={`${ev._label}${ev._hora ? ' — ' + ev._hora : ''}`}
-                          className={`rounded px-1 py-0.5 text-[10px] font-medium border truncate cursor-default leading-tight ${typeStyle(ev._type, ev.status_pagamento)}`}>
+                          className={`rounded px-1 py-0.5 text-caption font-medium border truncate cursor-default leading-tight ${typeStyle(ev._type, ev.status_pagamento)}`}>
                           <span className="mr-0.5">{typeIcon(ev._type)}</span>
                           {ev._label}
                         </div>
                       ))}
                       {dayEvents.length > 3 && (
-                        <div className="text-[10px] text-white/30 text-center">
+                        <div className="text-caption text-white/30 text-center">
                           +{dayEvents.length - 3} mais
                         </div>
                       )}
@@ -676,7 +676,7 @@ const Events: React.FC = () => {
         </div>
 
         <div className="flex md:hidden flex-wrap gap-3 text-xs text-white/40">
-          <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-[#7D1F2C]" />Evento Fechado</span>
+          <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-wine" />Evento Fechado</span>
           <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-purple-500/70" />Reserva Especial</span>
           <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-blue-500/60" />Reserva Normal</span>
           <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-emerald-500/60" />Pago</span>
@@ -709,7 +709,7 @@ const Events: React.FC = () => {
         <thead>
           <tr className="text-left bg-white/5 border-b border-white/10">
             {['Evento','Cliente','Data/Hora','Pessoas','Valor','Status','Checklist','Ações'].map(h => (
-              <th key={h} className="px-6 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">{h}</th>
+              <th key={h} className="px-6 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">{h}</th>
             ))}
           </tr>
         </thead>
@@ -747,7 +747,7 @@ const Events: React.FC = () => {
         <thead>
           <tr className="text-left bg-white/5 border-b border-white/10">
             {['Cliente','Data/Hora','Local','Pessoas','Valor','Status','Ações'].map(h => (
-              <th key={h} className="px-6 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">{h}</th>
+              <th key={h} className="px-6 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">{h}</th>
             ))}
           </tr>
         </thead>
@@ -777,7 +777,7 @@ const Events: React.FC = () => {
         <thead>
           <tr className="text-left bg-white/5 border-b border-white/10">
             {['Cliente','Data/Hora','Pessoas','Local','Observações','Ações'].map(h => (
-              <th key={h} className="px-6 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">{h}</th>
+              <th key={h} className="px-6 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">{h}</th>
             ))}
           </tr>
         </thead>
@@ -788,7 +788,7 @@ const Events: React.FC = () => {
               <td className="px-6 py-4"><div className="text-sm text-white">{dayjs(r.data_reserva).format('DD/MM/YYYY')}</div><div className="text-sm text-white/40">{r.horario}</div></td>
               <td className="px-6 py-4 text-sm text-white">{r.numero_pessoas}</td>
               <td className="px-6 py-4 text-sm text-white">{r.local_bar}</td>
-              <td className="px-6 py-4 text-sm text-white/40">{r.observacoes || '-'}</td>
+              <td className="px-6 py-4 text-sm text-white/60">{r.observacoes || '-'}</td>
               <td className="px-6 py-4">
                 <div className="flex gap-2">
                   <button onClick={() => openForm(r)} className="text-blue-400 hover:text-blue-300"><Edit className="w-4 h-4" /></button>
@@ -814,20 +814,20 @@ const Events: React.FC = () => {
             <div className="flex rounded-lg p-0.5 bg-white/10">
               <button onClick={() => setViewMode('list')}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
-                  viewMode === 'list' ? 'bg-[#7D1F2C] text-white shadow' : 'text-white/50 hover:text-white/80'
+                  viewMode === 'list' ? 'bg-wine text-white shadow' : 'text-white/50 hover:text-white/80'
                 }`}>
                 <List className="w-3.5 h-3.5" /> Lista
               </button>
               <button onClick={() => { setViewMode('calendar'); fetchCalendarData(); }}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
-                  viewMode === 'calendar' ? 'bg-[#7D1F2C] text-white shadow' : 'text-white/50 hover:text-white/80'
+                  viewMode === 'calendar' ? 'bg-wine text-white shadow' : 'text-white/50 hover:text-white/80'
                 }`}>
                 <CalendarDays className="w-3.5 h-3.5" /> Calendário
               </button>
             </div>
           </div>
           <button onClick={() => openForm()}
-            className="px-4 py-2 bg-[#7D1F2C] text-white rounded-lg hover:bg-[#6a1a25] flex items-center gap-2 text-sm font-medium">
+            className="px-4 py-2 bg-wine text-white rounded-lg hover:bg-[#6a1a25] flex items-center gap-2 text-sm font-medium">
             <Plus className="w-4 h-4" />
             {`Nova ${tabTitles[selectedTab].slice(0, -1)}`}
           </button>
@@ -842,12 +842,12 @@ const Events: React.FC = () => {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30 w-4 h-4" />
               <input type="text" placeholder="Buscar..." value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 bg-white/5 border border-white/20 rounded-lg text-white placeholder-white/30 text-sm focus:outline-none focus:border-[#7D1F2C]" />
+                className="w-full pl-9 pr-4 py-2 bg-white/5 border border-white/20 rounded-lg text-white placeholder-white/30 text-sm focus:outline-none focus:border-wine" />
             </div>
 
             {selectedTab !== 2 && (
               <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}
-                className="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-2 text-white text-sm focus:outline-none focus:border-[#7D1F2C]">
+                className="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-2 text-white text-sm focus:outline-none focus:border-wine">
                 <option value="all">Todos os Status</option>
                 <option value="pendente">Pendente</option>
                 <option value="pago_parcial">Pago Parcial</option>
@@ -857,13 +857,13 @@ const Events: React.FC = () => {
             )}
 
             <select value={mesFilter} onChange={e => setMesFilter(parseInt(e.target.value))}
-              className="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-2 text-white text-sm focus:outline-none focus:border-[#7D1F2C]">
+              className="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-2 text-white text-sm focus:outline-none focus:border-wine">
               {Array.from({ length: 12 }, (_, i) => (
                 <option key={i+1} value={i+1}>{dayjs().month(i).format('MMMM')}</option>
               ))}
             </select>
             <select value={anoFilter} onChange={e => setAnoFilter(parseInt(e.target.value))}
-              className="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-2 text-white text-sm focus:outline-none focus:border-[#7D1F2C]">
+              className="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-2 text-white text-sm focus:outline-none focus:border-wine">
               {Array.from({ length: 3 }, (_, i) => dayjs().year() - 1 + i).map(a => (
                 <option key={a} value={a}>{a}</option>
               ))}
@@ -879,7 +879,7 @@ const Events: React.FC = () => {
                 <Tab key={title}
                   className={({ selected }) =>
                     `flex items-center whitespace-nowrap rounded-lg py-2.5 px-4 text-sm font-medium leading-5 transition-all
-                    ${selected ? 'bg-[#7D1F2C] text-white shadow' : 'text-white/60 hover:bg-white/5 hover:text-white'}`
+                    ${selected ? 'bg-wine text-white shadow' : 'text-white/60 hover:bg-white/5 hover:text-white'}`
                   }>
                   {title}
                 </Tab>
@@ -893,7 +893,7 @@ const Events: React.FC = () => {
                     renderCalendar()
                   ) : loading ? (
                     <div className="flex justify-center items-center h-64">
-                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7D1F2C]" />
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-wine" />
                     </div>
                   ) : filteredData.length > 0 ? (
                     <div className="overflow-x-auto">{renderTable()}</div>
@@ -901,7 +901,7 @@ const Events: React.FC = () => {
                     <div className="text-center py-12">
                       <Calendar className="w-16 h-16 text-white/20 mx-auto mb-4" />
                       <h3 className="text-lg font-medium text-white mb-2">Nenhum registro encontrado</h3>
-                      <p className="text-white/40 text-sm">Ajuste os filtros ou crie um novo registro.</p>
+                      <p className="text-white/60 text-sm">Ajuste os filtros ou crie um novo registro.</p>
                     </div>
                   )}
                 </Tab.Panel>
@@ -933,7 +933,7 @@ const Events: React.FC = () => {
                   Cancelar
                 </button>
                 <button onClick={handleSave} disabled={loading}
-                  className="px-6 py-2 bg-[#7D1F2C] text-white rounded-xl hover:bg-[#6a1a25] text-sm font-medium transition-colors disabled:opacity-50">
+                  className="px-6 py-2 bg-wine text-white rounded-xl hover:bg-[#6a1a25] text-sm font-medium transition-colors disabled:opacity-50">
                   {loading ? 'Salvando...' : 'Salvar'}
                 </button>
               </div>
@@ -955,7 +955,7 @@ const Events: React.FC = () => {
                 <label className="block text-sm text-white/60 mb-1">Data de Vencimento</label>
                 <input type="date" value={dataVencimentoConta} onChange={e => setDataVencimentoConta(e.target.value)}
                   className={inputCls} />
-                <p className="text-xs text-white/30 mt-1">Deixe em branco para usar a data do evento</p>
+                <p className="text-xs text-white/60 mt-1">Deixe em branco para usar a data do evento</p>
               </div>
               {error && <div className="mb-4 p-3 bg-red-500/20 text-red-400 rounded-lg text-sm">{error}</div>}
               <div className="flex gap-3 justify-end">
@@ -964,7 +964,7 @@ const Events: React.FC = () => {
                   Não agora
                 </button>
                 <button onClick={gerarContaReceber} disabled={loading}
-                  className="px-4 py-2 bg-[#7D1F2C] text-white rounded-xl hover:bg-[#6a1a25] text-sm font-medium disabled:opacity-50">
+                  className="px-4 py-2 bg-wine text-white rounded-xl hover:bg-[#6a1a25] text-sm font-medium disabled:opacity-50">
                   {loading ? 'Gerando...' : 'Sim, gerar conta'}
                 </button>
               </div>

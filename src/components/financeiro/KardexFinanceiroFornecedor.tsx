@@ -191,7 +191,7 @@ const KardexFinanceiroFornecedor: React.FC = () => {
       case 'pago':
         return 'text-green-400 bg-green-900/30';
       case 'em_aberto':
-        return 'text-[#7D1F2C] bg-blue-900/30';
+        return 'text-wine bg-blue-900/30';
       case 'parcialmente_pago':
         return 'text-yellow-400 bg-yellow-900/30';
       case 'vencido':
@@ -242,7 +242,7 @@ const KardexFinanceiroFornecedor: React.FC = () => {
   };
 
   const getTipoColor = (tipo: string) => {
-    return tipo === 'conta_pagar' ? 'text-[#7D1F2C] bg-blue-900/30' : 'text-green-400 bg-green-900/30';
+    return tipo === 'conta_pagar' ? 'text-wine bg-blue-900/30' : 'text-green-400 bg-green-900/30';
   };
 
   const getTipoText = (tipo: string) => {
@@ -280,7 +280,7 @@ const KardexFinanceiroFornecedor: React.FC = () => {
                 placeholder="Buscar por nome, CNPJ ou email..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/20 rounded-lg text-white placeholder-white/40 focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+                className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/20 rounded-lg text-white placeholder-white/40 focus:ring-2 focus:ring-wine focus:border-wine"
               />
             </div>
           </div>
@@ -290,11 +290,11 @@ const KardexFinanceiroFornecedor: React.FC = () => {
               <div
                 key={fornecedor.id}
                 onClick={() => setFornecedorSelecionado(fornecedor)}
-                className="p-4 border border-white/10 rounded-lg hover:border-[#7D1F2C] hover:shadow-md cursor-pointer transition-all duration-200"
+                className="p-4 border border-white/10 rounded-lg hover:border-wine hover:shadow-md cursor-pointer transition-all duration-200"
               >
                 <div className="flex items-start">
-                  <div className="p-2 bg-[#7D1F2C]/20 rounded-lg mr-3">
-                    <Building2 className="w-5 h-5 text-[#7D1F2C]" />
+                  <div className="p-2 bg-wine/20 rounded-lg mr-3">
+                    <Building2 className="w-5 h-5 text-wine" />
                   </div>
                   <div className="flex-1">
                     <h5 className="font-medium text-white">{fornecedor.nome}</h5>
@@ -343,7 +343,7 @@ const KardexFinanceiroFornecedor: React.FC = () => {
         </div>
         <button
           onClick={exportarKardex}
-          className="px-4 py-2 bg-[#7D1F2C] text-white rounded-lg hover:bg-[#6a1a25]"
+          className="px-4 py-2 bg-wine text-white rounded-lg hover:bg-[#6a1a25]"
         >
           <Download className="w-4 h-4 inline mr-2" />
           Exportar Kardex
@@ -359,7 +359,7 @@ const KardexFinanceiroFornecedor: React.FC = () => {
       {/* Visão Geral do Fornecedor */}
       <div className="bg-[#12141f] p-6 rounded-lg border border-white/10">
         <h4 className="text-md font-medium text-white mb-4 flex items-center">
-          <Building2 className="w-5 h-5 mr-2 text-[#7D1F2C]" />
+          <Building2 className="w-5 h-5 mr-2 text-wine" />
           Dados do Fornecedor
         </h4>
         
@@ -464,7 +464,7 @@ const KardexFinanceiroFornecedor: React.FC = () => {
               type="date"
               value={filtros.dataInicial}
               onChange={(e) => setFiltros({ ...filtros, dataInicial: e.target.value })}
-              className="w-full rounded-md bg-white/5 border border-white/20 text-white focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+              className="w-full rounded-md bg-white/5 border border-white/20 text-white focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
             />
           </div>
 
@@ -476,7 +476,7 @@ const KardexFinanceiroFornecedor: React.FC = () => {
               type="date"
               value={filtros.dataFinal}
               onChange={(e) => setFiltros({ ...filtros, dataFinal: e.target.value })}
-              className="w-full rounded-md bg-white/5 border border-white/20 text-white focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+              className="w-full rounded-md bg-white/5 border border-white/20 text-white focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
             />
           </div>
 
@@ -487,7 +487,7 @@ const KardexFinanceiroFornecedor: React.FC = () => {
             <select
               value={filtros.status}
               onChange={(e) => setFiltros({ ...filtros, status: e.target.value })}
-              className="w-full rounded-md bg-white/5 border border-white/20 text-white focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+              className="w-full rounded-md bg-white/5 border border-white/20 text-white focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
             >
               <option value="all">Todos os Status</option>
               <option value="em_aberto">Em Aberto</option>
@@ -505,7 +505,7 @@ const KardexFinanceiroFornecedor: React.FC = () => {
             <select
               value={filtros.centroCusto}
               onChange={(e) => setFiltros({ ...filtros, centroCusto: e.target.value })}
-              className="w-full rounded-md bg-white/5 border border-white/20 text-white focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+              className="w-full rounded-md bg-white/5 border border-white/20 text-white focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
             >
               <option value="all">Todos os Centros</option>
               {centrosCusto.map((cc) => (
@@ -523,7 +523,7 @@ const KardexFinanceiroFornecedor: React.FC = () => {
             <select
               value={filtros.formaPagamento}
               onChange={(e) => setFiltros({ ...filtros, formaPagamento: e.target.value })}
-              className="w-full rounded-md bg-white/5 border border-white/20 text-white focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+              className="w-full rounded-md bg-white/5 border border-white/20 text-white focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
             >
               <option value="all">Todas as Formas</option>
               {formasPagamento.map((fp) => (
@@ -537,7 +537,7 @@ const KardexFinanceiroFornecedor: React.FC = () => {
           <div className="flex items-end">
             <button
               onClick={fetchDadosFornecedor}
-              className="w-full px-4 py-2 bg-[#7D1F2C] text-white rounded-md hover:bg-[#6a1a25]"
+              className="w-full px-4 py-2 bg-wine text-white rounded-md hover:bg-[#6a1a25]"
             >
               <Filter className="w-4 h-4 inline mr-2" />
               Filtrar
@@ -551,7 +551,7 @@ const KardexFinanceiroFornecedor: React.FC = () => {
         <div className="p-6">
           <div className="flex items-center justify-between mb-6">
             <h4 className="text-lg font-medium text-white flex items-center">
-              <FileText className="w-5 h-5 mr-2 text-[#7D1F2C]" />
+              <FileText className="w-5 h-5 mr-2 text-wine" />
               Kardex Financeiro
             </h4>
             <div className="text-sm text-white/50">
@@ -560,8 +560,14 @@ const KardexFinanceiroFornecedor: React.FC = () => {
           </div>
 
           {loading ? (
-            <div className="flex justify-center items-center h-64">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7D1F2C]"></div>
+            <div className="w-full">
+              <div className="w-full space-y-3" aria-busy="true">
+                    <div className="skeleton" style={{ height: 14, width: '32%' }} />
+                    <div className="skeleton" style={{ height: 44, width: '100%' }} />
+                    <div className="skeleton" style={{ height: 44, width: '100%' }} />
+                    <div className="skeleton" style={{ height: 44, width: '100%' }} />
+                    <div className="skeleton" style={{ height: 44, width: '82%' }} />
+                  </div>
             </div>
           ) : (
             <>

@@ -223,7 +223,7 @@ const PedidoCompraIAModal: React.FC<PedidoCompraIAModalProps> = ({
                     <p className="text-lg font-medium text-white">
                       Clique para selecionar ou arraste um arquivo
                     </p>
-                    <p className="text-sm text-white/40 mt-1">
+                    <p className="text-sm text-white/60 mt-1">
                       JPG, PNG ou PDF até 20MB
                     </p>
                   </div>
@@ -356,7 +356,7 @@ const PedidoCompraIAModal: React.FC<PedidoCompraIAModalProps> = ({
                   Itens ({extractionData.extracted.itens.length})
                 </h4>
                 <div className="border border-white/10 rounded-lg overflow-hidden">
-                  <div className="max-h-64 overflow-y-auto">
+                  <div className="max-h-64 overflow-auto">
                     <table className="w-full">
                       <thead className="bg-white/5 sticky top-0">
                         <tr>
@@ -398,7 +398,7 @@ const PedidoCompraIAModal: React.FC<PedidoCompraIAModalProps> = ({
                                 {item.descricao}
                               </p>
                               {item.codigo && (
-                                <p className="text-xs text-white/40">Cód: {item.codigo}</p>
+                                <p className="text-xs text-white/60">Cód: {item.codigo}</p>
                               )}
                             </td>
                             <td className="px-4 py-3 text-right text-sm text-white">

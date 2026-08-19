@@ -199,8 +199,14 @@ const RecategorizarLancamentos: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7D1F2C]"></div>
+      <div className="w-full">
+        <div className="w-full space-y-3" aria-busy="true">
+                    <div className="skeleton" style={{ height: 14, width: '32%' }} />
+                    <div className="skeleton" style={{ height: 44, width: '100%' }} />
+                    <div className="skeleton" style={{ height: 44, width: '100%' }} />
+                    <div className="skeleton" style={{ height: 44, width: '100%' }} />
+                    <div className="skeleton" style={{ height: 44, width: '82%' }} />
+                  </div>
       </div>
     );
   }
@@ -226,7 +232,7 @@ const RecategorizarLancamentos: React.FC = () => {
                   <div className="text-xs text-white/60 mb-1">{r.categoria_pai_nome}</div>
                   <div className="flex justify-between items-center">
                     <span className="text-sm font-medium">{r.quantidade} lanç.</span>
-                    <span className="text-sm font-bold text-[#D4AF37]">
+                    <span className="text-sm font-bold text-gold">
                       {formatCurrency(r.valor_total)}
                     </span>
                   </div>
@@ -251,7 +257,7 @@ const RecategorizarLancamentos: React.FC = () => {
                 setSelectedIds(new Set());
                 setCategoriaSelecionada('');
               }}
-              className="w-full rounded-lg bg-white/5 border border-white/20 text-white focus:border-[#7D1F2C] focus:ring-[#7D1F2C]"
+              className="w-full rounded-lg bg-white/5 border border-white/20 text-white focus:border-wine focus:ring-wine"
             >
               <option value="">Todas as categorias</option>
               {categoriasUnicas.map(cat => (
@@ -269,7 +275,7 @@ const RecategorizarLancamentos: React.FC = () => {
             <select
               value={filtroTipo}
               onChange={(e) => setFiltroTipo(e.target.value as any)}
-              className="w-full rounded-lg bg-white/5 border border-white/20 text-white focus:border-[#7D1F2C] focus:ring-[#7D1F2C]"
+              className="w-full rounded-lg bg-white/5 border border-white/20 text-white focus:border-wine focus:ring-wine"
             >
               <option value="all">Todos</option>
               <option value="entrada">Receitas</option>
@@ -284,7 +290,7 @@ const RecategorizarLancamentos: React.FC = () => {
             <select
               value={filtroMes}
               onChange={(e) => setFiltroMes(e.target.value)}
-              className="w-full rounded-lg bg-white/5 border border-white/20 text-white focus:border-[#7D1F2C] focus:ring-[#7D1F2C]"
+              className="w-full rounded-lg bg-white/5 border border-white/20 text-white focus:border-wine focus:ring-wine"
             >
               <option value="">Todos os meses</option>
               {mesesUnicos.map(mes => (
@@ -318,7 +324,7 @@ const RecategorizarLancamentos: React.FC = () => {
               <select
                 value={categoriaSelecionada}
                 onChange={(e) => setCategoriaSelecionada(e.target.value)}
-                className="w-full rounded-lg bg-white/5 border border-white/20 text-white focus:border-[#7D1F2C] focus:ring-[#7D1F2C]"
+                className="w-full rounded-lg bg-white/5 border border-white/20 text-white focus:border-wine focus:ring-wine"
               >
                 <option value="">Selecione a subcategoria de destino...</option>
                 {subcategorias.map(sub => (
@@ -335,7 +341,7 @@ const RecategorizarLancamentos: React.FC = () => {
               className={`px-6 py-2 rounded-lg font-medium flex items-center gap-2 ${
                 !categoriaSelecionada || processando
                   ? 'bg-white/10 text-white/30 cursor-not-allowed'
-                  : 'bg-[#7D1F2C] text-white hover:bg-[#6a1a25]'
+                  : 'bg-wine text-white hover:bg-[#6a1a25]'
               }`}
             >
               {processando ? (
@@ -370,7 +376,7 @@ const RecategorizarLancamentos: React.FC = () => {
             {lancamentosFiltrados.length > 0 && (
               <button
                 onClick={toggleAll}
-                className="text-sm text-[#7D1F2C] hover:text-[#6a1a25] font-medium"
+                className="text-sm text-wine hover:text-[#6a1a25] font-medium"
               >
                 {selectedIds.size === lancamentosFiltrados.length ? 'Desmarcar todos' : 'Selecionar todos'}
               </button>
@@ -404,7 +410,7 @@ const RecategorizarLancamentos: React.FC = () => {
                       type="checkbox"
                       checked={selectedIds.size === lancamentosFiltrados.length && lancamentosFiltrados.length > 0}
                       onChange={toggleAll}
-                      className="rounded border-gray-500/40 text-[#7D1F2C] focus:ring-[#7D1F2C]"
+                      className="rounded border-gray-500/40 text-wine focus:ring-wine"
                     />
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-white/50 uppercase">Data</th>
@@ -419,7 +425,7 @@ const RecategorizarLancamentos: React.FC = () => {
                   <tr
                     key={lancamento.id}
                     className={`hover:bg-white/5 transition-colors ${
-                      selectedIds.has(lancamento.id) ? 'bg-[#7D1F2C]/10' : ''
+                      selectedIds.has(lancamento.id) ? 'bg-wine/10' : ''
                     }`}
                   >
                     <td className="px-4 py-3">
@@ -427,7 +433,7 @@ const RecategorizarLancamentos: React.FC = () => {
                         type="checkbox"
                         checked={selectedIds.has(lancamento.id)}
                         onChange={() => toggleSelection(lancamento.id)}
-                        className="rounded border-gray-500/40 text-[#7D1F2C] focus:ring-[#7D1F2C]"
+                        className="rounded border-gray-500/40 text-wine focus:ring-wine"
                       />
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap text-sm text-white">

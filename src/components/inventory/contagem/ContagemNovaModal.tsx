@@ -56,12 +56,12 @@ const ContagemNovaModal: React.FC<Props> = ({ onClose, onCreated }) => {
       <div className="relative bg-[#0f1020] rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
         <div className="flex items-center justify-between px-6 py-4 border-b border-white/5">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#7D1F2C] to-[#D4AF37] flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-wine to-gold flex items-center justify-center">
               <ClipboardCheck className="w-5 h-5 text-white" />
             </div>
             <div>
               <h3 className="text-lg font-bold text-white">Nova Contagem</h3>
-              <p className="text-xs text-white/40">Preencha os dados para iniciar</p>
+              <p className="text-xs text-white/60">Preencha os dados para iniciar</p>
             </div>
           </div>
           <button
@@ -134,7 +134,7 @@ const ContagemNovaModal: React.FC<Props> = ({ onClose, onCreated }) => {
             />
             <div>
               <p className="text-sm font-medium text-white/80">Incluir itens sem saldo</p>
-              <p className="text-xs text-white/40">
+              <p className="text-xs text-white/60">
                 Carrega todos os itens do estoque, inclusive os com saldo zero
               </p>
             </div>
@@ -157,7 +157,7 @@ const ContagemNovaModal: React.FC<Props> = ({ onClose, onCreated }) => {
             <button
               type="submit"
               disabled={loading || !estoqueId || !responsavel.trim()}
-              className="flex-1 px-4 py-2.5 bg-gradient-to-r from-[#7D1F2C] to-[#D4AF37] text-white rounded-xl text-sm font-semibold hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-all"
+              className="flex-1 px-4 py-2.5 bg-gradient-to-r from-wine to-gold text-white rounded-xl text-sm font-semibold hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-all"
             >
               {loading ? (
                 <>

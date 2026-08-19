@@ -340,7 +340,7 @@ const SecaoBusca = () => {
             { label: 'Aniversário',   value: selecionado.data_nascimento ? `${selecionado.aniversario_dia}/${selecionado.aniversario_mes}` : '—', color: S.purple },
           ].map(({ label, value, color }) => (
             <div key={label} style={{ background: S.inputBg, borderRadius: 8, padding: 12, textAlign: 'center' }}>
-              <p style={{ color: S.muted, fontSize: 10, margin: '0 0 4px' }}>{label}</p>
+              <p style={{ color: S.muted, fontSize:'var(--fs-caption)', margin: '0 0 4px' }}>{label}</p>
               <p style={{ color, fontSize: 15, fontWeight: 700, margin: 0 }}>{value}</p>
             </div>
           ))}
@@ -486,7 +486,7 @@ const SecaoAniversariantes = () => {
                   <span style={{ color: isHoje ? S.gold : S.muted, fontSize: 16, fontWeight: 700, lineHeight: 1 }}>
                     {c.aniversario_dia}
                   </span>
-                  <span style={{ color: S.muted, fontSize: 9 }}>{meses[mes-1].slice(0,3).toUpperCase()}</span>
+                  <span style={{ color: S.muted, fontSize:'var(--fs-caption)' }}>{meses[mes-1].slice(0,3).toUpperCase()}</span>
                 </div>
                 <div>
                   <p style={{ color: S.text, fontWeight: 600, margin: 0, fontSize: 13 }}>
@@ -915,7 +915,7 @@ const SecaoGatilhos = () => {
           }}>
             <div style={{ flex: 1 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                <span style={{ background: `${S.blue}22`, color: S.blue, borderRadius: 6, padding: '2px 8px', fontSize: 10, fontWeight: 700 }}>
+                <span style={{ background: `${S.blue}22`, color: S.blue, borderRadius: 6, padding: '2px 8px', fontSize:'var(--fs-caption)', fontWeight: 700 }}>
                   {tipoLabel[g.tipo]}
                 </span>
                 <p style={{ color: S.text, fontWeight: 600, margin: 0, fontSize: 13 }}>{g.nome}</p>
@@ -1069,7 +1069,7 @@ const ModalDetalheVisitas = ({ cliente, onClose }: { cliente: any; onClose: () =
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                       <div style={{ textAlign: 'right' }}>
                         <p style={{ color: S.gold, fontWeight: 800, fontSize: 15, margin: 0 }}>+{pts}</p>
-                        <p style={{ color: S.muted, fontSize: 10, margin: 0 }}>pontos</p>
+                        <p style={{ color: S.muted, fontSize:'var(--fs-caption)', margin: 0 }}>pontos</p>
                       </div>
                       <span style={{ color: S.muted, fontSize: 16, transition: 'transform .2s', display: 'inline-block', transform: isOpen ? 'rotate(90deg)' : 'none' }}>›</span>
                     </div>
@@ -1084,7 +1084,7 @@ const ModalDetalheVisitas = ({ cliente, onClose }: { cliente: any; onClose: () =
                       )}
                       {prods && prods.length > 0 && (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                          <p style={{ color: S.muted, fontSize: 10, fontWeight: 700, margin: '0 0 6px', letterSpacing: 0.5 }}>
+                          <p style={{ color: S.muted, fontSize:'var(--fs-caption)', fontWeight: 700, margin: '0 0 6px', letterSpacing: 0.5 }}>
                             PRODUTOS CONSUMIDOS
                           </p>
                           {prods.map((p, pi) => (
@@ -1198,7 +1198,7 @@ const SecaoPontos = () => {
               >
                 {(c.pontos_total || 0).toLocaleString('pt-BR')}
               </p>
-              <p style={{ color: S.muted, fontSize: 10, margin: 0 }}>pontos · ver detalhes</p>
+              <p style={{ color: S.muted, fontSize:'var(--fs-caption)', margin: 0 }}>pontos · ver detalhes</p>
             </div>
           </div>
         ))}
@@ -1232,7 +1232,7 @@ const FidelidadeModule: React.FC = () => {
   }, []);
 
   return (
-    <div style={{ display: 'flex', minHeight: 'calc(100vh - 56px)', background: S.bg, fontFamily: 'Inter, sans-serif', margin: '-24px', marginTop: '-24px' }}>
+    <div style={{ display: 'flex', minHeight: 'calc(100vh - 56px)', background: S.bg, margin: '-24px', marginTop: '-24px' }}>
 
       {/* Sidebar */}
       <div style={{
@@ -1259,7 +1259,7 @@ const FidelidadeModule: React.FC = () => {
             {m.key === 'premios' && totalPremios !== null && totalPremios > 0 && (
               <span style={{
                 marginLeft: 'auto', background: S.wine, color: '#fff',
-                borderRadius: 10, padding: '1px 7px', fontSize: 10, fontWeight: 700,
+                borderRadius: 10, padding: '1px 7px', fontSize:'var(--fs-caption)', fontWeight: 700,
               }}>{totalPremios}</span>
             )}
           </button>

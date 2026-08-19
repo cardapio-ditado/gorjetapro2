@@ -649,7 +649,7 @@ const KardexProduto: React.FC = () => {
                 placeholder="Buscar por nome ou código..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-white/20 rounded-lg bg-white/5 text-white focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+                className="w-full pl-10 pr-4 py-2 border border-white/20 rounded-lg bg-white/5 text-white focus:ring-2 focus:ring-wine focus:border-wine"
               />
             </div>
           </div>
@@ -659,7 +659,7 @@ const KardexProduto: React.FC = () => {
               <div
                 key={item.id}
                 onClick={() => setItemSelecionado(item)}
-                className="p-4 border border-white/10 rounded-lg hover:border-[#7D1F2C] hover:shadow-md cursor-pointer transition-all duration-200"
+                className="p-4 border border-white/10 rounded-lg hover:border-wine hover:shadow-md cursor-pointer transition-all duration-200"
               >
                 <div className="flex items-start">
                   <div className="p-2 bg-blue-500/15 rounded-lg mr-3">
@@ -686,7 +686,7 @@ const KardexProduto: React.FC = () => {
           {filteredItens.length === 0 && (
             <div className="text-center py-8">
               <Package className="w-12 h-12 text-white/30 mx-auto mb-4" />
-              <p className="text-white/40">
+              <p className="text-white/60">
                 {searchTerm ? 'Nenhum item encontrado' : 'Nenhum item cadastrado'}
               </p>
             </div>
@@ -721,7 +721,7 @@ const KardexProduto: React.FC = () => {
           </button>
           <button
             onClick={exportarKardex}
-            className="px-4 py-2 bg-[#7D1F2C] text-white rounded-lg hover:bg-[#6a1a25]"
+            className="px-4 py-2 bg-wine text-white rounded-lg hover:bg-[#6a1a25]"
           >
             <FileText className="w-4 h-4 inline mr-2" />
             PDF
@@ -738,7 +738,7 @@ const KardexProduto: React.FC = () => {
       {/* Informações do Produto */}
       <div className="bg-[#12141f] p-6 rounded-lg border border-white/10">
         <h4 className="text-md font-medium text-white mb-4 flex items-center">
-          <Package className="w-5 h-5 mr-2 text-[#7D1F2C]" />
+          <Package className="w-5 h-5 mr-2 text-wine" />
           Informações do Produto
         </h4>
         
@@ -922,7 +922,7 @@ const KardexProduto: React.FC = () => {
               type="date"
               value={dataInicial}
               onChange={(e) => setDataInicial(e.target.value)}
-              className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+              className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
             />
           </div>
 
@@ -934,7 +934,7 @@ const KardexProduto: React.FC = () => {
               type="date"
               value={dataFinal}
               onChange={(e) => setDataFinal(e.target.value)}
-              className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+              className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
             />
           </div>
 
@@ -945,7 +945,7 @@ const KardexProduto: React.FC = () => {
             <select
               value={tipoFilter}
               onChange={(e) => setTipoFilter(e.target.value)}
-              className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+              className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
             >
               <option value="all">Todos os Tipos</option>
               <option value="entrada">Entradas</option>
@@ -962,7 +962,7 @@ const KardexProduto: React.FC = () => {
             <select
               value={estoqueFilter}
               onChange={(e) => setEstoqueFilter(e.target.value)}
-              className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+              className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
             >
               <option value="all">Todos os Estoques</option>
               {estoques.map((estoque) => (
@@ -976,7 +976,7 @@ const KardexProduto: React.FC = () => {
           <div className="flex items-end">
             <button
               onClick={fetchKardexProduto}
-              className="w-full px-4 py-2 bg-[#7D1F2C] text-white rounded-md hover:bg-[#6a1a25]"
+              className="w-full px-4 py-2 bg-wine text-white rounded-md hover:bg-[#6a1a25]"
             >
               <Filter className="w-4 h-4 inline mr-2" />
               Atualizar
@@ -989,7 +989,7 @@ const KardexProduto: React.FC = () => {
       {saldosEstoque.length > 0 && (
         <div className="bg-[#12141f] p-6 rounded-lg border border-white/10">
           <h4 className="text-lg font-medium text-white mb-4 flex items-center">
-            <Warehouse className="w-5 h-5 mr-2 text-[#7D1F2C]" />
+            <Warehouse className="w-5 h-5 mr-2 text-wine" />
             Saldos Atuais por Estoque
           </h4>
           
@@ -1022,7 +1022,7 @@ const KardexProduto: React.FC = () => {
                   {saldo.data_ultima_movimentacao && (
                     <div className="flex justify-between">
                       <span className="text-sm text-white/50">Última Movimentação:</span>
-                      <span className="text-sm text-white/40">
+                      <span className="text-sm text-white/60">
                         {dayjs(saldo.data_ultima_movimentacao).format('DD/MM/YYYY')}
                       </span>
                     </div>
@@ -1083,13 +1083,19 @@ const KardexProduto: React.FC = () => {
       <div className="bg-[#12141f] rounded-lg border border-white/10">
         <div className="p-6">
           <h4 className="text-lg font-medium text-white mb-4 flex items-center">
-            <FileText className="w-5 h-5 mr-2 text-[#7D1F2C]" />
+            <FileText className="w-5 h-5 mr-2 text-wine" />
             Kardex Detalhado
           </h4>
 
           {loading ? (
-            <div className="flex justify-center items-center h-64">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7D1F2C]"></div>
+            <div className="w-full">
+              <div className="w-full space-y-3" aria-busy="true">
+                    <div className="skeleton" style={{ height: 14, width: '32%' }} />
+                    <div className="skeleton" style={{ height: 44, width: '100%' }} />
+                    <div className="skeleton" style={{ height: 44, width: '100%' }} />
+                    <div className="skeleton" style={{ height: 44, width: '100%' }} />
+                    <div className="skeleton" style={{ height: 44, width: '82%' }} />
+                  </div>
             </div>
           ) : (
             <>
@@ -1098,18 +1104,18 @@ const KardexProduto: React.FC = () => {
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="text-left bg-white/5 border-b">
-                        <th className="px-4 py-3 text-xs font-medium text-white/40 uppercase">Data</th>
-                        <th className="px-4 py-3 text-xs font-medium text-white/40 uppercase">Tipo</th>
-                        <th className="px-4 py-3 text-xs font-medium text-white/40 uppercase">Origem</th>
-                        <th className="px-4 py-3 text-xs font-medium text-white/40 uppercase">Destino</th>
-                        <th className="px-4 py-3 text-xs font-medium text-white/40 uppercase">Entrada</th>
-                        <th className="px-4 py-3 text-xs font-medium text-white/40 uppercase">Saída</th>
-                        <th className="px-4 py-3 text-xs font-medium text-white/40 uppercase">Saldo Qtd</th>
-                        <th className="px-4 py-3 text-xs font-medium text-white/40 uppercase">Custo Unit.</th>
-                        <th className="px-4 py-3 text-xs font-medium text-white/40 uppercase">Custo Médio</th>
-                        <th className="px-4 py-3 text-xs font-medium text-white/40 uppercase">Saldo Valor</th>
-                        <th className="px-4 py-3 text-xs font-medium text-white/40 uppercase">Motivo</th>
-                        <th className="px-4 py-3 text-xs font-medium text-white/40 uppercase">Observações</th>
+                        <th className="px-4 py-3 text-xs font-medium text-white/60 uppercase">Data</th>
+                        <th className="px-4 py-3 text-xs font-medium text-white/60 uppercase">Tipo</th>
+                        <th className="px-4 py-3 text-xs font-medium text-white/60 uppercase">Origem</th>
+                        <th className="px-4 py-3 text-xs font-medium text-white/60 uppercase">Destino</th>
+                        <th className="px-4 py-3 text-xs font-medium text-white/60 uppercase">Entrada</th>
+                        <th className="px-4 py-3 text-xs font-medium text-white/60 uppercase">Saída</th>
+                        <th className="px-4 py-3 text-xs font-medium text-white/60 uppercase">Saldo Qtd</th>
+                        <th className="px-4 py-3 text-xs font-medium text-white/60 uppercase">Custo Unit.</th>
+                        <th className="px-4 py-3 text-xs font-medium text-white/60 uppercase">Custo Médio</th>
+                        <th className="px-4 py-3 text-xs font-medium text-white/60 uppercase">Saldo Valor</th>
+                        <th className="px-4 py-3 text-xs font-medium text-white/60 uppercase">Motivo</th>
+                        <th className="px-4 py-3 text-xs font-medium text-white/60 uppercase">Observações</th>
                       </tr>
                     </thead>
                     <tbody className="bg-[#12141f] divide-y divide-white/5">
@@ -1175,7 +1181,7 @@ const KardexProduto: React.FC = () => {
                 <div className="text-center py-12">
                   <Activity className="w-16 h-16 text-white/30 mx-auto mb-4" />
                   <h3 className="text-lg font-medium text-white mb-2">Nenhuma movimentação encontrada</h3>
-                  <p className="text-white/40">
+                  <p className="text-white/60">
                     Não há movimentações registradas para este produto no período selecionado.
                   </p>
                 </div>

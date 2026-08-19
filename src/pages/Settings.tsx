@@ -118,8 +118,8 @@ const Settings: React.FC = () => {
               <button
                 className={`flex items-center w-full px-4 py-2.5 text-sm font-medium rounded-md transition-colors ${
                   activeTab === 'profile' 
-                    ? 'bg-[#7D1F2C] text-white' 
-                    : 'text-white/60 hover:bg-[#7D1F2C] hover:bg-opacity-10 hover:text-[#7D1F2C]'
+                    ? 'bg-wine text-white' 
+                    : 'text-white/60 hover:bg-wine hover:bg-opacity-10 hover:text-wine'
                 }`}
                 onClick={() => setActiveTab('profile')}
               >
@@ -129,8 +129,8 @@ const Settings: React.FC = () => {
               <button
                 className={`flex items-center w-full px-4 py-2.5 text-sm font-medium rounded-md transition-colors ${
                   activeTab === 'security' 
-                    ? 'bg-[#7D1F2C] text-white' 
-                    : 'text-white/60 hover:bg-[#7D1F2C] hover:bg-opacity-10 hover:text-[#7D1F2C]'
+                    ? 'bg-wine text-white' 
+                    : 'text-white/60 hover:bg-wine hover:bg-opacity-10 hover:text-wine'
                 }`}
                 onClick={() => setActiveTab('security')}
               >
@@ -140,8 +140,8 @@ const Settings: React.FC = () => {
               <button
                 className={`flex items-center w-full px-4 py-2.5 text-sm font-medium rounded-md transition-colors ${
                   activeTab === 'notifications' 
-                    ? 'bg-[#7D1F2C] text-white' 
-                    : 'text-white/60 hover:bg-[#7D1F2C] hover:bg-opacity-10 hover:text-[#7D1F2C]'
+                    ? 'bg-wine text-white' 
+                    : 'text-white/60 hover:bg-wine hover:bg-opacity-10 hover:text-wine'
                 }`}
                 onClick={() => setActiveTab('notifications')}
               >
@@ -152,8 +152,8 @@ const Settings: React.FC = () => {
                 <button
                   className={`flex items-center w-full px-4 py-2.5 text-sm font-medium rounded-md transition-colors ${
                     activeTab === 'users' 
-                      ? 'bg-[#7D1F2C] text-white' 
-                      : 'text-white/60 hover:bg-[#7D1F2C] hover:bg-opacity-10 hover:text-[#7D1F2C]'
+                      ? 'bg-wine text-white' 
+                      : 'text-white/60 hover:bg-wine hover:bg-opacity-10 hover:text-wine'
                   }`}
                   onClick={() => setActiveTab('users')}
                 >
@@ -164,8 +164,8 @@ const Settings: React.FC = () => {
               {isAdmin() && <button
                 className={`flex items-center w-full px-4 py-2.5 text-sm font-medium rounded-md transition-colors ${
                   activeTab === 'payment'
-                    ? 'bg-[#7D1F2C] text-white'
-                    : 'text-white/60 hover:bg-[#7D1F2C] hover:bg-opacity-10 hover:text-[#7D1F2C]'
+                    ? 'bg-wine text-white'
+                    : 'text-white/60 hover:bg-wine hover:bg-opacity-10 hover:text-wine'
                 }`}
                 onClick={() => setActiveTab('payment')}
               >
@@ -176,8 +176,8 @@ const Settings: React.FC = () => {
                 <button
                   className={`flex items-center w-full px-4 py-2.5 text-sm font-medium rounded-md transition-colors ${
                     activeTab === 'ia'
-                      ? 'bg-[#7D1F2C] text-white'
-                      : 'text-white/60 hover:bg-[#7D1F2C] hover:bg-opacity-10 hover:text-[#7D1F2C]'
+                      ? 'bg-wine text-white'
+                      : 'text-white/60 hover:bg-wine hover:bg-opacity-10 hover:text-wine'
                   }`}
                   onClick={() => setActiveTab('ia')}
                 >
@@ -188,8 +188,8 @@ const Settings: React.FC = () => {
               <button
                 className={`flex items-center w-full px-4 py-2.5 text-sm font-medium rounded-md transition-colors ${
                   activeTab === 'global'
-                    ? 'bg-[#7D1F2C] text-white'
-                    : 'text-white/60 hover:bg-[#7D1F2C] hover:bg-opacity-10 hover:text-[#7D1F2C]'
+                    ? 'bg-wine text-white'
+                    : 'text-white/60 hover:bg-wine hover:bg-opacity-10 hover:text-wine'
                 }`}
                 onClick={() => setActiveTab('global')}
               >
@@ -208,14 +208,14 @@ const Settings: React.FC = () => {
                 <h3 className="text-lg font-medium text-white/90 mb-4">Perfil</h3>
                 
                 <div className="mb-6 flex items-center">
-                  <div className="w-24 h-24 rounded-full bg-[#7D1F2C] flex items-center justify-center text-white text-2xl mr-6">
+                  <div className="w-24 h-24 rounded-full bg-wine flex items-center justify-center text-white text-2xl mr-6">
                     AS
                   </div>
                   <div>
-                    <button className="px-4 py-2 bg-[#7D1F2C] text-white rounded-md hover:bg-[#5a1720] transition-colors duration-200 mb-2">
+                    <button className="px-4 py-2 bg-wine text-white rounded-md hover:bg-[#5a1720] transition-colors duration-200 mb-2">
                       Alterar foto
                     </button>
-                    <p className="text-sm text-white/40">
+                    <p className="text-sm text-white/60">
                       JPG, GIF ou PNG. Tamanho máximo de 2MB.
                     </p>
                   </div>
@@ -229,7 +229,7 @@ const Settings: React.FC = () => {
                       </label>
                       <input
                         type="text"
-                        className="w-full px-3 py-2 bg-[#12141f]/5 border border-white/20 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+                        className="w-full px-3 py-2 bg-[#12141f]/5 border border-white/20 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-wine focus:border-wine"
                         defaultValue="Ana"
                       />
                     </div>
@@ -239,7 +239,7 @@ const Settings: React.FC = () => {
                       </label>
                       <input
                         type="text"
-                        className="w-full px-3 py-2 bg-[#12141f]/5 border border-white/20 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+                        className="w-full px-3 py-2 bg-[#12141f]/5 border border-white/20 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-wine focus:border-wine"
                         defaultValue="Silva"
                       />
                     </div>
@@ -251,7 +251,7 @@ const Settings: React.FC = () => {
                     </label>
                     <input
                       type="email"
-                      className="w-full px-3 py-2 bg-[#12141f]/5 border border-white/20 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+                      className="w-full px-3 py-2 bg-[#12141f]/5 border border-white/20 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-wine focus:border-wine"
                       defaultValue="ana.silva@ditadopopular.com"
                     />
                   </div>
@@ -262,7 +262,7 @@ const Settings: React.FC = () => {
                     </label>
                     <input
                       type="tel"
-                      className="w-full px-3 py-2 bg-[#12141f]/5 border border-white/20 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+                      className="w-full px-3 py-2 bg-[#12141f]/5 border border-white/20 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-wine focus:border-wine"
                       defaultValue="(11) 99876-5432"
                     />
                   </div>
@@ -273,14 +273,14 @@ const Settings: React.FC = () => {
                     </label>
                     <input
                       type="text"
-                      className="w-full px-3 py-2 bg-[#12141f]/5 border border-white/20 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+                      className="w-full px-3 py-2 bg-[#12141f]/5 border border-white/20 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-wine focus:border-wine"
                       defaultValue="Gerente"
                       readOnly
                     />
                   </div>
                   
                   <div className="pt-4 flex justify-end">
-                    <button className="px-4 py-2 bg-[#7D1F2C] text-white rounded-md hover:bg-[#5a1720] transition-colors duration-200">
+                    <button className="px-4 py-2 bg-wine text-white rounded-md hover:bg-[#5a1720] transition-colors duration-200">
                       Salvar alterações
                     </button>
                   </div>
@@ -295,7 +295,7 @@ const Settings: React.FC = () => {
                 <div className="space-y-6">
                   <div>
                     <h4 className="text-md font-medium text-white/80 mb-3 flex items-center">
-                      <ShieldCheck className="w-5 h-5 mr-2 text-[#7D1F2C]" />
+                      <ShieldCheck className="w-5 h-5 mr-2 text-wine" />
                       Alterar senha
                     </h4>
                     <div className="space-y-3">
@@ -305,7 +305,7 @@ const Settings: React.FC = () => {
                         </label>
                         <input
                           type="password"
-                          className="w-full px-3 py-2 bg-[#12141f]/5 border border-white/20 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+                          className="w-full px-3 py-2 bg-[#12141f]/5 border border-white/20 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-wine focus:border-wine"
                           placeholder="••••••••"
                         />
                       </div>
@@ -315,7 +315,7 @@ const Settings: React.FC = () => {
                         </label>
                         <input
                           type="password"
-                          className="w-full px-3 py-2 bg-[#12141f]/5 border border-white/20 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+                          className="w-full px-3 py-2 bg-[#12141f]/5 border border-white/20 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-wine focus:border-wine"
                           placeholder="••••••••"
                         />
                       </div>
@@ -325,12 +325,12 @@ const Settings: React.FC = () => {
                         </label>
                         <input
                           type="password"
-                          className="w-full px-3 py-2 bg-[#12141f]/5 border border-white/20 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+                          className="w-full px-3 py-2 bg-[#12141f]/5 border border-white/20 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-wine focus:border-wine"
                           placeholder="••••••••"
                         />
                       </div>
                       <div className="pt-2">
-                        <button className="px-4 py-2 bg-[#7D1F2C] text-white rounded-md hover:bg-[#5a1720] transition-colors duration-200">
+                        <button className="px-4 py-2 bg-wine text-white rounded-md hover:bg-[#5a1720] transition-colors duration-200">
                           Atualizar senha
                         </button>
                       </div>
@@ -347,7 +347,7 @@ const Settings: React.FC = () => {
                       </div>
                       <label className="relative inline-flex items-center cursor-pointer">
                         <input type="checkbox" value="" className="sr-only peer" />
-                        <div className="w-11 h-6 bg-white/20 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[#7D1F2C] rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-[#12141f] after:border-white/20 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#7D1F2C]"></div>
+                        <div className="w-11 h-6 bg-white/20 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-wine rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-[#12141f] after:border-white/20 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-wine"></div>
                       </label>
                     </div>
                   </div>
@@ -358,7 +358,7 @@ const Settings: React.FC = () => {
                       <div className="p-3 bg-[#12141f]/5 rounded-md border border-white/10 flex justify-between items-center">
                         <div>
                           <p className="font-medium text-white/90">MacBook Pro - São Paulo</p>
-                          <p className="text-xs text-white/40">Último acesso: Hoje, 15:45</p>
+                          <p className="text-xs text-white/60">Último acesso: Hoje, 15:45</p>
                         </div>
                         <button className="text-sm text-red-500 hover:text-red-400">
                           Desconectar
@@ -367,7 +367,7 @@ const Settings: React.FC = () => {
                       <div className="p-3 bg-[#12141f]/5 rounded-md border border-white/10 flex justify-between items-center">
                         <div>
                           <p className="font-medium text-white/90">iPhone 14 - São Paulo</p>
-                          <p className="text-xs text-white/40">Último acesso: Ontem, 19:30</p>
+                          <p className="text-xs text-white/60">Último acesso: Ontem, 19:30</p>
                         </div>
                         <button className="text-sm text-red-500 hover:text-red-400">
                           Desconectar
@@ -390,31 +390,31 @@ const Settings: React.FC = () => {
                       <div className="flex items-center justify-between py-2 border-b border-white/5">
                         <div>
                           <p className="font-medium text-white/90">Notificações financeiras</p>
-                          <p className="text-xs text-white/40">Receba alertas sobre pagamentos e relatórios financeiros</p>
+                          <p className="text-xs text-white/60">Receba alertas sobre pagamentos e relatórios financeiros</p>
                         </div>
                         <label className="relative inline-flex items-center cursor-pointer">
                           <input type="checkbox" value="" className="sr-only peer" checked />
-                          <div className="w-11 h-6 bg-white/20 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[#7D1F2C] rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-[#12141f] after:border-white/20 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#7D1F2C]"></div>
+                          <div className="w-11 h-6 bg-white/20 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-wine rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-[#12141f] after:border-white/20 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-wine"></div>
                         </label>
                       </div>
                       <div className="flex items-center justify-between py-2 border-b border-white/5">
                         <div>
                           <p className="font-medium text-white/90">Alertas de estoque</p>
-                          <p className="text-xs text-white/40">Receba alertas quando produtos estiverem abaixo do estoque mínimo</p>
+                          <p className="text-xs text-white/60">Receba alertas quando produtos estiverem abaixo do estoque mínimo</p>
                         </div>
                         <label className="relative inline-flex items-center cursor-pointer">
                           <input type="checkbox" value="" className="sr-only peer" checked />
-                          <div className="w-11 h-6 bg-white/20 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[#7D1F2C] rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-[#12141f] after:border-white/20 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#7D1F2C]"></div>
+                          <div className="w-11 h-6 bg-white/20 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-wine rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-[#12141f] after:border-white/20 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-wine"></div>
                         </label>
                       </div>
                       <div className="flex items-center justify-between py-2 border-b border-white/5">
                         <div>
                           <p className="font-medium text-white/90">Escalas de funcionários</p>
-                          <p className="text-xs text-white/40">Receba notificações sobre mudanças nas escalas</p>
+                          <p className="text-xs text-white/60">Receba notificações sobre mudanças nas escalas</p>
                         </div>
                         <label className="relative inline-flex items-center cursor-pointer">
                           <input type="checkbox" value="" className="sr-only peer" />
-                          <div className="w-11 h-6 bg-white/20 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[#7D1F2C] rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-[#12141f] after:border-white/20 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#7D1F2C]"></div>
+                          <div className="w-11 h-6 bg-white/20 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-wine rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-[#12141f] after:border-white/20 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-wine"></div>
                         </label>
                       </div>
                     </div>
@@ -426,28 +426,28 @@ const Settings: React.FC = () => {
                       <div className="flex items-center justify-between py-2 border-b border-white/5">
                         <div>
                           <p className="font-medium text-white/90">Eventos próximos</p>
-                          <p className="text-xs text-white/40">Receba lembretes de eventos que acontecerão em breve</p>
+                          <p className="text-xs text-white/60">Receba lembretes de eventos que acontecerão em breve</p>
                         </div>
                         <label className="relative inline-flex items-center cursor-pointer">
                           <input type="checkbox" value="" className="sr-only peer" checked />
-                          <div className="w-11 h-6 bg-white/20 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[#7D1F2C] rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-[#12141f] after:border-white/20 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#7D1F2C]"></div>
+                          <div className="w-11 h-6 bg-white/20 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-wine rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-[#12141f] after:border-white/20 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-wine"></div>
                         </label>
                       </div>
                       <div className="flex items-center justify-between py-2 border-b border-white/5">
                         <div>
                           <p className="font-medium text-white/90">Novas reservas</p>
-                          <p className="text-xs text-white/40">Receba notificações quando houver novas reservas</p>
+                          <p className="text-xs text-white/60">Receba notificações quando houver novas reservas</p>
                         </div>
                         <label className="relative inline-flex items-center cursor-pointer">
                           <input type="checkbox" value="" className="sr-only peer" checked />
-                          <div className="w-11 h-6 bg-white/20 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[#7D1F2C] rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-[#12141f] after:border-white/20 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#7D1F2C]"></div>
+                          <div className="w-11 h-6 bg-white/20 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-wine rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-[#12141f] after:border-white/20 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-wine"></div>
                         </label>
                       </div>
                     </div>
                   </div>
                   
                   <div className="pt-4 flex justify-end">
-                    <button className="px-4 py-2 bg-[#7D1F2C] text-white rounded-md hover:bg-[#5a1720] transition-colors duration-200">
+                    <button className="px-4 py-2 bg-wine text-white rounded-md hover:bg-[#5a1720] transition-colors duration-200">
                       Salvar preferências
                     </button>
                   </div>
@@ -515,7 +515,7 @@ const Settings: React.FC = () => {
                         value={openaiApiKey}
                         onChange={(e) => setOpenaiApiKey(e.target.value)}
                         placeholder="sk-..."
-                        className="w-full px-4 py-2 pr-12 bg-[#12141f]/5 border border-white/20 rounded-lg text-white focus:ring-2 focus:ring-[#7D1F2C] focus:border-transparent"
+                        className="w-full px-4 py-2 pr-12 bg-[#12141f]/5 border border-white/20 rounded-lg text-white focus:ring-2 focus:ring-wine focus:border-transparent"
                       />
                       <button
                         type="button"
@@ -529,7 +529,7 @@ const Settings: React.FC = () => {
                         )}
                       </button>
                     </div>
-                    <p className="text-xs text-white/40 mt-2">
+                    <p className="text-xs text-white/60 mt-2">
                       Obtenha sua chave em{' '}
                       <a
                         href="https://platform.openai.com/api-keys"
@@ -550,13 +550,13 @@ const Settings: React.FC = () => {
                     <select
                       value={openaiModel}
                       onChange={(e) => setOpenaiModel(e.target.value)}
-                      className="w-full px-4 py-2 bg-[#12141f]/5 border border-white/20 rounded-lg text-white placeholder-white/30 focus:ring-2 focus:ring-[#7D1F2C] focus:border-transparent"
+                      className="w-full px-4 py-2 bg-[#12141f]/5 border border-white/20 rounded-lg text-white placeholder-white/30 focus:ring-2 focus:ring-wine focus:border-transparent"
                     >
                       <option value="gpt-4o-mini">GPT-4o Mini (Rápido e econômico)</option>
                       <option value="gpt-4o">GPT-4o (Melhor performance)</option>
                       <option value="gpt-3.5-turbo">GPT-3.5 Turbo (Mais barato)</option>
                     </select>
-                    <p className="text-xs text-white/40 mt-2">
+                    <p className="text-xs text-white/60 mt-2">
                       <strong>Recomendado:</strong> GPT-4o Mini oferece ótimo custo-benefício
                     </p>
                   </div>
@@ -579,7 +579,7 @@ const Settings: React.FC = () => {
                     <button
                       onClick={salvarConfiguracoesIA}
                       disabled={loading || !openaiApiKey}
-                      className="flex items-center px-6 py-2.5 bg-[#7D1F2C] text-white rounded-lg hover:bg-[#6a1a25] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      className="flex items-center px-6 py-2.5 bg-wine text-white rounded-lg hover:bg-[#6a1a25] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
                       <Save className="w-5 h-5 mr-2" />
                       {loading ? 'Salvando...' : 'Salvar Configurações'}
@@ -597,7 +597,7 @@ const Settings: React.FC = () => {
                   {activeTab === 'global' && 'Configurações Gerais'}
                 </h3>
                 <div className="py-8 flex items-center justify-center">
-                  <p className="text-white/40">Conteúdo em desenvolvimento</p>
+                  <p className="text-white/60">Conteúdo em desenvolvimento</p>
                 </div>
               </div>
             )}

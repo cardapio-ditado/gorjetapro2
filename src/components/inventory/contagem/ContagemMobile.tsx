@@ -127,11 +127,11 @@ export default function ContagemMobile() {
 
   if (loading) return (
     <div className="min-h-screen bg-[#0a0c14] flex flex-col items-center justify-center gap-4">
-      <div className="w-12 h-12 rounded-2xl bg-[#7D1F2C]/20 flex items-center justify-center">
-        <ClipboardList className="w-6 h-6 text-[#7D1F2C]" />
+      <div className="w-12 h-12 rounded-2xl bg-wine/20 flex items-center justify-center">
+        <ClipboardList className="w-6 h-6 text-wine" />
       </div>
       <Loader2 className="w-6 h-6 animate-spin text-white/40" />
-      <p className="text-sm text-white/40">Carregando contagem...</p>
+      <p className="text-sm text-white/60">Carregando contagem...</p>
     </div>
   );
 
@@ -155,19 +155,19 @@ export default function ContagemMobile() {
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 mb-0.5">
-              <div className="w-6 h-6 rounded-lg bg-[#7D1F2C]/20 flex items-center justify-center shrink-0">
-                <ClipboardList className="w-3.5 h-3.5 text-[#7D1F2C]" />
+              <div className="w-6 h-6 rounded-lg bg-wine/20 flex items-center justify-center shrink-0">
+                <ClipboardList className="w-3.5 h-3.5 text-wine" />
               </div>
-              <span className="text-[11px] text-white/40 uppercase tracking-wider font-semibold">Contagem de Estoque</span>
+              <span className="text-caption text-white/60 uppercase tracking-wider font-semibold">Contagem de Estoque</span>
             </div>
             <h1 className="text-lg font-bold text-white truncate">{contagem?.estoque_nome}</h1>
-            <p className="text-xs text-white/40 mt-0.5">
+            <p className="text-xs text-white/60 mt-0.5">
               Responsável: <span className="text-white/60">{contagem?.responsavel}</span>
             </p>
           </div>
           <div className="shrink-0 text-right">
             <p className="text-2xl font-bold text-white tabular-nums">{stats.contados}</p>
-            <p className="text-[11px] text-white/40">de {stats.total}</p>
+            <p className="text-caption text-white/60">de {stats.total}</p>
           </div>
         </div>
 
@@ -175,7 +175,7 @@ export default function ContagemMobile() {
         <div className="mt-3 flex items-center gap-2">
           <div className="flex-1 bg-white/10 rounded-full h-2 overflow-hidden">
             <div
-              className="h-full bg-gradient-to-r from-[#7D1F2C] to-[#D4AF37] rounded-full transition-all duration-500"
+              className="h-full bg-gradient-to-r from-wine to-gold rounded-full transition-all duration-500"
               style={{ width: `${progressPct}%` }}
             />
           </div>
@@ -192,7 +192,7 @@ export default function ContagemMobile() {
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
             placeholder="Buscar por nome ou código..."
-            className="w-full pl-8 pr-3 py-2 text-sm border border-white/10 rounded-xl bg-white/5 text-white focus:outline-none focus:ring-2 focus:ring-[#7D1F2C]/30 focus:border-[#7D1F2C]"
+            className="w-full pl-8 pr-3 py-2 text-sm border border-white/10 rounded-xl bg-white/5 text-white focus:outline-none focus:ring-2 focus:ring-wine/30 focus:border-wine"
           />
         </div>
         <button
@@ -257,10 +257,10 @@ export default function ContagemMobile() {
                   <p className="font-semibold text-white text-sm leading-tight">{item.item_nome}</p>
                   <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                     {item.item_codigo && (
-                      <span className="text-[11px] text-white/30">{item.item_codigo}</span>
+                      <span className="text-caption text-white/60">{item.item_codigo}</span>
                     )}
                     {grupo && (
-                      <span className={`text-[10px] px-1.5 py-0.5 rounded-full border ${COR_BADGE[grupo.cor]}`}>
+                      <span className={`text-caption px-1.5 py-0.5 rounded-full border ${COR_BADGE[grupo.cor]}`}>
                         {grupo.emoji} {grupo.label}
                       </span>
                     )}
@@ -287,18 +287,18 @@ export default function ContagemMobile() {
                 <div className="flex items-center gap-3">
                   {/* Sistema */}
                   <div className="flex-1 bg-white/5 rounded-xl px-3 py-2 text-center">
-                    <p className="text-[10px] text-white/40 uppercase font-medium">Sistema</p>
+                    <p className="text-caption text-white/60 uppercase font-medium">Sistema</p>
                     <p className={`text-lg font-bold tabular-nums leading-tight ${
                       item.quantidade_sistema === 0 ? 'text-orange-400' : 'text-white/70'
                     }`}>
                       {item.quantidade_sistema}
                     </p>
-                    <p className="text-[10px] text-white/30">{item.unidade_medida}</p>
+                    <p className="text-caption text-white/60">{item.unidade_medida}</p>
                   </div>
 
                   {/* Input contado */}
                   <div className="flex-1">
-                    <p className="text-[10px] text-white/40 uppercase font-medium text-center mb-1">Contado</p>
+                    <p className="text-caption text-white/60 uppercase font-medium text-center mb-1">Contado</p>
                     <input
                       type="number"
                       inputMode="decimal"
@@ -313,7 +313,7 @@ export default function ContagemMobile() {
                           ? 'border-green-500/50 bg-green-500/10 text-green-300 focus:ring-green-500/20'
                           : isContado && dif !== 0
                           ? 'border-orange-500/50 bg-orange-500/10 text-orange-300 focus:ring-orange-500/20'
-                          : 'border-white/10 bg-white/5 text-white focus:ring-[#7D1F2C]/20 focus:border-[#7D1F2C]'
+                          : 'border-white/10 bg-white/5 text-white focus:ring-wine/20 focus:border-wine'
                       }`}
                     />
                   </div>
@@ -321,7 +321,7 @@ export default function ContagemMobile() {
                   {/* Diferença */}
                   {isContado && dif !== null && (
                     <div className="w-20 text-center">
-                      <p className="text-[10px] text-white/40 uppercase font-medium mb-1">Dif.</p>
+                      <p className="text-caption text-white/60 uppercase font-medium mb-1">Dif.</p>
                       <div className={`rounded-xl px-2 py-2 ${
                         dif > 0 ? 'bg-green-500/15' : dif < 0 ? 'bg-red-500/15' : 'bg-white/10'
                       }`}>
@@ -334,7 +334,7 @@ export default function ContagemMobile() {
                           {dif > 0 ? '+' : ''}{dif.toFixed(2)}
                         </p>
                         {item.valor_diferenca !== null && item.valor_diferenca !== 0 && (
-                          <p className={`text-[10px] font-medium ${dif > 0 ? 'text-green-400' : 'text-red-400'}`}>
+                          <p className={`text-caption font-medium ${dif > 0 ? 'text-green-400' : 'text-red-400'}`}>
                             {item.valor_diferenca > 0 ? '+' : ''}{formatCurrency(item.valor_diferenca)}
                           </p>
                         )}
@@ -349,7 +349,7 @@ export default function ContagemMobile() {
                   value={item.observacao || ''}
                   onChange={e => handleObs(item.id, e.target.value)}
                   placeholder="Observação (opcional)..."
-                  className="w-full text-xs border border-white/10 rounded-xl px-3 py-2 focus:ring-2 focus:ring-[#7D1F2C]/20 focus:border-[#7D1F2C] bg-white/5 text-white"
+                  className="w-full text-xs border border-white/10 rounded-xl px-3 py-2 focus:ring-2 focus:ring-wine/20 focus:border-wine bg-white/5 text-white"
                 />
               </div>
             </div>

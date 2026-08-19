@@ -235,7 +235,7 @@ export default function InventarioConsolidado() {
           <input
             type="text" value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
             placeholder="Buscar por nome ou código..."
-            className="w-full pl-9 pr-3 py-2.5 bg-white/5 border border-white/20 text-white rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#7D1F2C]/30"
+            className="w-full pl-9 pr-3 py-2.5 bg-white/5 border border-white/20 text-white rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-wine/30"
           />
         </div>
 
@@ -275,7 +275,7 @@ export default function InventarioConsolidado() {
       </div>
 
       {/* Contador */}
-      <p className="text-xs text-white/40">
+      <p className="text-xs text-white/60">
         {itensFiltrados.length} {itensFiltrados.length === 1 ? 'item' : 'itens'} exibidos
       </p>
 
@@ -291,27 +291,27 @@ export default function InventarioConsolidado() {
             <table className="min-w-full">
               <thead className="bg-white/5 border-b border-white/10">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-white/40 uppercase tracking-wide">
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-white/60 uppercase tracking-wide">
                     <button onClick={() => toggleSort('nome')} className="flex items-center gap-1 hover:text-white/60">
                       Item <SortIcon field="nome" />
                     </button>
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-white/40 uppercase tracking-wide">Categoria</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-white/40 uppercase tracking-wide">Estoque</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-white/40 uppercase tracking-wide">Un</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold text-white/40 uppercase tracking-wide">
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-white/60 uppercase tracking-wide">Categoria</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-white/60 uppercase tracking-wide">Estoque</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-white/60 uppercase tracking-wide">Un</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold text-white/60 uppercase tracking-wide">
                     <button onClick={() => toggleSort('saldo')} className="flex items-center gap-1 ml-auto hover:text-white/60">
                       Saldo <SortIcon field="saldo" />
                     </button>
                   </th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold text-white/40 uppercase tracking-wide">Custo Unit.</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold text-white/40 uppercase tracking-wide">
+                  <th className="px-4 py-3 text-right text-xs font-semibold text-white/60 uppercase tracking-wide">Custo Unit.</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold text-white/60 uppercase tracking-wide">
                     <button onClick={() => toggleSort('valor')} className="flex items-center gap-1 ml-auto hover:text-white/60">
                       Valor Total <SortIcon field="valor" />
                     </button>
                   </th>
-                  <th className="px-4 py-3 text-center text-xs font-semibold text-white/40 uppercase tracking-wide">Status</th>
-                  <th className="px-4 py-3 text-center text-xs font-semibold text-white/40 uppercase tracking-wide">Histórico</th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold text-white/60 uppercase tracking-wide">Status</th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold text-white/60 uppercase tracking-wide">Histórico</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
@@ -328,7 +328,7 @@ export default function InventarioConsolidado() {
                           {row.item_nome}
                         </p>
                         {row.item_codigo && (
-                          <p className="text-xs text-white/30 mt-0.5">{row.item_codigo}</p>
+                          <p className="text-xs text-white/60 mt-0.5">{row.item_codigo}</p>
                         )}
                       </td>
                       <td className="px-4 py-3 text-sm text-white/50">{row.item_categoria || '—'}</td>
@@ -373,7 +373,7 @@ export default function InventarioConsolidado() {
             <div className="flex items-center justify-between p-5 border-b border-white/10">
               <div>
                 <h3 className="text-lg font-bold text-white">{kardexItem.nome}</h3>
-                <p className="text-xs text-white/40 mt-0.5">
+                <p className="text-xs text-white/60 mt-0.5">
                   {estoques.find(e => e.id === kardexItem.estoqueId)?.nome || kardexItem.estoqueId} · Últimas 50 movimentações
                 </p>
               </div>
@@ -391,13 +391,13 @@ export default function InventarioConsolidado() {
                   <Loader2 className="w-6 h-6 animate-spin text-white/30" />
                 </div>
               ) : kardexRows.length === 0 ? (
-                <p className="text-center text-white/30 py-12 text-sm">Nenhuma movimentação encontrada</p>
+                <p className="text-center text-white/60 py-12 text-sm">Nenhuma movimentação encontrada</p>
               ) : (
                 <table className="min-w-full">
                   <thead className="bg-white/5 border-b border-white/10 sticky top-0">
                     <tr>
                       {['Data', 'Tipo', 'Qtd', 'Custo Unit.', 'Total', 'Origem', 'Obs'].map(h => (
-                        <th key={h} className="px-4 py-2.5 text-left text-xs font-semibold text-white/40 uppercase tracking-wide">{h}</th>
+                        <th key={h} className="px-4 py-2.5 text-left text-xs font-semibold text-white/60 uppercase tracking-wide">{h}</th>
                       ))}
                     </tr>
                   </thead>
@@ -421,10 +421,10 @@ export default function InventarioConsolidado() {
                         <td className="px-4 py-2.5 text-sm text-white/60 tabular-nums whitespace-nowrap">
                           {row.custo_total != null ? fmtCurrency(row.custo_total) : '—'}
                         </td>
-                        <td className="px-4 py-2.5 text-xs text-white/40">
+                        <td className="px-4 py-2.5 text-xs text-white/60">
                           {row.origem_tipo || '—'}
                         </td>
-                        <td className="px-4 py-2.5 text-xs text-white/30 max-w-[150px] truncate">
+                        <td className="px-4 py-2.5 text-xs text-white/60 max-w-[150px] truncate">
                           {row.observacoes || row.motivo || '—'}
                         </td>
                       </tr>

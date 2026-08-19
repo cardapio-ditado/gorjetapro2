@@ -29,7 +29,7 @@ interface Colaborador {
 const TIPOS_EVENTO = [
   { key: 'admissao', label: 'Admissão', icon: UserCheck, cor: 'text-emerald-400', bg: 'bg-emerald-500/20 border-emerald-500/30' },
   { key: 'promocao', label: 'Promoção', icon: ArrowUpRight, cor: 'text-blue-400', bg: 'bg-blue-500/20 border-blue-500/30' },
-  { key: 'ajuste_salarial', label: 'Ajuste Salarial', icon: DollarSign, cor: 'text-[#D4AF37]', bg: 'bg-[#D4AF37]/20 border-[#D4AF37]/30' },
+  { key: 'ajuste_salarial', label: 'Ajuste Salarial', icon: DollarSign, cor: 'text-gold', bg: 'bg-gold/20 border-gold/30' },
   { key: 'mudanca_funcao', label: 'Mudança de Função', icon: Briefcase, cor: 'text-sky-400', bg: 'bg-sky-500/20 border-sky-500/30' },
   { key: 'afastamento', label: 'Afastamento', icon: PauseCircle, cor: 'text-orange-400', bg: 'bg-orange-500/20 border-orange-500/30' },
   { key: 'retorno', label: 'Retorno', icon: RotateCcw, cor: 'text-teal-400', bg: 'bg-teal-500/20 border-teal-500/30' },
@@ -38,7 +38,7 @@ const TIPOS_EVENTO = [
 
 const tipoCfg = (tipo: string) => TIPOS_EVENTO.find(t => t.key === tipo) ?? TIPOS_EVENTO[TIPOS_EVENTO.length - 1];
 
-const inp = 'w-full bg-white/5 border border-white/15 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-[#7D1F2C]/60 focus:ring-1 focus:ring-[#7D1F2C]/40';
+const inp = 'w-full bg-white/5 border border-white/15 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-wine/60 focus:ring-1 focus:ring-wine/40';
 const sel = inp + ' appearance-none';
 
 const fmt = (v: number | null) => v ? `R$ ${v.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '—';
@@ -140,7 +140,7 @@ export default function HistoricoCarreira() {
         <div className="space-y-1 max-h-[600px] overflow-y-auto">
           {colaboradoresFiltrados.map(c => (
             <button key={c.id} onClick={() => setColaboradorSel(c.id)}
-              className={`w-full text-left px-3 py-2.5 rounded-xl transition-all text-sm ${colaboradorSel === c.id ? 'bg-[#7D1F2C] text-white' : 'text-white/60 hover:text-white hover:bg-white/5'}`}>
+              className={`w-full text-left px-3 py-2.5 rounded-xl transition-all text-sm ${colaboradorSel === c.id ? 'bg-wine text-white' : 'text-white/60 hover:text-white hover:bg-white/5'}`}>
               <p className="font-medium truncate">{c.nome_completo}</p>
               {c.data_admissao && <p className="text-xs opacity-60 mt-0.5">desde {dayjs(c.data_admissao).format('DD/MM/YYYY')}</p>}
             </button>
@@ -168,7 +168,7 @@ export default function HistoricoCarreira() {
                 </p>
               </div>
               <button onClick={abrirModal}
-                className="flex items-center gap-2 px-4 py-2 bg-[#7D1F2C] hover:bg-[#9b2535] text-white rounded-xl text-sm font-medium transition-all">
+                className="flex items-center gap-2 px-4 py-2 bg-wine hover:bg-wine-light text-white rounded-xl text-sm font-medium transition-all">
                 <Plus className="w-4 h-4" />Adicionar Evento
               </button>
             </div>
@@ -194,18 +194,18 @@ export default function HistoricoCarreira() {
                             <div>
                               <div className="flex items-center gap-2">
                                 <p className={`font-medium text-sm ${cfg.cor}`}>{e.titulo || cfg.label}</p>
-                                <span className="text-white/30 text-xs">{dayjs(e.data_evento).format('DD/MM/YYYY')}</span>
+                                <span className="text-white/60 text-xs">{dayjs(e.data_evento).format('DD/MM/YYYY')}</span>
                               </div>
                               {e.descricao && <p className="text-white/60 text-sm mt-1">{e.descricao}</p>}
                               <div className="flex gap-4 mt-2 flex-wrap">
                                 {(e.funcao_anterior || e.funcao_nova) && (
-                                  <p className="text-white/40 text-xs">
+                                  <p className="text-white/60 text-xs">
                                     {e.funcao_anterior && <span className="line-through mr-1">{e.funcao_anterior}</span>}
                                     {e.funcao_nova && <span className="text-white/60">{e.funcao_nova}</span>}
                                   </p>
                                 )}
                                 {(e.salario_anterior || e.salario_novo) && (
-                                  <p className="text-white/40 text-xs">
+                                  <p className="text-white/60 text-xs">
                                     {e.salario_anterior && <span className="mr-1">{fmt(e.salario_anterior)}</span>}
                                     {e.salario_novo && <span className="text-emerald-400">{fmt(e.salario_novo)}</span>}
                                     {e.percentual_reajuste !== null && e.percentual_reajuste !== undefined && (
@@ -214,7 +214,7 @@ export default function HistoricoCarreira() {
                                   </p>
                                 )}
                               </div>
-                              {e.registrado_por && <p className="text-white/30 text-xs mt-1">por {e.registrado_por}</p>}
+                              {e.registrado_por && <p className="text-white/60 text-xs mt-1">por {e.registrado_por}</p>}
                             </div>
                             <button onClick={() => excluir(e.id)} className="p-1.5 hover:bg-red-500/20 rounded-lg text-white/20 hover:text-red-400 transition-all ml-2">
                               <X className="w-3.5 h-3.5" />
@@ -300,7 +300,7 @@ export default function HistoricoCarreira() {
               {(form.funcao_nova || form.salario_novo) && (
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input type="checkbox" checked={form.atualizar_colaborador || false} onChange={e => setForm(f => ({ ...f, atualizar_colaborador: e.target.checked }))}
-                    className="w-4 h-4 rounded accent-[#7D1F2C]" />
+                    className="w-4 h-4 rounded accent-wine" />
                   <span className="text-white/60 text-sm">Atualizar dados do colaborador (função/salário)</span>
                 </label>
               )}
@@ -308,7 +308,7 @@ export default function HistoricoCarreira() {
             <div className="p-6 border-t border-white/10 flex justify-end gap-3">
               <button onClick={() => setModal(false)} className="px-4 py-2 rounded-xl text-white/60 hover:text-white hover:bg-white/5 text-sm transition-all">Cancelar</button>
               <button onClick={salvar} disabled={salvando}
-                className="px-6 py-2 bg-[#7D1F2C] hover:bg-[#9b2535] text-white rounded-xl text-sm font-medium transition-all disabled:opacity-50">
+                className="px-6 py-2 bg-wine hover:bg-wine-light text-white rounded-xl text-sm font-medium transition-all disabled:opacity-50">
                 {salvando ? 'Salvando...' : 'Salvar Evento'}
               </button>
             </div>

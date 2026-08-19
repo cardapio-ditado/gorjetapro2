@@ -136,7 +136,7 @@ const LancamentoLoteIA: React.FC<LancamentoLoteIAProps> = ({ isOpen, onClose, on
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
       <div className="bg-[#0f1020] rounded-lg w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="p-6 border-b border-white/10 bg-gradient-to-r from-[#7D1F2C] to-[#a0292e]">
+        <div className="p-6 border-b border-white/10 bg-gradient-to-r from-wine to-[#a0292e]">
           <div className="flex justify-between items-start">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
@@ -226,7 +226,7 @@ const LancamentoLoteIA: React.FC<LancamentoLoteIAProps> = ({ isOpen, onClose, on
               {/* Resumo */}
               <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="w-12 h-12 bg-[#7D1F2C] rounded-lg flex items-center justify-center">
+                  <div className="w-12 h-12 bg-wine rounded-lg flex items-center justify-center">
                     <CheckCircle className="w-6 h-6 text-white" />
                   </div>
                   <div>
@@ -338,7 +338,7 @@ const LancamentoLoteIA: React.FC<LancamentoLoteIAProps> = ({ isOpen, onClose, on
                 </button>
                 <button
                   onClick={handleFechar}
-                  className="px-6 py-2 bg-[#7D1F2C] text-white rounded-lg hover:bg-[#6a1a25] transition-colors"
+                  className="px-6 py-2 bg-wine text-white rounded-lg hover:bg-[#6a1a25] transition-colors"
                 >
                   Concluir
                 </button>
@@ -354,7 +354,7 @@ const LancamentoLoteIA: React.FC<LancamentoLoteIAProps> = ({ isOpen, onClose, on
                 <button
                   onClick={handleLancar}
                   disabled={loading || !mensagem.trim()}
-                  className="px-6 py-2 bg-[#7D1F2C] text-white rounded-lg hover:bg-[#6a1a25] disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transition-colors"
+                  className="px-6 py-2 bg-wine text-white rounded-lg hover:bg-[#6a1a25] disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transition-colors"
                 >
                   {loading ? (
                     <>

@@ -319,7 +319,7 @@ export default function PreEntrevista() {
               value={inputMensagem}
               onChange={(e) => setInputMensagem(e.target.value)}
               placeholder="Digite sua resposta..."
-              className="flex-1 px-4 py-2 bg-[#12141f]/5 border border-white/20 rounded-lg text-white focus:ring-2 focus:ring-[#7D1F2C] focus:border-transparent"
+              className="flex-1 px-4 py-2 bg-[#12141f]/5 border border-white/20 rounded-lg text-white focus:ring-2 focus:ring-wine focus:border-transparent"
               disabled={enviando}
             />
             <button

@@ -49,7 +49,13 @@ const DashboardRH: React.FC = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7D1F2C]"></div>
+        <div className="w-full space-y-3" aria-busy="true">
+                    <div className="skeleton" style={{ height: 14, width: '32%' }} />
+                    <div className="skeleton" style={{ height: 44, width: '100%' }} />
+                    <div className="skeleton" style={{ height: 44, width: '100%' }} />
+                    <div className="skeleton" style={{ height: 44, width: '100%' }} />
+                    <div className="skeleton" style={{ height: 44, width: '82%' }} />
+                  </div>
       </div>
     );
   }
@@ -138,7 +144,7 @@ const DashboardRH: React.FC = () => {
                       <h4 className="font-semibold text-white mb-1">{vaga.titulo}</h4>
                       <p className="text-sm text-white/50">{vaga.cargo?.nome}</p>
                       <div className="flex items-center gap-2 mt-2">
-                        <span className="text-xs text-white/40">
+                        <span className="text-xs text-white/60">
                           {new Date(vaga.data_abertura).toLocaleDateString('pt-BR')}
                         </span>
                         <span className="px-2 py-0.5 bg-green-500/15 text-green-400 text-xs rounded-full">
@@ -179,7 +185,7 @@ const DashboardRH: React.FC = () => {
                       </h4>
                       <p className="text-sm text-white/50">{candidatura.vaga?.titulo}</p>
                       <div className="flex items-center gap-2 mt-2">
-                        <span className="text-xs text-white/40">
+                        <span className="text-xs text-white/60">
                           {new Date(candidatura.data_aplicacao).toLocaleDateString('pt-BR')}
                         </span>
                         <span
@@ -199,7 +205,7 @@ const DashboardRH: React.FC = () => {
                     </div>
                     {candidatura.pontuacao_geral && (
                       <div className="text-right">
-                        <div className="text-2xl font-bold text-[#7D1F2C]">
+                        <div className="text-2xl font-bold text-wine">
                           {candidatura.pontuacao_geral.toFixed(0)}
                         </div>
                         <div className="text-xs text-white/40">Pontuação</div>

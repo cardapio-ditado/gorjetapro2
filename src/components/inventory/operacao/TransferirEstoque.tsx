@@ -178,10 +178,10 @@ export default function TransferirEstoque({ onVoltar }: Props) {
         </div>
         <div>
           <h2 className="text-xl font-bold text-white mb-1">Requisição criada!</h2>
-          <p className="text-white/40 text-sm">
+          <p className="text-white/60 text-sm">
             Req #{requisicaoCriada.numero} · {origem?.nome} → {destino?.nome}
           </p>
-          <p className="text-white/30 text-xs mt-1">
+          <p className="text-white/60 text-xs mt-1">
             Solicitante: {funcionarioSelecionado?.nome_completo} ({setor})
           </p>
         </div>
@@ -192,7 +192,7 @@ export default function TransferirEstoque({ onVoltar }: Props) {
               setOrigem(null); setDestino(null); setLinhas([]);
               setPasso(1); setRequisicaoCriada(null);
             }}
-            className="px-5 py-2.5 bg-[#D4AF37]/20 border border-[#D4AF37]/40 text-[#D4AF37] rounded-xl text-sm font-semibold hover:bg-[#D4AF37]/30"
+            className="px-5 py-2.5 bg-gold/20 border border-gold/40 text-gold rounded-xl text-sm font-semibold hover:bg-gold/30"
           >
             Nova requisição
           </button>
@@ -217,10 +217,10 @@ export default function TransferirEstoque({ onVoltar }: Props) {
           <React.Fragment key={n}>
             <div className="flex flex-col items-center gap-1">
               <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors
-                ${passo === n ? 'bg-[#D4AF37] text-black' : passo > n ? 'bg-green-500/30 text-green-400 border border-green-500/40' : 'bg-white/5 text-white/30 border border-white/10'}`}>
+                ${passo === n ? 'bg-gold text-black' : passo > n ? 'bg-green-500/30 text-green-400 border border-green-500/40' : 'bg-white/5 text-white/30 border border-white/10'}`}>
                 {passo > n ? <Check className="w-4 h-4" /> : n}
               </div>
-              <span className={`text-[9px] font-semibold uppercase tracking-wide hidden sm:block ${passo === n ? 'text-white/60' : 'text-white/20'}`}>{label}</span>
+              <span className={`text-caption font-semibold uppercase tracking-wide hidden sm:block ${passo === n ? 'text-white/60' : 'text-white/60'}`}>{label}</span>
             </div>
             {n < 4 && <div className={`flex-1 h-px mb-4 ${passo > n ? 'bg-green-500/40' : 'bg-white/10'}`} />}
           </React.Fragment>
@@ -252,7 +252,7 @@ export default function TransferirEstoque({ onVoltar }: Props) {
         <div className="space-y-4">
           <div className="bg-[#12141f] border border-white/[0.07] rounded-2xl p-5 space-y-4">
             <div>
-              <label className="block text-xs font-semibold text-white/40 uppercase tracking-wide mb-2">
+              <label className="block text-xs font-semibold text-white/60 uppercase tracking-wide mb-2">
                 Solicitante
               </label>
               <div className="relative">
@@ -276,7 +276,7 @@ export default function TransferirEstoque({ onVoltar }: Props) {
                         className="flex flex-col items-start w-full px-4 py-3 text-left hover:bg-white/5 transition-colors"
                       >
                         <span className="text-sm text-white/80 font-medium">{f.nome_completo}</span>
-                        {f.cargo && <span className="text-xs text-white/30">{f.cargo}</span>}
+                        {f.cargo && <span className="text-xs text-white/60">{f.cargo}</span>}
                       </button>
                     ))}
                   </div>
@@ -294,7 +294,7 @@ export default function TransferirEstoque({ onVoltar }: Props) {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-white/40 uppercase tracking-wide mb-2">
+              <label className="block text-xs font-semibold text-white/60 uppercase tracking-wide mb-2">
                 Setor
               </label>
               <input
@@ -302,7 +302,7 @@ export default function TransferirEstoque({ onVoltar }: Props) {
                 value={setor}
                 onChange={e => setSetor(e.target.value)}
                 placeholder="Ex: Cozinha, Bar, Salão..."
-                className="w-full bg-white/[0.03] border border-white/[0.07] rounded-xl px-4 py-3 text-sm text-white placeholder-white/25 outline-none focus:border-[#D4AF37]/40"
+                className="w-full bg-white/[0.03] border border-white/[0.07] rounded-xl px-4 py-3 text-sm text-white placeholder-white/25 outline-none focus:border-gold/40"
               />
             </div>
           </div>
@@ -310,7 +310,7 @@ export default function TransferirEstoque({ onVoltar }: Props) {
           <button
             disabled={!funcionarioSelecionado || !setor.trim()}
             onClick={() => setPasso(2)}
-            className="flex items-center justify-center gap-2 w-full px-5 py-4 bg-[#D4AF37] text-black rounded-xl font-bold text-sm hover:bg-[#c9a32e] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+            className="flex items-center justify-center gap-2 w-full px-5 py-4 bg-gold text-black rounded-xl font-bold text-sm hover:bg-[#c9a32e] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
           >
             Próximo: estoques
             <ChevronRight className="w-4 h-4" />
@@ -323,7 +323,7 @@ export default function TransferirEstoque({ onVoltar }: Props) {
         <div className="space-y-4">
           <div className="bg-[#12141f] border border-white/[0.07] rounded-2xl p-5 space-y-5">
             <div>
-              <label className="block text-xs font-semibold text-white/40 uppercase tracking-wide mb-2">
+              <label className="block text-xs font-semibold text-white/60 uppercase tracking-wide mb-2">
                 Estoque de origem
               </label>
               <div className="grid grid-cols-1 gap-2">
@@ -344,7 +344,7 @@ export default function TransferirEstoque({ onVoltar }: Props) {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-white/40 uppercase tracking-wide mb-2">
+              <label className="block text-xs font-semibold text-white/60 uppercase tracking-wide mb-2">
                 Estoque de destino
               </label>
               <div className="grid grid-cols-1 gap-2">
@@ -368,7 +368,7 @@ export default function TransferirEstoque({ onVoltar }: Props) {
           <button
             disabled={!origem || !destino}
             onClick={() => setPasso(3)}
-            className="flex items-center justify-center gap-2 w-full px-5 py-4 bg-[#D4AF37] text-black rounded-xl font-bold text-sm hover:bg-[#c9a32e] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+            className="flex items-center justify-center gap-2 w-full px-5 py-4 bg-gold text-black rounded-xl font-bold text-sm hover:bg-[#c9a32e] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
           >
             Próximo: escolher itens
             <ChevronRight className="w-4 h-4" />
@@ -407,9 +407,9 @@ export default function TransferirEstoque({ onVoltar }: Props) {
                   >
                     <div>
                       <p className="text-white/80 font-medium">{item.nome}</p>
-                      {item.codigo && <p className="text-white/30 text-xs">{item.codigo}</p>}
+                      {item.codigo && <p className="text-white/60 text-xs">{item.codigo}</p>}
                     </div>
-                    <span className="text-white/30 text-xs shrink-0 ml-2">{item.unidade_medida}</span>
+                    <span className="text-white/60 text-xs shrink-0 ml-2">{item.unidade_medida}</span>
                   </button>
                 ))}
               </div>
@@ -427,7 +427,7 @@ export default function TransferirEstoque({ onVoltar }: Props) {
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex-1 min-w-0">
                           <p className="text-sm text-white/80 font-medium truncate">{l.item.nome}</p>
-                          <p className="text-xs text-white/30 mt-0.5">
+                          <p className="text-xs text-white/60 mt-0.5">
                             Saldo: {l.saldoOrigem !== null ? Number(l.saldoOrigem).toLocaleString('pt-BR', { maximumFractionDigits: 3 }) : '—'} {l.item.unidade_medida}
                           </p>
                         </div>
@@ -443,9 +443,9 @@ export default function TransferirEstoque({ onVoltar }: Props) {
                           value={l.quantidade}
                           onChange={e => atualizarQtd(l.item.id, e.target.value)}
                           placeholder="Qtd"
-                          className={`w-32 bg-white/5 border rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-[#D4AF37]/60 ${excede ? 'border-amber-500/50' : 'border-white/10'}`}
+                          className={`w-32 bg-white/5 border rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-gold/60 ${excede ? 'border-amber-500/50' : 'border-white/10'}`}
                         />
-                        <span className="text-white/30 text-sm">{l.item.unidade_medida}</span>
+                        <span className="text-white/60 text-sm">{l.item.unidade_medida}</span>
                         {excede && (
                           <div className="flex items-center gap-1 text-amber-400 text-xs">
                             <AlertTriangle className="w-3.5 h-3.5" />
@@ -463,7 +463,7 @@ export default function TransferirEstoque({ onVoltar }: Props) {
           <button
             disabled={linhasValidas.length === 0}
             onClick={() => setPasso(4)}
-            className="flex items-center justify-center gap-2 w-full px-5 py-4 bg-[#D4AF37] text-black rounded-xl font-bold text-sm hover:bg-[#c9a32e] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+            className="flex items-center justify-center gap-2 w-full px-5 py-4 bg-gold text-black rounded-xl font-bold text-sm hover:bg-[#c9a32e] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
           >
             Próximo: confirmar
             <ChevronRight className="w-4 h-4" />
@@ -476,14 +476,14 @@ export default function TransferirEstoque({ onVoltar }: Props) {
         <div className="space-y-4">
           {/* Resumo solicitante */}
           <div className="bg-[#12141f] border border-white/[0.07] rounded-2xl p-5 space-y-3">
-            <p className="text-xs font-semibold text-white/30 uppercase tracking-wide">Solicitante</p>
+            <p className="text-xs font-semibold text-white/60 uppercase tracking-wide">Solicitante</p>
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-xl bg-blue-500/20 flex items-center justify-center shrink-0">
                 <User className="w-4 h-4 text-blue-400" />
               </div>
               <div>
                 <p className="text-white font-semibold text-sm">{funcionarioSelecionado?.nome_completo}</p>
-                <p className="text-white/40 text-xs">{setor}</p>
+                <p className="text-white/60 text-xs">{setor}</p>
               </div>
             </div>
           </div>

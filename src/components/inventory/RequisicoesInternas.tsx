@@ -385,7 +385,7 @@ export default function RequisicoesInternas() {
           </button>
           <button
             onClick={() => setMostrarFormulario(true)}
-            className="flex items-center gap-2 bg-[#7D1F2C] text-white px-4 py-2 rounded-xl hover:bg-[#6a1a25] text-sm font-semibold"
+            className="flex items-center gap-2 bg-wine text-white px-4 py-2 rounded-xl hover:bg-[#6a1a25] text-sm font-semibold"
           >
             <Plus className="w-4 h-4" /> Nova Requisição
           </button>
@@ -399,7 +399,7 @@ export default function RequisicoesInternas() {
           <input
             type="text" value={busca} onChange={e => setBusca(e.target.value)}
             placeholder="Buscar por número, funcionário ou setor..."
-            className="w-full pl-9 pr-3 py-2.5 bg-white/5 border border-white/20 text-white rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#7D1F2C]/30"
+            className="w-full pl-9 pr-3 py-2.5 bg-white/5 border border-white/20 text-white rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-wine/30"
           />
         </div>
         <SearchableSelect
@@ -422,14 +422,14 @@ export default function RequisicoesInternas() {
             <Loader2 className="w-6 h-6 animate-spin text-white/30" />
           </div>
         ) : requisicoesFiltradas.length === 0 ? (
-          <p className="text-center text-white/30 py-12">Nenhuma requisição encontrada</p>
+          <p className="text-center text-white/60 py-12">Nenhuma requisição encontrada</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="min-w-full">
               <thead className="bg-white/5 border-b border-white/10">
                 <tr>
                   {['Número', 'Data', 'Funcionário', 'Setor', 'De → Para', 'Itens', 'Status', 'Ações'].map(h => (
-                    <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-white/40 uppercase tracking-wide">{h}</th>
+                    <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-white/60 uppercase tracking-wide">{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -439,7 +439,7 @@ export default function RequisicoesInternas() {
                     <td className="px-4 py-3 text-sm font-semibold text-white whitespace-nowrap">
                       {req.numero_requisicao}
                       {req.criado_anonimamente && (
-                        <span className="ml-2 px-1.5 py-0.5 bg-blue-500/15 text-blue-300 text-[10px] rounded-full">Público</span>
+                        <span className="ml-2 px-1.5 py-0.5 bg-blue-500/15 text-blue-300 text-caption rounded-full">Público</span>
                       )}
                     </td>
                     <td className="px-4 py-3 text-sm text-white/50 whitespace-nowrap">
@@ -447,7 +447,7 @@ export default function RequisicoesInternas() {
                     </td>
                     <td className="px-4 py-3 text-sm text-white whitespace-nowrap">{req.funcionario_nome}</td>
                     <td className="px-4 py-3 text-sm text-white/50 whitespace-nowrap">{req.setor}</td>
-                    <td className="px-4 py-3 text-xs text-white/40 whitespace-nowrap">
+                    <td className="px-4 py-3 text-xs text-white/60 whitespace-nowrap">
                       <div>{req.estoque_origem?.nome}</div>
                       <div className="flex items-center gap-1 mt-0.5">
                         <ChevronRight className="w-3 h-3" />{req.estoque_destino?.nome}
@@ -500,7 +500,7 @@ export default function RequisicoesInternas() {
                   ['Para', requisicaoDetalhes.estoque_destino?.nome || '—'],
                 ].map(([label, value]) => (
                   <div key={label as string}>
-                    <p className="text-xs font-semibold text-white/40 uppercase tracking-wide mb-1">{label}</p>
+                    <p className="text-xs font-semibold text-white/60 uppercase tracking-wide mb-1">{label}</p>
                     {label === 'Status'
                       ? <StatusBadge status={requisicaoDetalhes.status} />
                       : <p className="text-sm text-white">{value as string}</p>
@@ -511,13 +511,13 @@ export default function RequisicoesInternas() {
 
               {requisicaoDetalhes.observacoes && (
                 <div>
-                  <p className="text-xs font-semibold text-white/40 uppercase tracking-wide mb-1">Observações</p>
+                  <p className="text-xs font-semibold text-white/60 uppercase tracking-wide mb-1">Observações</p>
                   <p className="text-sm text-white/70 bg-white/5 rounded-xl p-3">{requisicaoDetalhes.observacoes}</p>
                 </div>
               )}
 
               <div>
-                <p className="text-xs font-semibold text-white/40 uppercase tracking-wide mb-3">
+                <p className="text-xs font-semibold text-white/60 uppercase tracking-wide mb-3">
                   Itens ({requisicaoDetalhes.itens?.length || 0})
                 </p>
                 <div className="border border-white/10 rounded-xl overflow-hidden">
@@ -525,7 +525,7 @@ export default function RequisicoesInternas() {
                     <thead className="bg-white/5">
                       <tr>
                         {['Item', 'Un', 'Qtd Solicitada', 'Obs'].map(h => (
-                          <th key={h} className="px-4 py-2.5 text-left text-xs font-semibold text-white/40 uppercase tracking-wide">{h}</th>
+                          <th key={h} className="px-4 py-2.5 text-left text-xs font-semibold text-white/60 uppercase tracking-wide">{h}</th>
                         ))}
                       </tr>
                     </thead>
@@ -535,7 +535,7 @@ export default function RequisicoesInternas() {
                           <td className="px-4 py-2.5 text-sm text-white">{item.itens_estoque?.nome}</td>
                           <td className="px-4 py-2.5 text-sm text-white/50">{item.itens_estoque?.unidade_medida}</td>
                           <td className="px-4 py-2.5 text-sm font-semibold text-white tabular-nums">{fmtQtd(item.quantidade_solicitada)}</td>
-                          <td className="px-4 py-2.5 text-sm text-white/40">{item.observacao || '—'}</td>
+                          <td className="px-4 py-2.5 text-sm text-white/60">{item.observacao || '—'}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -555,7 +555,7 @@ export default function RequisicoesInternas() {
                   <Printer className="w-4 h-4" /> Imprimir
                 </button>
                 <button onClick={() => gerarPDF(requisicaoDetalhes)}
-                  className="flex items-center gap-2 px-4 py-2 bg-[#7D1F2C] text-white rounded-xl hover:bg-[#6a1a25] text-sm font-semibold">
+                  className="flex items-center gap-2 px-4 py-2 bg-wine text-white rounded-xl hover:bg-[#6a1a25] text-sm font-semibold">
                   <Download className="w-4 h-4" /> Baixar PDF
                 </button>
               </div>
@@ -581,13 +581,13 @@ export default function RequisicoesInternas() {
                 <div>
                   <label className="text-xs font-semibold text-white/50 uppercase tracking-wide block mb-1.5">Nome do Funcionário *</label>
                   <input type="text" value={funcionarioNome} onChange={e => setFuncionarioNome(e.target.value)}
-                    className="w-full bg-white/5 border border-white/20 text-white rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#7D1F2C]/30"
+                    className="w-full bg-white/5 border border-white/20 text-white rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-wine/30"
                     placeholder="Digite o nome" />
                 </div>
                 <div>
                   <label className="text-xs font-semibold text-white/50 uppercase tracking-wide block mb-1.5">Setor *</label>
                   <input type="text" value={setor} onChange={e => setSetor(e.target.value)}
-                    className="w-full bg-white/5 border border-white/20 text-white rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#7D1F2C]/30"
+                    className="w-full bg-white/5 border border-white/20 text-white rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-wine/30"
                     placeholder="Digite o setor" />
                 </div>
                 <div>
@@ -646,9 +646,9 @@ export default function RequisicoesInternas() {
                     <input type="number" step="0.01" min="0.01"
                       value={quantidadeItem} onChange={e => setQuantidadeItem(e.target.value)}
                       placeholder="Qtd"
-                      className="w-full bg-white/5 border border-white/20 text-white rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#7D1F2C]/30" />
+                      className="w-full bg-white/5 border border-white/20 text-white rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-wine/30" />
                     {itemAtualSaldo && itemAtualSaldo.saldo !== null && (
-                      <p className={`text-[11px] mt-1 ${(itemAtualSaldo.saldo ?? 0) < 0 ? 'text-red-400' : 'text-white/40'}`}>
+                      <p className={`text-caption mt-1 ${(itemAtualSaldo.saldo ?? 0) < 0 ? 'text-red-400' : 'text-white/60'}`}>
                         Saldo: {fmtQtd(itemAtualSaldo.saldo)} {itemAtualSaldo.unidade_medida}
                       </p>
                     )}
@@ -656,11 +656,11 @@ export default function RequisicoesInternas() {
                   <div className="md:col-span-3">
                     <input type="text" value={observacaoItem} onChange={e => setObservacaoItem(e.target.value)}
                       placeholder="Observação (opcional)"
-                      className="w-full bg-white/5 border border-white/20 text-white rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#7D1F2C]/30" />
+                      className="w-full bg-white/5 border border-white/20 text-white rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-wine/30" />
                   </div>
                   <div className="md:col-span-2">
                     <button onClick={adicionarItem}
-                      className="w-full flex items-center justify-center gap-2 bg-[#7D1F2C] text-white rounded-xl py-2.5 text-sm font-semibold hover:bg-[#6a1a25]">
+                      className="w-full flex items-center justify-center gap-2 bg-wine text-white rounded-xl py-2.5 text-sm font-semibold hover:bg-[#6a1a25]">
                       <Plus className="w-4 h-4" /> Adicionar
                     </button>
                   </div>
@@ -674,7 +674,7 @@ export default function RequisicoesInternas() {
                     <thead className="bg-white/5">
                       <tr>
                         {['Item', 'Un', 'Qtd', 'Obs', ''].map(h => (
-                          <th key={h} className="px-4 py-2.5 text-left text-xs font-semibold text-white/40 uppercase tracking-wide">{h}</th>
+                          <th key={h} className="px-4 py-2.5 text-left text-xs font-semibold text-white/60 uppercase tracking-wide">{h}</th>
                         ))}
                       </tr>
                     </thead>
@@ -684,7 +684,7 @@ export default function RequisicoesInternas() {
                           <td className="px-4 py-2.5 text-sm text-white">{item.itens_estoque?.nome}</td>
                           <td className="px-4 py-2.5 text-sm text-white/50">{item.itens_estoque?.unidade_medida}</td>
                           <td className="px-4 py-2.5 text-sm font-semibold text-white tabular-nums">{fmtQtd(item.quantidade_solicitada)}</td>
-                          <td className="px-4 py-2.5 text-sm text-white/40">{item.observacao || '—'}</td>
+                          <td className="px-4 py-2.5 text-sm text-white/60">{item.observacao || '—'}</td>
                           <td className="px-4 py-2.5">
                             <button onClick={() => removerItem(i)} className="p-1 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg">
                               <Trash2 className="w-3.5 h-3.5" />
@@ -700,7 +700,7 @@ export default function RequisicoesInternas() {
               <div>
                 <label className="text-xs font-semibold text-white/50 uppercase tracking-wide block mb-1.5">Observações Gerais</label>
                 <textarea value={observacoes} onChange={e => setObservacoes(e.target.value)} rows={3}
-                  className="w-full bg-white/5 border border-white/20 text-white rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#7D1F2C]/30 resize-none"
+                  className="w-full bg-white/5 border border-white/20 text-white rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-wine/30 resize-none"
                   placeholder="Observações adicionais..." />
               </div>
             </div>
@@ -711,7 +711,7 @@ export default function RequisicoesInternas() {
                 Cancelar
               </button>
               <button onClick={salvarRequisicao} disabled={loading || itens.length === 0}
-                className="flex items-center gap-2 px-5 py-2 bg-[#7D1F2C] text-white rounded-xl hover:bg-[#6a1a25] text-sm font-semibold disabled:opacity-40">
+                className="flex items-center gap-2 px-5 py-2 bg-wine text-white rounded-xl hover:bg-[#6a1a25] text-sm font-semibold disabled:opacity-40">
                 {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
                 {loading ? 'Salvando...' : 'Criar Requisição'}
               </button>

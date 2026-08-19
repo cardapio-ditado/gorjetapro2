@@ -112,7 +112,7 @@ export default function PreEntrevistaView({ candidatura_id }: PreEntrevistaViewP
       <div className="bg-white/5 border border-white/10 rounded-lg p-6 text-center">
         <MessageSquare className="w-12 h-12 text-white/30 mx-auto mb-3" />
         <p className="text-white/50">Nenhuma pré-entrevista realizada ainda</p>
-        <p className="text-sm text-white/40 mt-2">
+        <p className="text-sm text-white/60 mt-2">
           Clique em "Pré-Entrevista" para gerar o link e enviar ao candidato
         </p>
       </div>

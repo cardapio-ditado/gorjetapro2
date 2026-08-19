@@ -40,7 +40,7 @@ interface Documento {
   adicionado_em: string;
 }
 
-const inp = 'w-full bg-white/5 border border-white/15 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-[#7D1F2C]/60 focus:ring-1 focus:ring-[#7D1F2C]/40 placeholder-white/25';
+const inp = 'w-full bg-white/5 border border-white/15 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-wine/60 focus:ring-1 focus:ring-wine/40 placeholder-white/25';
 const sel = inp + ' appearance-none';
 
 const STATUS_MAP: Record<string, { cor: string; label: string }> = {
@@ -49,7 +49,7 @@ const STATUS_MAP: Record<string, { cor: string; label: string }> = {
   em_processo: { cor: 'bg-sky-500/20 text-sky-300', label: 'Em Processo' },
   aprovado: { cor: 'bg-emerald-500/20 text-emerald-300', label: 'Aprovado' },
   recusado: { cor: 'bg-red-500/20 text-red-300', label: 'Recusado' },
-  banco_talentos: { cor: 'bg-[#D4AF37]/20 text-[#D4AF37]', label: 'Banco de Talentos' },
+  banco_talentos: { cor: 'bg-gold/20 text-gold', label: 'Banco de Talentos' },
 };
 
 const GestaoCandidaturas: React.FC = () => {
@@ -267,8 +267,14 @@ const GestaoCandidaturas: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#7D1F2C]"></div>
+      <div className="w-full">
+        <div className="w-full space-y-3" aria-busy="true">
+                    <div className="skeleton" style={{ height: 14, width: '32%' }} />
+                    <div className="skeleton" style={{ height: 44, width: '100%' }} />
+                    <div className="skeleton" style={{ height: 44, width: '100%' }} />
+                    <div className="skeleton" style={{ height: 44, width: '100%' }} />
+                    <div className="skeleton" style={{ height: 44, width: '82%' }} />
+                  </div>
       </div>
     );
   }
@@ -282,7 +288,7 @@ const GestaoCandidaturas: React.FC = () => {
           <p className="text-white/50 text-sm">Análise e acompanhamento de candidatos</p>
         </div>
         <button onClick={() => setShowUploadModal(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-[#7D1F2C] hover:bg-[#9b2535] text-white rounded-xl text-sm font-medium transition-all">
+          className="flex items-center gap-2 px-4 py-2 bg-wine hover:bg-wine-light text-white rounded-xl text-sm font-medium transition-all">
           <Plus className="w-4 h-4" />Nova Candidatura
         </button>
       </div>
@@ -293,7 +299,7 @@ const GestaoCandidaturas: React.FC = () => {
           { label: 'Total', val: candidaturas.length, cor: 'text-white', bg: 'bg-white/5' },
           { label: 'Em Triagem', val: candidaturas.filter(c => c.status === 'triagem').length, cor: 'text-yellow-400', bg: 'bg-yellow-500/10' },
           { label: 'Aprovados', val: candidaturas.filter(c => c.status === 'aprovado').length, cor: 'text-emerald-400', bg: 'bg-emerald-500/10' },
-          { label: 'Banco Talentos', val: candidaturas.filter(c => c.status === 'banco_talentos').length, cor: 'text-[#D4AF37]', bg: 'bg-[#D4AF37]/10' },
+          { label: 'Banco Talentos', val: candidaturas.filter(c => c.status === 'banco_talentos').length, cor: 'text-gold', bg: 'bg-gold/10' },
         ].map(k => (
           <div key={k.label} className={`${k.bg} border border-white/10 rounded-xl p-4`}>
             <p className="text-white/50 text-xs">{k.label}</p>
@@ -353,7 +359,7 @@ const GestaoCandidaturas: React.FC = () => {
                     {c.pontuacao_geral ? (
                       <div className="flex items-center gap-3 max-w-xs">
                         <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
-                          <div className="h-full bg-gradient-to-r from-[#7D1F2C] to-[#D4AF37]" style={{ width: `${c.pontuacao_geral}%` }} />
+                          <div className="h-full bg-gradient-to-r from-wine to-gold" style={{ width: `${c.pontuacao_geral}%` }} />
                         </div>
                         <span className="text-xs text-white/60">{c.pontuacao_geral}/100</span>
                       </div>
@@ -438,7 +444,7 @@ const GestaoCandidaturas: React.FC = () => {
               </div>
               <div className="flex justify-end gap-3 pt-2">
                 <button type="button" onClick={() => setShowUploadModal(false)} className="px-4 py-2 text-white/60 hover:text-white hover:bg-white/5 rounded-xl text-sm transition-all">Cancelar</button>
-                <button type="submit" className="px-6 py-2 bg-[#7D1F2C] hover:bg-[#9b2535] text-white rounded-xl text-sm font-medium transition-all flex items-center gap-2">
+                <button type="submit" className="px-6 py-2 bg-wine hover:bg-wine-light text-white rounded-xl text-sm font-medium transition-all flex items-center gap-2">
                   <Upload className="w-4 h-4" />Cadastrar
                 </button>
               </div>
@@ -484,7 +490,7 @@ const GestaoCandidaturas: React.FC = () => {
             <div className="flex justify-end gap-3 mt-6">
               <button onClick={() => setEditando(null)} className="px-4 py-2 text-white/60 hover:text-white hover:bg-white/5 rounded-xl text-sm transition-all">Cancelar</button>
               <button onClick={salvarEdicao} disabled={salvandoEdit}
-                className="px-6 py-2 bg-[#7D1F2C] hover:bg-[#9b2535] text-white rounded-xl text-sm font-medium transition-all disabled:opacity-50">
+                className="px-6 py-2 bg-wine hover:bg-wine-light text-white rounded-xl text-sm font-medium transition-all disabled:opacity-50">
                 {salvandoEdit ? 'Salvando...' : 'Salvar'}
               </button>
             </div>
@@ -499,7 +505,7 @@ const GestaoCandidaturas: React.FC = () => {
             <div className="flex justify-between items-center mb-6">
               <div>
                 <h3 className="text-lg font-bold text-white">Documentos</h3>
-                <p className="text-white/40 text-xs">{docCandidatura.candidato?.nome}</p>
+                <p className="text-white/60 text-xs">{docCandidatura.candidato?.nome}</p>
               </div>
               <button onClick={() => setShowDocModal(false)} className="p-2 hover:bg-white/10 rounded-lg text-white/40 hover:text-white transition-all"><X className="w-5 h-5" /></button>
             </div>
@@ -525,7 +531,7 @@ const GestaoCandidaturas: React.FC = () => {
                     <FileText className="w-5 h-5 text-white/40 flex-shrink-0" />
                     <div className="flex-1 min-w-0">
                       <p className="text-white text-sm truncate">{doc.nome}</p>
-                      {doc.tamanho && <p className="text-white/30 text-xs">{(doc.tamanho / 1024).toFixed(0)} KB</p>}
+                      {doc.tamanho && <p className="text-white/60 text-xs">{(doc.tamanho / 1024).toFixed(0)} KB</p>}
                     </div>
                     <button onClick={() => baixarDocumento(doc)} className="p-1.5 hover:bg-white/10 rounded-lg text-white/50 hover:text-white transition-all">
                       <Download className="w-4 h-4" />
@@ -555,7 +561,7 @@ const GestaoCandidaturas: React.FC = () => {
                   <p className="text-white/60 text-xs mb-2">Pontuação Geral</p>
                   <div className="flex items-center gap-4">
                     <div className="flex-1 h-3 bg-white/10 rounded-full overflow-hidden">
-                      <div className="h-full bg-gradient-to-r from-[#7D1F2C] to-[#D4AF37]" style={{ width: `${selectedCandidatura.pontuacao_geral}%` }} />
+                      <div className="h-full bg-gradient-to-r from-wine to-gold" style={{ width: `${selectedCandidatura.pontuacao_geral}%` }} />
                     </div>
                     <span className="text-2xl font-bold text-white">{selectedCandidatura.pontuacao_geral}/100</span>
                   </div>

@@ -376,15 +376,15 @@ const BibliotecaMapeamentos: React.FC<BibliotecaMapeamentosProps> = ({ onClose }
             <div className="flex items-center justify-center h-64">
               <div className="text-center">
                 <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
-                <p className="text-white/40 mt-4">Carregando mapeamentos...</p>
+                <p className="text-white/60 mt-4">Carregando mapeamentos...</p>
               </div>
             </div>
           ) : mapeamentosFiltrados.length === 0 ? (
             <div className="flex items-center justify-center h-64">
               <div className="text-center">
                 <Target className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <p className="text-white/40 text-lg">Nenhum mapeamento encontrado</p>
-                <p className="text-white/30 text-sm mt-2">
+                <p className="text-white/60 text-lg">Nenhum mapeamento encontrado</p>
+                <p className="text-white/60 text-sm mt-2">
                   {searchTerm ? 'Tente ajustar os filtros de busca' : 'Crie seu primeiro mapeamento'}
                 </p>
               </div>
@@ -413,10 +413,10 @@ const BibliotecaMapeamentos: React.FC<BibliotecaMapeamentosProps> = ({ onClose }
                               {mapeamento.item_estoque?.nome}
                             </span>
                             {mapeamento.item_estoque?.codigo && (
-                              <span className="text-white/30">• {mapeamento.item_estoque.codigo}</span>
+                              <span className="text-white/60">• {mapeamento.item_estoque.codigo}</span>
                             )}
                             {mapeamento.estoque?.nome && (
-                              <span className="text-white/30">• {mapeamento.estoque.nome}</span>
+                              <span className="text-white/60">• {mapeamento.estoque.nome}</span>
                             )}
                           </div>
                         </div>
@@ -426,19 +426,19 @@ const BibliotecaMapeamentos: React.FC<BibliotecaMapeamentosProps> = ({ onClose }
                         {getConfidenceBadge(mapeamento.confianca)}
 
                         {mapeamento.origem && (
-                          <span className="text-xs text-white/40 flex items-center">
+                          <span className="text-xs text-white/60 flex items-center">
                             <Filter className="w-3 h-3 mr-1" />
                             Origem: {mapeamento.origem}
                           </span>
                         )}
 
-                        <span className="text-xs text-white/40 flex items-center">
+                        <span className="text-xs text-white/60 flex items-center">
                           <TrendingUp className="w-3 h-3 mr-1" />
                           {mapeamento.usado_vezes} uso{mapeamento.usado_vezes !== 1 ? 's' : ''}
                         </span>
 
                         {mapeamento.ultima_utilizacao && (
-                          <span className="text-xs text-white/40 flex items-center">
+                          <span className="text-xs text-white/60 flex items-center">
                             <Clock className="w-3 h-3 mr-1" />
                             Último uso: {dayjs(mapeamento.ultima_utilizacao).fromNow()}
                           </span>
@@ -560,7 +560,7 @@ const BibliotecaMapeamentos: React.FC<BibliotecaMapeamentosProps> = ({ onClose }
                     </option>
                   ))}
                 </select>
-                <p className="text-xs text-white/40 mt-1">
+                <p className="text-xs text-white/60 mt-1">
                   Se selecionado, a IA sempre usará este estoque para baixas deste produto
                 </p>
               </div>
@@ -576,7 +576,7 @@ const BibliotecaMapeamentos: React.FC<BibliotecaMapeamentosProps> = ({ onClose }
                   placeholder="Ex: Sistema POS, Planilha Vendas, etc"
                   className="w-full px-4 py-2.5 border border-white/20 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                 />
-                <p className="text-xs text-white/40 mt-1">
+                <p className="text-xs text-white/60 mt-1">
                   Identifique de onde vem este mapeamento para facilitar filtros futuros
                 </p>
               </div>

@@ -8,10 +8,22 @@ export default {
         sans:    ['DM Sans', 'system-ui', '-apple-system', 'sans-serif'],
         mono:    ['DM Mono', 'monospace'],
       },
+      // Escala tipografica — espelha o bloco de :root em src/index.css.
+      // Piso de 11px (caption). Um papel por degrau; nao crave pixel.
+      fontSize: {
+        caption: ['0.6875rem', { lineHeight: '1.35' }], // 11px
+        label:   ['0.75rem',   { lineHeight: '1.35' }], // 12px
+        body:    ['0.875rem',  { lineHeight: '1.55' }], // 14px
+        subsec:  ['1rem',      { lineHeight: '1.35' }], // 16px
+        section: ['1.25rem',   { lineHeight: '1.15' }], // 20px
+        title:   ['1.75rem',   { lineHeight: '1.15' }], // 28px
+        display: ['2.5rem',    { lineHeight: '1.15' }], // 40px
+      },
       colors: {
         wine: {
           DEFAULT: '#7D1F2C',
           deep:    '#5C1520',
+          deepest: '#3d0e16',
           light:   '#9B2535',
           glow:    'rgba(125, 31, 44, 0.18)',
         },
@@ -27,6 +39,9 @@ export default {
           elevated: '#141a28',
           surface:  '#1a2235',
         },
+        // Regra de uso e razoes de contraste medidas: ver bloco Text em src/index.css.
+        // Resumo: muted (1,99:1) e disabled (1,40:1) REPROVAM como texto — use-os so em
+        // icone decorativo, divisoria e estado desabilitado. Texto legivel para em secondary.
         text: {
           primary:   '#e8edf8',
           secondary: '#7a8ba6',

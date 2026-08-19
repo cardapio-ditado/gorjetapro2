@@ -61,8 +61,8 @@ const EMPTY_FORM: FormState = {
 
 const AREAS = ['Cozinha', 'Bar', 'Atendimento', 'Caixa', 'Delivery', 'Limpeza', 'Administração', 'Marketing', 'TI', 'RH', 'Financeiro', 'Produção', 'Logística', 'Outro'];
 
-const inp = 'w-full bg-white/5 border border-white/15 rounded-xl px-3 py-2 text-white text-sm placeholder-white/30 focus:outline-none focus:border-[#7D1F2C]/60';
-const sel = 'w-full bg-[#0e1019] border border-white/15 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-[#7D1F2C]/60';
+const inp = 'w-full bg-white/5 border border-white/15 rounded-xl px-3 py-2 text-white text-sm placeholder-white/30 focus:outline-none focus:border-wine/60';
+const sel = 'w-full bg-[#0e1019] border border-white/15 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-wine/60';
 
 export default function BancoTalentos() {
   const [talentos, setTalentos] = useState<Talento[]>([]);
@@ -391,7 +391,7 @@ export default function BancoTalentos() {
               onClick={() => toggleArea(area)}
               className={`px-2.5 py-1 rounded-lg text-xs border transition-colors ${
                 form.areas_interesse.includes(area)
-                  ? 'bg-[#7D1F2C]/40 border-[#7D1F2C] text-white'
+                  ? 'bg-wine/40 border-wine text-white'
                   : 'border-white/10 text-white/50 hover:border-white/30'
               }`}
             >
@@ -418,7 +418,7 @@ export default function BancoTalentos() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Users className="w-8 h-8 text-[#7D1F2C]" />
+          <Users className="w-8 h-8 text-wine" />
           <div>
             <h2 className="text-2xl font-bold text-white">Banco de Talentos</h2>
             <p className="text-white/50">Candidatos e currículos para futuras oportunidades</p>
@@ -426,7 +426,7 @@ export default function BancoTalentos() {
         </div>
         <button
           onClick={() => { setForm({ ...EMPTY_FORM }); setShowCadastrarModal(true); }}
-          className="flex items-center gap-2 px-4 py-2 bg-[#7D1F2C] text-white rounded-xl hover:bg-[#9D2F3C] transition-colors text-sm font-medium"
+          className="flex items-center gap-2 px-4 py-2 bg-wine text-white rounded-xl hover:bg-[#9D2F3C] transition-colors text-sm font-medium"
         >
           <Plus className="w-4 h-4" />
           Cadastrar Currículo
@@ -440,7 +440,7 @@ export default function BancoTalentos() {
             key={cat}
             onClick={() => setCategoriaTab(cat)}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              categoriaTab === cat ? 'bg-[#7D1F2C] text-white' : 'text-white/50 hover:text-white'
+              categoriaTab === cat ? 'bg-wine text-white' : 'text-white/50 hover:text-white'
             }`}
           >
             {cat === 'banco_talentos' ? <Star className="w-4 h-4" /> : <FileText className="w-4 h-4" />}
@@ -459,7 +459,7 @@ export default function BancoTalentos() {
               placeholder="Buscar por nome, email ou área..."
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-white/5 border border-white/15 rounded-xl text-white text-sm placeholder-white/30 focus:outline-none focus:border-[#7D1F2C]/60"
+              className="w-full pl-9 pr-4 py-2 bg-white/5 border border-white/15 rounded-xl text-white text-sm placeholder-white/30 focus:outline-none focus:border-wine/60"
             />
           </div>
           <div className="flex items-center gap-2">
@@ -481,12 +481,12 @@ export default function BancoTalentos() {
         {/* Cards */}
         {loading ? (
           <div className="flex justify-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#7D1F2C]" />
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-wine" />
           </div>
         ) : filteredTalentos.length === 0 ? (
           <div className="text-center py-12">
             <Users className="w-14 h-14 text-white/20 mx-auto mb-3" />
-            <p className="text-white/40 text-sm">
+            <p className="text-white/60 text-sm">
               {categoriaTab === 'banco_curriculos' ? 'Nenhum currículo cadastrado.' : 'Nenhum talento encontrado.'}
             </p>
           </div>
@@ -524,7 +524,7 @@ export default function BancoTalentos() {
                         {talento.areas_interesse.slice(0, 3).map((a, i) => (
                           <span key={i} className="px-1.5 py-0.5 bg-blue-500/10 text-blue-400 rounded text-xs">{a}</span>
                         ))}
-                        {talento.areas_interesse.length > 3 && <span className="text-white/30 text-xs">+{talento.areas_interesse.length - 3}</span>}
+                        {talento.areas_interesse.length > 3 && <span className="text-white/60 text-xs">+{talento.areas_interesse.length - 3}</span>}
                       </div>
                     </div>
                   )}
@@ -593,7 +593,7 @@ export default function BancoTalentos() {
                   type="button"
                   onClick={() => cvFileRef.current?.click()}
                   disabled={extractingAI}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-[#7D1F2C]/40 rounded-xl text-white/60 hover:border-[#7D1F2C] hover:text-white transition-colors text-sm disabled:opacity-50"
+                  className="w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-wine/40 rounded-xl text-white/60 hover:border-wine hover:text-white transition-colors text-sm disabled:opacity-50"
                 >
                   {extractingAI ? (
                     <>
@@ -608,13 +608,13 @@ export default function BancoTalentos() {
                   )}
                 </button>
                 {extractingAI && (
-                  <p className="text-xs text-white/30 text-center mt-1">Aguarde, o Claude está analisando o arquivo...</p>
+                  <p className="text-xs text-white/60 text-center mt-1">Aguarde, o Claude está analisando o arquivo...</p>
                 )}
               </div>
 
               <div className="relative">
                 <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-white/10" /></div>
-                <div className="relative flex justify-center"><span className="bg-[#12141f] px-3 text-xs text-white/30">ou preencha manualmente</span></div>
+                <div className="relative flex justify-center"><span className="bg-[#12141f] px-3 text-xs text-white/60">ou preencha manualmente</span></div>
               </div>
 
               {renderFormFields(false)}
@@ -625,7 +625,7 @@ export default function BancoTalentos() {
                   Cancelar
                 </button>
                 <button onClick={cadastrarCurriculo} disabled={saving}
-                  className="flex-1 px-4 py-2 bg-[#7D1F2C] text-white rounded-xl hover:bg-[#9D2F3C] disabled:opacity-50 text-sm font-medium">
+                  className="flex-1 px-4 py-2 bg-wine text-white rounded-xl hover:bg-[#9D2F3C] disabled:opacity-50 text-sm font-medium">
                   {saving ? 'Salvando...' : 'Cadastrar'}
                 </button>
               </div>
@@ -650,7 +650,7 @@ export default function BancoTalentos() {
                   Cancelar
                 </button>
                 <button onClick={salvarEdicao} disabled={saving}
-                  className="flex-1 px-4 py-2 bg-[#7D1F2C] text-white rounded-xl hover:bg-[#9D2F3C] disabled:opacity-50 text-sm font-medium">
+                  className="flex-1 px-4 py-2 bg-wine text-white rounded-xl hover:bg-[#9D2F3C] disabled:opacity-50 text-sm font-medium">
                   {saving ? 'Salvando...' : 'Salvar'}
                 </button>
               </div>
@@ -671,7 +671,7 @@ export default function BancoTalentos() {
               <input type="file" ref={docFileRef} className="hidden" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
                 onChange={e => { if (e.target.files?.[0]) uploadDocumento(e.target.files[0]); }} />
               <button onClick={() => docFileRef.current?.click()} disabled={uploadingDoc}
-                className="w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-white/15 rounded-xl text-white/50 hover:border-[#7D1F2C]/60 hover:text-white/80 transition-colors text-sm disabled:opacity-50">
+                className="w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-white/15 rounded-xl text-white/50 hover:border-wine/60 hover:text-white/80 transition-colors text-sm disabled:opacity-50">
                 {uploadingDoc ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
                 {uploadingDoc ? 'Enviando...' : 'Clique para anexar (PDF, Word, Imagem — máx. 10MB)'}
               </button>
@@ -685,7 +685,7 @@ export default function BancoTalentos() {
                       <FileText className="w-4 h-4 text-white/40 shrink-0" />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm text-white truncate">{doc.nome}</p>
-                        <p className="text-xs text-white/30">{(doc.tamanho / 1024).toFixed(1)} KB · {new Date(doc.adicionado_em).toLocaleDateString('pt-BR')}</p>
+                        <p className="text-xs text-white/60">{(doc.tamanho / 1024).toFixed(1)} KB · {new Date(doc.adicionado_em).toLocaleDateString('pt-BR')}</p>
                       </div>
                       <button onClick={() => downloadDoc(doc)} className="p-1.5 text-white/40 hover:text-white transition-colors"><Download className="w-4 h-4" /></button>
                       <button onClick={() => excluirDoc(doc)} className="p-1.5 text-red-400/60 hover:text-red-400 transition-colors"><Trash2 className="w-4 h-4" /></button>

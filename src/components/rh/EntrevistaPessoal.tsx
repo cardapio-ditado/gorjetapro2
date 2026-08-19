@@ -209,7 +209,7 @@ export default function EntrevistaPessoal({ candidatura_id, onClose }: Entrevist
                     <FileAudio className="w-8 h-8 text-purple-400" />
                     <div className="text-left">
                       <p className="text-sm font-medium text-white">{audioFile.name}</p>
-                      <p className="text-xs text-white/40">
+                      <p className="text-xs text-white/60">
                         {(audioFile.size / 1024 / 1024).toFixed(2)} MB
                       </p>
                     </div>
@@ -242,7 +242,7 @@ export default function EntrevistaPessoal({ candidatura_id, onClose }: Entrevist
                       </label>
                       <p className="pl-1">ou arraste aqui</p>
                     </div>
-                    <p className="text-xs text-white/40">
+                    <p className="text-xs text-white/60">
                       MP3, WAV, M4A, MP4, WEBM até 25MB
                     </p>
                   </>

@@ -225,7 +225,7 @@ const ItemMappingModal: React.FC<ItemMappingModalProps> = ({
         <div className="p-6 border-b border-white/10 flex justify-between items-center">
           <div>
             <h3 className="text-xl font-semibold text-white">Mapear Itens da Nota</h3>
-            <p className="text-sm text-white/40 mt-1">
+            <p className="text-sm text-white/60 mt-1">
               Associe os itens da nota com itens existentes no estoque ou crie novos
             </p>
           </div>
@@ -237,7 +237,7 @@ const ItemMappingModal: React.FC<ItemMappingModalProps> = ({
         <div className="p-6 overflow-y-auto flex-1">
           {loading ? (
             <div className="text-center py-8">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7D1F2C] mx-auto"></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-wine mx-auto"></div>
               <p className="mt-4 text-white/50">Carregando itens do estoque...</p>
             </div>
           ) : (
@@ -286,7 +286,7 @@ const ItemMappingModal: React.FC<ItemMappingModalProps> = ({
                           onClick={() => handleCreateNew(index)}
                           className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                             mapping.action === 'create'
-                              ? 'bg-[#7D1F2C] text-white'
+                              ? 'bg-wine text-white'
                               : 'bg-white/5 border border-white/20 text-white/80 hover:bg-white/10'
                           }`}
                         >
@@ -301,7 +301,7 @@ const ItemMappingModal: React.FC<ItemMappingModalProps> = ({
                           }}
                           className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                             mapping.action === 'map'
-                              ? 'bg-[#7D1F2C] text-white'
+                              ? 'bg-wine text-white'
                               : 'bg-white/5 border border-white/20 text-white/80 hover:bg-white/10'
                           }`}
                         >
@@ -435,7 +435,7 @@ const ItemMappingModal: React.FC<ItemMappingModalProps> = ({
             </button>
             <button
               onClick={handleConfirm}
-              className="px-6 py-2 bg-[#7D1F2C] text-white rounded-lg hover:bg-[#6a1a25] flex items-center"
+              className="px-6 py-2 bg-wine text-white rounded-lg hover:bg-[#6a1a25] flex items-center"
             >
               <Check className="w-5 h-5 mr-2" />
               Confirmar Mapeamento

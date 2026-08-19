@@ -52,7 +52,7 @@ const ModalVisualizarConta: React.FC<ModalVisualizarContaProps> = ({ isOpen, con
   const getStatusBadge = (status: string) => {
     const badges = {
       'em_aberto': { color: 'bg-yellow-500/10 text-yellow-400', icon: Clock, label: 'Em Aberto' },
-      'parcialmente_pago': { color: 'bg-blue-900/30 text-[#D4AF37]', icon: AlertCircle, label: 'Parcialmente Pago' },
+      'parcialmente_pago': { color: 'bg-blue-900/30 text-gold', icon: AlertCircle, label: 'Parcialmente Pago' },
       'pago': { color: 'bg-green-900/30 text-green-400', icon: CheckCircle, label: 'Pago' },
       'vencido': { color: 'bg-red-900/30 text-red-400', icon: AlertCircle, label: 'Vencido' },
       'cancelado': { color: 'bg-white/10 text-white/90', icon: X, label: 'Cancelado' }
@@ -251,7 +251,7 @@ const ModalVisualizarConta: React.FC<ModalVisualizarContaProps> = ({ isOpen, con
           {pagamentos.length > 0 && (
             <div className="bg-gradient-to-br from-blue-500/10 to-blue-500/15 rounded-lg p-5 border-2 border-blue-500/30">
               <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                <DollarSign className="w-5 h-5 text-[#D4AF37]" />
+                <DollarSign className="w-5 h-5 text-gold" />
                 Histórico de Pagamentos
                 <span className="ml-2 px-3 py-1 bg-blue-600 text-white text-sm rounded-full">
                   {pagamentos.length} {pagamentos.length === 1 ? 'pagamento' : 'pagamentos'}
@@ -275,7 +275,7 @@ const ModalVisualizarConta: React.FC<ModalVisualizarContaProps> = ({ isOpen, con
                         </div>
                       </div>
                       <div className="text-right">
-                        <span className="text-xl font-bold text-[#D4AF37]">
+                        <span className="text-xl font-bold text-gold">
                           {formatCurrency(pagamento.valor)}
                         </span>
                         <p className="text-xs text-white/50 mt-0.5">Valor Pago</p>
@@ -318,7 +318,7 @@ const ModalVisualizarConta: React.FC<ModalVisualizarContaProps> = ({ isOpen, con
                 <div className="grid grid-cols-3 gap-4 text-center">
                   <div>
                     <p className="text-xs text-white/60 mb-1">Total de Pagamentos</p>
-                    <p className="text-lg font-bold text-[#D4AF37]">{pagamentos.length}</p>
+                    <p className="text-lg font-bold text-gold">{pagamentos.length}</p>
                   </div>
                   <div>
                     <p className="text-xs text-white/60 mb-1">Total Pago</p>

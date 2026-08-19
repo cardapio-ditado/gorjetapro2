@@ -51,8 +51,8 @@ interface Periodo {
   funcao_nome?: string;
 }
 
-const inp = 'w-full bg-white/5 border border-white/15 rounded-xl px-3 py-2 text-white text-sm placeholder-white/30 focus:outline-none focus:border-[#7D1F2C]/60';
-const sel = 'w-full bg-[#0e1019] border border-white/15 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-[#7D1F2C]/60';
+const inp = 'w-full bg-white/5 border border-white/15 rounded-xl px-3 py-2 text-white text-sm placeholder-white/30 focus:outline-none focus:border-wine/60';
+const sel = 'w-full bg-[#0e1019] border border-white/15 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-wine/60';
 
 // ────────────────────────────────────────
 // Helpers
@@ -425,7 +425,7 @@ const FeriasColaboradores: React.FC = () => {
               key={key}
               onClick={() => setViewMode(key)}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                viewMode === key ? 'bg-[#7D1F2C] text-white' : 'text-white/60 hover:text-white hover:bg-white/5'
+                viewMode === key ? 'bg-wine text-white' : 'text-white/60 hover:text-white hover:bg-white/5'
               }`}
             >
               <Icon className="w-4 h-4" />
@@ -468,7 +468,7 @@ const FeriasColaboradores: React.FC = () => {
             </div>
             <button
               onClick={() => { setPeriodoForm({ colaborador_id: '', periodo_aquisitivo_inicio: '', periodo_aquisitivo_fim: '', periodo_concessivo_inicio: '', periodo_concessivo_fim: '', dias_direito: '30', observacoes: '' }); setShowPeriodoForm(true); }}
-              className="flex items-center gap-2 px-4 py-2 bg-[#7D1F2C] text-white rounded-xl hover:bg-[#9D2F3C] text-sm font-medium"
+              className="flex items-center gap-2 px-4 py-2 bg-wine text-white rounded-xl hover:bg-[#9D2F3C] text-sm font-medium"
             >
               <Plus className="w-4 h-4" /> Novo Período
             </button>
@@ -500,11 +500,11 @@ const FeriasColaboradores: React.FC = () => {
 
           {/* Períodos list */}
           {loading ? (
-            <div className="flex justify-center py-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#7D1F2C]" /></div>
+            <div className="flex justify-center py-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-wine" /></div>
           ) : filteredPeriodos.length === 0 ? (
             <div className="text-center py-12 bg-[#12141f] border border-white/10 rounded-xl">
               <CalendarDays className="w-12 h-12 text-white/20 mx-auto mb-3" />
-              <p className="text-white/40 text-sm">Nenhum período cadastrado.</p>
+              <p className="text-white/60 text-sm">Nenhum período cadastrado.</p>
             </div>
           ) : (
             <div className="space-y-2">
@@ -520,34 +520,34 @@ const FeriasColaboradores: React.FC = () => {
                           <p className="font-semibold text-white truncate">{p.colaborador_nome}</p>
                           <span className={`px-2 py-0.5 text-xs rounded-full font-medium ${periodoStatusColor[p.status] || 'bg-white/10 text-white/60'}`}>{p.status}</span>
                         </div>
-                        <p className="text-white/40 text-xs mb-3">{p.funcao_nome}</p>
+                        <p className="text-white/60 text-xs mb-3">{p.funcao_nome}</p>
 
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
                           <div>
-                            <p className="text-white/40 text-xs mb-0.5">Período Aquisitivo</p>
+                            <p className="text-white/60 text-xs mb-0.5">Período Aquisitivo</p>
                             <p className="text-white/80 font-medium">
                               {dayjs(p.periodo_aquisitivo_inicio).format('DD/MM/YYYY')}<br />
-                              <span className="text-white/40">até</span>{' '}
+                              <span className="text-white/60">até</span>{' '}
                               {dayjs(p.periodo_aquisitivo_fim).format('DD/MM/YYYY')}
                             </p>
                           </div>
                           <div>
-                            <p className="text-white/40 text-xs mb-0.5">Período de Gozo</p>
+                            <p className="text-white/60 text-xs mb-0.5">Período de Gozo</p>
                             <p className={`font-medium ${isCritico ? 'text-red-300' : isAlerta ? 'text-yellow-300' : 'text-white/80'}`}>
                               {dayjs(p.periodo_concessivo_inicio).format('DD/MM/YYYY')}<br />
-                              <span className={isCritico || isAlerta ? '' : 'text-white/40'}>até </span>
+                              <span className={isCritico || isAlerta ? '' : 'text-white/60'}>até </span>
                               {dayjs(p.periodo_concessivo_fim).format('DD/MM/YYYY')}
                             </p>
                           </div>
                           <div>
-                            <p className="text-white/40 text-xs mb-0.5">Dias</p>
+                            <p className="text-white/60 text-xs mb-0.5">Dias</p>
                             <p className="text-white/80">
                               <span className="text-white font-semibold">{p.dias_restantes}</span> restantes
-                              <br /><span className="text-white/40 text-xs">{p.dias_gozados} gozados de {p.dias_direito}</span>
+                              <br /><span className="text-white/60 text-xs">{p.dias_gozados} gozados de {p.dias_direito}</span>
                             </p>
                           </div>
                           <div>
-                            <p className="text-white/40 text-xs mb-1">Alerta de Gozo</p>
+                            <p className="text-white/60 text-xs mb-1">Alerta de Gozo</p>
                             <GozoBadge p={p} />
                           </div>
                         </div>
@@ -560,14 +560,14 @@ const FeriasColaboradores: React.FC = () => {
                               style={{ width: `${Math.min(100, (p.dias_gozados / p.dias_direito) * 100)}%` }}
                             />
                           </div>
-                          <p className="text-white/30 text-xs mt-0.5">{Math.round((p.dias_gozados / p.dias_direito) * 100)}% utilizado</p>
+                          <p className="text-white/60 text-xs mt-0.5">{Math.round((p.dias_gozados / p.dias_direito) * 100)}% utilizado</p>
                         </div>
                       </div>
 
                       <div className="flex gap-1.5 shrink-0">
                         <button
                           onClick={() => { setViewMode('ferias'); setShowFeriasForm(true); setFeriasForm(f => ({ ...f, colaborador_id: p.colaborador_id, periodo_aquisitivo_id: p.id })); fetchPeriodosDisponiveis(p.colaborador_id); }}
-                          className="flex items-center gap-1 px-3 py-1.5 bg-[#7D1F2C]/30 text-[#e05060] border border-[#7D1F2C]/40 rounded-lg hover:bg-[#7D1F2C]/50 text-xs transition-colors"
+                          className="flex items-center gap-1 px-3 py-1.5 bg-wine/30 text-[#e05060] border border-wine/40 rounded-lg hover:bg-wine/50 text-xs transition-colors"
                           title="Agendar férias deste período"
                         >
                           <Plus className="w-3.5 h-3.5" /> Agendar
@@ -596,7 +596,7 @@ const FeriasColaboradores: React.FC = () => {
                 <Download className="w-4 h-4" /> Exportar
               </button>
               <button onClick={() => { setEditingFerias(null); setFeriasForm({ colaborador_id: '', periodo_aquisitivo_id: '', data_inicio: '', data_fim: '', observacoes: '' }); setShowFeriasForm(true); }}
-                className="flex items-center gap-2 px-4 py-2 bg-[#7D1F2C] text-white rounded-xl hover:bg-[#9D2F3C] text-sm font-medium">
+                className="flex items-center gap-2 px-4 py-2 bg-wine text-white rounded-xl hover:bg-[#9D2F3C] text-sm font-medium">
                 <Plus className="w-4 h-4" /> Cadastrar Férias
               </button>
             </div>
@@ -615,7 +615,7 @@ const FeriasColaboradores: React.FC = () => {
               <div key={label} className="bg-[#12141f] border border-white/10 rounded-xl p-4 flex items-center gap-3">
                 <Icon className={`w-7 h-7 ${color} shrink-0`} />
                 <div>
-                  <p className="text-xs text-white/40">{label}</p>
+                  <p className="text-xs text-white/60">{label}</p>
                   <p className={`text-xl font-bold ${color}`}>{value}</p>
                 </div>
               </div>
@@ -642,7 +642,7 @@ const FeriasColaboradores: React.FC = () => {
                   <option key={y} value={y}>{y}</option>
                 ))}
               </select>
-              <button onClick={fetchFerias} className="flex items-center justify-center gap-2 px-4 py-2 bg-[#7D1F2C] text-white rounded-xl hover:bg-[#9D2F3C] text-sm">
+              <button onClick={fetchFerias} className="flex items-center justify-center gap-2 px-4 py-2 bg-wine text-white rounded-xl hover:bg-[#9D2F3C] text-sm">
                 <Filter className="w-4 h-4" /> Filtrar
               </button>
             </div>
@@ -650,7 +650,7 @@ const FeriasColaboradores: React.FC = () => {
 
           {/* Table */}
           {loading ? (
-            <div className="flex justify-center py-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#7D1F2C]" /></div>
+            <div className="flex justify-center py-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-wine" /></div>
           ) : (
             <div className="bg-[#12141f] border border-white/10 rounded-xl overflow-hidden">
               <div className="overflow-x-auto">
@@ -658,7 +658,7 @@ const FeriasColaboradores: React.FC = () => {
                   <thead>
                     <tr className="bg-white/5 border-b border-white/10">
                       {['Colaborador', 'Período', 'Duração', 'Retorno', 'Status', 'Alertas', 'Ações'].map(h => (
-                        <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-white/40 uppercase tracking-wider">{h}</th>
+                        <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-white/60 uppercase tracking-wider">{h}</th>
                       ))}
                     </tr>
                   </thead>
@@ -670,17 +670,17 @@ const FeriasColaboradores: React.FC = () => {
                       }`}>
                         <td className="px-4 py-3">
                           <p className="font-medium text-white">{f.colaborador_nome}</p>
-                          <p className="text-xs text-white/40">{f.funcao_nome}</p>
-                          <p className="text-xs text-white/30">Adm: {dayjs(f.data_admissao).format('DD/MM/YYYY')}</p>
+                          <p className="text-xs text-white/60">{f.funcao_nome}</p>
+                          <p className="text-xs text-white/60">Adm: {dayjs(f.data_admissao).format('DD/MM/YYYY')}</p>
                         </td>
                         <td className="px-4 py-3 text-sm">
                           <p className="text-white">{dayjs(f.data_inicio).format('DD/MM/YYYY')}</p>
-                          <p className="text-white/40 text-xs">até</p>
+                          <p className="text-white/60 text-xs">até</p>
                           <p className="text-white">{dayjs(f.data_fim).format('DD/MM/YYYY')}</p>
                         </td>
                         <td className="px-4 py-3 text-sm">
                           <p className="text-white">{f.dias_corridos}d corridos</p>
-                          <p className="text-white/40 text-xs">{f.dias_uteis} úteis</p>
+                          <p className="text-white/60 text-xs">{f.dias_uteis} úteis</p>
                         </td>
                         <td className="px-4 py-3 text-sm text-white/80">
                           {f.data_prevista_retorno ? dayjs(f.data_prevista_retorno).format('DD/MM/YYYY') : '—'}
@@ -729,8 +729,8 @@ const FeriasColaboradores: React.FC = () => {
               {filteredFerias.length === 0 && (
                 <div className="text-center py-12">
                   <CalendarDays className="w-12 h-12 text-white/20 mx-auto mb-3" />
-                  <p className="text-white/40 text-sm">Nenhuma férias encontrada.</p>
-                  <button onClick={() => { setViewMode('periodos'); }} className="mt-3 text-sm text-[#7D1F2C] hover:text-[#e05060]">
+                  <p className="text-white/60 text-sm">Nenhuma férias encontrada.</p>
+                  <button onClick={() => { setViewMode('periodos'); }} className="mt-3 text-sm text-wine hover:text-[#e05060]">
                     Criar um período aquisitivo primeiro
                   </button>
                 </div>
@@ -812,7 +812,7 @@ const FeriasColaboradores: React.FC = () => {
 
               <div className="flex gap-3 pt-2">
                 <button onClick={() => setShowPeriodoForm(false)} className="flex-1 px-4 py-2 border border-white/15 text-white/70 rounded-xl hover:bg-white/5 text-sm">Cancelar</button>
-                <button onClick={salvarPeriodo} disabled={loading} className="flex-1 px-4 py-2 bg-[#7D1F2C] text-white rounded-xl hover:bg-[#9D2F3C] disabled:opacity-50 text-sm font-medium">
+                <button onClick={salvarPeriodo} disabled={loading} className="flex-1 px-4 py-2 bg-wine text-white rounded-xl hover:bg-[#9D2F3C] disabled:opacity-50 text-sm font-medium">
                   {loading ? 'Salvando...' : 'Salvar Período'}
                 </button>
               </div>
@@ -878,9 +878,9 @@ const FeriasColaboradores: React.FC = () => {
                 <div className="bg-blue-900/20 border border-blue-700/30 rounded-xl p-3">
                   <p className="text-xs font-semibold text-blue-300 mb-2">Cálculo Automático</p>
                   <div className="grid grid-cols-3 gap-3 text-sm">
-                    <div><p className="text-white/40 text-xs">Dias corridos</p><p className="text-white font-bold">{dayjs(feriasForm.data_fim).diff(dayjs(feriasForm.data_inicio), 'days') + 1}</p></div>
-                    <div><p className="text-white/40 text-xs">Dias úteis</p><p className="text-white font-bold">{calcularDiasUteis(feriasForm.data_inicio, feriasForm.data_fim)}</p></div>
-                    <div><p className="text-white/40 text-xs">Retorno</p><p className="text-white font-bold">{dayjs(calcularDataRetorno(feriasForm.data_fim)).format('DD/MM/YYYY')}</p></div>
+                    <div><p className="text-white/60 text-xs">Dias corridos</p><p className="text-white font-bold">{dayjs(feriasForm.data_fim).diff(dayjs(feriasForm.data_inicio), 'days') + 1}</p></div>
+                    <div><p className="text-white/60 text-xs">Dias úteis</p><p className="text-white font-bold">{calcularDiasUteis(feriasForm.data_inicio, feriasForm.data_fim)}</p></div>
+                    <div><p className="text-white/60 text-xs">Retorno</p><p className="text-white font-bold">{dayjs(calcularDataRetorno(feriasForm.data_fim)).format('DD/MM/YYYY')}</p></div>
                   </div>
                 </div>
               )}
@@ -893,7 +893,7 @@ const FeriasColaboradores: React.FC = () => {
 
               <div className="flex gap-3 pt-2">
                 <button onClick={() => { setShowFeriasForm(false); setEditingFerias(null); }} className="flex-1 px-4 py-2 border border-white/15 text-white/70 rounded-xl hover:bg-white/5 text-sm">Cancelar</button>
-                <button onClick={salvarFerias} disabled={loading} className="flex-1 px-4 py-2 bg-[#7D1F2C] text-white rounded-xl hover:bg-[#9D2F3C] disabled:opacity-50 text-sm font-medium">
+                <button onClick={salvarFerias} disabled={loading} className="flex-1 px-4 py-2 bg-wine text-white rounded-xl hover:bg-[#9D2F3C] disabled:opacity-50 text-sm font-medium">
                   {loading ? 'Salvando...' : editingFerias ? 'Salvar' : 'Cadastrar'}
                 </button>
               </div>
@@ -912,7 +912,7 @@ const FeriasColaboradores: React.FC = () => {
             <div className="p-5 space-y-4">
               <div className="bg-white/5 rounded-xl p-4 text-sm space-y-1">
                 <p className="font-semibold text-white">{feriasParaAprovar.colaborador_nome}</p>
-                <p className="text-white/40">{feriasParaAprovar.funcao_nome}</p>
+                <p className="text-white/60">{feriasParaAprovar.funcao_nome}</p>
                 <p className="text-white/70">Período: {dayjs(feriasParaAprovar.data_inicio).format('DD/MM/YYYY')} a {dayjs(feriasParaAprovar.data_fim).format('DD/MM/YYYY')}</p>
                 <p className="text-white/70">Duração: {feriasParaAprovar.dias_corridos} dias corridos ({feriasParaAprovar.dias_uteis} úteis)</p>
               </div>

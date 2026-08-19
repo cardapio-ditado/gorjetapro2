@@ -320,7 +320,7 @@ const GerenciamentoPermissoes: React.FC<GerenciamentoPermissoesProps> = ({
                 placeholder="Buscar módulos ou abas..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 pr-4 py-2 border border-white/20 bg-white/5 rounded-lg focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+                className="pl-10 pr-4 py-2 border border-white/20 bg-white/5 rounded-lg focus:ring-2 focus:ring-wine focus:border-wine"
               />
             </div>
             {temAlteracoes() && (
@@ -343,7 +343,7 @@ const GerenciamentoPermissoes: React.FC<GerenciamentoPermissoesProps> = ({
             <button
               onClick={handleSalvarPermissoes}
               disabled={!temAlteracoes() || saving}
-              className="px-4 py-2 bg-[#7D1F2C] text-white rounded-md hover:bg-[#6a1a25] disabled:opacity-50"
+              className="px-4 py-2 bg-wine text-white rounded-md hover:bg-[#6a1a25] disabled:opacity-50"
             >
               <Save className="w-4 h-4 inline mr-2" />
               {saving ? 'Salvando...' : 'Salvar Permissões'}
@@ -354,8 +354,14 @@ const GerenciamentoPermissoes: React.FC<GerenciamentoPermissoesProps> = ({
 
       {/* Grid de Permissões */}
       {loading ? (
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7D1F2C]"></div>
+        <div className="w-full">
+          <div className="w-full space-y-3" aria-busy="true">
+                    <div className="skeleton" style={{ height: 14, width: '32%' }} />
+                    <div className="skeleton" style={{ height: 44, width: '100%' }} />
+                    <div className="skeleton" style={{ height: 44, width: '100%' }} />
+                    <div className="skeleton" style={{ height: 44, width: '100%' }} />
+                    <div className="skeleton" style={{ height: 44, width: '82%' }} />
+                  </div>
         </div>
       ) : (
         <div className="bg-[#12141f] rounded-lg shadow-sm border border-white/10">
@@ -369,7 +375,7 @@ const GerenciamentoPermissoes: React.FC<GerenciamentoPermissoesProps> = ({
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center">
-                        <div className="p-2 bg-[#7D1F2C] rounded-lg mr-3">
+                        <div className="p-2 bg-wine rounded-lg mr-3">
                           <Shield className="w-5 h-5 text-white" />
                         </div>
                         <div>
@@ -419,7 +425,7 @@ const GerenciamentoPermissoes: React.FC<GerenciamentoPermissoesProps> = ({
                                     type="checkbox"
                                     checked={permissaoModulo?.pode_visualizar || false}
                                     onChange={(e) => atualizarPermissao(modulo.id, null, 'pode_visualizar', e.target.checked)}
-                                    className="rounded border-white/20 text-[#7D1F2C] focus:ring-[#7D1F2C]"
+                                    className="rounded border-white/20 text-wine focus:ring-wine"
                                   />
                                   <span className="ml-2 text-sm text-white/80">
                                     <Eye className="w-4 h-4 inline mr-1" />
@@ -510,7 +516,7 @@ const GerenciamentoPermissoes: React.FC<GerenciamentoPermissoesProps> = ({
                                     type="checkbox"
                                     checked={permissaoAba?.pode_visualizar || false}
                                     onChange={(e) => atualizarPermissao(modulo.id, aba.id, 'pode_visualizar', e.target.checked)}
-                                    className="rounded border-white/20 text-[#7D1F2C] focus:ring-[#7D1F2C]"
+                                    className="rounded border-white/20 text-wine focus:ring-wine"
                                   />
                                   <span className="ml-2 text-sm text-white/80">
                                     <Eye className="w-4 h-4 inline mr-1" />
@@ -601,7 +607,7 @@ const GerenciamentoPermissoes: React.FC<GerenciamentoPermissoesProps> = ({
         <h4 className="font-medium text-blue-300 mb-2">Legenda das Permissões</h4>
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3 text-sm">
           <div className="flex items-center">
-            <Eye className="w-4 h-4 text-[#7D1F2C] mr-2" />
+            <Eye className="w-4 h-4 text-wine mr-2" />
             <span><strong>Ver:</strong> Visualizar dados</span>
           </div>
           <div className="flex items-center">

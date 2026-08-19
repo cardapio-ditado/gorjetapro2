@@ -66,7 +66,7 @@ export const PageLayout: React.FC<PageLayoutProps> = ({
                   {idx > 0 && (
                     <ChevronRight className="text-white/20" style={{width:'12px',height:'12px'}} />
                   )}
-                  <span className={idx === breadcrumb.length - 1 ? "text-white/60 text-xs font-medium" : "text-white/30 text-xs"}>
+                  <span className={idx === breadcrumb.length - 1 ? "text-white/60 text-xs font-medium" : "text-white/60 text-xs"}>
                     {item}
                   </span>
                 </React.Fragment>
@@ -94,7 +94,7 @@ export const PageLayout: React.FC<PageLayoutProps> = ({
             {/* Data + Ações */}
             <div className="flex items-center gap-3">
               <div className="hidden md:block text-right flex-shrink-0">
-                <p className="text-white/30 text-xs capitalize leading-relaxed">{hoje}</p>
+                <p className="text-white/60 text-xs capitalize leading-relaxed">{hoje}</p>
               </div>
               {actions && (
                 <div className="flex items-center gap-2">

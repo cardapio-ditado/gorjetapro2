@@ -444,8 +444,8 @@ const LancarVendasModal: React.FC<LancarVendasModalProps> = ({ isOpen, onClose, 
           {itensVenda.length === 0 && estoqueOrigem && (
             <div className="text-center py-12 border-2 border-dashed border-white/20 rounded-lg">
               <Package className="w-12 h-12 text-white/30 mx-auto mb-2" />
-              <p className="text-white/40">Nenhum item adicionado ainda</p>
-              <p className="text-sm text-white/30 mt-1">Clique em "Adicionar Item" para começar</p>
+              <p className="text-white/60">Nenhum item adicionado ainda</p>
+              <p className="text-sm text-white/60 mt-1">Clique em "Adicionar Item" para começar</p>
             </div>
           )}
 
@@ -454,7 +454,7 @@ const LancarVendasModal: React.FC<LancarVendasModalProps> = ({ isOpen, onClose, 
               <div key={item.id} className="p-4 border border-white/10 rounded-lg bg-white/5">
                 <div className="grid grid-cols-12 gap-3 items-start">
                   <div className="col-span-1 flex items-center justify-center pt-6">
-                    <span className="text-lg font-bold text-white/30">#{index + 1}</span>
+                    <span className="text-lg font-bold text-white/60">#{index + 1}</span>
                   </div>
 
                   <div className="col-span-2">
@@ -515,7 +515,7 @@ const LancarVendasModal: React.FC<LancarVendasModalProps> = ({ isOpen, onClose, 
                       className="w-full rounded-md border-white/20 shadow-sm focus:border-green-500 focus:ring focus:ring-green-500 focus:ring-opacity-50 text-sm"
                     />
                     {item.tipo === 'item_direto' && item.item_id && (
-                      <p className="text-xs text-white/40 mt-1">
+                      <p className="text-xs text-white/60 mt-1">
                         Disponível: {itensEstoque.find(i => i.id === item.item_id)?.quantidade_atual.toFixed(3)}
                       </p>
                     )}
@@ -524,7 +524,7 @@ const LancarVendasModal: React.FC<LancarVendasModalProps> = ({ isOpen, onClose, 
                   <div className="col-span-1 flex flex-col items-end justify-center pt-6">
                     {item.custo_unitario > 0 && (
                       <div className="text-right mb-2">
-                        <p className="text-xs text-white/40">CMV</p>
+                        <p className="text-xs text-white/60">CMV</p>
                         <p className="text-sm font-semibold text-white">
                           {formatCurrency(item.custo_total)}
                         </p>

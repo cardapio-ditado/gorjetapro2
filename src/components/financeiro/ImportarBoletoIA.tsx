@@ -220,7 +220,7 @@ const ImportarBoletoIA: React.FC<ImportarBoletoIAProps> = ({
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
       <div className="bg-[#0f1020] rounded-lg w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="p-6 border-b border-white/10 flex justify-between items-center bg-gradient-to-r from-[#7D1F2C] to-[#a0292e]">
+        <div className="p-6 border-b border-white/10 flex justify-between items-center bg-gradient-to-r from-wine to-[#a0292e]">
           <div className="text-white">
             <div className="flex items-center gap-2">
               <Sparkles className="w-6 h-6" />
@@ -261,7 +261,7 @@ const ImportarBoletoIA: React.FC<ImportarBoletoIAProps> = ({
                 <div className="text-center">
                   <Camera className="w-12 h-12 text-white/40 mx-auto mb-4" />
                   <label className="cursor-pointer">
-                    <span className="text-[#7D1F2C] hover:text-[#7D1F2C] font-medium">
+                    <span className="text-wine hover:text-wine font-medium">
                       Clique para selecionar
                     </span>
                     <span className="text-white/60"> ou arraste o documento</span>
@@ -303,7 +303,7 @@ const ImportarBoletoIA: React.FC<ImportarBoletoIAProps> = ({
                 <button
                   onClick={handleExtract}
                   disabled={loading}
-                  className="w-full px-4 py-3 bg-gradient-to-r from-[#7D1F2C] to-[#a0292e] text-white rounded-lg hover:from-purple-700 hover:to-blue-700 disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="w-full px-4 py-3 bg-gradient-to-r from-wine to-[#a0292e] text-white rounded-lg hover:from-purple-700 hover:to-blue-700 disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   {loading ? (
                     <>
@@ -573,7 +573,7 @@ const ImportarBoletoIA: React.FC<ImportarBoletoIAProps> = ({
                 </button>
                 <button
                   onClick={handleConfirmExtraction}
-                  className="flex-1 px-4 py-2 bg-gradient-to-r from-[#7D1F2C] to-[#a0292e] text-white rounded-lg hover:from-purple-700 hover:to-blue-700 flex items-center justify-center gap-2"
+                  className="flex-1 px-4 py-2 bg-gradient-to-r from-wine to-[#a0292e] text-white rounded-lg hover:from-purple-700 hover:to-blue-700 flex items-center justify-center gap-2"
                 >
                   <CheckCircle className="w-5 h-5" />
                   Confirmar e Criar Conta

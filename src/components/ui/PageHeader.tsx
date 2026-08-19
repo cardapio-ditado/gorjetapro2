@@ -17,11 +17,11 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
     <div className="mb-6">
       <div className="flex items-start justify-between gap-4 mb-4">
         <div className="flex-1">
-          <h1 className="font-display text-3xl font-bold text-white leading-tight mb-2">
+          <h1 className="t-title" style={{ color: 'var(--text-primary)', marginBottom: 'var(--sp-2)' }}>
             {title}
           </h1>
           {subtitle && (
-            <p className="font-sans text-sm text-white/60 leading-relaxed">
+            <p className="t-body" style={{ color: 'var(--text-secondary)' }}>
               {subtitle}
             </p>
           )}

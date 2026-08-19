@@ -777,7 +777,7 @@ const Musicians: React.FC = () => {
             </div>
             <button
               onClick={goToToday}
-              className="px-3 py-1 bg-gradient-to-r from-[#7D1F2C] to-[#601C28] text-white text-sm rounded-md hover:from-[#8B2332] hover:to-[#7D1F2C] transition-all shadow-sm"
+              className="px-3 py-1 bg-gradient-to-r from-wine to-[#601C28] text-white text-sm rounded-md hover:from-[#8B2332] hover:to-wine transition-all shadow-sm"
             >
               Hoje
             </button>
@@ -926,7 +926,7 @@ const Musicians: React.FC = () => {
         <div className="relative px-6 lg:px-8 pt-7 pb-0">
           {/* Breadcrumb */}
           <div className="flex items-center gap-1.5 mb-4">
-            <span className="text-white/30 text-xs">Músicos</span>
+            <span className="text-white/60 text-xs">Músicos</span>
             <ChevronRight className="text-white/20" style={{width:'12px',height:'12px'}} />
             <span className="text-white/60 text-xs font-medium">{viewMode === 'table' ? 'Listagem' : 'Calendário'}</span>
           </div>
@@ -944,7 +944,7 @@ const Musicians: React.FC = () => {
                 <h1 className="text-white text-2xl font-bold leading-none tracking-tight">
                   Cadastro de Músicos
                 </h1>
-                <p className="text-white/40 text-sm mt-1">Gerencie apresentações e pagamentos de músicos</p>
+                <p className="text-white/60 text-sm mt-1">Gerencie apresentações e pagamentos de músicos</p>
               </div>
             </div>
 
@@ -1010,7 +1010,7 @@ const Musicians: React.FC = () => {
               onClick={() => setStatusFilter('all')}
               className={`flex items-center gap-1.5 px-4 py-2.5 text-xs font-medium border-b-2 whitespace-nowrap transition-all duration-150 flex-shrink-0 ${
                 statusFilter === 'all'
-                  ? 'border-[#D4AF37] text-white bg-[#12141f]/5'
+                  ? 'border-gold text-white bg-[#12141f]/5'
                   : 'border-transparent text-white/35 hover:text-white/60 hover:bg-[#12141f]/5'
               }`}
             >
@@ -1020,7 +1020,7 @@ const Musicians: React.FC = () => {
               onClick={() => setStatusFilter('pendente')}
               className={`flex items-center gap-1.5 px-4 py-2.5 text-xs font-medium border-b-2 whitespace-nowrap transition-all duration-150 flex-shrink-0 ${
                 statusFilter === 'pendente'
-                  ? 'border-[#D4AF37] text-white bg-[#12141f]/5'
+                  ? 'border-gold text-white bg-[#12141f]/5'
                   : 'border-transparent text-white/35 hover:text-white/60 hover:bg-[#12141f]/5'
               }`}
             >
@@ -1031,7 +1031,7 @@ const Musicians: React.FC = () => {
               onClick={() => setStatusFilter('pago')}
               className={`flex items-center gap-1.5 px-4 py-2.5 text-xs font-medium border-b-2 whitespace-nowrap transition-all duration-150 flex-shrink-0 ${
                 statusFilter === 'pago'
-                  ? 'border-[#D4AF37] text-white bg-[#12141f]/5'
+                  ? 'border-gold text-white bg-[#12141f]/5'
                   : 'border-transparent text-white/35 hover:text-white/60 hover:bg-[#12141f]/5'
               }`}
             >
@@ -1042,7 +1042,7 @@ const Musicians: React.FC = () => {
               onClick={() => setStatusFilter('cancelado')}
               className={`flex items-center gap-1.5 px-4 py-2.5 text-xs font-medium border-b-2 whitespace-nowrap transition-all duration-150 flex-shrink-0 ${
                 statusFilter === 'cancelado'
-                  ? 'border-[#D4AF37] text-white bg-[#12141f]/5'
+                  ? 'border-gold text-white bg-[#12141f]/5'
                   : 'border-transparent text-white/35 hover:text-white/60 hover:bg-[#12141f]/5'
               }`}
             >
@@ -1066,7 +1066,7 @@ const Musicians: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
             <div className="p-6 rounded-xl hover:scale-[1.02] transition-all" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
               <div className="flex items-center">
-                <div className="p-3 bg-gradient-to-br from-[#7D1F2C] to-[#601C28] rounded-lg">
+                <div className="p-3 bg-gradient-to-br from-wine to-[#601C28] rounded-lg">
                   <Music className="w-8 h-8 text-white" />
                 </div>
                 <div className="ml-4">
@@ -1074,7 +1074,7 @@ const Musicians: React.FC = () => {
                   <p className="text-3xl font-bold text-white">
                     {indicadores.apresentacoes_mes}
                   </p>
-                  <p className="text-xs text-white/40 mt-1">
+                  <p className="text-xs text-white/60 mt-1">
                     Total histórico: {indicadores.total_apresentacoes}
                   </p>
                 </div>
@@ -1083,15 +1083,15 @@ const Musicians: React.FC = () => {
 
             <div className="p-6 rounded-xl hover:scale-[1.02] transition-all" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
               <div className="flex items-center">
-                <div className="p-3 bg-gradient-to-br from-[#D4AF37] to-[#C5A028] rounded-lg">
+                <div className="p-3 bg-gradient-to-br from-gold to-[#C5A028] rounded-lg">
                   <DollarSign className="w-8 h-8 text-white" />
                 </div>
                 <div className="ml-4">
                   <p className="text-sm font-medium text-white/60">Valor Total no Período</p>
-                  <p className="text-3xl font-bold text-[#D4AF37]">
+                  <p className="text-3xl font-bold text-gold">
                     {formatCurrency(indicadores.valor_total_mes)}
                   </p>
-                  <p className="text-xs text-white/40 mt-1">
+                  <p className="text-xs text-white/60 mt-1">
                     Pago: {formatCurrency(indicadores.valor_pago_mes)}
                   </p>
                 </div>
@@ -1108,7 +1108,7 @@ const Musicians: React.FC = () => {
                   <p className="text-3xl font-bold text-amber-400">
                     {formatCurrency(indicadores.valor_pendente_mes)}
                   </p>
-                  <p className="text-xs text-white/40 mt-1">
+                  <p className="text-xs text-white/60 mt-1">
                     {indicadores.musicos_ativos} músicos ativos
                   </p>
                 </div>
@@ -1129,7 +1129,7 @@ const Musicians: React.FC = () => {
                   placeholder="Buscar músicos..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 rounded-lg text-sm text-white placeholder-white/30 focus:ring-2 focus:ring-[#D4AF37] focus:outline-none"
+                  className="w-full pl-10 pr-4 py-2 rounded-lg text-sm text-white placeholder-white/30 focus:ring-2 focus:ring-gold focus:outline-none"
                   style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.1)' }}
                 />
               </div>
@@ -1141,7 +1141,7 @@ const Musicians: React.FC = () => {
                 type="date"
                 value={dataInicio}
                 onChange={(e) => setDataInicio(e.target.value)}
-                className="w-full px-4 py-2 rounded-lg text-sm text-white focus:ring-2 focus:ring-[#D4AF37] focus:outline-none"
+                className="w-full px-4 py-2 rounded-lg text-sm text-white focus:ring-2 focus:ring-gold focus:outline-none"
                 style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.1)' }}
               />
             </div>
@@ -1152,7 +1152,7 @@ const Musicians: React.FC = () => {
                 type="date"
                 value={dataFim}
                 onChange={(e) => setDataFim(e.target.value)}
-                className="w-full px-4 py-2 rounded-lg text-sm text-white focus:ring-2 focus:ring-[#D4AF37] focus:outline-none"
+                className="w-full px-4 py-2 rounded-lg text-sm text-white focus:ring-2 focus:ring-gold focus:outline-none"
                 style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.1)' }}
               />
             </div>
@@ -1162,7 +1162,7 @@ const Musicians: React.FC = () => {
         {/* Content */}
         {loading ? (
           <div className="flex justify-center items-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#D4AF37]"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gold"></div>
           </div>
         ) : (
           <>
@@ -1251,7 +1251,7 @@ const Musicians: React.FC = () => {
                           </td>
                           <td className="px-6 py-4">
                             <div>
-                              <span className="font-bold text-lg text-[#D4AF37]">
+                              <span className="font-bold text-lg text-gold">
                                 {formatCurrency(Math.max(0, (musico.valor || 0) + (musico.valor_adicional || 0) - (musico.valor_consumo || 0)))}
                               </span>
                               <div className="text-xs text-white/40">
@@ -1334,7 +1334,7 @@ const Musicians: React.FC = () => {
                     type="text"
                     value={formData.nome}
                     onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
-                    className="w-full rounded-lg px-4 py-2 text-white placeholder-white/30 focus:ring-2 focus:ring-[#D4AF37] focus:outline-none"
+                    className="w-full rounded-lg px-4 py-2 text-white placeholder-white/30 focus:ring-2 focus:ring-gold focus:outline-none"
                     style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)' }}
                     required
                     placeholder="Ex: João da Silva, Banda Samba Raiz"
@@ -1349,7 +1349,7 @@ const Musicians: React.FC = () => {
                     type="text"
                     value={formData.contato}
                     onChange={(e) => setFormData({ ...formData, contato: e.target.value })}
-                    className="w-full rounded-lg px-4 py-2 text-white placeholder-white/30 focus:ring-2 focus:ring-[#D4AF37] focus:outline-none"
+                    className="w-full rounded-lg px-4 py-2 text-white placeholder-white/30 focus:ring-2 focus:ring-gold focus:outline-none"
                     style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)' }}
                     placeholder="Telefone ou email"
                   />
@@ -1401,7 +1401,7 @@ const Musicians: React.FC = () => {
                     type="date"
                     value={formData.data_evento}
                     onChange={(e) => setFormData({ ...formData, data_evento: e.target.value })}
-                    className="w-full rounded-lg px-4 py-2 text-white placeholder-white/30 focus:ring-2 focus:ring-[#D4AF37] focus:outline-none"
+                    className="w-full rounded-lg px-4 py-2 text-white placeholder-white/30 focus:ring-2 focus:ring-gold focus:outline-none"
                     style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)' }}
                     required
                   />
@@ -1415,7 +1415,7 @@ const Musicians: React.FC = () => {
                     type="time"
                     value={formData.horario_inicio}
                     onChange={(e) => setFormData({ ...formData, horario_inicio: e.target.value })}
-                    className="w-full rounded-lg px-4 py-2 text-white placeholder-white/30 focus:ring-2 focus:ring-[#D4AF37] focus:outline-none"
+                    className="w-full rounded-lg px-4 py-2 text-white placeholder-white/30 focus:ring-2 focus:ring-gold focus:outline-none"
                     style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)' }}
                   />
                 </div>
@@ -1428,7 +1428,7 @@ const Musicians: React.FC = () => {
                     type="time"
                     value={formData.horario_fim}
                     onChange={(e) => setFormData({ ...formData, horario_fim: e.target.value })}
-                    className="w-full rounded-lg px-4 py-2 text-white placeholder-white/30 focus:ring-2 focus:ring-[#D4AF37] focus:outline-none"
+                    className="w-full rounded-lg px-4 py-2 text-white placeholder-white/30 focus:ring-2 focus:ring-gold focus:outline-none"
                     style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)' }}
                   />
                 </div>
@@ -1447,7 +1447,7 @@ const Musicians: React.FC = () => {
                       min="0"
                       value={formData.valor}
                       onChange={(e) => setFormData({ ...formData, valor: parseFloat(e.target.value) || 0 })}
-                      className="pl-10 w-full rounded-md bg-[#12141f]/5 border-white/20 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                      className="pl-10 w-full rounded-md bg-[#12141f]/5 border-white/20 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                       required
                     />
                   </div>
@@ -1467,7 +1467,7 @@ const Musicians: React.FC = () => {
                       min="0"
                       value={formData.valor_consumo}
                       onChange={(e) => setFormData({ ...formData, valor_consumo: parseFloat(e.target.value) || 0 })}
-                      className="pl-10 w-full rounded-md bg-[#12141f]/5 border-white/20 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                      className="pl-10 w-full rounded-md bg-[#12141f]/5 border-white/20 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                     />
                   </div>
                 </div>
@@ -1486,10 +1486,10 @@ const Musicians: React.FC = () => {
                       min="0"
                       value={formData.valor_adicional}
                       onChange={(e) => setFormData({ ...formData, valor_adicional: parseFloat(e.target.value) || 0 })}
-                      className="pl-10 w-full rounded-md bg-[#12141f]/5 border-white/20 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                      className="pl-10 w-full rounded-md bg-[#12141f]/5 border-white/20 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                     />
                   </div>
-                  <p className="text-xs text-white/40 mt-1">
+                  <p className="text-xs text-white/60 mt-1">
                     Ex: Extensão de tempo, repertório especial
                   </p>
                 </div>
@@ -1501,7 +1501,7 @@ const Musicians: React.FC = () => {
                   <select
                     value={formData.status_pagamento}
                     onChange={(e) => setFormData({ ...formData, status_pagamento: e.target.value as any })}
-                    className="w-full rounded-lg px-4 py-2 text-white placeholder-white/30 focus:ring-2 focus:ring-[#D4AF37] focus:outline-none"
+                    className="w-full rounded-lg px-4 py-2 text-white placeholder-white/30 focus:ring-2 focus:ring-gold focus:outline-none"
                     style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)' }}
                   >
                     <option value="pendente">Pendente</option>
@@ -1518,7 +1518,7 @@ const Musicians: React.FC = () => {
                     type="text"
                     value={formData.material_promocional}
                     onChange={(e) => setFormData({ ...formData, material_promocional: e.target.value })}
-                    className="w-full rounded-lg px-4 py-2 text-white placeholder-white/30 focus:ring-2 focus:ring-[#D4AF37] focus:outline-none"
+                    className="w-full rounded-lg px-4 py-2 text-white placeholder-white/30 focus:ring-2 focus:ring-gold focus:outline-none"
                     style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)' }}
                     placeholder="Links para redes sociais, portfolio, etc."
                   />
@@ -1531,7 +1531,7 @@ const Musicians: React.FC = () => {
                   <textarea
                     value={formData.observacoes}
                     onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
-                    className="w-full rounded-lg px-4 py-2 text-white placeholder-white/30 focus:ring-2 focus:ring-[#D4AF37] focus:outline-none"
+                    className="w-full rounded-lg px-4 py-2 text-white placeholder-white/30 focus:ring-2 focus:ring-gold focus:outline-none"
                     style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)' }}
                     rows={3}
                     placeholder="Observações sobre a apresentação..."
@@ -1540,7 +1540,7 @@ const Musicians: React.FC = () => {
 
                 {/* Cálculo do Valor Total */}
                 <div className="md:col-span-2 p-4 rounded-lg" style={{ background: 'rgba(212, 175, 55, 0.1)', border: '1px solid rgba(212, 175, 55, 0.3)' }}>
-                  <h4 className="font-medium text-[#D4AF37] mb-2">Cálculo do Valor Total</h4>
+                  <h4 className="font-medium text-gold mb-2">Cálculo do Valor Total</h4>
                   <div className="grid grid-cols-4 gap-4 text-sm">
                     <div>
                       <span className="text-white/60 font-medium">Valor Base:</span>
@@ -1562,7 +1562,7 @@ const Musicians: React.FC = () => {
                     </div>
                     <div>
                       <span className="text-white/60 font-medium">Total Final:</span>
-                      <div className="text-lg font-bold text-[#D4AF37]">
+                      <div className="text-lg font-bold text-gold">
                         {formatCurrency(calcularValorTotal())}
                       </div>
                     </div>

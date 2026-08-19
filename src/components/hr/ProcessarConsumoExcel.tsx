@@ -440,14 +440,14 @@ const ProcessarConsumoExcel: React.FC<ProcessarConsumoExcelProps> = ({ onClose }
                   {arquivo ? (
                     <>
                       <p className="text-lg font-semibold text-white/80">{arquivo.name}</p>
-                      <p className="text-sm text-white/40 mt-2">Clique para escolher outro arquivo</p>
+                      <p className="text-sm text-white/60 mt-2">Clique para escolher outro arquivo</p>
                     </>
                   ) : (
                     <>
                       <p className="text-lg font-semibold text-white/80">
                         Clique para selecionar o arquivo Excel
                       </p>
-                      <p className="text-sm text-white/40 mt-2">Arquivos .xlsx ou .xls</p>
+                      <p className="text-sm text-white/60 mt-2">Arquivos .xlsx ou .xls</p>
                     </>
                   )}
                 </label>
@@ -571,7 +571,7 @@ const ProcessarConsumoExcel: React.FC<ProcessarConsumoExcelProps> = ({ onClose }
                         </>
                       ) : (
                         <div className="p-4 text-center">
-                          <p className="text-sm text-white/40 mb-2">
+                          <p className="text-sm text-white/60 mb-2">
                             Nenhum colaborador encontrado
                             {buscaNome[item.funcionario] && (
                               <span className="block text-xs mt-1">
@@ -650,7 +650,7 @@ const ProcessarConsumoExcel: React.FC<ProcessarConsumoExcelProps> = ({ onClose }
                       Exportar Resultado
                     </button>
                   </div>
-                  <div className="max-h-60 overflow-y-auto border rounded-lg">
+                  <div className="max-h-60 overflow-auto border rounded-lg">
                     <table className="w-full text-sm">
                       <thead className="bg-white/5 sticky top-0">
                         <tr>
@@ -750,7 +750,7 @@ const ProcessarConsumoExcel: React.FC<ProcessarConsumoExcelProps> = ({ onClose }
                   </button>
                   <button
                     onClick={onClose}
-                    className="flex-1 px-4 py-2 bg-[#7D1F2C] text-white rounded-lg hover:bg-[#6a1a25]"
+                    className="flex-1 px-4 py-2 bg-wine text-white rounded-lg hover:bg-[#6a1a25]"
                   >
                     Concluir
                   </button>

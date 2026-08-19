@@ -1083,7 +1083,7 @@ const ComprasEstoque: React.FC = () => {
           </button>
           <button
             onClick={() => openForm()}
-            className="px-4 py-2 bg-[#7D1F2C] text-white rounded-lg hover:bg-[#6a1a25]"
+            className="px-4 py-2 bg-wine text-white rounded-lg hover:bg-[#6a1a25]"
           >
             <Plus className="w-4 h-4 inline mr-2" />
             Nova Compra
@@ -1191,7 +1191,7 @@ const ComprasEstoque: React.FC = () => {
                 placeholder="Buscar compras..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-white/20 rounded-lg bg-white/5 text-white focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+                className="w-full pl-10 pr-4 py-2 border border-white/20 rounded-lg bg-white/5 text-white focus:ring-2 focus:ring-wine focus:border-wine"
               />
             </div>
           </div>
@@ -1200,7 +1200,7 @@ const ComprasEstoque: React.FC = () => {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value as any)}
-              className="w-full border border-white/20 rounded-lg px-4 py-2 bg-white/5 text-white focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+              className="w-full border border-white/20 rounded-lg px-4 py-2 bg-white/5 text-white focus:ring-2 focus:ring-wine focus:border-wine"
             >
               <option value="all">Todos os Status</option>
               <option value="pendente">Pendente</option>
@@ -1227,7 +1227,7 @@ const ComprasEstoque: React.FC = () => {
               type="date"
               value={dataInicial}
               onChange={(e) => setDataInicial(e.target.value)}
-              className="w-full border border-white/20 rounded-lg px-4 py-2 bg-white/5 text-white focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+              className="w-full border border-white/20 rounded-lg px-4 py-2 bg-white/5 text-white focus:ring-2 focus:ring-wine focus:border-wine"
             />
           </div>
 
@@ -1236,7 +1236,7 @@ const ComprasEstoque: React.FC = () => {
               type="date"
               value={dataFinal}
               onChange={(e) => setDataFinal(e.target.value)}
-              className="w-full border border-white/20 rounded-lg px-4 py-2 bg-white/5 text-white focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+              className="w-full border border-white/20 rounded-lg px-4 py-2 bg-white/5 text-white focus:ring-2 focus:ring-wine focus:border-wine"
             />
           </div>
         </div>
@@ -1244,8 +1244,14 @@ const ComprasEstoque: React.FC = () => {
 
       {/* Lista de Compras */}
       {loading ? (
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7D1F2C]"></div>
+        <div className="w-full">
+          <div className="w-full space-y-3" aria-busy="true">
+                    <div className="skeleton" style={{ height: 14, width: '32%' }} />
+                    <div className="skeleton" style={{ height: 44, width: '100%' }} />
+                    <div className="skeleton" style={{ height: 44, width: '100%' }} />
+                    <div className="skeleton" style={{ height: 44, width: '100%' }} />
+                    <div className="skeleton" style={{ height: 44, width: '82%' }} />
+                  </div>
         </div>
       ) : (
         <div className="bg-[#12141f] rounded-lg border border-white/10 overflow-hidden">
@@ -1253,25 +1259,25 @@ const ComprasEstoque: React.FC = () => {
             <table className="w-full">
               <thead>
                 <tr className="text-left bg-white/5 border-b">
-                  <th className="px-6 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">
                     Fornecedor
                   </th>
-                  <th className="px-6 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">
                     Documento
                   </th>
-                  <th className="px-6 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">
                     Data Compra
                   </th>
-                  <th className="px-6 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">
                     Estoque Destino
                   </th>
-                  <th className="px-6 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">
                     Valor Total
                   </th>
-                  <th className="px-6 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">
                     Status
                   </th>
-                  <th className="px-6 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">
                     Ações
                   </th>
                 </tr>
@@ -1368,7 +1374,7 @@ const ComprasEstoque: React.FC = () => {
             <div className="text-center py-12">
               <ShoppingCart className="w-16 h-16 text-white/30 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-white mb-2">Nenhuma compra encontrada</h3>
-              <p className="text-white/40">
+              <p className="text-white/60">
                 {searchTerm || statusFilter !== 'all' || fornecedorFilter !== 'all'
                   ? 'Nenhuma compra corresponde aos filtros aplicados.'
                   : 'Nenhuma compra cadastrada.'}
@@ -1389,7 +1395,7 @@ const ComprasEstoque: React.FC = () => {
                 <h3 className="text-lg font-bold text-white">
                   {editingCompra ? 'Editar Compra' : 'Nova Compra'}
                 </h3>
-                <p className="text-xs text-white/40 mt-0.5">Preencha os dados da compra e adicione os itens recebidos</p>
+                <p className="text-xs text-white/60 mt-0.5">Preencha os dados da compra e adicione os itens recebidos</p>
               </div>
               <button onClick={() => setShowForm(false)} className="p-2 hover:bg-white/10 rounded-xl transition-colors">
                 <X className="w-5 h-5 text-white/40" />
@@ -1400,7 +1406,7 @@ const ComprasEstoque: React.FC = () => {
 
               {/* Seção 1 — Dados da compra */}
               <div>
-                <h4 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-3 flex items-center gap-2">
+                <h4 className="text-xs font-semibold text-white/60 uppercase tracking-wider mb-3 flex items-center gap-2">
                   <ShoppingCart className="w-3.5 h-3.5" /> Dados da Compra
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1423,10 +1429,10 @@ const ComprasEstoque: React.FC = () => {
                       type="text"
                       value={formData.numero_documento}
                       onChange={(e) => setFormData({ ...formData, numero_documento: e.target.value })}
-                      className="w-full rounded-xl border border-white/20 bg-[#1a1d2e] text-white px-3 py-2.5 text-sm focus:border-[#7D1F2C] focus:outline-none"
+                      className="w-full rounded-xl border border-white/20 bg-[#1a1d2e] text-white px-3 py-2.5 text-sm focus:border-wine focus:outline-none"
                       placeholder="Ex: NF-001, Pedido-123"
                     />
-                    <p className="text-xs text-white/30 mt-1">Número da nota fiscal ou pedido (opcional)</p>
+                    <p className="text-xs text-white/60 mt-1">Número da nota fiscal ou pedido (opcional)</p>
                   </div>
 
                   <div>
@@ -1437,10 +1443,10 @@ const ComprasEstoque: React.FC = () => {
                       type="date"
                       value={formData.data_compra}
                       onChange={(e) => setFormData({ ...formData, data_compra: e.target.value })}
-                      className="w-full rounded-xl border border-white/20 bg-[#1a1d2e] text-white px-3 py-2.5 text-sm focus:border-[#7D1F2C] focus:outline-none"
+                      className="w-full rounded-xl border border-white/20 bg-[#1a1d2e] text-white px-3 py-2.5 text-sm focus:border-wine focus:outline-none"
                       required
                     />
-                    <p className="text-xs text-white/30 mt-1">Data em que a compra foi realizada</p>
+                    <p className="text-xs text-white/60 mt-1">Data em que a compra foi realizada</p>
                   </div>
 
                   <div>
@@ -1453,7 +1459,7 @@ const ComprasEstoque: React.FC = () => {
                       required
                       className="w-full"
                     />
-                    <p className="text-xs text-white/30 mt-1">Local onde os produtos serão armazenados</p>
+                    <p className="text-xs text-white/60 mt-1">Local onde os produtos serão armazenados</p>
                   </div>
                 </div>
               </div>
@@ -1461,17 +1467,17 @@ const ComprasEstoque: React.FC = () => {
               {/* Seção 2 — Itens da Compra */}
               <div className="border-t border-white/8 pt-5">
                 <div className="flex items-center justify-between mb-3">
-                  <h4 className="text-xs font-semibold text-white/40 uppercase tracking-wider flex items-center gap-2">
+                  <h4 className="text-xs font-semibold text-white/60 uppercase tracking-wider flex items-center gap-2">
                     <Package className="w-3.5 h-3.5" /> Itens da Compra
                     {formData.itens.length > 0 && (
-                      <span className="ml-1 px-2 py-0.5 bg-white/10 rounded-full text-white/60 normal-case text-[10px] font-bold">
+                      <span className="ml-1 px-2 py-0.5 bg-white/10 rounded-full text-white/60 normal-case text-caption font-bold">
                         {formData.itens.length} {formData.itens.length === 1 ? 'item' : 'itens'}
                       </span>
                     )}
                   </h4>
                   <button
                     onClick={adicionarItem}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-[#7D1F2C] text-white rounded-xl text-xs font-semibold hover:bg-[#6a1a25] transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-wine text-white rounded-xl text-xs font-semibold hover:bg-[#6a1a25] transition-colors"
                   >
                     <Plus className="w-3.5 h-3.5" /> Adicionar Item
                   </button>
@@ -1481,11 +1487,11 @@ const ComprasEstoque: React.FC = () => {
                   <div className="space-y-2">
                     {/* Cabeçalho das colunas */}
                     <div className="hidden md:grid grid-cols-12 gap-2 px-3 pb-1">
-                      <div className="col-span-4 text-[10px] font-semibold text-white/30 uppercase tracking-wide">Produto / Insumo</div>
-                      <div className="col-span-2 text-[10px] font-semibold text-white/30 uppercase tracking-wide">Qtd recebida</div>
-                      <div className="col-span-2 text-[10px] font-semibold text-white/30 uppercase tracking-wide">Custo unitário (R$)</div>
-                      <div className="col-span-2 text-[10px] font-semibold text-white/30 uppercase tracking-wide">Data validade</div>
-                      <div className="col-span-1 text-[10px] font-semibold text-white/30 uppercase tracking-wide text-right">Total</div>
+                      <div className="col-span-4 text-caption font-semibold text-white/30 uppercase tracking-wide">Produto / Insumo</div>
+                      <div className="col-span-2 text-caption font-semibold text-white/30 uppercase tracking-wide">Qtd recebida</div>
+                      <div className="col-span-2 text-caption font-semibold text-white/30 uppercase tracking-wide">Custo unitário (R$)</div>
+                      <div className="col-span-2 text-caption font-semibold text-white/30 uppercase tracking-wide">Data validade</div>
+                      <div className="col-span-1 text-caption font-semibold text-white/30 uppercase tracking-wide text-right">Total</div>
                       <div className="col-span-1" />
                     </div>
 
@@ -1497,7 +1503,7 @@ const ComprasEstoque: React.FC = () => {
                         placeholder="Filtrar lista de produtos ao selecionar..."
                         value={searchItemTerm}
                         onChange={(e) => setSearchItemTerm(e.target.value)}
-                        className="w-full pl-9 pr-4 py-2 border border-white/10 rounded-xl bg-[#1a1d2e] text-white text-sm focus:outline-none focus:border-[#7D1F2C]"
+                        className="w-full pl-9 pr-4 py-2 border border-white/10 rounded-xl bg-[#1a1d2e] text-white text-sm focus:outline-none focus:border-wine"
                       />
                     </div>
 
@@ -1517,7 +1523,7 @@ const ComprasEstoque: React.FC = () => {
 
                             {/* Item */}
                             <div className="md:col-span-4">
-                              <label className="block text-[10px] font-semibold text-white/40 uppercase tracking-wide mb-1 md:hidden">Produto</label>
+                              <label className="block text-caption font-semibold text-white/60 uppercase tracking-wide mb-1 md:hidden">Produto</label>
                               <SearchableSelect
                                 options={itensFilteredForSelect.map(ie => ({
                                   value: ie.id,
@@ -1531,7 +1537,7 @@ const ComprasEstoque: React.FC = () => {
                                 className="w-full"
                               />
                               {itemInfo && (
-                                <p className="text-[10px] text-white/30 mt-1">
+                                <p className="text-caption text-white/60 mt-1">
                                   Unidade: <span className="text-white/50">{itemInfo.unidade_medida}</span>
                                   {itemInfo.custo_medio > 0 && <> · Último custo: <span className="text-white/50">{formatCurrency(itemInfo.custo_medio)}</span></>}
                                 </p>
@@ -1540,8 +1546,8 @@ const ComprasEstoque: React.FC = () => {
 
                             {/* Quantidade */}
                             <div className="md:col-span-2">
-                              <label className="block text-[10px] font-semibold text-white/40 uppercase tracking-wide mb-1">
-                                Quantidade {itemInfo && <span className="text-white/30 normal-case">({itemInfo.unidade_medida})</span>}
+                              <label className="block text-caption font-semibold text-white/60 uppercase tracking-wide mb-1">
+                                Quantidade {itemInfo && <span className="text-white/60 normal-case">({itemInfo.unidade_medida})</span>}
                               </label>
                               <input
                                 type="number"
@@ -1549,7 +1555,7 @@ const ComprasEstoque: React.FC = () => {
                                 min="0.001"
                                 value={item.quantidade || ''}
                                 onChange={(e) => atualizarItem(index, 'quantidade', parseFloat(e.target.value) || 0)}
-                                className="w-full rounded-xl border border-white/20 bg-[#1a1d2e] text-white px-3 py-2.5 text-sm focus:border-[#7D1F2C] focus:outline-none"
+                                className="w-full rounded-xl border border-white/20 bg-[#1a1d2e] text-white px-3 py-2.5 text-sm focus:border-wine focus:outline-none"
                                 placeholder="0"
                                 required
                               />
@@ -1557,16 +1563,16 @@ const ComprasEstoque: React.FC = () => {
 
                             {/* Custo unitário */}
                             <div className="md:col-span-2">
-                              <label className="block text-[10px] font-semibold text-white/40 uppercase tracking-wide mb-1">Custo Unitário (R$)</label>
+                              <label className="block text-caption font-semibold text-white/60 uppercase tracking-wide mb-1">Custo Unitário (R$)</label>
                               <div className="relative">
-                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40 text-sm">R$</span>
+                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/60 text-sm">R$</span>
                                 <input
                                   type="number"
                                   step="0.01"
                                   min="0"
                                   value={item.custo_unitario || ''}
                                   onChange={(e) => atualizarItem(index, 'custo_unitario', parseFloat(e.target.value) || 0)}
-                                  className="w-full pl-9 rounded-xl border border-white/20 bg-[#1a1d2e] text-white px-3 py-2.5 text-sm focus:border-[#7D1F2C] focus:outline-none"
+                                  className="w-full pl-9 rounded-xl border border-white/20 bg-[#1a1d2e] text-white px-3 py-2.5 text-sm focus:border-wine focus:outline-none"
                                   placeholder="0,00"
                                   required
                                 />
@@ -1575,19 +1581,19 @@ const ComprasEstoque: React.FC = () => {
 
                             {/* Validade */}
                             <div className="md:col-span-2">
-                              <label className="block text-[10px] font-semibold text-white/40 uppercase tracking-wide mb-1">Validade <span className="text-white/25 normal-case">(opcional)</span></label>
+                              <label className="block text-caption font-semibold text-white/60 uppercase tracking-wide mb-1">Validade <span className="text-white/60 normal-case">(opcional)</span></label>
                               <input
                                 type="date"
                                 value={item.data_validade || ''}
                                 onChange={(e) => atualizarItem(index, 'data_validade', e.target.value)}
-                                className="w-full rounded-xl border border-white/20 bg-[#1a1d2e] text-white px-3 py-2.5 text-sm focus:border-[#7D1F2C] focus:outline-none"
+                                className="w-full rounded-xl border border-white/20 bg-[#1a1d2e] text-white px-3 py-2.5 text-sm focus:border-wine focus:outline-none"
                               />
                             </div>
 
                             {/* Total + remover */}
                             <div className="md:col-span-1 flex flex-col items-end justify-between h-full gap-2">
-                              <label className="block text-[10px] font-semibold text-white/40 uppercase tracking-wide self-start md:self-end">Total</label>
-                              <span className={`text-sm font-bold ${total > 0 ? 'text-[#D4AF37]' : 'text-white/20'}`}>
+                              <label className="block text-caption font-semibold text-white/60 uppercase tracking-wide self-start md:self-end">Total</label>
+                              <span className={`text-sm font-bold ${total > 0 ? 'text-gold' : 'text-white/20'}`}>
                                 {total > 0 ? formatCurrency(total) : '—'}
                               </span>
                             </div>
@@ -1607,24 +1613,24 @@ const ComprasEstoque: React.FC = () => {
                     })}
 
                     {/* Rodapé — total geral */}
-                    <div className="flex items-center justify-between px-4 py-3 bg-[#7D1F2C]/10 border border-[#7D1F2C]/20 rounded-2xl mt-2">
+                    <div className="flex items-center justify-between px-4 py-3 bg-wine/10 border border-wine/20 rounded-2xl mt-2">
                       <div>
                         <p className="text-xs text-white/50">{formData.itens.length} {formData.itens.length === 1 ? 'produto' : 'produtos'} · encargos/descontos podem ser ajustados no recebimento</p>
                       </div>
                       <div className="text-right">
-                        <p className="text-xs text-white/40 mb-0.5">Valor total da compra</p>
-                        <p className="text-xl font-bold text-[#D4AF37]">{formatCurrency(calcularValorTotal())}</p>
+                        <p className="text-xs text-white/60 mb-0.5">Valor total da compra</p>
+                        <p className="text-xl font-bold text-gold">{formatCurrency(calcularValorTotal())}</p>
                       </div>
                     </div>
                   </div>
                 ) : (
                   <div className="flex flex-col items-center justify-center py-10 bg-white/3 border border-dashed border-white/10 rounded-2xl">
                     <Package className="w-10 h-10 text-white/20 mb-3" />
-                    <p className="text-sm text-white/40 mb-1">Nenhum produto adicionado</p>
-                    <p className="text-xs text-white/25 mb-4">Clique em "Adicionar Item" para incluir os produtos comprados</p>
+                    <p className="text-sm text-white/60 mb-1">Nenhum produto adicionado</p>
+                    <p className="text-xs text-white/60 mb-4">Clique em "Adicionar Item" para incluir os produtos comprados</p>
                     <button
                       onClick={adicionarItem}
-                      className="flex items-center gap-2 px-4 py-2.5 bg-[#7D1F2C] text-white rounded-xl text-sm font-semibold hover:bg-[#6a1a25] transition-colors"
+                      className="flex items-center gap-2 px-4 py-2.5 bg-wine text-white rounded-xl text-sm font-semibold hover:bg-[#6a1a25] transition-colors"
                     >
                       <Plus className="w-4 h-4" /> Adicionar Primeiro Item
                     </button>
@@ -1634,11 +1640,11 @@ const ComprasEstoque: React.FC = () => {
 
               {/* Seção 3 — Observações */}
               <div className="border-t border-white/8 pt-5">
-                <h4 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-3">Observações</h4>
+                <h4 className="text-xs font-semibold text-white/60 uppercase tracking-wider mb-3">Observações</h4>
                 <textarea
                   value={formData.observacoes}
                   onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
-                  className="w-full rounded-xl border border-white/20 bg-[#1a1d2e] text-white px-3 py-2.5 text-sm focus:border-[#7D1F2C] focus:outline-none"
+                  className="w-full rounded-xl border border-white/20 bg-[#1a1d2e] text-white px-3 py-2.5 text-sm focus:border-wine focus:outline-none"
                   rows={2}
                   placeholder="Informações adicionais sobre esta compra (opcional)..."
                 />
@@ -1647,7 +1653,7 @@ const ComprasEstoque: React.FC = () => {
 
             {/* Footer */}
             <div className="px-6 py-4 border-t border-white/5 flex items-center justify-between gap-3 sticky bottom-0 bg-[#0f1020]">
-              <p className="text-xs text-white/30">
+              <p className="text-xs text-white/60">
                 {!formData.estoque_destino_id && <span className="text-amber-400">Selecione o estoque de destino · </span>}
                 {formData.itens.length === 0 && <span className="text-amber-400">Adicione pelo menos 1 item</span>}
                 {formData.estoque_destino_id && formData.itens.length > 0 && <span className="text-emerald-400">Pronto para salvar</span>}
@@ -1662,7 +1668,7 @@ const ComprasEstoque: React.FC = () => {
                 <button
                   onClick={handleSave}
                   disabled={loading || !formData.estoque_destino_id || formData.itens.length === 0}
-                  className="px-5 py-2.5 bg-[#7D1F2C] text-white rounded-xl hover:bg-[#6a1a25] disabled:opacity-50 text-sm font-semibold transition-colors"
+                  className="px-5 py-2.5 bg-wine text-white rounded-xl hover:bg-[#6a1a25] disabled:opacity-50 text-sm font-semibold transition-colors"
                 >
                   {loading ? 'Salvando...' : editingCompra ? 'Salvar Alterações' : 'Registrar Compra'}
                 </button>
@@ -1722,8 +1728,8 @@ const ComprasEstoque: React.FC = () => {
             </div>
 
             {loading ? (
-              <div className="flex justify-center items-center h-32">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#7D1F2C]"></div>
+              <div className="w-full">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-wine"></div>
               </div>
             ) : (
               <>
@@ -1732,28 +1738,28 @@ const ComprasEstoque: React.FC = () => {
                     <table className="w-full">
                       <thead>
                         <tr className="text-left bg-white/5 border-b">
-                          <th className="px-4 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">
+                          <th className="px-4 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">
                             Item
                           </th>
-                          <th className="px-4 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">
+                          <th className="px-4 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">
                             Código
                           </th>
-                          <th className="px-4 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">
+                          <th className="px-4 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">
                             Qtd Pedida
                           </th>
-                          <th className="px-4 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">
+                          <th className="px-4 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">
                             Qtd Recebida
                           </th>
-                          <th className="px-4 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">
+                          <th className="px-4 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">
                             Unidade
                           </th>
-                          <th className="px-4 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">
+                          <th className="px-4 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">
                             Custo Unit.
                           </th>
-                          <th className="px-4 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">
+                          <th className="px-4 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">
                             Custo Total
                           </th>
-                          <th className="px-4 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">
+                          <th className="px-4 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">
                             Validade
                           </th>
                         </tr>
@@ -1831,7 +1837,7 @@ const ComprasEstoque: React.FC = () => {
                     <div className="mt-4 flex justify-end">
                       <div className="bg-white/5 p-4 rounded-lg">
                         <div className="text-sm text-white/50 mb-1">Valor Total da Compra</div>
-                        <div className="text-2xl font-bold text-[#7D1F2C]">
+                        <div className="text-2xl font-bold text-wine">
                           {formatCurrency(
                             compraSelecionada.itens.reduce((sum, item) => {
                               const quantidadeRecebida = item.quantidade_recebida ?? (item.quantidade_pedida || item.quantidade);
@@ -1850,7 +1856,7 @@ const ComprasEstoque: React.FC = () => {
                 ) : (
                   <div className="text-center py-8">
                     <Package className="w-12 h-12 text-white/30 mx-auto mb-4" />
-                    <p className="text-white/40">Nenhum item encontrado para esta compra</p>
+                    <p className="text-white/60">Nenhum item encontrado para esta compra</p>
                   </div>
                 )}
               </>
@@ -1900,14 +1906,14 @@ const ComprasEstoque: React.FC = () => {
                 <table className="w-full">
                   <thead>
                     <tr className="text-left bg-white/5 border-b">
-                      <th className="px-4 py-3 text-xs font-medium text-white/40 uppercase">Item</th>
-                      <th className="px-4 py-3 text-xs font-medium text-white/40 uppercase text-center">Unidade</th>
-                      <th className="px-4 py-3 text-xs font-medium text-white/40 uppercase text-center">Qtd Pedida</th>
-                      <th className="px-4 py-3 text-xs font-medium text-white/40 uppercase text-center">Qtd Recebida</th>
-                      <th className="px-4 py-3 text-xs font-medium text-white/40 uppercase text-center">Custo Unit.</th>
-                      <th className="px-4 py-3 text-xs font-medium text-white/40 uppercase text-center">Total</th>
-                      <th className="px-4 py-3 text-xs font-medium text-white/40 uppercase text-center">Status</th>
-                      <th className="px-4 py-3 text-xs font-medium text-white/40 uppercase">Motivo (se divergente)</th>
+                      <th className="px-4 py-3 text-xs font-medium text-white/60 uppercase">Item</th>
+                      <th className="px-4 py-3 text-xs font-medium text-white/60 uppercase text-center">Unidade</th>
+                      <th className="px-4 py-3 text-xs font-medium text-white/60 uppercase text-center">Qtd Pedida</th>
+                      <th className="px-4 py-3 text-xs font-medium text-white/60 uppercase text-center">Qtd Recebida</th>
+                      <th className="px-4 py-3 text-xs font-medium text-white/60 uppercase text-center">Custo Unit.</th>
+                      <th className="px-4 py-3 text-xs font-medium text-white/60 uppercase text-center">Total</th>
+                      <th className="px-4 py-3 text-xs font-medium text-white/60 uppercase text-center">Status</th>
+                      <th className="px-4 py-3 text-xs font-medium text-white/60 uppercase">Motivo (se divergente)</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1921,7 +1927,7 @@ const ComprasEstoque: React.FC = () => {
                             <div>
                               <p className="font-medium text-white">{item.item_nome}</p>
                               {item.item_codigo && (
-                                <p className="text-sm text-white/40">Cód: {item.item_codigo}</p>
+                                <p className="text-sm text-white/60">Cód: {item.item_codigo}</p>
                               )}
                             </div>
                           </td>
@@ -1938,7 +1944,7 @@ const ComprasEstoque: React.FC = () => {
                               step="0.01"
                               value={item.quantidade_recebida || 0}
                               onChange={(e) => atualizarQuantidadeRecebida(item.id, parseFloat(e.target.value) || 0)}
-                              className="w-24 px-3 py-2 border border-white/20 rounded-lg bg-white/5 text-white focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C] text-center"
+                              className="w-24 px-3 py-2 border border-white/20 rounded-lg bg-white/5 text-white focus:ring-2 focus:ring-wine focus:border-wine text-center"
                             />
                           </td>
                           <td className="px-4 py-3">
@@ -1948,7 +1954,7 @@ const ComprasEstoque: React.FC = () => {
                               step="0.01"
                               value={item.custo_unitario || 0}
                               onChange={(e) => atualizarCustoUnitarioRecebimento(item.id, parseFloat(e.target.value) || 0)}
-                              className="w-28 px-3 py-2 border border-white/20 rounded-lg bg-white/5 text-white focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C] text-center"
+                              className="w-28 px-3 py-2 border border-white/20 rounded-lg bg-white/5 text-white focus:ring-2 focus:ring-wine focus:border-wine text-center"
                             />
                           </td>
                           <td className="px-4 py-3 text-center">
@@ -1976,7 +1982,7 @@ const ComprasEstoque: React.FC = () => {
                                 placeholder="Informe o motivo..."
                                 value={item.motivo_divergencia || ''}
                                 onChange={(e) => atualizarMotivoDivergencia(item.id, e.target.value)}
-                                className="w-full px-3 py-2 border border-white/20 rounded-lg bg-white/5 text-white focus:ring-2 focus:ring-[#7D1F2C] focus:border-[#7D1F2C]"
+                                className="w-full px-3 py-2 border border-white/20 rounded-lg bg-white/5 text-white focus:ring-2 focus:ring-wine focus:border-wine"
                               />
                             )}
                           </td>
@@ -2044,7 +2050,7 @@ const ComprasEstoque: React.FC = () => {
                         setValorEncargosRecebimento(valor);
                         setPercentualEncargosRecebimento(Math.round(percentual * 100) / 100);
                       }}
-                      className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                      className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                       placeholder="0,00"
                     />
                   </div>
@@ -2068,10 +2074,10 @@ const ComprasEstoque: React.FC = () => {
                         setPercentualEncargosRecebimento(percentual);
                         setValorEncargosRecebimento(Math.round(valor * 100) / 100);
                       }}
-                      className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                      className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                       placeholder="0,00"
                     />
-                    <p className="text-xs text-white/40 mt-1">Calculado automaticamente</p>
+                    <p className="text-xs text-white/60 mt-1">Calculado automaticamente</p>
                   </div>
 
                   <div className="md:col-span-3">
@@ -2082,7 +2088,7 @@ const ComprasEstoque: React.FC = () => {
                       type="text"
                       value={descricaoEncargosRecebimento}
                       onChange={(e) => setDescricaoEncargosRecebimento(e.target.value)}
-                      className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-[#7D1F2C] focus:ring focus:ring-[#7D1F2C] focus:ring-opacity-50"
+                      className="w-full rounded-md border border-white/20 bg-white/5 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
                       placeholder="Ex: Entrega + 2% financeiro"
                     />
                   </div>
@@ -2142,7 +2148,7 @@ const ComprasEstoque: React.FC = () => {
                       className="w-full rounded-md border-white/20 shadow-sm focus:border-green-600 focus:ring focus:ring-green-600 focus:ring-opacity-50"
                       placeholder="0,00"
                     />
-                    <p className="text-xs text-white/40 mt-1">Calculado automaticamente</p>
+                    <p className="text-xs text-white/60 mt-1">Calculado automaticamente</p>
                   </div>
 
                   <div className="md:col-span-3">
@@ -2229,7 +2235,7 @@ const ComprasEstoque: React.FC = () => {
                   const hasDivergencia = item.quantidade_recebida !== quantidadePedida;
                   return hasDivergencia && !item.motivo_divergencia;
                 })}
-                className="px-4 py-2 bg-[#7D1F2C] text-white rounded-lg hover:bg-[#6a1a25] disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-2 bg-wine text-white rounded-lg hover:bg-[#6a1a25] disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Confirmar Recebimento
               </button>
@@ -2266,7 +2272,7 @@ const ComprasEstoque: React.FC = () => {
             <div className="p-6 border-b border-white/10 flex justify-between items-center">
               <div>
                 <h3 className="text-xl font-semibold text-white">Métricas e Análises de Compras</h3>
-                <p className="text-sm text-white/40 mt-1">
+                <p className="text-sm text-white/60 mt-1">
                   Visão completa das compras com filtros e indicadores
                 </p>
               </div>

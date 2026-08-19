@@ -77,7 +77,7 @@ const ContagemHistorico: React.FC<Props> = ({ onVoltar, onVerContagem }) => {
           </button>
           <div>
             <h2 className="text-xl font-bold text-white">Historico de Contagens</h2>
-            <p className="text-xs text-white/40">Contagens processadas e finalizadas</p>
+            <p className="text-xs text-white/60">Contagens processadas e finalizadas</p>
           </div>
         </div>
       </div>
@@ -149,7 +149,7 @@ const ContagemHistorico: React.FC<Props> = ({ onVoltar, onVerContagem }) => {
         ) : historico.length === 0 ? (
           <div className="py-16 text-center">
             <History className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-            <p className="text-sm text-white/40">
+            <p className="text-sm text-white/60">
               {hasFilters
                 ? 'Nenhuma contagem encontrada com estes filtros'
                 : 'Nenhuma contagem processada ainda'}
@@ -160,25 +160,25 @@ const ContagemHistorico: React.FC<Props> = ({ onVoltar, onVerContagem }) => {
             <table className="w-full">
               <thead className="bg-white/5 border-b border-white/10">
                 <tr>
-                  <th className="px-4 py-2.5 text-left text-[11px] font-semibold text-white/40 uppercase">
+                  <th className="px-4 py-2.5 text-left text-caption font-semibold text-white/60 uppercase">
                     Data
                   </th>
-                  <th className="px-4 py-2.5 text-left text-[11px] font-semibold text-white/40 uppercase">
+                  <th className="px-4 py-2.5 text-left text-caption font-semibold text-white/60 uppercase">
                     Estoque
                   </th>
-                  <th className="px-4 py-2.5 text-left text-[11px] font-semibold text-white/40 uppercase">
+                  <th className="px-4 py-2.5 text-left text-caption font-semibold text-white/60 uppercase">
                     Responsavel
                   </th>
-                  <th className="px-4 py-2.5 text-center text-[11px] font-semibold text-white/40 uppercase">
+                  <th className="px-4 py-2.5 text-center text-caption font-semibold text-white/60 uppercase">
                     Itens
                   </th>
-                  <th className="px-4 py-2.5 text-center text-[11px] font-semibold text-white/40 uppercase">
+                  <th className="px-4 py-2.5 text-center text-caption font-semibold text-white/60 uppercase">
                     Divergencias
                   </th>
-                  <th className="px-4 py-2.5 text-right text-[11px] font-semibold text-white/40 uppercase">
+                  <th className="px-4 py-2.5 text-right text-caption font-semibold text-white/60 uppercase">
                     Valor Ajustes
                   </th>
-                  <th className="px-4 py-2.5 text-center text-[11px] font-semibold text-white/40 uppercase w-16">
+                  <th className="px-4 py-2.5 text-center text-caption font-semibold text-white/40 uppercase w-16">
                     Acoes
                   </th>
                 </tr>
@@ -188,7 +188,7 @@ const ContagemHistorico: React.FC<Props> = ({ onVoltar, onVerContagem }) => {
                   <tr key={c.id} className="hover:bg-white/10/5/50 transition-colors">
                     <td className="px-4 py-3 text-sm text-white/80">
                       {dayjs(c.processado_em || c.data_contagem).format('DD/MM/YYYY')}
-                      <span className="text-white/30 ml-1 text-xs">
+                      <span className="text-white/60 ml-1 text-xs">
                         {dayjs(c.processado_em || c.data_contagem).format('HH:mm')}
                       </span>
                     </td>

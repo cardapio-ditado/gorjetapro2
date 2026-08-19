@@ -216,8 +216,8 @@ function AbaMapeamento() {
 
   if (carregando) return (
     <div className="flex flex-col items-center justify-center py-20 gap-4">
-      <div className="w-10 h-10 border-4 border-[#7D1F2C]/20 border-t-[#7D1F2C] rounded-full animate-spin"/>
-      <p className="text-white/40 text-sm">Carregando central de mapeamento...</p>
+      <div className="w-10 h-10 border-4 border-wine/20 border-t-[#7D1F2C] rounded-full animate-spin"/>
+      <p className="text-white/60 text-sm">Carregando central de mapeamento...</p>
     </div>
   );
 
@@ -225,9 +225,9 @@ function AbaMapeamento() {
     <div className="p-6 max-w-4xl mx-auto space-y-4">
       <div>
         <h1 className="text-xl font-bold text-white flex items-center gap-2">
-          <Map size={20} className="text-[#7D1F2C]"/> Central de Mapeamento
+          <Map size={20} className="text-wine"/> Central de Mapeamento
         </h1>
-        <p className="text-sm text-white/40 mt-1">
+        <p className="text-sm text-white/60 mt-1">
           Vincule cada produto do cardápio com o item ou ficha técnica do estoque. Independente das vendas — mapeie quando quiser.
         </p>
       </div>
@@ -247,7 +247,7 @@ function AbaMapeamento() {
         ].map(s=>(
           <div key={s.label} className={`${s.bg} border ${s.border} rounded-2xl p-4 text-center`}>
             <p className={`text-2xl font-bold ${s.color}`}>{s.val}</p>
-            <p className="text-xs text-white/40 mt-1">{s.label}</p>
+            <p className="text-xs text-white/60 mt-1">{s.label}</p>
           </div>
         ))}
       </div>
@@ -256,7 +256,7 @@ function AbaMapeamento() {
         <div className="w-full bg-white/10 rounded-full h-3 overflow-hidden">
           <div className={`h-3 rounded-full transition-all duration-500 ${pct>=80?'bg-green-500':pct>=50?'bg-amber-400':'bg-red-400'}`} style={{width:`${pct}%`}}/>
         </div>
-        <p className="text-xs text-white/30 text-center mt-1">{pct}% do cardápio vinculado ao estoque</p>
+        <p className="text-xs text-white/60 text-center mt-1">{pct}% do cardápio vinculado ao estoque</p>
       </div>
 
       {/* Filtros */}
@@ -265,14 +265,14 @@ function AbaMapeamento() {
           <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30"/>
           <input type="text" placeholder={`Buscar entre ${stats.total} produtos...`} value={search}
             onChange={e=>setSearch(e.target.value)}
-            className="w-full bg-[#1a1d2e] text-white border border-white/10 rounded-xl pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#7D1F2C]/30"/>
+            className="w-full bg-[#1a1d2e] text-white border border-white/10 rounded-xl pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-wine/30"/>
         </div>
         <button onClick={carregar} className="flex items-center gap-2 px-3 py-2 rounded-xl border border-white/10 text-sm text-white/40 hover:bg-white/5">
           <RefreshCw size={13}/> Atualizar
         </button>
         {(['pendentes','todos','mapeados'] as const).map(f=>(
           <button key={f} onClick={()=>setFiltro(f)}
-            className={`px-3 py-2 rounded-xl text-xs font-medium border transition-colors ${filtro===f?'bg-[#7D1F2C] text-white border-[#7D1F2C]':'bg-white/5 text-white/60 border-white/10 hover:bg-white/10'}`}>
+            className={`px-3 py-2 rounded-xl text-xs font-medium border transition-colors ${filtro===f?'bg-wine text-white border-wine':'bg-white/5 text-white/60 border-white/10 hover:bg-white/10'}`}>
             {f==='pendentes'?`⚠ Pendentes (${stats.pendentes})`:f==='mapeados'?`✓ Vinculados (${stats.mapeados})`:'Todos'}
           </button>
         ))}
@@ -288,7 +288,7 @@ function AbaMapeamento() {
       {/* Paginação */}
       {filtrados.length > POR_PAGINA && (
         <div className="flex items-center justify-between bg-white/5 border border-white/10 rounded-xl px-4 py-2">
-          <span className="text-xs text-white/40">
+          <span className="text-xs text-white/60">
             Mostrando {pagina*POR_PAGINA+1}–{Math.min((pagina+1)*POR_PAGINA, filtrados.length)} de {filtrados.length}
           </span>
           <div className="flex gap-2">
@@ -338,7 +338,7 @@ function AbaMapeamento() {
                   : ok              ? <Check  size={14} className="text-green-400 flex-shrink-0"/>
                   :                   <AlertTriangle size={14} className="text-amber-500 flex-shrink-0"/>}
                   <div className="min-w-0">
-                    <p className={`font-semibold text-sm truncate ${edit.ignorar?'line-through text-white/30':'text-white'}`}>
+                    <p className={`font-semibold text-sm truncate ${edit.ignorar?'line-through text-white/60':'text-white'}`}>
                       {m.nome_externo}
                     </p>
                     <div className="flex items-center gap-2 flex-wrap mt-0.5">
@@ -347,7 +347,7 @@ function AbaMapeamento() {
                           → {itemNome||fichaNome||'?'}{estqNome?` · ${estqNome}`:''}
                         </span>
                       )}
-                      {edit.ignorar && <span className="text-xs text-white/30">ignorado — não baixa estoque</span>}
+                      {edit.ignorar && <span className="text-xs text-white/60">ignorado — não baixa estoque</span>}
                       {!ok && melhorScore >= 50 && (
                         <span className="text-xs text-blue-500 flex items-center gap-1">
                           <Zap size={10}/> Sugestão: {melhorItem?.nome} ({melhorScore}%)
@@ -357,7 +357,7 @@ function AbaMapeamento() {
                   </div>
                 </div>
                 <button onClick={()=>setExpandido(isExp?null:m.nome_externo)}
-                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-white/10 bg-[#12141f] text-xs font-medium text-white/60 hover:border-[#7D1F2C] hover:text-[#7D1F2C] transition-all flex-shrink-0 ml-2">
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-white/10 bg-[#12141f] text-xs font-medium text-white/60 hover:border-wine hover:text-wine transition-all flex-shrink-0 ml-2">
                   {isExp?'Fechar':ok?'Editar':'Vincular'}
                   <ChevronDown size={11} className={`transition-transform ${isExp?'rotate-180':''}`}/>
                 </button>
@@ -376,13 +376,13 @@ function AbaMapeamento() {
                   {!edit.ignorar && (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <p className="text-xs font-semibold text-white/40 uppercase tracking-wide mb-2 flex items-center gap-1">
+                        <p className="text-xs font-semibold text-white/60 uppercase tracking-wide mb-2 flex items-center gap-1">
                           <Link2 size={11}/> Vincular a
                         </p>
                         <div className="flex gap-2 mb-3">
                           {(['item','ficha'] as const).map(t=>(
                             <button key={t} onClick={()=>setEdit(m.nome_externo,{tipo:t,item_id:'',ficha_id:'',busca:''})}
-                              className={`flex-1 py-2 rounded-xl text-xs font-medium border transition-colors ${edit.tipo===t?'bg-[#7D1F2C] text-white border-[#7D1F2C]':'bg-white/5 text-white/60 border-white/10 hover:bg-white/10'}`}>
+                              className={`flex-1 py-2 rounded-xl text-xs font-medium border transition-colors ${edit.tipo===t?'bg-wine text-white border-wine':'bg-white/5 text-white/60 border-white/10 hover:bg-white/10'}`}>
                               {t==='item'?'📦 Item de estoque':'📋 Ficha técnica'}
                             </button>
                           ))}
@@ -406,7 +406,7 @@ function AbaMapeamento() {
                                 placeholder={`Buscar ${edit.tipo==='item'?'item de estoque':'ficha técnica'}...`}
                                 value={edit.busca} autoFocus
                                 onChange={e=>setEdit(m.nome_externo,{busca:e.target.value})}
-                                className="w-full bg-[#1a1d2e] text-white border border-white/10 rounded-xl pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#7D1F2C]/30"/>
+                                className="w-full bg-[#1a1d2e] text-white border border-white/10 rounded-xl pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-wine/30"/>
                             </div>
                             <div className="border border-white/10 rounded-xl overflow-hidden max-h-52 overflow-y-auto">
                               {(edit.tipo==='item'?itensFiltrados:fichasFiltradas).map(x=>{
@@ -415,9 +415,9 @@ function AbaMapeamento() {
                                 return (
                                   <button key={x.id}
                                     onClick={()=>setEdit(m.nome_externo, edit.tipo==='item'?{item_id:x.id,busca:''}:{ficha_id:x.id,busca:''})}
-                                    className={`w-full text-left px-3 py-2.5 text-sm border-b border-white/5 last:border-0 flex items-center justify-between transition-colors ${sel?'bg-[#7D1F2C]/5 font-semibold text-[#7D1F2C]':'hover:bg-white/5 text-white/80'}`}>
+                                    className={`w-full text-left px-3 py-2.5 text-sm border-b border-white/5 last:border-0 flex items-center justify-between transition-colors ${sel?'bg-wine/5 font-semibold text-wine':'hover:bg-white/5 text-white/80'}`}>
                                     <div className="flex items-center gap-2 min-w-0">
-                                      {sel && <Check size={12} className="text-[#7D1F2C] flex-shrink-0"/>}
+                                      {sel && <Check size={12} className="text-wine flex-shrink-0"/>}
                                       <span className="truncate">{x.nome}</span>
                                     </div>
                                     {s>=45 && (
@@ -435,18 +435,18 @@ function AbaMapeamento() {
                       </div>
 
                       <div>
-                        <p className="text-xs font-semibold text-white/40 uppercase tracking-wide mb-2 flex items-center gap-1">
+                        <p className="text-xs font-semibold text-white/60 uppercase tracking-wide mb-2 flex items-center gap-1">
                           <Warehouse size={11}/> Dar baixa em qual estoque?
                         </p>
                         <div className="space-y-2">
                           {estoques.map(e=>(
                             <label key={e.id}
-                              className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${edit.estoque_id===e.id?'border-[#7D1F2C] bg-[#7D1F2C]/5':'border-white/10 hover:border-white/20 hover:bg-white/5'}`}>
+                              className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${edit.estoque_id===e.id?'border-wine bg-wine/5':'border-white/10 hover:border-white/20 hover:bg-white/5'}`}>
                               <input type="radio" name={`est_${m.nome_externo}`}
                                 checked={edit.estoque_id===e.id}
                                 onChange={()=>setEdit(m.nome_externo,{estoque_id:e.id})}
-                                className="accent-[#7D1F2C] w-4 h-4"/>
-                              <span className={`text-sm font-medium ${edit.estoque_id===e.id?'text-[#7D1F2C]':'text-white/80'}`}>{e.nome}</span>
+                                className="accent-wine w-4 h-4"/>
+                              <span className={`text-sm font-medium ${edit.estoque_id===e.id?'text-wine':'text-white/80'}`}>{e.nome}</span>
                             </label>
                           ))}
                         </div>
@@ -461,7 +461,7 @@ function AbaMapeamento() {
                     </button>
                     <button onClick={()=>salvar(m.nome_externo)}
                       disabled={salvando===m.nome_externo||(!edit.ignorar&&(!edit.tipo||(!edit.item_id&&!edit.ficha_id)||!edit.estoque_id))}
-                      className="flex-1 py-2 rounded-xl bg-[#7D1F2C] disabled:opacity-40 text-white text-sm font-bold hover:bg-[#6a1a25] transition-colors">
+                      className="flex-1 py-2 rounded-xl bg-wine disabled:opacity-40 text-white text-sm font-bold hover:bg-[#6a1a25] transition-colors">
                       {salvando===m.nome_externo ? 'Salvando...' : edit.ignorar ? '✓ Marcar como Ignorado' : '✓ Salvar Vínculo'}
                     </button>
                   </div>
@@ -530,7 +530,7 @@ function AbaRevisao({
           <button onClick={onVoltar} className="text-white/30 hover:text-white/80 text-sm">← Voltar</button>
           <div>
             <h1 className="text-xl font-bold text-white">Revisar vendas</h1>
-            <p className="text-sm text-white/40">{dtinicio} → {dtfim} · {produtos.length} produtos</p>
+            <p className="text-sm text-white/60">{dtinicio} → {dtfim} · {produtos.length} produtos</p>
           </div>
         </div>
         <div className="flex gap-2 text-xs flex-wrap">
@@ -551,7 +551,7 @@ function AbaRevisao({
                 `🧩 ${qtdExpandidos} expandidos`;
               return (
                 <button key={f} onClick={() => setFiltro(f)}
-                  className={`px-3 py-2 rounded-xl text-xs font-medium border transition-colors ${filtro===f ? 'bg-[#7D1F2C] text-white border-[#7D1F2C]' : 'bg-white/5 text-white/60 border-white/10 hover:bg-white/10'}`}>
+                  className={`px-3 py-2 rounded-xl text-xs font-medium border transition-colors ${filtro===f ? 'bg-wine text-white border-wine' : 'bg-white/5 text-white/60 border-white/10 hover:bg-white/10'}`}>
                   {label}
                 </button>
               );
@@ -597,9 +597,9 @@ function AbaRevisao({
                       : <AlertTriangle size={15} className="text-amber-500 flex-shrink-0"/>}
                   <div className="min-w-0">
                     <p className="font-semibold text-white text-sm">{prod.productName}</p>
-                    <p className="text-xs text-white/30 flex items-center gap-2 flex-wrap">
+                    <p className="text-xs text-white/60 flex items-center gap-2 flex-wrap">
                       {prod.expandido_de && (
-                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-purple-500/15 text-purple-400 rounded-md text-[10px] font-semibold">
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-purple-500/15 text-purple-400 rounded-md text-caption font-semibold">
                           🧩 de: {prod.expandido_de}
                         </span>
                       )}
@@ -611,7 +611,7 @@ function AbaRevisao({
                 <div className="flex items-center gap-3 flex-shrink-0 ml-4">
                   <div className="text-right">
                     <p className="text-lg font-bold text-white/90">{prod.count}</p>
-                    <p className="text-xs text-white/30">unid.</p>
+                    <p className="text-xs text-white/60">unid.</p>
                   </div>
                   <button onClick={()=>toggleIgnorar(prod)} disabled={prod.salvandoIgnore}
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all bg-[#12141f] border-white/10 text-white/40 hover:border-red-500/40 hover:text-red-500 hover:bg-red-500/10 disabled:opacity-50">
@@ -621,23 +621,23 @@ function AbaRevisao({
               </div>
               <div className="px-4 py-4 space-y-4">
                 <div>
-                  <label className="text-xs font-semibold text-white/40 uppercase tracking-wide flex items-center gap-1 mb-1"><Warehouse size={11}/> Estoque de saída</label>
+                  <label className="text-xs font-semibold text-white/60 uppercase tracking-wide flex items-center gap-1 mb-1"><Warehouse size={11}/> Estoque de saída</label>
                   <select value={prod.estoqueId} onChange={e=>update(prod.productId,{estoqueId:e.target.value})}
-                    className={`w-full rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#7D1F2C]/30 ${prod.estoqueId?'border border-white/10 bg-[#1a1d2e]':'border border-amber-500/40 bg-amber-500/10'}`}>
+                    className={`w-full rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-wine/30 ${prod.estoqueId?'border border-white/10 bg-[#1a1d2e]':'border border-amber-500/40 bg-amber-500/10'}`}>
                     <option value="">— Selecione o estoque —</option>
                     {estoques.map(e=><option key={e.id} value={e.id}>{e.nome}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="text-xs font-semibold text-white/40 uppercase tracking-wide flex items-center gap-1 mb-2"><Link2 size={11}/> Vínculo de baixa</label>
+                  <label className="text-xs font-semibold text-white/60 uppercase tracking-wide flex items-center gap-1 mb-2"><Link2 size={11}/> Vínculo de baixa</label>
                   {!prod.itemEstoqueId&&!prod.fichaId&&(
                     <div className="flex gap-2 mb-3">
                       <button onClick={()=>update(prod.productId,{vinculoTipo:'item'})}
-                        className={`flex-1 py-2 rounded-xl text-xs font-medium border ${prod.vinculoTipo==='item'?'bg-[#7D1F2C] text-white border-[#7D1F2C]':'bg-white/5 text-white/60 border-white/10 hover:bg-white/10'}`}>
+                        className={`flex-1 py-2 rounded-xl text-xs font-medium border ${prod.vinculoTipo==='item'?'bg-wine text-white border-wine':'bg-white/5 text-white/60 border-white/10 hover:bg-white/10'}`}>
                         Item de estoque
                       </button>
                       <button onClick={()=>update(prod.productId,{vinculoTipo:'ficha'})}
-                        className={`flex-1 py-2 rounded-xl text-xs font-medium border ${prod.vinculoTipo==='ficha'?'bg-[#7D1F2C] text-white border-[#7D1F2C]':'bg-white/5 text-white/60 border-white/10 hover:bg-white/10'}`}>
+                        className={`flex-1 py-2 rounded-xl text-xs font-medium border ${prod.vinculoTipo==='ficha'?'bg-wine text-white border-wine':'bg-white/5 text-white/60 border-white/10 hover:bg-white/10'}`}>
                         Ficha técnica
                       </button>
                     </div>
@@ -645,7 +645,7 @@ function AbaRevisao({
                   {prod.itemEstoqueId&&(
                     <div className="flex items-center gap-2">
                       <div className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white/80 flex items-center gap-2">
-                        <Package size={13} className="text-white/30"/>{nomeItem(prod.itemEstoqueId)}<span className="text-xs text-white/30 ml-1">— item</span>
+                        <Package size={13} className="text-white/30"/>{nomeItem(prod.itemEstoqueId)}<span className="text-xs text-white/60 ml-1">— item</span>
                       </div>
                       <button onClick={()=>update(prod.productId,{itemEstoqueId:'',fichaId:'',vinculoTipo:''})} className="p-2 text-white/30 hover:text-red-500"><X size={15}/></button>
                     </div>
@@ -653,7 +653,7 @@ function AbaRevisao({
                   {prod.fichaId&&(
                     <div className="flex items-center gap-2">
                       <div className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white/80 flex items-center gap-2">
-                        <RefreshCw size={13} className="text-white/30"/>{nomeFicha(prod.fichaId)}<span className="text-xs text-white/30 ml-1">— ficha técnica</span>
+                        <RefreshCw size={13} className="text-white/30"/>{nomeFicha(prod.fichaId)}<span className="text-xs text-white/60 ml-1">— ficha técnica</span>
                       </div>
                       <button onClick={()=>update(prod.productId,{itemEstoqueId:'',fichaId:'',vinculoTipo:''})} className="p-2 text-white/30 hover:text-red-500"><X size={15}/></button>
                     </div>
@@ -664,7 +664,7 @@ function AbaRevisao({
                         <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30"/>
                         <input type="text" placeholder="Buscar item de estoque..." value={q} autoFocus
                           onChange={e=>setBuscaVinculo(prev=>({...prev,[prod.productId]:e.target.value}))}
-                          className="w-full border border-amber-500/40 bg-amber-500/10 rounded-xl pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#7D1F2C]/30 focus:bg-[#12141f] focus:border-white/10"/>
+                          className="w-full border border-amber-500/40 bg-amber-500/10 rounded-xl pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-wine/30 focus:bg-[#12141f] focus:border-white/10"/>
                       </div>
                       {q&&(
                         <div className="border border-white/10 rounded-xl bg-[#12141f] shadow-lg max-h-44 overflow-y-auto">
@@ -673,10 +673,10 @@ function AbaRevisao({
                               onClick={()=>{update(prod.productId,{itemEstoqueId:item.id,fichaId:'',vinculoTipo:'item'});setBuscaVinculo(prev=>({...prev,[prod.productId]:''}));}}
                               className="w-full text-left px-3 py-2 text-sm hover:bg-white/5 border-b border-white/5 last:border-0 flex items-center justify-between">
                               <span className="font-medium text-white/90">{item.nome}</span>
-                              <span className="text-xs text-white/30 ml-2 flex-shrink-0">{item.unidade_medida}{item.custo_medio>0&&` · R$ ${Number(item.custo_medio).toFixed(2)}`}</span>
+                              <span className="text-xs text-white/60 ml-2 flex-shrink-0">{item.unidade_medida}{item.custo_medio>0&&` · R$ ${Number(item.custo_medio).toFixed(2)}`}</span>
                             </button>
                           ))}
-                          {filtrarVinculo(prod.productId,'item').length===0&&<p className="px-3 py-3 text-sm text-white/30 italic text-center">Nenhum item encontrado</p>}
+                          {filtrarVinculo(prod.productId,'item').length===0&&<p className="px-3 py-3 text-sm text-white/60 italic text-center">Nenhum item encontrado</p>}
                         </div>
                       )}
                     </div>
@@ -687,7 +687,7 @@ function AbaRevisao({
                         <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30"/>
                         <input type="text" placeholder="Buscar ficha técnica..." value={q} autoFocus
                           onChange={e=>setBuscaVinculo(prev=>({...prev,[prod.productId]:e.target.value}))}
-                          className="w-full border border-amber-500/40 bg-amber-500/10 rounded-xl pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#7D1F2C]/30 focus:bg-[#12141f] focus:border-white/10"/>
+                          className="w-full border border-amber-500/40 bg-amber-500/10 rounded-xl pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-wine/30 focus:bg-[#12141f] focus:border-white/10"/>
                       </div>
                       {q&&(
                         <div className="border border-white/10 rounded-xl bg-[#12141f] shadow-lg max-h-44 overflow-y-auto">
@@ -696,10 +696,10 @@ function AbaRevisao({
                               onClick={()=>{update(prod.productId,{fichaId:f.id,itemEstoqueId:'',vinculoTipo:'ficha'});setBuscaVinculo(prev=>({...prev,[prod.productId]:''}));}}
                               className="w-full text-left px-3 py-2 text-sm hover:bg-white/5 border-b border-white/5 last:border-0 flex items-center justify-between">
                               <span className="font-medium text-white/90">{f.nome}</span>
-                              <span className="text-xs text-white/30 ml-2 flex-shrink-0">{f.porcoes>0&&`${f.porcoes} porç.`}{f.custo_total>0&&` · R$ ${Number(f.custo_total).toFixed(2)}`}</span>
+                              <span className="text-xs text-white/60 ml-2 flex-shrink-0">{f.porcoes>0&&`${f.porcoes} porç.`}{f.custo_total>0&&` · R$ ${Number(f.custo_total).toFixed(2)}`}</span>
                             </button>
                           ))}
-                          {filtrarVinculo(prod.productId,'ficha').length===0&&<p className="px-3 py-3 text-sm text-white/30 italic text-center">Nenhuma ficha encontrada</p>}
+                          {filtrarVinculo(prod.productId,'ficha').length===0&&<p className="px-3 py-3 text-sm text-white/60 italic text-center">Nenhuma ficha encontrada</p>}
                         </div>
                       )}
                     </div>
@@ -714,7 +714,7 @@ function AbaRevisao({
 
       {ignoradosVisiveis.length>0&&(
         <div className="mt-2">
-          <p className="text-xs font-semibold text-white/30 uppercase tracking-wide mb-2 flex items-center gap-1"><EyeOff size={11}/> Ignorados / Compostos</p>
+          <p className="text-xs font-semibold text-white/60 uppercase tracking-wide mb-2 flex items-center gap-1"><EyeOff size={11}/> Ignorados / Compostos</p>
           <div className="space-y-2">
             {ignoradosVisiveis.map(prod=>(
               <div key={prod.productId} className={`rounded-2xl border px-4 py-3 flex items-center justify-between opacity-60 hover:opacity-80 ${prod.eh_produto_composto?'bg-purple-500/10 border-purple-500/30':'bg-white/5 border-white/10'}`}>
@@ -722,7 +722,7 @@ function AbaRevisao({
                   {prod.eh_produto_composto ? <span className="text-purple-400 text-sm">🧩</span> : <EyeOff size={14} className="text-white/30 flex-shrink-0"/>}
                   <div>
                     <p className={`text-sm font-medium ${prod.eh_produto_composto?'text-purple-400':'text-white/60 line-through'}`}>{prod.productName}</p>
-                    <p className="text-xs text-white/30">
+                    <p className="text-xs text-white/60">
                       {prod.eh_produto_composto
                         ? `subitens expandidos: ${prod.additions_expandidos?.join(', ') || '—'}`
                         : `${prod.productCategory||'—'} · ${prod.count} unid.`}
@@ -743,7 +743,7 @@ function AbaRevisao({
 
       <div className="sticky bottom-4 pt-2">
         <button onClick={handleProcessar} disabled={!todosProntos||processando}
-          className={`w-full flex items-center justify-center gap-2 font-bold py-4 rounded-2xl transition-all shadow-lg text-white ${todosProntos?'bg-[#7D1F2C] hover:bg-[#6a1a25] shadow-[#7D1F2C]/30':'bg-white/20 cursor-not-allowed'}`}>
+          className={`w-full flex items-center justify-center gap-2 font-bold py-4 rounded-2xl transition-all shadow-lg text-white ${todosProntos?'bg-wine hover:bg-[#6a1a25] shadow-[#7D1F2C]/30':'bg-white/20 cursor-not-allowed'}`}>
           <Play size={18} className={processando?'animate-pulse':''}/>
           {processando?'Processando baixas...':todosProntos
             ?`Processar ${ativos.filter(p=>p.estoqueId).length} produto(s)${ignorados.length>0?` · ${ignorados.length} ignorado(s)`:''}`
@@ -880,7 +880,7 @@ export default function ZigVendasSync() {
           {key:'mapeamento',  label:`🗺 Mapeamento${qtdPendentes>0?` (${qtdPendentes} pendentes no período)`:''}` },
         ] as {key:Aba;label:string}[]).map(tab=>(
           <button key={tab.key} onClick={()=>setAba(tab.key)}
-            className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors mr-1 ${aba===tab.key?'border-[#7D1F2C] text-[#7D1F2C]':'border-transparent text-white/40 hover:text-white/80'}`}>
+            className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors mr-1 ${aba===tab.key?'border-wine text-wine':'border-transparent text-white/40 hover:text-white/80'}`}>
             {tab.label}
           </button>
         ))}
@@ -897,12 +897,12 @@ export default function ZigVendasSync() {
           {etapa==='busca' && (
             <div className="p-6 max-w-2xl mx-auto space-y-6">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-[#7D1F2C] flex items-center justify-center">
+                <div className="w-10 h-10 rounded-xl bg-wine flex items-center justify-center">
                   <Package size={20} className="text-white"/>
                 </div>
                 <div>
                   <h1 className="text-xl font-bold text-white">ZIG → Estoque</h1>
-                  <p className="text-sm text-white/40">Baixa de estoque via vendas ZIG</p>
+                  <p className="text-sm text-white/60">Baixa de estoque via vendas ZIG</p>
                 </div>
               </div>
 
@@ -918,14 +918,14 @@ export default function ZigVendasSync() {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="text-xs font-medium text-white/40 mb-1 block">Data início</label>
+                    <label className="text-xs font-medium text-white/60 mb-1 block">Data início</label>
                     <input type="date" value={dtinicio} onChange={e=>setDtinicio(e.target.value)}
-                      className="w-full bg-white/5 border border-white/20 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#7D1F2C]/30"/>
+                      className="w-full bg-white/5 border border-white/20 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-wine/30"/>
                   </div>
                   <div>
-                    <label className="text-xs font-medium text-white/40 mb-1 block">Data fim</label>
+                    <label className="text-xs font-medium text-white/60 mb-1 block">Data fim</label>
                     <input type="date" value={dtfim} onChange={e=>setDtfim(e.target.value)}
-                      className="w-full bg-white/5 border border-white/20 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#7D1F2C]/30"/>
+                      className="w-full bg-white/5 border border-white/20 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-wine/30"/>
                   </div>
                 </div>
                 <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-3 text-xs text-blue-400 space-y-1">
@@ -937,7 +937,7 @@ export default function ZigVendasSync() {
                 </div>
                 {erroBusca && <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-3 text-sm text-red-400">{erroBusca}</div>}
                 <button onClick={handleBuscar} disabled={buscando}
-                  className="w-full flex items-center justify-center gap-2 bg-[#7D1F2C] hover:bg-[#6a1a25] disabled:opacity-50 text-white font-semibold py-3 rounded-xl">
+                  className="w-full flex items-center justify-center gap-2 bg-wine hover:bg-[#6a1a25] disabled:opacity-50 text-white font-semibold py-3 rounded-xl">
                   <Search size={18} className={buscando?'animate-pulse':''}/>
                   {buscando?'Buscando vendas na ZIG...':'Buscar vendas'}
                 </button>
@@ -947,7 +947,7 @@ export default function ZigVendasSync() {
                 <div className="bg-[#12141f] rounded-2xl border border-white/10 overflow-hidden">
                   <div className="px-5 py-4 border-b border-white/5 flex items-center justify-between">
                     <h2 className="font-semibold text-white/90 flex items-center gap-2">
-                      <Clock size={15} className="text-[#7D1F2C]"/> Histórico de sincronizações
+                      <Clock size={15} className="text-wine"/> Histórico de sincronizações
                     </h2>
                     <button onClick={carregarLogs} className="p-1.5 rounded-lg hover:bg-white/10 text-white/30">
                       <RefreshCw size={13}/>
@@ -974,13 +974,13 @@ export default function ZigVendasSync() {
                                 <span className="text-xs font-semibold text-white/80">
                                   {new Date(log.iniciado_em).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'})}
                                 </span>
-                                <span className="text-xs text-white/30">{log.dtinicio} → {log.dtfim}</span>
+                                <span className="text-xs text-white/60">{log.dtinicio} → {log.dtfim}</span>
                               </div>
                               <div className="flex items-center gap-3 mt-0.5 flex-wrap">
                                 <span className="text-xs font-bold text-green-400">{log.total_movimentacoes??0} baixas</span>
                                 {(log.total_duplicados??0)>0 && <span className="text-xs text-blue-400">{log.total_duplicados} já proc.</span>}
                                 {(pendentes.length)>0 && <span className="text-xs text-amber-500">{pendentes.length} pendentes</span>}
-                                {(ignorados.length)>0 && <span className="text-xs text-white/30">{ignorados.length} ignorados</span>}
+                                {(ignorados.length)>0 && <span className="text-xs text-white/60">{ignorados.length} ignorados</span>}
                                 {log.erro_mensagem && <span className="text-xs text-red-400 truncate max-w-[180px]">⚠ {log.erro_mensagem.split('|')[0]}</span>}
                               </div>
                             </div>
@@ -989,8 +989,8 @@ export default function ZigVendasSync() {
                               onClick={() => { setLogAberto(isOpen ? null : log.id); setAbaLog('processados'); }}
                               title="Ver detalhes desta sincronização"
                               className={`p-2 rounded-xl border transition-all flex-shrink-0 ${isOpen
-                                ? 'bg-[#7D1F2C] border-[#7D1F2C] text-white shadow-sm'
-                                : 'border-white/10 text-white/30 hover:border-[#7D1F2C] hover:text-[#7D1F2C] hover:bg-[#7D1F2C]/5'}`}>
+                                ? 'bg-wine border-wine text-white shadow-sm'
+                                : 'border-white/10 text-white/30 hover:border-wine hover:text-wine hover:bg-wine/5'}`}>
                               <Eye size={14}/>
                             </button>
                           </div>
@@ -1009,7 +1009,7 @@ export default function ZigVendasSync() {
                                   ].map(s=>(
                                     <div key={s.label} className="bg-white/5 rounded-xl p-2">
                                       <p className={`text-lg font-bold ${s.color}`}>{s.val}</p>
-                                      <p className="text-[10px] text-white/30 leading-tight">{s.label}</p>
+                                      <p className="text-caption text-white/60 leading-tight">{s.label}</p>
                                     </div>
                                   ))}
                                 </div>
@@ -1024,7 +1024,7 @@ export default function ZigVendasSync() {
                                 ] as {key:typeof abaLog;label:string}[]).map(t=>(
                                   <button key={t.key} onClick={()=>setAbaLog(t.key)}
                                     className={`px-3 py-2 text-xs font-medium border-b-2 transition-colors ${abaLog===t.key
-                                      ?'border-[#7D1F2C] text-[#7D1F2C]'
+                                      ?'border-wine text-wine'
                                       :'border-transparent text-white/30 hover:text-white/60'}`}>
                                     {t.label}
                                   </button>
@@ -1036,12 +1036,12 @@ export default function ZigVendasSync() {
                                 {semDetalhe && log.total_duplicados > 0 && abaLog === 'processados' && (
                                   <div className="px-4 py-5 text-center">
                                     <p className="text-xs text-blue-400 font-medium">Todos os {log.total_duplicados} itens já haviam sido processados anteriormente</p>
-                                    <p className="text-xs text-white/30 mt-1">Nenhuma baixa nova foi gerada neste sync</p>
+                                    <p className="text-xs text-white/60 mt-1">Nenhuma baixa nova foi gerada neste sync</p>
                                   </div>
                                 )}
                                 {abaLog==='processados' && (
                                   processados.length === 0
-                                    ? <p className="text-center text-xs text-white/30 py-6 italic">Nenhum item processado</p>
+                                    ? <p className="text-center text-xs text-white/60 py-6 italic">Nenhum item processado</p>
                                     : <table className="w-full text-xs">
                                         <thead className="bg-white/10 sticky top-0">
                                           <tr>
@@ -1056,7 +1056,7 @@ export default function ZigVendasSync() {
                                             <tr key={i} className={i%2===0?'bg-[#12141f]':'bg-white/5/50'}>
                                               <td className="px-4 py-2 font-medium text-white/90">{item.nome}</td>
                                               <td className="px-3 py-2 text-center text-white/60">{Number(item.quantidade).toFixed(item.quantidade%1===0?0:3).replace(/\.?0+$/,'')}</td>
-                                              <td className="px-3 py-2 text-center text-white/40">{item.data_venda}</td>
+                                              <td className="px-3 py-2 text-center text-white/60">{item.data_venda}</td>
                                               <td className="px-3 py-2 text-center">
                                                 <span className="inline-flex items-center justify-center w-6 h-6 bg-green-500/15 text-green-400 rounded-full font-bold">{item.movimentacoes}</span>
                                               </td>
@@ -1067,7 +1067,7 @@ export default function ZigVendasSync() {
                                 )}
                                 {abaLog==='pendentes' && (
                                   pendentes.length === 0
-                                    ? <p className="text-center text-xs text-white/30 py-6 italic">Nenhum item pendente 🎉</p>
+                                    ? <p className="text-center text-xs text-white/60 py-6 italic">Nenhum item pendente 🎉</p>
                                     : <table className="w-full text-xs">
                                         <thead className="bg-amber-500/10 sticky top-0">
                                           <tr>
@@ -1089,7 +1089,7 @@ export default function ZigVendasSync() {
                                 )}
                                 {abaLog==='ignorados' && (
                                   ignorados.length === 0
-                                    ? <p className="text-center text-xs text-white/30 py-6 italic">Nenhum item ignorado</p>
+                                    ? <p className="text-center text-xs text-white/60 py-6 italic">Nenhum item ignorado</p>
                                     : <table className="w-full text-xs">
                                         <thead className="bg-white/10 sticky top-0">
                                           <tr>
@@ -1100,8 +1100,8 @@ export default function ZigVendasSync() {
                                         <tbody className="divide-y divide-white/5">
                                           {ignorados.map((item,i)=>(
                                             <tr key={i} className={i%2===0?'bg-[#12141f]':'bg-white/5/50'}>
-                                              <td className="px-4 py-2 font-medium text-white/40 line-through">{item.nome}</td>
-                                              <td className="px-3 py-2 text-white/30 italic">{item.motivo}</td>
+                                              <td className="px-4 py-2 font-medium text-white/60 line-through">{item.nome}</td>
+                                              <td className="px-3 py-2 text-white/60 italic">{item.motivo}</td>
                                             </tr>
                                           ))}
                                         </tbody>
@@ -1146,7 +1146,7 @@ export default function ZigVendasSync() {
                 </div>
                 <div>
                   <h1 className="text-xl font-bold text-white">{resultado?.ok?'Baixas processadas!':'Erro ao processar'}</h1>
-                  <p className="text-sm text-white/40">{dtinicio} → {dtfim}</p>
+                  <p className="text-sm text-white/60">{dtinicio} → {dtfim}</p>
                 </div>
               </div>
               {resultado?.ok&&resultado.resumo&&(
@@ -1160,7 +1160,7 @@ export default function ZigVendasSync() {
                   ].map(item=>(
                     <div key={item.label} className="bg-[#12141f] rounded-2xl border border-white/10 p-4 text-center">
                       <p className={`text-2xl font-bold ${item.color}`}>{item.val??0}</p>
-                      <p className="text-xs text-white/40 mt-1">{item.label}</p>
+                      <p className="text-xs text-white/60 mt-1">{item.label}</p>
                     </div>
                   ))}
                 </div>
@@ -1178,7 +1178,7 @@ export default function ZigVendasSync() {
                   Nova sincronização
                 </button>
                 <button onClick={()=>setEtapa('revisao')}
-                  className="flex-1 py-3 rounded-xl bg-[#7D1F2C] text-white text-sm font-medium hover:bg-[#6a1a25]">
+                  className="flex-1 py-3 rounded-xl bg-wine text-white text-sm font-medium hover:bg-[#6a1a25]">
                   Ver revisão
                 </button>
               </div>
