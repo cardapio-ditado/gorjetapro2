@@ -36,7 +36,7 @@ export const KPICard: React.FC<KPICardProps> = ({
 
   const getVariationColor = () => {
     if (!variation) return '';
-    if (trend === 'neutral') return 'text-text-muted';
+    if (trend === 'neutral') return 'text-text-secondary';
     return variation > 0 ? 'text-success' : 'text-danger';
   };
 

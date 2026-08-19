@@ -48,7 +48,7 @@ const PageLoader = () => (
       <div className="absolute inset-0 rounded-full border-2 border-white/8" />
       <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-[#D4AF37] animate-spin" />
     </div>
-    <p className="text-xs font-sans font-medium" style={{ color: 'var(--text-muted)' }}>Carregando...</p>
+    <p className="text-xs font-sans font-medium" style={{ color: 'var(--text-secondary)' }}>Carregando...</p>
   </div>
 );
 

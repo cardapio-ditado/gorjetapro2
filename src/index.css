@@ -27,7 +27,23 @@
   --border-subtle: rgba(255,255,255,0.04);
   --border-strong: rgba(255,255,255,0.12);
 
-  /* Text — guaranteed contrast on dark backgrounds */
+  /* Text — guaranteed contrast on dark backgrounds
+   *
+   * REGRA DE USO (medida em WCAG 2.2 AA, contra os fundos reais do app):
+   *   --text-primary    16,23:1 em --bg-dark · qualquer texto, qualquer fundo.
+   *   --text-secondary   5,50:1 em --bg-dark · pior caso 4,59:1 em --bg-surface.
+   *                      É o nível MAIS BAIXO legível: todo texto que a pessoa
+   *                      precisa ler para de descer daqui (rótulo, valor, data,
+   *                      status, placeholder, estado vazio).
+   *   --text-muted       1,99:1 em --bg-dark · REPROVA como texto. Só para o que
+   *                      a WCAG isenta: ícone decorativo acompanhado de rótulo,
+   *                      divisória, ponto de status. Nunca em texto.
+   *   --text-disabled    1,40:1 · exclusivamente estado desabilitado (isento).
+   *
+   * Não existe quarto nível legível: qualquer valor abaixo do secondary reprova
+   * em --bg-elevated ou --bg-surface. Precisa de mais um nível? Use peso ou
+   * tamanho, não uma cor mais escura.
+   */
   --text-primary:   #e8edf8;
   --text-secondary: #7a8ba6;
   --text-muted:     #3a4560;
@@ -85,7 +101,7 @@
 
   input::placeholder,
   textarea::placeholder {
-    color: var(--text-muted);
+    color: var(--text-secondary);
     opacity: 1;
   }
 
@@ -290,7 +306,7 @@
     width: 100%;
     transition: all 0.15s ease;
   }
-  .input-dark::placeholder { color: var(--text-muted); }
+  .input-dark::placeholder { color: var(--text-secondary); }
   .input-dark:focus {
     border-color: rgba(125,31,44,0.8) !important;
     box-shadow: 0 0 0 3px rgba(125,31,44,0.15) !important;
@@ -445,7 +461,7 @@
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.1em;
-    color: var(--text-muted);
+    color: var(--text-secondary);
     padding: 0 8px;
   }
 

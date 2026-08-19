@@ -27,6 +27,9 @@ export default {
           elevated: '#141a28',
           surface:  '#1a2235',
         },
+        // Regra de uso e razoes de contraste medidas: ver bloco Text em src/index.css.
+        // Resumo: muted (1,99:1) e disabled (1,40:1) REPROVAM como texto — use-os so em
+        // icone decorativo, divisoria e estado desabilitado. Texto legivel para em secondary.
         text: {
           primary:   '#e8edf8',
           secondary: '#7a8ba6',

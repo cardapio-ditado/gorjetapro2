@@ -133,7 +133,7 @@ const Saguao: React.FC = () => {
               onClick={logout}
               title="Sair"
               className="w-8 h-8 flex items-center justify-center rounded-lg transition-all hover:bg-white/[0.06]"
-              style={{ color: 'var(--text-muted)' }}
+              style={{ color: 'var(--text-secondary)' }}
             >
               <LogOut size={14} />
             </button>
@@ -143,7 +143,7 @@ const Saguao: React.FC = () => {
         <main className="flex-1 flex flex-col justify-center items-end px-6 sm:px-10 lg:px-16 pb-16 max-w-full">
           <p
             className="text-right text-[11px] uppercase tracking-[0.18em] font-semibold mb-8"
-            style={{ color: 'var(--text-muted)' }}
+            style={{ color: 'var(--text-secondary)' }}
           >
             Onde você vai trabalhar agora?
           </p>

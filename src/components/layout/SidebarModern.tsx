@@ -205,7 +205,7 @@ const SidebarModern: React.FC<Props> = ({ onNavigate, onCloseMobile }) => {
                     return (
                       <p key={sub.path + sub.name}
                         className="text-[9px] font-bold uppercase tracking-widest px-2 pt-2.5 pb-1"
-                        style={{ color: 'var(--text-muted)' }}>
+                        style={{ color: 'var(--text-secondary)' }}>
                         {label}
                       </p>
                     );
@@ -259,7 +259,7 @@ const SidebarModern: React.FC<Props> = ({ onNavigate, onCloseMobile }) => {
 
   const GroupLabel: React.FC<{ children: React.ReactNode }> = ({ children }) => (
     <p className="px-2.5 pt-3 pb-1.5 text-[9px] font-bold uppercase tracking-[0.1em]"
-      style={{ color: 'var(--text-muted)' }}>
+      style={{ color: 'var(--text-secondary)' }}>
       {children}
     </p>
   );
@@ -293,7 +293,7 @@ const SidebarModern: React.FC<Props> = ({ onNavigate, onCloseMobile }) => {
             Ditado Popular
           </p>
           <p className="text-[9px] mt-0.5 tracking-widest uppercase font-medium"
-            style={{ color: 'var(--text-muted)' }}>
+            style={{ color: 'var(--text-secondary)' }}>
             Gestão
           </p>
         </div>
@@ -301,7 +301,7 @@ const SidebarModern: React.FC<Props> = ({ onNavigate, onCloseMobile }) => {
           <button
             onClick={onCloseMobile}
             className="lg:hidden flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-lg transition-all"
-            style={{ color: 'var(--text-muted)' }}
+            style={{ color: 'var(--text-secondary)' }}
             aria-label="Fechar menu"
           >
             <X size={15} />
@@ -359,7 +359,7 @@ const SidebarModern: React.FC<Props> = ({ onNavigate, onCloseMobile }) => {
               {usuario?.nome_completo?.split(' ')[0] ?? 'Usuário'}
             </p>
             <p className="text-[10px] capitalize truncate leading-tight mt-0.5"
-              style={{ color: 'var(--text-muted)' }}>
+              style={{ color: 'var(--text-secondary)' }}>
               {usuario?.cargo ?? usuario?.nivel ?? '—'}
             </p>
           </div>
@@ -367,7 +367,7 @@ const SidebarModern: React.FC<Props> = ({ onNavigate, onCloseMobile }) => {
             onClick={logout}
             title="Sair"
             className="flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-lg transition-all hover:bg-danger/10"
-            style={{ color: 'var(--text-muted)' }}
+            style={{ color: 'var(--text-secondary)' }}
           >
             <LogOut size={13} />
           </button>

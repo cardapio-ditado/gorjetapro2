@@ -119,7 +119,7 @@ export default function PortalGerente() {
           {/* Reservas */}
           <div className={card} style={cardStyle}>
             <h2 className="font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>Reservas do dia</h2>
-            {resumo.reservas.length === 0 && <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Nenhuma reserva.</p>}
+            {resumo.reservas.length === 0 && <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Nenhuma reserva.</p>}
             {resumo.reservas.map((r, i) => (
               <div key={i} className="py-2" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
                 <div className="flex justify-between">
@@ -129,7 +129,7 @@ export default function PortalGerente() {
                 <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
                   {r.pessoas ? `${r.pessoas} pessoas` : ''} {r.local ? `· ${r.local}` : ''} {r.telefone ? `· ${r.telefone}` : ''}
                 </p>
-                {r.obs && <p className="text-xs italic" style={{ color: 'var(--text-muted)' }}>{r.obs}</p>}
+                {r.obs && <p className="text-xs italic" style={{ color: 'var(--text-secondary)' }}>{r.obs}</p>}
               </div>
             ))}
           </div>
@@ -137,10 +137,10 @@ export default function PortalGerente() {
           {/* Escala */}
           <div className={card} style={cardStyle}>
             <h2 className="font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>Escala de hoje</h2>
-            {resumo.escala.length === 0 && <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Escala não lançada para hoje.</p>}
+            {resumo.escala.length === 0 && <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Escala não lançada para hoje.</p>}
             {resumo.escala.filter(e => !e.folga).map((e, i) => (
               <div key={i} className="flex justify-between py-1.5" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-                <span style={{ color: 'var(--text-primary)' }}>{e.nome} <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{e.funcao}</span></span>
+                <span style={{ color: 'var(--text-primary)' }}>{e.nome} <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>{e.funcao}</span></span>
                 <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>{e.setor} · {e.horario}</span>
               </div>
             ))}
@@ -149,7 +149,7 @@ export default function PortalGerente() {
           {/* Cachê da noite */}
           <div className={card} style={cardStyle}>
             <h2 className="font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>Atrações da noite</h2>
-            {resumo['cachê_noite'].length === 0 && <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Sem atração lançada.</p>}
+            {resumo['cachê_noite'].length === 0 && <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Sem atração lançada.</p>}
             {resumo['cachê_noite'].map((c, i) => (
               <div key={i} className="flex justify-between py-2" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
                 <div>
@@ -179,7 +179,7 @@ export default function PortalGerente() {
                 {buscando ? '…' : 'Buscar'}
               </button>
             </div>
-            {semResultado && <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Cliente não encontrado no programa.</p>}
+            {semResultado && <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Cliente não encontrado no programa.</p>}
             {fidelidade && (
               <div>
                 <div className="flex gap-4 mb-2 text-sm">
@@ -187,7 +187,7 @@ export default function PortalGerente() {
                   <span style={{ color: 'var(--text-secondary)' }}>Total: {fmtReais(fidelidade.gasto_total)}</span>
                 </div>
                 {(fidelidade.premios_disponiveis || []).length === 0 && (
-                  <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Sem prêmios disponíveis.</p>
+                  <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Sem prêmios disponíveis.</p>
                 )}
                 {(fidelidade.premios_disponiveis || []).map((p: any) => (
                   <div key={p.id} className="flex justify-between items-center py-2" style={{ borderBottom: '1px solid var(--border-subtle)' }}>

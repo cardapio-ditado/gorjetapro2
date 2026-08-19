@@ -766,7 +766,7 @@ const ColaboradoresRH: React.FC = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`text-sm font-semibold ${
-                        colaborador.percentual_comissao > 0 ? 'text-success' : 'text-text-muted'
+                        colaborador.percentual_comissao > 0 ? 'text-success' : 'text-text-secondary'
                       }`}>
                         {colaborador.percentual_comissao}%
                       </span>
@@ -797,7 +797,7 @@ const ColaboradoresRH: React.FC = () => {
                           className={`w-8 h-8 flex items-center justify-center rounded-lg transition-colors ${
                             colaborador.status === 'ativo'
                               ? 'text-success hover:bg-success/10'
-                              : 'text-text-muted hover:text-text-secondary hover:bg-white/6'
+                              : 'text-text-secondary hover:text-text-secondary hover:bg-white/6'
                           }`}
                           title={colaborador.status === 'ativo' ? 'Desativar' : 'Ativar'}
                         >
