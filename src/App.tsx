@@ -40,6 +40,7 @@ const AgendaDiaria        = lazy(() => import('./pages/AgendaDiaria'));
 const FidelidadeModule    = lazy(() => import('./pages/FidelidadeModule'));
 const RedefinirSenha      = lazy(() => import('./pages/RedefinirSenha'));
 const PortalGerente       = lazy(() => import('./pages/PortalGerente'));
+const Saguao              = lazy(() => import('./pages/Saguao'));
 
 const PageLoader = () => (
   <div className="flex flex-col items-center justify-center h-full min-h-[300px] gap-4">
@@ -89,6 +90,17 @@ function AppContent() {
     );
   }
 
+  // O saguão toma a tela inteira, sem lateral nem topbar: é a entrada do
+  // sistema, não uma página dentro dele. A lateral só existe DENTRO de um
+  // módulo — e lá mostra apenas as telas daquele módulo.
+  if (location.pathname === '/') {
+    return (
+      <Suspense fallback={<PageLoader />}>
+        <Saguao />
+      </Suspense>
+    );
+  }
+
   return (
     <div className="flex h-screen overflow-hidden ambient-glow">
 
@@ -120,7 +132,6 @@ function AppContent() {
           <div key={location.key} className="p-5 lg:p-7 min-h-full page-transition">
             <Suspense fallback={<PageLoader />}>
               <Routes>
-                <Route path="/"                    element={<ProtectedRoute moduloSlug="dashboard">     <PainelInicial />       </ProtectedRoute>} />
                 <Route path="/dashboard"           element={<ProtectedRoute moduloSlug="dashboard">     <PainelInicial />       </ProtectedRoute>} />
                 <Route path="/portal-gerente"      element={<ProtectedRoute moduloSlug="dashboard">     <PortalGerente />       </ProtectedRoute>} />
                 <Route path="/agenda-diaria"       element={<ProtectedRoute moduloSlug="dashboard">     <AgendaDiaria />        </ProtectedRoute>} />

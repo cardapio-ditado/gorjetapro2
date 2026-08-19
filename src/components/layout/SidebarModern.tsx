@@ -4,7 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import {
   Home, DollarSign, Warehouse, Users, Music, CalendarDays,
   Settings, BookOpen, Target, ClipboardList,
-  TrendingUp, ChevronDown, LogOut, Star, X, LayoutDashboard,
+  TrendingUp, ChevronDown, LogOut, Star, X, LayoutDashboard, Hexagon,
 } from 'lucide-react';
 
 const ESTOQUE_SUBMODS_ADMIN = [
@@ -33,18 +33,36 @@ const ESTOQUE_SUBMODS_USER = [
 ];
 
 export interface SubModule { name: string; path: string; }
+
+/** As cinco áreas da casa. São os favos do saguão. */
+export type Area = 'financeiro' | 'estoque' | 'rh' | 'operacao' | 'gestao';
+
 export interface Module {
   name: string; path: string;
   icon: React.ElementType; slug: string;
   subModules?: SubModule[];
-  group?: 'operacao' | 'gestao' | 'sistema';
+  group?: Area;
 }
 
+/**
+ * A definição de cada área: nome, ícone e o que mora nela.
+ *
+ * Exportada porque o saguão desenha um favo por área e a lateral rotula o
+ * grupo aberto — dois lugares, uma verdade. A ordem aqui é a ordem na tela.
+ */
+export const AREAS: Array<{ id: Area; nome: string; icone: React.ElementType; descricao: string }> = [
+  { id: 'operacao',   nome: 'Operação',          icone: ClipboardList, descricao: 'O turno de hoje: agenda, eventos e diário' },
+  { id: 'financeiro', nome: 'Financeiro',        icone: DollarSign,    descricao: 'Caixa, contas, faturamento e DRE' },
+  { id: 'estoque',    nome: 'Estoque',           icone: Warehouse,     descricao: 'Contagem, compras, produção e fichas' },
+  { id: 'rh',         nome: 'Recursos Humanos',  icone: Users,         descricao: 'Equipe, escalas, férias e recrutamento' },
+  { id: 'gestao',     nome: 'Gestão',            icone: TrendingUp,    descricao: 'Metas, fidelidade e ajustes do sistema' },
+];
+
 export const MODULES: Module[] = [
-  { name: 'Dashboard',      path: '/',                   icon: Home,          slug: 'dashboard',       group: 'operacao' },
+  { name: 'Dashboard',      path: '/dashboard',          icon: Home,          slug: 'dashboard',       group: 'operacao' },
   { name: 'Portal do Gerente', path: '/portal-gerente',  icon: LayoutDashboard, slug: 'dashboard',     group: 'operacao' },
   { name: 'Agenda do Dia',  path: '/agenda-diaria',      icon: ClipboardList, slug: 'dashboard',       group: 'operacao' },
-  { name: 'RH',             path: '/staff',              icon: Users,         slug: 'rh',              group: 'operacao',
+  { name: 'RH',             path: '/staff',              icon: Users,         slug: 'rh',              group: 'rh',
     subModules: [
       { name: 'Recrutamento',  path: '/recruitment' },
       { name: 'Colaboradores', path: '/staff?tab=0' },
@@ -60,7 +78,7 @@ export const MODULES: Module[] = [
   },
   { name: 'Músicos',        path: '/musicians',          icon: Music,         slug: 'musicos',         group: 'operacao' },
   { name: 'Eventos',        path: '/events',             icon: CalendarDays,  slug: 'eventos',         group: 'operacao' },
-  { name: 'Financeiro',     path: '/finance',            icon: DollarSign,    slug: 'financeiro',      group: 'gestao',
+  { name: 'Financeiro',     path: '/finance',            icon: DollarSign,    slug: 'financeiro',      group: 'financeiro',
     subModules: [
       { name: 'Dashboard Financeiro',     path: '/financeiro' },
       { name: 'Fluxo de Caixa',           path: '/finance?tab=fluxo' },
@@ -81,7 +99,7 @@ export const MODULES: Module[] = [
       { name: 'DRE Simplificado',         path: '/dre-simplificado' },
     ],
   },
-  { name: 'Estoque',        path: '/advanced-inventory', icon: Warehouse,     slug: 'estoque',         group: 'gestao' },
+  { name: 'Estoque',        path: '/advanced-inventory', icon: Warehouse,     slug: 'estoque',         group: 'estoque' },
   { name: 'OKRs',           path: '/gestao-estrategica', icon: TrendingUp,    slug: 'financeiro',      group: 'gestao' },
   { name: 'Fidelidade',     path: '/fidelidade',         icon: Star,          slug: 'dashboard',       group: 'gestao',
     subModules: [
@@ -93,10 +111,10 @@ export const MODULES: Module[] = [
       { name: 'Programa de Pontos',   path: '/fidelidade?tab=pontos' },
     ],
   },
-  { name: 'Metas & Tarefas', path: '/metas-tarefas',    icon: Target,        slug: 'solicitacoes',    group: 'sistema' },
-  { name: 'Diário de Bordo', path: '/ocorrencias',        icon: BookOpen,      slug: 'ocorrencias',     group: 'sistema' },
-  { name: 'Manual',         path: '/manual',             icon: BookOpen,      slug: 'manual',          group: 'sistema' },
-  { name: 'Configurações',  path: '/settings',           icon: Settings,      slug: 'configuracoes',   group: 'sistema' },
+  { name: 'Metas & Tarefas', path: '/metas-tarefas',    icon: Target,        slug: 'solicitacoes',    group: 'gestao' },
+  { name: 'Diário de Bordo', path: '/ocorrencias',        icon: BookOpen,      slug: 'ocorrencias',     group: 'operacao' },
+  { name: 'Manual',         path: '/manual',             icon: BookOpen,      slug: 'manual',          group: 'gestao' },
+  { name: 'Configurações',  path: '/settings',           icon: Settings,      slug: 'configuracoes',   group: 'gestao' },
 ];
 
 interface Props { onNavigate?: () => void; onCloseMobile?: () => void; }
@@ -123,9 +141,6 @@ const SidebarModern: React.FC<Props> = ({ onNavigate, onCloseMobile }) => {
   });
 
   const filtered = modulesWithDynamic.filter(m => temAcessoModulo(m.slug));
-  const operacao = filtered.filter(m => m.group === 'operacao');
-  const gestao   = filtered.filter(m => m.group === 'gestao');
-  const sistema  = filtered.filter(m => m.group === 'sistema');
 
   const isActive    = (path: string) =>
     location.pathname + location.search === path || location.pathname === path;
@@ -137,7 +152,9 @@ const SidebarModern: React.FC<Props> = ({ onNavigate, onCloseMobile }) => {
 
   const renderModule = (m: Module) => {
     const active      = isModActive(m);
-    const open        = expanded === m.name;
+    // `expanded === null` = ninguém mexeu ainda: o módulo atual nasce aberto,
+    // porque com a lateral contextual ele é a única coisa na tela.
+    const open        = expanded === m.name || (expanded === null && moduloAtual?.name === m.name);
     const hasChildren = !!m.subModules?.length;
 
     const itemClass = `relative w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] font-medium transition-all duration-150 group ${
@@ -247,6 +264,19 @@ const SidebarModern: React.FC<Props> = ({ onNavigate, onCloseMobile }) => {
     </p>
   );
 
+  /**
+   * A área em que a pessoa está AGORA.
+   *
+   * A lateral deixou de listar tudo de uma vez — a escolha de área virou o
+   * saguão ("/"). Aqui aparecem os módulos da área aberta (o ativo já
+   * expandido), mais o caminho de volta. Fora de qualquer área (rota
+   * desconhecida), a lista completa continua sendo o plano B: uma lateral
+   * vazia parece defeito.
+   */
+  const moduloAtual = modulesWithDynamic.find(isModActive) ?? null;
+  const areaAtual = moduloAtual?.group ? AREAS.find(a => a.id === moduloAtual.group) ?? null : null;
+  const daArea = areaAtual ? filtered.filter(m => m.group === areaAtual.id) : [];
+
   return (
     <div className="flex flex-col h-full" style={{ background: 'var(--bg-dark)' }}>
 
@@ -281,25 +311,36 @@ const SidebarModern: React.FC<Props> = ({ onNavigate, onCloseMobile }) => {
 
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto px-2 py-3 space-y-0.5 scrollbar-hide">
-        {operacao.length > 0 && (
-          <>
-            <GroupLabel>Operação</GroupLabel>
-            {operacao.map(renderModule)}
-          </>
-        )}
+        <Link
+          to="/"
+          onClick={onNavigate}
+          className="w-full flex items-center gap-2.5 px-2.5 py-2 mb-2 rounded-lg text-[13px] font-medium transition-all duration-150"
+          style={{
+            color: 'var(--gold)',
+            background: 'rgba(212,175,55,0.07)',
+            border: '1px solid rgba(212,175,55,0.14)',
+          }}
+        >
+          <Hexagon size={15} />
+          <span className="font-sans">Saguão</span>
+        </Link>
 
-        {gestao.length > 0 && (
+        {areaAtual ? (
           <>
-            <GroupLabel>Gestão</GroupLabel>
-            {gestao.map(renderModule)}
+            <GroupLabel>{areaAtual.nome}</GroupLabel>
+            {daArea.map(renderModule)}
           </>
-        )}
-
-        {sistema.length > 0 && (
-          <>
-            <GroupLabel>Sistema</GroupLabel>
-            {sistema.map(renderModule)}
-          </>
+        ) : (
+          AREAS.map(area => {
+            const modulos = filtered.filter(m => m.group === area.id);
+            if (modulos.length === 0) return null;
+            return (
+              <React.Fragment key={area.id}>
+                <GroupLabel>{area.nome}</GroupLabel>
+                {modulos.map(renderModule)}
+              </React.Fragment>
+            );
+          })
         )}
       </nav>
 
