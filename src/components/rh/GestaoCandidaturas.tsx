@@ -267,8 +267,14 @@ const GestaoCandidaturas: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-wine"></div>
+      <div className="w-full">
+        <div className="w-full space-y-3" aria-busy="true">
+                    <div className="skeleton" style={{ height: 14, width: '32%' }} />
+                    <div className="skeleton" style={{ height: 44, width: '100%' }} />
+                    <div className="skeleton" style={{ height: 44, width: '100%' }} />
+                    <div className="skeleton" style={{ height: 44, width: '100%' }} />
+                    <div className="skeleton" style={{ height: 44, width: '82%' }} />
+                  </div>
       </div>
     );
   }

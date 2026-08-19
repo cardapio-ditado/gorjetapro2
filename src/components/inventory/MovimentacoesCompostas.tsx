@@ -204,7 +204,13 @@ const MovimentacoesCompostas: React.FC = () => {
 
       {loading ? (
         <div className="flex justify-center items-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-wine"></div>
+          <div className="w-full space-y-3" aria-busy="true">
+                    <div className="skeleton" style={{ height: 14, width: '32%' }} />
+                    <div className="skeleton" style={{ height: 44, width: '100%' }} />
+                    <div className="skeleton" style={{ height: 44, width: '100%' }} />
+                    <div className="skeleton" style={{ height: 44, width: '100%' }} />
+                    <div className="skeleton" style={{ height: 44, width: '82%' }} />
+                  </div>
         </div>
       ) : filteredMovimentacoes.length === 0 ? (
         <div className="text-center py-12 bg-white/5 rounded-lg border-2 border-dashed border-white/20">
