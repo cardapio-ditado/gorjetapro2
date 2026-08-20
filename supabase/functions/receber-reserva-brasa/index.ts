@@ -151,28 +151,47 @@ Deno.serve(async (req: Request) => {
  * A área do bar que o cliente pediu, a partir do que ele disse.
  *
  * O agente já pergunta a preferência no atendimento, e a resposta chega em
- * texto livre nas observações. Aqui ela vira uma das opções que a tela de
- * Reservas Normais conhece.
+ * texto livre nas observações.
  *
- * Sem correspondência clara, o valor é "outros" — e nunca um palpite: mandar
- * alguém para a varanda porque a frase tinha a palavra "fora" é pior que
- * deixar a escolha para quem recebe, que tem a frase original logo ao lado
- * nas observações.
+ * `local_bar` é texto livre, e a lista mostra o valor cru — as cinco opções
+ * do formulário são conveniência de quem digita, não uma restrição. Então o
+ * pedido que não é nenhuma delas vale mais ESCRITO do que reduzido a
+ * "outros": "perto do palco" diz ao anfitrião exatamente o que fazer;
+ * "outros" o obriga a ir ler as observações.
+ *
+ * Quando o pedido É uma das opções conhecidas, usa o valor canônico — assim
+ * o filtro e o formulário continuam batendo com o que já existe na casa.
  */
 function areaDoBar(notas?: string | null): string {
-  const texto = (notas ?? "")
+  const original = (notas ?? "").trim();
+  const texto = original
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase();
-  if (!texto.trim()) return "interna";
+  if (!texto) return "interna";
 
-  // Ordem importa: "area interna" contém "interna", e mezanino é o termo mais
-  // específico da casa.
+  // 1. As áreas que a casa já tem cadastradas. Ordem importa: "área interna"
+  //    contém "interna", e mezanino é o termo mais específico.
   if (/\bmezanino\b/.test(texto)) return "mezanino";
   if (/\bvaranda\b/.test(texto)) return "varanda";
   if (/\bdeck\b/.test(texto)) return "deck";
   if (/\binterna?\b|\bdentro\b|\bsalao\b/.test(texto)) return "interna";
-  return "outros";
+
+  // 2. Um lugar que a casa não tem como opção: vai escrito, do jeito que a
+  //    pessoa pediu. Recorta só o trecho do lugar — a observação inteira
+  //    ("aniversário da esposa, quer perto do palco") encheria a coluna e
+  //    esconderia o que importa.
+  const pedido = original.match(
+    /\b(perto|pr[óo]ximo|pertinho|de frente|ao lado|longe|em frente)\b[^.,;!?\n]{0,32}/i,
+  );
+  if (pedido) {
+    return pedido[0].trim().replace(/\s+/g, " ").toLowerCase();
+  }
+
+  // 3. Falou de outra coisa (ocasião, aniversário) e não pediu lugar: o
+  //    padrão do formulário. Chutar uma área aqui mandaria alguém para a
+  //    varanda por causa de uma palavra solta.
+  return "interna";
 }
 
 /**
