@@ -61,6 +61,7 @@ Deno.serve(async (req: Request) => {
       customer_phone?: string;
       party_size?: number;
       reserved_for?: string;
+      area_preference?: string | null;
       occasion?: string | null;
       notes?: string | null;
     };
@@ -112,7 +113,7 @@ Deno.serve(async (req: Request) => {
     return json({ registrada: true, ja_existia: true });
   }
 
-  const local = areaDoBar(d.notes);
+  const local = areaDoBar(d.area_preference);
 
   const observacoes = [
     "Reserva pelo WhatsApp (Brasa Food)",
@@ -148,50 +149,41 @@ Deno.serve(async (req: Request) => {
 });
 
 /**
- * A área do bar que o cliente pediu, a partir do que ele disse.
+ * A área do bar que o cliente pediu.
  *
- * O agente já pergunta a preferência no atendimento, e a resposta chega em
- * texto livre nas observações.
+ * Vem PRONTA do Brasa: a ferramenta de reserva do agente tem um campo `area`
+ * dedicado ("varanda, salão, área externa, mesa perto do palco"), que viaja
+ * no webhook como `area_preference`. A primeira versão desta função vasculhava
+ * as observações com expressão regular procurando "perto de..." — adivinhação
+ * desnecessária, com a informação chegando estruturada ao lado.
  *
- * `local_bar` é texto livre, e a lista mostra o valor cru — as cinco opções
- * do formulário são conveniência de quem digita, não uma restrição. Então o
- * pedido que não é nenhuma delas vale mais ESCRITO do que reduzido a
- * "outros": "perto do palco" diz ao anfitrião exatamente o que fazer;
- * "outros" o obriga a ir ler as observações.
- *
- * Quando o pedido É uma das opções conhecidas, usa o valor canônico — assim
- * o filtro e o formulário continuam batendo com o que já existe na casa.
+ * `local_bar` é texto livre e a lista mostra o valor cru, então o pedido vai
+ * ESCRITO do jeito que a pessoa falou. Só há uma normalização: quando o
+ * pedido é uma das áreas que a casa já usa no formulário, vale o valor
+ * canônico — assim o que veio do WhatsApp e o que foi digitado à mão
+ * aparecem iguais na lista, em vez de "Varanda" e "varanda" convivendo.
  */
-function areaDoBar(notas?: string | null): string {
-  const original = (notas ?? "").trim();
-  const texto = original
+function areaDoBar(area?: string | null): string {
+  const pedido = (area ?? "").trim().replace(/\s+/g, " ");
+  // Sem preferência: o padrão do formulário. Inventar uma área aqui mandaria
+  // alguém para a varanda sem ninguém ter pedido.
+  if (!pedido) return "interna";
+
+  const texto = pedido
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase();
-  if (!texto) return "interna";
 
-  // 1. As áreas que a casa já tem cadastradas. Ordem importa: "área interna"
-  //    contém "interna", e mezanino é o termo mais específico.
+  // Ordem importa: "área interna" contém "interna", e mezanino é o termo
+  // mais específico da casa.
   if (/\bmezanino\b/.test(texto)) return "mezanino";
   if (/\bvaranda\b/.test(texto)) return "varanda";
   if (/\bdeck\b/.test(texto)) return "deck";
   if (/\binterna?\b|\bdentro\b|\bsalao\b/.test(texto)) return "interna";
 
-  // 2. Um lugar que a casa não tem como opção: vai escrito, do jeito que a
-  //    pessoa pediu. Recorta só o trecho do lugar — a observação inteira
-  //    ("aniversário da esposa, quer perto do palco") encheria a coluna e
-  //    esconderia o que importa.
-  const pedido = original.match(
-    /\b(perto|pr[óo]ximo|pertinho|de frente|ao lado|longe|em frente)\b[^.,;!?\n]{0,32}/i,
-  );
-  if (pedido) {
-    return pedido[0].trim().replace(/\s+/g, " ").toLowerCase();
-  }
-
-  // 3. Falou de outra coisa (ocasião, aniversário) e não pediu lugar: o
-  //    padrão do formulário. Chutar uma área aqui mandaria alguém para a
-  //    varanda por causa de uma palavra solta.
-  return "interna";
+  // Qualquer outro lugar — "perto do palco", "longe da caixa de som" — vai
+  // como veio. É o que diz ao anfitrião o que fazer.
+  return pedido.toLowerCase();
 }
 
 /**

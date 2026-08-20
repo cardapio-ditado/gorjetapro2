@@ -526,15 +526,22 @@ const Events: React.FC = () => {
         </div>
         <div>
           <label className="block text-sm font-medium text-white/80 mb-1">Local</label>
-          <select value={formReservaNormal.local_bar}
+          {/* Texto livre com sugestões, e não <select>: o cliente pede "perto
+              do palco" ou "longe da caixa de som", e a lista fixa obrigava a
+              escolher "Outros" — jogando fora justamente a informação que o
+              anfitrião precisa na hora de sentar a pessoa. A datalist mantém
+              as áreas de sempre a um clique, para quem só quer o comum. */}
+          <input value={formReservaNormal.local_bar}
             onChange={e => setFormReservaNormal({ ...formReservaNormal, local_bar: e.target.value })}
-            className={selectCls}>
-            <option value="interna">Área Interna</option>
-            <option value="varanda">Varanda</option>
-            <option value="deck">Deck</option>
-            <option value="mezanino">Mezanino</option>
-            <option value="outros">Outros</option>
-          </select>
+            list="areas-do-bar"
+            placeholder="varanda, deck, perto do palco…"
+            className={inputCls} />
+          <datalist id="areas-do-bar">
+            <option value="interna" />
+            <option value="varanda" />
+            <option value="deck" />
+            <option value="mezanino" />
+          </datalist>
         </div>
         <div className="md:col-span-2">
           <label className="block text-sm font-medium text-white/80 mb-1">Observações</label>
