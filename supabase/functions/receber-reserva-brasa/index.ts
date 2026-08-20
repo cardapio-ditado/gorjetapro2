@@ -2,25 +2,29 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 /**
- * Recebe do Brasa Food a reserva que o agente de WhatsApp aprovou e a coloca
- * no mapa de mesas (`reservas_mesas`).
+ * Recebe do Brasa Food a reserva que o agente de WhatsApp aprovou e a grava
+ * na lista de reservas (`reservas_normais`).
  *
  * A ponte mora AQUI, no Gorjeta, de propósito: o Brasa Food é um produto
- * generalista e só sabe publicar webhooks — ele não conhece o Ditado. Tudo que
- * é peculiar desta casa (mapa de mesas, regra de bloqueio por dia, escolha de
- * mesa) fica do lado que é da casa. Se um dia a ponte mudar, o produto não
- * sofre.
+ * generalista e só sabe publicar webhooks — ele não conhece o Ditado. Tudo
+ * que é peculiar desta casa fica do lado que é da casa.
+ *
+ * POR QUE NÃO O MAPA DE MESAS. A primeira versão escrevia em
+ * `reservas_mesas`, escolhendo a menor mesa livre que coubesse. Na prática
+ * isso jogava as pessoas em lugares aleatórios: quem pedia "perto do palco"
+ * caía onde sobrou, porque a escolha não olhava a seção. Atender a
+ * preferência de verdade exigiria adjacência de mesas, junção de mesas para
+ * grupos grandes e um modelo do salão que o agente não tem como conhecer.
+ *
+ * A lista resolve sem nada disso: `local_bar` guarda a ÁREA que o cliente
+ * pediu, e quem recebe escolhe a mesa daquela área na hora — que é a decisão
+ * que uma pessoa toma melhor que um algoritmo, olhando o salão.
  *
  * Contrato do webhook (src/webhooks.ts do Brasa):
  * - POST com corpo { event, created_at, data }
  * - Assinado: header `x-webhook-signature: t=<unix>,v1=<hmac-sha256>`,
  *   onde o HMAC cobre `${t}.${corpo}` com o segredo compartilhado.
  * - 2xx encerra; 4xx NÃO é retentado; 5xx é retentado 5x com backoff.
- *   Por isso este handler devolve 200 mesmo quando decide não registrar
- *   (mesa nenhuma livre): repetir a entrega não libera mesa.
- *
- * Regra de conflito copiada de MapaMesasPublico.tsx: "sem giro de mesas —
- * qualquer reserva no dia bloqueia a mesa". A escolha respeita isso.
  */
 
 const FUSO = "America/Cuiaba";
@@ -96,68 +100,36 @@ Deno.serve(async (req: Request) => {
   }).format(quando);
 
   // Idempotência: o Brasa retenta entregas, e a segunda tentativa não pode
-  // virar segunda mesa reservada. A etiqueta brasa:<id> na observação é a
-  // memória de que esta reserva já entrou.
+  // virar segunda reserva. A etiqueta brasa:<id> na observação é a memória de
+  // que esta reserva já entrou.
   const etiqueta = `brasa:${d.reservation_id}`;
   const { data: existente } = await supabase
-    .from("reservas_mesas")
-    .select("id, mesa_id")
+    .from("reservas_normais")
+    .select("id")
     .ilike("observacoes", `%${etiqueta}%`)
-    .neq("status", "cancelada")
     .limit(1);
   if (existente && existente.length > 0) {
     return json({ registrada: true, ja_existia: true });
   }
 
-  const [{ data: mesas }, { data: reservasDoDia }] = await Promise.all([
-    supabase.from("mesas").select("id, numero, nome, capacidade").eq("ativo", true),
-    supabase
-      .from("reservas_mesas")
-      .select("mesa_id")
-      .eq("data_reserva", dataReserva)
-      .neq("status", "cancelada"),
-  ]);
-
-  const ocupadas = new Set((reservasDoDia ?? []).map((r) => r.mesa_id));
-  const livres = (mesas ?? []).filter((m) => !ocupadas.has(m.id));
-
-  if (livres.length === 0) {
-    // 200 de propósito: retentar não libera mesa. O registro fica no log da
-    // função, e a divergência aparece na conferência (reserva no Brasa sem
-    // mesa no mapa).
-    console.error(
-      `[brasa] sem mesa livre em ${dataReserva} para ${d.customer_name} (${d.party_size}p) — reserva ${d.reservation_id} NÃO entrou no mapa`,
-    );
-    return json({ registrada: false, motivo: "sem_mesa_livre" });
-  }
-
-  // A menor mesa que comporta o grupo — reserva de 2 não gasta a mesa de 8.
-  // Se nenhuma comporta, vai para a maior livre com aviso: mesa apertada com
-  // nota é resolvível na hora; reserva invisível no mapa não é.
-  const porCapacidade = [...livres].sort((a, b) => a.capacidade - b.capacidade);
-  const mesa =
-    porCapacidade.find((m) => m.capacidade >= (d.party_size ?? 0)) ??
-    porCapacidade[porCapacidade.length - 1];
-  const apertada = mesa.capacidade < (d.party_size ?? 0);
+  const local = areaDoBar(d.notes);
 
   const observacoes = [
     "Reserva pelo WhatsApp (Brasa Food)",
     d.occasion ? `Ocasião: ${d.occasion}` : null,
     d.notes ? `Obs: ${d.notes}` : null,
-    apertada ? `⚠ Grupo de ${d.party_size} numa mesa de ${mesa.capacidade} — juntar mesas` : null,
     etiqueta,
   ]
     .filter(Boolean)
     .join(" · ");
 
-  const { error } = await supabase.from("reservas_mesas").insert({
-    mesa_id: mesa.id,
+  const { error } = await supabase.from("reservas_normais").insert({
     nome_cliente: d.customer_name,
-    telefone: d.customer_phone ?? null,
+    telefone_cliente: d.customer_phone ?? "",
     data_reserva: dataReserva,
     horario,
     numero_pessoas: d.party_size,
-    status: "confirmada",
+    local_bar: local,
     observacoes,
   });
 
@@ -169,12 +141,39 @@ Deno.serve(async (req: Request) => {
 
   return json({
     registrada: true,
-    mesa: mesa.nome || mesa.numero,
     data: dataReserva,
     horario,
-    aviso: apertada ? "grupo maior que a mesa" : null,
+    local_bar: local,
   });
 });
+
+/**
+ * A área do bar que o cliente pediu, a partir do que ele disse.
+ *
+ * O agente já pergunta a preferência no atendimento, e a resposta chega em
+ * texto livre nas observações. Aqui ela vira uma das opções que a tela de
+ * Reservas Normais conhece.
+ *
+ * Sem correspondência clara, o valor é "outros" — e nunca um palpite: mandar
+ * alguém para a varanda porque a frase tinha a palavra "fora" é pior que
+ * deixar a escolha para quem recebe, que tem a frase original logo ao lado
+ * nas observações.
+ */
+function areaDoBar(notas?: string | null): string {
+  const texto = (notas ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+  if (!texto.trim()) return "interna";
+
+  // Ordem importa: "area interna" contém "interna", e mezanino é o termo mais
+  // específico da casa.
+  if (/\bmezanino\b/.test(texto)) return "mezanino";
+  if (/\bvaranda\b/.test(texto)) return "varanda";
+  if (/\bdeck\b/.test(texto)) return "deck";
+  if (/\binterna?\b|\bdentro\b|\bsalao\b/.test(texto)) return "interna";
+  return "outros";
+}
 
 /**
  * Confere a assinatura HMAC do Brasa.
