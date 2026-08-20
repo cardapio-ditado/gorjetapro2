@@ -11,6 +11,14 @@ import dayjs from 'dayjs';
 import ChatFinanceiroIA from '../components/financeiro/ChatFinanceiroIA';
 import MapaMesasAdmin from '../components/events/MapaMesasAdmin';
 
+/**
+ * Mapa de Mesas adormecido a pedido da casa: enquanto não houver reserva por
+ * mesa, a aba não vai ao ar. Nada foi removido — o componente, as tabelas
+ * (mesas, reservas_mesas) e a ponte com o Brasa Food seguem intactos. Para
+ * reativar, troque para true: a aba volta ao lugar de sempre, no fim da lista.
+ */
+const MAPA_MESAS_ATIVO = false;
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface EventoFechado {
@@ -147,7 +155,9 @@ const Events: React.FC = () => {
   const [calendarMonth, setCalendarMonth] = useState(dayjs().startOf('month'));
   const [allCalendarEvents, setAllCalendarEvents] = useState<any[]>([]);
 
-  const tabTitles = ['Eventos Fechados', 'Reservas Especiais', 'Reservas Normais', 'Mapa de Mesas'];
+  const tabTitles = MAPA_MESAS_ATIVO
+    ? ['Eventos Fechados', 'Reservas Especiais', 'Reservas Normais', 'Mapa de Mesas']
+    : ['Eventos Fechados', 'Reservas Especiais', 'Reservas Normais'];
 
   // ── Fetch ────────────────────────────────────────────────────────────────
   useEffect(() => { fetchData(); }, [selectedTab, mesFilter, anoFilter, statusFilter]);
@@ -906,9 +916,11 @@ const Events: React.FC = () => {
                   )}
                 </Tab.Panel>
               ))}
-              <Tab.Panel className="rounded-xl p-6">
-                <MapaMesasAdmin />
-              </Tab.Panel>
+              {MAPA_MESAS_ATIVO && (
+                <Tab.Panel className="rounded-xl p-6">
+                  <MapaMesasAdmin />
+                </Tab.Panel>
+              )}
             </Tab.Panels>
           </Tab.Group>
         </div>
