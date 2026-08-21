@@ -450,6 +450,8 @@ function AbaNotas() {
   const [notaVer, setNotaVer] = useState<Nota | null>(null);
   const [notaItens, setNotaItens] = useState<NotaItem[]>([]);
   const [catalogo, setCatalogo] = useState<CatalogoItem[]>([]);
+  const [periodoPago, setPeriodoPago] = useState<'semana' | 'mes' | 'tudo'>('mes');
+  const [pago, setPago] = useState({ total: 0, qtd: 0 });
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -461,10 +463,43 @@ function AbaNotas() {
     setLoading(false);
   }, []);
 
+  /**
+   * Quanto saiu de caixa no período — o que restou da aba Pagamentos.
+   *
+   * Lê fornecedor_pagamentos pela data_pagamento, e não as notas quitadas: o
+   * indicador antigo somava valor_pago de notas com status "pago" filtrando
+   * pelo criado_em DA NOTA, então ignorava todo pagamento parcial e jogava o
+   * pagamento no mês em que a nota entrou, não no mês em que o dinheiro saiu.
+   */
+  const loadPago = useCallback(async () => {
+    let q = supabase
+      .from('fornecedor_pagamentos')
+      .select('valor')
+      .eq('fornecedor_id', DEVILLE_ID);
+
+    if (periodoPago !== 'tudo') {
+      const d = new Date();
+      if (periodoPago === 'semana') d.setDate(d.getDate() - 7);
+      else d.setDate(1);
+      q = q.gte('data_pagamento', d.toISOString().split('T')[0]);
+    }
+
+    const { data } = await q;
+    const linhas = data ?? [];
+    setPago({
+      total: linhas.reduce((s: number, p: { valor: number | string | null }) => s + Number(p.valor || 0), 0),
+      qtd: linhas.length,
+    });
+  }, [periodoPago]);
+
   useEffect(() => {
     load();
     supabase.from('vw_fornecedor_catalogo').select('*').eq('fornecedor_id', DEVILLE_ID).eq('ativo', true).then(({ data }) => setCatalogo(data ?? []));
   }, [load]);
+
+  // Roda junto de load() — assim lançar, editar ou excluir um pagamento
+  // atualiza o indicador na mesma ação, sem precisar recarregar a página.
+  useEffect(() => { loadPago(); }, [loadPago, notas]);
 
   const verItens = async (nota: Nota) => {
     setNotaVer(nota);
@@ -510,9 +545,8 @@ function AbaNotas() {
   // KPIs
   const emAberto = notas.filter(n => n.status_pagamento === 'em_aberto' || n.status_pagamento === 'parcialmente_pago');
   const vencidas = notas.filter(n => (n.status_pagamento === 'em_aberto' || n.status_pagamento === 'parcialmente_pago') && (n.dias_atraso ?? 0) > 0);
-  const thisMonth = new Date().toISOString().slice(0, 7);
-  const pagoMes = notas.filter(n => n.status_pagamento === 'pago' && n.criado_em?.startsWith(thisMonth)).reduce((s, n) => s + n.valor_pago, 0);
   const totalHist = notas.reduce((s, n) => s + n.valor_total, 0);
+  const rotuloPeriodo = { semana: 'últimos 7 dias', mes: 'mês corrente', tudo: 'desde o início' }[periodoPago];
 
   return (
     <div>
@@ -521,8 +555,6 @@ function AbaNotas() {
         {[
           { label: 'Em Aberto', value: `${emAberto.length} notas`, sub: fmt(emAberto.reduce((s, n) => s + n.saldo_restante, 0)), color: 'text-yellow-300' },
           { label: 'Vencido', value: `${vencidas.length} notas`, sub: fmt(vencidas.reduce((s, n) => s + n.saldo_restante, 0)), color: 'text-red-300' },
-          { label: 'Pago este mês', value: fmt(pagoMes), sub: thisMonth.split('-').reverse().join('/'), color: 'text-green-300' },
-          { label: 'Total histórico', value: fmt(totalHist), sub: `${notas.length} notas`, color: 'text-gold' },
         ].map(k => (
           <div key={k.label} className="bg-[#12141f] border border-white/10 rounded-xl p-4">
             <p className="text-white/60 text-xs mb-1">{k.label}</p>
@@ -530,6 +562,34 @@ function AbaNotas() {
             <p className="text-white/60 text-xs mt-0.5">{k.sub}</p>
           </div>
         ))}
+
+        {/* Pago no período — único card com controle próprio, porque é o que
+            responde "quanto saiu para a De Ville" no fechamento. */}
+        <div className="bg-[#12141f] border border-white/10 rounded-xl p-4">
+          <div className="flex items-center justify-between mb-1 gap-2">
+            <p className="text-white/60 text-xs">Pago no período</p>
+            <div className="flex items-center gap-0.5">
+              {([['semana', '7d'], ['mes', 'Mês'], ['tudo', 'Tudo']] as const).map(([k, rotulo]) => (
+                <button key={k} onClick={() => setPeriodoPago(k)}
+                  className={`px-1.5 py-0.5 rounded text-[10px] font-medium transition-colors ${
+                    periodoPago === k ? 'bg-wine text-white' : 'text-white/50 hover:text-white hover:bg-white/10'
+                  }`}>
+                  {rotulo}
+                </button>
+              ))}
+            </div>
+          </div>
+          <p className="text-lg font-bold text-green-300">{fmt(pago.total)}</p>
+          <p className="text-white/60 text-xs mt-0.5">
+            {pago.qtd} {pago.qtd === 1 ? 'pagamento' : 'pagamentos'} · {rotuloPeriodo}
+          </p>
+        </div>
+
+        <div className="bg-[#12141f] border border-white/10 rounded-xl p-4">
+          <p className="text-white/60 text-xs mb-1">Total histórico</p>
+          <p className="text-lg font-bold text-gold">{fmt(totalHist)}</p>
+          <p className="text-white/60 text-xs mt-0.5">{notas.length} notas</p>
+        </div>
       </div>
 
       <div className="flex items-center justify-between mb-4">
