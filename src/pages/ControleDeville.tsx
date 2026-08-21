@@ -164,6 +164,46 @@ const fmtDate = (s: string | null | undefined) => {
 
 const today = () => new Date().toISOString().split('T')[0];
 
+/**
+ * Reescreve valor_pago e status_pagamento de uma nota a partir da SOMA REAL dos
+ * pagamentos lançados nela.
+ *
+ * Antes cada tela ajustava o total por diferença (somava o novo, subtraía o
+ * antigo) — e a exclusão simplesmente não ajustava nada, deixando a nota como
+ * paga sem ter pagamento algum. Somar do zero elimina a classe inteira desse
+ * erro: qualquer que seja a operação, o total volta a bater com o extrato.
+ */
+async function recalcularPagamentoNota(notaId: string) {
+  const { data: pgtos } = await supabase
+    .from('fornecedor_pagamentos')
+    .select('valor')
+    .eq('nota_id', notaId);
+
+  const totalPago = (pgtos ?? []).reduce(
+    (s: number, p: { valor: number | string | null }) => s + Number(p.valor || 0),
+    0,
+  );
+
+  const { data: nota } = await supabase
+    .from('fornecedor_notas')
+    .select('valor_total, tipo')
+    .eq('id', notaId)
+    .maybeSingle();
+  if (!nota) return;
+
+  const total = Number(nota.valor_total || 0);
+  const status =
+    totalPago >= total && total > 0 ? 'pago'
+    : nota.tipo === 'consignado' ? 'consignado_ativo'
+    : totalPago > 0 ? 'parcialmente_pago'
+    : 'em_aberto';
+
+  await supabase
+    .from('fornecedor_notas')
+    .update({ valor_pago: totalPago, status_pagamento: status })
+    .eq('id', notaId);
+}
+
 function calcularVencimento(dataEmissao: string, prazo: string): string {
   const d = new Date(dataEmissao + 'T12:00:00');
   if (prazo === 'd1') d.setDate(d.getDate() + 1);
@@ -682,6 +722,23 @@ function AbaNotas() {
                 Nota normal — valor registrado diretamente na NF
               </div>
             )}
+
+            {/* Extrato da própria nota — o que antes era a aba Pagamentos. */}
+            <HistoricoPagamentosNota
+              notaId={notaVer.id}
+              onAlterado={async () => {
+                await load();
+                // A nota aberta no modal é uma cópia do estado anterior; sem
+                // reler, o topo continuaria mostrando o saldo velho depois de
+                // editar ou excluir um pagamento aqui dentro.
+                const { data } = await supabase
+                  .from('vw_fornecedor_notas_detalhe')
+                  .select('*')
+                  .eq('id', notaVer.id)
+                  .maybeSingle();
+                if (data) setNotaVer(data as Nota);
+              }}
+            />
           </div>
         </Modal>
       )}
@@ -1180,6 +1237,110 @@ function ModalEditarNota({ nota, onClose }: { nota: Nota; onClose: () => void })
   );
 }
 
+/**
+ * Extrato de pagamentos de UMA nota, dentro da própria nota.
+ *
+ * Nasceu de juntar a aba Pagamentos aqui: o pagamento é um fato da nota, não
+ * uma lista à parte. Editar e excluir moram junto do extrato, e as duas
+ * operações passam por recalcularPagamentoNota — que é o que faltava na
+ * exclusão antiga, a ponto de a própria tela avisar "ajuste manualmente".
+ */
+function HistoricoPagamentosNota({
+  notaId,
+  onAlterado,
+}: {
+  notaId: string;
+  onAlterado: () => void;
+}) {
+  const [pgtos, setPgtos] = useState<Pagamento[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [editar, setEditar] = useState<Pagamento | null>(null);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    const { data } = await supabase
+      .from('fornecedor_pagamentos')
+      .select('*')
+      .eq('nota_id', notaId)
+      .order('data_pagamento', { ascending: false });
+    setPgtos((data ?? []) as Pagamento[]);
+    setLoading(false);
+  }, [notaId]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const excluir = async (p: Pagamento) => {
+    if (!window.confirm(`Excluir o pagamento de ${fmt(p.valor)} de ${fmtDate(p.data_pagamento)}?\n\nO saldo da nota é recalculado automaticamente.`)) return;
+    await supabase.from('fornecedor_pagamentos').delete().eq('id', p.id);
+    await recalcularPagamentoNota(notaId);
+    await load();
+    onAlterado();
+  };
+
+  const formaLabel: Record<string, string> = {
+    pix: 'PIX', dinheiro: 'Dinheiro', transferencia: 'Transferência', boleto: 'Boleto', outro: 'Outro',
+  };
+
+  const totalPago = pgtos.reduce((s, p) => s + Number(p.valor || 0), 0);
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-2">
+        <p className="text-xs text-white/60 uppercase tracking-wide">Histórico de Pagamentos</p>
+        {pgtos.length > 0 && (
+          <p className="text-xs text-white/50">
+            {pgtos.length} {pgtos.length === 1 ? 'lançamento' : 'lançamentos'} · <span className="text-green-400 font-semibold">{fmt(totalPago)}</span>
+          </p>
+        )}
+      </div>
+
+      <div className="bg-[#12141f] border border-white/10 rounded-xl overflow-hidden">
+        {loading ? (
+          <div className="px-4 py-6 text-center text-white/40 text-sm">Carregando…</div>
+        ) : pgtos.length === 0 ? (
+          <div className="px-4 py-6 text-center">
+            <p className="text-white/50 text-sm">Nenhum pagamento lançado nesta nota.</p>
+            <p className="text-white/30 text-xs mt-1">Use o botão de cifrão na listagem para registrar — total ou parcial.</p>
+          </div>
+        ) : (
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-white/10">
+                {['Data', 'Forma', 'Valor', 'Observações', ''].map(h => (
+                  <th key={h} className="px-3 py-2.5 text-left text-xs font-medium text-white/60 uppercase tracking-wide">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {pgtos.map(p => (
+                <tr key={p.id} className="border-b border-white/5 last:border-0 hover:bg-white/[0.02]">
+                  <td className="px-3 py-3 text-white whitespace-nowrap">{fmtDate(p.data_pagamento)}</td>
+                  <td className="px-3 py-3 text-white/70">{formaLabel[p.forma_pagamento] || p.forma_pagamento}</td>
+                  <td className="px-3 py-3 text-green-400 font-semibold whitespace-nowrap">{fmt(p.valor)}</td>
+                  <td className="px-3 py-3 text-white/50">{p.observacoes || '—'}</td>
+                  <td className="px-3 py-3">
+                    <div className="flex items-center gap-1 justify-end">
+                      <button onClick={() => setEditar(p)} className="p-1.5 text-white/30 hover:text-blue-400 transition-colors rounded-lg hover:bg-white/5" title="Editar pagamento"><Pencil size={12} /></button>
+                      <button onClick={() => excluir(p)} className="p-1.5 text-white/30 hover:text-red-400 transition-colors rounded-lg hover:bg-white/5" title="Excluir pagamento"><Trash2 size={12} /></button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      {editar && (
+        <ModalEditarPagamento
+          pagamento={editar}
+          onClose={async () => { setEditar(null); await load(); onAlterado(); }}
+        />
+      )}
+    </div>
+  );
+}
+
 function ModalPagamentoNota({ nota, onClose }: { nota: Nota; onClose: () => void }) {
   const [dataPgto, setDataPgto] = useState(today());
   const [valor, setValor] = useState(String(nota.saldo_restante));
@@ -1187,9 +1348,20 @@ function ModalPagamentoNota({ nota, onClose }: { nota: Nota; onClose: () => void
   const [obs, setObs] = useState('');
   const [saving, setSaving] = useState(false);
 
+  const saldo = Number(nota.saldo_restante ?? 0);
+  const v = parseFloat(valor);
+  const valorValido = !isNaN(v) && v > 0;
+  // O que sobra DEPOIS deste pagamento — é o número que diz, sem texto de
+  // ajuda, que pagar menos que o saldo é uma operação prevista.
+  const restante = valorValido ? Math.max(0, saldo - v) : saldo;
+  const quitaTudo = valorValido && v >= saldo;
+  const excedeSaldo = valorValido && v > saldo + 0.005;
+
   const save = async () => {
-    const v = parseFloat(valor);
-    if (!v || v <= 0) return alert('Informe um valor válido.');
+    if (!valorValido) return alert('Informe um valor válido.');
+    if (excedeSaldo && !window.confirm(
+      `O valor de ${fmt(v)} é maior que o saldo de ${fmt(saldo)}.\n\nRegistrar assim mesmo?`
+    )) return;
     setSaving(true);
     try {
       await supabase.from('fornecedor_pagamentos').insert({
@@ -1200,9 +1372,9 @@ function ModalPagamentoNota({ nota, onClose }: { nota: Nota; onClose: () => void
         forma_pagamento: forma,
         observacoes: obs || null,
       });
-      const novoValorPago = (nota.valor_pago ?? 0) + v;
-      const novoStatus = novoValorPago >= nota.valor_total ? 'pago' : 'parcialmente_pago';
-      await supabase.from('fornecedor_notas').update({ valor_pago: novoValorPago, status_pagamento: novoStatus }).eq('id', nota.id);
+      // Soma do extrato, não aritmética sobre o total antigo: dois pagamentos
+      // lançados em abas diferentes não se atropelam.
+      await recalcularPagamentoNota(nota.id);
       onClose();
     } catch (e: any) {
       alert('Erro: ' + e.message);
@@ -1216,15 +1388,61 @@ function ModalPagamentoNota({ nota, onClose }: { nota: Nota; onClose: () => void
       <div className="space-y-4">
         <div className="bg-white/5 rounded-xl p-3 text-sm">
           <p className="text-white/50">Nota: <span className="text-white font-medium">{nota.numero_nota || '—'}</span></p>
-          <p className="text-white/50 mt-1">Saldo: <span className="text-yellow-300 font-semibold">{fmt(nota.saldo_restante)}</span></p>
+          <div className="grid grid-cols-3 gap-3 mt-2.5">
+            <div>
+              <p className="text-xs text-white/50">Total</p>
+              <p className="text-white font-semibold">{fmt(nota.valor_total)}</p>
+            </div>
+            <div>
+              <p className="text-xs text-white/50">Já pago</p>
+              <p className="text-green-400 font-semibold">{fmt(nota.valor_pago)}</p>
+            </div>
+            <div>
+              <p className="text-xs text-white/50">Saldo</p>
+              <p className="text-yellow-300 font-semibold">{fmt(saldo)}</p>
+            </div>
+          </div>
         </div>
         <div>
           <label className="block text-xs text-white/50 mb-1.5">Data do Pagamento</label>
           <input type="date" className={inputCls} value={dataPgto} onChange={e => setDataPgto(e.target.value)} />
         </div>
         <div>
-          <label className="block text-xs text-white/50 mb-1.5">Valor</label>
-          <input type="number" step="0.01" className={inputCls} value={valor} onChange={e => setValor(e.target.value)} />
+          <div className="flex items-center justify-between mb-1.5">
+            <label className="block text-xs text-white/50">Valor</label>
+            {/* Pagamento parcial sempre coube aqui; o campo é que vinha
+                preenchido com o saldo e parecia fixo. Os atalhos tornam a
+                escolha visível — e "Metade" existe porque é o parcial que
+                mais aparece na prática. */}
+            <div className="flex items-center gap-1">
+              <button type="button" onClick={() => setValor(saldo.toFixed(2))}
+                className="px-2 py-1 rounded-lg text-[11px] border border-white/15 text-white/60 hover:text-white hover:bg-white/5 transition-colors">
+                Saldo total
+              </button>
+              <button type="button" onClick={() => setValor((saldo / 2).toFixed(2))}
+                className="px-2 py-1 rounded-lg text-[11px] border border-white/15 text-white/60 hover:text-white hover:bg-white/5 transition-colors">
+                Metade
+              </button>
+              <button type="button" onClick={() => setValor('')}
+                className="px-2 py-1 rounded-lg text-[11px] border border-white/15 text-white/60 hover:text-white hover:bg-white/5 transition-colors">
+                Limpar
+              </button>
+            </div>
+          </div>
+          <input type="number" step="0.01" min="0" className={inputCls} value={valor}
+            placeholder="0,00"
+            onChange={e => setValor(e.target.value)} />
+          <p className="text-xs mt-1.5 min-h-[1rem]">
+            {!valorValido ? (
+              <span className="text-white/40">Pode ser o saldo inteiro ou um valor menor.</span>
+            ) : excedeSaldo ? (
+              <span className="text-orange-400">Maior que o saldo de {fmt(saldo)} — vai pedir confirmação.</span>
+            ) : quitaTudo ? (
+              <span className="text-green-400">Quita a nota — o status vira Pago.</span>
+            ) : (
+              <span className="text-yellow-300">Pagamento parcial — restam {fmt(restante)} nesta nota.</span>
+            )}
+          </p>
         </div>
         <div>
           <label className="block text-xs text-white/50 mb-1.5">Forma de Pagamento</label>
@@ -2183,160 +2401,6 @@ function ModalDevolucao({ item, notaId, onClose }: { item: ConsignadoItem; notaI
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// ABA 4 — PAGAMENTOS
-// ═══════════════════════════════════════════════════════════════════════════════
-
-function AbaPagamentos() {
-  const [pagamentos, setPagamentos] = useState<Pagamento[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [periodo, setPeriodo] = useState<'semana' | 'mes' | 'tudo' | 'personalizado'>('mes');
-  const [dataInicio, setDataInicio] = useState(() => { const d = new Date(); d.setDate(1); return d.toISOString().split('T')[0]; });
-  const [dataFim, setDataFim] = useState(today());
-  const [showNovoPgto, setShowNovoPgto] = useState(false);
-  const [editarPgto, setEditarPgto] = useState<Pagamento | null>(null);
-
-  const load = useCallback(async () => {
-    setLoading(true);
-    let query = supabase
-      .from('fornecedor_pagamentos')
-      .select('*, fornecedor_notas(numero_nota, tipo)')
-      .eq('fornecedor_id', DEVILLE_ID)
-      .order('data_pagamento', { ascending: false });
-
-    if (periodo !== 'tudo') {
-      let ini = dataInicio, fim = dataFim;
-      if (periodo === 'mes') {
-        const now = new Date();
-        ini = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
-        fim = today();
-      } else if (periodo === 'semana') {
-        const now = new Date();
-        const day = now.getDay();
-        const diff = now.getDate() - day + (day === 0 ? -6 : 1);
-        ini = new Date(new Date().setDate(diff)).toISOString().split('T')[0];
-        fim = today();
-      }
-      query = query.gte('data_pagamento', ini).lte('data_pagamento', fim);
-    }
-
-    const { data } = await query;
-    setPagamentos((data ?? []).map((d: any) => ({
-      ...d,
-      numero_nota: d.fornecedor_notas?.numero_nota,
-      tipo_nota: d.fornecedor_notas?.tipo,
-    })));
-    setLoading(false);
-  }, [periodo, dataInicio, dataFim]);
-
-  useEffect(() => { load(); }, [load]);
-
-  const totalPeriodo = pagamentos.reduce((s, p) => s + Number(p.valor), 0);
-
-  const deletarPagamento = async (p: Pagamento) => {
-    if (!window.confirm('Excluir este pagamento? O saldo da nota NÃO será recalculado automaticamente — ajuste manualmente se necessário.')) return;
-    await supabase.from('fornecedor_pagamentos').delete().eq('id', p.id);
-    load();
-  };
-
-  const formaLabel: Record<string, string> = { pix: 'PIX', dinheiro: 'Dinheiro', transferencia: 'Transferência', boleto: 'Boleto', outro: 'Outro' };
-  const formaColor: Record<string, string> = { pix: 'text-teal-400', dinheiro: 'text-green-400', transferencia: 'text-blue-400', boleto: 'text-orange-400', outro: 'text-white/50' };
-
-  return (
-    <div>
-      {/* Filtros */}
-      <div className="flex flex-wrap items-center gap-3 mb-4">
-        <div className="flex rounded-xl overflow-hidden border border-white/20">
-          {(['semana', 'mes', 'tudo', 'personalizado'] as const).map(p => (
-            <button key={p} onClick={() => setPeriodo(p)} className={`px-3 py-2 text-xs font-medium transition-colors ${periodo === p ? 'bg-wine text-white' : 'text-white/50 hover:text-white hover:bg-white/5'}`}>
-              {p === 'personalizado' ? 'Período' : p === 'mes' ? 'Este mês' : p === 'semana' ? 'Esta semana' : 'Todos'}
-            </button>
-          ))}
-        </div>
-        {periodo === 'personalizado' && (
-          <div className="flex items-center gap-2">
-            <input type="date" className={inputCls + ' w-auto'} value={dataInicio} onChange={e => setDataInicio(e.target.value)} />
-            <span className="text-white/60 text-sm">até</span>
-            <input type="date" className={inputCls + ' w-auto'} value={dataFim} onChange={e => setDataFim(e.target.value)} />
-          </div>
-        )}
-        <button onClick={load} className="p-2.5 rounded-xl border border-white/20 text-white/40 hover:text-white hover:bg-white/5 transition-colors"><RefreshCw size={14} /></button>
-        <div className="ml-auto">
-          <button onClick={() => setShowNovoPgto(true)} className="flex items-center gap-2 px-4 py-2 bg-wine hover:bg-[#6a1a25] text-white rounded-xl text-sm font-medium transition-colors">
-            <Plus size={14} /> Novo Pagamento
-          </button>
-        </div>
-      </div>
-
-      {/* KPI total */}
-      <div className="bg-[#12141f] border border-white/10 rounded-xl p-4 mb-4 flex items-center justify-between">
-        <div>
-          <p className="text-white/60 text-xs">Total pago no período</p>
-          <p className="text-gold text-2xl font-bold mt-0.5">{fmt(totalPeriodo)}</p>
-        </div>
-        <div className="text-right">
-          <p className="text-white/60 text-xs">{pagamentos.length} pagamentos</p>
-        </div>
-      </div>
-
-      <div className="bg-[#12141f] border border-white/10 rounded-xl overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-white/10">
-                {['Data', 'Nota vinculada', 'Tipo nota', 'Forma', 'Valor', 'Observações', ''].map(h => (
-                  <th key={h} className="px-4 py-3 text-left text-xs font-medium text-white/60 uppercase tracking-wide whitespace-nowrap">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                <tr><td colSpan={7} className="py-8 text-center text-white/60">Carregando...</td></tr>
-              ) : pagamentos.length === 0 ? (
-                <tr><td colSpan={7} className="py-8 text-center text-white/60">Nenhum pagamento no período</td></tr>
-              ) : pagamentos.map(p => (
-                <tr key={p.id} className="border-b border-white/5 last:border-0 hover:bg-white/[0.02]">
-                  <td className="px-4 py-3 text-white/70 whitespace-nowrap">{fmtDate(p.data_pagamento)}</td>
-                  <td className="px-4 py-3">
-                    {p.nota_id
-                      ? <span className="text-white font-medium">{(p as any).numero_nota || <span className="text-white/60 italic">s/ número</span>}</span>
-                      : <span className="text-white/60 italic text-xs">Acerto geral</span>
-                    }
-                  </td>
-                  <td className="px-4 py-3">
-                    {(p as any).tipo_nota
-                      ? <span className={`px-2 py-0.5 rounded-full text-xs ${(p as any).tipo_nota === 'consignado' ? 'text-blue-300 bg-blue-900/30' : 'text-white/60 bg-white/5'}`}>
-                          {(p as any).tipo_nota === 'consignado' ? 'Consignado' : 'Normal'}
-                        </span>
-                      : <span className="text-white/60 text-xs">—</span>
-                    }
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className={`text-xs font-semibold ${formaColor[p.forma_pagamento] ?? 'text-white/50'}`}>
-                      {formaLabel[p.forma_pagamento] ?? p.forma_pagamento}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-gold font-semibold">{fmt(Number(p.valor))}</td>
-                  <td className="px-4 py-3 text-white/60 text-xs max-w-xs truncate">{p.observacoes || '—'}</td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-1">
-                      <button onClick={() => setEditarPgto(p)} className="p-1.5 text-white/30 hover:text-blue-400 transition-colors rounded-lg hover:bg-white/5" title="Editar"><Pencil size={12} /></button>
-                      <button onClick={() => deletarPagamento(p)} className="p-1.5 text-white/30 hover:text-red-400 transition-colors rounded-lg hover:bg-white/5" title="Excluir"><Trash2 size={12} /></button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {showNovoPgto && <ModalNovoPagamento onClose={() => { setShowNovoPgto(false); load(); }} />}
-      {editarPgto && <ModalEditarPagamento pagamento={editarPgto} onClose={() => { setEditarPgto(null); load(); }} />}
-    </div>
-  );
-}
-
 // ─── Modal Editar Pagamento ───────────────────────────────────────────────────
 
 function ModalEditarPagamento({ pagamento, onClose }: { pagamento: Pagamento; onClose: () => void }) {
@@ -2402,117 +2466,6 @@ function ModalEditarPagamento({ pagamento, onClose }: { pagamento: Pagamento; on
           <button onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-white/20 text-white/70 hover:bg-white/5 text-sm transition-colors">Cancelar</button>
           <button onClick={save} disabled={saving} className="flex-1 py-2.5 rounded-xl bg-wine hover:bg-[#6a1a25] text-white text-sm font-medium transition-colors disabled:opacity-50">
             {saving ? 'Salvando...' : 'Salvar Alterações'}
-          </button>
-        </div>
-      </div>
-    </Modal>
-  );
-}
-
-// ─── Modal Novo Pagamento (seleciona nota + suporte parcial) ──────────────────
-
-function ModalNovoPagamento({ onClose }: { onClose: () => void }) {
-  const [notas, setNotas] = useState<Nota[]>([]);
-  const [notaId, setNotaId] = useState<string>('');
-  const [dataPgto, setDataPgto] = useState(today());
-  const [valor, setValor] = useState('');
-  const [forma, setForma] = useState('pix');
-  const [obs, setObs] = useState('');
-  const [saving, setSaving] = useState(false);
-
-  useEffect(() => {
-    supabase.from('vw_fornecedor_notas_detalhe').select('*')
-      .not('status_pagamento', 'eq', 'pago')
-      .order('data_emissao', { ascending: false })
-      .then(({ data }) => setNotas(data ?? []));
-  }, []);
-
-  const notaSel = notas.find(n => n.id === notaId);
-
-  useEffect(() => {
-    if (notaSel) setValor(String(Number(notaSel.saldo_restante).toFixed(2)));
-    else setValor('');
-  }, [notaId, notaSel]);
-
-  const save = async () => {
-    const v = parseFloat(valor);
-    if (!v || v <= 0) return alert('Informe um valor válido.');
-    setSaving(true);
-    try {
-      await supabase.from('fornecedor_pagamentos').insert({
-        fornecedor_id: DEVILLE_ID,
-        nota_id: notaId || null,
-        data_pagamento: dataPgto,
-        valor: v,
-        forma_pagamento: forma,
-        observacoes: obs || null,
-      });
-      if (notaSel) {
-        const novoValorPago = Number(notaSel.valor_pago) + v;
-        let novoStatus = novoValorPago >= Number(notaSel.valor_total) ? 'pago'
-          : notaSel.tipo === 'consignado' ? 'consignado_ativo' : 'parcialmente_pago';
-        await supabase.from('fornecedor_notas').update({ valor_pago: novoValorPago, status_pagamento: novoStatus }).eq('id', notaSel.id);
-      }
-      onClose();
-    } catch (e: any) {
-      alert('Erro: ' + e.message);
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  return (
-    <Modal title="Registrar Pagamento — De Ville" onClose={onClose}>
-      <div className="space-y-4">
-        <div>
-          <label className="block text-xs text-white/50 mb-1.5">Nota <span className="text-white/60">(deixe em branco para acerto geral)</span></label>
-          <select className={selectCls} value={notaId} onChange={e => setNotaId(e.target.value)}>
-            <option value="">— Acerto geral / sem nota vinculada —</option>
-            {notas.map(n => (
-              <option key={n.id} value={n.id}>
-                {n.numero_nota || 'S/N'} · {n.tipo === 'consignado' ? 'Consig.' : 'Normal'} · {fmtDate(n.data_emissao)} · Saldo: {fmt(Number(n.saldo_restante))}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {notaSel && (
-          <div className="bg-white/5 rounded-xl p-3 text-xs grid grid-cols-3 gap-3">
-            <div><p className="text-white/60">Total</p><p className="text-white font-medium">{fmt(Number(notaSel.valor_total))}</p></div>
-            <div><p className="text-white/60">Pago</p><p className="text-green-400 font-medium">{fmt(Number(notaSel.valor_pago))}</p></div>
-            <div><p className="text-white/60">Saldo</p><p className="text-yellow-300 font-bold">{fmt(Number(notaSel.saldo_restante))}</p></div>
-          </div>
-        )}
-
-        <div>
-          <label className="block text-xs text-white/50 mb-1.5">Data do Pagamento</label>
-          <input type="date" className={inputCls} value={dataPgto} onChange={e => setDataPgto(e.target.value)} />
-        </div>
-        <div>
-          <label className="block text-xs text-white/50 mb-1.5">
-            Valor
-            {notaSel && <span className="text-white/60 ml-1">(parcial permitido — máx. {fmt(Number(notaSel.saldo_restante))})</span>}
-          </label>
-          <input type="number" step="0.01" min="0.01" placeholder="0,00" className={inputCls} value={valor} onChange={e => setValor(e.target.value)} />
-        </div>
-        <div>
-          <label className="block text-xs text-white/50 mb-1.5">Forma de Pagamento</label>
-          <select className={selectCls} value={forma} onChange={e => setForma(e.target.value)}>
-            <option value="pix">PIX</option>
-            <option value="dinheiro">Dinheiro</option>
-            <option value="transferencia">Transferência</option>
-            <option value="boleto">Boleto</option>
-            <option value="outro">Outro</option>
-          </select>
-        </div>
-        <div>
-          <label className="block text-xs text-white/50 mb-1.5">Observações</label>
-          <textarea className={inputCls + ' resize-none'} rows={2} placeholder="Opcional..." value={obs} onChange={e => setObs(e.target.value)} />
-        </div>
-        <div className="flex gap-3 pt-2">
-          <button onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-white/20 text-white/70 hover:bg-white/5 text-sm transition-colors">Cancelar</button>
-          <button onClick={save} disabled={saving} className="flex-1 py-2.5 rounded-xl bg-wine hover:bg-[#6a1a25] text-white text-sm font-medium transition-colors disabled:opacity-50">
-            {saving ? 'Confirmando...' : 'Confirmar Pagamento'}
           </button>
         </div>
       </div>
@@ -2709,11 +2662,15 @@ function AbaCatalogo() {
 // COMPONENTE PRINCIPAL
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/**
+ * A aba Pagamentos saiu: pagamento é fato da nota, não lista paralela. Lançar
+ * está no cifrão da listagem (total ou parcial) e o extrato — com editar e
+ * excluir — mora dentro da própria nota, em Histórico de Pagamentos.
+ */
 const TABS = [
   { label: 'Estoque',      icon: Package },
   { label: 'Notas',        icon: FileText },
   { label: 'Consignados',  icon: RefreshCw },
-  { label: 'Pagamentos',   icon: DollarSign },
   { label: 'Catálogo',     icon: Settings },
 ];
 
@@ -2764,8 +2721,7 @@ const ControleDeville: React.FC = () => {
         {tab === 0 && <AbaEstoque />}
         {tab === 1 && <AbaNotas />}
         {tab === 2 && <AbaConsignados />}
-        {tab === 3 && <AbaPagamentos />}
-        {tab === 4 && <AbaCatalogo />}
+        {tab === 3 && <AbaCatalogo />}
       </div>
     </div>
   );
