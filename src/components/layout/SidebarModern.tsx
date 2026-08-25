@@ -93,8 +93,6 @@ export const MODULES: Module[] = [
       { name: 'Kardex Completo',          path: '/finance?tab=kardex-completo' },
       { name: 'Relatórios',               path: '/finance?tab=relatorios' },
       { name: 'Cadastros',                path: '/finance?tab=cadastros' },
-      { name: 'Visão Estratégica',        path: '/visao-estrategica' },
-      { name: 'Entradas Previsto x Real', path: '/entradas' },
       { name: 'ZIG Recebimentos',         path: '/zig-recebimentos' },
       { name: 'DRE Simplificado',         path: '/dre-simplificado' },
     ],

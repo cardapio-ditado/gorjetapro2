@@ -47,8 +47,6 @@ const ALL_ROUTES: SearchResult[] = [
   { label: 'Financeiro — Relatórios',            path: '/finance?tab=relatorios',        icon: DollarSign },
   { label: 'Financeiro — Cadastros',             path: '/finance?tab=cadastros',         icon: DollarSign },
   { label: 'Dashboard Financeiro',               path: '/financeiro',       icon: DollarSign },
-  { label: 'Visão Estratégica',                  path: '/visao-estrategica',icon: DollarSign },
-  { label: 'Entradas Previsto x Real',           path: '/entradas',         icon: DollarSign },
   { label: 'ZIG Recebimentos',                   path: '/zig-recebimentos', icon: DollarSign },
   { label: 'DRE Simplificado',                   path: '/dre-simplificado', icon: DollarSign },
   // Estoque
@@ -194,8 +192,6 @@ const Topbar: React.FC<TopbarProps> = ({ toggleSidebar, user, onLogout }) => {
       '/ocorrencias': { module: 'Ocorrências' },
       '/marketing': { module: 'Marketing' },
       '/gestao-estrategica': { module: 'OKRs Estratégicos' },
-      '/visao-estrategica': { module: 'Financeiro', sub: 'Visão Estratégica' },
-      '/entradas': { module: 'Financeiro', sub: 'Entradas' },
       '/zig-recebimentos': { module: 'Financeiro', sub: 'ZIG Recebimentos' },
       '/zig-vendas': { module: 'Estoque', sub: 'ZIG Vendas' },
       '/lista-compras': { module: 'Estoque', sub: 'Lista de Compras' },
