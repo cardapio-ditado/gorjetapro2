@@ -3237,7 +3237,7 @@ const DespesasTab: React.FC<DespesasTabProps> = ({
                     const valorExibir = (conta as any).valor_restante_planejamento || conta.valor_restante || 0;
                     return (
                       <div key={contaId} className="flex justify-between text-sm bg-[#12141f] p-2 rounded border border-white/10">
-                        <span className="text-white">{(conta as any).fornecedor_nome || conta.fornecedor}</span>
+                        <span className="text-white">{conta.fornecedor_nome}</span>
                         <span className="font-bold text-white">{formatCurrency(valorExibir)}</span>
                       </div>
                     );

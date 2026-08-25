@@ -90,12 +90,7 @@ interface IndicadoresFinanceiros {
 }
 
 const RelatoriosGerenciais: React.FC = () => {
-  const [dreData, setDreData] = useState<DREData[]>([]);
-  const [groupedDRE, setGroupedDRE] = useState<DREGroup[]>([]);
   const [fluxoCaixaData, setFluxoCaixaData] = useState<FluxoCaixaData[]>([]);
-  const [contasPagarData, setContasPagarData] = useState<ContasPagarData[]>([]);
-  const [contasReceberData, setContasReceberData] = useState<ContasReceberData[]>([]);
-  const [fornecedorRanking, setFornecedorRanking] = useState<FornecedorRanking[]>([]);
   
   // Dados dos relatórios
   const [categoriasData, setCategorias] = useState<CategoriaData[]>([]);

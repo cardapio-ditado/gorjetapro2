@@ -42,7 +42,9 @@ export interface Despesa {
   fornecedor: string;
   valor: number;
   categoria_id: string;
+  categoria_nome?: string | null;
   subcategoria_id: string | null;
+  subcategoria_nome?: string | null;
   descricao: string | null;
   data_vencimento: string | null;
   is_override: boolean;
@@ -52,7 +54,6 @@ export interface Despesa {
   tipo_lancamento?: 'previsao' | 'realizada' | 'confirmada';
   data_confirmacao?: string | null;
   confirmado_por?: string | null;
-  conta_pagar_id: string | null;
   observacao_conversao: string | null;
   convertido_em: string | null;
   convertido_por: string | null;

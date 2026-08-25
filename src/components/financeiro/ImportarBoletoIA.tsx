@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Upload, Camera, CheckCircle, AlertTriangle, Sparkles, Loader } from 'lucide-react';
+import { X, Upload, Camera, CheckCircle, AlertTriangle, Sparkles, Loader, FileText } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
 interface BoletoExtraction {
