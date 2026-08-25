@@ -481,7 +481,10 @@ const FeriasColaboradores: React.FC = () => {
           .sort((a, b) => a.data_inicio.localeCompare(b.data_inicio)),
       });
       if (p.status !== 'completo') c.diasDevidos += Math.max(0, p.dias_restantes);
-      if (p.status === 'vencido') c.temVencido = true;
+      // Vencido se decide pela DATA, não pelo status gravado: a função de
+      // monitoramento reclassifica períodos como "parcial" sem olhar o prazo,
+      // e o alerta vermelho não pode depender de quem gravou por último.
+      if (p.dias_restantes > 0 && diasParaVencer(p.periodo_concessivo_fim) < 0) c.temVencido = true;
     }
 
     for (const g of gozos) {
