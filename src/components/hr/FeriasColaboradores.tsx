@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Plus, Search, Filter, Calendar, Clock, CheckCircle, XCircle, AlertTriangle, CreditCard as Edit2, Trash2, Download, CalendarDays, CalendarCheck, Timer, Award, Target, Activity, Users, Brain, ChevronRight, Info, BarChart2 } from 'lucide-react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { Plus, Search, Filter, Calendar, Clock, CheckCircle, XCircle, AlertTriangle, CreditCard as Edit2, Trash2, Download, CalendarDays, CalendarCheck, Timer, Award, Users, Brain, ChevronRight, Info } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import MonitoramentoFeriasIA from './MonitoramentoFeriasIA';
 import dayjs from 'dayjs';
@@ -49,6 +49,18 @@ interface Periodo {
   observacoes?: string;
   colaborador_nome?: string;
   funcao_nome?: string;
+  data_admissao?: string;
+}
+
+/** Um lançamento de férias visto pela ótica do período a que pertence. */
+interface Gozo {
+  id: string;
+  colaborador_id: string;
+  periodo_aquisitivo_id?: string | null;
+  data_inicio: string;
+  data_fim: string;
+  dias_corridos: number;
+  status: string;
 }
 
 const inp = 'w-full bg-white/5 border border-white/15 rounded-xl px-3 py-2 text-white text-sm placeholder-white/30 focus:outline-none focus:border-wine/60';
@@ -71,11 +83,10 @@ const statusFeriasLabel: Record<string, string> = {
   gozado: 'Gozado', cancelado: 'Cancelado',
 };
 
-const periodoStatusColor: Record<string, string> = {
-  pendente: 'text-blue-300 bg-blue-900/30',
-  parcial: 'text-yellow-300 bg-yellow-900/30',
-  gozado: 'text-green-300 bg-green-900/30',
-  vencido: 'text-red-300 bg-red-900/30',
+// Os status reais do banco são pendente | parcial | completo | vencido —
+// "gozado" nunca existiu aqui (era o bug que deixava o filtro sem efeito).
+const periodoStatusLabel: Record<string, string> = {
+  pendente: 'Pendente', parcial: 'Parcial', completo: 'Completo', vencido: 'Vencido',
 };
 
 function calcularDiasUteis(dataInicio: string, dataFim: string) {
@@ -107,6 +118,8 @@ const FeriasColaboradores: React.FC = () => {
   const [viewMode, setViewMode] = useState<'ferias' | 'periodos' | 'monitoramento'>('periodos');
   const [ferias, setFerias] = useState<Ferias[]>([]);
   const [periodos, setPeriodos] = useState<Periodo[]>([]);
+  const [gozos, setGozos] = useState<Gozo[]>([]);
+  const [expandido, setExpandido] = useState<Record<string, boolean>>({});
   const [colaboradores, setColaboradores] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -151,10 +164,12 @@ const FeriasColaboradores: React.FC = () => {
     fetchColaboradores();
   }, []);
 
+  // statusPeriodoFilter ficou de fora de propósito: na visão por colaborador o
+  // filtro de status é aplicado localmente, sem nova ida ao banco.
   useEffect(() => {
     if (viewMode === 'ferias') fetchFerias();
     if (viewMode === 'periodos') fetchPeriodos();
-  }, [viewMode, statusFilter, anoFilter, statusPeriodoFilter]);
+  }, [viewMode, statusFilter, anoFilter]);
 
   useEffect(() => {
     fetchIndicadores();
@@ -189,19 +204,26 @@ const FeriasColaboradores: React.FC = () => {
   const fetchPeriodos = async () => {
     setLoading(true);
     try {
-      let q = supabase
-        .from('periodos_aquisitivos_ferias')
-        .select('*, colaborador:colaboradores(nome_completo, funcao_personalizada)')
-        .order('periodo_concessivo_fim', { ascending: true });
-      if (statusPeriodoFilter !== 'all') q = q.eq('status', statusPeriodoFilter);
-      const { data, error } = await q;
-      if (error) throw error;
-      const mapped = (data || []).map((p: any) => ({
+      // Períodos e gozos vêm juntos: a tela agrupa por colaborador e mostra o
+      // gozo DENTRO do período a que pertence — filtro de status é local.
+      const [pRes, gRes] = await Promise.all([
+        supabase
+          .from('periodos_aquisitivos_ferias')
+          .select('*, colaborador:colaboradores(nome_completo, funcao_personalizada, data_admissao)')
+          .order('periodo_aquisitivo_inicio', { ascending: false }),
+        supabase
+          .from('ferias_colaboradores')
+          .select('id, colaborador_id, periodo_aquisitivo_id, data_inicio, data_fim, dias_corridos, status'),
+      ]);
+      if (pRes.error) throw pRes.error;
+      if (gRes.error) throw gRes.error;
+      setPeriodos((pRes.data || []).map((p: any) => ({
         ...p,
         colaborador_nome: p.colaborador?.nome_completo || '—',
         funcao_nome: p.colaborador?.funcao_personalizada || '—',
-      }));
-      setPeriodos(mapped);
+        data_admissao: p.colaborador?.data_admissao,
+      })));
+      setGozos((gRes.data || []) as Gozo[]);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -210,11 +232,12 @@ const FeriasColaboradores: React.FC = () => {
   };
 
   const fetchPeriodosDisponiveis = async (colaboradorId: string) => {
+    // Todos os períodos, inclusive vencidos: férias antigas se lançam num
+    // período que já venceu — era o filtro por pendente/parcial que impedia.
     const { data } = await supabase
       .from('periodos_aquisitivos_ferias')
       .select('*, colaborador:colaboradores(nome_completo)')
       .eq('colaborador_id', colaboradorId)
-      .in('status', ['pendente', 'parcial'])
       .order('periodo_aquisitivo_inicio', { ascending: false });
     const mapped = (data || []).map((p: any) => ({
       ...p,
@@ -261,7 +284,11 @@ const FeriasColaboradores: React.FC = () => {
         dias_corridos: fim.diff(ini, 'days') + 1,
         dias_uteis: calcularDiasUteis(feriasForm.data_inicio, feriasForm.data_fim),
         data_prevista_retorno: calcularDataRetorno(feriasForm.data_fim),
-        status: editingFerias?.status || 'previsto',
+        // Datas que já passaram são registro histórico, não previsão: entram
+        // direto como gozadas, sem obrigar ninguém a passar pelo fluxo de
+        // solicitar/aprovar algo que já aconteceu.
+        status: editingFerias?.status
+          || (dayjs(feriasForm.data_fim).isBefore(dayjs(), 'day') ? 'gozado' : 'previsto'),
       };
       if (editingFerias) {
         const { error } = await supabase.from('ferias_colaboradores').update(payload).eq('id', editingFerias.id);
@@ -274,6 +301,7 @@ const FeriasColaboradores: React.FC = () => {
       setEditingFerias(null);
       setFeriasForm({ colaborador_id: '', periodo_aquisitivo_id: '', data_inicio: '', data_fim: '', observacoes: '' });
       fetchFerias();
+      fetchPeriodos();
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -302,9 +330,10 @@ const FeriasColaboradores: React.FC = () => {
   };
 
   const excluirFerias = async (id: string) => {
-    if (!confirm('Excluir este período de férias?')) return;
+    if (!confirm('Excluir este lançamento de férias? Os dias voltam ao saldo do período.')) return;
     await supabase.from('ferias_colaboradores').delete().eq('id', id);
     fetchFerias();
+    fetchPeriodos();
   };
 
   // ── Período CRUD ──
@@ -346,7 +375,7 @@ const FeriasColaboradores: React.FC = () => {
   };
 
   const excluirPeriodo = async (id: string) => {
-    if (!confirm('Excluir este período aquisitivo?')) return;
+    if (!confirm('Excluir este ano base? Os lançamentos de férias vinculados a ele perdem o vínculo (não são apagados).')) return;
     await supabase.from('periodos_aquisitivos_ferias').delete().eq('id', id);
     fetchPeriodos();
   };
@@ -411,18 +440,72 @@ const FeriasColaboradores: React.FC = () => {
     (f.observacoes || '').toLowerCase().includes(searchFerias.toLowerCase())
   );
 
-  const filteredPeriodos = periodos.filter(p =>
-    p.colaborador_nome?.toLowerCase().includes(searchPeriodos.toLowerCase())
-  );
+  /**
+   * A visão que faltava: cada colaborador com seus anos base, e dentro de cada
+   * ano base o prazo concessivo e os dias efetivamente gozados. Quem tem
+   * período vencido sobe para o topo — é onde o RH precisa agir.
+   */
+  interface CartaoColaborador {
+    id: string;
+    nome: string;
+    funcao: string;
+    admissao?: string;
+    periodos: (Periodo & { gozosDoPeriodo: Gozo[] })[];
+    semVinculo: number;
+    diasDevidos: number;
+    temVencido: boolean;
+  }
 
-  // Countdown badge
+  const porColaborador = useMemo<CartaoColaborador[]>(() => {
+    const busca = searchPeriodos.trim().toLowerCase();
+    const idsPeriodos = new Set(periodos.map(p => p.id));
+    const mapa = new Map<string, CartaoColaborador>();
+
+    for (const p of periodos) {
+      let c = mapa.get(p.colaborador_id);
+      if (!c) {
+        c = {
+          id: p.colaborador_id,
+          nome: p.colaborador_nome || '—',
+          funcao: p.funcao_nome || '',
+          admissao: p.data_admissao,
+          periodos: [], semVinculo: 0, diasDevidos: 0, temVencido: false,
+        };
+        mapa.set(p.colaborador_id, c);
+      }
+      if (statusPeriodoFilter !== 'all' && p.status !== statusPeriodoFilter) continue;
+      c.periodos.push({
+        ...p,
+        gozosDoPeriodo: gozos
+          .filter(g => g.periodo_aquisitivo_id === p.id && g.status !== 'cancelado')
+          .sort((a, b) => a.data_inicio.localeCompare(b.data_inicio)),
+      });
+      if (p.status !== 'completo') c.diasDevidos += Math.max(0, p.dias_restantes);
+      if (p.status === 'vencido') c.temVencido = true;
+    }
+
+    for (const g of gozos) {
+      if (g.status === 'cancelado') continue;
+      if (g.periodo_aquisitivo_id && idsPeriodos.has(g.periodo_aquisitivo_id)) continue;
+      const c = mapa.get(g.colaborador_id);
+      if (c) c.semVinculo++;
+    }
+
+    let lista = Array.from(mapa.values()).filter(c => c.periodos.length > 0);
+    if (busca) lista = lista.filter(c => c.nome.toLowerCase().includes(busca));
+    const peso = (c: CartaoColaborador) => (c.temVencido ? 0 : c.diasDevidos > 0 ? 1 : 2);
+    lista.sort((a, b) => peso(a) - peso(b) || a.nome.localeCompare(b.nome));
+    return lista;
+  }, [periodos, gozos, searchPeriodos, statusPeriodoFilter]);
+
+  // Countdown badge do prazo concessivo
   const GozoBadge = ({ p }: { p: Periodo }) => {
     const dias = diasParaVencer(p.periodo_concessivo_fim);
-    if (p.status === 'gozado') return <span className="px-2 py-0.5 text-xs rounded-full bg-green-900/30 text-green-300">Concluído</span>;
+    if (p.status === 'completo') return <span className="px-2 py-0.5 text-xs rounded-full bg-green-900/30 text-green-300">Concluído</span>;
     if (dias < 0) return <span className="px-2 py-0.5 text-xs rounded-full bg-red-900/40 text-red-300 font-semibold">Vencido há {Math.abs(dias)}d</span>;
-    if (dias <= 30) return <span className="px-2 py-0.5 text-xs rounded-full bg-red-900/30 text-red-300 font-semibold animate-pulse">{dias}d para vencer</span>;
-    if (dias <= 60) return <span className="px-2 py-0.5 text-xs rounded-full bg-yellow-900/30 text-yellow-300">{dias}d para vencer</span>;
-    return <span className="px-2 py-0.5 text-xs rounded-full bg-white/10 text-white/50">{dias}d para vencer</span>;
+    if (dias <= 30) return <span className="px-2 py-0.5 text-xs rounded-full bg-red-900/30 text-red-300 font-semibold animate-pulse">{dias}d restantes</span>;
+    if (dias <= 60) return <span className="px-2 py-0.5 text-xs rounded-full bg-yellow-900/30 text-yellow-300">{dias}d restantes</span>;
+    return <span className="px-2 py-0.5 text-xs rounded-full bg-white/10 text-white/50">{dias}d restantes</span>;
   };
 
   return (
@@ -431,8 +514,8 @@ const FeriasColaboradores: React.FC = () => {
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex gap-1 bg-white/5 p-1 rounded-xl">
           {([
-            { key: 'periodos', label: 'Períodos', icon: CalendarDays },
-            { key: 'ferias', label: 'Controle de Férias', icon: Calendar },
+            { key: 'periodos', label: 'Por Colaborador', icon: Users },
+            { key: 'ferias', label: 'Lançamentos', icon: Calendar },
             { key: 'monitoramento', label: 'Monitoramento IA', icon: Brain },
           ] as const).map(({ key, label, icon: Icon }) => (
             <button
@@ -472,125 +555,176 @@ const FeriasColaboradores: React.FC = () => {
       {/* ───── MONITORAMENTO IA ───── */}
       {viewMode === 'monitoramento' && <MonitoramentoFeriasIA />}
 
-      {/* ───── PERÍODOS AQUISITIVOS ───── */}
+      {/* ───── FÉRIAS POR COLABORADOR ───── */}
       {viewMode === 'periodos' && (
         <div className="space-y-5">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-3">
             <div>
-              <h3 className="text-lg font-bold text-white">Períodos Aquisitivos e Concessivos</h3>
-              <p className="text-white/50 text-sm">Gerencie os períodos antes de cadastrar férias</p>
+              <h3 className="text-lg font-bold text-white font-display">Férias por Colaborador</h3>
+              <p className="text-white/50 text-sm">Cada pessoa com seus anos base, o prazo de cada um e o que já foi tirado</p>
             </div>
             <button
               onClick={() => { setPeriodoForm({ colaborador_id: '', periodo_aquisitivo_inicio: '', periodo_aquisitivo_fim: '', periodo_concessivo_inicio: '', periodo_concessivo_fim: '', dias_direito: '30', observacoes: '' }); setShowPeriodoForm(true); }}
               className="flex items-center gap-2 px-4 py-2 bg-wine text-white rounded-xl hover:bg-[#9D2F3C] text-sm font-medium"
             >
-              <Plus className="w-4 h-4" /> Novo Período
+              <Plus className="w-4 h-4" /> Novo Ano Base
             </button>
           </div>
 
-          {/* Explicação */}
+          {/* Legenda dos três conceitos — a régua de leitura da tela toda */}
           <div className="bg-blue-900/20 border border-blue-700/30 rounded-xl p-4 flex gap-3 text-sm text-blue-300">
             <Info className="w-4 h-4 mt-0.5 shrink-0" />
-            <div>
-              <p className="font-medium mb-1">Como funciona:</p>
-              <p className="text-blue-300/70">O <strong className="text-blue-200">Período Aquisitivo</strong> é o ano de trabalho em que o colaborador conquista o direito às férias. O <strong className="text-blue-200">Período Concessivo</strong> é o prazo de 12 meses seguinte ao aquisitivo, dentro do qual a empresa deve conceder as férias — ele é calculado automaticamente e não se digita. O <strong className="text-blue-200">gozo</strong> (as datas em que o colaborador efetivamente tirou férias) se lança em "Controle de Férias".</p>
-            </div>
+            <p className="text-blue-300/70">
+              <strong className="text-blue-200">Ano base</strong> é o ano trabalhado que dá o direito às férias.{' '}
+              <strong className="text-blue-200">Conceder até</strong> é o prazo legal (12 meses após o ano base) para a pessoa tirá-las.{' '}
+              <strong className="text-blue-200">Férias tiradas</strong> são os dias que ela de fato usufruiu dentro desse prazo.
+            </p>
           </div>
 
-          {/* Filters */}
+          {/* Filtros */}
           <div className="flex gap-3 flex-wrap">
             <div className="flex-1 min-w-48 relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30 w-4 h-4" />
               <input className="w-full pl-9 pr-4 py-2 bg-white/5 border border-white/15 rounded-xl text-white text-sm placeholder-white/30 focus:outline-none" placeholder="Buscar colaborador..." value={searchPeriodos} onChange={e => setSearchPeriodos(e.target.value)} />
             </div>
-            <select className={sel + ' w-auto'} value={statusPeriodoFilter} onChange={e => { setStatusPeriodoFilter(e.target.value); }}>
-              <option value="all">Todos os status</option>
-              <option value="pendente">Pendente</option>
-              <option value="parcial">Parcial</option>
-              <option value="gozado">Gozado</option>
-              <option value="vencido">Vencido</option>
+            <select className={sel + ' w-auto'} value={statusPeriodoFilter} onChange={e => setStatusPeriodoFilter(e.target.value)}>
+              <option value="all">Todos os anos base</option>
+              <option value="vencido">Vencidos</option>
+              <option value="pendente">Pendentes</option>
+              <option value="parcial">Parciais</option>
+              <option value="completo">Completos</option>
             </select>
           </div>
 
-          {/* Períodos list */}
           {loading ? (
             <div className="flex justify-center py-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-wine" /></div>
-          ) : filteredPeriodos.length === 0 ? (
+          ) : porColaborador.length === 0 ? (
             <div className="text-center py-12 bg-[#12141f] border border-white/10 rounded-xl">
               <CalendarDays className="w-12 h-12 text-white/20 mx-auto mb-3" />
-              <p className="text-white/60 text-sm">Nenhum período cadastrado.</p>
+              <p className="text-white/60 text-sm">Nenhum colaborador com ano base {statusPeriodoFilter !== 'all' ? `"${periodoStatusLabel[statusPeriodoFilter]}"` : 'cadastrado'}.</p>
             </div>
           ) : (
-            <div className="space-y-2">
-              {filteredPeriodos.map(p => {
-                const diasGozo = diasParaVencer(p.periodo_concessivo_fim);
-                const isCritico = diasGozo < 0 && p.status !== 'gozado';
-                const isAlerta = diasGozo >= 0 && diasGozo <= 60 && p.status !== 'gozado';
+            <div className="space-y-3">
+              {porColaborador.map(c => {
+                const aberto = expandido[c.id] ?? (c.temVencido || c.diasDevidos > 0);
                 return (
-                  <div key={p.id} className={`bg-[#12141f] border rounded-xl p-4 ${isCritico ? 'border-red-700/50 bg-red-900/10' : isAlerta ? 'border-yellow-700/40 bg-yellow-900/10' : 'border-white/10'}`}>
-                    <div className="flex items-start justify-between gap-4 flex-wrap">
+                  <div key={c.id} className={`bg-[#12141f] border rounded-xl overflow-hidden ${c.temVencido ? 'border-red-700/40' : 'border-white/10'}`}>
+                    {/* Cabeçalho da pessoa */}
+                    <button
+                      onClick={() => setExpandido(e => ({ ...e, [c.id]: !aberto }))}
+                      className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-white/[0.03] transition-colors focus-ring"
+                    >
+                      <ChevronRight className={`w-4 h-4 shrink-0 text-white/40 transition-transform ${aberto ? 'rotate-90' : ''}`} />
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <p className="font-semibold text-white truncate">{p.colaborador_nome}</p>
-                          <span className={`px-2 py-0.5 text-xs rounded-full font-medium ${periodoStatusColor[p.status] || 'bg-white/10 text-white/60'}`}>{p.status}</span>
-                        </div>
-                        <p className="text-white/60 text-xs mb-3">{p.funcao_nome}</p>
-
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-                          <div>
-                            <p className="text-white/60 text-xs mb-0.5">Período Aquisitivo</p>
-                            <p className="text-white/80 font-medium">
-                              {dayjs(p.periodo_aquisitivo_inicio).format('DD/MM/YYYY')}<br />
-                              <span className="text-white/60">até</span>{' '}
-                              {dayjs(p.periodo_aquisitivo_fim).format('DD/MM/YYYY')}
-                            </p>
-                          </div>
-                          <div>
-                            <p className="text-white/60 text-xs mb-0.5">Período Concessivo</p>
-                            <p className={`font-medium ${isCritico ? 'text-red-300' : isAlerta ? 'text-yellow-300' : 'text-white/80'}`}>
-                              {dayjs(p.periodo_concessivo_inicio).format('DD/MM/YYYY')}<br />
-                              <span className={isCritico || isAlerta ? '' : 'text-white/60'}>até </span>
-                              {dayjs(p.periodo_concessivo_fim).format('DD/MM/YYYY')}
-                            </p>
-                          </div>
-                          <div>
-                            <p className="text-white/60 text-xs mb-0.5">Dias</p>
-                            <p className="text-white/80">
-                              <span className="text-white font-semibold">{p.dias_restantes}</span> restantes
-                              <br /><span className="text-white/60 text-xs">{p.dias_gozados} gozados de {p.dias_direito}</span>
-                            </p>
-                          </div>
-                          <div>
-                            <p className="text-white/60 text-xs mb-1">Prazo para conceder</p>
-                            <GozoBadge p={p} />
-                          </div>
-                        </div>
-
-                        {/* Progress bar */}
-                        <div className="mt-3">
-                          <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
-                            <div
-                              className={`h-full rounded-full transition-all ${isCritico ? 'bg-red-500' : isAlerta ? 'bg-yellow-500' : 'bg-green-500'}`}
-                              style={{ width: `${Math.min(100, (p.dias_gozados / p.dias_direito) * 100)}%` }}
-                            />
-                          </div>
-                          <p className="text-white/60 text-xs mt-0.5">{Math.round((p.dias_gozados / p.dias_direito) * 100)}% utilizado</p>
-                        </div>
+                        <p className="font-semibold text-white truncate">{c.nome}</p>
+                        <p className="text-white/50 text-xs">
+                          {c.funcao}{c.admissao ? ` · admissão ${dayjs(c.admissao).format('DD/MM/YYYY')}` : ''}
+                        </p>
                       </div>
-
-                      <div className="flex gap-1.5 shrink-0">
-                        <button
-                          onClick={() => { setViewMode('ferias'); setShowFeriasForm(true); setFeriasForm(f => ({ ...f, colaborador_id: p.colaborador_id, periodo_aquisitivo_id: p.id })); fetchPeriodosDisponiveis(p.colaborador_id); }}
-                          className="flex items-center gap-1 px-3 py-1.5 bg-wine/30 text-[#e05060] border border-wine/40 rounded-lg hover:bg-wine/50 text-xs transition-colors"
-                          title="Agendar férias deste período"
-                        >
-                          <Plus className="w-3.5 h-3.5" /> Agendar
-                        </button>
-                        <button onClick={() => excluirPeriodo(p.id)} className="p-1.5 text-red-400/40 hover:text-red-400 rounded-lg hover:bg-red-500/10 transition-colors">
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                      <div className="flex items-center gap-2 shrink-0">
+                        {c.temVencido ? (
+                          <span className="px-2.5 py-1 text-xs rounded-full bg-red-900/40 text-red-300 font-semibold">
+                            {c.diasDevidos}d vencidos a conceder
+                          </span>
+                        ) : c.diasDevidos > 0 ? (
+                          <span className="px-2.5 py-1 text-xs rounded-full bg-yellow-900/30 text-yellow-300">
+                            {c.diasDevidos}d a conceder
+                          </span>
+                        ) : (
+                          <span className="px-2.5 py-1 text-xs rounded-full bg-green-900/30 text-green-300">Em dia</span>
+                        )}
+                        <span className="text-white/40 text-xs hidden sm:block">
+                          {c.periodos.length} {c.periodos.length === 1 ? 'ano base' : 'anos base'}
+                        </span>
                       </div>
-                    </div>
+                    </button>
+
+                    {/* Os anos base da pessoa, um por linha */}
+                    {aberto && (
+                      <div className="border-t border-white/10 overflow-x-auto">
+                        <table className="w-full text-sm">
+                          <thead>
+                            <tr className="bg-white/[0.03] border-b border-white/10">
+                              {['Ano base', 'Conceder até', 'Férias tiradas no período', 'Saldo', ''].map(h => (
+                                <th key={h} className="px-4 py-2 text-left text-xs font-medium text-white/50 uppercase tracking-wide whitespace-nowrap">{h}</th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-white/5">
+                            {c.periodos.map(p => (
+                              <tr key={p.id} className={p.status === 'vencido' ? 'bg-red-900/10' : ''}>
+                                <td className="px-4 py-3 whitespace-nowrap align-top">
+                                  <p className="text-white font-semibold font-mono">
+                                    {dayjs(p.periodo_aquisitivo_inicio).format('YYYY')} → {dayjs(p.periodo_aquisitivo_fim).format('YYYY')}
+                                  </p>
+                                  <p className="text-white/50 text-xs mt-0.5">
+                                    {dayjs(p.periodo_aquisitivo_inicio).format('DD/MM/YYYY')} – {dayjs(p.periodo_aquisitivo_fim).format('DD/MM/YYYY')}
+                                  </p>
+                                </td>
+                                <td className="px-4 py-3 whitespace-nowrap align-top">
+                                  <p className={`font-medium font-mono ${p.status === 'vencido' ? 'text-red-300' : 'text-white/90'}`}>
+                                    {dayjs(p.periodo_concessivo_fim).format('DD/MM/YYYY')}
+                                  </p>
+                                  <div className="mt-1"><GozoBadge p={p} /></div>
+                                </td>
+                                <td className="px-4 py-3 align-top">
+                                  {p.gozosDoPeriodo.length === 0 ? (
+                                    <span className="text-white/40 text-xs">— nenhum dia lançado</span>
+                                  ) : (
+                                    <div className="flex flex-wrap gap-1.5">
+                                      {p.gozosDoPeriodo.map(g => (
+                                        <span key={g.id} className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-sky-900/30 border border-sky-700/30 text-sky-200 text-xs whitespace-nowrap font-mono">
+                                          {dayjs(g.data_inicio).format('DD/MM/YY')} – {dayjs(g.data_fim).format('DD/MM/YY')}
+                                          <span className="text-sky-400/80">· {g.dias_corridos}d</span>
+                                        </span>
+                                      ))}
+                                    </div>
+                                  )}
+                                </td>
+                                <td className="px-4 py-3 whitespace-nowrap align-top">
+                                  <p className="text-white font-mono">
+                                    <span className="font-semibold">{p.dias_gozados}</span>
+                                    <span className="text-white/40">/{p.dias_direito}d</span>
+                                  </p>
+                                  <div className="h-1 w-16 bg-white/10 rounded-full overflow-hidden mt-1.5">
+                                    <div
+                                      className={`h-full rounded-full ${p.status === 'vencido' ? 'bg-red-500' : p.status === 'completo' ? 'bg-green-500' : 'bg-yellow-500'}`}
+                                      style={{ width: `${Math.min(100, (p.dias_gozados / Math.max(1, p.dias_direito)) * 100)}%` }}
+                                    />
+                                  </div>
+                                </td>
+                                <td className="px-4 py-3 whitespace-nowrap align-top">
+                                  <div className="flex items-center gap-1 justify-end">
+                                    {p.dias_restantes > 0 && (
+                                      <button
+                                        onClick={() => {
+                                          setEditingFerias(null);
+                                          setFeriasForm({ colaborador_id: c.id, periodo_aquisitivo_id: p.id, data_inicio: '', data_fim: '', observacoes: '' });
+                                          fetchPeriodosDisponiveis(c.id);
+                                          setShowFeriasForm(true);
+                                        }}
+                                        className="flex items-center gap-1 px-2.5 py-1.5 bg-wine/25 text-[#e08590] border border-wine/40 rounded-lg hover:bg-wine/45 text-xs transition-colors focus-ring"
+                                        title="Lançar dias de férias neste ano base"
+                                      >
+                                        <Plus className="w-3.5 h-3.5" /> Lançar férias
+                                      </button>
+                                    )}
+                                    <button onClick={() => excluirPeriodo(p.id)} className="p-1.5 text-red-400/40 hover:text-red-400 rounded-lg hover:bg-red-500/10 transition-colors focus-ring" title="Excluir ano base" aria-label="Excluir ano base">
+                                      <Trash2 className="w-4 h-4" />
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                        {c.semVinculo > 0 && (
+                          <p className="px-4 py-2 text-xs text-amber-400/80 border-t border-white/5">
+                            {c.semVinculo} lançamento{c.semVinculo > 1 ? 's' : ''} de férias sem ano base vinculado — veja na aba Lançamentos.
+                          </p>
+                        )}
+                      </div>
+                    )}
                   </div>
                 );
               })}
@@ -604,7 +738,7 @@ const FeriasColaboradores: React.FC = () => {
         <div className="space-y-5">
           {/* Header */}
           <div className="flex items-center justify-between flex-wrap gap-3">
-            <h3 className="text-lg font-bold text-white">Controle de Férias</h3>
+            <h3 className="text-lg font-bold text-white font-display">Lançamentos de Férias</h3>
             <div className="flex gap-2">
               <button onClick={exportarFerias} className="flex items-center gap-2 px-3 py-2 bg-white/5 border border-white/15 rounded-xl text-white/70 hover:bg-white/10 text-sm">
                 <Download className="w-4 h-4" /> Exportar
@@ -745,7 +879,7 @@ const FeriasColaboradores: React.FC = () => {
                   <CalendarDays className="w-12 h-12 text-white/20 mx-auto mb-3" />
                   <p className="text-white/60 text-sm">Nenhuma férias encontrada.</p>
                   <button onClick={() => { setViewMode('periodos'); }} className="mt-3 text-sm text-wine hover:text-[#e05060]">
-                    Criar um período aquisitivo primeiro
+                    Criar um ano base primeiro na aba "Por Colaborador"
                   </button>
                 </div>
               )}
@@ -759,7 +893,7 @@ const FeriasColaboradores: React.FC = () => {
         <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
           <div className="bg-[#12141f] border border-white/15 rounded-2xl w-full max-w-xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between p-5 border-b border-white/10">
-              <h3 className="text-lg font-bold text-white">Novo Período Aquisitivo</h3>
+              <h3 className="text-lg font-bold text-white">Novo Ano Base</h3>
               <button onClick={() => setShowPeriodoForm(false)} className="text-white/40 hover:text-white"><XCircle className="w-5 h-5" /></button>
             </div>
             <div className="p-5 space-y-4">
@@ -781,7 +915,7 @@ const FeriasColaboradores: React.FC = () => {
               </div>
 
               <div>
-                <p className="text-xs font-semibold text-white/60 mb-2 uppercase tracking-wide">Período Aquisitivo (ano trabalhado)</p>
+                <p className="text-xs font-semibold text-white/60 mb-2 uppercase tracking-wide">Ano base — período aquisitivo (ano trabalhado)</p>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-xs text-white/50 mb-1">Início</label>
@@ -803,7 +937,7 @@ const FeriasColaboradores: React.FC = () => {
                   tirou férias. Gozo se lança em Controle de Férias. */}
               <div>
                 <p className="text-xs font-semibold text-white/60 mb-2 uppercase tracking-wide">
-                  Período Concessivo <span className="text-gold/70 normal-case font-normal">(calculado automaticamente)</span>
+                  Conceder até — período concessivo <span className="text-gold/70 normal-case font-normal">(calculado automaticamente)</span>
                 </p>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
@@ -871,18 +1005,19 @@ const FeriasColaboradores: React.FC = () => {
                   <label className="block text-xs text-white/50 mb-1">Período Aquisitivo</label>
                   <select className={sel} value={feriasForm.periodo_aquisitivo_id}
                     onChange={e => setFeriasForm(f => ({ ...f, periodo_aquisitivo_id: e.target.value }))}>
-                    <option value="">Selecionar período (opcional)...</option>
+                    <option value="">Selecionar ano base (opcional)...</option>
                     {periodosDisponiveis.map(p => (
                       <option key={p.id} value={p.id}>
-                        {dayjs(p.periodo_aquisitivo_inicio).format('DD/MM/YYYY')} – {dayjs(p.periodo_aquisitivo_fim).format('DD/MM/YYYY')}
-                        {' '}({p.dias_restantes}d restantes · conceder até {dayjs(p.periodo_concessivo_fim).format('DD/MM/YYYY')})
+                        Ano base {dayjs(p.periodo_aquisitivo_inicio).format('YYYY')} → {dayjs(p.periodo_aquisitivo_fim).format('YYYY')}
+                        {' '}· {p.dias_restantes}d restantes · conceder até {dayjs(p.periodo_concessivo_fim).format('DD/MM/YYYY')}
+                        {' '}({periodoStatusLabel[p.status] || p.status})
                       </option>
                     ))}
                   </select>
                   {periodosDisponiveis.length === 0 && (
                     <p className="text-xs text-amber-400 mt-1 flex items-center gap-1">
                       <AlertTriangle className="w-3.5 h-3.5" />
-                      Nenhum período disponível. Cadastre primeiro na aba "Períodos".
+                      Nenhum ano base cadastrado. Cadastre primeiro na aba "Por Colaborador".
                     </p>
                   )}
                 </div>
@@ -909,6 +1044,11 @@ const FeriasColaboradores: React.FC = () => {
                     <div><p className="text-white/60 text-xs">Dias úteis</p><p className="text-white font-bold">{calcularDiasUteis(feriasForm.data_inicio, feriasForm.data_fim)}</p></div>
                     <div><p className="text-white/60 text-xs">Retorno</p><p className="text-white font-bold">{dayjs(calcularDataRetorno(feriasForm.data_fim)).format('DD/MM/YYYY')}</p></div>
                   </div>
+                  {!editingFerias && dayjs(feriasForm.data_fim).isBefore(dayjs(), 'day') && (
+                    <p className="text-xs text-sky-300 mt-2">
+                      As datas já passaram: será registrado direto como <strong>férias gozadas</strong>, sem passar por solicitação e aprovação.
+                    </p>
+                  )}
                 </div>
               )}
 
