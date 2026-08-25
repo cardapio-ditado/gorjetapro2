@@ -167,7 +167,11 @@ const FeriasColaboradores: React.FC = () => {
   // Filters
   const [searchFerias, setSearchFerias] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [anoFilter, setAnoFilter] = useState(new Date().getFullYear());
+  // 'all' por padrao: o filtro antigo abria travado no ano corrente e so
+  // oferecia 5 anos, entao o historico (ha lancamentos desde 2014) ficava
+  // invisivel sem nenhum caminho para chega-lo.
+  const [anoFilter, setAnoFilter] = useState<number | 'all'>('all');
+  const [anosDisponiveis, setAnosDisponiveis] = useState<number[]>([]);
   const [searchPeriodos, setSearchPeriodos] = useState('');
   const [statusPeriodoFilter, setStatusPeriodoFilter] = useState('all');
 
@@ -179,6 +183,7 @@ const FeriasColaboradores: React.FC = () => {
 
   useEffect(() => {
     fetchColaboradores();
+    fetchAnosDisponiveis();
   }, []);
 
   // statusPeriodoFilter ficou de fora de propósito: na visão por colaborador o
@@ -191,6 +196,17 @@ const FeriasColaboradores: React.FC = () => {
   useEffect(() => {
     fetchIndicadores();
   }, [ferias, periodos]);
+
+  const fetchAnosDisponiveis = async () => {
+    const { data } = await supabase
+      .from('ferias_colaboradores')
+      .select('data_inicio')
+      .order('data_inicio', { ascending: true })
+      .limit(1);
+    const primeiro = data?.[0]?.data_inicio ? new Date(data[0].data_inicio).getFullYear() : new Date().getFullYear();
+    const ultimo = new Date().getFullYear() + 1;
+    setAnosDisponiveis(Array.from({ length: ultimo - primeiro + 1 }, (_, i) => ultimo - i));
+  };
 
   const fetchColaboradores = async () => {
     const { data } = await supabase
@@ -207,7 +223,9 @@ const FeriasColaboradores: React.FC = () => {
     try {
       let q = supabase.from('vw_ferias_detalhadas').select('*');
       if (statusFilter !== 'all') q = q.eq('status', statusFilter);
-      q = q.gte('data_inicio', `${anoFilter}-01-01`).lte('data_inicio', `${anoFilter}-12-31`);
+      if (anoFilter !== 'all') {
+        q = q.gte('data_inicio', `${anoFilter}-01-01`).lte('data_inicio', `${anoFilter}-12-31`);
+      }
       const { data, error } = await q.order('data_inicio', { ascending: false });
       if (error) throw error;
       setFerias(data || []);
@@ -784,7 +802,7 @@ const FeriasColaboradores: React.FC = () => {
             {[
               { label: 'Em férias agora', value: ferias.filter(f => situacaoFerias(f) === 'em_gozo').length, icon: Award, color: 'text-sky-400' },
               { label: 'Agendadas', value: ferias.filter(f => situacaoFerias(f) === 'agendada').length, icon: Calendar, color: 'text-yellow-400' },
-              { label: 'Gozadas no ano', value: ferias.filter(f => situacaoFerias(f) === 'gozada').length, icon: CheckCircle, color: 'text-green-400' },
+              { label: anoFilter === 'all' ? 'Gozadas (todas)' : `Gozadas em ${anoFilter}`, value: ferias.filter(f => situacaoFerias(f) === 'gozada').length, icon: CheckCircle, color: 'text-green-400' },
               { label: 'Terminadas sem registro', value: ferias.filter(f => situacaoFerias(f) === 'sem_registro').length, icon: AlertTriangle, color: 'text-red-400' },
             ].map(({ label, value, icon: Icon, color }) => (
               <div key={label} className="bg-[#12141f] border border-white/10 rounded-xl p-4 flex items-center gap-3">
@@ -812,8 +830,9 @@ const FeriasColaboradores: React.FC = () => {
                 <option value="gozado">Etapa: Gozado</option>
                 <option value="cancelado">Etapa: Cancelado</option>
               </select>
-              <select className={sel} value={anoFilter} onChange={e => setAnoFilter(parseInt(e.target.value))}>
-                {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 2 + i).map(y => (
+              <select className={sel} value={anoFilter} onChange={e => setAnoFilter(e.target.value === 'all' ? 'all' : parseInt(e.target.value))}>
+                <option value="all">Todos os anos</option>
+                {anosDisponiveis.map(y => (
                   <option key={y} value={y}>{y}</option>
                 ))}
               </select>
