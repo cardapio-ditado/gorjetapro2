@@ -118,6 +118,19 @@
     color-scheme: dark;
   }
 
+  /* A LISTA do <select> e desenhada pelo navegador, nao pelo CSS da pagina:
+   * sem color-scheme ele usa o tema claro do sistema e o texto branco herdado
+   * some no fundo branco. Vale para TODO select (nao so os border-white), e o
+   * option leva cor explicita porque Firefox ignora o color-scheme na lista. */
+  select {
+    color-scheme: dark;
+  }
+  select option,
+  select optgroup {
+    background-color: var(--bg-card);
+    color: var(--text-primary);
+  }
+
   input::placeholder,
   textarea::placeholder {
     color: var(--text-secondary);
