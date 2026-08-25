@@ -316,12 +316,15 @@ const FeriasColaboradores: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
+      // Recalcula na hora de gravar em vez de confiar no que está no estado:
+      // o concessivo é derivado, e derivado não se salva "como está na tela".
+      const concessivo = calcularConcessivo(periodoForm.periodo_aquisitivo_fim);
       const { error } = await supabase.from('periodos_aquisitivos_ferias').insert([{
         colaborador_id: periodoForm.colaborador_id,
         periodo_aquisitivo_inicio: periodoForm.periodo_aquisitivo_inicio,
         periodo_aquisitivo_fim: periodoForm.periodo_aquisitivo_fim,
-        periodo_concessivo_inicio: periodoForm.periodo_concessivo_inicio,
-        periodo_concessivo_fim: periodoForm.periodo_concessivo_fim,
+        periodo_concessivo_inicio: concessivo.periodo_concessivo_inicio,
+        periodo_concessivo_fim: concessivo.periodo_concessivo_fim,
         dias_direito: parseInt(periodoForm.dias_direito) || 30,
         dias_gozados: 0,
         status: 'pendente',
@@ -348,13 +351,24 @@ const FeriasColaboradores: React.FC = () => {
     fetchPeriodos();
   };
 
-  // Auto-fill período concessivo when aquisitivo dates are set
-  const autoFillConcessivo = (iniAquis: string, fimAquis: string) => {
-    if (iniAquis && fimAquis) {
-      const iniConc = dayjs(fimAquis).add(1, 'day').format('YYYY-MM-DD');
-      const fimConc = dayjs(fimAquis).add(1, 'year').format('YYYY-MM-DD');
-      setPeriodoForm(p => ({ ...p, periodo_concessivo_inicio: iniConc, periodo_concessivo_fim: fimConc }));
+  /**
+   * O concessivo deriva do aquisitivo, sempre: começa no dia seguinte ao fim do
+   * aquisitivo e termina 12 meses depois (art. 134 da CLT). Basta o FIM do
+   * aquisitivo para calcular — antes exigia as duas datas, então mexer só no
+   * fim deixava o concessivo desatualizado no formulário.
+   */
+  const calcularConcessivo = (fimAquis: string) => {
+    if (!fimAquis || !dayjs(fimAquis).isValid()) {
+      return { periodo_concessivo_inicio: '', periodo_concessivo_fim: '' };
     }
+    return {
+      periodo_concessivo_inicio: dayjs(fimAquis).add(1, 'day').format('YYYY-MM-DD'),
+      periodo_concessivo_fim: dayjs(fimAquis).add(1, 'year').format('YYYY-MM-DD'),
+    };
+  };
+
+  const autoFillConcessivo = (_iniAquis: string, fimAquis: string) => {
+    setPeriodoForm(p => ({ ...p, ...calcularConcessivo(fimAquis) }));
   };
 
   // Auto-fill aquisitivo from admission date
@@ -463,7 +477,7 @@ const FeriasColaboradores: React.FC = () => {
         <div className="space-y-5">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-lg font-bold text-white">Períodos Aquisitivos e de Gozo</h3>
+              <h3 className="text-lg font-bold text-white">Períodos Aquisitivos e Concessivos</h3>
               <p className="text-white/50 text-sm">Gerencie os períodos antes de cadastrar férias</p>
             </div>
             <button
@@ -479,7 +493,7 @@ const FeriasColaboradores: React.FC = () => {
             <Info className="w-4 h-4 mt-0.5 shrink-0" />
             <div>
               <p className="font-medium mb-1">Como funciona:</p>
-              <p className="text-blue-300/70">O <strong className="text-blue-200">Período Aquisitivo</strong> é o ano de trabalho em que o colaborador conquista o direito às férias. O <strong className="text-blue-200">Período de Gozo (Concessivo)</strong> é o prazo de 12 meses após o aquisitivo em que as férias devem ser tiradas. Após criar o período, vá em "Controle de Férias" para agendar as datas.</p>
+              <p className="text-blue-300/70">O <strong className="text-blue-200">Período Aquisitivo</strong> é o ano de trabalho em que o colaborador conquista o direito às férias. O <strong className="text-blue-200">Período Concessivo</strong> é o prazo de 12 meses seguinte ao aquisitivo, dentro do qual a empresa deve conceder as férias — ele é calculado automaticamente e não se digita. O <strong className="text-blue-200">gozo</strong> (as datas em que o colaborador efetivamente tirou férias) se lança em "Controle de Férias".</p>
             </div>
           </div>
 
@@ -532,7 +546,7 @@ const FeriasColaboradores: React.FC = () => {
                             </p>
                           </div>
                           <div>
-                            <p className="text-white/60 text-xs mb-0.5">Período de Gozo</p>
+                            <p className="text-white/60 text-xs mb-0.5">Período Concessivo</p>
                             <p className={`font-medium ${isCritico ? 'text-red-300' : isAlerta ? 'text-yellow-300' : 'text-white/80'}`}>
                               {dayjs(p.periodo_concessivo_inicio).format('DD/MM/YYYY')}<br />
                               <span className={isCritico || isAlerta ? '' : 'text-white/60'}>até </span>
@@ -547,7 +561,7 @@ const FeriasColaboradores: React.FC = () => {
                             </p>
                           </div>
                           <div>
-                            <p className="text-white/60 text-xs mb-1">Alerta de Gozo</p>
+                            <p className="text-white/60 text-xs mb-1">Prazo para conceder</p>
                             <GozoBadge p={p} />
                           </div>
                         </div>
@@ -782,20 +796,33 @@ const FeriasColaboradores: React.FC = () => {
                 </div>
               </div>
 
+              {/* Concessivo é consequência do aquisitivo, não escolha de quem
+                  cadastra: começa no dia seguinte ao fim do aquisitivo e dura
+                  12 meses. Ficava editável e rotulado "Período de Gozo" — foi
+                  o que levou o RH a digitar aqui as datas em que a pessoa
+                  tirou férias. Gozo se lança em Controle de Férias. */}
               <div>
-                <p className="text-xs font-semibold text-white/60 mb-2 uppercase tracking-wide">Período de Gozo (prazo para tirar férias)</p>
+                <p className="text-xs font-semibold text-white/60 mb-2 uppercase tracking-wide">
+                  Período Concessivo <span className="text-gold/70 normal-case font-normal">(calculado automaticamente)</span>
+                </p>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-xs text-white/50 mb-1">Início</label>
-                    <input type="date" className={inp} value={periodoForm.periodo_concessivo_inicio}
-                      onChange={e => setPeriodoForm(p => ({ ...p, periodo_concessivo_inicio: e.target.value }))} />
+                    <input type="date" readOnly disabled tabIndex={-1}
+                      className={inp + ' opacity-60 cursor-not-allowed'}
+                      value={periodoForm.periodo_concessivo_inicio} />
                   </div>
                   <div>
-                    <label className="block text-xs text-white/50 mb-1">Fim (prazo máximo)</label>
-                    <input type="date" className={inp} value={periodoForm.periodo_concessivo_fim}
-                      onChange={e => setPeriodoForm(p => ({ ...p, periodo_concessivo_fim: e.target.value }))} />
+                    <label className="block text-xs text-white/50 mb-1">Fim (prazo legal)</label>
+                    <input type="date" readOnly disabled tabIndex={-1}
+                      className={inp + ' opacity-60 cursor-not-allowed'}
+                      value={periodoForm.periodo_concessivo_fim} />
                   </div>
                 </div>
+                <p className="text-xs text-white/40 mt-2">
+                  Prazo em que a empresa deve conceder as férias — não é quando o colaborador as tirou.
+                  As datas que ele de fato usufruiu (o gozo) se lançam em <strong className="text-white/60">Controle de Férias</strong>.
+                </p>
               </div>
 
               <div>
@@ -848,7 +875,7 @@ const FeriasColaboradores: React.FC = () => {
                     {periodosDisponiveis.map(p => (
                       <option key={p.id} value={p.id}>
                         {dayjs(p.periodo_aquisitivo_inicio).format('DD/MM/YYYY')} – {dayjs(p.periodo_aquisitivo_fim).format('DD/MM/YYYY')}
-                        {' '}({p.dias_restantes}d restantes · gozo até {dayjs(p.periodo_concessivo_fim).format('DD/MM/YYYY')})
+                        {' '}({p.dias_restantes}d restantes · conceder até {dayjs(p.periodo_concessivo_fim).format('DD/MM/YYYY')})
                       </option>
                     ))}
                   </select>
