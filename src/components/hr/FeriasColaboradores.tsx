@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Plus, Search, Filter, Calendar, Clock, CheckCircle, XCircle, AlertTriangle, CreditCard as Edit2, Trash2, Download, CalendarDays, CalendarCheck, Timer, Award, Users, Brain, ChevronRight, Info } from 'lucide-react';
+import { Plus, Search, Filter, Calendar, CheckCircle, XCircle, AlertTriangle, CreditCard as Edit2, Trash2, Download, CalendarDays, CalendarCheck, Timer, Award, Users, Brain, ChevronRight, Info } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import MonitoramentoFeriasIA from './MonitoramentoFeriasIA';
 import dayjs from 'dayjs';
@@ -70,17 +70,34 @@ const sel = 'w-full bg-[#0e1019] border border-white/15 rounded-xl px-3 py-2 tex
 // Helpers
 // ────────────────────────────────────────
 
-const statusFeriasColor: Record<string, string> = {
-  previsto: 'text-blue-300 bg-blue-900/30 border-blue-700/40',
-  solicitado: 'text-yellow-300 bg-yellow-900/30 border-yellow-700/40',
-  aprovado: 'text-green-300 bg-green-900/30 border-green-700/40',
-  gozado: 'text-sky-300 bg-sky-900/30 border-sky-700/40',
-  cancelado: 'text-red-300 bg-red-900/30 border-red-700/40',
-};
-
 const statusFeriasLabel: Record<string, string> = {
   previsto: 'Previsto', solicitado: 'Solicitado', aprovado: 'Aprovado',
   gozado: 'Gozado', cancelado: 'Cancelado',
+};
+
+/**
+ * A situação REAL das férias vem das DATAS; o status do fluxo (previsto →
+ * solicitado → aprovado → gozado) só diz em que pé está a burocracia. A tela
+ * antiga lia o dias_vencimento da view (que é HOJE − data_fim, ou seja, dias
+ * DESDE o término) como se fosse "dias até vencer" — resultado invertido:
+ * quem estava DE FÉRIAS naquele momento aparecia como "Vencida há Xd".
+ */
+type SituacaoFerias = 'em_gozo' | 'agendada' | 'sem_registro' | 'gozada' | 'cancelada';
+
+function situacaoFerias(f: { data_inicio: string; data_fim: string; status: string }): SituacaoFerias {
+  if (f.status === 'cancelado') return 'cancelada';
+  const hoje = dayjs();
+  if (hoje.isBetween(dayjs(f.data_inicio), dayjs(f.data_fim), 'day', '[]')) return 'em_gozo';
+  if (dayjs(f.data_inicio).isAfter(hoje, 'day')) return 'agendada';
+  return f.status === 'gozado' ? 'gozada' : 'sem_registro';
+}
+
+const situacaoInfo: Record<SituacaoFerias, { rotulo: string; cls: string; prioridade: number }> = {
+  em_gozo:      { rotulo: 'Em férias agora', cls: 'text-sky-300 bg-sky-900/30 border-sky-700/40', prioridade: 0 },
+  sem_registro: { rotulo: 'Terminou sem registro', cls: 'text-red-300 bg-red-900/30 border-red-700/40', prioridade: 1 },
+  agendada:     { rotulo: 'Agendada', cls: 'text-yellow-300 bg-yellow-900/30 border-yellow-700/40', prioridade: 2 },
+  gozada:       { rotulo: 'Gozada', cls: 'text-green-300 bg-green-900/30 border-green-700/40', prioridade: 3 },
+  cancelada:    { rotulo: 'Cancelada', cls: 'text-white/50 bg-white/10 border-white/10', prioridade: 4 },
 };
 
 // Os status reais do banco são pendente | parcial | completo | vencido —
@@ -250,7 +267,9 @@ const FeriasColaboradores: React.FC = () => {
     const previstas = ferias.filter(f => f.status === 'previsto').length;
     const solicitadas = ferias.filter(f => f.status === 'solicitado').length;
     const aprovadas = ferias.filter(f => f.status === 'aprovado').length;
-    const vencidas = ferias.filter(f => f.dias_vencimento < 0).length;
+    // dias_vencimento da view é HOJE − data_fim (dias desde o término);
+    // "vencida" aqui significa terminou sem ninguém registrar o gozo.
+    const vencidas = ferias.filter(f => situacaoFerias(f) === 'sem_registro').length;
     const periodosVencendo = periodos.filter(p => {
       const d = diasParaVencer(p.periodo_concessivo_fim);
       return d >= 0 && d <= 60 && p.status !== 'gozado';
@@ -435,10 +454,17 @@ const FeriasColaboradores: React.FC = () => {
     exportToExcel(data, `ferias-${dayjs().format('YYYY-MM-DD')}`, headers);
   };
 
-  const filteredFerias = ferias.filter(f =>
-    f.colaborador_nome.toLowerCase().includes(searchFerias.toLowerCase()) ||
-    (f.observacoes || '').toLowerCase().includes(searchFerias.toLowerCase())
-  );
+  // Quem está de férias agora abre a lista; depois o que precisa de ação
+  // (terminou sem registro), depois agendadas e por fim o histórico.
+  const filteredFerias = ferias
+    .filter(f =>
+      f.colaborador_nome.toLowerCase().includes(searchFerias.toLowerCase()) ||
+      (f.observacoes || '').toLowerCase().includes(searchFerias.toLowerCase())
+    )
+    .sort((a, b) =>
+      situacaoInfo[situacaoFerias(a)].prioridade - situacaoInfo[situacaoFerias(b)].prioridade
+      || b.data_inicio.localeCompare(a.data_inicio)
+    );
 
   /**
    * A visão que faltava: cada colaborador com seus anos base, e dentro de cada
@@ -753,15 +779,13 @@ const FeriasColaboradores: React.FC = () => {
             </div>
           </div>
 
-          {/* Indicadores */}
-          <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
+          {/* Indicadores — contam pela situação real (datas), não pelo status */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {[
-              { label: 'Colaboradores', value: colaboradores.length, icon: Users, color: 'text-blue-400' },
-              { label: 'Previstas', value: indicadores.previstas, icon: Calendar, color: 'text-sky-400' },
-              { label: 'Solicitadas', value: indicadores.solicitadas, icon: Clock, color: 'text-yellow-400' },
-              { label: 'Aprovadas', value: indicadores.aprovadas, icon: CheckCircle, color: 'text-green-400' },
-              { label: 'Em Gozo', value: ferias.filter(f => f.status === 'gozado' && dayjs().isBetween(dayjs(f.data_inicio), dayjs(f.data_fim), 'day', '[]')).length, icon: Award, color: 'text-sky-400' },
-              { label: 'Vencidas', value: indicadores.vencidas, icon: AlertTriangle, color: 'text-red-400' },
+              { label: 'Em férias agora', value: ferias.filter(f => situacaoFerias(f) === 'em_gozo').length, icon: Award, color: 'text-sky-400' },
+              { label: 'Agendadas', value: ferias.filter(f => situacaoFerias(f) === 'agendada').length, icon: Calendar, color: 'text-yellow-400' },
+              { label: 'Gozadas no ano', value: ferias.filter(f => situacaoFerias(f) === 'gozada').length, icon: CheckCircle, color: 'text-green-400' },
+              { label: 'Terminadas sem registro', value: ferias.filter(f => situacaoFerias(f) === 'sem_registro').length, icon: AlertTriangle, color: 'text-red-400' },
             ].map(({ label, value, icon: Icon, color }) => (
               <div key={label} className="bg-[#12141f] border border-white/10 rounded-xl p-4 flex items-center gap-3">
                 <Icon className={`w-7 h-7 ${color} shrink-0`} />
@@ -781,12 +805,12 @@ const FeriasColaboradores: React.FC = () => {
                 <input className="w-full pl-9 pr-4 py-2 bg-white/5 border border-white/15 rounded-xl text-white text-sm placeholder-white/30 focus:outline-none" placeholder="Buscar colaborador..." value={searchFerias} onChange={e => setSearchFerias(e.target.value)} />
               </div>
               <select className={sel} value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
-                <option value="all">Todos os Status</option>
-                <option value="previsto">Previsto</option>
-                <option value="solicitado">Solicitado</option>
-                <option value="aprovado">Aprovado</option>
-                <option value="gozado">Gozado</option>
-                <option value="cancelado">Cancelado</option>
+                <option value="all">Todas as etapas</option>
+                <option value="previsto">Etapa: Previsto</option>
+                <option value="solicitado">Etapa: Solicitado</option>
+                <option value="aprovado">Etapa: Aprovado</option>
+                <option value="gozado">Etapa: Gozado</option>
+                <option value="cancelado">Etapa: Cancelado</option>
               </select>
               <select className={sel} value={anoFilter} onChange={e => setAnoFilter(parseInt(e.target.value))}>
                 {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 2 + i).map(y => (
@@ -808,72 +832,77 @@ const FeriasColaboradores: React.FC = () => {
                 <table className="w-full">
                   <thead>
                     <tr className="bg-white/5 border-b border-white/10">
-                      {['Colaborador', 'Período', 'Duração', 'Retorno', 'Status', 'Alertas', 'Ações'].map(h => (
+                      {['Colaborador', 'Férias', 'Duração', 'Situação', 'Ações'].map(h => (
                         <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-white/60 uppercase tracking-wider">{h}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/5">
-                    {filteredFerias.map(f => (
-                      <tr key={f.id} className={`hover:bg-white/3 transition-colors ${
-                        f.dias_vencimento < 0 ? 'bg-red-900/10 border-l-2 border-red-600' :
-                        f.dias_vencimento <= 30 ? 'bg-yellow-900/10 border-l-2 border-yellow-600' : ''
-                      }`}>
-                        <td className="px-4 py-3">
-                          <p className="font-medium text-white">{f.colaborador_nome}</p>
-                          <p className="text-xs text-white/60">{f.funcao_nome}</p>
-                          <p className="text-xs text-white/60">Adm: {dayjs(f.data_admissao).format('DD/MM/YYYY')}</p>
-                        </td>
-                        <td className="px-4 py-3 text-sm">
-                          <p className="text-white">{dayjs(f.data_inicio).format('DD/MM/YYYY')}</p>
-                          <p className="text-white/60 text-xs">até</p>
-                          <p className="text-white">{dayjs(f.data_fim).format('DD/MM/YYYY')}</p>
-                        </td>
-                        <td className="px-4 py-3 text-sm">
-                          <p className="text-white">{f.dias_corridos}d corridos</p>
-                          <p className="text-white/60 text-xs">{f.dias_uteis} úteis</p>
-                        </td>
-                        <td className="px-4 py-3 text-sm text-white/80">
-                          {f.data_prevista_retorno ? dayjs(f.data_prevista_retorno).format('DD/MM/YYYY') : '—'}
-                        </td>
-                        <td className="px-4 py-3">
-                          <span className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full border ${statusFeriasColor[f.status] || 'text-white/60 bg-white/10 border-white/10'}`}>
-                            {statusFeriasLabel[f.status] || f.status}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-sm space-y-1">
-                          {f.data_aprovacao && <p className="text-green-400 text-xs flex items-center gap-1"><CheckCircle className="w-3 h-3" /> Aprovado {dayjs(f.data_aprovacao).format('DD/MM')}</p>}
-                          {f.dias_vencimento < 0 && <p className="text-red-400 text-xs flex items-center gap-1"><AlertTriangle className="w-3 h-3" /> Vencida há {Math.abs(f.dias_vencimento)}d</p>}
-                          {f.dias_vencimento >= 0 && f.dias_vencimento <= 30 && <p className="text-yellow-400 text-xs flex items-center gap-1"><Timer className="w-3 h-3" /> Vence em {f.dias_vencimento}d</p>}
-                        </td>
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-1">
-                            {f.status === 'previsto' && (
-                              <button onClick={() => handleSolicitar(f.id)} className="p-1.5 text-blue-400 hover:text-blue-300 hover:bg-blue-900/30 rounded-lg" title="Solicitar">
-                                <CalendarCheck className="w-4 h-4" />
-                              </button>
+                    {filteredFerias.map(f => {
+                      const sit = situacaoFerias(f);
+                      const info = situacaoInfo[sit];
+                      const hoje = dayjs();
+                      return (
+                        <tr key={f.id} className={`hover:bg-white/3 transition-colors ${
+                          sit === 'em_gozo' ? 'bg-sky-900/10 border-l-2 border-sky-500' :
+                          sit === 'sem_registro' ? 'bg-red-900/10 border-l-2 border-red-600' : ''
+                        }`}>
+                          <td className="px-4 py-3">
+                            <p className="font-medium text-white">{f.colaborador_nome}</p>
+                            <p className="text-xs text-white/60">{f.funcao_nome}</p>
+                          </td>
+                          <td className="px-4 py-3 text-sm whitespace-nowrap">
+                            <p className="text-white font-mono">{dayjs(f.data_inicio).format('DD/MM/YYYY')} – {dayjs(f.data_fim).format('DD/MM/YYYY')}</p>
+                            {f.data_prevista_retorno && (
+                              <p className="text-white/50 text-xs mt-0.5">retorno {dayjs(f.data_prevista_retorno).format('DD/MM/YYYY')}</p>
                             )}
-                            {f.status === 'solicitado' && (
-                              <button onClick={() => { setFeriasParaAprovar(f); setShowApprovalModal(true); }} className="p-1.5 text-green-400 hover:text-green-300 hover:bg-green-900/30 rounded-lg" title="Aprovar">
-                                <CheckCircle className="w-4 h-4" />
+                          </td>
+                          <td className="px-4 py-3 text-sm whitespace-nowrap">
+                            <p className="text-white font-mono">{f.dias_corridos}d</p>
+                            <p className="text-white/50 text-xs">{f.dias_uteis} úteis</p>
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full border ${info.cls}`}>
+                              {info.rotulo}
+                            </span>
+                            <p className="text-xs text-white/50 mt-1">
+                              {sit === 'em_gozo' && <>volta {f.data_prevista_retorno ? dayjs(f.data_prevista_retorno).format('DD/MM') : dayjs(f.data_fim).add(1, 'day').format('DD/MM')} · faltam {dayjs(f.data_fim).diff(hoje, 'day')}d</>}
+                              {sit === 'agendada' && <>começa em {dayjs(f.data_inicio).diff(hoje, 'day')}d · etapa: {statusFeriasLabel[f.status] || f.status}</>}
+                              {sit === 'gozada' && <>encerrada em {dayjs(f.data_fim).format('DD/MM/YYYY')}</>}
+                              {sit === 'sem_registro' && <>terminaria em {dayjs(f.data_fim).format('DD/MM')} — confirme abaixo se foram tiradas</>}
+                            </p>
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-1">
+                              {sit === 'agendada' && f.status === 'previsto' && (
+                                <button onClick={() => handleSolicitar(f.id)} className="p-1.5 text-blue-400 hover:text-blue-300 hover:bg-blue-900/30 rounded-lg focus-ring" title="Solicitar aprovação">
+                                  <CalendarCheck className="w-4 h-4" />
+                                </button>
+                              )}
+                              {f.status === 'solicitado' && (
+                                <button onClick={() => { setFeriasParaAprovar(f); setShowApprovalModal(true); }} className="p-1.5 text-green-400 hover:text-green-300 hover:bg-green-900/30 rounded-lg focus-ring" title="Aprovar / rejeitar">
+                                  <CheckCircle className="w-4 h-4" />
+                                </button>
+                              )}
+                              {/* Confirmação de gozo: para quem está de férias (registro em dia)
+                                  ou já voltou sem ninguém marcar (o vermelho da tabela). */}
+                              {(sit === 'em_gozo' || sit === 'sem_registro') && f.status !== 'gozado' && (
+                                <button onClick={() => handleIniciarFerias(f.id)} className="p-1.5 text-sky-400 hover:text-sky-300 hover:bg-sky-900/30 rounded-lg focus-ring" title="Confirmar que as férias foram/estão sendo gozadas">
+                                  <Award className="w-4 h-4" />
+                                </button>
+                              )}
+                              <button onClick={() => { setEditingFerias(f); setFeriasForm({ colaborador_id: f.colaborador_id, periodo_aquisitivo_id: f.periodo_aquisitivo_id || '', data_inicio: f.data_inicio, data_fim: f.data_fim, observacoes: f.observacoes || '' }); fetchPeriodosDisponiveis(f.colaborador_id); setShowFeriasForm(true); }}
+                                className="p-1.5 text-white/40 hover:text-white hover:bg-white/5 rounded-lg focus-ring" title="Editar">
+                                <Edit2 className="w-4 h-4" />
                               </button>
-                            )}
-                            {f.status === 'aprovado' && dayjs().isSameOrAfter(dayjs(f.data_inicio)) && (
-                              <button onClick={() => handleIniciarFerias(f.id)} className="p-1.5 text-sky-400 hover:text-sky-300 hover:bg-sky-900/30 rounded-lg" title="Iniciar Gozo">
-                                <Award className="w-4 h-4" />
+                              <button onClick={() => excluirFerias(f.id)} className="p-1.5 text-red-400/40 hover:text-red-400 hover:bg-red-900/20 rounded-lg focus-ring" title="Excluir">
+                                <Trash2 className="w-4 h-4" />
                               </button>
-                            )}
-                            <button onClick={() => { setEditingFerias(f); setFeriasForm({ colaborador_id: f.colaborador_id, periodo_aquisitivo_id: f.periodo_aquisitivo_id || '', data_inicio: f.data_inicio, data_fim: f.data_fim, observacoes: f.observacoes || '' }); fetchPeriodosDisponiveis(f.colaborador_id); setShowFeriasForm(true); }}
-                              className="p-1.5 text-white/40 hover:text-white hover:bg-white/5 rounded-lg" title="Editar">
-                              <Edit2 className="w-4 h-4" />
-                            </button>
-                            <button onClick={() => excluirFerias(f.id)} className="p-1.5 text-red-400/40 hover:text-red-400 hover:bg-red-900/20 rounded-lg" title="Excluir">
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>

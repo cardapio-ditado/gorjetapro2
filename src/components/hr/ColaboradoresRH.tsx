@@ -106,7 +106,9 @@ const ColaboradoresRH: React.FC = () => {
     email: '',
     endereco: '',
     observacoes: '',
-    status: 'ativo'
+    status: 'ativo',
+    data_demissao: '',
+    foto_url: ''
   });
 
   useEffect(() => {
