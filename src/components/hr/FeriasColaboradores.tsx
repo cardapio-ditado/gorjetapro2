@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Plus, Search, CheckCircle, XCircle, AlertTriangle, CreditCard as Edit2, Trash2, Download, CalendarDays, Award, Brain, ChevronRight, Info, Users, Timer, ArrowLeft, Hourglass } from 'lucide-react';
+import { Plus, Search, CheckCircle, XCircle, AlertTriangle, CreditCard as Edit2, Trash2, Download, CalendarDays, Award, Brain, ChevronRight, Info, Users, ArrowLeft, Hourglass } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import MonitoramentoFeriasIA from './MonitoramentoFeriasIA';
 import dayjs from 'dayjs';
@@ -52,6 +52,9 @@ interface Periodo {
   periodo_concessivo_fim: string;
   dias_direito: number;
   dias_gozados: number;
+  /** Abono pecuniário (art. 143): dias convertidos em dinheiro, até 1/3 do direito. */
+  dias_vendidos: number;
+  abono_observacoes?: string | null;
   dias_restantes: number;
   status: string;
   observacoes?: string;
@@ -191,6 +194,78 @@ function sugerirAnoBase(periodos: Periodo[], dataInicio: string): Periodo | null
 /** Sentinela do select de ano base: "crie o ano base certo para mim". */
 const ANO_BASE_AUTO = '__auto__';
 
+// ────────────────────────────────────────
+// O que a CLT diz (arts. 129 a 145)
+// ────────────────────────────────────────
+
+/**
+ * Art. 130: os dias de férias dependem das faltas injustificadas no ano base.
+ * Não é um número livre — são quatro degraus.
+ */
+const DEGRAUS_DIREITO = [
+  { dias: 30, faltas: 'até 5 faltas' },
+  { dias: 24, faltas: '6 a 14 faltas' },
+  { dias: 18, faltas: '15 a 23 faltas' },
+  { dias: 12, faltas: '24 a 32 faltas' },
+];
+
+/** Art. 143: pode vender até 1/3 dos dias a que tem direito. */
+const maxVendaveis = (diasDireito: number) => Math.floor(diasDireito / 3);
+
+/**
+ * Avisos legais sobre um lançamento — não bloqueiam (o RH pode estar
+ * registrando o que já aconteceu), mas aparecem antes de gravar.
+ */
+function avisosLegais(opts: {
+  dataInicio: string; dataFim: string; periodo?: Periodo | null; outrosGozos: Gozo[]; editandoId?: string | null;
+}): { nivel: 'alerta' | 'info'; texto: string }[] {
+  const { dataInicio, dataFim, periodo } = opts;
+  const avisos: { nivel: 'alerta' | 'info'; texto: string }[] = [];
+  if (!dataInicio || !dataFim) return avisos;
+  const ini = dayjs(dataInicio);
+  const fim = dayjs(dataFim);
+  if (fim.isBefore(ini, 'day')) return avisos;
+  const dias = fim.diff(ini, 'day') + 1;
+
+  // Art. 134 §3º: não pode começar nos 2 dias antes de feriado ou do descanso
+  // semanal. Com descanso no domingo, isso proíbe sexta e sábado.
+  if (ini.day() === 5 || ini.day() === 6) {
+    avisos.push({ nivel: 'alerta', texto: `Começa numa ${ini.day() === 5 ? 'sexta' : 'sábado'}: a lei proíbe iniciar férias nos 2 dias antes do descanso semanal ou de feriado (art. 134, §3º). Se o descanso da pessoa não é no domingo, ignore.` });
+  }
+
+  if (periodo) {
+    const outros = opts.outrosGozos.filter(g => g.id !== opts.editandoId && g.status !== 'cancelado');
+    const blocos = [...outros.map(g => g.dias_corridos), dias];
+    // Férias fracionadas: diz qual período será este e o que já foi lançado.
+    if (outros.length > 0 && !opts.editandoId) {
+      const lista = outros.map(g => `${g.dias_corridos}d em ${fmtCurto(g.data_inicio)}`).join(', ');
+      avisos.push({ nivel: 'info', texto: `Férias divididas: este será o ${outros.length + 1}º período do ano base (já lançado: ${lista}).` });
+    }
+    // Art. 134 §1º: até 3 períodos; um de pelo menos 14 dias; os outros de pelo menos 5.
+    if (blocos.length > 3) {
+      avisos.push({ nivel: 'alerta', texto: `Seria o ${blocos.length}º período deste ano base — a lei permite dividir as férias em no máximo 3 (art. 134, §1º).` });
+    }
+    if (dias < 5) {
+      avisos.push({ nivel: 'alerta', texto: `Só ${plural(dias, 'dia', 'dias')}: nenhum período de férias pode ter menos de 5 dias corridos (art. 134, §1º).` });
+    }
+    const totalPrevisto = blocos.reduce((s, d) => s + d, 0);
+    const disponivel = periodo.dias_direito - periodo.dias_vendidos;
+    if (blocos.length > 1 && totalPrevisto >= disponivel && !blocos.some(d => d >= 14)) {
+      avisos.push({ nivel: 'alerta', texto: 'Dividindo as férias, um dos períodos precisa ter pelo menos 14 dias corridos (art. 134, §1º) — nenhum tem.' });
+    }
+    // Art. 137: depois do prazo, paga em dobro.
+    if (ini.isAfter(dayjs(periodo.periodo_concessivo_fim), 'day')) {
+      avisos.push({ nivel: 'alerta', texto: `Depois do prazo (${fmt(periodo.periodo_concessivo_fim)}): a empresa paga essas férias em dobro (art. 137).` });
+    }
+  }
+
+  // Art. 145: o pagamento (salário + 1/3) sai até 2 dias antes do início.
+  if (ini.isAfter(dayjs(), 'day')) {
+    avisos.push({ nivel: 'info', texto: `Pagar até ${fmt(ini.subtract(2, 'day').format('YYYY-MM-DD'))}: salário dos dias mais 1/3 (art. 145 e CF art. 7º, XVII).` });
+  }
+  return avisos;
+}
+
 const rotuloAnoBase = (p: { periodo_aquisitivo_inicio: string; periodo_aquisitivo_fim: string }) =>
   `${dayjs(p.periodo_aquisitivo_inicio).format('YYYY')} → ${dayjs(p.periodo_aquisitivo_fim).format('YYYY')}`;
 
@@ -210,6 +285,7 @@ interface Pessoa {
   diasVencidos: number;
   diasATirar: number;
   diasTirados: number;
+  diasVendidos: number;
   proximoPrazo: string | null;
   anoEmCurso: Periodo | null;
   pendencia: Pendencia;
@@ -249,6 +325,11 @@ const FeriasColaboradores: React.FC = () => {
     colaborador_id: '', periodo_aquisitivo_id: '',
     data_inicio: '', data_fim: '', observacoes: '',
   });
+
+  // Abono pecuniário (vender férias) e dias de direito — dois modais pequenos
+  // sobre um ano base específico.
+  const [abonoForm, setAbonoForm] = useState<{ periodo: Periodo; nome: string; dias: string; obs: string } | null>(null);
+  const [direitoForm, setDireitoForm] = useState<{ periodo: Periodo; nome: string; dias: number } | null>(null);
 
   // Form - Ano base manual (casos fora do padrão)
   const [showPeriodoForm, setShowPeriodoForm] = useState(false);
@@ -530,14 +611,35 @@ const FeriasColaboradores: React.FC = () => {
     }
   };
 
-  const editarDiasDireito = async (p: Periodo, nome: string) => {
-    const resposta = prompt(`Dias de direito do ano base ${rotuloAnoBase(p)} de ${nome} (30 é o normal; menos só com muitas faltas no ano):`, String(p.dias_direito));
-    if (resposta === null) return;
-    const n = parseInt(resposta);
-    if (isNaN(n) || n < 0 || n > 30) return setError('Informe um número de 0 a 30.');
-    const { error } = await supabase.from('periodos_aquisitivos_ferias').update({ dias_direito: n }).eq('id', p.id);
+  /** Art. 130: os dias de direito seguem os degraus de faltas. */
+  const salvarDiasDireito = async () => {
+    if (!direitoForm) return;
+    const { periodo: p, dias } = direitoForm;
+    if (p.dias_vendidos > maxVendaveis(dias)) {
+      return setError(`Com ${dias} dias de direito só se pode vender ${maxVendaveis(dias)}; este ano base tem ${p.dias_vendidos} vendidos. Ajuste a venda primeiro.`);
+    }
+    const { error } = await supabase.from('periodos_aquisitivos_ferias').update({ dias_direito: dias }).eq('id', p.id);
     if (error) return setError(error.message);
-    setSucesso(`Ano base ${rotuloAnoBase(p)}: direito ajustado para ${plural(n, 'dia', 'dias')}.`);
+    setDireitoForm(null);
+    setSucesso(`Ano base ${rotuloAnoBase(p)}: ${plural(dias, 'dia', 'dias')} de direito.`);
+    fetchTudo();
+  };
+
+  /** Art. 143: vender até 1/3 das férias. Os dias vendidos saem do saldo. */
+  const salvarAbono = async () => {
+    if (!abonoForm) return;
+    const { periodo: p, dias, obs } = abonoForm;
+    const n = parseInt(dias);
+    const max = maxVendaveis(p.dias_direito);
+    if (isNaN(n) || n < 0) return setError('Informe quantos dias foram vendidos.');
+    if (n > max) return setError(`Com ${p.dias_direito} dias de direito, a lei permite vender no máximo ${max} (um terço — art. 143).`);
+    if (n > p.dias_direito - p.dias_gozados) return setError(`A pessoa já tirou ${p.dias_gozados} dias deste ano base; sobram ${p.dias_direito - p.dias_gozados} para vender.`);
+    const { error } = await supabase.from('periodos_aquisitivos_ferias').update({ dias_vendidos: n, abono_observacoes: obs || null }).eq('id', p.id);
+    if (error) return setError(error.message);
+    setAbonoForm(null);
+    setSucesso(n === 0
+      ? `Ano base ${rotuloAnoBase(p)}: venda de férias desfeita.`
+      : `${abonoForm.nome} vendeu ${plural(n, 'dia', 'dias')} do ano base ${rotuloAnoBase(p)}. Sobram ${p.dias_direito - p.dias_gozados - n} para tirar.`);
     fetchTudo();
   };
 
@@ -578,7 +680,7 @@ const FeriasColaboradores: React.FC = () => {
     const mapa = new Map<string, Pessoa>();
     const nova = (colab: Colab): Pessoa => ({
       colab, periodos: [], semVinculo: [], emGozo: null, proximaAgendada: null,
-      semRegistro: 0, diasVencidos: 0, diasATirar: 0, diasTirados: 0, proximoPrazo: null, anoEmCurso: null, pendencia: 'sem_ano_base',
+      semRegistro: 0, diasVencidos: 0, diasATirar: 0, diasTirados: 0, diasVendidos: 0, proximoPrazo: null, anoEmCurso: null, pendencia: 'sem_ano_base',
     });
     for (const c of colaboradores) mapa.set(c.id, nova(c));
     // Quem saiu da empresa mas ainda tem ano base com saldo continua na lista:
@@ -608,6 +710,7 @@ const FeriasColaboradores: React.FC = () => {
     }
     for (const pes of mapa.values()) {
       for (const p of pes.periodos) {
+        pes.diasVendidos += p.dias_vendidos || 0;
         if (emCurso(p)) { pes.anoEmCurso = p; continue; }
         if (p.dias_restantes <= 0) continue;
         // Vencido se decide pela DATA, não pelo status gravado.
@@ -689,10 +792,11 @@ const FeriasColaboradores: React.FC = () => {
     </button>
   );
 
-  const FeriasChip = ({ g }: { g: Gozo }) => {
+  const FeriasChip = ({ g, ordem }: { g: Gozo; ordem?: string }) => {
     const sit = situacaoFerias(g);
     return (
       <div className={`flex items-center gap-2 flex-wrap rounded-lg border px-2.5 py-1.5 text-xs ${situacaoCls[sit]}`}>
+        {ordem && <span className="px-1.5 py-0.5 rounded bg-white/10 text-[10px] font-semibold tracking-wide">{ordem}</span>}
         <span className="font-mono font-semibold">{fmt(g.data_inicio)} a {fmt(g.data_fim)}</span>
         <span className="opacity-80">· {plural(g.dias_corridos, 'dia', 'dias')}</span>
         <span className="opacity-80">· {situacaoTexto[sit]}</span>
@@ -738,7 +842,7 @@ const FeriasColaboradores: React.FC = () => {
               <div className="w-[92px] shrink-0 text-right">
                 <p className="text-xs font-mono font-semibold text-white">{rotuloAnoBase(p)}</p>
                 <p className={`text-[11px] leading-tight ${vencido ? 'text-red-300' : tudo ? 'text-green-300/80' : emCurso(p) ? 'text-white/40' : 'text-amber-200/80'}`}>
-                  {emCurso(p) ? 'em andamento' : tudo ? 'tirou tudo' : vencido ? `${p.dias_restantes}d vencidos` : p.gozos.length ? `faltam ${p.dias_restantes}d` : `${p.dias_restantes}d a tirar`}
+                  {emCurso(p) ? 'em andamento' : tudo ? (p.dias_vendidos > 0 ? `tirou + vendeu ${p.dias_vendidos}d` : 'tirou tudo') : vencido ? `${p.dias_restantes}d vencidos` : p.gozos.length || p.dias_vendidos ? `faltam ${p.dias_restantes}d` : `${p.dias_restantes}d a tirar`}
                 </p>
               </div>
               <div className="relative flex-1 h-7 rounded-md overflow-hidden" style={{ background: 'rgba(255,255,255,0.04)' }} title={`Trabalhou de ${fmt(p.periodo_aquisitivo_inicio)} a ${fmt(p.periodo_aquisitivo_fim)} · tirar até ${fmt(p.periodo_concessivo_fim)}`}>
@@ -759,6 +863,11 @@ const FeriasColaboradores: React.FC = () => {
                       title={`${fmt(g.data_inicio)} a ${fmt(g.data_fim)} · ${g.dias_corridos} dias · ${situacaoTexto[sit]}${atrasado ? ' · tiradas depois do prazo' : ''}`} />
                   );
                 })}
+                {/* dias vendidos: bloco listrado no fim do prazo */}
+                {p.dias_vendidos > 0 && (
+                  <div className="absolute top-1 bottom-1 rounded-sm" style={{ right: 0, width: `${Math.max(2, (p.dias_vendidos / total) * 100)}%`, background: 'repeating-linear-gradient(135deg, rgba(212,175,55,0.85) 0 3px, rgba(212,175,55,0.25) 3px 6px)' }}
+                    title={`${plural(p.dias_vendidos, 'dia vendido', 'dias vendidos')} (abono pecuniário)`} />
+                )}
                 {hojePct !== null && (
                   <div className="absolute top-0 bottom-0 w-0.5" style={{ left: `${hojePct}%`, background: 'var(--gold)' }} title="Hoje" />
                 )}
@@ -774,7 +883,136 @@ const FeriasColaboradores: React.FC = () => {
           <span className="inline-flex items-center gap-1.5"><span className="w-3 h-2 rounded-sm" style={{ background: situacaoCor.gozada }} />tiradas</span>
           <span className="inline-flex items-center gap-1.5"><span className="w-3 h-2 rounded-sm" style={{ background: situacaoCor.em_gozo }} />de férias agora</span>
           <span className="inline-flex items-center gap-1.5"><span className="w-3 h-2 rounded-sm" style={{ background: situacaoCor.agendada }} />agendadas</span>
+          <span className="inline-flex items-center gap-1.5"><span className="w-3 h-2 rounded-sm" style={{ background: 'repeating-linear-gradient(135deg, rgba(212,175,55,0.85) 0 2px, rgba(212,175,55,0.25) 2px 4px)' }} />vendidas</span>
           <span className="inline-flex items-center gap-1.5"><span className="w-0.5 h-3" style={{ background: 'var(--gold)' }} />hoje</span>
+        </div>
+      </div>
+    );
+  };
+
+  /**
+   * O panorama do time, em vez de quatro quadrados com números: uma barra com
+   * a situação de todo mundo (clicável, filtra a lista) e o calendário dos
+   * próximos 12 meses — quem está fora, quando, por quanto tempo.
+   */
+  const PanoramaDoTime = () => {
+    const segmentos: { key: Filtro; label: string; value: number; cor: string; texto: string }[] = [
+      { key: 'em_ferias', label: 'de férias agora', value: totais.emFerias, cor: situacaoCor.em_gozo, texto: 'text-sky-300' },
+      { key: 'vencido', label: 'com férias vencidas', value: totais.vencido, cor: situacaoCor.sem_registro, texto: 'text-red-300' },
+      { key: 'a_tirar', label: 'com dias a tirar', value: totais.aTirar, cor: '#f59e0b', texto: 'text-amber-300' },
+      { key: 'em_dia', label: 'em dia', value: totais.emDia, cor: situacaoCor.gozada, texto: 'text-green-300' },
+    ];
+    const totalPessoas = segmentos.reduce((s, x) => s + x.value, 0) || 1;
+
+    // Calendário: do mês passado até 10 meses à frente.
+    const inicio = dayjs().startOf('month').subtract(1, 'month');
+    const fimJanela = inicio.add(12, 'month');
+    const totalDias = fimJanela.diff(inicio, 'day');
+    const pct = (d: dayjs.Dayjs) => Math.min(100, Math.max(0, (d.diff(inicio, 'day') / totalDias) * 100));
+    const meses = Array.from({ length: 12 }, (_, i) => inicio.add(i, 'month'));
+    const linhas = pessoas
+      .map(pes => ({
+        pes,
+        barras: gozos
+          .filter(g => g.colaborador_id === pes.colab.id && g.status !== 'cancelado')
+          .filter(g => dayjs(g.data_fim).isAfter(inicio) && dayjs(g.data_inicio).isBefore(fimJanela)),
+      }))
+      .filter(l => l.barras.length > 0)
+      .sort((a, b) => a.barras[0].data_inicio.localeCompare(b.barras[0].data_inicio));
+    const hojePct = pct(dayjs());
+
+    return (
+      <div className="bg-[#12141f] border border-white/10 rounded-2xl p-5 space-y-5">
+        {/* A barra do time */}
+        <div>
+          <div className="flex items-baseline justify-between flex-wrap gap-2 mb-2">
+            <h4 className="text-sm font-semibold text-white">O time hoje</h4>
+            <p className="text-xs text-white/50">{plural(totalPessoas, 'pessoa', 'pessoas')} · clique numa cor para filtrar a lista</p>
+          </div>
+          <div className="flex h-9 rounded-xl overflow-hidden border border-white/10">
+            {segmentos.filter(s => s.value > 0).map(s => (
+              <button
+                key={s.key}
+                onClick={() => setFiltro(f => f === s.key ? 'todos' : s.key)}
+                className={`relative flex items-center justify-center text-sm font-bold text-[#0d0f1a] transition-opacity focus-ring ${filtro !== 'todos' && filtro !== s.key ? 'opacity-30' : ''}`}
+                style={{ width: `${(s.value / totalPessoas) * 100}%`, background: s.cor, minWidth: 28 }}
+                title={`${s.value} ${s.label}`}
+                aria-pressed={filtro === s.key}
+              >
+                {s.value}
+              </button>
+            ))}
+          </div>
+          <div className="flex flex-wrap gap-x-5 gap-y-1.5 mt-2.5">
+            {segmentos.map(s => (
+              <button key={s.key} onClick={() => setFiltro(f => f === s.key ? 'todos' : s.key)}
+                className={`inline-flex items-center gap-1.5 text-xs focus-ring rounded ${filtro === s.key ? 'text-white' : 'text-white/60 hover:text-white'}`}>
+                <span className="w-2.5 h-2.5 rounded-sm" style={{ background: s.cor }} />
+                <strong className={s.texto}>{s.value}</strong> {s.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* O calendário */}
+        <div>
+          <h4 className="text-sm font-semibold text-white mb-0.5">Calendário de férias</h4>
+          <p className="text-xs text-white/50 mb-3">Do mês passado aos próximos dez meses. Cada barra é um período de férias; a linha dourada é hoje.</p>
+          {linhas.length === 0 ? (
+            <p className="text-sm text-white/50 py-4 text-center border border-dashed border-white/10 rounded-xl">Nenhuma férias lançada nesta janela. Marque as próximas em "Lançar férias".</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <div className="min-w-[640px]">
+                {/* cabeçalho dos meses */}
+                <div className="flex ml-[140px] border-b border-white/10">
+                  {meses.map(m => (
+                    <div key={m.format('YYYY-MM')} className={`flex-1 text-center text-[11px] py-1 capitalize ${m.isSame(dayjs(), 'month') ? 'text-gold font-semibold' : 'text-white/45'}`}>
+                      {m.format('MMM')}<span className="hidden lg:inline">/{m.format('YY')}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="relative">
+                  {/* grade dos meses */}
+                  <div className="absolute inset-y-0 left-[140px] right-0 flex pointer-events-none">
+                    {meses.map(m => <div key={m.format('YYYY-MM')} className="flex-1 border-l border-white/5" />)}
+                  </div>
+                  {/* hoje */}
+                  <div className="absolute top-0 bottom-0 w-0.5 pointer-events-none z-10" style={{ left: `calc(140px + (100% - 140px) * ${hojePct / 100})`, background: 'var(--gold)' }} />
+                  {linhas.map(({ pes, barras }) => (
+                    <div key={pes.colab.id} className="flex items-center h-9 border-b border-white/5 last:border-b-0">
+                      <button onClick={() => abrirPessoa(pes.colab.id)} className="w-[140px] shrink-0 pr-3 text-left text-xs text-white/80 hover:text-white truncate focus-ring rounded" title={pes.colab.nome_completo}>
+                        {pes.colab.nome_completo.split(' ').slice(0, 2).join(' ')}
+                      </button>
+                      <div className="relative flex-1 h-full">
+                        {barras.map(g => {
+                          const sit = situacaoFerias(g);
+                          const left = pct(dayjs(g.data_inicio));
+                          const width = Math.max(0.8, pct(dayjs(g.data_fim).add(1, 'day')) - left);
+                          return (
+                            <button
+                              key={g.id}
+                              onClick={() => abrirPessoa(pes.colab.id)}
+                              className="absolute top-1.5 bottom-1.5 rounded-md text-[10px] font-semibold text-[#0d0f1a] overflow-hidden whitespace-nowrap px-1.5 text-left focus-ring"
+                              style={{ left: `${left}%`, width: `${width}%`, background: situacaoCor[sit] }}
+                              title={`${fmt(g.data_inicio)} a ${fmt(g.data_fim)} · ${g.dias_corridos} dias · ${situacaoTexto[sit]}`}
+                            >
+                              {width > 6 ? `${fmtCurto(g.data_inicio).slice(0, 5)}–${fmtCurto(g.data_fim).slice(0, 5)} · ${g.dias_corridos}d` : ''}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+          <div className="flex flex-wrap gap-x-4 gap-y-1 mt-3 text-[11px] text-white/45">
+            <span className="inline-flex items-center gap-1.5"><span className="w-3 h-2 rounded-sm" style={{ background: situacaoCor.gozada }} />tiradas</span>
+            <span className="inline-flex items-center gap-1.5"><span className="w-3 h-2 rounded-sm" style={{ background: situacaoCor.em_gozo }} />de férias agora</span>
+            <span className="inline-flex items-center gap-1.5"><span className="w-3 h-2 rounded-sm" style={{ background: situacaoCor.agendada }} />agendadas</span>
+            <span className="inline-flex items-center gap-1.5"><span className="w-3 h-2 rounded-sm" style={{ background: situacaoCor.sem_registro }} />terminaram sem confirmação</span>
+          </div>
         </div>
       </div>
     );
@@ -824,7 +1062,7 @@ const FeriasColaboradores: React.FC = () => {
             {[
               { label: 'Dias vencidos', value: pes.diasVencidos, cls: pes.diasVencidos > 0 ? 'text-red-300' : 'text-white/40', sub: pes.diasVencidos > 0 ? 'a lei manda pagar em dobro' : 'nenhum' },
               { label: 'Dias a tirar', value: pes.diasATirar, cls: pes.diasATirar > 0 ? 'text-amber-300' : 'text-white/40', sub: pes.proximoPrazo ? `até ${fmt(pes.proximoPrazo)}` : pes.anoEmCurso ? `próximos 30 a partir de ${fmtCurto(dayjs(pes.anoEmCurso.periodo_aquisitivo_fim).add(1, 'day').format('YYYY-MM-DD'))}` : 'nenhum' },
-              { label: 'Dias já tirados', value: pes.diasTirados, cls: 'text-green-300', sub: `em ${plural(pes.periodos.filter(p => p.gozos.length > 0).length, 'ano base', 'anos base')}` },
+              { label: 'Dias já tirados', value: pes.diasTirados, cls: 'text-green-300', sub: pes.diasVendidos > 0 ? `mais ${plural(pes.diasVendidos, 'dia vendido', 'dias vendidos')}` : `em ${plural(pes.periodos.filter(p => p.gozos.length > 0).length, 'ano base', 'anos base')}` },
               { label: 'Próximas férias', value: pes.emGozo ? 'agora' : pes.proximaAgendada ? fmtCurto(pes.proximaAgendada.data_inicio) : '—', cls: pes.emGozo ? 'text-sky-300' : pes.proximaAgendada ? 'text-yellow-300' : 'text-white/40', sub: pes.emGozo ? `volta ${fmtCurto(pes.emGozo.data_prevista_retorno || dayjs(pes.emGozo.data_fim).add(1, 'day').format('YYYY-MM-DD'))}` : pes.proximaAgendada ? `${plural(pes.proximaAgendada.dias_corridos, 'dia', 'dias')} · até ${fmtCurto(pes.proximaAgendada.data_fim)}` : 'nada marcado' },
             ].map(t => (
               <div key={t.label} className="bg-white/[0.03] border border-white/10 rounded-xl p-3">
@@ -877,11 +1115,16 @@ const FeriasColaboradores: React.FC = () => {
                             {curso ? 'trabalhando desde' : 'trabalhou de'} {fmt(p.periodo_aquisitivo_inicio)}{curso ? `, completa em ${fmt(p.periodo_aquisitivo_fim)}` : ` a ${fmt(p.periodo_aquisitivo_fim)}`}
                           </p>
                           <p className={`text-xs mt-0.5 ${vencido ? 'text-red-300' : 'text-white/50'}`}>
-                            <button onClick={() => editarDiasDireito(p, c.nome_completo)} className="underline decoration-dotted underline-offset-2 hover:text-white focus-ring rounded" title="Ajustar os dias de direito">
+                            <button onClick={() => { setError(null); setDireitoForm({ periodo: p, nome: c.nome_completo, dias: p.dias_direito }); }} className="underline decoration-dotted underline-offset-2 hover:text-white focus-ring rounded" title="Ajustar os dias de direito (depende das faltas no ano — art. 130)">
                               {p.dias_direito} dias de direito
                             </button>
                             {' '}· tirar até {fmt(p.periodo_concessivo_fim)}
                           </p>
+                          {p.dias_vendidos > 0 && (
+                            <p className="text-xs mt-1 inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-gold/10 border border-gold/30 text-gold/90">
+                              Vendeu {plural(p.dias_vendidos, 'dia', 'dias')}{p.abono_observacoes ? ` · ${p.abono_observacoes}` : ''}
+                            </p>
+                          )}
                         </div>
                         <div className="flex-1 min-w-[260px] space-y-1.5">
                           {curso ? (
@@ -898,20 +1141,40 @@ const FeriasColaboradores: React.FC = () => {
                                   : <>Ainda não tirou: {plural(p.dias_restantes, 'dia', 'dias')} a tirar até {fmt(p.periodo_concessivo_fim)}</>}
                             </p>
                           ) : null}
-                          {p.gozos.map(g => <FeriasChip key={g.id} g={g} />)}
-                          {!curso && p.gozos.length > 0 && !tirouTudo && (
+                          {p.gozos.map((g, i) => <FeriasChip key={g.id} g={g} ordem={p.gozos.length > 1 ? `${i + 1}º período` : undefined} />)}
+                          {p.gozos.length > 1 && (() => {
+                            // Art. 134 §1º: até 3 períodos, um de 14+ dias, os demais de 5+.
+                            const ds = p.gozos.map(g => g.dias_corridos);
+                            const fora = ds.length > 3 || ds.some(d => d < 5) || (p.dias_restantes <= 0 && !ds.some(d => d >= 14));
+                            return (
+                              <p className={`text-xs ${fora ? 'text-amber-200/90' : 'text-white/50'}`}>
+                                Férias divididas em {ds.length} períodos: {ds.join(' + ')} dias
+                                {fora && <> — fora da regra da CLT (até 3 períodos, um com 14+ dias, os outros com 5+)</>}
+                              </p>
+                            );
+                          })()}
+                          {!curso && (p.gozos.length > 0 || p.dias_vendidos > 0) && !tirouTudo && (
                             <p className={`text-xs ${vencido ? 'text-red-300' : 'text-amber-200/80'}`}>
-                              Tirou {p.dias_gozados} de {p.dias_direito} dias · {vencido
+                              Tirou {p.dias_gozados}{p.dias_vendidos > 0 ? ` e vendeu ${p.dias_vendidos}` : ''} de {p.dias_direito} dias · {vencido
                                 ? `${plural(p.dias_restantes, 'dia vencido', 'dias vencidos')} desde ${fmt(p.periodo_concessivo_fim)}`
                                 : `ainda ${plural(p.dias_restantes, 'dia', 'dias')} a tirar até ${fmt(p.periodo_concessivo_fim)}`}
                             </p>
                           )}
-                          {tirouTudo && p.gozos.length > 0 && (
-                            <p className="text-xs text-green-300/80"><CheckCircle className="w-3.5 h-3.5 inline mr-1 -mt-0.5" />Tirou tudo</p>
+                          {tirouTudo && (p.gozos.length > 0 || p.dias_vendidos > 0) && (
+                            <p className="text-xs text-green-300/80"><CheckCircle className="w-3.5 h-3.5 inline mr-1 -mt-0.5" />{p.dias_vendidos > 0 ? `Tirou ${p.dias_gozados} e vendeu ${p.dias_vendidos}: fechado` : 'Tirou tudo'}</p>
                           )}
                         </div>
                         <div className="flex items-center gap-1 shrink-0">
                           {!curso && !tirouTudo && <BotaoLancar colaboradorId={c.id} periodoId={p.id} rotulo="Lançar neste ano" />}
+                          {!curso && (p.dias_vendidos > 0 || p.dias_direito - p.dias_gozados > 0) && (
+                            <button
+                              onClick={() => { setError(null); setAbonoForm({ periodo: p, nome: c.nome_completo, dias: String(p.dias_vendidos || maxVendaveis(p.dias_direito)), obs: p.abono_observacoes || '' }); }}
+                              className="px-2.5 py-1.5 text-xs rounded-lg border border-gold/30 text-gold/80 hover:bg-gold/10 hover:text-gold transition-colors focus-ring whitespace-nowrap"
+                              title="Abono pecuniário: converter até 1/3 das férias em dinheiro (art. 143)"
+                            >
+                              {p.dias_vendidos > 0 ? 'Venda' : 'Vendeu férias'}
+                            </button>
+                          )}
                           <button onClick={() => excluirPeriodo(p, c.nome_completo)} className="p-1.5 text-white/25 hover:text-red-400 rounded-lg hover:bg-red-500/10 transition-colors focus-ring" title="Apagar este ano base" aria-label="Apagar este ano base">
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -991,34 +1254,15 @@ const FeriasColaboradores: React.FC = () => {
         <MonitoramentoFeriasIA />
       ) : (
         <div className="space-y-4">
-          {/* Os números que importam, clicáveis — cada um é um filtro da lista */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {([
-              { key: 'em_ferias', label: 'De férias agora', value: totais.emFerias, cls: 'text-sky-300', icon: Award },
-              { key: 'vencido', label: 'Com férias vencidas', value: totais.vencido, cls: 'text-red-300', icon: AlertTriangle },
-              { key: 'a_tirar', label: 'Com dias a tirar', value: totais.aTirar, cls: 'text-amber-300', icon: Timer },
-              { key: 'em_dia', label: 'Em dia', value: totais.emDia, cls: 'text-green-300', icon: CheckCircle },
-            ] as const).map(({ key, label, value, cls, icon: Icon }) => (
-              <button key={key} onClick={() => setFiltro(f => f === key ? 'todos' : key)}
-                className={`text-left bg-[#12141f] border rounded-xl p-3.5 flex items-center gap-3 transition-colors focus-ring ${filtro === key ? 'border-wine/60 bg-wine/10' : 'border-white/10 hover:border-white/20'}`}
-                aria-pressed={filtro === key}>
-                <Icon className={`w-6 h-6 ${cls} shrink-0`} />
-                <div className="min-w-0">
-                  <p className={`text-2xl font-bold leading-none ${cls}`}>{value}</p>
-                  <p className="text-xs text-white/60 mt-1 truncate">{label}</p>
-                </div>
-              </button>
-            ))}
-          </div>
+          {!loading || pessoas.length > 0 ? <PanoramaDoTime /> : null}
 
-          <div className="bg-blue-900/20 border border-blue-700/30 rounded-xl p-3.5 flex gap-3 text-sm">
-            <Info className="w-4 h-4 mt-0.5 shrink-0 text-blue-300" />
-            <p className="text-blue-200/80">
-              Cada ano trabalhado é um <strong className="text-blue-100">ano base</strong>, criado sozinho pela data de admissão, e dá direito a 30 dias de férias
-              a tirar nos 12 meses seguintes. Clique numa pessoa para ver a história dela. Para registrar férias tiradas ou marcar as próximas,
-              clique em <strong className="text-blue-100">Lançar férias</strong> e informe só a pessoa e as datas.
-            </p>
-          </div>
+          <p className="text-xs text-white/45 px-1 flex gap-2">
+            <Info className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+            <span>
+              Cada ano trabalhado vira um ano base sozinho, pela data de admissão, com 30 dias de férias a tirar nos 12 meses seguintes
+              — dá para dividir em até 3 períodos e vender até 10 dias. Clique numa pessoa para ver a história dela.
+            </span>
+          </p>
 
           <div className="flex gap-3 flex-wrap items-center">
             <div className="flex-1 min-w-56 relative">
@@ -1202,10 +1446,30 @@ const FeriasColaboradores: React.FC = () => {
                 );
               })()}
 
+              {/* O que a CLT tem a dizer sobre estas datas — avisa, não bloqueia:
+                  o RH pode estar registrando o que já aconteceu. */}
+              {(() => {
+                const periodo = periodosDisponiveis.find(p => p.id === feriasForm.periodo_aquisitivo_id) ?? null;
+                const outros = periodo ? gozos.filter(g => g.periodo_aquisitivo_id === periodo.id) : [];
+                const avisos = avisosLegais({ dataInicio: feriasForm.data_inicio, dataFim: feriasForm.data_fim, periodo, outrosGozos: outros, editandoId: editingFerias?.id });
+                if (avisos.length === 0) return null;
+                return (
+                  <ul className="space-y-1.5">
+                    {avisos.map(a => (
+                      <li key={a.texto} className={`flex gap-2 text-xs rounded-lg px-3 py-2 border ${a.nivel === 'alerta' ? 'bg-amber-900/15 border-amber-700/30 text-amber-200' : 'bg-white/[0.03] border-white/10 text-white/60'}`}>
+                        {a.nivel === 'alerta' ? <AlertTriangle className="w-3.5 h-3.5 mt-0.5 shrink-0" /> : <Info className="w-3.5 h-3.5 mt-0.5 shrink-0" />}
+                        <span>{a.texto}</span>
+                      </li>
+                    ))}
+                  </ul>
+                );
+              })()}
+
               <div>
                 <label className="block text-xs text-white/50 mb-1">Observação (opcional)</label>
                 <textarea className={inp + ' resize-none'} rows={2} value={feriasForm.observacoes}
-                  onChange={e => setFeriasForm(f => ({ ...f, observacoes: e.target.value }))} placeholder="Ex.: vendeu 10 dias, férias coletivas..." />
+                  onChange={e => setFeriasForm(f => ({ ...f, observacoes: e.target.value }))} placeholder="Ex.: férias coletivas, a pedido do colaborador..." />
+                <p className="text-[11px] text-white/40 mt-1">Vendeu dias? Isso se registra na página da pessoa, no ano base, em "Vendeu férias".</p>
               </div>
 
               <div className="flex gap-3 pt-2">
@@ -1213,6 +1477,98 @@ const FeriasColaboradores: React.FC = () => {
                 <button onClick={salvarFerias} disabled={loading} className="flex-1 px-4 py-2 bg-wine text-white rounded-xl hover:bg-[#9D2F3C] disabled:opacity-50 text-sm font-medium focus-ring">
                   {loading ? 'Salvando...' : editingFerias ? 'Salvar correção' : 'Lançar férias'}
                 </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══════ MODAL: Vendeu férias (abono pecuniário, art. 143) ═══════ */}
+      {abonoForm && (() => {
+        const p = abonoForm.periodo;
+        const max = maxVendaveis(p.dias_direito);
+        const n = parseInt(abonoForm.dias) || 0;
+        const sobra = p.dias_direito - p.dias_gozados - n;
+        const prazoPedido = dayjs(p.periodo_aquisitivo_fim).subtract(15, 'day');
+        return (
+          <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
+            <div className="bg-[#12141f] border border-white/15 rounded-2xl w-full max-w-md">
+              <div className="flex items-center justify-between p-5 border-b border-white/10">
+                <div>
+                  <h3 className="text-lg font-bold text-white">Vendeu férias</h3>
+                  <p className="text-xs text-white/50 mt-0.5">{abonoForm.nome} · ano base {rotuloAnoBase(p)}</p>
+                </div>
+                <button onClick={() => { setAbonoForm(null); setError(null); }} className="text-white/40 hover:text-white focus-ring rounded" aria-label="Fechar"><XCircle className="w-5 h-5" /></button>
+              </div>
+              <div className="p-5 space-y-4">
+                {error && <div className="p-3 bg-red-900/30 text-red-300 rounded-xl border border-red-700/40 text-sm">{error}</div>}
+
+                <div className="bg-white/[0.03] border border-white/10 rounded-xl p-3 text-xs text-white/60 space-y-1">
+                  <p>A pessoa pode trocar até <strong className="text-white">um terço</strong> das férias por dinheiro (abono pecuniário, art. 143 da CLT).</p>
+                  <p>Com <strong className="text-white">{p.dias_direito} dias</strong> de direito, dá para vender no máximo <strong className="text-white">{max}</strong>. Os dias vendidos são pagos junto com as férias, também com o 1/3.</p>
+                  <p>O pedido é do empregado e vale até <strong className="text-white">{fmt(prazoPedido.format('YYYY-MM-DD'))}</strong> (15 dias antes de fechar o ano base). Depois disso, só se a empresa aceitar.</p>
+                </div>
+
+                <div>
+                  <label className="block text-xs text-white/50 mb-1">Quantos dias vendeu</label>
+                  <div className="flex gap-2">
+                    {[0, ...Array.from({ length: max }, (_, i) => i + 1).filter(d => d === max || d % 5 === 0)].map(d => (
+                      <button key={d} onClick={() => setAbonoForm(f => f && ({ ...f, dias: String(d) }))}
+                        className={`flex-1 py-2 rounded-xl text-sm border transition-colors focus-ring ${n === d ? 'bg-gold/20 border-gold/50 text-gold' : 'border-white/15 text-white/60 hover:bg-white/5'}`}>
+                        {d === 0 ? 'Nenhum' : `${d} dias`}
+                      </button>
+                    ))}
+                    <input type="number" min={0} max={max} className={inp + ' w-20 flex-none text-center'} value={abonoForm.dias}
+                      onChange={e => setAbonoForm(f => f && ({ ...f, dias: e.target.value }))} aria-label="Outro número de dias" />
+                  </div>
+                  <p className="text-xs mt-2 text-white/60">
+                    {n > max ? <span className="text-amber-300">Passa do limite legal de {max} dias.</span>
+                      : n > 0 ? <>Sobram <strong className="text-white">{Math.max(0, sobra)} dias</strong> para tirar de folga{p.dias_gozados > 0 ? ` (já tirou ${p.dias_gozados})` : ''}.</>
+                      : 'Nenhum dia vendido neste ano base.'}
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-xs text-white/50 mb-1">Observação (opcional)</label>
+                  <input className={inp} value={abonoForm.obs} onChange={e => setAbonoForm(f => f && ({ ...f, obs: e.target.value }))} placeholder="Ex.: pedido em 10/02/2026, pago com as férias" />
+                </div>
+
+                <div className="flex gap-3 pt-1">
+                  <button onClick={() => { setAbonoForm(null); setError(null); }} className="flex-1 px-4 py-2 border border-white/15 text-white/70 rounded-xl hover:bg-white/5 text-sm focus-ring">Cancelar</button>
+                  <button onClick={salvarAbono} className="flex-1 px-4 py-2 bg-wine text-white rounded-xl hover:bg-[#9D2F3C] text-sm font-medium focus-ring">Salvar</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* ═══════ MODAL: Dias de direito (art. 130) ═══════ */}
+      {direitoForm && (
+        <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
+          <div className="bg-[#12141f] border border-white/15 rounded-2xl w-full max-w-md">
+            <div className="flex items-center justify-between p-5 border-b border-white/10">
+              <div>
+                <h3 className="text-lg font-bold text-white">Dias de direito</h3>
+                <p className="text-xs text-white/50 mt-0.5">{direitoForm.nome} · ano base {rotuloAnoBase(direitoForm.periodo)}</p>
+              </div>
+              <button onClick={() => { setDireitoForm(null); setError(null); }} className="text-white/40 hover:text-white focus-ring rounded" aria-label="Fechar"><XCircle className="w-5 h-5" /></button>
+            </div>
+            <div className="p-5 space-y-4">
+              {error && <div className="p-3 bg-red-900/30 text-red-300 rounded-xl border border-red-700/40 text-sm">{error}</div>}
+              <p className="text-xs text-white/60">Os dias de férias dependem das faltas sem justificativa no ano base (art. 130 da CLT). Mais de 32 faltas: perde as férias do ano.</p>
+              <div className="space-y-2">
+                {DEGRAUS_DIREITO.map(d => (
+                  <button key={d.dias} onClick={() => setDireitoForm(f => f && ({ ...f, dias: d.dias }))}
+                    className={`w-full flex items-center justify-between px-4 py-2.5 rounded-xl border text-sm transition-colors focus-ring ${direitoForm.dias === d.dias ? 'bg-wine/20 border-wine/50 text-white' : 'border-white/15 text-white/70 hover:bg-white/5'}`}>
+                    <span className="font-semibold">{d.dias} dias</span>
+                    <span className="text-xs opacity-70">{d.faltas}</span>
+                  </button>
+                ))}
+              </div>
+              <div className="flex gap-3 pt-1">
+                <button onClick={() => { setDireitoForm(null); setError(null); }} className="flex-1 px-4 py-2 border border-white/15 text-white/70 rounded-xl hover:bg-white/5 text-sm focus-ring">Cancelar</button>
+                <button onClick={salvarDiasDireito} className="flex-1 px-4 py-2 bg-wine text-white rounded-xl hover:bg-[#9D2F3C] text-sm font-medium focus-ring">Salvar</button>
               </div>
             </div>
           </div>
