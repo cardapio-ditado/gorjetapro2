@@ -301,7 +301,7 @@ const FeriasColaboradores: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const pessoaId = searchParams.get('pessoa');
 
-  const [aba, setAba] = useState<'pessoas' | 'alertas'>('pessoas');
+  const [aba, setAba] = useState<'pessoas' | 'prazos' | 'alertas'>('pessoas');
   const [periodos, setPeriodos] = useState<Periodo[]>([]);
   const [gozos, setGozos] = useState<Gozo[]>([]);
   const [colaboradores, setColaboradores] = useState<Colab[]>([]);
@@ -1018,6 +1018,194 @@ const FeriasColaboradores: React.FC = () => {
     );
   };
 
+  /**
+   * A empresa inteira numa tela: uma linha por pessoa, e em cada linha o
+   * prazo para tirar as férias de cada ano base em aberto — como barra que
+   * termina na data-limite, colorida pela urgência. Quem já passou do prazo
+   * sobe para o topo; depois vem quem está mais perto de vencer.
+   */
+  const PrazosDaEmpresa = () => {
+    const hoje = dayjs();
+    const inicio = hoje.startOf('month').subtract(1, 'month');
+    const nMeses = 18;
+    const fimJanela = inicio.add(nMeses, 'month');
+    const totalDias = fimJanela.diff(inicio, 'day');
+    const pct = (d: dayjs.Dayjs) => Math.min(100, Math.max(0, (d.diff(inicio, 'day') / totalDias) * 100));
+    const meses = Array.from({ length: nMeses }, (_, i) => inicio.add(i, 'month'));
+    const hojePct = pct(hoje);
+
+    const urgencia = (dias: number) =>
+      dias < 0 ? { cor: '#f87171', texto: 'text-red-300', rotulo: 'passou do prazo' }
+      : dias <= 60 ? { cor: '#fb923c', texto: 'text-orange-300', rotulo: 'vence em até 60 dias' }
+      : dias <= 120 ? { cor: '#facc15', texto: 'text-yellow-300', rotulo: 'vence em até 120 dias' }
+      : { cor: '#4ade80', texto: 'text-green-300', rotulo: 'com folga' };
+
+    const linhas = pessoas
+      .map(pes => {
+        const abertos = pes.periodos
+          .filter(p => !emCurso(p) && p.dias_restantes > 0)
+          .map(p => ({ p, dias: diasParaVencer(p.periodo_concessivo_fim) }))
+          .sort((a, b) => a.dias - b.dias);
+        const maisUrgente = abertos.length ? abertos[0].dias : Infinity;
+        const saldo = abertos.reduce((s, a) => s + a.p.dias_restantes, 0);
+        const ferias = gozos.filter(g => g.colaborador_id === pes.colab.id && g.status !== 'cancelado')
+          .filter(g => ['agendada', 'em_gozo'].includes(situacaoFerias(g)));
+        return { pes, abertos, maisUrgente, saldo, ferias };
+      })
+      .filter(l => l.abertos.length > 0 || l.pes.anoEmCurso)
+      .sort((a, b) => a.maisUrgente - b.maisUrgente || a.pes.colab.nome_completo.localeCompare(b.pes.colab.nome_completo));
+
+    const contagem = {
+      vencidos: linhas.filter(l => l.maisUrgente < 0).length,
+      ate60: linhas.filter(l => l.maisUrgente >= 0 && l.maisUrgente <= 60).length,
+      ate120: linhas.filter(l => l.maisUrgente > 60 && l.maisUrgente <= 120).length,
+      folga: linhas.filter(l => l.maisUrgente > 120 && l.maisUrgente !== Infinity).length,
+      acumulando: linhas.filter(l => l.maisUrgente === Infinity).length,
+    };
+
+    return (
+      <div className="space-y-4">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+          {[
+            { label: 'Passaram do prazo', value: contagem.vencidos, cls: 'text-red-300', cor: '#f87171' },
+            { label: 'Vencem em 60 dias', value: contagem.ate60, cls: 'text-orange-300', cor: '#fb923c' },
+            { label: 'Vencem em 120 dias', value: contagem.ate120, cls: 'text-yellow-300', cor: '#facc15' },
+            { label: 'Com folga', value: contagem.folga, cls: 'text-green-300', cor: '#4ade80' },
+            { label: 'Ainda acumulando', value: contagem.acumulando, cls: 'text-white/60', cor: 'rgba(255,255,255,0.25)' },
+          ].map(t => (
+            <div key={t.label} className="bg-[#12141f] border border-white/10 rounded-xl p-3.5 flex items-center gap-3">
+              <span className="w-2.5 h-8 rounded-full shrink-0" style={{ background: t.cor }} />
+              <div className="min-w-0">
+                <p className={`text-2xl font-bold leading-none ${t.cls}`}>{t.value}</p>
+                <p className="text-xs text-white/60 mt-1 truncate">{t.label}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="bg-[#12141f] border border-white/10 rounded-2xl p-5">
+          <div className="flex items-baseline justify-between flex-wrap gap-2 mb-1">
+            <h4 className="text-sm font-semibold text-white">Prazo para tirar férias, pessoa por pessoa</h4>
+            <p className="text-xs text-white/50">{plural(linhas.length, 'pessoa', 'pessoas')} · ordem: quem vence primeiro</p>
+          </div>
+          <p className="text-xs text-white/50 mb-4">
+            Cada barra termina na data-limite para conceder as férias daquele ano base. Vermelho já passou; laranja vence em 60 dias; amarelo em 120; verde tem folga.
+            Cinza é o ano ainda em andamento. As faixas finas em cima são férias marcadas ou em curso. Clique no nome para abrir a pessoa.
+          </p>
+
+          {linhas.length === 0 ? (
+            <p className="text-sm text-white/50 py-6 text-center border border-dashed border-white/10 rounded-xl">Ninguém com ano base em aberto.</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <div className="min-w-[860px]">
+                <div className="flex ml-[210px] border-b border-white/10">
+                  {meses.map(m => (
+                    <div key={m.format('YYYY-MM')} className={`flex-1 text-center text-[11px] py-1 capitalize ${m.isSame(hoje, 'month') ? 'text-gold font-semibold' : 'text-white/45'}`}>
+                      {m.format('MMM')}{m.month() === 0 || m.isSame(inicio, 'month') ? <span className="block text-[10px] opacity-70">{m.format('YYYY')}</span> : null}
+                    </div>
+                  ))}
+                </div>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-[210px] right-0 flex pointer-events-none">
+                    {meses.map(m => <div key={m.format('YYYY-MM')} className="flex-1 border-l border-white/5" />)}
+                  </div>
+                  <div className="absolute top-0 bottom-0 w-0.5 pointer-events-none z-10" style={{ left: `calc(210px + (100% - 210px) * ${hojePct / 100})`, background: 'var(--gold)' }} />
+
+                  {linhas.map(({ pes, abertos, maisUrgente, saldo, ferias }) => {
+                    const u = maisUrgente === Infinity ? null : urgencia(maisUrgente);
+                    const proximo = abertos[0];
+                    return (
+                      <div key={pes.colab.id} className="flex items-center h-11 border-b border-white/5 last:border-b-0">
+                        <button onClick={() => abrirPessoa(pes.colab.id)} className="w-[210px] shrink-0 pr-3 text-left focus-ring rounded flex items-center gap-2.5 min-w-0" title={pes.colab.nome_completo}>
+                          <span className="w-1.5 h-7 rounded-full shrink-0" style={{ background: u?.cor ?? 'rgba(255,255,255,0.2)' }} />
+                          <span className="min-w-0">
+                            <span className="block text-xs text-white/90 truncate">{pes.colab.nome_completo.split(' ').slice(0, 2).join(' ')}</span>
+                            <span className={`block text-[11px] truncate ${u?.texto ?? 'text-white/40'}`}>
+                              {proximo
+                                ? maisUrgente < 0
+                                  ? `${plural(saldo, 'dia vencido', 'dias vencidos')} · desde ${fmtCurto(proximo.p.periodo_concessivo_fim)}`
+                                  : `${plural(saldo, 'dia', 'dias')} · até ${fmtCurto(proximo.p.periodo_concessivo_fim)} (${maisUrgente}d)`
+                                : pes.anoEmCurso ? `fecha o ano em ${fmtCurto(pes.anoEmCurso.periodo_aquisitivo_fim)}` : ''}
+                            </span>
+                          </span>
+                        </button>
+                        <div className="relative flex-1 h-full">
+                          {/* ano em andamento: prazo futuro, em cinza */}
+                          {pes.anoEmCurso && (() => {
+                            const p = pes.anoEmCurso;
+                            const a = dayjs(p.periodo_concessivo_inicio);
+                            const b = dayjs(p.periodo_concessivo_fim);
+                            if (!b.isAfter(inicio) || !a.isBefore(fimJanela)) return null;
+                            const left = pct(a);
+                            const width = Math.max(0.8, pct(b) - left);
+                            return (
+                              <div className="absolute top-3 bottom-3 rounded-md border border-dashed border-white/25 text-[10px] text-white/50 px-1.5 overflow-hidden whitespace-nowrap flex items-center"
+                                style={{ left: `${left}%`, width: `${width}%`, background: 'rgba(255,255,255,0.04)' }}
+                                title={`Ano base ${rotuloAnoBase(p)} em andamento: ${p.dias_direito} dias a tirar de ${fmt(p.periodo_concessivo_inicio)} a ${fmt(p.periodo_concessivo_fim)}`}>
+                                {width > 10 ? `${p.dias_direito}d a partir de ${fmtCurto(p.periodo_concessivo_inicio)}` : ''}
+                              </div>
+                            );
+                          })()}
+                          {/* cada ano base em aberto: a barra até a data-limite */}
+                          {abertos.map(({ p, dias }) => {
+                            const u2 = urgencia(dias);
+                            const limite = dayjs(p.periodo_concessivo_fim);
+                            // vencido: a barra vai da data-limite até hoje; no prazo: do início do prazo à data-limite
+                            const a = dias < 0 ? limite : dayjs(p.periodo_concessivo_inicio);
+                            const b = dias < 0 ? hoje : limite;
+                            if (!b.isAfter(inicio)) {
+                              // venceu antes da janela: marca na borda esquerda
+                              return (
+                                <div key={p.id} className="absolute top-3 bottom-3 rounded-md px-1.5 text-[10px] font-semibold text-[#0d0f1a] overflow-hidden whitespace-nowrap flex items-center"
+                                  style={{ left: 0, width: '9%', background: u2.cor }}
+                                  title={`Ano base ${rotuloAnoBase(p)}: ${plural(p.dias_restantes, 'dia vencido', 'dias vencidos')} desde ${fmt(p.periodo_concessivo_fim)}`}>
+                                  ◀ {p.dias_restantes}d vencidos
+                                </div>
+                              );
+                            }
+                            const left = pct(a);
+                            const width = Math.max(1, pct(b) - left);
+                            const alem = limite.isAfter(fimJanela);
+                            return (
+                              <div key={p.id} className="absolute top-3 bottom-3 rounded-md px-1.5 text-[10px] font-semibold text-[#0d0f1a] overflow-hidden whitespace-nowrap flex items-center"
+                                style={{ left: `${left}%`, width: `${width}%`, background: u2.cor, opacity: 0.92 }}
+                                title={`Ano base ${rotuloAnoBase(p)}: ${plural(p.dias_restantes, 'dia', 'dias')} a tirar até ${fmt(p.periodo_concessivo_fim)}${dias < 0 ? ` — passou há ${-dias} dias` : ` — faltam ${dias} dias`}`}>
+                                {width > 9 ? (dias < 0 ? `${p.dias_restantes}d · vencido há ${-dias}d` : `${p.dias_restantes}d · até ${fmtCurto(p.periodo_concessivo_fim)}${alem ? ' ▶' : ''}`) : ''}
+                              </div>
+                            );
+                          })}
+                          {/* férias marcadas ou em curso, como faixa fina por cima */}
+                          {ferias.map(g => {
+                            const left = pct(dayjs(g.data_inicio));
+                            const width = Math.max(0.6, pct(dayjs(g.data_fim).add(1, 'day')) - left);
+                            const sit = situacaoFerias(g);
+                            return (
+                              <div key={g.id} className="absolute top-1 h-1.5 rounded-full z-[5]" style={{ left: `${left}%`, width: `${width}%`, background: situacaoCor[sit] }}
+                                title={`${situacaoTexto[sit]}: ${fmt(g.data_inicio)} a ${fmt(g.data_fim)} · ${g.dias_corridos} dias`} />
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
+          <div className="flex flex-wrap gap-x-4 gap-y-1 mt-3 text-[11px] text-white/45">
+            <span className="inline-flex items-center gap-1.5"><span className="w-3 h-2 rounded-sm" style={{ background: '#f87171' }} />passou do prazo</span>
+            <span className="inline-flex items-center gap-1.5"><span className="w-3 h-2 rounded-sm" style={{ background: '#fb923c' }} />vence em 60 dias</span>
+            <span className="inline-flex items-center gap-1.5"><span className="w-3 h-2 rounded-sm" style={{ background: '#facc15' }} />vence em 120 dias</span>
+            <span className="inline-flex items-center gap-1.5"><span className="w-3 h-2 rounded-sm" style={{ background: '#4ade80' }} />com folga</span>
+            <span className="inline-flex items-center gap-1.5"><span className="w-3 h-2 rounded-sm border border-dashed border-white/40" />ano em andamento</span>
+            <span className="inline-flex items-center gap-1.5"><span className="w-3 h-1 rounded-full" style={{ background: situacaoCor.agendada }} />férias marcadas</span>
+            <span className="inline-flex items-center gap-1.5"><span className="w-0.5 h-3" style={{ background: 'var(--gold)' }} />hoje</span>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   /** A página de uma pessoa. */
   const PaginaPessoa = ({ pes }: { pes: Pessoa }) => {
     const c = pes.colab;
@@ -1215,6 +1403,7 @@ const FeriasColaboradores: React.FC = () => {
             <div className="flex gap-1 bg-white/5 p-1 rounded-xl">
               {([
                 { key: 'pessoas', label: 'Pessoas', icon: Users },
+                { key: 'prazos', label: 'Prazos', icon: Hourglass },
                 { key: 'alertas', label: 'Alertas', icon: Brain },
               ] as const).map(({ key, label, icon: Icon }) => (
                 <button key={key} onClick={() => setAba(key)}
@@ -1252,6 +1441,8 @@ const FeriasColaboradores: React.FC = () => {
         )
       ) : aba === 'alertas' ? (
         <MonitoramentoFeriasIA />
+      ) : aba === 'prazos' ? (
+        <PrazosDaEmpresa />
       ) : (
         <div className="space-y-4">
           {!loading || pessoas.length > 0 ? <PanoramaDoTime /> : null}
