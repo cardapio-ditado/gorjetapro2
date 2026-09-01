@@ -127,6 +127,57 @@ function diasParaVencer(dataFim: string) {
   return dayjs(dataFim).diff(dayjs(), 'day');
 }
 
+/**
+ * O k-ésimo ano base de quem foi admitido em `admissao`: 12 meses a partir do
+ * aniversário de admissão. O concessivo (prazo para conceder) são os 12 meses
+ * seguintes — art. 134 da CLT.
+ */
+function anoBaseN(admissao: string, k: number) {
+  const adm = dayjs(admissao);
+  const ini = adm.add(k, 'year');
+  const fim = adm.add(k + 1, 'year').subtract(1, 'day');
+  return {
+    periodo_aquisitivo_inicio: ini.format('YYYY-MM-DD'),
+    periodo_aquisitivo_fim: fim.format('YYYY-MM-DD'),
+    periodo_concessivo_inicio: fim.add(1, 'day').format('YYYY-MM-DD'),
+    periodo_concessivo_fim: fim.add(1, 'year').format('YYYY-MM-DD'),
+  };
+}
+
+/** O ano base a que férias iniciadas em `dataInicio` pertencem, se ele ainda não existir. */
+function anoBaseParaData(admissao: string, dataInicio: string) {
+  // Férias se tiram DEPOIS de completar o ano base: o último completado antes
+  // da data. Antes de fechar o primeiro ano (férias coletivas, por exemplo),
+  // o ano base é o que está em curso.
+  const k = Math.max(0, dayjs(dataInicio).diff(dayjs(admissao), 'year') - 1);
+  return anoBaseN(admissao, k);
+}
+
+/**
+ * Qual ano base "paga" as férias que começam em `dataInicio`.
+ *
+ * Os dias se consomem do mais antigo para o mais novo: se a pessoa tem saldo
+ * de dois anos, as férias de hoje quitam o mais velho (é o que vence primeiro
+ * e o que a lei manda pagar em dobro se atrasar). Só entra na conta ano base
+ * já completado antes das férias. Sem saldo em lugar nenhum, fica o ano cujo
+ * prazo de concessão cobre a data — para o RH ver que está lançando a mais.
+ */
+function sugerirAnoBase(periodos: Periodo[], dataInicio: string): Periodo | null {
+  if (!dataInicio || periodos.length === 0) return null;
+  const d = dayjs(dataInicio);
+  const completados = periodos
+    .filter(p => dayjs(p.periodo_aquisitivo_fim).isBefore(d, 'day'))
+    .sort((a, b) => a.periodo_aquisitivo_inicio.localeCompare(b.periodo_aquisitivo_inicio));
+  const comSaldo = completados.find(p => p.dias_restantes > 0);
+  if (comSaldo) return comSaldo;
+  const noPrazo = periodos.find(p =>
+    d.isBetween(dayjs(p.periodo_concessivo_inicio), dayjs(p.periodo_concessivo_fim), 'day', '[]'));
+  return noPrazo ?? null;
+}
+
+/** Sentinela do select de ano base: "crie o ano base certo para mim". */
+const ANO_BASE_AUTO = '__auto__';
+
 // ────────────────────────────────────────
 // Component
 // ────────────────────────────────────────
@@ -140,11 +191,17 @@ const FeriasColaboradores: React.FC = () => {
   const [colaboradores, setColaboradores] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // Confirmação visível depois de gravar. O modal fechava em silêncio e a
+  // pessoa não tinha como saber se algo tinha sido salvo — nem onde.
+  const [sucesso, setSucesso] = useState<string | null>(null);
 
   // Form - Férias
   const [showFeriasForm, setShowFeriasForm] = useState(false);
   const [editingFerias, setEditingFerias] = useState<Ferias | null>(null);
   const [periodosDisponiveis, setPeriodosDisponiveis] = useState<Periodo[]>([]);
+  // Quando a pessoa escolhe o ano base com a própria mão, a sugestão
+  // automática para de sobrescrever a escolha a cada mudança de data.
+  const [anoBaseManual, setAnoBaseManual] = useState(false);
   const [feriasForm, setFeriasForm] = useState({
     colaborador_id: '', periodo_aquisitivo_id: '',
     data_inicio: '', data_fim: '', observacoes: '',
@@ -196,6 +253,25 @@ const FeriasColaboradores: React.FC = () => {
   useEffect(() => {
     fetchIndicadores();
   }, [ferias, periodos]);
+
+  useEffect(() => {
+    if (!sucesso) return;
+    const t = setTimeout(() => setSucesso(null), 12000);
+    return () => clearTimeout(t);
+  }, [sucesso]);
+
+  // Sugere o ano base sempre que colaborador/data mudam — a menos que a
+  // pessoa já tenha escolhido um por conta própria.
+  useEffect(() => {
+    if (editingFerias || anoBaseManual || !feriasForm.colaborador_id) return;
+    const sugerido = sugerirAnoBase(periodosDisponiveis, feriasForm.data_inicio);
+    const colab = colaboradores.find(c => c.id === feriasForm.colaborador_id);
+    const proximo = sugerido ? sugerido.id : (feriasForm.data_inicio && colab?.data_admissao ? ANO_BASE_AUTO : '');
+    if (proximo !== feriasForm.periodo_aquisitivo_id) {
+      setFeriasForm(f => ({ ...f, periodo_aquisitivo_id: proximo }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [feriasForm.colaborador_id, feriasForm.data_inicio, periodosDisponiveis, anoBaseManual, editingFerias]);
 
   const fetchAnosDisponiveis = async () => {
     const { data } = await supabase
@@ -266,19 +342,79 @@ const FeriasColaboradores: React.FC = () => {
     }
   };
 
-  const fetchPeriodosDisponiveis = async (colaboradorId: string) => {
+  const fetchPeriodosDisponiveis = async (colaboradorId: string): Promise<Periodo[]> => {
     // Todos os períodos, inclusive vencidos: férias antigas se lançam num
     // período que já venceu — era o filtro por pendente/parcial que impedia.
     const { data } = await supabase
       .from('periodos_aquisitivos_ferias')
       .select('*, colaborador:colaboradores(nome_completo)')
       .eq('colaborador_id', colaboradorId)
-      .order('periodo_aquisitivo_inicio', { ascending: false });
-    const mapped = (data || []).map((p: any) => ({
+      .order('periodo_aquisitivo_inicio', { ascending: true });
+    const mapped: Periodo[] = (data || []).map((p: any) => ({
       ...p,
       colaborador_nome: p.colaborador?.nome_completo || '—',
     }));
     setPeriodosDisponiveis(mapped);
+    return mapped;
+  };
+
+  /**
+   * A ÚNICA porta de entrada para lançar férias. Recebe, opcionalmente, quem
+   * e de qual ano base — os botões espalhados pela tela só passam isso.
+   */
+  const abrirLancamento = (colaboradorId = '', periodoId = '') => {
+    setEditingFerias(null);
+    setAnoBaseManual(!!periodoId);
+    setFeriasForm({ colaborador_id: colaboradorId, periodo_aquisitivo_id: periodoId, data_inicio: '', data_fim: '', observacoes: '' });
+    setPeriodosDisponiveis([]);
+    if (colaboradorId) fetchPeriodosDisponiveis(colaboradorId);
+    setError(null);
+    setShowFeriasForm(true);
+  };
+
+  const fecharLancamento = () => {
+    setShowFeriasForm(false);
+    setEditingFerias(null);
+    setAnoBaseManual(false);
+    setError(null);
+  };
+
+  const rotuloAnoBase = (p: { periodo_aquisitivo_inicio: string; periodo_aquisitivo_fim: string }) =>
+    `${dayjs(p.periodo_aquisitivo_inicio).format('YYYY')} → ${dayjs(p.periodo_aquisitivo_fim).format('YYYY')}`;
+
+  /**
+   * Cria os anos base que faltam entre a admissão e hoje. Idempotente: pula
+   * os que já existem. É o que o RH fazia à mão, um por um, no botão errado.
+   */
+  const gerarAnosBase = async (colab: { id: string; nome_completo: string; data_admissao?: string }) => {
+    if (!colab.data_admissao) return setError(`${colab.nome_completo} está sem data de admissão no cadastro — preencha em Colaboradores.`);
+    setLoading(true);
+    setError(null);
+    try {
+      const existentes = await fetchPeriodosDisponiveis(colab.id);
+      const jaTem = new Set(existentes.map(p => p.periodo_aquisitivo_inicio));
+      const novos: Array<ReturnType<typeof anoBaseN> & { colaborador_id: string; dias_direito: number; dias_gozados: number; status: string }> = [];
+      for (let k = 0; ; k++) {
+        const ab = anoBaseN(colab.data_admissao, k);
+        if (dayjs(ab.periodo_aquisitivo_inicio).isAfter(dayjs(), 'day')) break;
+        if (!jaTem.has(ab.periodo_aquisitivo_inicio)) {
+          novos.push({ colaborador_id: colab.id, ...ab, dias_direito: 30, dias_gozados: 0, status: 'pendente' });
+        }
+      }
+      if (novos.length === 0) {
+        setSucesso(`${colab.nome_completo} já tem todos os anos base desde a admissão.`);
+      } else {
+        const { error } = await supabase.from('periodos_aquisitivos_ferias').insert(novos);
+        if (error) throw error;
+        setSucesso(`${novos.length} ano${novos.length > 1 ? 's' : ''} base criado${novos.length > 1 ? 's' : ''} para ${colab.nome_completo}, de ${dayjs(novos[0].periodo_aquisitivo_inicio).format('YYYY')} a ${dayjs(novos[novos.length - 1].periodo_aquisitivo_fim).format('YYYY')}.`);
+        setExpandido(e => ({ ...e, [colab.id]: true }));
+      }
+      fetchPeriodos();
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const fetchIndicadores = useCallback(() => {
@@ -312,9 +448,34 @@ const FeriasColaboradores: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
+      const colab = colaboradores.find(c => c.id === feriasForm.colaborador_id);
+      let periodoId: string | null = feriasForm.periodo_aquisitivo_id || null;
+      let anoBaseCriado: string | null = null;
+
+      // Sem ano base que sirva? Cria o certo na hora, a partir da admissão.
+      // Era o passo que fazia o RH desistir: a tela mandava "cadastrar um ano
+      // base primeiro" em outra aba, e o botão de lá parecia ser o de férias.
+      if (periodoId === ANO_BASE_AUTO) {
+        if (!colab?.data_admissao) throw new Error('Colaborador sem data de admissão no cadastro — preencha em Colaboradores para o ano base ser calculado.');
+        const ab = anoBaseParaData(colab.data_admissao, feriasForm.data_inicio);
+        const existente = periodosDisponiveis.find(p => p.periodo_aquisitivo_inicio === ab.periodo_aquisitivo_inicio);
+        if (existente) {
+          periodoId = existente.id;
+        } else {
+          const { data: novo, error: errAb } = await supabase
+            .from('periodos_aquisitivos_ferias')
+            .insert([{ colaborador_id: colab.id, ...ab, dias_direito: 30, dias_gozados: 0, status: 'pendente' }])
+            .select('id')
+            .single();
+          if (errAb) throw errAb;
+          periodoId = novo.id;
+          anoBaseCriado = rotuloAnoBase(ab);
+        }
+      }
+
       const payload = {
         colaborador_id: feriasForm.colaborador_id,
-        periodo_aquisitivo_id: feriasForm.periodo_aquisitivo_id || null,
+        periodo_aquisitivo_id: periodoId,
         data_inicio: feriasForm.data_inicio,
         data_fim: feriasForm.data_fim,
         observacoes: feriasForm.observacoes || null,
@@ -334,8 +495,16 @@ const FeriasColaboradores: React.FC = () => {
         const { error } = await supabase.from('ferias_colaboradores').insert([payload]);
         if (error) throw error;
       }
-      setShowFeriasForm(false);
-      setEditingFerias(null);
+
+      const periodoUsado = periodosDisponiveis.find(p => p.id === periodoId);
+      const nomeAnoBase = anoBaseCriado ? `ano base ${anoBaseCriado} (criado agora)` : periodoUsado ? `ano base ${rotuloAnoBase(periodoUsado)}` : 'sem ano base vinculado';
+      setSucesso(
+        `${editingFerias ? 'Férias atualizadas' : payload.status === 'gozado' ? 'Férias registradas como gozadas' : 'Férias agendadas'}: `
+        + `${colab?.nome_completo ?? 'colaborador'} · ${dayjs(feriasForm.data_inicio).format('DD/MM/YYYY')} a ${dayjs(feriasForm.data_fim).format('DD/MM/YYYY')} · ${payload.dias_corridos} dias · ${nomeAnoBase}.`
+      );
+      // Mostra onde o lançamento foi parar: o cartão da pessoa, aberto.
+      setExpandido(e => ({ ...e, [feriasForm.colaborador_id]: true }));
+      fecharLancamento();
       setFeriasForm({ colaborador_id: '', periodo_aquisitivo_id: '', data_inicio: '', data_fim: '', observacoes: '' });
       fetchFerias();
       fetchPeriodos();
@@ -382,6 +551,19 @@ const FeriasColaboradores: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
+      // Trava contra o engano de 27/08: o mesmo ano base gravado de novo por
+      // quem, na verdade, queria lançar as férias tiradas nele.
+      const { data: repetido } = await supabase
+        .from('periodos_aquisitivos_ferias')
+        .select('id, periodo_aquisitivo_inicio, periodo_aquisitivo_fim')
+        .eq('colaborador_id', periodoForm.colaborador_id)
+        .eq('periodo_aquisitivo_inicio', periodoForm.periodo_aquisitivo_inicio)
+        .maybeSingle();
+      if (repetido) {
+        const nome = colaboradores.find(c => c.id === periodoForm.colaborador_id)?.nome_completo ?? 'este colaborador';
+        throw new Error(`O ano base ${rotuloAnoBase(repetido)} já existe para ${nome}. Se a ideia é registrar as férias que a pessoa tirou, use "Lançar férias".`);
+      }
+
       // Recalcula na hora de gravar em vez de confiar no que está no estado:
       // o concessivo é derivado, e derivado não se salva "como está na tela".
       const concessivo = calcularConcessivo(periodoForm.periodo_aquisitivo_fim);
@@ -545,6 +727,16 @@ const FeriasColaboradores: React.FC = () => {
     return lista;
   }, [periodos, gozos, searchPeriodos, statusPeriodoFilter]);
 
+  // Quem está ativo mas ainda não tem nenhum ano base — invisível na lista
+  // acima, que só nasce dos períodos. Sem isso a pessoa "não existia" em Férias.
+  const semAnoBase = useMemo(() => {
+    const comPeriodo = new Set(periodos.map(p => p.colaborador_id));
+    const busca = searchPeriodos.trim().toLowerCase();
+    return colaboradores
+      .filter(c => !comPeriodo.has(c.id))
+      .filter(c => !busca || c.nome_completo.toLowerCase().includes(busca));
+  }, [colaboradores, periodos, searchPeriodos]);
+
   // Countdown badge do prazo concessivo
   const GozoBadge = ({ p }: { p: Periodo }) => {
     const dias = diasParaVencer(p.periodo_concessivo_fim);
@@ -578,8 +770,16 @@ const FeriasColaboradores: React.FC = () => {
           ))}
         </div>
 
-        {/* Quick KPIs */}
-        <div className="flex gap-3 flex-wrap">
+        {/* A ação principal da tela inteira, sempre à vista, em qualquer aba.
+            Antes o botão grande da aba inicial era "Novo Ano Base" — e foi
+            nele que o RH clicou seis vezes tentando lançar férias. */}
+        <div className="flex gap-3 flex-wrap items-center">
+          <button
+            onClick={() => abrirLancamento()}
+            className="flex items-center gap-2 px-4 py-2 bg-wine text-white rounded-xl hover:bg-[#9D2F3C] text-sm font-semibold shadow-lg shadow-wine/20 focus-ring"
+          >
+            <Plus className="w-4 h-4" /> Lançar férias
+          </button>
           {indicadores.periodosCriticos > 0 && (
             <div className="flex items-center gap-2 px-3 py-1.5 bg-red-900/30 border border-red-700/40 rounded-xl text-sm text-red-300">
               <AlertTriangle className="w-4 h-4" />
@@ -595,8 +795,17 @@ const FeriasColaboradores: React.FC = () => {
         </div>
       </div>
 
-      {error && (
+      {error && !showFeriasForm && !showPeriodoForm && (
         <div className="p-3 bg-red-900/30 text-red-300 rounded-xl border border-red-700/40 text-sm">{error}</div>
+      )}
+      {sucesso && (
+        <div role="status" className="flex items-start gap-3 p-3 bg-green-900/25 text-green-200 rounded-xl border border-green-700/40 text-sm">
+          <CheckCircle className="w-4 h-4 mt-0.5 shrink-0 text-green-400" />
+          <p className="flex-1">{sucesso}</p>
+          <button onClick={() => setSucesso(null)} className="text-green-300/60 hover:text-green-200 focus-ring rounded" aria-label="Fechar aviso">
+            <XCircle className="w-4 h-4" />
+          </button>
+        </div>
       )}
 
       {/* ───── MONITORAMENTO IA ───── */}
@@ -610,22 +819,32 @@ const FeriasColaboradores: React.FC = () => {
               <h3 className="text-lg font-bold text-white font-display">Férias por Colaborador</h3>
               <p className="text-white/50 text-sm">Cada pessoa com seus anos base, o prazo de cada um e o que já foi tirado</p>
             </div>
+            {/* Secundário de propósito: o ano base normalmente nasce sozinho
+                ao lançar férias. Aqui é só para casos fora do padrão
+                (direito reduzido por faltas, período fracionado etc.). */}
             <button
-              onClick={() => { setPeriodoForm({ colaborador_id: '', periodo_aquisitivo_inicio: '', periodo_aquisitivo_fim: '', periodo_concessivo_inicio: '', periodo_concessivo_fim: '', dias_direito: '30', observacoes: '' }); setShowPeriodoForm(true); }}
-              className="flex items-center gap-2 px-4 py-2 bg-wine text-white rounded-xl hover:bg-[#9D2F3C] text-sm font-medium"
+              onClick={() => { setError(null); setPeriodoForm({ colaborador_id: '', periodo_aquisitivo_inicio: '', periodo_aquisitivo_fim: '', periodo_concessivo_inicio: '', periodo_concessivo_fim: '', dias_direito: '30', observacoes: '' }); setShowPeriodoForm(true); }}
+              className="flex items-center gap-2 px-3 py-2 border border-white/15 text-white/60 rounded-xl hover:bg-white/5 hover:text-white text-sm focus-ring"
+              title="Só para casos fora do padrão — ao lançar férias o ano base é criado sozinho"
             >
-              <Plus className="w-4 h-4" /> Novo Ano Base
+              Ano base manual
             </button>
           </div>
 
           {/* Legenda dos três conceitos — a régua de leitura da tela toda */}
           <div className="bg-blue-900/20 border border-blue-700/30 rounded-xl p-4 flex gap-3 text-sm text-blue-300">
             <Info className="w-4 h-4 mt-0.5 shrink-0" />
-            <p className="text-blue-300/70">
-              <strong className="text-blue-200">Ano base</strong> é o ano trabalhado que dá o direito às férias.{' '}
-              <strong className="text-blue-200">Conceder até</strong> é o prazo legal (12 meses após o ano base) para a pessoa tirá-las.{' '}
-              <strong className="text-blue-200">Férias tiradas</strong> são os dias que ela de fato usufruiu dentro desse prazo.
-            </p>
+            <div className="text-blue-300/70 space-y-1.5">
+              <p>
+                <strong className="text-blue-200">Ano base</strong> é o ano trabalhado que dá o direito às férias.{' '}
+                <strong className="text-blue-200">Conceder até</strong> é o prazo legal (12 meses após o ano base) para a pessoa tirá-las.{' '}
+                <strong className="text-blue-200">Férias tiradas</strong> são os dias que ela de fato usufruiu dentro desse prazo.
+              </p>
+              <p>
+                Para registrar férias tiradas ou agendar as próximas, clique em <strong className="text-blue-200">Lançar férias</strong>:
+                o ano base certo é escolhido — ou criado — sozinho a partir da admissão e das datas.
+              </p>
+            </div>
           </div>
 
           {/* Filtros */}
@@ -656,19 +875,30 @@ const FeriasColaboradores: React.FC = () => {
                 const aberto = expandido[c.id] ?? (c.temVencido || c.diasDevidos > 0);
                 return (
                   <div key={c.id} className={`bg-[#12141f] border rounded-xl overflow-hidden ${c.temVencido ? 'border-red-700/40' : 'border-white/10'}`}>
-                    {/* Cabeçalho da pessoa */}
-                    <button
-                      onClick={() => setExpandido(e => ({ ...e, [c.id]: !aberto }))}
-                      className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-white/[0.03] transition-colors focus-ring"
-                    >
-                      <ChevronRight className={`w-4 h-4 shrink-0 text-white/40 transition-transform ${aberto ? 'rotate-90' : ''}`} />
-                      <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-white truncate">{c.nome}</p>
-                        <p className="text-white/50 text-xs">
-                          {c.funcao}{c.admissao ? ` · admissão ${dayjs(c.admissao).format('DD/MM/YYYY')}` : ''}
-                        </p>
-                      </div>
+                    {/* Cabeçalho da pessoa: abre/fecha os anos base e, sem
+                        precisar abrir nada, lança férias direto para ela. */}
+                    <div className="flex items-center gap-3 px-4 py-3">
+                      <button
+                        onClick={() => setExpandido(e => ({ ...e, [c.id]: !aberto }))}
+                        className="flex-1 min-w-0 flex items-center gap-3 text-left rounded-lg focus-ring"
+                        aria-expanded={aberto}
+                      >
+                        <ChevronRight className={`w-4 h-4 shrink-0 text-white/40 transition-transform ${aberto ? 'rotate-90' : ''}`} />
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-white truncate">{c.nome}</p>
+                          <p className="text-white/50 text-xs">
+                            {c.funcao}{c.admissao ? ` · admissão ${dayjs(c.admissao).format('DD/MM/YYYY')}` : ''}
+                          </p>
+                        </div>
+                      </button>
                       <div className="flex items-center gap-2 shrink-0">
+                        <button
+                          onClick={() => abrirLancamento(c.id)}
+                          className="flex items-center gap-1 px-2.5 py-1.5 bg-wine/25 text-[#e08590] border border-wine/40 rounded-lg hover:bg-wine/45 text-xs transition-colors focus-ring"
+                          title={`Lançar férias de ${c.nome}`}
+                        >
+                          <Plus className="w-3.5 h-3.5" /> Lançar férias
+                        </button>
                         {c.temVencido ? (
                           <span className="px-2.5 py-1 text-xs rounded-full bg-red-900/40 text-red-300 font-semibold">
                             {c.diasDevidos}d vencidos a conceder
@@ -684,7 +914,7 @@ const FeriasColaboradores: React.FC = () => {
                           {c.periodos.length} {c.periodos.length === 1 ? 'ano base' : 'anos base'}
                         </span>
                       </div>
-                    </button>
+                    </div>
 
                     {/* Os anos base da pessoa, um por linha */}
                     {aberto && (
@@ -744,16 +974,11 @@ const FeriasColaboradores: React.FC = () => {
                                   <div className="flex items-center gap-1 justify-end">
                                     {p.dias_restantes > 0 && (
                                       <button
-                                        onClick={() => {
-                                          setEditingFerias(null);
-                                          setFeriasForm({ colaborador_id: c.id, periodo_aquisitivo_id: p.id, data_inicio: '', data_fim: '', observacoes: '' });
-                                          fetchPeriodosDisponiveis(c.id);
-                                          setShowFeriasForm(true);
-                                        }}
-                                        className="flex items-center gap-1 px-2.5 py-1.5 bg-wine/25 text-[#e08590] border border-wine/40 rounded-lg hover:bg-wine/45 text-xs transition-colors focus-ring"
-                                        title="Lançar dias de férias neste ano base"
+                                        onClick={() => abrirLancamento(c.id, p.id)}
+                                        className="flex items-center gap-1 px-2.5 py-1.5 text-white/60 border border-white/15 rounded-lg hover:bg-white/5 hover:text-white text-xs transition-colors focus-ring whitespace-nowrap"
+                                        title="Lançar dias de férias descontando deste ano base"
                                       >
-                                        <Plus className="w-3.5 h-3.5" /> Lançar férias
+                                        <Plus className="w-3.5 h-3.5" /> Lançar neste ano
                                       </button>
                                     )}
                                     <button onClick={() => excluirPeriodo(p.id)} className="p-1.5 text-red-400/40 hover:text-red-400 rounded-lg hover:bg-red-500/10 transition-colors focus-ring" title="Excluir ano base" aria-label="Excluir ano base">
@@ -777,6 +1002,47 @@ const FeriasColaboradores: React.FC = () => {
               })}
             </div>
           )}
+
+          {/* Quem ainda não tem ano base nenhum — antes simplesmente não
+              aparecia aqui, e o RH ia para "Novo Ano Base" tentar consertar. */}
+          {!loading && statusPeriodoFilter === 'all' && semAnoBase.length > 0 && (
+            <div className="bg-[#12141f] border border-dashed border-white/15 rounded-xl">
+              <div className="px-4 py-3 border-b border-white/10">
+                <p className="text-sm font-semibold text-white/80">
+                  {semAnoBase.length} colaborador{semAnoBase.length > 1 ? 'es' : ''} ativo{semAnoBase.length > 1 ? 's' : ''} ainda sem ano base
+                </p>
+                <p className="text-xs text-white/50 mt-0.5">
+                  Lance as férias normalmente — o ano base é criado sozinho. Ou gere de uma vez todos os anos base desde a admissão.
+                </p>
+              </div>
+              <ul className="divide-y divide-white/5">
+                {semAnoBase.map(c => (
+                  <li key={c.id} className="flex items-center gap-3 px-4 py-2.5">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-white truncate">{c.nome_completo}</p>
+                      <p className="text-xs text-white/50">
+                        {c.funcao_nome || ''}{c.data_admissao ? ` · admissão ${dayjs(c.data_admissao).format('DD/MM/YYYY')}` : ' · sem data de admissão'}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => gerarAnosBase(c)}
+                      disabled={!c.data_admissao}
+                      className="px-2.5 py-1.5 text-white/60 border border-white/15 rounded-lg hover:bg-white/5 hover:text-white text-xs transition-colors focus-ring disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap"
+                      title="Cria todos os anos base desde a admissão até hoje"
+                    >
+                      Gerar anos base
+                    </button>
+                    <button
+                      onClick={() => abrirLancamento(c.id)}
+                      className="flex items-center gap-1 px-2.5 py-1.5 bg-wine/25 text-[#e08590] border border-wine/40 rounded-lg hover:bg-wine/45 text-xs transition-colors focus-ring whitespace-nowrap"
+                    >
+                      <Plus className="w-3.5 h-3.5" /> Lançar férias
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
       )}
 
@@ -789,10 +1055,6 @@ const FeriasColaboradores: React.FC = () => {
             <div className="flex gap-2">
               <button onClick={exportarFerias} className="flex items-center gap-2 px-3 py-2 bg-white/5 border border-white/15 rounded-xl text-white/70 hover:bg-white/10 text-sm">
                 <Download className="w-4 h-4" /> Exportar
-              </button>
-              <button onClick={() => { setEditingFerias(null); setFeriasForm({ colaborador_id: '', periodo_aquisitivo_id: '', data_inicio: '', data_fim: '', observacoes: '' }); setShowFeriasForm(true); }}
-                className="flex items-center gap-2 px-4 py-2 bg-wine text-white rounded-xl hover:bg-[#9D2F3C] text-sm font-medium">
-                <Plus className="w-4 h-4" /> Cadastrar Férias
               </button>
             </div>
           </div>
@@ -910,7 +1172,7 @@ const FeriasColaboradores: React.FC = () => {
                                   <Award className="w-4 h-4" />
                                 </button>
                               )}
-                              <button onClick={() => { setEditingFerias(f); setFeriasForm({ colaborador_id: f.colaborador_id, periodo_aquisitivo_id: f.periodo_aquisitivo_id || '', data_inicio: f.data_inicio, data_fim: f.data_fim, observacoes: f.observacoes || '' }); fetchPeriodosDisponiveis(f.colaborador_id); setShowFeriasForm(true); }}
+                              <button onClick={() => { setEditingFerias(f); setAnoBaseManual(true); setError(null); setFeriasForm({ colaborador_id: f.colaborador_id, periodo_aquisitivo_id: f.periodo_aquisitivo_id || '', data_inicio: f.data_inicio, data_fim: f.data_fim, observacoes: f.observacoes || '' }); fetchPeriodosDisponiveis(f.colaborador_id); setShowFeriasForm(true); }}
                                 className="p-1.5 text-white/40 hover:text-white hover:bg-white/5 rounded-lg focus-ring" title="Editar">
                                 <Edit2 className="w-4 h-4" />
                               </button>
@@ -928,9 +1190,13 @@ const FeriasColaboradores: React.FC = () => {
               {filteredFerias.length === 0 && (
                 <div className="text-center py-12">
                   <CalendarDays className="w-12 h-12 text-white/20 mx-auto mb-3" />
-                  <p className="text-white/60 text-sm">Nenhuma férias encontrada.</p>
-                  <button onClick={() => { setViewMode('periodos'); }} className="mt-3 text-sm text-wine hover:text-[#e05060]">
-                    Criar um ano base primeiro na aba "Por Colaborador"
+                  <p className="text-white/60 text-sm">
+                    {searchFerias || statusFilter !== 'all' || anoFilter !== 'all'
+                      ? 'Nenhum lançamento com esses filtros.'
+                      : 'Nenhum lançamento de férias ainda.'}
+                  </p>
+                  <button onClick={() => abrirLancamento()} className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-wine text-white rounded-xl hover:bg-[#9D2F3C] text-sm font-medium focus-ring">
+                    <Plus className="w-4 h-4" /> Lançar férias
                   </button>
                 </div>
               )}
@@ -944,10 +1210,16 @@ const FeriasColaboradores: React.FC = () => {
         <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
           <div className="bg-[#12141f] border border-white/15 rounded-2xl w-full max-w-xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between p-5 border-b border-white/10">
-              <h3 className="text-lg font-bold text-white">Novo Ano Base</h3>
-              <button onClick={() => setShowPeriodoForm(false)} className="text-white/40 hover:text-white"><XCircle className="w-5 h-5" /></button>
+              <div>
+                <h3 className="text-lg font-bold text-white">Ano base manual</h3>
+                <p className="text-xs text-white/50 mt-0.5">Só para casos fora do padrão. Para registrar férias tiradas, use "Lançar férias".</p>
+              </div>
+              <button onClick={() => setShowPeriodoForm(false)} className="text-white/40 hover:text-white focus-ring rounded" aria-label="Fechar"><XCircle className="w-5 h-5" /></button>
             </div>
             <div className="p-5 space-y-4">
+              {error && (
+                <div className="p-3 bg-red-900/30 text-red-300 rounded-xl border border-red-700/40 text-sm">{error}</div>
+              )}
               <div>
                 <label className="block text-xs text-white/50 mb-1">Colaborador *</label>
                 <select className={sel} value={periodoForm.colaborador_id}
@@ -1038,54 +1310,109 @@ const FeriasColaboradores: React.FC = () => {
         <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
           <div className="bg-[#12141f] border border-white/15 rounded-2xl w-full max-w-xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between p-5 border-b border-white/10">
-              <h3 className="text-lg font-bold text-white">{editingFerias ? 'Editar Férias' : 'Cadastrar Férias'}</h3>
-              <button onClick={() => { setShowFeriasForm(false); setEditingFerias(null); }} className="text-white/40 hover:text-white"><XCircle className="w-5 h-5" /></button>
+              <div>
+                <h3 className="text-lg font-bold text-white">{editingFerias ? 'Editar férias' : 'Lançar férias'}</h3>
+                {!editingFerias && <p className="text-xs text-white/50 mt-0.5">Quem, de que dia a que dia. O resto o sistema resolve.</p>}
+              </div>
+              <button onClick={fecharLancamento} className="text-white/40 hover:text-white focus-ring rounded" aria-label="Fechar"><XCircle className="w-5 h-5" /></button>
             </div>
             <div className="p-5 space-y-4">
+              {error && (
+                <div className="p-3 bg-red-900/30 text-red-300 rounded-xl border border-red-700/40 text-sm">{error}</div>
+              )}
+
               <div>
                 <label className="block text-xs text-white/50 mb-1">Colaborador *</label>
                 <select className={sel} value={feriasForm.colaborador_id}
-                  onChange={e => { const id = e.target.value; setFeriasForm(f => ({ ...f, colaborador_id: id, periodo_aquisitivo_id: '' })); if (id) fetchPeriodosDisponiveis(id); }}>
+                  onChange={e => { const id = e.target.value; setAnoBaseManual(false); setFeriasForm(f => ({ ...f, colaborador_id: id, periodo_aquisitivo_id: '' })); setPeriodosDisponiveis([]); if (id) fetchPeriodosDisponiveis(id); }}>
                   <option value="">Selecionar colaborador...</option>
                   {colaboradores.map(c => <option key={c.id} value={c.id}>{c.nome_completo}</option>)}
                 </select>
               </div>
 
-              {feriasForm.colaborador_id && (
-                <div>
-                  <label className="block text-xs text-white/50 mb-1">Período Aquisitivo</label>
-                  <select className={sel} value={feriasForm.periodo_aquisitivo_id}
-                    onChange={e => setFeriasForm(f => ({ ...f, periodo_aquisitivo_id: e.target.value }))}>
-                    <option value="">Selecionar ano base (opcional)...</option>
-                    {periodosDisponiveis.map(p => (
-                      <option key={p.id} value={p.id}>
-                        Ano base {dayjs(p.periodo_aquisitivo_inicio).format('YYYY')} → {dayjs(p.periodo_aquisitivo_fim).format('YYYY')}
-                        {' '}· {p.dias_restantes}d restantes · conceder até {dayjs(p.periodo_concessivo_fim).format('DD/MM/YYYY')}
-                        {' '}({periodoStatusLabel[p.status] || p.status})
-                      </option>
-                    ))}
-                  </select>
-                  {periodosDisponiveis.length === 0 && (
-                    <p className="text-xs text-amber-400 mt-1 flex items-center gap-1">
-                      <AlertTriangle className="w-3.5 h-3.5" />
-                      Nenhum ano base cadastrado. Cadastre primeiro na aba "Por Colaborador".
-                    </p>
-                  )}
-                </div>
-              )}
-
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs text-white/50 mb-1">Data de Início *</label>
+                  <label className="block text-xs text-white/50 mb-1">Primeiro dia de férias *</label>
                   <input type="date" className={inp} value={feriasForm.data_inicio}
                     onChange={e => setFeriasForm(f => ({ ...f, data_inicio: e.target.value }))} />
                 </div>
                 <div>
-                  <label className="block text-xs text-white/50 mb-1">Data de Fim *</label>
+                  <label className="block text-xs text-white/50 mb-1">Último dia de férias *</label>
                   <input type="date" className={inp} value={feriasForm.data_fim}
                     onChange={e => setFeriasForm(f => ({ ...f, data_fim: e.target.value }))} />
                 </div>
               </div>
+
+              {/* O ano base é consequência: sugerido a partir das datas (o mais
+                  antigo com saldo), criado na hora se não existir. Fica visível
+                  para quem quiser conferir ou trocar — não como pergunta. */}
+              {feriasForm.colaborador_id && (() => {
+                const colab = colaboradores.find(c => c.id === feriasForm.colaborador_id);
+                const escolhido = periodosDisponiveis.find(p => p.id === feriasForm.periodo_aquisitivo_id);
+                const auto = feriasForm.periodo_aquisitivo_id === ANO_BASE_AUTO;
+                const previsto = auto && colab?.data_admissao && feriasForm.data_inicio ? anoBaseParaData(colab.data_admissao, feriasForm.data_inicio) : null;
+                return (
+                  <div className={`rounded-xl border p-3 ${escolhido || previsto ? 'bg-white/[0.03] border-white/10' : 'bg-amber-900/15 border-amber-700/30'}`}>
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-xs text-white/50">Dias descontados do ano base</p>
+                        {escolhido ? (
+                          <>
+                            <p className="text-sm text-white font-semibold font-mono mt-0.5">
+                              {rotuloAnoBase(escolhido)}
+                              <span className="text-white/50 font-sans font-normal"> · {escolhido.dias_restantes} de {escolhido.dias_direito} dias disponíveis</span>
+                            </p>
+                            <p className="text-xs text-white/50 mt-0.5">
+                              Prazo legal para conceder: até {dayjs(escolhido.periodo_concessivo_fim).format('DD/MM/YYYY')}
+                              {feriasForm.data_inicio && dayjs(feriasForm.data_inicio).isAfter(dayjs(escolhido.periodo_concessivo_fim), 'day') && (
+                                <span className="text-amber-300"> — férias fora do prazo (a lei manda pagar em dobro)</span>
+                              )}
+                              {feriasForm.data_inicio && feriasForm.data_fim && dayjs(feriasForm.data_fim).diff(dayjs(feriasForm.data_inicio), 'day') + 1 > escolhido.dias_restantes && (
+                                <span className="text-amber-300"> — passa do saldo deste ano base</span>
+                              )}
+                            </p>
+                          </>
+                        ) : previsto ? (
+                          <>
+                            <p className="text-sm text-white font-semibold font-mono mt-0.5">
+                              {rotuloAnoBase(previsto)}
+                              <span className="text-gold/80 font-sans font-normal"> · será criado ao salvar</span>
+                            </p>
+                            <p className="text-xs text-white/50 mt-0.5">
+                              Calculado pela admissão em {dayjs(colab!.data_admissao).format('DD/MM/YYYY')} · prazo para conceder até {dayjs(previsto.periodo_concessivo_fim).format('DD/MM/YYYY')}
+                            </p>
+                          </>
+                        ) : !feriasForm.data_inicio ? (
+                          <p className="text-sm text-white/60 mt-0.5">Informe o primeiro dia para o ano base ser escolhido.</p>
+                        ) : (
+                          <p className="text-sm text-amber-200 mt-0.5 flex items-center gap-1.5">
+                            <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                            {colab?.data_admissao ? 'Nenhum ano base escolhido — as férias ficam sem vínculo.' : 'Colaborador sem data de admissão: preencha em Colaboradores para o ano base ser calculado.'}
+                          </p>
+                        )}
+                      </div>
+                      {(periodosDisponiveis.length > 0 || colab?.data_admissao) && (
+                        <select
+                          className={sel + ' w-auto max-w-[220px] text-xs py-1.5'}
+                          value={feriasForm.periodo_aquisitivo_id}
+                          onChange={e => { setAnoBaseManual(true); setFeriasForm(f => ({ ...f, periodo_aquisitivo_id: e.target.value })); }}
+                          aria-label="Trocar o ano base"
+                        >
+                          <option value="">Sem vínculo</option>
+                          {colab?.data_admissao && feriasForm.data_inicio && (
+                            <option value={ANO_BASE_AUTO}>Criar o ano base certo</option>
+                          )}
+                          {periodosDisponiveis.map(p => (
+                            <option key={p.id} value={p.id}>
+                              {rotuloAnoBase(p)} · {p.dias_restantes}d disponíveis · {periodoStatusLabel[p.status] || p.status}
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                    </div>
+                  </div>
+                );
+              })()}
 
               {feriasForm.data_inicio && feriasForm.data_fim && dayjs(feriasForm.data_fim).isAfter(dayjs(feriasForm.data_inicio)) && (
                 <div className="bg-blue-900/20 border border-blue-700/30 rounded-xl p-3">
@@ -1110,9 +1437,9 @@ const FeriasColaboradores: React.FC = () => {
               </div>
 
               <div className="flex gap-3 pt-2">
-                <button onClick={() => { setShowFeriasForm(false); setEditingFerias(null); }} className="flex-1 px-4 py-2 border border-white/15 text-white/70 rounded-xl hover:bg-white/5 text-sm">Cancelar</button>
-                <button onClick={salvarFerias} disabled={loading} className="flex-1 px-4 py-2 bg-wine text-white rounded-xl hover:bg-[#9D2F3C] disabled:opacity-50 text-sm font-medium">
-                  {loading ? 'Salvando...' : editingFerias ? 'Salvar' : 'Cadastrar'}
+                <button onClick={fecharLancamento} className="flex-1 px-4 py-2 border border-white/15 text-white/70 rounded-xl hover:bg-white/5 text-sm focus-ring">Cancelar</button>
+                <button onClick={salvarFerias} disabled={loading} className="flex-1 px-4 py-2 bg-wine text-white rounded-xl hover:bg-[#9D2F3C] disabled:opacity-50 text-sm font-medium focus-ring">
+                  {loading ? 'Salvando...' : editingFerias ? 'Salvar alterações' : 'Lançar férias'}
                 </button>
               </div>
             </div>
