@@ -322,20 +322,26 @@ const SidebarModern: React.FC<Props> = ({ onNavigate, onCloseMobile }) => {
           <span className="font-sans">Saguão</span>
         </Link>
 
-        {/* Todos os módulos, sempre — agrupados por área, a área aberta primeiro.
-            A lateral que mostrava só a área atual escondia o resto do sistema:
-            quem caía no Dashboard não achava o Eventos. Num sistema o mapa
-            inteiro fica à vista; o saguão continua sendo a porta de entrada. */}
-        {[...(areaAtual ? [areaAtual] : []), ...AREAS.filter(a => a.id !== areaAtual?.id)].map(area => {
-          const modulos = filtered.filter(m => m.group === area.id);
-          if (modulos.length === 0) return null;
-          return (
-            <React.Fragment key={area.id}>
-              <GroupLabel>{area.nome}</GroupLabel>
-              {modulos.map(renderModule)}
-            </React.Fragment>
-          );
-        })}
+        {/* Só a área do favo escolhido — decisão da casa: a lateral é o mapa
+            da área, e a troca de área se faz no saguão. Fora de qualquer área
+            (rota desconhecida), a lista completa é o plano B. */}
+        {areaAtual ? (
+          <>
+            <GroupLabel>{areaAtual.nome}</GroupLabel>
+            {filtered.filter(m => m.group === areaAtual.id).map(renderModule)}
+          </>
+        ) : (
+          AREAS.map(area => {
+            const modulos = filtered.filter(m => m.group === area.id);
+            if (modulos.length === 0) return null;
+            return (
+              <React.Fragment key={area.id}>
+                <GroupLabel>{area.nome}</GroupLabel>
+                {modulos.map(renderModule)}
+              </React.Fragment>
+            );
+          })
+        )}
       </nav>
 
       {/* User footer */}
