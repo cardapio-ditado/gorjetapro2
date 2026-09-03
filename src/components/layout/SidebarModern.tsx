@@ -273,7 +273,6 @@ const SidebarModern: React.FC<Props> = ({ onNavigate, onCloseMobile }) => {
    */
   const moduloAtual = modulesWithDynamic.find(isModActive) ?? null;
   const areaAtual = moduloAtual?.group ? AREAS.find(a => a.id === moduloAtual.group) ?? null : null;
-  const daArea = areaAtual ? filtered.filter(m => m.group === areaAtual.id) : [];
 
   return (
     <div className="flex flex-col h-full" style={{ background: 'var(--bg-dark)' }}>
@@ -323,23 +322,20 @@ const SidebarModern: React.FC<Props> = ({ onNavigate, onCloseMobile }) => {
           <span className="font-sans">Saguão</span>
         </Link>
 
-        {areaAtual ? (
-          <>
-            <GroupLabel>{areaAtual.nome}</GroupLabel>
-            {daArea.map(renderModule)}
-          </>
-        ) : (
-          AREAS.map(area => {
-            const modulos = filtered.filter(m => m.group === area.id);
-            if (modulos.length === 0) return null;
-            return (
-              <React.Fragment key={area.id}>
-                <GroupLabel>{area.nome}</GroupLabel>
-                {modulos.map(renderModule)}
-              </React.Fragment>
-            );
-          })
-        )}
+        {/* Todos os módulos, sempre — agrupados por área, a área aberta primeiro.
+            A lateral que mostrava só a área atual escondia o resto do sistema:
+            quem caía no Dashboard não achava o Eventos. Num sistema o mapa
+            inteiro fica à vista; o saguão continua sendo a porta de entrada. */}
+        {[...(areaAtual ? [areaAtual] : []), ...AREAS.filter(a => a.id !== areaAtual?.id)].map(area => {
+          const modulos = filtered.filter(m => m.group === area.id);
+          if (modulos.length === 0) return null;
+          return (
+            <React.Fragment key={area.id}>
+              <GroupLabel>{area.nome}</GroupLabel>
+              {modulos.map(renderModule)}
+            </React.Fragment>
+          );
+        })}
       </nav>
 
       {/* User footer */}

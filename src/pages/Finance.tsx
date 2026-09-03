@@ -192,7 +192,7 @@ const Finance: React.FC = () => {
       {!showChat && (
         <button
           onClick={() => setShowChat(true)}
-          className="fixed bottom-6 right-6 w-14 h-14 rounded-2xl shadow-xl flex items-center justify-center z-40 group transition-all hover:scale-105"
+          className="fixed bottom-6 right-6 w-14 h-14 rounded-2xl shadow-xl flex items-center justify-center z-40 group transition-all hover:scale-105 fundo-saturado"
           style={{ background: 'linear-gradient(135deg,#7D1F2C,#D4AF37)' }}
           title="Assistente Financeiro IA"
         >

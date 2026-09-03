@@ -574,7 +574,7 @@ const CadernoDia: React.FC = () => {
             <button
               onClick={salvarEOrganizar}
               disabled={processando || saving || !texto.trim()}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-white font-semibold text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-white font-semibold text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed fundo-saturado"
               style={{ background: 'linear-gradient(135deg, var(--wine), #a02536)' }}>
               {processando ? (
                 <><Loader2 size={15} className="animate-spin" /> Organizando…</>

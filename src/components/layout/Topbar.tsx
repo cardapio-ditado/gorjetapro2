@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Search, Bell, Settings, LogOut, ChevronDown, Command, ChevronRight, Menu, X, Home, DollarSign, Warehouse, Users, Music, CalendarDays, BookOpen, AlertTriangle, Target, TrendingUp, Star } from 'lucide-react';
+import { Search, Bell, Settings, LogOut, ChevronDown, Command, ChevronRight, Menu, X, Home, DollarSign, Warehouse, Users, Music, CalendarDays, BookOpen, AlertTriangle, Target, TrendingUp, Star, Sun, Moon } from 'lucide-react';
 import { Usuario } from '../../contexts/AuthContext';
+import { alternarTema, lerTema, Tema } from '../../lib/tema';
 
 interface TopbarProps {
   toggleSidebar: () => void;
@@ -84,6 +85,7 @@ const Topbar: React.FC<TopbarProps> = ({ toggleSidebar, user, onLogout }) => {
   const location  = useLocation();
   const navigate  = useNavigate();
   const [showUserMenu,   setShowUserMenu]   = useState(false);
+  const [tema,           setTema]           = useState<Tema>(() => lerTema());
   const [searchQuery,    setSearchQuery]    = useState('');
   const [searchFocused,  setSearchFocused]  = useState(false);
   const [selectedIndex,  setSelectedIndex]  = useState(0);
@@ -230,7 +232,7 @@ const Topbar: React.FC<TopbarProps> = ({ toggleSidebar, user, onLogout }) => {
   const showDropdown = searchFocused && results.length > 0;
 
   return (
-    <header className="h-[52px] flex items-center px-4 gap-3 glass-topbar">
+    <header className="h-[52px] flex items-center px-4 gap-3 topbar-solid">
 
       {/* Hamburger — mobile only */}
       <button
@@ -377,6 +379,15 @@ const Topbar: React.FC<TopbarProps> = ({ toggleSidebar, user, onLogout }) => {
             </div>
 
             <div className="py-2 px-2">
+              <button
+                onClick={() => setTema(alternarTema())}
+                className="flex items-center w-full gap-3 px-3 py-2.5 rounded-lg text-sm font-sans text-white/50 hover:text-white/80 hover:bg-white/5 transition-all"
+                title="O tema vale para as telas de trabalho. Login e saguão não mudam."
+              >
+                {tema === 'claro' ? <Moon size={16} /> : <Sun size={16} />}
+                <span className="flex-1 text-left">{tema === 'claro' ? 'Usar tema escuro' : 'Usar tema claro'}</span>
+                <span className="t-caption text-white/40">{tema === 'claro' ? 'claro' : 'escuro'}</span>
+              </button>
               <button className="flex items-center w-full gap-3 px-3 py-2.5 rounded-lg text-sm font-sans text-white/50 hover:text-white/80 hover:bg-white/5 transition-all">
                 <Settings size={16} />
                 Configurações

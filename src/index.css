@@ -468,6 +468,74 @@
     border-bottom: 1px solid rgba(255,255,255,0.08);
   }
 
+  /* ── Shell de sistema (dentro dos módulos) ─────────────────────────────
+   * Lateral e topo opacos, fixos, com fio de 1px. Sem blur: nada atrás para
+   * desfocar, e listas densas rolam sem custo. */
+  .sidebar-solid {
+    background: var(--bg-dark);
+    border-right: 1px solid var(--border);
+  }
+  .topbar-solid {
+    background: var(--bg-dark);
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* ── Tema claro — só no shell dos módulos ───────────────────────────────
+   * Os tokens trocam aqui, escopados: Login e Saguão (fora do .app-shell)
+   * continuam escuros sobre a foto. Os utilitários fixos (text-white,
+   * bg-white/5, bg-[#12141f]...) são remapeados em src/tema-claro.css. */
+  [data-theme="light"] .app-shell {
+    --bg-base:     #f3f1ec;
+    --bg-dark:     #faf9f6;
+    --bg-card:     #ffffff;
+    --bg-elevated: #fbfaf8;
+    --bg-surface:  #f3f1ec;
+    --bg-hover:    rgba(0,0,0,0.035);
+    --bg-active:   rgba(0,0,0,0.06);
+    --border:        rgba(0,0,0,0.09);
+    --border-subtle: rgba(0,0,0,0.05);
+    --border-strong: rgba(0,0,0,0.16);
+    --text-primary:   #1f1b1a;
+    --text-secondary: #5f5955;
+    --text-muted:     #a8a09b;
+    --text-disabled:  #cfc9c3;
+    --gold:        #a3841c;   /* dourado que ainda lê sobre branco (4,1:1) */
+    --gold-light:  #b8961f;
+    --shadow-rest:    0 1px 2px rgba(31,27,26,0.08);
+    --shadow-raised:  0 4px 14px rgba(31,27,26,0.12);
+    --shadow-overlay: 0 12px 36px rgba(31,27,26,0.22);
+    color-scheme: light;
+  }
+  [data-theme="light"] .app-shell .glass-card,
+  [data-theme="light"] .app-shell .glass-soft {
+    background: #ffffff;
+    border: 1px solid rgba(0,0,0,0.09);
+    box-shadow: 0 1px 2px rgba(31,27,26,0.06);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+  [data-theme="light"] .app-shell .glass-modal {
+    background: rgba(255,255,255,0.96);
+    border: 1px solid rgba(0,0,0,0.1);
+    box-shadow: 0 24px 64px rgba(31,27,26,0.25);
+  }
+  [data-theme="light"] .app-shell .ambient-glow { background: #f3f1ec; }
+  [data-theme="light"] .app-shell select { color-scheme: light; }
+  [data-theme="light"] .app-shell select option,
+  [data-theme="light"] .app-shell select optgroup { background-color: #ffffff; color: #1f1b1a; }
+  [data-theme="light"] .app-shell .text-gold-gradient {
+    background: linear-gradient(120deg, #8a6d12 0%, #a3841c 45%, #7a5f0f 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+  }
+  [data-theme="light"] .app-shell .shadow-black\/60 { --tw-shadow-color: rgba(31,27,26,0.18); --tw-shadow: var(--tw-shadow-colored); }
+  [data-theme="light"] .app-shell input:focus,
+  [data-theme="light"] .app-shell select:focus,
+  [data-theme="light"] .app-shell textarea:focus {
+    border-color: rgba(125,31,44,0.7) !important;
+    box-shadow: 0 0 0 3px rgba(125,31,44,0.12) !important;
+  }
+
   /* Número-herói em dourado metálico */
   .text-gold-gradient {
     background: linear-gradient(120deg, #E5C158 0%, #D4AF37 45%, #F0D98A 100%);

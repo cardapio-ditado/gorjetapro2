@@ -1,4 +1,4 @@
-import React, { lazy, Suspense, useState, useEffect } from 'react';
+import { lazy, Suspense, useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import SidebarModern from './components/layout/SidebarModern';
@@ -100,14 +100,18 @@ function AppContent() {
     );
   }
 
+  // Dentro de um módulo o layout é de sistema: fundo chapado, lateral e topo
+  // opacos e fixos, sem vidro nem luz ambiente. A capa (foto, favos) fica no
+  // Login e no Saguão, que não passam por aqui. .app-shell é também o escopo
+  // do tema claro (src/tema-claro.css).
   return (
-    <div className="flex h-screen overflow-hidden ambient-glow">
+    <div className="app-shell flex h-screen overflow-hidden" style={{ background: 'var(--bg-base)' }}>
 
       {/* Overlay mobile */}
       {sidebarOpen && (
         <div
           className="fixed inset-0 z-40 lg:hidden"
-          style={{ background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(4px)' }}
+          style={{ background: 'rgba(0,0,0,0.55)' }}
           onClick={() => setSidebarOpen(false)}
         />
       )}
@@ -118,7 +122,7 @@ function AppContent() {
         transition-transform duration-300 ease-in-out
         lg:translate-x-0 lg:static lg:inset-0
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-        glass-sidebar
+        sidebar-solid
       `}>
         <SidebarModern onNavigate={() => setSidebarOpen(false)} onCloseMobile={() => setSidebarOpen(false)} />
       </aside>

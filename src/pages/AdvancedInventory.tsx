@@ -239,7 +239,7 @@ const AdvancedInventory: React.FC = () => {
 
       {/* HERO */}
       <div
-        className="relative overflow-hidden"
+        className="relative overflow-hidden fundo-saturado"
         style={{ background: 'linear-gradient(135deg, #7D1F2C 0%, #5a1520 60%, #3d0f16 100%)' }}
       >
         <div className="absolute inset-0 opacity-[0.03]"

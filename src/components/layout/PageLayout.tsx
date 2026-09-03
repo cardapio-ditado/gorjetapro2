@@ -38,8 +38,9 @@ export const PageLayout: React.FC<PageLayoutProps> = ({
     <div className="flex flex-col min-h-screen -m-5 lg:-m-7" style={{ background: 'var(--bg-base)' }}>
 
       {/* HERO SECTION */}
+      {/* fundo-saturado: no tema claro, o texto branco daqui continua branco */}
       <div
-        className="relative overflow-hidden"
+        className="relative overflow-hidden fundo-saturado"
         style={{ background: GRADIENTS[variant] }}
       >
         {/* Ruído decorativo */}
