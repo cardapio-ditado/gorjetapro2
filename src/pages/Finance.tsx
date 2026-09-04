@@ -3,13 +3,13 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import {
   TrendingUp, FileText, CreditCard, Receipt,
   ArrowLeftRight, Tag, Building2, Activity, PieChart,
-  Settings, Target, RefreshCw, MessageSquare, X,
-  DollarSign, ChevronRight, Upload,
+  Settings, MessageSquare, ChevronRight, Upload,
 } from 'lucide-react';
 import dayjs from 'dayjs';
 import 'dayjs/locale/pt-br';
 
 import FluxoCaixa               from '../components/financeiro/FluxoCaixa';
+import FechamentoSocios         from '../components/financeiro/FechamentoSocios';
 import FaturamentoZig           from '../components/financeiro/FaturamentoZig';
 import ExtratoDiario            from '../components/financeiro/ExtratoDiario';
 import ContasPagar              from '../components/financeiro/ContasPagar';
@@ -35,6 +35,7 @@ interface Tab {
 
 const TABS: Tab[] = [
   { slug: 'fluxo',             label: 'Fluxo de Caixa',       icon: TrendingUp,     description: 'Entradas e saídas do período' },
+  { slug: 'fechamento',        label: 'Fechamento de Sócios', icon: PieChart,       description: 'Quanto tinha, quanto entrou, quanto foi pago, quanto sobrou' },
   { slug: 'faturamento',       label: 'Faturamento',          icon: TrendingUp,     description: 'Vendas ZIG por dia — bebidas, alimentos, couvert' },
   { slug: 'extrato',           label: 'Extrato',              icon: FileText,       description: 'Resumo do dia detalhado ou visão por período' },
   { slug: 'pagar',             label: 'Contas a Pagar',       icon: CreditCard,     description: 'Obrigações financeiras em aberto' },
@@ -51,6 +52,7 @@ const TABS: Tab[] = [
 
 const CONTENT: Record<string, React.ReactNode> = {
   'fluxo':             <FluxoCaixa />,
+  'fechamento':        <FechamentoSocios />,
   'faturamento':       <FaturamentoZig />,
   'extrato':           <ExtratoDiario />,
   'pagar':             <ContasPagar />,
@@ -78,7 +80,6 @@ const Finance: React.FC = () => {
   const navigate  = useNavigate();
   const [tab, setTab]           = useState(0);
   const [showChat, setShowChat] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
 
   // Sync tab com URL (aceita slug novo e índice numérico legado)
   useEffect(() => {

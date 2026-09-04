@@ -36,6 +36,7 @@ const ALL_ROUTES: SearchResult[] = [
   { label: 'Eventos',                 path: '/events',                                               icon: CalendarDays },
   // Financeiro
   { label: 'Financeiro — Fluxo de Caixa',        path: '/finance?tab=fluxo',             icon: DollarSign },
+  { label: 'Financeiro — Fechamento de Sócios',  path: '/finance?tab=fechamento',        icon: DollarSign },
   { label: 'Financeiro — Faturamento (ZIG)',     path: '/finance?tab=faturamento',       icon: DollarSign },
   { label: 'Financeiro — Extrato Diário',        path: '/finance?tab=extrato',           icon: DollarSign },
   { label: 'Financeiro — Contas a Pagar',        path: '/finance?tab=pagar',             icon: DollarSign },

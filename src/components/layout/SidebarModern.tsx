@@ -82,6 +82,7 @@ export const MODULES: Module[] = [
     subModules: [
       { name: 'Dashboard Financeiro',     path: '/financeiro' },
       { name: 'Fluxo de Caixa',           path: '/finance?tab=fluxo' },
+      { name: 'Fechamento de Sócios',     path: '/finance?tab=fechamento' },
       { name: 'Faturamento (ZIG)',        path: '/finance?tab=faturamento' },
       { name: 'Extrato Diário',           path: '/finance?tab=extrato' },
       { name: 'Contas a Pagar',           path: '/finance?tab=pagar' },
