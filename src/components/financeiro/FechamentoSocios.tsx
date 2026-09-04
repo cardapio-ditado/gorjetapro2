@@ -248,7 +248,7 @@ const FechamentoSocios: React.FC = () => {
                 {([
                   { nivel: 'simplificado', titulo: 'Simplificado', desc: 'Só os grupos. Uma página, para ler em um minuto.' },
                   { nivel: 'analitico', titulo: 'Analítico', desc: 'Grupos abertos em categorias.' },
-                  { nivel: 'completo', titulo: 'Completo', desc: 'Analítico mais o extrato de todos os lançamentos do período.' },
+                  { nivel: 'completo', titulo: 'Completo', desc: 'Analítico, depois cada categoria com seus lançamentos, e no fim o extrato de tudo em ordem de data.' },
                 ] as { nivel: NivelRelatorio; titulo: string; desc: string }[]).map(o => (
                   <button key={o.nivel} onClick={() => gerarPdf(o.nivel)} className="w-full text-left px-4 py-3 hover:bg-white/5 border-b border-white/5 last:border-b-0 focus-ring">
                     <p className="text-white text-sm font-semibold">{o.titulo}</p>

@@ -326,6 +326,43 @@ export function gerarPdfFechamento(dados: FechamentoDados, nivel: NivelRelatorio
   if (avisos.length) { pg.y += 2; avisos.forEach(a => pg.paragrafo('• ' + a, AMBAR, 8.5)); }
 
   if (nivel === 'completo' && dados.extrato) {
+    // ── Lançamentos por categoria: cada grupo, cada categoria, o que compõe o número ──
+    const operacionais = dados.extrato.filter(l => l.origem !== 'transferencia');
+    const porCategoria = (tipo: 'entrada' | 'saida', bloco: FechamentoBloco, titulo: string, cor: RGB) => {
+      const linhasTipo = operacionais.filter(l => l.tipo === tipo);
+      if (linhasTipo.length === 0) return;
+      pg.novaPagina();
+      pg.titulo1(titulo);
+      pg.paragrafo('Cada grupo aberto em categorias, e cada categoria com os lançamentos que a compõem, em ordem de data.');
+      const ordemGrupos = [...bloco.grupos.filter(g => !ehSocio(g)), ...bloco.grupos.filter(ehSocio)];
+      const emitirCategoria = (nome: string, itens: FechamentoExtratoLinha[]) => {
+        const sub = itens.reduce((s, l) => s + n(l.valor), 0);
+        // nome e subtotal na coluna larga (Descrição): a de Data é estreita demais
+        const linhas: LinhaTabela[] = [
+          { celulas: ['', nome, `${itens.length} lanç.`, ''], estilo: 'grupo' },
+          ...itens.map(l => ({ celulas: [fmt(l.data), (l.descricao || '').trim() || '—', l.conta || '—', brl(n(l.valor))], estilo: 'normal' as const })),
+          { celulas: ['', `Subtotal · ${nome}`, '', brl(sub)], estilo: 'total' },
+        ];
+        pg.tabela({ colunas: ['Data', 'Descrição', 'Conta', 'Valor'], larguras: [20, 0, 40, 30], alinhar: ['left', 'left', 'left', 'right'], linhas, zebra: false });
+      };
+      for (const g of ordemGrupos) {
+        const doGrupo = linhasTipo.filter(l => l.grupo === g.nome);
+        if (doGrupo.length === 0) continue;
+        pg.secao(ehSocio(g) ? `${g.nome} (sócios e empréstimos)` : g.nome, brl(n(g.total)), cor);
+        const nomesCat = [...new Set(doGrupo.map(l => l.categoria || g.nome))];
+        nomesCat.sort((a, b) => doGrupo.filter(l => (l.categoria || g.nome) === b).reduce((s, l) => s + n(l.valor), 0) - doGrupo.filter(l => (l.categoria || g.nome) === a).reduce((s, l) => s + n(l.valor), 0));
+        for (const c of nomesCat) emitirCategoria(c, doGrupo.filter(l => (l.categoria || g.nome) === c));
+      }
+      const semCat = linhasTipo.filter(l => !l.grupo);
+      if (semCat.length) {
+        pg.secao('Sem categoria', brl(semCat.reduce((s, l) => s + n(l.valor), 0)), AMBAR);
+        emitirCategoria('Lançamentos ainda não classificados', semCat);
+      }
+    };
+    porCategoria('entrada', dados.entradas, 'O que entrou, por categoria', VERDE);
+    porCategoria('saida', dados.saidas, 'O que foi pago, por categoria', VERMELHO);
+
+    // ── Extrato: tudo, em ordem de data ──
     pg.novaPagina();
     pg.titulo1('Extrato de lançamentos');
     pg.paragrafo(`Todos os lançamentos de ${periodo}, em ordem de data. ${dados.extrato.length} lançamentos. Transferências entre contas aparecem marcadas e não entram nos totais acima.`);
