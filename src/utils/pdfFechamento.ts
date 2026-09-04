@@ -28,6 +28,8 @@ export interface FechamentoDados {
   entradas: FechamentoBloco;
   saidas: FechamentoBloco;
   transferencias: { entradas: number; saidas: number; liquido: number };
+  /** Taxas que a adquirente reteve: entram como complemento do bruto e saem como Tarifas. */
+  retido_adquirente?: { total: number; qtd: number } | null;
   sem_conta: { liquido: number; qtd: number };
   extrato?: FechamentoExtratoLinha[] | null;
   anterior: { inicio: string; fim: string; saldo_inicial: number; entradas: number; saidas: number; saldo_final: number } | null;
@@ -305,6 +307,9 @@ export function gerarPdfFechamento(dados: FechamentoDados, nivel: NivelRelatorio
 
   pg.secao('O que entrou', brl(ent), VERDE);
   pg.tabela({ colunas, larguras, alinhar, linhas: linhasDoBloco(dados.entradas, nivel, 'Não é venda: sócios e empréstimos') });
+  if (n(dados.retido_adquirente?.total) > 0) {
+    pg.paragrafo(`As vendas em cartão estão pelo valor cheio. Desse total, ${brl(n(dados.retido_adquirente!.total))} ficaram com a adquirente (ZIG, PagSeguro) como taxa e aparecem em "O que foi pago", em Tarifas Bancárias.`, CINZA, 8.5);
+  }
 
   pg.secao('O que foi pago', brl(sai), VERMELHO);
   pg.tabela({ colunas, larguras, alinhar, linhas: linhasDoBloco(dados.saidas, nivel, 'Retiradas de sócios e empréstimos') });

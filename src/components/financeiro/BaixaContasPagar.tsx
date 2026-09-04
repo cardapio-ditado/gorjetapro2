@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { CheckCircle, XCircle, DollarSign, Calendar, CreditCard, Building2, FileText, Search } from 'lucide-react';
+import { CheckCircle, DollarSign, Search } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import dayjs from 'dayjs';
 
@@ -419,6 +419,16 @@ const BaixaContasPagar: React.FC = () => {
                     </option>
                   ))}
                 </select>
+                {/* Taxa de cartão já veio descontada pela adquirente: não é dinheiro
+                    saindo da conta. O gatilho no banco lança junto o complemento do
+                    valor bruto como receita, e o antigo "AJUSTE SALDO" deixa de existir. */}
+                {formasPagamento.find(fp => fp.id === baixaModal.formaPagamentoId)?.nome === 'RETIDO PELA ADQUIRENTE' && (
+                  <p className="mt-2 text-xs text-sky-200/90 bg-sky-900/20 border border-sky-700/30 rounded-lg px-3 py-2">
+                    Use para taxas que a ZIG ou o PagSeguro já descontaram antes de depositar. O dinheiro não sai da conta:
+                    o sistema registra esta taxa como despesa e, junto, o complemento do valor bruto da venda como receita.
+                    O saldo não muda e não precisa de ajuste.
+                  </p>
+                )}
               </div>
 
               <div>

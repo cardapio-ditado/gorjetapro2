@@ -1,7 +1,7 @@
 /* GERADO por scripts/gerar-tema-claro.mjs — não edite à mão.
  * A pele clara do sistema: cada utilitário de tema escuro em uso no código
  * ganha aqui o equivalente claro, escopado ao shell dos módulos.
- * 464 regras. */
+ * 466 regras. */
 [data-theme="light"] .app-shell .bg-amber-900\/10{background-color:rgba(245,158,11,0.040)}
 [data-theme="light"] .app-shell .bg-amber-900\/15{background-color:rgba(245,158,11,0.060)}
 [data-theme="light"] .app-shell .bg-amber-900\/20{background-color:rgba(245,158,11,0.080)}
@@ -41,6 +41,7 @@
 [data-theme="light"] .app-shell .bg-red-900\/40{background-color:rgba(239,68,68,0.160)}
 [data-theme="light"] .app-shell .bg-red-900\/90{background-color:rgba(239,68,68,0.220)}
 [data-theme="light"] .app-shell .bg-sky-900\/15{background-color:rgba(14,165,233,0.060)}
+[data-theme="light"] .app-shell .bg-sky-900\/20{background-color:rgba(14,165,233,0.080)}
 [data-theme="light"] .app-shell .bg-sky-900\/30{background-color:rgba(14,165,233,0.120)}
 [data-theme="light"] .app-shell .bg-sky-900\/40{background-color:rgba(14,165,233,0.160)}
 [data-theme="light"] .app-shell .bg-white{background-color:#ffffff}
@@ -284,6 +285,7 @@
 [data-theme="light"] .app-shell .text-rose-400{color:#be123c}
 [data-theme="light"] .app-shell .text-sky-200{color:#075985}
 [data-theme="light"] .app-shell .text-sky-200\/80{color:#075985}
+[data-theme="light"] .app-shell .text-sky-200\/90{color:#075985}
 [data-theme="light"] .app-shell .text-sky-300{color:#0369a1}
 [data-theme="light"] .app-shell .text-sky-400{color:#0369a1}
 [data-theme="light"] .app-shell .text-slate-300{color:#334155}

@@ -337,14 +337,25 @@ const FechamentoSocios: React.FC = () => {
           </p>
 
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
-            <Bloco
-              titulo="O que entrou"
-              subtitulo="Dinheiro que caiu nas contas no período, por origem"
-              bloco={dados.entradas}
-              cor="#34d399"
-              rotuloSocios="Não é venda: sócios e empréstimos"
-              corSocios="#fbbf24"
-            />
+            <div className="space-y-2">
+              <Bloco
+                titulo="O que entrou"
+                subtitulo="Dinheiro que caiu nas contas no período, por origem"
+                bloco={dados.entradas}
+                cor="#34d399"
+                rotuloSocios="Não é venda: sócios e empréstimos"
+                corSocios="#fbbf24"
+              />
+              {n(dados.retido_adquirente?.total) > 0 && (
+                <p className="text-xs text-white/50 px-1 flex gap-2">
+                  <Info className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                  <span>
+                    As vendas em cartão estão pelo valor cheio. Desse total, <strong className="text-white/80">{brl(n(dados.retido_adquirente!.total))}</strong> ficaram
+                    com a adquirente (ZIG, PagSeguro) como taxa e aparecem em "O que foi pago", em Tarifas Bancárias.
+                  </span>
+                </p>
+              )}
+            </div>
             <Bloco
               titulo="O que foi pago"
               subtitulo="Dinheiro que saiu das contas no período, por grupo"
