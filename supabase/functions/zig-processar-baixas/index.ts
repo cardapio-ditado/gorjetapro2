@@ -201,7 +201,8 @@ Deno.serve(async (req) => {
           item_estoque_id: temItem ? itemEstoqueId : null,
           ficha_tecnica_id: temFicha ? fichaTecnicaId : null,
           estoque_id: estoqueId, zig_category: productCategory || null,
-          tipo_mapeamento: temFicha ? 'ficha' : 'direto', origem: 'manual',
+          // A tabela só aceita 'manual' | 'automatico' aqui; 'ficha'/'direto' violava o check e o mapeamento novo nunca era salvo.
+          tipo_mapeamento: 'manual', origem: 'manual', confianca: 1,
           usado_vezes: 1, ultima_utilizacao: new Date().toISOString(),
         });
       }
