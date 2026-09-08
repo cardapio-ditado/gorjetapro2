@@ -5,6 +5,7 @@ import {
   EyeOff, Eye, Map, ChevronDown, Zap, List
 } from 'lucide-react';
 import { PageHeader, KPICard, SectionCard } from '../components/ui';
+import MapeamentoZigAssistido from '../components/inventory/MapeamentoZigAssistido';
 
 const SUPABASE_URL  = import.meta.env.VITE_SUPABASE_URL as string;
 const SUPABASE_ANON = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
@@ -47,7 +48,7 @@ interface ProdutoCatalogo {
 }
 
 type Etapa = 'busca'|'revisao'|'resultado';
-type Aba   = 'lancamentos'|'mapeamento';
+type Aba   = 'assistido'|'lancamentos'|'mapeamento';
 
 // ── helpers ────────────────────────────────────────────────────────────────
 function norm(s: string): string {
@@ -758,7 +759,7 @@ function AbaRevisao({
 // COMPONENTE PRINCIPAL
 // ════════════════════════════════════════════════════════════════════════════
 export default function ZigVendasSync() {
-  const [aba, setAba]             = useState<Aba>('lancamentos');
+  const [aba, setAba]             = useState<Aba>('assistido');
   const [etapa, setEtapa]         = useState<Etapa>('busca');
   const [dtinicio, setDtinicio]   = useState(()=>{ const d=new Date(); d.setDate(d.getDate()-1); return d.toISOString().split('T')[0]; });
   const [dtfim, setDtfim]         = useState(()=>{ const d=new Date(); d.setDate(d.getDate()-1); return d.toISOString().split('T')[0]; });
@@ -876,6 +877,7 @@ export default function ZigVendasSync() {
       {/* Tabs */}
       <div className="flex border-b border-white/10 px-6 pt-2 bg-[#12141f]">
         {([
+          {key:'assistido',   label:'🧭 Mapeamento assistido'},
           {key:'lancamentos', label:'⚡ ZIG Lançamentos'},
           {key:'mapeamento',  label:`🗺 Mapeamento${qtdPendentes>0?` (${qtdPendentes} pendentes no período)`:''}` },
         ] as {key:Aba;label:string}[]).map(tab=>(
@@ -885,6 +887,11 @@ export default function ZigVendasSync() {
           </button>
         ))}
       </div>
+
+      {/* ── ABA MAPEAMENTO ASSISTIDO ── */}
+      {aba==='assistido' && (
+        <MapeamentoZigAssistido />
+      )}
 
       {/* ── ABA MAPEAMENTO ── */}
       {aba==='mapeamento' && (
