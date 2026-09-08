@@ -8,3 +8,12 @@
 # entregas e nenhuma reserva chegaria ao mapa.
 [functions.receber-reserva-brasa]
 verify_jwt = false
+
+# A baixa automática da ZIG é chamada pelo pg_cron com a chave pública (anon)
+# no Authorization, então o gateway continua exigindo um JWT válido.
+[functions.zig-baixa-automatica]
+verify_jwt = true
+
+# Chamada pela tela Estoque › ZIG Vendas sem sessão; sempre rodou sem JWT.
+[functions.zig-processar-baixas]
+verify_jwt = false
