@@ -1,9 +1,54 @@
-import React from 'react';
-import { Package, Smartphone, CheckCircle, Clock } from 'lucide-react';
+import { Package, Smartphone, CheckCircle, Clock, ClipboardList, Send } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
 import { QRCodeSVG } from 'qrcode.react';
 
+// Cartaz por setor (?setor=bar|cozinha): aponta para a folha de contagem e
+// pedido do setor. Sem o parâmetro, é o cartaz genérico da requisição pública.
+const SETORES: Record<string, { titulo: string; nome: string }> = {
+  bar:     { titulo: 'Pedido do Bar',     nome: 'do Bar' },
+  cozinha: { titulo: 'Pedido da Cozinha', nome: 'da Cozinha' },
+};
+
 export default function CartazRequisicao() {
-  const linkRequisicao = 'https://www.ditado.org/requisicao-estoque';
+  const [params] = useSearchParams();
+  const setorParam = (params.get('setor') || '').trim().toLowerCase();
+  const setor = SETORES[setorParam] ? setorParam : null;
+
+  const linkRequisicao = setor
+    ? `https://www.ditado.org/pedido/${setor}`
+    : 'https://www.ditado.org/requisicao-estoque';
+
+  const titulo = setor ? SETORES[setor].titulo : 'Requisição de Material';
+  const subtitulo = setor
+    ? `Folha de contagem e pedido ${SETORES[setor].nome} — direto do celular`
+    : 'Solicite itens do estoque de forma rápida e fácil';
+
+  const passos = setor
+    ? [
+        { icon: <ClipboardList className="w-8 h-8 text-blue-500" />, bg: 'bg-blue-50', title: '1. Conte o que tem', desc: 'Abra o link e informe quanto tem em mãos de cada item' },
+        { icon: <CheckCircle className="w-8 h-8 text-green-500" />, bg: 'bg-green-50', title: '2. Confira o pedido', desc: 'O sistema sugere quanto pedir pelo nível do balcão — ajuste se precisar' },
+        { icon: <Send className="w-8 h-8 text-purple-500" />, bg: 'bg-purple-50', title: '3. Envie', desc: 'O estoquista recebe na hora e entrega no setor' },
+      ]
+    : [
+        { icon: <Smartphone className="w-8 h-8 text-blue-500" />, bg: 'bg-blue-50', title: '1. Acesse o Link', desc: 'Escaneie o QR Code ou acesse o link' },
+        { icon: <svg className="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>, bg: 'bg-green-50', title: '2. Preencha', desc: 'Informe seus dados e os itens necessários' },
+        { icon: <svg className="w-8 h-8 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>, bg: 'bg-purple-50', title: '3. Envie', desc: 'Clique em enviar requisição' },
+        { icon: <Clock className="w-8 h-8 text-orange-500" />, bg: 'bg-orange-50', title: '4. Aguarde', desc: 'Estoquista entrará em contato via WhatsApp' },
+      ];
+
+  const importante = setor
+    ? [
+        'Conte antes de pedir: nos itens "só contagem" o sistema não sabe quanto tem no setor',
+        'A quantidade a pedir já vem sugerida pelo nível de balcão — confira e ajuste',
+        'Escolha seu nome antes de enviar; o pedido fica registrado no seu nome',
+        'Não precisa fazer login — é só abrir o link no celular',
+      ]
+    : [
+        'Sempre informe seu WhatsApp correto para receber o contato',
+        'Verifique as quantidades disponíveis antes de solicitar',
+        'Guarde o número da requisição para acompanhamento',
+        'Não precisa fazer login — sistema totalmente público!',
+      ];
 
   return (
     <div className="min-h-screen bg-[#0d0f1a] p-8">
@@ -27,8 +72,8 @@ export default function CartazRequisicao() {
           <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-700 rounded-full mb-4">
             <Package className="w-10 h-10 text-white" />
           </div>
-          <h1 className="text-4xl font-bold text-gray-800 mb-2">Requisição de Material</h1>
-          <p className="text-xl text-gray-500">Solicite itens do estoque de forma rápida e fácil</p>
+          <h1 className="text-4xl font-bold text-gray-800 mb-2">{titulo}</h1>
+          <p className="text-xl text-gray-500">{subtitulo}</p>
         </div>
 
         {/* QR Code */}
@@ -46,13 +91,8 @@ export default function CartazRequisicao() {
         {/* Como Funciona */}
         <div className="mb-10">
           <h2 className="text-2xl font-bold text-gray-800 text-center mb-6">Como Funciona?</h2>
-          <div className="grid grid-cols-4 gap-6">
-            {[
-              { icon: <Smartphone className="w-8 h-8 text-blue-500" />, bg: 'bg-blue-50', title: '1. Acesse o Link', desc: 'Escaneie o QR Code ou acesse o link' },
-              { icon: <svg className="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>, bg: 'bg-green-50', title: '2. Preencha', desc: 'Informe seus dados e os itens necessários' },
-              { icon: <svg className="w-8 h-8 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>, bg: 'bg-purple-50', title: '3. Envie', desc: 'Clique em enviar requisição' },
-              { icon: <Clock className="w-8 h-8 text-orange-500" />, bg: 'bg-orange-50', title: '4. Aguarde', desc: 'Estoquista entrará em contato via WhatsApp' },
-            ].map((step, i) => (
+          <div className={`grid gap-6 ${passos.length === 3 ? 'grid-cols-3' : 'grid-cols-4'}`}>
+            {passos.map((step, i) => (
               <div key={i} className="text-center">
                 <div className={`inline-flex items-center justify-center w-16 h-16 ${step.bg} rounded-full mb-3`}>
                   {step.icon}
@@ -73,12 +113,7 @@ export default function CartazRequisicao() {
             Importante
           </h3>
           <ul className="space-y-2 text-sm text-yellow-800">
-            {[
-              'Sempre informe seu WhatsApp correto para receber o contato',
-              'Verifique as quantidades disponíveis antes de solicitar',
-              'Guarde o número da requisição para acompanhamento',
-              'Não precisa fazer login — sistema totalmente público!',
-            ].map((item, i) => (
+            {importante.map((item, i) => (
               <li key={i} className="flex items-start gap-2">
                 <CheckCircle className="w-4 h-4 mt-0.5 shrink-0 text-yellow-600" />
                 <span>{item}</span>

@@ -23,6 +23,7 @@ const Recruitment         = lazy(() => import('./pages/Recruitment'));
 const PreEntrevista       = lazy(() => import('./pages/PreEntrevista'));
 const SolicitacaoPublica  = lazy(() => import('./pages/SolicitacaoPublica'));
 const RequisicaoPublica   = lazy(() => import('./pages/RequisicaoPublica'));
+const PedidoSetor         = lazy(() => import('./pages/PedidoSetor'));
 const CartazRequisicao    = lazy(() => import('./components/inventory/CartazRequisicao'));
 const GestaoEstrategica   = lazy(() => import('./pages/GestaoEstrategica'));
 const DashboardFinanceiro = lazy(() => import('./pages/DashboardFinanceiro'));
@@ -58,7 +59,7 @@ function AppContent() {
 
   useEffect(() => { testConnection(); }, []);
 
-  const rotasPublicas = ['/pre-entrevista', '/solicitacao', '/requisicao-estoque', '/cartaz-requisicao', '/contagem-mobile', '/disc', '/compras-publica', '/reservar-mesa', '/mapademesas', '/login', '/redefinir-senha'];
+  const rotasPublicas = ['/pre-entrevista', '/solicitacao', '/requisicao-estoque', '/pedido', '/cartaz-requisicao', '/contagem-mobile', '/disc', '/compras-publica', '/reservar-mesa', '/mapademesas', '/login', '/redefinir-senha'];
   const isRotaPublica = rotasPublicas.some(r => location.pathname.startsWith(r));
 
   if (location.pathname === '/login') return <Login />;
@@ -78,6 +79,7 @@ function AppContent() {
           <Route path="/pre-entrevista"         element={<PreEntrevista />} />
           <Route path="/solicitacao"            element={<SolicitacaoPublica />} />
           <Route path="/requisicao-estoque"     element={<RequisicaoPublica />} />
+          <Route path="/pedido/:setor"          element={<PedidoSetor />} />
           <Route path="/cartaz-requisicao"      element={<CartazRequisicao />} />
           <Route path="/contagem-mobile/:token"   element={<ContagemMobile />} />
           <Route path="/disc"                     element={<DiscPublico />} />

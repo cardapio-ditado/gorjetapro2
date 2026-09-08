@@ -1,7 +1,7 @@
 /* GERADO por scripts/gerar-tema-claro.mjs — não edite à mão.
  * A pele clara do sistema: cada utilitário de tema escuro em uso no código
  * ganha aqui o equivalente claro, escopado ao shell dos módulos.
- * 468 regras. */
+ * 469 regras. */
 [data-theme="light"] .app-shell .bg-amber-900\/10{background-color:rgba(245,158,11,0.040)}
 [data-theme="light"] .app-shell .bg-amber-900\/15{background-color:rgba(245,158,11,0.060)}
 [data-theme="light"] .app-shell .bg-amber-900\/20{background-color:rgba(245,158,11,0.080)}
@@ -105,6 +105,7 @@
 [data-theme="light"] .app-shell .disabled\:bg-white\/10:disabled{background-color:rgba(31,27,26,0.085)}
 [data-theme="light"] .app-shell .disabled\:bg-white\/5:disabled{background-color:rgba(31,27,26,0.043)}
 [data-theme="light"] .app-shell .disabled\:text-white\/20:disabled{color:rgba(31,27,26,0.42)}
+[data-theme="light"] .app-shell .disabled\:text-white\/40:disabled{color:rgba(31,27,26,0.56)}
 [data-theme="light"] .app-shell .divide-white\/10>:not([hidden])~:not([hidden]){border-color:rgba(31,27,26,0.130)}
 [data-theme="light"] .app-shell .divide-white\/5>:not([hidden])~:not([hidden]){border-color:rgba(31,27,26,0.085)}
 [data-theme="light"] .app-shell .divide-white\/\[0\.05\]>:not([hidden])~:not([hidden]){border-color:rgba(31,27,26,0.085)}
