@@ -1,12 +1,12 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import {
   ArrowLeft, ArrowRight, ArrowLeftRight, Search, AlertTriangle,
-  Check, X, ChevronRight, User, Loader2,
+  Check, X, ChevronRight, User, Loader2, Sparkles,
 } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
 import { useAuth } from '../../../contexts/AuthContext';
 
-interface Estoque { id: string; nome: string; }
+interface Estoque { id: string; nome: string; tipo?: string | null; }
 interface Item { id: string; nome: string; unidade_medida: string; codigo?: string; }
 interface Funcionario { id: string; nome_completo: string; cargo?: string; }
 
@@ -38,6 +38,9 @@ export default function TransferirEstoque({ onVoltar }: Props) {
   const [resultados, setResultados] = useState<Item[]>([]);
   const [buscando, setBuscando] = useState(false);
   const [linhas, setLinhas] = useState<LinhaTransferencia[]>([]);
+  const [sugerindo, setSugerindo] = useState(false);
+  const [semSaldoCentral, setSemSaldoCentral] = useState<string[]>([]);
+  const [msgSugestao, setMsgSugestao] = useState<string | null>(null);
 
   // Passo 4 — Confirmar
   const [salvando, setSalvando] = useState(false);
@@ -47,11 +50,15 @@ export default function TransferirEstoque({ onVoltar }: Props) {
   useEffect(() => {
     const load = async () => {
       const [estRes, funcRes] = await Promise.all([
-        supabase.from('estoques').select('id, nome').eq('status', true).order('nome'),
-        supabase.from('funcionarios').select('id, nome_completo, cargo').eq('ativo', true).order('nome_completo').limit(200),
+        supabase.from('estoques').select('id, nome, tipo').eq('status', true).order('nome'),
+        // colaboradores é a tabela atual de equipe (status 'ativo'|'inativo'); funcionarios é legado
+        supabase.from('colaboradores').select('id, nome_completo, funcao_personalizada').eq('status', 'ativo').order('nome_completo').limit(200),
       ]);
       setEstoques(estRes.data || []);
-      setFuncionarios(funcRes.data || []);
+      setFuncionarios(
+        ((funcRes.data || []) as { id: string; nome_completo: string; funcao_personalizada: string | null }[])
+          .map(f => ({ id: f.id, nome_completo: f.nome_completo, cargo: f.funcao_personalizada || undefined }))
+      );
     };
     load();
   }, []);
@@ -67,7 +74,7 @@ export default function TransferirEstoque({ onVoltar }: Props) {
       .from('itens_estoque')
       .select('id, nome, unidade_medida, codigo')
       .ilike('nome', `%${termo}%`)
-      .eq('ativo', true)
+      .eq('status', 'ativo')
       .order('nome')
       .limit(20);
     setResultados(data || []);
@@ -102,6 +109,68 @@ export default function TransferirEstoque({ onVoltar }: Props) {
     setLinhas(prev => prev.map(l => l.item.id === itemId ? { ...l, quantidade: valor } : l));
 
   const linhasValidas = linhas.filter(l => l.quantidade && Number(l.quantidade) > 0);
+
+  const destinoEhPonta = !!destino && destino.tipo !== 'central';
+
+  // Sugere a reposição de hoje pelo nível de balcão do destino e preenche as linhas
+  const sugerirPeloNivel = async () => {
+    if (!destino) return;
+    setSugerindo(true);
+    setMsgSugestao(null);
+    setSemSaldoCentral([]);
+    try {
+      const { data, error } = await supabase.rpc('fn_sugerir_reposicao_local', { p_estoque_id: destino.id });
+      if (error) throw error;
+      const rows = ((data || []) as Record<string, unknown>[]).map(r => ({
+        item_id: String(r.item_id),
+        nome: String(r.nome ?? ''),
+        unidade_medida: String(r.unidade_medida ?? ''),
+        saldo_central: Number(r.saldo_central) || 0,
+        quantidade_falta: Number(r.quantidade_falta) || 0,
+        quantidade_sugerida: Number(r.quantidade_sugerida) || 0,
+      }));
+
+      const semSaldo = rows.filter(r => r.quantidade_falta > 0 && r.quantidade_sugerida <= 0).map(r => r.nome);
+      const sugeridas = rows.filter(r => r.quantidade_sugerida > 0);
+      setSemSaldoCentral(semSaldo);
+
+      if (sugeridas.length === 0) {
+        setMsgSugestao(rows.length === 0
+          ? 'Nenhum item abaixo do nível de balcão neste estoque.'
+          : 'Itens abaixo do nível, mas sem saldo no Central para atender.');
+        return;
+      }
+
+      const origemEhCentral = origem?.tipo === 'central';
+      const novas: LinhaTransferencia[] = [];
+      for (const r of sugeridas) {
+        if (linhas.some(l => l.item.id === r.item_id)) continue;
+        const saldoOrigem = origemEhCentral
+          ? r.saldo_central
+          : origem ? await buscarSaldo(r.item_id, origem.id) : null;
+        novas.push({
+          item: { id: r.item_id, nome: r.nome, unidade_medida: r.unidade_medida },
+          quantidade: String(r.quantidade_sugerida),
+          saldoOrigem,
+        });
+      }
+      const sugeridaMap = new Map(sugeridas.map(r => [r.item_id, r.quantidade_sugerida]));
+      setLinhas(prev => [
+        ...prev.map(l => {
+          const sug = sugeridaMap.get(l.item.id);
+          if (sug === undefined) return l;
+          const atual = Number(l.quantidade) || 0;
+          return atual >= sug ? l : { ...l, quantidade: String(sug) };
+        }),
+        ...novas,
+      ]);
+      setMsgSugestao(`${sugeridas.length} ${sugeridas.length === 1 ? 'item sugerido' : 'itens sugeridos'} pelo nível de balcão.`);
+    } catch (e) {
+      setMsgSugestao(e instanceof Error ? e.message : 'Erro ao sugerir reposição');
+    } finally {
+      setSugerindo(false);
+    }
+  };
 
   const criarRequisicaoEEntregar = async (entregar: boolean) => {
     if (!origem || !destino || !funcionarioSelecionado || !setor || linhasValidas.length === 0) return;
@@ -162,8 +231,8 @@ export default function TransferirEstoque({ onVoltar }: Props) {
       }
 
       setRequisicaoCriada({ id: req.id, numero: req.numero_requisicao || req.id.slice(0, 8) });
-    } catch (e: any) {
-      setErro(e.message || 'Erro ao salvar');
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : 'Erro ao salvar');
     } finally {
       setSalvando(false);
     }
@@ -190,6 +259,7 @@ export default function TransferirEstoque({ onVoltar }: Props) {
             onClick={() => {
               setFuncionarioSelecionado(null); setBuscaFunc(''); setSetor('');
               setOrigem(null); setDestino(null); setLinhas([]);
+              setSemSaldoCentral([]); setMsgSugestao(null);
               setPasso(1); setRequisicaoCriada(null);
             }}
             className="px-5 py-2.5 bg-gold/20 border border-gold/40 text-gold rounded-xl text-sm font-semibold hover:bg-gold/30"
@@ -384,6 +454,28 @@ export default function TransferirEstoque({ onVoltar }: Props) {
             <ArrowRight className="w-4 h-4 text-blue-400/50" />
             <span className="text-blue-300 text-sm font-semibold">{destino?.nome}</span>
           </div>
+
+          {destinoEhPonta && (
+            <div className="space-y-2">
+              <button
+                onClick={sugerirPeloNivel}
+                disabled={sugerindo}
+                className="flex items-center justify-center gap-2 w-full px-4 py-3 bg-gold/15 border border-gold/40 text-gold rounded-xl text-sm font-semibold hover:bg-gold/25 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+              >
+                {sugerindo ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                Sugerir pelo nível de balcão
+              </button>
+              {msgSugestao && (
+                <p className="text-xs text-white/60 px-1">{msgSugestao}</p>
+              )}
+              {semSaldoCentral.length > 0 && (
+                <div className="flex items-start gap-2 px-3 py-2 bg-amber-500/10 border border-amber-500/30 rounded-xl text-xs text-amber-300">
+                  <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                  <span>Sem saldo no Central: {semSaldoCentral.join(', ')}</span>
+                </div>
+              )}
+            </div>
+          )}
 
           <div className="relative bg-[#12141f] border border-white/[0.07] rounded-xl">
             <div className="flex items-center gap-2 px-3 py-2.5">

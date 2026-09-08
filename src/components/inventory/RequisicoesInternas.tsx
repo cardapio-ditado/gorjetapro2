@@ -1,11 +1,13 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import {
-  Plus, FileText, Printer, Search, Filter, X, Trash2,
+  Plus, FileText, Printer, Search, X, Trash2,
   CheckCircle, Eye, Download, QrCode, Loader2, ChevronRight,
+  Sparkles, SlidersHorizontal, AlertTriangle,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { gerarImpressaoTermicaRequisicao } from '../../utils/impressaoTermica';
 import { SearchableSelect } from '../common/SearchableSelect';
+import NiveisBalcao from './NiveisBalcao';
 import jsPDF from 'jspdf';
 
 function fmtQtd(n: number | string | null | undefined): string {
@@ -87,6 +89,12 @@ export default function RequisicoesInternas() {
   const [quantidadeItem, setQuantidadeItem]   = useState('');
   const [observacaoItem, setObservacaoItem]   = useState('');
 
+  // nível de balcão
+  const [sugerindo, setSugerindo]             = useState(false);
+  const [semSaldoCentral, setSemSaldoCentral] = useState<string[]>([]);
+  const [msgSugestao, setMsgSugestao]         = useState<string | null>(null);
+  const [mostrarNiveis, setMostrarNiveis]     = useState(false);
+
   useEffect(() => { carregarDados(); }, [filtroStatus]);
 
   // Carregar saldos quando o estoque de origem muda — APENAS INFORMATIVO
@@ -148,7 +156,8 @@ export default function RequisicoesInternas() {
       .eq('estoque_id', estoqueOrigemId);
 
     const saldoMap: Record<string, number> = {};
-    (saldos || []).forEach((s: any) => { saldoMap[s.item_id] = Number(s.quantidade_atual); });
+    ((saldos || []) as { item_id: string; quantidade_atual: number | string }[])
+      .forEach(s => { saldoMap[s.item_id] = Number(s.quantidade_atual); });
 
     setItensComSaldo(todosItens.map(item => ({
       ...item,
@@ -182,6 +191,72 @@ export default function RequisicoesInternas() {
 
   function removerItem(index: number) {
     setItens(prev => prev.filter((_, i) => i !== index));
+  }
+
+  // Um clique propõe a reposição de hoje (Central → ponta) pelo nível de balcão do destino
+  async function sugerirPeloNivel() {
+    if (!estoqueDestinoId) return;
+    setSugerindo(true);
+    setMsgSugestao(null);
+    setSemSaldoCentral([]);
+    try {
+      const { data, error } = await supabase.rpc('fn_sugerir_reposicao_local', { p_estoque_id: estoqueDestinoId });
+      if (error) throw error;
+      const rows = ((data || []) as Record<string, unknown>[]).map(r => ({
+        item_id: String(r.item_id),
+        nome: String(r.nome ?? ''),
+        categoria: r.categoria == null ? null : String(r.categoria),
+        unidade_medida: String(r.unidade_medida ?? ''),
+        nivel_reposicao: Number(r.nivel_reposicao) || 0,
+        saldo_local: Number(r.saldo_local) || 0,
+        quantidade_falta: Number(r.quantidade_falta) || 0,
+        quantidade_sugerida: Number(r.quantidade_sugerida) || 0,
+      }));
+
+      setSemSaldoCentral(rows.filter(r => r.quantidade_falta > 0 && r.quantidade_sugerida <= 0).map(r => r.nome));
+      const sugeridas = rows.filter(r => r.quantidade_sugerida > 0);
+
+      if (sugeridas.length === 0) {
+        setMsgSugestao(rows.length === 0
+          ? 'Nenhum item abaixo do nível de balcão neste estoque.'
+          : 'Itens abaixo do nível, mas sem saldo no Central para atender.');
+        return;
+      }
+
+      // Merge: não duplica item; mantém a quantidade do usuário se for maior
+      setItens(prev => {
+        const sugeridaMap = new Map(sugeridas.map(r => [r.item_id, r]));
+        const atualizados = prev.map(item => {
+          const sug = sugeridaMap.get(item.item_id);
+          if (!sug) return item;
+          return item.quantidade_solicitada >= sug.quantidade_sugerida
+            ? item
+            : { ...item, quantidade_solicitada: sug.quantidade_sugerida };
+        });
+        const existentes = new Set(prev.map(i => i.item_id));
+        const novos: ItemRequisicao[] = sugeridas
+          .filter(r => !existentes.has(r.item_id))
+          .map(r => {
+            const info = todosItens.find(i => i.id === r.item_id);
+            return {
+              item_id: r.item_id,
+              quantidade_solicitada: r.quantidade_sugerida,
+              observacao: `Nível ${fmtQtd(r.nivel_reposicao)} · em mãos ${fmtQtd(r.saldo_local)}`,
+              itens_estoque: info ?? {
+                id: r.item_id, nome: r.nome, unidade_medida: r.unidade_medida,
+                custo_medio: 0, categoria: r.categoria,
+              },
+            };
+          });
+        return [...atualizados, ...novos];
+      });
+      setMsgSugestao(`${sugeridas.length} ${sugeridas.length === 1 ? 'item sugerido' : 'itens sugeridos'} pelo nível de balcão.`);
+    } catch (e) {
+      console.error(e);
+      setMsgSugestao(e instanceof Error ? e.message : 'Erro ao sugerir reposição');
+    } finally {
+      setSugerindo(false);
+    }
   }
 
   async function salvarRequisicao() {
@@ -357,6 +432,7 @@ export default function RequisicoesInternas() {
     setEstoqueOrigemId(''); setEstoqueDestinoId('');
     setObservacoes(''); setItens([]);
     setItemSelecionado(''); setQuantidadeItem(''); setObservacaoItem('');
+    setSemSaldoCentral([]); setMsgSugestao(null); setMostrarNiveis(false);
   }
 
   const requisicoesFiltradas = requisicoes.filter(req =>
@@ -366,6 +442,11 @@ export default function RequisicoesInternas() {
   );
 
   const itemAtualSaldo = itensComSaldo.find(i => i.id === itemSelecionado);
+  const estoqueDestino = estoques.find(e => e.id === estoqueDestinoId);
+  const destinoEhPonta = !!estoqueDestino && estoqueDestino.tipo !== 'central';
+  const opcoesItens: ItemEstoqueComSaldo[] = estoqueOrigemId
+    ? itensComSaldo
+    : todosItens.map(i => ({ ...i, saldo: null }));
 
   return (
     <div className="space-y-6">
@@ -610,7 +691,39 @@ export default function RequisicoesInternas() {
 
               {/* Adicionar itens */}
               <div className="border-t border-white/10 pt-5">
-                <h4 className="font-semibold text-white mb-3">Adicionar Itens</h4>
+                <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+                  <h4 className="font-semibold text-white">Adicionar Itens</h4>
+                  {destinoEhPonta && estoqueDestino && (
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={sugerirPeloNivel}
+                        disabled={sugerindo}
+                        title={`Propõe a reposição de hoje para ${estoqueDestino.nome} com base no nível de balcão`}
+                        className="flex items-center gap-2 px-3 py-2 bg-gold/15 border border-gold/40 text-gold rounded-xl text-xs font-semibold hover:bg-gold/25 disabled:opacity-40"
+                      >
+                        {sugerindo ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+                        Sugerir pelo nível de balcão
+                      </button>
+                      <button
+                        onClick={() => setMostrarNiveis(true)}
+                        className="flex items-center gap-1.5 px-3 py-2 text-white/60 hover:text-white hover:bg-white/5 rounded-xl text-xs font-semibold"
+                      >
+                        <SlidersHorizontal className="w-3.5 h-3.5" />
+                        Níveis de balcão
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {msgSugestao && (
+                  <p className="mb-3 text-xs text-white/60">{msgSugestao}</p>
+                )}
+                {semSaldoCentral.length > 0 && (
+                  <div className="mb-3 flex items-start gap-2 p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl text-xs text-amber-300">
+                    <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                    <span>Sem saldo no Central: {semSaldoCentral.join(', ')}</span>
+                  </div>
+                )}
 
                 {!estoqueOrigemId && (
                   <div className="mb-3 p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl text-sm text-amber-300">
@@ -628,8 +741,8 @@ export default function RequisicoesInternas() {
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
                   <div className="md:col-span-5">
                     <SearchableSelect
-                      options={(estoqueOrigemId ? itensComSaldo : todosItens).map(item => {
-                        const saldo = 'saldo' in item ? item.saldo : null;
+                      options={opcoesItens.map(item => {
+                        const saldo = item.saldo;
                         return {
                           value: item.id,
                           label: item.nome,
@@ -718,6 +831,15 @@ export default function RequisicoesInternas() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Modal Níveis de balcão do destino */}
+      {mostrarNiveis && estoqueDestino && (
+        <NiveisBalcao
+          estoqueId={estoqueDestino.id}
+          estoqueNome={estoqueDestino.nome}
+          onClose={() => setMostrarNiveis(false)}
+        />
       )}
     </div>
   );
