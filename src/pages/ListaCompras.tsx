@@ -1,13 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type ReactNode } from 'react';
 import {
   ShoppingCart, RefreshCw, CheckCircle2, Circle,
   Package, Truck, Store, Filter, ChevronDown, ChevronRight,
   Printer, ClipboardList, Search, X,
-  BarChart2, Check, Link,
+  BarChart2, Check, Link, Send, AlertTriangle, Info,
 } from 'lucide-react';
-
-const SUPABASE_URL  = import.meta.env.VITE_SUPABASE_URL as string;
-const SUPABASE_ANON = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
+import { supabase } from '../lib/supabase';
 
 type TipoCompra = 'todos' | 'rua' | 'fornecedor' | 'ambos';
 type StatusLista = 'aberta' | 'em_andamento' | 'concluida' | 'cancelada';
@@ -22,6 +20,12 @@ interface ItemLista {
   custo_unitario: number; custo_estimado: number;
   comprado: boolean; comprado_em: string | null;
   observacao: string | null; ordem: number;
+  entrada_compra_id: string | null;
+}
+
+interface ResultadoPedidos {
+  pedidos: { entrada_id: string; fornecedor: string; itens: number; valor: number }[];
+  sem_fornecedor: string[];
 }
 
 interface Lista {
@@ -52,6 +56,16 @@ const TIPO_COLOR: Record<string, string> = {
   fornecedor: 'bg-blue-500/15 text-blue-400 border-blue-500/30',
   ambos: 'bg-purple-500/15 text-purple-400 border-purple-500/30',
   todos: 'bg-[#12141f]/10 text-white/60 border-white/10',
+};
+const CRITERIO_LABEL: Record<string, string> = {
+  consumo: 'pelo consumo',
+  manual: 'mínimo travado',
+  sem_consumo: 'sem histórico (mínimo digitado)',
+};
+const CRITERIO_COLOR: Record<string, string> = {
+  consumo: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
+  manual: 'bg-purple-500/10 text-purple-400 border-purple-500/30',
+  sem_consumo: 'bg-white/5 text-white/50 border-white/10',
 };
 const STATUS_COLOR: Record<StatusLista, string> = {
   aberta: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/30',
@@ -101,24 +115,34 @@ export default function ListaCompras() {
   const [listas, setListas] = useState<Lista[]>([]);
   const [carregandoListas, setCarregandoListas] = useState(false);
 
-  const headers = { apikey: SUPABASE_ANON, Authorization: `Bearer ${SUPABASE_ANON}`, 'Content-Type': 'application/json' };
+  const [gerandoPedidos, setGerandoPedidos] = useState(false);
+  const [resultadoPedidos, setResultadoPedidos] = useState<ResultadoPedidos | null>(null);
+  const [erroPedidos, setErroPedidos] = useState('');
 
   const carregarListas = async () => {
     setCarregandoListas(true);
-    const r = await fetch(`${SUPABASE_URL}/rest/v1/listas_compra?select=*&order=criado_em.desc&limit=30`, { headers });
-    const d = await r.json();
-    if (Array.isArray(d)) setListas(d);
+    const { data } = await supabase
+      .from('listas_compra')
+      .select('*')
+      .order('criado_em', { ascending: false })
+      .limit(30);
+    if (Array.isArray(data)) setListas(data as Lista[]);
     setCarregandoListas(false);
   };
 
   const carregarItens = async (listaId: string) => {
     setCarregandoItens(true);
-    const r = await fetch(`${SUPABASE_URL}/rest/v1/listas_compra_itens?lista_id=eq.${listaId}&order=categoria,nome_item`, { headers });
-    const d = await r.json();
-    if (Array.isArray(d)) {
+    const { data } = await supabase
+      .from('listas_compra_itens')
+      .select('*')
+      .eq('lista_id', listaId)
+      .order('categoria')
+      .order('nome_item');
+    if (Array.isArray(data)) {
+      const d = data as ItemLista[];
       setItens(d);
       const agruparPorFornecedor = d[0]?.tipo_compra === 'fornecedor';
-      setExpandidas(new Set(d.map((i: ItemLista) => grupoDe(i, agruparPorFornecedor))));
+      setExpandidas(new Set(d.map(i => grupoDe(i, agruparPorFornecedor))));
     }
     setCarregandoItens(false);
   };
@@ -133,13 +157,11 @@ export default function ListaCompras() {
   const carregarSugestoes = async () => {
     setCarregandoSugestoes(true);
     try {
-      const r = await fetch(`${SUPABASE_URL}/rest/v1/rpc/fn_sugestao_compra`, {
-        method: 'POST',
-        headers: { ...headers, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ p_nivel_alvo: nivelAlvo, p_ignorar_listas: ignorarListasAbertas }),
+      const { data } = await supabase.rpc('fn_sugestao_compra', {
+        p_nivel_alvo: nivelAlvo,
+        p_ignorar_listas: ignorarListasAbertas,
       });
-      const d = await r.json();
-      if (Array.isArray(d)) setSugestoes(d);
+      if (Array.isArray(data)) setSugestoes(data as Sugestao[]);
     } catch { /* silently fail */ }
     setCarregandoSugestoes(false);
   };
@@ -162,10 +184,9 @@ export default function ListaCompras() {
       const valorTotal = sugestoesFiltradas.reduce((s, i) => s + Number(i.custo_estimado), 0);
 
       // 1. Criar cabeçalho da lista (numero é gerado pelo trigger no banco)
-      const rLista = await fetch(`${SUPABASE_URL}/rest/v1/listas_compra`, {
-        method: 'POST',
-        headers: { ...headers, Prefer: 'return=representation' },
-        body: JSON.stringify({
+      const { data: lista, error: erroLista } = await supabase
+        .from('listas_compra')
+        .insert({
           titulo: tituloFinal,
           tipo_compra: tipoFiltro,
           status: 'aberta',
@@ -174,11 +195,10 @@ export default function ListaCompras() {
           total_itens: sugestoesFiltradas.length,
           itens_comprados: 0,
           valor_estimado: valorTotal,
-        }),
-      });
-      const dLista = await rLista.json();
-      const lista = Array.isArray(dLista) ? dLista[0] : dLista;
-      if (!lista?.id) { setErroGerar('Erro ao criar lista.'); return; }
+        })
+        .select('*')
+        .single();
+      if (erroLista || !lista?.id) { setErroGerar(erroLista?.message || 'Erro ao criar lista.'); return; }
 
       // 2. Inserir itens, cada um com seu próprio tipo/estoque/fornecedor reais
       const itensParaInserir = sugestoesFiltradas.map(s => ({
@@ -203,35 +223,38 @@ export default function ListaCompras() {
         ordem: 0,
       }));
 
-      await fetch(`${SUPABASE_URL}/rest/v1/listas_compra_itens`, {
-        method: 'POST',
-        headers: { ...headers, Prefer: 'return=minimal' },
-        body: JSON.stringify(itensParaInserir),
-      });
+      const { error: erroItens } = await supabase.from('listas_compra_itens').insert(itensParaInserir);
+      if (erroItens) { setErroGerar(erroItens.message); return; }
 
       await abrirLista(lista.id);
-    } catch (e: any) { setErroGerar(e.message); }
+    } catch (e: unknown) { setErroGerar(e instanceof Error ? e.message : String(e)); }
     finally { setGerando(false); }
   };
 
+  const buscarLista = async (id: string): Promise<Lista | null> => {
+    const { data } = await supabase.from('listas_compra').select('*').eq('id', id).maybeSingle();
+    return (data as Lista | null) ?? null;
+  };
+
   const abrirLista = async (id: string) => {
-    const r = await fetch(`${SUPABASE_URL}/rest/v1/listas_compra?id=eq.${id}&select=*`, { headers });
-    const d = await r.json();
-    if (d[0]) { setListaAtiva(d[0]); await carregarItens(d[0].id); }
+    setResultadoPedidos(null); setErroPedidos('');
+    const lista = await buscarLista(id);
+    if (lista) { setListaAtiva(lista); await carregarItens(lista.id); }
   };
 
   const toggleComprado = async (item: ItemLista) => {
+    // Item com pedido gerado é marcado pelo recebimento da mercadoria, não à mão.
+    if (item.entrada_compra_id) return;
     const novo = !item.comprado;
     setSalvando(item.id);
     setItens(prev => prev.map(i => i.id === item.id ? { ...i, comprado: novo, comprado_em: novo ? new Date().toISOString() : null } : i));
-    await fetch(`${SUPABASE_URL}/rest/v1/listas_compra_itens?id=eq.${item.id}`, {
-      method: 'PATCH', headers: { ...headers, Prefer: 'return=minimal' },
-      body: JSON.stringify({ comprado: novo, comprado_em: novo ? new Date().toISOString() : null }),
-    });
+    await supabase
+      .from('listas_compra_itens')
+      .update({ comprado: novo, comprado_em: novo ? new Date().toISOString() : null })
+      .eq('id', item.id);
     if (listaAtiva) {
-      const r = await fetch(`${SUPABASE_URL}/rest/v1/listas_compra?id=eq.${listaAtiva.id}&select=*`, { headers });
-      const d = await r.json();
-      if (d[0]) setListaAtiva(d[0]);
+      const lista = await buscarLista(listaAtiva.id);
+      if (lista) setListaAtiva(lista);
     }
     setSalvando(null);
   };
@@ -241,19 +264,35 @@ export default function ListaCompras() {
     const novaQtd = Math.max(0, ehFracionado(item.unidade_medida) ? qtd : Math.round(qtd));
     const novoCusto = Number((item.custo_unitario * novaQtd).toFixed(2));
     setItens(prev => prev.map(i => i.id === item.id ? { ...i, quantidade_comprar: novaQtd, custo_estimado: novoCusto } : i));
-    await fetch(`${SUPABASE_URL}/rest/v1/listas_compra_itens?id=eq.${item.id}`, {
-      method: 'PATCH', headers: { ...headers, Prefer: 'return=minimal' },
-      body: JSON.stringify({ quantidade_comprar: novaQtd, custo_estimado: novoCusto }),
-    });
+    await supabase
+      .from('listas_compra_itens')
+      .update({ quantidade_comprar: novaQtd, custo_estimado: novoCusto })
+      .eq('id', item.id);
   };
 
   const concluirLista = async () => {
     if (!listaAtiva) return;
-    await fetch(`${SUPABASE_URL}/rest/v1/listas_compra?id=eq.${listaAtiva.id}`, {
-      method: 'PATCH', headers: { ...headers, Prefer: 'return=minimal' },
-      body: JSON.stringify({ status: 'concluida', concluido_em: new Date().toISOString() }),
-    });
+    await supabase
+      .from('listas_compra')
+      .update({ status: 'concluida', concluido_em: new Date().toISOString() })
+      .eq('id', listaAtiva.id);
     setListaAtiva(prev => prev ? { ...prev, status: 'concluida' } : null);
+  };
+
+  // Gera uma entrada pendente por fornecedor (fornecedor padrão de cada item) para a lista aberta.
+  const gerarPedidosFornecedores = async () => {
+    if (!listaAtiva) return;
+    setGerandoPedidos(true); setErroPedidos(''); setResultadoPedidos(null);
+    try {
+      const { data, error } = await supabase.rpc('fn_lista_compra_gerar_pedidos', { p_lista_id: listaAtiva.id });
+      if (error) { setErroPedidos(error.message); return; }
+      const r = (data || {}) as Partial<ResultadoPedidos>;
+      setResultadoPedidos({ pedidos: r.pedidos || [], sem_fornecedor: r.sem_fornecedor || [] });
+      const lista = await buscarLista(listaAtiva.id);
+      if (lista) setListaAtiva(lista);
+      await carregarItens(listaAtiva.id);
+    } catch (e: unknown) { setErroPedidos(e instanceof Error ? e.message : String(e)); }
+    finally { setGerandoPedidos(false); }
   };
 
   // ─── IMPRESSÃO via iframe oculto (não depende de popup) ─────────────────
@@ -326,8 +365,8 @@ ${grupos.map(grupo => `
       <th style="width:20px">V</th>
       <th style="text-align:left">Item</th>
       <th style="width:55px">Tipo</th>
-      <th style="width:75px">Em estoque</th>
-      <th style="width:55px">Minimo</th>
+      <th style="width:75px">Saldo Central</th>
+      <th style="width:55px">Pto. pedido</th>
       <th style="width:80px">Qtd comprar</th>
       <th style="width:70px">Vlr Unit.</th>
       <th style="width:75px">Total Est.</th>
@@ -389,7 +428,7 @@ ${grupos.map(grupo => `
             </div>
             <div>
               <h1 className="text-xl font-bold text-white">Lista de Compras</h1>
-              <p className="text-sm text-white/60">Geração automática por estoque mínimo ou ideal (+25%)</p>
+              <p className="text-sm text-white/60">Geração automática pelo ponto de pedido ou ideal (+25%)</p>
             </div>
           </div>
           <div className="flex gap-2">
@@ -412,6 +451,10 @@ ${grupos.map(grupo => `
               <h2 className="font-semibold text-white/90 flex items-center gap-2">
                 <BarChart2 size={16} className="text-wine" /> Gerar nova lista
               </h2>
+              <p className="flex items-center gap-1.5 text-xs text-white/50 -mt-2">
+                <Info size={13} className="text-white/40 flex-shrink-0" />
+                A sugestão olha só o saldo do Estoque Central.
+              </p>
 
               <div>
                 <label className="text-xs font-semibold text-white/60 uppercase tracking-wide mb-2 block">Tipo de compra</label>
@@ -421,7 +464,7 @@ ${grupos.map(grupo => `
                     { v: 'rua', label: 'Compra na rua', icon: <Store size={14}/> },
                     { v: 'fornecedor', label: 'Fornecedor', icon: <Truck size={14}/> },
                     { v: 'ambos', label: 'Ambos', icon: <Package size={14}/> },
-                  ] as {v: TipoCompra; label: string; icon: any}[]).map(op => (
+                  ] as {v: TipoCompra; label: string; icon: ReactNode}[]).map(op => (
                     <button key={op.v} onClick={() => setTipoFiltro(op.v)}
                       className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border text-xs font-medium transition-all ${tipoFiltro === op.v ? 'bg-wine text-white border-wine' : 'bg-[#12141f]/5 text-white/60 border-white/10 hover:bg-[#12141f]/10'}`}>
                       {op.icon}
@@ -438,8 +481,8 @@ ${grupos.map(grupo => `
                 <label className="text-xs font-semibold text-white/60 uppercase tracking-wide mb-2 block">Nível de reposição</label>
                 <div className="grid grid-cols-2 gap-2">
                   {([
-                    { v: 'minimo', titulo: 'Mínimo', desc: 'Só até o estoque mínimo, sem sobra' },
-                    { v: 'ideal', titulo: 'Ideal (+25%)', desc: 'Mínimo + 25% de folga' },
+                    { v: 'minimo', titulo: 'Ponto de pedido', desc: 'Só até o ponto de pedido, sem sobra' },
+                    { v: 'ideal', titulo: 'Ideal (+25%)', desc: 'Ponto de pedido + 25% de folga' },
                   ] as { v: NivelAlvo; titulo: string; desc: string }[]).map(op => (
                     <button key={op.v} onClick={() => setNivelAlvo(op.v)}
                       className={`text-left p-3 rounded-xl border transition-all ${nivelAlvo === op.v ? 'bg-wine text-white border-wine' : 'bg-[#12141f]/5 text-white/60 border-white/10 hover:bg-[#12141f]/10'}`}>
@@ -492,9 +535,9 @@ ${grupos.map(grupo => `
                       <thead className="sticky top-0">
                         <tr className="bg-[#0c1018] text-white/40">
                           <th className="px-3 py-2 text-left font-medium">Item</th>
-                          <th className="px-3 py-2 text-right font-medium">Em estoque</th>
-                          <th className="px-3 py-2 text-right font-medium">Mínimo</th>
-                          <th className="px-3 py-2 text-right font-medium">Alvo ({nivelAlvo === 'ideal' ? 'ideal' : 'mín'})</th>
+                          <th className="px-3 py-2 text-right font-medium">Saldo no Central</th>
+                          <th className="px-3 py-2 text-right font-medium">Ponto de pedido</th>
+                          <th className="px-3 py-2 text-right font-medium">Alvo ({nivelAlvo === 'ideal' ? 'ideal' : 'pto. pedido'})</th>
                           <th className="px-3 py-2 text-right font-medium">Comprar</th>
                         </tr>
                       </thead>
@@ -508,13 +551,20 @@ ${grupos.map(grupo => `
                                 </span>
                                 <p className="text-white/80 font-medium truncate max-w-[140px]">{s.nome}</p>
                               </div>
-                              {s.fornecedor_nome && <p className="text-white/60 text-caption ml-6">{s.fornecedor_nome}</p>}
+                              <div className="flex items-center gap-1.5 ml-6 flex-wrap">
+                                {s.fornecedor_nome && <p className="text-white/60 text-caption">{s.fornecedor_nome}</p>}
+                                {CRITERIO_LABEL[s.criterio] && (
+                                  <span className={`text-caption px-1 py-0.5 rounded border ${CRITERIO_COLOR[s.criterio]}`}>
+                                    {CRITERIO_LABEL[s.criterio]}
+                                  </span>
+                                )}
+                              </div>
                             </td>
                             <td className="px-3 py-2 text-right text-red-400/80">
-                              {fmt(s.saldo_atual, s.saldo_atual % 1 === 0 ? 0 : 2)} {s.unidade_medida}
+                              {fmt(Number(s.saldo_atual), Number(s.saldo_atual) % 1 === 0 ? 0 : 2)} {s.unidade_medida}
                             </td>
                             <td className="px-3 py-2 text-right text-white/50">
-                              {fmt(s.estoque_minimo, 0)}
+                              {fmt(Number(s.estoque_minimo), Number(s.estoque_minimo) % 1 === 0 ? 0 : 2)}
                             </td>
                             <td className="px-3 py-2 text-right text-amber-400/80">
                               {fmt(s.quantidade_alvo, s.quantidade_alvo % 1 === 0 ? 0 : 2)}
@@ -529,7 +579,7 @@ ${grupos.map(grupo => `
                   </div>
                 )}
                 {!carregandoSugestoes && sugestoesFiltradas.length === 0 && (
-                  <p className="px-4 py-3 text-xs text-white/60">Nenhum item desse tipo abaixo do ponto de reposição no momento.</p>
+                  <p className="px-4 py-3 text-xs text-white/60">Nenhum item desse tipo abaixo do ponto de pedido no Central no momento.</p>
                 )}
               </div>
 
@@ -585,6 +635,14 @@ ${grupos.map(grupo => `
                     className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-white/10 text-sm font-medium text-white/60 hover:bg-white/5 disabled:opacity-50">
                     <Printer size={15}/> Imprimir
                   </button>
+                  {(listaAtiva.status === 'aberta' || listaAtiva.status === 'em_andamento') && (
+                    <button onClick={gerarPedidosFornecedores} disabled={gerandoPedidos}
+                      title="Cria um pedido pendente no Estoque Central para cada fornecedor padrão dos itens"
+                      className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-purple-500/30 bg-purple-500/10 text-sm font-medium text-purple-300 hover:bg-purple-500/20 disabled:opacity-50 transition-colors">
+                      <Send size={14} className={gerandoPedidos ? 'animate-pulse' : ''}/>
+                      {gerandoPedidos ? 'Gerando pedidos...' : 'Gerar pedidos aos fornecedores'}
+                    </button>
+                  )}
                   {listaAtiva.status !== 'concluida' && (
                     <button onClick={concluirLista}
                       className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-green-600 text-white text-sm font-medium hover:bg-green-700">
@@ -600,6 +658,44 @@ ${grupos.map(grupo => `
                 </div>
                 <span className="text-xs font-semibold text-white/60 min-w-[36px]">{pct}%</span>
               </div>
+
+              {/* Resultado da geração de pedidos */}
+              {erroPedidos && (
+                <div className="rounded-xl p-3 text-sm border bg-red-500/10 border-red-500/30 text-red-400">{erroPedidos}</div>
+              )}
+              {resultadoPedidos && (
+                <div className="rounded-xl border border-purple-500/30 bg-purple-500/10 p-3 text-sm space-y-2">
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="font-semibold text-purple-200">
+                      {resultadoPedidos.pedidos.length === 0
+                        ? 'Nenhum pedido gerado'
+                        : `${resultadoPedidos.pedidos.length} ${resultadoPedidos.pedidos.length === 1 ? 'pedido gerado' : 'pedidos gerados'} no Estoque Central`}
+                    </p>
+                    <button onClick={() => setResultadoPedidos(null)} className="text-white/30 hover:text-white/60"><X size={14}/></button>
+                  </div>
+                  {resultadoPedidos.pedidos.length > 0 && (
+                    <ul className="space-y-1 text-xs text-white/80">
+                      {resultadoPedidos.pedidos.map(p => (
+                        <li key={p.entrada_id} className="flex items-center gap-2">
+                          <Truck size={12} className="text-purple-300 flex-shrink-0"/>
+                          <span className="font-medium">{p.fornecedor}</span>
+                          <span className="text-white/50">· {p.itens} {p.itens === 1 ? 'item' : 'itens'} · {fmtMoeda(Number(p.valor))}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  {resultadoPedidos.sem_fornecedor.length > 0 && (
+                    <div className="flex items-start gap-2 text-xs text-amber-300 bg-amber-500/10 border border-amber-500/30 rounded-lg px-3 py-2">
+                      <AlertTriangle size={14} className="flex-shrink-0 mt-0.5"/>
+                      <div>
+                        <p className="font-semibold">Sem fornecedor padrão ({resultadoPedidos.sem_fornecedor.length}): {resultadoPedidos.sem_fornecedor.join(', ')}</p>
+                        <p className="text-amber-300/80 mt-0.5">Defina o fornecedor padrão em Cadastros › Itens para esses entrarem no pedido.</p>
+                      </div>
+                    </div>
+                  )}
+                  <p className="text-xs text-white/50">Ao receber a mercadoria, os itens do pedido são marcados como comprados automaticamente.</p>
+                </div>
+              )}
             </div>
 
             {/* Busca */}
@@ -645,21 +741,30 @@ ${grupos.map(grupo => `
                           const ideal = item.estoque_minimo * 1.25;
                           return (
                           <div key={item.id} className={`flex items-start gap-3 px-5 py-3 transition-colors ${item.comprado ? 'bg-green-500/10' : ''} ${salvando === item.id ? 'opacity-60' : ''}`}>
-                            <button onClick={() => toggleComprado(item)} className="mt-0.5 flex-shrink-0">
+                            <button onClick={() => toggleComprado(item)} disabled={!!item.entrada_compra_id}
+                              title={item.entrada_compra_id ? 'Marcado automaticamente ao receber o pedido' : undefined}
+                              className="mt-0.5 flex-shrink-0 disabled:cursor-not-allowed disabled:opacity-50">
                               {item.comprado
                                 ? <CheckCircle2 size={22} className="text-green-500" />
-                                : <Circle size={22} className="text-white/20 hover:text-wine" />}
+                                : <Circle size={22} className={`text-white/20 ${item.entrada_compra_id ? '' : 'hover:text-wine'}`} />}
                             </button>
                             <div className="flex-1 min-w-0">
                               <div className="flex items-start justify-between gap-2">
-                                <p className={`text-sm font-medium ${item.comprado ? 'line-through text-white/60' : 'text-white/90'}`}>{item.nome_item}</p>
+                                <div className="flex items-center gap-2 flex-wrap min-w-0">
+                                  <p className={`text-sm font-medium ${item.comprado ? 'line-through text-white/60' : 'text-white/90'}`}>{item.nome_item}</p>
+                                  {item.entrada_compra_id && (
+                                    <span className="text-caption px-1.5 py-0.5 rounded-md border bg-purple-500/10 text-purple-300 border-purple-500/30 flex items-center gap-1">
+                                      <Send size={10}/> Pedido gerado
+                                    </span>
+                                  )}
+                                </div>
                                 <span className={`flex-shrink-0 text-caption px-1.5 py-0.5 rounded-md border ${TIPO_COLOR[item.tipo_compra] || 'bg-[#12141f]/10 text-white/60 border-white/10'}`}>
                                   {item.tipo_compra === 'rua' ? '🛒 Rua' : item.tipo_compra === 'fornecedor' ? '🚚 Forn.' : '🔀 Ambos'}
                                 </span>
                               </div>
                               <div className="flex items-center gap-3 mt-1 flex-wrap">
-                                <span className="text-xs text-red-500">Estoque: <strong>{fmt(item.estoque_atual, item.estoque_atual % 1 === 0 ? 0 : 2)} {item.unidade_medida}</strong></span>
-                                <span className="text-xs text-white/60">Mín: {fmt(item.estoque_minimo, 0)}</span>
+                                <span className="text-xs text-red-500">Saldo no Central: <strong>{fmt(item.estoque_atual, item.estoque_atual % 1 === 0 ? 0 : 2)} {item.unidade_medida}</strong></span>
+                                <span className="text-xs text-white/60">Ponto de pedido: {fmt(item.estoque_minimo, item.estoque_minimo % 1 === 0 ? 0 : 2)}</span>
                                 {item.estoque_minimo > 0 && <span className="text-xs text-amber-400">Ideal: {fmt(ideal, ideal % 1 === 0 ? 0 : 1)}</span>}
                                 {item.fornecedor_nome && (
                                   <span className="text-xs text-blue-400">📦 {item.fornecedor_nome}{item.fornecedor_tel && ` · ${item.fornecedor_tel}`}</span>

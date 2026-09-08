@@ -2,16 +2,15 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
   Warehouse, MessageSquare,
-  ArrowLeftRight, ClipboardCheck, Factory, Package,
+  ArrowLeftRight, ClipboardCheck, Package,
   ShoppingCart, BarChart3, FileText, Eye,
-  Settings, Zap, ChevronRight,
+  Settings, Zap, ChevronRight, CalendarDays,
 } from 'lucide-react';
 
 import { useAuth } from '../contexts/AuthContext';
 
 // ── Componentes existentes (não tocados) ─────────────────────────────────────
 import EstoquesGerenciamento   from '../components/inventory/EstoquesGerenciamento';
-import MovimentacoesEstoque    from '../components/inventory/MovimentacoesEstoque';
 import ProducaoEstoque         from '../components/inventory/ProducaoEstoque';
 import ComprasEstoque          from '../components/inventory/ComprasEstoque';
 import ItensEstoque            from '../components/inventory/ItensEstoque';
@@ -25,9 +24,9 @@ import DashboardEstoque        from '../components/inventory/DashboardEstoque';
 import ZigVendasSync           from './ZigVendasSync';
 import ListaCompras            from './ListaCompras';
 import RelatoriosEstoque       from '../components/inventory/RelatoriosEstoque';
-import VendasDashboard         from '../components/inventory/VendasDashboard';
 import MapeamentoItensExcel    from '../components/inventory/MapeamentoItensExcel';
 import MovimentacoesCompostas  from '../components/inventory/MovimentacoesCompostas';
+import ComprasDaSemana         from '../components/inventory/ComprasDaSemana';
 
 // ── Componentes novos ────────────────────────────────────────────────────────
 import OperacaoHome      from '../components/inventory/operacao/OperacaoHome';
@@ -37,7 +36,7 @@ import TransferirEstoque from '../components/inventory/operacao/TransferirEstoqu
 type Area = 'operacao' | 'compras' | 'analise' | 'cadastros';
 type Tela =
   | 'home' | 'receber' | 'transferir' | 'produzir' | 'contar' | 'requisicoes'
-  | 'compras' | 'lista-compras'
+  | 'semana' | 'compras' | 'lista-compras'
   | 'dashboard' | 'kardex' | 'inventario' | 'relatorios' | 'zig' | 'movimentacoes-avancadas'
   | 'itens' | 'fichas' | 'estoques' | 'mapeamento';
 
@@ -48,6 +47,7 @@ interface TelaConfig {
 }
 
 const TELAS_COMPRAS: TelaConfig[] = [
+  { key: 'semana',       label: 'Compras da semana', icon: CalendarDays },
   { key: 'compras',      label: 'Compras',        icon: ShoppingCart },
   { key: 'lista-compras', label: 'Lista de Compras', icon: FileText },
 ];
@@ -88,7 +88,7 @@ const TAB_MAP: Record<number, { area: Area; tela: Tela }> = {
 const AdvancedInventory: React.FC = () => {
   const location  = useLocation();
   const navigate  = useNavigate();
-  const { usuario, isAdmin } = useAuth();
+  const { isAdmin } = useAuth();
 
   const isAdminOrMaster = isAdmin();
 
@@ -141,7 +141,7 @@ const AdvancedInventory: React.FC = () => {
   // ── renderizar conteúdo ──────────────────────────────────────────────────
   const renderConteudo = () => {
     // Operação — fluxos específicos
-    if (tela === 'home' || area === 'operacao' && tela === 'home') {
+    if (tela === 'home') {
       return (
         <OperacaoHome
           onAcao={(acao) => {
@@ -161,6 +161,7 @@ const AdvancedInventory: React.FC = () => {
     if (tela === 'requisicoes') return <RequisicoesInternas />;
 
     // Compras
+    if (area === 'compras' && tela === 'semana') return <ComprasDaSemana />;
     if (tela === 'compras')      return <ComprasEstoque />;
     if (tela === 'lista-compras') return <ListaCompras />;
 
