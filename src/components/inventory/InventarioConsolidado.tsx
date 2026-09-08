@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
-  Search, Filter, Download, Eye, X, ChevronUp, ChevronDown,
-  AlertTriangle, Package, Loader2, History,
+  Search, Download, X, ChevronUp, ChevronDown,
+  AlertTriangle, Package, Loader2, History, ShoppingCart, ArrowDownToLine, Info,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { exportToExcel } from '../../utils/reportGenerator';
@@ -47,7 +47,29 @@ interface KardexRow {
   origem_tipo: string | null;
 }
 
-interface Estoque { id: string; nome: string; }
+interface Estoque { id: string; nome: string; tipo: string; }
+
+// Linha de fn_reposicao_central (só os campos usados aqui)
+interface ReposicaoCentral {
+  ponto_pedido: number;
+  cobertura_dias: number | null;
+  consumo_dia: number;
+  situacao: 'zerado' | 'comprar' | 'atencao' | 'ok';
+  criterio: 'manual' | 'consumo' | 'sem_consumo';
+}
+
+type Situacao = 'negativo' | 'zerado' | 'comprar' | 'atencao' | 'abaixo_nivel' | 'ok';
+
+// Situação já resolvida de cada linha (Central x pontas)
+interface RowStatus {
+  situacao: Situacao;
+  label: string;
+  cls: string;
+  isCentral: boolean;
+  referencia: number | null;   // ponto de pedido (Central) ou nível de balcão (pontas)
+  cobertura: number | null;    // só Central
+  criterio?: ReposicaoCentral['criterio'];
+}
 
 type SortField = 'nome' | 'saldo' | 'valor';
 
@@ -66,16 +88,49 @@ function tipoColor(tipo: string) {
   return 'bg-blue-500/15 text-blue-300';
 }
 
-function statusBadge(saldo: number, minimo: number) {
-  if (saldo < 0) return { label: 'Negativo', cls: 'bg-red-500/20 text-red-300' };
-  if (saldo === 0) return { label: 'Zerado', cls: 'bg-white/10 text-white/40' };
-  if (saldo < minimo && minimo > 0) return { label: 'Crítico', cls: 'bg-yellow-500/15 text-yellow-300' };
-  return { label: 'OK', cls: 'bg-green-500/15 text-green-300' };
+const SITUACAO_META: Record<Situacao, { label: string; cls: string }> = {
+  negativo:     { label: 'Negativo',        cls: 'bg-red-500/20 text-red-300' },
+  zerado:       { label: 'Zerado',          cls: 'bg-red-500/15 text-red-300' },
+  comprar:      { label: 'Comprar',         cls: 'bg-amber-500/15 text-amber-300' },
+  atencao:      { label: 'Atenção',         cls: 'bg-yellow-500/15 text-yellow-300' },
+  abaixo_nivel: { label: 'Abaixo do nível', cls: 'bg-orange-500/15 text-orange-300' },
+  ok:           { label: 'OK',              cls: 'bg-green-500/15 text-green-300' },
+};
+
+const CRITERIO_LABEL: Record<ReposicaoCentral['criterio'], string> = {
+  consumo: 'consumo', manual: 'travado', sem_consumo: 'sem histórico',
+};
+
+function resolveStatus(
+  row: VwInventarioRow,
+  isCentral: boolean,
+  rep: ReposicaoCentral | undefined,
+  nivel: number | undefined,
+): RowStatus {
+  const saldo = Number(row.saldo_atual);
+  const base = (situacao: Situacao, extra: Partial<RowStatus> = {}): RowStatus => ({
+    situacao, ...SITUACAO_META[situacao], isCentral, referencia: null, cobertura: null, ...extra,
+  });
+
+  if (isCentral) {
+    const extra = { referencia: rep?.ponto_pedido ?? null, cobertura: rep?.cobertura_dias ?? null, criterio: rep?.criterio };
+    if (saldo < 0) return base('negativo', extra);
+    if (rep) return base(rep.situacao, extra);
+    return base(saldo === 0 ? 'zerado' : 'ok', extra);
+  }
+
+  const extra = { referencia: nivel ?? null };
+  if (saldo < 0) return base('negativo', extra);
+  if (saldo === 0) return base('zerado', extra);
+  if (nivel != null && saldo < nivel) return base('abaixo_nivel', extra);
+  return base('ok', extra);
 }
 
 export default function InventarioConsolidado() {
   const [rows, setRows]         = useState<VwInventarioRow[]>([]);
   const [estoques, setEstoques] = useState<Estoque[]>([]);
+  const [reposicao, setReposicao] = useState<Record<string, ReposicaoCentral>>({});
+  const [niveis, setNiveis]     = useState<Record<string, number>>({}); // `${item_id}|${estoque_id}` → nível
   const [loading, setLoading]   = useState(true);
   const [error, setError]       = useState<string | null>(null);
 
@@ -96,16 +151,38 @@ export default function InventarioConsolidado() {
   async function load() {
     setLoading(true); setError(null);
     try {
-      const [estRes, invRes] = await Promise.all([
-        supabase.from('estoques').select('id, nome').eq('status', true).order('nome'),
+      const [estRes, invRes, repRes, nivRes] = await Promise.all([
+        supabase.from('estoques').select('id, nome, tipo').eq('status', true).order('nome'),
         supabase.from('vw_inventario').select('*').order('item_nome'),
+        supabase.rpc('fn_reposicao_central'),
+        supabase.from('itens_estoque_niveis').select('item_id, estoque_id, nivel_reposicao'),
       ]);
       if (estRes.error) throw estRes.error;
       if (invRes.error) throw invRes.error;
-      setEstoques(estRes.data || []);
+      if (repRes.error) throw repRes.error;
+      if (nivRes.error) throw nivRes.error;
+      setEstoques((estRes.data || []) as Estoque[]);
       setRows((invRes.data || []) as VwInventarioRow[]);
-    } catch (e: any) {
-      setError(e.message || 'Erro ao carregar inventário');
+
+      const repIdx: Record<string, ReposicaoCentral> = {};
+      (repRes.data || []).forEach((r: Record<string, unknown>) => {
+        repIdx[String(r.item_id)] = {
+          ponto_pedido:   Number(r.ponto_pedido ?? 0),
+          cobertura_dias: r.cobertura_dias == null ? null : Number(r.cobertura_dias),
+          consumo_dia:    Number(r.consumo_dia ?? 0),
+          situacao:       (r.situacao as ReposicaoCentral['situacao']) || 'ok',
+          criterio:       (r.criterio as ReposicaoCentral['criterio']) || 'sem_consumo',
+        };
+      });
+      setReposicao(repIdx);
+
+      const nivIdx: Record<string, number> = {};
+      (nivRes.data || []).forEach((n: { item_id: string; estoque_id: string; nivel_reposicao: number | string }) => {
+        nivIdx[`${n.item_id}|${n.estoque_id}`] = Number(n.nivel_reposicao);
+      });
+      setNiveis(nivIdx);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Erro ao carregar inventário');
     } finally {
       setLoading(false);
     }
@@ -125,7 +202,7 @@ export default function InventarioConsolidado() {
         .limit(50);
       if (error) throw error;
       setKardexRows((data || []) as KardexRow[]);
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error(e);
     } finally {
       setKardexLoading(false);
@@ -137,25 +214,39 @@ export default function InventarioConsolidado() {
     [rows]
   );
 
-  const itensFiltrados = useMemo(() => {
-    let r = [...rows];
+  const centralIds = useMemo(
+    () => new Set(estoques.filter(e => e.tipo === 'central').map(e => e.id)),
+    [estoques]
+  );
 
-    if (estoqueFilter !== 'all') r = r.filter(row => row.estoque_id === estoqueFilter);
-    if (categoriaFilter !== 'all') r = r.filter(row => row.item_categoria === categoriaFilter);
+  // Cada linha com a situação já resolvida (Central → fn_reposicao_central; pontas → nível de balcão)
+  const rowsComStatus = useMemo(() =>
+    rows.map(row => ({
+      row,
+      st: resolveStatus(
+        row,
+        centralIds.has(row.estoque_id),
+        reposicao[row.item_id],
+        niveis[`${row.item_id}|${row.estoque_id}`],
+      ),
+    })),
+    [rows, centralIds, reposicao, niveis]
+  );
+
+  const itensFiltrados = useMemo(() => {
+    let r = [...rowsComStatus];
+
+    if (estoqueFilter !== 'all') r = r.filter(({ row }) => row.estoque_id === estoqueFilter);
+    if (categoriaFilter !== 'all') r = r.filter(({ row }) => row.item_categoria === categoriaFilter);
     if (statusFilter !== 'all') {
-      r = r.filter(row => {
-        const s = row.saldo_atual;
-        const min = row.item_estoque_minimo;
-        if (statusFilter === 'negativo') return s < 0;
-        if (statusFilter === 'zerado') return s === 0;
-        if (statusFilter === 'critico') return s > 0 && s < min && min > 0;
-        if (statusFilter === 'ok') return s >= min || min === 0;
-        return true;
+      r = r.filter(({ st }) => {
+        if (statusFilter === 'comprar') return st.isCentral && (st.situacao === 'comprar' || st.situacao === 'zerado');
+        return st.situacao === statusFilter;
       });
     }
     if (searchTerm) {
       const t = searchTerm.toLowerCase();
-      r = r.filter(row =>
+      r = r.filter(({ row }) =>
         row.item_nome.toLowerCase().includes(t) ||
         (row.item_codigo?.toLowerCase().includes(t) ?? false)
       );
@@ -163,14 +254,14 @@ export default function InventarioConsolidado() {
 
     r.sort((a, b) => {
       let cmp = 0;
-      if (sortBy === 'nome')   cmp = a.item_nome.localeCompare(b.item_nome);
-      if (sortBy === 'saldo')  cmp = a.saldo_atual - b.saldo_atual;
-      if (sortBy === 'valor')  cmp = a.valor_total - b.valor_total;
+      if (sortBy === 'nome')   cmp = a.row.item_nome.localeCompare(b.row.item_nome);
+      if (sortBy === 'saldo')  cmp = a.row.saldo_atual - b.row.saldo_atual;
+      if (sortBy === 'valor')  cmp = a.row.valor_total - b.row.valor_total;
       return sortAsc ? cmp : -cmp;
     });
 
     return r;
-  }, [rows, estoqueFilter, categoriaFilter, statusFilter, searchTerm, sortBy, sortAsc]);
+  }, [rowsComStatus, estoqueFilter, categoriaFilter, statusFilter, searchTerm, sortBy, sortAsc]);
 
   function toggleSort(field: SortField) {
     if (sortBy === field) setSortAsc(v => !v);
@@ -185,8 +276,9 @@ export default function InventarioConsolidado() {
   }
 
   function exportar() {
-    const headers = ['Item', 'Código', 'Categoria', 'Estoque', 'Unidade', 'Saldo', 'Custo Unit.', 'Valor Total', 'Status'];
-    const rows = itensFiltrados.map(r => [
+    const headers = ['Item', 'Código', 'Categoria', 'Estoque', 'Unidade', 'Saldo', 'Custo Unit.', 'Valor Total',
+                     'Ponto de pedido / Nível', 'Cobre (dias)', 'Status'];
+    const linhas = itensFiltrados.map(({ row: r, st }) => [
       r.item_nome,
       r.item_codigo || '',
       r.item_categoria || '',
@@ -195,12 +287,22 @@ export default function InventarioConsolidado() {
       String(r.saldo_atual),
       String(r.item_custo_medio),
       String(r.valor_total),
-      statusBadge(r.saldo_atual, r.item_estoque_minimo).label,
+      st.referencia == null ? '' : String(st.referencia),
+      st.cobertura == null ? '' : String(st.cobertura),
+      st.label,
     ]);
-    exportToExcel(rows, 'inventario', headers);
+    exportToExcel(linhas, 'inventario', headers);
   }
 
-  const negativosCount = rows.filter(r => r.saldo_atual < 0).length;
+  const negativosCount    = rowsComStatus.filter(({ st }) => st.situacao === 'negativo').length;
+  const paraComprarCount  = rowsComStatus.filter(({ st }) => st.isCentral && (st.situacao === 'comprar' || st.situacao === 'zerado')).length;
+  const atencaoCount      = rowsComStatus.filter(({ st }) => st.isCentral && st.situacao === 'atencao').length;
+  const abaixoNivelCount  = rowsComStatus.filter(({ st }) => !st.isCentral && st.situacao === 'abaixo_nivel').length;
+
+  // Cabeçalho da coluna de referência acompanha o depósito filtrado
+  const estoqueFiltrado = estoques.find(e => e.id === estoqueFilter);
+  const refHeader = !estoqueFiltrado ? 'Ponto pedido / Nível'
+    : estoqueFiltrado.tipo === 'central' ? 'Ponto de pedido' : 'Nível de balcão';
 
   if (loading) return (
     <div className="flex items-center justify-center py-16">
@@ -216,6 +318,37 @@ export default function InventarioConsolidado() {
 
   return (
     <div className="space-y-5">
+
+      {/* Regra de reposição */}
+      <div className="flex items-center gap-2 text-xs text-white/60">
+        <Info className="w-3.5 h-3.5 shrink-0 text-white/40" />
+        <p>Compra é decidida pelo Estoque Central. Bar e Cozinha se repõem por requisição pelo nível de balcão.</p>
+      </div>
+
+      {/* Resumo */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {[
+          { label: 'Para comprar (Central)',   value: paraComprarCount, icon: ShoppingCart,    cls: 'text-amber-300',  filtro: 'comprar' },
+          { label: 'Atenção (Central)',        value: atencaoCount,     icon: AlertTriangle,   cls: 'text-yellow-300', filtro: 'atencao' },
+          { label: 'Abaixo do nível (pontas)', value: abaixoNivelCount, icon: ArrowDownToLine, cls: 'text-orange-300', filtro: 'abaixo_nivel' },
+          { label: 'Saldo negativo',           value: negativosCount,   icon: AlertTriangle,   cls: 'text-red-300',    filtro: 'negativo' },
+        ].map(({ label, value, icon: Icon, cls, filtro }) => (
+          <button
+            key={label}
+            type="button"
+            onClick={() => setStatusFilter(statusFilter === filtro ? 'all' : filtro)}
+            className={`bg-[#12141f] border rounded-xl p-4 text-left transition-colors hover:bg-white/5 ${
+              statusFilter === filtro ? 'border-white/30' : 'border-white/10'
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <Icon className={`w-4 h-4 ${cls}`} />
+              <p className="text-xs text-white/60">{label}</p>
+            </div>
+            <p className={`text-2xl font-bold mt-1 tabular-nums ${cls}`}>{value}</p>
+          </button>
+        ))}
+      </div>
 
       {/* Alerta negativos */}
       {negativosCount > 0 && (
@@ -261,7 +394,9 @@ export default function InventarioConsolidado() {
         >
           <option value="all">Todos os Status</option>
           <option value="ok">OK</option>
-          <option value="critico">Crítico</option>
+          <option value="comprar">Para comprar (Central)</option>
+          <option value="atencao">Atenção (Central)</option>
+          <option value="abaixo_nivel">Abaixo do nível (pontas)</option>
           <option value="zerado">Zerado</option>
           <option value="negativo">Negativo</option>
         </select>
@@ -310,14 +445,15 @@ export default function InventarioConsolidado() {
                       Valor Total <SortIcon field="valor" />
                     </button>
                   </th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold text-white/60 uppercase tracking-wide whitespace-nowrap">{refHeader}</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold text-white/60 uppercase tracking-wide">Cobre</th>
                   <th className="px-4 py-3 text-center text-xs font-semibold text-white/60 uppercase tracking-wide">Status</th>
                   <th className="px-4 py-3 text-center text-xs font-semibold text-white/60 uppercase tracking-wide">Histórico</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
-                {itensFiltrados.map((row, i) => {
-                  const st = statusBadge(row.saldo_atual, row.item_estoque_minimo);
-                  const negativo = row.saldo_atual < 0;
+                {itensFiltrados.map(({ row, st }, i) => {
+                  const negativo = st.situacao === 'negativo';
                   return (
                     <tr
                       key={`${row.item_id}-${row.estoque_id}-${i}`}
@@ -343,8 +479,24 @@ export default function InventarioConsolidado() {
                       <td className={`px-4 py-3 text-sm font-semibold text-right tabular-nums ${negativo ? 'text-red-300' : 'text-white/80'}`}>
                         {fmtCurrency(row.valor_total)}
                       </td>
+                      {/* Ponto de pedido (Central) ou nível de balcão (pontas) */}
+                      <td className="px-4 py-3 text-right whitespace-nowrap">
+                        {st.referencia == null ? (
+                          <span className="text-sm text-white/30">—</span>
+                        ) : (
+                          <div className="flex items-center justify-end gap-1.5">
+                            <span className="text-sm text-white/80 tabular-nums">{fmtQtd(st.referencia)}</span>
+                            <span className="text-[10px] text-white/40">
+                              {st.isCentral ? (st.criterio ? CRITERIO_LABEL[st.criterio] : 'PP') : 'nível'}
+                            </span>
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-right tabular-nums text-white/60 whitespace-nowrap">
+                        {st.isCentral && st.cobertura != null ? `${fmtQtd(Math.round(st.cobertura * 10) / 10)} dias` : '—'}
+                      </td>
                       <td className="px-4 py-3 text-center">
-                        <span className={`text-xs px-2.5 py-1 rounded-full font-semibold ${st.cls}`}>
+                        <span className={`text-xs px-2.5 py-1 rounded-full font-semibold whitespace-nowrap ${st.cls}`}>
                           {st.label}
                         </span>
                       </td>

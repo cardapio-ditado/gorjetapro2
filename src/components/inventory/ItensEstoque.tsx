@@ -35,11 +35,40 @@ interface ItemEstoque {
   grupo_contagem?: string;
   ignorar_contagem?: boolean;
   entra_no_cmv?: boolean;
+  minimo_manual?: boolean;
   criado_em: string;
   atualizado_em: string;
   quantidade_total?: number;
   valor_total_estoque?: number;
 }
+
+// Linha de fn_reposicao_central (valores numéricos já convertidos com Number())
+interface ReposicaoCentral {
+  item_id: string;
+  ciclo_dias: number | null;
+  saldo_central: number;
+  consumo_dia: number;
+  cobertura_dias: number | null;
+  ponto_pedido: number;
+  criterio: 'manual' | 'consumo' | 'sem_consumo';
+  situacao: 'zerado' | 'comprar' | 'atencao' | 'ok';
+}
+
+const CRITERIO_BADGE: Record<ReposicaoCentral['criterio'], { label: string; cls: string }> = {
+  consumo:     { label: 'consumo',       cls: 'bg-blue-500/15 text-blue-300' },
+  manual:      { label: 'travado',       cls: 'bg-purple-500/15 text-purple-300' },
+  sem_consumo: { label: 'sem histórico', cls: 'bg-white/10 text-white/50' },
+};
+
+const SITUACAO_DOT: Record<ReposicaoCentral['situacao'], { title: string; cls: string }> = {
+  zerado:  { title: 'Zerado no Central',  cls: 'bg-red-500' },
+  comprar: { title: 'Comprar',            cls: 'bg-amber-500' },
+  atencao: { title: 'Atenção',            cls: 'bg-yellow-400' },
+  ok:      { title: 'OK',                 cls: 'bg-green-500' },
+};
+
+const fmtNum = (n: number | null | undefined, digits = 2) =>
+  n == null || isNaN(n) ? '—' : n.toLocaleString('pt-BR', { maximumFractionDigits: digits });
 
 interface FormData {
   nome: string;
@@ -60,6 +89,7 @@ interface FormData {
   grupo_contagem: string;
   ignorar_contagem: boolean;
   entra_no_cmv: boolean;
+  minimo_manual: boolean;
 }
 
 interface IndicadoresItens {
@@ -73,13 +103,15 @@ interface IndicadoresItens {
 
 const ItensEstoque: React.FC = () => {
   const [itens, setItens]             = useState<ItemEstoque[]>([]);
-  const [estoques, setEstoques]       = useState<any[]>([]);
-  const [fornecedores, setFornecedores] = useState<any[]>([]);
+  const [estoques, setEstoques]       = useState<{ id: string; nome: string }[]>([]);
+  const [fornecedores, setFornecedores] = useState<{ id: string; nome: string }[]>([]);
   const [indicadores, setIndicadores] = useState<IndicadoresItens | null>(null);
   const [loading, setLoading]         = useState(true);
   const [error, setError]             = useState<string | null>(null);
   const [showForm, setShowForm]       = useState(false);
   const [editingItem, setEditingItem] = useState<ItemEstoque | null>(null);
+  // Reposição calculada pelo Estoque Central, indexada por item_id
+  const [reposicao, setReposicao]     = useState<Record<string, ReposicaoCentral>>({});
 
   // Filtros
   const [searchTerm, setSearchTerm]       = useState('');
@@ -106,6 +138,7 @@ const ItensEstoque: React.FC = () => {
     status: 'ativo', estoque_minimo: 0, ponto_reposicao: 0,
     estoque_nativo_id: '', tipo_compra: 'ambos', fornecedor_padrao_id: '',
     grupo_contagem: 'outros', ignorar_contagem: false, entra_no_cmv: true,
+    minimo_manual: false,
   });
 
   const categoriasPredefinidas = [
@@ -134,9 +167,9 @@ const ItensEstoque: React.FC = () => {
         if (f.estoqueFilter)  setEstoqueFilter(f.estoqueFilter);
         if (f.grupoFilter)    setGrupoFilter(f.grupoFilter);
         if (f.ignorarFilter)  setIgnorarFilter(f.ignorarFilter);
-      } catch {}
+      } catch { /* filtros salvos inválidos — ignora */ }
     }
-    fetchData(); fetchIndicadores(); fetchEstoques(); fetchFornecedores();
+    fetchData(); fetchIndicadores(); fetchEstoques(); fetchFornecedores(); fetchReposicao();
   }, []);
 
   useEffect(() => {
@@ -166,7 +199,7 @@ const ItensEstoque: React.FC = () => {
       const { data: saldosData, error: saldosError } = await saldosQuery;
       if (saldosError) throw saldosError;
 
-      const saldosPorItem = (saldosData || []).reduce((acc: any, s: any) => {
+      const saldosPorItem = (saldosData || []).reduce((acc: Record<string, { quantidade_total: number; valor_total: number }>, s) => {
         if (!acc[s.item_id]) acc[s.item_id] = { quantidade_total: 0, valor_total: 0 };
         acc[s.item_id].quantidade_total += parseFloat(s.quantidade_atual || 0);
         acc[s.item_id].valor_total      += parseFloat(s.valor_total || 0);
@@ -186,6 +219,27 @@ const ItensEstoque: React.FC = () => {
   const fetchFornecedores = async () => {
     const { data } = await supabase.from('fornecedores').select('id, nome').eq('status', 'ativo').order('nome');
     setFornecedores(data || []);
+  };
+
+  // Carrega o cálculo de reposição do Estoque Central uma vez e indexa por item
+  const fetchReposicao = async () => {
+    const { data, error } = await supabase.rpc('fn_reposicao_central');
+    if (error) { console.error('fn_reposicao_central:', error); return; }
+    const idx: Record<string, ReposicaoCentral> = {};
+    (data || []).forEach((r: Record<string, unknown>) => {
+      const id = String(r.item_id);
+      idx[id] = {
+        item_id:        id,
+        ciclo_dias:     r.ciclo_dias == null ? null : Number(r.ciclo_dias),
+        saldo_central:  Number(r.saldo_central ?? 0),
+        consumo_dia:    Number(r.consumo_dia ?? 0),
+        cobertura_dias: r.cobertura_dias == null ? null : Number(r.cobertura_dias),
+        ponto_pedido:   Number(r.ponto_pedido ?? 0),
+        criterio:       (r.criterio as ReposicaoCentral['criterio']) || 'sem_consumo',
+        situacao:       (r.situacao as ReposicaoCentral['situacao']) || 'ok',
+      };
+    });
+    setReposicao(idx);
   };
 
   const fetchEstoques = async () => {
@@ -219,6 +273,7 @@ const ItensEstoque: React.FC = () => {
         ponto_reposicao:    parseFloat(formData.ponto_reposicao.toString()) || 0,
         estoque_nativo_id:  formData.estoque_nativo_id  || null,
         fornecedor_padrao_id: formData.fornecedor_padrao_id || null,
+        minimo_manual:      !!formData.minimo_manual,
       };
 
       if (editingItem) {
@@ -229,7 +284,7 @@ const ItensEstoque: React.FC = () => {
         const { error } = await supabase.from('itens_estoque').insert([dataToSave]);
         if (error) throw error;
       }
-      setShowForm(false); setEditingItem(null); resetForm(); fetchData(); fetchIndicadores();
+      setShowForm(false); setEditingItem(null); resetForm(); fetchData(); fetchIndicadores(); fetchReposicao();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao salvar item');
     } finally { setLoading(false); }
@@ -266,7 +321,7 @@ const ItensEstoque: React.FC = () => {
         .eq('id', item.id);
       if (error) throw error;
       setItens(prev => prev.map(i => i.id === item.id ? { ...i, ignorar_contagem: !i.ignorar_contagem } : i));
-    } catch (err) { setError('Erro ao atualizar configuração de contagem'); }
+    } catch { setError('Erro ao atualizar configuração de contagem'); }
   };
 
   const openForm = (item?: ItemEstoque) => {
@@ -276,21 +331,22 @@ const ItensEstoque: React.FC = () => {
         nome:               item.nome,
         codigo:             item.codigo || '',
         descricao:          item.descricao || '',
-        tipo_item:          (item.tipo_item as any) || 'insumo',
+        tipo_item:          (item.tipo_item as FormData['tipo_item']) || 'insumo',
         categoria:          item.categoria || 'Geral',
         unidade_medida:     item.unidade_medida,
         custo_medio:        item.custo_medio || 0,
         tem_validade:       item.tem_validade || false,
         observacoes:        item.observacoes || '',
-        status:             item.status as any,
+        status:             item.status as FormData['status'],
         estoque_minimo:     item.estoque_minimo || 0,
         ponto_reposicao:    item.ponto_reposicao || 0,
         estoque_nativo_id:  item.estoque_nativo_id || '',
-        tipo_compra:        (item.tipo_compra as any) || 'ambos',
+        tipo_compra:        (item.tipo_compra as FormData['tipo_compra']) || 'ambos',
         fornecedor_padrao_id: item.fornecedor_padrao_id || '',
         grupo_contagem:     item.grupo_contagem || 'outros',
         ignorar_contagem:   item.ignorar_contagem || false,
         entra_no_cmv:       item.entra_no_cmv !== false,
+        minimo_manual:      item.minimo_manual === true,
       });
     } else {
       setEditingItem(null); resetForm();
@@ -305,6 +361,7 @@ const ItensEstoque: React.FC = () => {
       status: 'ativo', estoque_minimo: 0, ponto_reposicao: 0,
       estoque_nativo_id: '', tipo_compra: 'ambos', fornecedor_padrao_id: '',
       grupo_contagem: 'outros', ignorar_contagem: false, entra_no_cmv: true,
+      minimo_manual: false,
     });
     setShowNewCategoryInput(false); setNewCategoryName('');
   };
@@ -331,13 +388,16 @@ const ItensEstoque: React.FC = () => {
   const exportData = () => {
     if (filteredItens.length === 0) { alert('Não há dados para exportar'); return; }
     const headers = ['Nome','Código','Tipo','Categoria','Grupo Contagem','Não Contar','Unidade',
-                     'Custo Médio','Est. Mínimo','Validade','Status','Observações','Criado em'];
+                     'Custo Médio','Est. Mínimo','Ponto de Pedido','Critério','Situação','Validade','Status','Observações','Criado em'];
     const data = filteredItens.map(item => [
       item.nome, item.codigo || '', item.tipo_item === 'insumo' ? 'Insumo' : 'Produto para Venda',
       item.categoria || 'Geral',
       GRUPOS_CONTAGEM.find(g => g.value === item.grupo_contagem)?.label || item.grupo_contagem || '',
       item.ignorar_contagem ? 'Sim' : 'Não',
       item.unidade_medida, item.custo_medio, item.estoque_minimo,
+      reposicao[item.id]?.ponto_pedido ?? '',
+      reposicao[item.id] ? CRITERIO_BADGE[reposicao[item.id].criterio].label : '',
+      reposicao[item.id]?.situacao ?? '',
       item.tem_validade ? 'Sim' : 'Não', item.status,
       item.observacoes || '', dayjs(item.criado_em).format('DD/MM/YYYY'),
     ]);
@@ -443,7 +503,7 @@ const ItensEstoque: React.FC = () => {
             {estoques.map(e => <option key={e.id} value={e.id}>{e.nome}</option>)}
           </select>
           {/* Status */}
-          <select value={statusFilter} onChange={e => setStatusFilter(e.target.value as any)}
+          <select value={statusFilter} onChange={e => setStatusFilter(e.target.value as typeof statusFilter)}
             className={`border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-wine ${statusFilter!=='all' ? 'border-yellow-400 bg-yellow-500/10' : 'border-white/20'}`}>
             <option value="all">Todos status</option>
             <option value="ativo">Ativo</option>
@@ -456,7 +516,7 @@ const ItensEstoque: React.FC = () => {
             {GRUPOS_CONTAGEM.map(g => <option key={g.value} value={g.value}>{g.label}</option>)}
           </select>
           {/* Ignorar contagem */}
-          <select value={ignorarFilter} onChange={e => setIgnorarFilter(e.target.value as any)}
+          <select value={ignorarFilter} onChange={e => setIgnorarFilter(e.target.value as typeof ignorarFilter)}
             className={`border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-wine ${ignorarFilter!=='all' ? 'border-yellow-400 bg-yellow-500/10' : 'border-white/20'}`}>
             <option value="all">Contagem: todos</option>
             <option value="nao_ignorados">✅ Conta normalmente</option>
@@ -484,7 +544,7 @@ const ItensEstoque: React.FC = () => {
               <thead>
                 <tr className="text-left bg-white/5 border-b">
                   {['Item','Código','Tipo','Categoria','Grupo Contagem','Não Contar',
-                    'Unidade','Custo Médio','Qtd.',`Valor Total`,'Est. Mínimo','Status','Criado em','Ações']
+                    'Unidade','Custo Médio','Qtd.',`Valor Total`,'Ponto de pedido','Status','Criado em','Ações']
                     .map(h => (
                       <th key={h} className="px-4 py-3 text-xs font-medium text-white/60 uppercase tracking-wider whitespace-nowrap">
                         {h}
@@ -493,7 +553,10 @@ const ItensEstoque: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/10">
-                {filteredItens.map(item => (
+                {filteredItens.map(item => {
+                  const rep = reposicao[item.id];
+                  const limiteQtd = rep ? rep.ponto_pedido : item.estoque_minimo;
+                  return (
                   <tr key={item.id} className={`hover:bg-white/10/5 ${item.ignorar_contagem ? 'opacity-60' : ''}`}>
                     <td className="px-4 py-3">
                       <div className="font-medium text-white text-sm">{item.nome}</div>
@@ -541,14 +604,32 @@ const ItensEstoque: React.FC = () => {
                       </span>
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap">
-                      <span className={`text-sm font-medium ${(item.quantidade_total||0) < item.estoque_minimo ? 'text-red-400' : 'text-white'}`}>
+                      <span className={`text-sm font-medium ${(item.quantidade_total||0) < limiteQtd ? 'text-red-400' : 'text-white'}`}>
                         {formatarQuantidade(item.quantidade_total)} {item.unidade_medida}
                       </span>
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap text-sm text-white/80">
                       {formatCurrency(item.valor_total_estoque || 0)}
                     </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-sm text-white/50">{item.estoque_minimo}</td>
+                    {/* Ponto de pedido (calculado pelo Estoque Central) */}
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      {rep ? (
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`w-2 h-2 rounded-full shrink-0 ${SITUACAO_DOT[rep.situacao].cls}`}
+                            title={SITUACAO_DOT[rep.situacao].title}
+                          />
+                          <span className="text-sm text-white/80 tabular-nums">{fmtNum(rep.ponto_pedido, 3)}</span>
+                          <span className={`px-1.5 py-0.5 text-[10px] font-medium rounded-full ${CRITERIO_BADGE[rep.criterio].cls}`}>
+                            {CRITERIO_BADGE[rep.criterio].label}
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="text-sm text-white/40" title="Sem cálculo do Central (item inativo ou sem dados)">
+                          {item.estoque_minimo || '—'}
+                        </span>
+                      )}
+                    </td>
                     <td className="px-4 py-3 whitespace-nowrap">
                       <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${
                         item.status === 'ativo' ? 'text-green-300 bg-green-900/30' : 'text-red-300 bg-red-900/30'
@@ -575,7 +656,8 @@ const ItensEstoque: React.FC = () => {
                       </div>
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -631,7 +713,7 @@ const ItensEstoque: React.FC = () => {
               <div>
                 <label className="block text-sm font-medium text-white/80 mb-1">Tipo *</label>
                 <select value={formData.tipo_item}
-                  onChange={e => setFormData({ ...formData, tipo_item: e.target.value as any })}
+                  onChange={e => setFormData({ ...formData, tipo_item: e.target.value as FormData['tipo_item'] })}
                   className="w-full rounded-xl border-white/20 shadow-sm focus:border-wine focus:ring focus:ring-wine/20">
                   <option value="insumo">Insumo</option>
                   <option value="produto_final">Produto para Venda</option>
@@ -713,13 +795,32 @@ const ItensEstoque: React.FC = () => {
                 </div>
               </div>
 
-              {/* Estoque crítico */}
+              {/* Estoque mínimo (ponto de pedido manual) */}
               <div>
-                <label className="block text-sm font-medium text-white/80 mb-1">Estoque Crítico (Urgente)</label>
+                <label className="block text-sm font-medium text-white/80 mb-1">Estoque Mínimo</label>
                 <input type="number" step="0.001" min="0" value={formData.estoque_minimo}
                   onChange={e => setFormData({ ...formData, estoque_minimo: parseFloat(e.target.value) || 0 })}
                   className="w-full rounded-xl border-white/20 shadow-sm focus:border-wine focus:ring focus:ring-wine/20" />
-                <p className="text-xs text-red-500 mt-1">Abaixo desta qtd = CRÍTICO</p>
+                <p className="text-xs text-white/60 mt-1">
+                  Sem a trava, o ponto de pedido é calculado pelo consumo que sai do Estoque Central; o mínimo digitado só vale para itens sem histórico.
+                </p>
+                <label className={`mt-2 flex items-center gap-2 p-2 rounded-xl cursor-pointer transition-colors border ${
+                  formData.minimo_manual
+                    ? 'bg-purple-500/10 border-purple-500/30 hover:bg-purple-500/15'
+                    : 'bg-white/5 border-transparent hover:bg-white/10'
+                }`}>
+                  <input type="checkbox" checked={formData.minimo_manual}
+                    onChange={e => setFormData({ ...formData, minimo_manual: e.target.checked })}
+                    className="w-4 h-4 rounded text-purple-500 border-white/20 focus:ring-purple-500" />
+                  <div>
+                    <p className={`text-sm font-medium ${formData.minimo_manual ? 'text-purple-300' : 'text-white/80'}`}>
+                      Travar mínimo manual
+                    </p>
+                    <p className="text-xs text-white/60">
+                      {formData.minimo_manual ? 'O mínimo digitado é o ponto de pedido' : 'Ponto de pedido segue o consumo'}
+                    </p>
+                  </div>
+                </label>
               </div>
 
               {/* Ponto de reposição */}
@@ -730,6 +831,41 @@ const ItensEstoque: React.FC = () => {
                   className="w-full rounded-xl border-white/20 shadow-sm focus:border-wine focus:ring focus:ring-wine/20" />
                 <p className="text-xs text-yellow-400 mt-1">Abaixo desta qtd = ESTOQUE BAIXO</p>
               </div>
+
+              {/* Calculado pelo sistema (somente ao editar) */}
+              {editingItem && (() => {
+                const rep = reposicao[editingItem.id];
+                return (
+                  <div className="md:col-span-2 bg-white/5 border border-white/10 rounded-xl p-3">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Target className="w-4 h-4 text-white/60" />
+                      <p className="text-xs font-semibold text-white/60 uppercase tracking-wide">Calculado pelo sistema</p>
+                      {rep && (
+                        <span className={`ml-auto px-1.5 py-0.5 text-[10px] font-medium rounded-full ${CRITERIO_BADGE[rep.criterio].cls}`}>
+                          {CRITERIO_BADGE[rep.criterio].label}
+                        </span>
+                      )}
+                    </div>
+                    {rep ? (
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        {[
+                          { label: 'Consumo/dia',        value: `${fmtNum(rep.consumo_dia, 3)} ${editingItem.unidade_medida}` },
+                          { label: 'Cobre',              value: rep.cobertura_dias == null ? '—' : `${fmtNum(rep.cobertura_dias, 1)} dias` },
+                          { label: 'Ponto de pedido',    value: `${fmtNum(rep.ponto_pedido, 3)} ${editingItem.unidade_medida}` },
+                          { label: 'Ciclo do fornecedor', value: rep.ciclo_dias == null ? 'diário' : `${rep.ciclo_dias} dias` },
+                        ].map(({ label, value }) => (
+                          <div key={label}>
+                            <p className="text-[11px] text-white/50">{label}</p>
+                            <p className="text-sm font-semibold text-white tabular-nums">{value}</p>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-white/50">Sem cálculo disponível para este item (inativo ou sem dados no Estoque Central).</p>
+                    )}
+                  </div>
+                );
+              })()}
 
               {/* Estoque nativo */}
               <div>
@@ -746,7 +882,7 @@ const ItensEstoque: React.FC = () => {
               <div>
                 <label className="block text-sm font-medium text-white/80 mb-1">Tipo de Compra *</label>
                 <select value={formData.tipo_compra}
-                  onChange={e => setFormData({ ...formData, tipo_compra: e.target.value as any })}
+                  onChange={e => setFormData({ ...formData, tipo_compra: e.target.value as FormData['tipo_compra'] })}
                   className="w-full rounded-xl border-white/20 shadow-sm focus:border-wine focus:ring focus:ring-wine/20">
                   <option value="ambos">Ambos</option>
                   <option value="fornecedor">Apenas Fornecedor</option>

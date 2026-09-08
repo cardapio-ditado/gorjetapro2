@@ -1,10 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { Tab } from '@headlessui/react';
-import { Plus, Search, Filter, CreditCard as Edit, Trash2, Download, Building2, Users, CreditCard, Tag, Banknote, Building, Eye, EyeOff, FileText, CheckCircle, XCircle, Settings, BarChart3, Vault } from 'lucide-react';
+import { Plus, Search, CreditCard as Edit, Trash2, Download, Building2, Users, CreditCard, Tag, Banknote, Building, Eye, EyeOff, FileText, CheckCircle, XCircle, BarChart3, Vault } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import FinancialCategories from '../components/financeiro/FinancialCategories';
 import DRESimplificado from '../components/diretoria/DRESimplificado';
-import { PageHeader } from '../components/ui';
+
+// Dias da semana ISO (1 = Seg ... 7 = Dom) usados em fornecedores.dias_compra
+const WEEKDAYS: { value: number; label: string }[] = [
+  { value: 1, label: 'Seg' }, { value: 2, label: 'Ter' }, { value: 3, label: 'Qua' },
+  { value: 4, label: 'Qui' }, { value: 5, label: 'Sex' }, { value: 6, label: 'Sáb' },
+  { value: 7, label: 'Dom' },
+];
+
+const normalizeWeekdays = (v: unknown): number[] =>
+  Array.isArray(v) ? v.map(Number).filter(n => n >= 1 && n <= 7) : [];
 
 interface CostCenter {
   id: string;
@@ -25,6 +34,8 @@ interface Supplier {
   observacoes?: string;
   categoria_padrao_id?: string;
   tipo: 'geral' | 'musico' | 'rh';
+  ciclo_compra_dias?: number | null;
+  dias_compra?: number[] | null;
   status: 'ativo' | 'inativo';
   criado_em: string;
 }
@@ -217,6 +228,15 @@ const GeneralRegistrations: React.FC = () => {
         dataToSave.saldo_inicial = parseFloat(dataToSave.saldo_inicial) || 0;
         dataToSave.saldo_atual = parseFloat(dataToSave.saldo_atual) || 0;
       }
+
+      // Fornecedores: dias_compra vai como integer[] ou null (nenhum dia = qualquer dia)
+      if (selectedTab === 1) {
+        const dias = normalizeWeekdays(dataToSave.dias_compra);
+        dataToSave.dias_compra = dias.length > 0 ? dias : null;
+        if (dataToSave.ciclo_compra_dias === '' || dataToSave.ciclo_compra_dias === undefined) {
+          dataToSave.ciclo_compra_dias = null;
+        }
+      }
       
       if (editingItem) {
         const { error } = await supabase
@@ -399,6 +419,33 @@ const GeneralRegistrations: React.FC = () => {
                     onChange={(e) => setFormData({ ...formData, [field.name]: e.target.checked })}
                     className="rounded border-white/20 text-wine focus:ring-wine"
                   />
+                ) : field.type === 'weekdays' ? (
+                  <div className="flex flex-wrap gap-1.5">
+                    {WEEKDAYS.map((d) => {
+                      const selecionados = normalizeWeekdays(formData[field.name]);
+                      const ativo = selecionados.includes(d.value);
+                      return (
+                        <button
+                          key={d.value}
+                          type="button"
+                          aria-pressed={ativo}
+                          onClick={() => {
+                            const next = ativo
+                              ? selecionados.filter((n) => n !== d.value)
+                              : [...selecionados, d.value].sort((a, b) => a - b);
+                            setFormData({ ...formData, [field.name]: next.length > 0 ? next : null });
+                          }}
+                          className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors ${
+                            ativo
+                              ? 'bg-wine text-white border-wine'
+                              : 'bg-white/5 text-white/60 border-white/10 hover:bg-white/10'
+                          }`}
+                        >
+                          {d.label}
+                        </button>
+                      );
+                    })}
+                  </div>
                 ) : (
                   <input
                     type={field.type}
@@ -472,7 +519,8 @@ const GeneralRegistrations: React.FC = () => {
               }))
             ]
           },
-          { name: 'ciclo_compra_dias', label: 'Ciclo de compra (dias)', type: 'number', helpText: 'Deixe vazio para compra diária' },
+          { name: 'ciclo_compra_dias', label: 'Ciclo de compra (dias)', type: 'number', helpText: 'Preenchido pelo histórico de compras; ajuste se precisar. Vazio = compra diária.' },
+          { name: 'dias_compra', label: 'Dias de compra', type: 'weekdays', helpText: 'Nenhum selecionado = qualquer dia.' },
           { name: 'endereco', label: 'Endereço', type: 'textarea', fullWidth: true },
           { name: 'observacoes', label: 'Observações', type: 'textarea', fullWidth: true },
           { name: 'status', label: 'Status', type: 'select', required: true, options: [
@@ -642,6 +690,35 @@ const GeneralRegistrations: React.FC = () => {
                 {item.categoria_padrao_id ? getCategoryName(item.categoria_padrao_id) : '-'}
               </span>
             )
+          },
+          {
+            key: 'compra',
+            label: 'Compra',
+            render: (item: any) => {
+              const ciclo = item.ciclo_compra_dias ? Number(item.ciclo_compra_dias) : null;
+              const dias = normalizeWeekdays(item.dias_compra);
+              if (!ciclo && dias.length === 0) return <span className="text-white/30">—</span>;
+              return (
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs text-white/70">{ciclo ? `${ciclo}d` : 'diário'}</span>
+                  {dias.length > 0 && (
+                    <span className="flex gap-0.5">
+                      {WEEKDAYS.map((d) => (
+                        <span
+                          key={d.value}
+                          title={d.label}
+                          className={`w-4 h-4 rounded text-[10px] leading-4 text-center ${
+                            dias.includes(d.value) ? 'bg-wine/40 text-white' : 'bg-white/5 text-white/20'
+                          }`}
+                        >
+                          {d.label.charAt(0)}
+                        </span>
+                      ))}
+                    </span>
+                  )}
+                </div>
+              );
+            }
           },
           {
             key: 'status',
