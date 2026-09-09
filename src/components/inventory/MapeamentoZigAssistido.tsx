@@ -215,6 +215,10 @@ export default function MapeamentoZigAssistido() {
   const [filtro, setFiltro]     = useState<FiltroKey>('precisa');
   const [busca, setBusca]       = useState('');
   const [aberto, setAberto]     = useState<string|null>(null);
+  // Produtos decididos enquanto esta visão estava aberta continuam na lista até
+  // o filtro ou a busca mudar; senão a linha some no primeiro clique e o
+  // editor fecha antes de a pessoa terminar de ajustar.
+  const [fixados, setFixados]   = useState<Set<string>>(new Set());
   const [dec, setDec]           = useState<Record<string, Decisao>>({});     // decisões salvas nesta sessão
   const [draft, setDraft]       = useState<Record<string, Decisao>>({});     // rascunhos em edição
   const [salvando, setSalvando] = useState<Record<string, boolean>>({});
@@ -299,6 +303,7 @@ export default function MapeamentoZigAssistido() {
     setSalvando(s => { const n = { ...s }; delete n[p.id]; return n; });
     if (error) { setStatus({ texto: `Não salvou "${p.nome}": ${error.message}`, erro: true }); return false; }
     setDec(prev => ({ ...prev, [p.id]: { ...d } }));
+    setFixados(prev => (prev.has(p.id) ? prev : new Set(prev).add(p.id)));
     setStatus({ texto: 'Salvo · ' + hora(), erro: false });
     return true;
   }, []);
@@ -332,7 +337,9 @@ export default function MapeamentoZigAssistido() {
   const altas = contagens.alta;
   const q = normalizar(busca);
   const fn = FILTROS.find(f => f.key === filtro)!.fn;
-  const linhas = produtos.filter(p => fn(p, decidido(p)) && (!q || normalizar(p.nome).includes(q) || normalizar(p.sug.alvo_nome).includes(q) || normalizar(p.atual.alvo).includes(q) || normalizar(dec[p.id]?.alvo_nome).includes(q)));
+  const casaBusca = (p: Produto) => !q || normalizar(p.nome).includes(q) || normalizar(p.sug.alvo_nome).includes(q) || normalizar(p.atual.alvo).includes(q) || normalizar(dec[p.id]?.alvo_nome).includes(q);
+  // A linha aberta e as decididas nesta visão ficam, mesmo que o filtro já não as inclua.
+  const linhas = produtos.filter(p => p.id === aberto || fixados.has(p.id) || (fn(p, decidido(p)) && casaBusca(p)));
   const pct = pendentesIniciais ? Math.min(100, Math.round(100 * decididos / pendentesIniciais)) : 0;
 
   if (erroCarga) {
@@ -365,12 +372,12 @@ export default function MapeamentoZigAssistido() {
         <div className="flex flex-wrap items-center gap-2">
           <label className="flex-1 min-w-[240px] flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-2">
             <Search size={14} className="text-white/40 shrink-0"/>
-            <input type="search" value={busca} onChange={e => setBusca(e.target.value)} placeholder="produto, item ou ficha" autoComplete="off"
+            <input type="search" value={busca} onChange={e => { setBusca(e.target.value); setFixados(new Set()); }} placeholder="produto, item ou ficha" autoComplete="off"
               className="flex-1 min-w-0 bg-transparent outline-none text-sm text-white placeholder:text-white/30"/>
           </label>
           <div className="flex flex-wrap gap-1.5">
             {FILTROS.map(f => (
-              <button key={f.key} type="button" onClick={() => setFiltro(f.key)} aria-pressed={filtro === f.key}
+              <button key={f.key} type="button" onClick={() => { setFiltro(f.key); setFixados(new Set()); }} aria-pressed={filtro === f.key}
                 className={`px-2.5 py-1.5 rounded-lg text-xs border transition-colors inline-flex items-center gap-1.5 ${filtro === f.key ? 'bg-wine border-wine text-white' : 'bg-white/5 border-white/10 text-white/60 hover:text-white'}`}>
                 {f.label}<b className={`font-mono text-[10px] font-medium ${filtro === f.key ? 'text-white/80' : 'text-white/40'}`}>{contagens[f.key]}</b>
               </button>
