@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import {
   CalendarDays, RefreshCw, Search, X, Truck, Store, AlertTriangle,
   ChevronDown, ChevronRight, Phone, Send, CheckCircle2, ShoppingCart,
-  Package, Info, ExternalLink, Users, Wallet,
+  Package, Info, ExternalLink, Users, Wallet, ClipboardList, Copy, Check, MessageCircle,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
@@ -55,6 +55,27 @@ interface Mensagem {
   texto: string;
   link?: string;
   linkLabel?: string;
+  /** Link externo (abre em nova aba) — usado para a lista do comprador */
+  linkExterno?: { href: string; label: string };
+}
+
+interface ListaDoDia {
+  lista_id: string;
+  numero: string;
+  titulo: string;
+  status: string;
+  itens: number;
+  comprados: number;
+  valor: number;
+  fornecedores: number;
+}
+
+function urlListaPublica(listaId: string): string {
+  return `${window.location.origin}/compras-publica/${listaId}`;
+}
+
+function urlWhatsApp(titulo: string, url: string): string {
+  return `https://wa.me/?text=${encodeURIComponent(`Lista de compras de hoje, ${titulo}: ${url}`)}`;
 }
 
 // ─── Constantes ──────────────────────────────────────────────────────────────
@@ -271,13 +292,87 @@ function MensagemBox({ msg, onFechar }: { msg: Mensagem; onFechar: () => void })
       {ok ? <CheckCircle2 size={16} className="flex-shrink-0 mt-0.5" /> : <AlertTriangle size={16} className="flex-shrink-0 mt-0.5" />}
       <div className="flex-1 min-w-0">
         <p>{msg.texto}</p>
-        {msg.link && (
-          <Link to={msg.link} className="inline-flex items-center gap-1 mt-1 text-xs font-semibold underline underline-offset-2 hover:opacity-80">
-            <ExternalLink size={12} /> {msg.linkLabel || 'Abrir'}
-          </Link>
-        )}
+        <div className="flex items-center gap-3 flex-wrap">
+          {msg.link && (
+            <Link to={msg.link} className="inline-flex items-center gap-1 mt-1 text-xs font-semibold underline underline-offset-2 hover:opacity-80">
+              <ExternalLink size={12} /> {msg.linkLabel || 'Abrir'}
+            </Link>
+          )}
+          {msg.linkExterno && (
+            <a href={msg.linkExterno.href} target="_blank" rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 mt-1 text-xs font-semibold underline underline-offset-2 hover:opacity-80">
+              <ClipboardList size={12} /> {msg.linkExterno.label}
+            </a>
+          )}
+        </div>
       </div>
       <button onClick={onFechar} className="text-white/30 hover:text-white/60 flex-shrink-0"><X size={14} /></button>
+    </div>
+  );
+}
+
+function PainelListaDoDia({ lista }: { lista: ListaDoDia }) {
+  const [copiado, setCopiado] = useState(false);
+  const [mostrarUrl, setMostrarUrl] = useState(false);
+  const url = urlListaPublica(lista.lista_id);
+
+  useEffect(() => {
+    if (!copiado) return;
+    const t = setTimeout(() => setCopiado(false), 2500);
+    return () => clearTimeout(t);
+  }, [copiado]);
+
+  const copiarLink = async () => {
+    try {
+      if (!navigator.clipboard?.writeText) throw new Error('clipboard indisponível');
+      await navigator.clipboard.writeText(url);
+      setCopiado(true); setMostrarUrl(false);
+    } catch {
+      setMostrarUrl(true);
+    }
+  };
+
+  return (
+    <div className="bg-[#12141f] rounded-2xl border border-wine/50 ring-1 ring-wine/20 px-5 py-4">
+      <div className="flex items-start justify-between gap-3 flex-wrap">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="w-10 h-10 bg-wine/20 rounded-xl flex items-center justify-center flex-shrink-0">
+            <ClipboardList size={20} className="text-wine" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-white font-bold leading-tight">
+              Lista do comprador de hoje <span className="text-white/50 font-medium">· {lista.numero}</span>
+            </p>
+            <p className="text-xs text-white/60 mt-0.5">
+              {lista.itens} {lista.itens === 1 ? 'item' : 'itens'} ({lista.comprados} {lista.comprados === 1 ? 'comprado' : 'comprados'})
+              {' · '}{fmtMoeda(lista.valor)}
+              {' · '}{lista.fornecedores} {lista.fornecedores === 1 ? 'fornecedor' : 'fornecedores'}
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2 flex-wrap">
+          <a href={url} target="_blank" rel="noopener noreferrer"
+            className="flex items-center gap-1.5 bg-wine hover:bg-[#6a1a25] text-white text-sm font-semibold px-3 py-2 rounded-xl transition-colors">
+            <ExternalLink size={14} /> Abrir lista
+          </a>
+          <button onClick={copiarLink}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-white/10 text-sm font-medium text-white/70 hover:bg-white/5 transition-colors">
+            {copiado ? <Check size={14} className="text-green-400" /> : <Copy size={14} />}
+            {copiado ? 'Copiado' : 'Copiar link'}
+          </button>
+          <a href={urlWhatsApp(lista.titulo, url)} target="_blank" rel="noopener noreferrer"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-green-500/30 bg-green-500/10 text-sm font-medium text-green-300 hover:bg-green-500/20 transition-colors">
+            <MessageCircle size={14} /> Enviar no WhatsApp
+          </a>
+        </div>
+      </div>
+      {mostrarUrl && (
+        <div className="mt-3">
+          <p className="text-caption text-white/50 mb-1">Não foi possível copiar automaticamente. Selecione e copie o link:</p>
+          <input readOnly value={url} onFocus={e => e.target.select()}
+            className="w-full text-xs border border-white/10 rounded-lg px-2 py-1.5 bg-[#0c1018] text-white/80 focus:outline-none focus:ring-2 focus:ring-wine/30" />
+        </div>
+      )}
     </div>
   );
 }
@@ -297,6 +392,31 @@ export default function ComprasDaSemana() {
   const [quantidades, setQuantidades] = useState<Record<string, number>>({});
   const [gerando, setGerando] = useState<string | null>(null);
   const [mensagens, setMensagens] = useState<Record<string, Mensagem>>({});
+  const [listaDia, setListaDia] = useState<ListaDoDia | null>(null);
+
+  const carregarListaDia = useCallback(async (): Promise<ListaDoDia | null> => {
+    try {
+      const { data, error } = await supabase.rpc('fn_lista_do_dia_resumo');
+      if (error || !data) { setListaDia(null); return null; }
+      const r = data as Record<string, unknown>;
+      if (!r.lista_id) { setListaDia(null); return null; }
+      const l: ListaDoDia = {
+        lista_id: String(r.lista_id),
+        numero: String(r.numero ?? ''),
+        titulo: String(r.titulo ?? ''),
+        status: String(r.status ?? ''),
+        itens: Number(r.itens ?? 0),
+        comprados: Number(r.comprados ?? 0),
+        valor: Number(r.valor ?? 0),
+        fornecedores: Number(r.fornecedores ?? 0),
+      };
+      setListaDia(l);
+      return l;
+    } catch {
+      setListaDia(null);
+      return null;
+    }
+  }, []);
 
   const carregar = useCallback(async () => {
     setCarregando(true); setErro('');
@@ -320,7 +440,7 @@ export default function ComprasDaSemana() {
     }
   }, []);
 
-  useEffect(() => { carregar(); }, [carregar]);
+  useEffect(() => { carregar(); carregarListaDia(); }, [carregar, carregarListaDia]);
 
   // ── Filtros ──
   const buscaLower = busca.trim().toLowerCase();
@@ -409,14 +529,16 @@ export default function ComprasDaSemana() {
         p_observacoes: `Gerado em Compras da semana (${new Date().toLocaleDateString('pt-BR')})`,
       });
       if (error) { setMsg(key, { tipo: 'erro', texto: error.message }); return; }
-      const r = (data || {}) as { entrada_id?: string; itens?: number; valor?: number };
+      const r = (data || {}) as { entrada_id?: string; itens?: number; valor?: number; lista_id?: string; lista_numero?: string };
+      const numLista = r.lista_numero || 'de hoje';
       setMsg(key, {
         tipo: 'ok',
-        texto: `Pedido gerado para ${card.nome}: ${Number(r.itens ?? sel.length)} ${Number(r.itens ?? sel.length) === 1 ? 'item' : 'itens'}, ${fmtMoeda(Number(r.valor ?? 0))}. Fica pendente no Estoque Central até o recebimento.`,
+        texto: `Pedido gerado para ${card.nome}: ${Number(r.itens ?? sel.length)} ${Number(r.itens ?? sel.length) === 1 ? 'item' : 'itens'}, ${fmtMoeda(Number(r.valor ?? 0))}. Fica pendente no Estoque Central até o recebimento. Adicionado à lista do comprador ${numLista}.`,
         link: '/advanced-inventory?area=operacao&tela=receber',
         linkLabel: 'Receber mercadoria',
+        linkExterno: r.lista_id ? { href: urlListaPublica(r.lista_id), label: 'Abrir lista' } : undefined,
       });
-      await carregar();
+      await Promise.all([carregar(), carregarListaDia()]);
     } catch (e: unknown) {
       setMsg(key, { tipo: 'erro', texto: e instanceof Error ? e.message : String(e) });
     } finally {
@@ -438,11 +560,12 @@ export default function ComprasDaSemana() {
       const r = (data || {}) as { lista_id?: string; numero?: string; itens?: number; valor?: number };
       setMsg(key, {
         tipo: 'ok',
-        texto: `Lista ${r.numero || ''} gerada: ${Number(r.itens ?? sel.length)} ${Number(r.itens ?? sel.length) === 1 ? 'item' : 'itens'}, ${fmtMoeda(Number(r.valor ?? 0))}.`,
+        texto: `Lista de rua gerada: ${Number(r.itens ?? sel.length)} ${Number(r.itens ?? sel.length) === 1 ? 'item' : 'itens'}, ${fmtMoeda(Number(r.valor ?? 0))}. Adicionado à lista do comprador ${r.numero || 'de hoje'}.`,
         link: '/advanced-inventory?area=compras&tela=lista-compras',
         linkLabel: 'Abrir listas de compras',
+        linkExterno: r.lista_id ? { href: urlListaPublica(r.lista_id), label: 'Abrir lista' } : undefined,
       });
-      await carregar();
+      await Promise.all([carregar(), carregarListaDia()]);
     } catch (e: unknown) {
       setMsg(key, { tipo: 'erro', texto: e instanceof Error ? e.message : String(e) });
     } finally {
@@ -529,6 +652,9 @@ export default function ComprasDaSemana() {
           );
         })}
       </div>
+
+      {/* Lista do comprador de hoje */}
+      {listaDia && <PainelListaDoDia lista={listaDia} />}
 
       {/* Busca */}
       <div className="relative max-w-sm">

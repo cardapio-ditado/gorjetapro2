@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { CheckCircle2, Circle, ShoppingCart, RefreshCw, Package, ChevronDown, ChevronRight } from 'lucide-react';
+import { CheckCircle2, Circle, ShoppingCart, RefreshCw, Package, ChevronDown, ChevronRight, Phone, Share2, Store, Truck, Send } from 'lucide-react';
 
 const SUPABASE_URL  = import.meta.env.VITE_SUPABASE_URL as string;
 const SUPABASE_ANON = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
@@ -18,6 +18,54 @@ interface ItemLista {
   custo_unitario: number; custo_estimado: number;
   comprado: boolean; comprado_em: string | null;
   observacao: string | null;
+  entrada_compra_id: string | null;
+}
+
+interface Grupo {
+  key: string;
+  nome: string;
+  tipo: 'rua' | 'fornecedor' | 'sem';
+  telefone: string | null;
+  itens: ItemLista[];
+  /** true quando todos os itens já viraram pedido ao fornecedor (só receber/conferir) */
+  pedidoEnviado: boolean;
+}
+
+const KEY_RUA = '__rua';
+const KEY_SEM = '__sem';
+
+function chaveGrupo(i: ItemLista): string {
+  if (i.tipo_compra === 'rua') return KEY_RUA;
+  if (i.tipo_compra === 'fornecedor' || i.fornecedor_nome) return `forn:${(i.fornecedor_nome || '').trim() || 'Fornecedor'}`;
+  return KEY_SEM;
+}
+
+function agrupar(itens: ItemLista[]): Grupo[] {
+  const map = new Map<string, Grupo>();
+  for (const i of itens) {
+    const key = chaveGrupo(i);
+    let g = map.get(key);
+    if (!g) {
+      g = {
+        key,
+        nome: key === KEY_RUA ? 'Compra de rua' : key === KEY_SEM ? 'Sem fornecedor' : key.slice(5),
+        tipo: key === KEY_RUA ? 'rua' : key === KEY_SEM ? 'sem' : 'fornecedor',
+        telefone: null,
+        itens: [],
+        pedidoEnviado: false,
+      };
+      map.set(key, g);
+    }
+    if (!g.telefone && i.fornecedor_tel) g.telefone = i.fornecedor_tel;
+    g.itens.push(i);
+  }
+  const grupos = [...map.values()];
+  for (const g of grupos) {
+    g.itens.sort((a, b) => a.nome_item.localeCompare(b.nome_item, 'pt-BR'));
+    g.pedidoEnviado = g.itens.length > 0 && g.itens.every(i => !!i.entrada_compra_id);
+  }
+  const ordem = (g: Grupo) => (g.tipo === 'rua' ? 0 : g.tipo === 'fornecedor' ? 1 : 2);
+  return grupos.sort((a, b) => ordem(a) - ordem(b) || a.nome.localeCompare(b.nome, 'pt-BR'));
 }
 
 interface Lista {
@@ -56,14 +104,14 @@ export default function ListaComprasPublica() {
     try {
       const [rLista, rItens] = await Promise.all([
         fetch(`${SUPABASE_URL}/rest/v1/listas_compra?id=eq.${id}&select=*`, { headers }),
-        fetch(`${SUPABASE_URL}/rest/v1/listas_compra_itens?lista_id=eq.${id}&order=categoria,nome_item`, { headers }),
+        fetch(`${SUPABASE_URL}/rest/v1/listas_compra_itens?lista_id=eq.${id}&order=fornecedor_nome,nome_item`, { headers }),
       ]);
       const [dLista, dItens] = await Promise.all([rLista.json(), rItens.json()]);
       if (!dLista[0]) { setErro('Lista não encontrada.'); return; }
       setLista(dLista[0]);
       if (Array.isArray(dItens)) {
         setItens(dItens);
-        setExpandidas(new Set(dItens.map((i: ItemLista) => i.categoria)));
+        setExpandidas(new Set(dItens.map((i: ItemLista) => chaveGrupo(i))));
       }
     } catch {
       setErro('Erro ao carregar a lista. Tente novamente.');
@@ -90,9 +138,14 @@ export default function ListaComprasPublica() {
     setSalvando(null);
   };
 
-  const categorias = [...new Set(itens.map(i => i.categoria))].sort();
+  const grupos = agrupar(itens);
   const totalComprados = itens.filter(i => i.comprado).length;
   const pct = itens.length > 0 ? Math.round((totalComprados / itens.length) * 100) : 0;
+
+  const urlAtual = typeof window !== 'undefined' ? window.location.href : '';
+  const linkWhatsApp = lista
+    ? `https://wa.me/?text=${encodeURIComponent(`Lista de compras de hoje, ${lista.titulo}: ${urlAtual}`)}`
+    : '';
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center" style={{ background: '#080c14' }}>
@@ -120,13 +173,18 @@ export default function ListaComprasPublica() {
       <div style={{ background: 'linear-gradient(135deg, #7D1F2C 0%, #5a1520 60%, #3d0f16 100%)' }}>
         <div className="max-w-2xl mx-auto px-4 py-5">
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.15)' }}>
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(255,255,255,0.15)' }}>
               <ShoppingCart size={20} className="text-white" />
             </div>
-            <div>
+            <div className="flex-1 min-w-0">
               <h1 className="text-xl font-bold text-white leading-tight">{lista.numero}</h1>
-              <p className="text-white/60 text-sm">{lista.titulo}</p>
+              <p className="text-white/60 text-sm truncate">{lista.titulo}</p>
             </div>
+            <a href={linkWhatsApp} target="_blank" rel="noopener noreferrer"
+              className="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium text-white transition-colors hover:bg-white/20"
+              style={{ background: 'rgba(255,255,255,0.15)' }}>
+              <Share2 size={15} /> Compartilhar
+            </a>
           </div>
 
           {/* Progresso */}
@@ -148,29 +206,48 @@ export default function ListaComprasPublica() {
 
       {/* Itens */}
       <div className="max-w-2xl mx-auto px-4 py-4 space-y-3">
-        {categorias.map(cat => {
-          const itensCat = itens.filter(i => i.categoria === cat);
-          const comprados = itensCat.filter(i => i.comprado).length;
-          const isExp = expandidas.has(cat);
+        {grupos.map(grupo => {
+          const { key, itens: itensGrupo } = grupo;
+          const comprados = itensGrupo.filter(i => i.comprado).length;
+          const isExp = expandidas.has(key);
+          const borda = grupo.tipo === 'rua' ? 'rgba(249,115,22,0.3)' : grupo.tipo === 'sem' ? 'rgba(239,68,68,0.25)' : 'rgba(255,255,255,0.08)';
+          const Icone = grupo.tipo === 'rua' ? Store : grupo.tipo === 'fornecedor' ? Truck : Package;
+          const corIcone = grupo.tipo === 'rua' ? 'text-orange-400' : grupo.tipo === 'fornecedor' ? 'text-blue-400' : 'text-red-400';
           return (
-            <div key={cat} className="rounded-2xl overflow-hidden" style={{ background: '#101520', border: '1px solid rgba(255,255,255,0.08)' }}>
+            <div key={key} className="rounded-2xl overflow-hidden" style={{ background: '#101520', border: `1px solid ${borda}` }}>
               <button
-                onClick={() => setExpandidas(prev => { const s = new Set(prev); if (s.has(cat)) s.delete(cat); else s.add(cat); return s; })}
-                className="w-full flex items-center justify-between px-4 py-3 transition-colors hover:bg-white/5"
+                onClick={() => setExpandidas(prev => { const s = new Set(prev); if (s.has(key)) s.delete(key); else s.add(key); return s; })}
+                className="w-full flex items-start justify-between gap-2 px-4 py-3 transition-colors hover:bg-white/5 text-left"
               >
-                <div className="flex items-center gap-2">
-                  {isExp ? <ChevronDown size={15} className="text-white/30" /> : <ChevronRight size={15} className="text-white/30" />}
-                  <span className="font-semibold text-white/90 text-sm">{cat}</span>
-                  <span className="text-xs text-white/60">{itensCat.length} itens</span>
+                <div className="flex items-start gap-2 min-w-0">
+                  {isExp ? <ChevronDown size={15} className="text-white/30 flex-shrink-0 mt-0.5" /> : <ChevronRight size={15} className="text-white/30 flex-shrink-0 mt-0.5" />}
+                  <Icone size={15} className={`${corIcone} flex-shrink-0 mt-0.5`} />
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-semibold text-white/90 text-sm">{grupo.nome}</span>
+                      <span className="text-xs text-white/60">{itensGrupo.length} {itensGrupo.length === 1 ? 'item' : 'itens'}</span>
+                      {grupo.telefone && (
+                        <a href={`tel:${grupo.telefone.replace(/\s/g, '')}`} onClick={e => e.stopPropagation()}
+                          className="inline-flex items-center gap-1 text-xs text-blue-400 hover:underline">
+                          <Phone size={11} /> {grupo.telefone}
+                        </a>
+                      )}
+                    </div>
+                    {grupo.pedidoEnviado && (
+                      <p className="inline-flex items-center gap-1 text-xs text-blue-300/80 mt-1">
+                        <Send size={11} /> Pedido já enviado ao fornecedor — só receber e conferir
+                      </p>
+                    )}
+                  </div>
                 </div>
                 {comprados > 0 && (
-                  <span className="text-xs text-green-400 font-medium">{comprados}/{itensCat.length} ✓</span>
+                  <span className="text-xs text-green-400 font-medium flex-shrink-0">{comprados}/{itensGrupo.length} ✓</span>
                 )}
               </button>
 
               {isExp && (
                 <div className="divide-y" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
-                  {itensCat.map(item => (
+                  {itensGrupo.map(item => (
                     <button
                       key={item.id}
                       onClick={() => toggleComprado(item)}
@@ -195,10 +272,10 @@ export default function ListaComprasPublica() {
                               {item.tipo_compra === 'rua' ? 'Rua' : 'Fornecedor'}
                             </span>
                           )}
+                          {item.categoria && (
+                            <span className="text-caption text-white/40">{item.categoria}</span>
+                          )}
                         </div>
-                        {item.fornecedor_nome && (
-                          <p className="text-xs text-blue-400 mt-0.5">{item.fornecedor_nome}{item.fornecedor_tel && ` · ${item.fornecedor_tel}`}</p>
-                        )}
                       </div>
                     </button>
                   ))}
