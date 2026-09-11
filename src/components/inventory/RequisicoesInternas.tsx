@@ -53,13 +53,13 @@ interface Requisicao {
 }
 
 const STATUS_BADGE: Record<string, string> = {
-  pendente:  'bg-yellow-500/15 text-yellow-300',
+  pendente:  'bg-green-500/15 text-green-300',
   aprovado:  'bg-green-500/15 text-green-300',
   rejeitado: 'bg-red-500/15 text-red-300',
   concluido: 'bg-blue-500/15 text-blue-300',
 };
 const STATUS_LABEL: Record<string, string> = {
-  pendente: 'Pendente', aprovado: 'Aprovado',
+  pendente: 'A entregar', aprovado: 'A entregar',
   rejeitado: 'Rejeitado', concluido: 'Concluído',
 };
 
@@ -134,7 +134,8 @@ export default function RequisicoesInternas() {
             .from('requisicoes_internas')
             .select('*, estoque_origem:estoques!requisicoes_internas_estoque_origem_id_fkey(nome), estoque_destino:estoques!requisicoes_internas_estoque_destino_id_fkey(nome)')
             .order('data_requisicao', { ascending: false });
-          if (filtroStatus !== 'todos') q = q.eq('status', filtroStatus);
+          if (filtroStatus === 'pendente') q = q.in('status', ['pendente', 'aprovado']);
+          else if (filtroStatus !== 'todos') q = q.eq('status', filtroStatus);
           return q;
         })(),
       ]);
@@ -289,7 +290,8 @@ export default function RequisicoesInternas() {
           setor, estoque_origem_id: estoqueOrigemId,
           estoque_destino_id: estoqueDestinoId,
           observacoes: observacoes || null,
-          status: 'pendente',
+          status: 'aprovado',
+          data_aprovacao: new Date().toISOString(),
         })
         .select().single();
 
@@ -581,8 +583,7 @@ export default function RequisicoesInternas() {
         <SearchableSelect
           options={[
             { value: 'todos', label: 'Todos os Status' },
-            { value: 'pendente', label: 'Pendente' },
-            { value: 'aprovado', label: 'Aprovado' },
+            { value: 'pendente', label: 'A entregar' },
             { value: 'rejeitado', label: 'Rejeitado' },
             { value: 'concluido', label: 'Concluído' },
           ]}

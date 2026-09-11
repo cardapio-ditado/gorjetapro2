@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { Package, ArrowLeftRight, Factory, ClipboardCheck, Clock, FileText, Loader2 } from 'lucide-react';
+import { Package, ArrowLeftRight, Factory, ClipboardCheck, Clock, FileText, Loader2, Store } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
 import { useAuth } from '../../../contexts/AuthContext';
 
 interface Props {
-  onAcao: (acao: 'receber' | 'transferir' | 'produzir' | 'contar' | 'requisicoes') => void;
+  onAcao: (acao: 'receber' | 'transferir' | 'produzir' | 'contar' | 'requisicoes' | 'reposicao') => void;
 }
 
 interface MovRecente {
@@ -71,7 +71,7 @@ export default function OperacaoHome({ onAcao }: Props) {
 
       const [movsRes, pendentesRes] = await Promise.all([
         query,
-        supabase.from('requisicoes_internas').select('id', { count: 'exact', head: true }).eq('status', 'pendente'),
+        supabase.from('requisicoes_internas').select('id', { count: 'exact', head: true }).in('status', ['pendente', 'aprovado']),
       ]);
 
       const movsData = (movsRes.data || []) as unknown as MovRecente[];
@@ -160,18 +160,18 @@ export default function OperacaoHome({ onAcao }: Props) {
         ))}
       </div>
 
-      {/* Requisições pendentes */}
+      {/* Reposição de balcão (a entregar hoje) */}
       <button
-        onClick={() => onAcao('requisicoes')}
-        className="flex items-center justify-between w-full px-5 py-4 bg-[#12141f] border border-white/[0.07] rounded-2xl hover:border-white/20 transition-all group"
+        onClick={() => onAcao('reposicao')}
+        className="flex items-center justify-between w-full px-5 py-4 bg-[#12141f] border border-wine/40 rounded-2xl hover:border-wine transition-all group"
       >
         <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-xl bg-white/5">
-            <FileText className="w-5 h-5 text-white/50" />
+          <div className="p-2.5 rounded-xl bg-wine/20">
+            <Store className="w-5 h-5 text-wine" />
           </div>
           <div className="text-left">
-            <p className="text-white font-semibold text-sm">Requisições internas</p>
-            <p className="text-white/60 text-xs mt-0.5">Gerenciar requisições de transferência</p>
+            <p className="text-white font-semibold text-sm">Reposição de balcão</p>
+            <p className="text-white/60 text-xs mt-0.5">Separar e entregar o que o Bar e a Cozinha precisam hoje</p>
           </div>
         </div>
         {pendentes > 0 && (
@@ -179,6 +179,22 @@ export default function OperacaoHome({ onAcao }: Props) {
             {pendentes}
           </span>
         )}
+      </button>
+
+      {/* Histórico de requisições */}
+      <button
+        onClick={() => onAcao('requisicoes')}
+        className="flex items-center justify-between w-full px-5 py-3 bg-[#12141f] border border-white/[0.07] rounded-2xl hover:border-white/20 transition-all group"
+      >
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-xl bg-white/5">
+            <FileText className="w-4 h-4 text-white/50" />
+          </div>
+          <div className="text-left">
+            <p className="text-white/80 font-semibold text-sm">Requisições</p>
+            <p className="text-white/50 text-xs mt-0.5">Histórico, impressão e requisições para outros estoques</p>
+          </div>
+        </div>
       </button>
 
       {/* Últimas ações */}

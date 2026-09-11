@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 
 const ESTOQUE_SUBMODS_ADMIN = [
+  { name: 'Reposição de balcão',   path: '/advanced-inventory?area=operacao&tela=reposicao' },
   { name: 'Receber mercadoria',    path: '/advanced-inventory?area=operacao&tela=receber' },
   { name: 'Transferir',            path: '/advanced-inventory?area=operacao&tela=transferir' },
   { name: 'Produzir',              path: '/advanced-inventory?area=operacao&tela=produzir' },
@@ -31,6 +32,7 @@ const ESTOQUE_SUBMODS_ADMIN = [
 
 const ESTOQUE_SUBMODS_USER = [
   { name: 'Operação', path: '/advanced-inventory?area=operacao&tela=home' },
+  { name: 'Reposição de balcão', path: '/advanced-inventory?area=operacao&tela=reposicao' },
 ];
 
 export interface SubModule { name: string; path: string; }

@@ -27,6 +27,7 @@ import RelatoriosEstoque       from '../components/inventory/RelatoriosEstoque';
 import MapeamentoItensExcel    from '../components/inventory/MapeamentoItensExcel';
 import MovimentacoesCompostas  from '../components/inventory/MovimentacoesCompostas';
 import ComprasDaSemana         from '../components/inventory/ComprasDaSemana';
+import ReposicaoBalcao         from '../components/inventory/ReposicaoBalcao';
 
 // ── Componentes novos ────────────────────────────────────────────────────────
 import OperacaoHome      from '../components/inventory/operacao/OperacaoHome';
@@ -35,7 +36,7 @@ import TransferirEstoque from '../components/inventory/operacao/TransferirEstoqu
 // ── Tipos ────────────────────────────────────────────────────────────────────
 type Area = 'operacao' | 'compras' | 'analise' | 'cadastros';
 type Tela =
-  | 'home' | 'receber' | 'transferir' | 'produzir' | 'contar' | 'requisicoes'
+  | 'home' | 'receber' | 'transferir' | 'produzir' | 'contar' | 'requisicoes' | 'reposicao'
   | 'semana' | 'compras' | 'lista-compras'
   | 'dashboard' | 'kardex' | 'inventario' | 'relatorios' | 'zig' | 'movimentacoes-avancadas'
   | 'itens' | 'fichas' | 'estoques' | 'mapeamento';
@@ -135,6 +136,7 @@ const AdvancedInventory: React.FC = () => {
     if (tela === 'produzir')   return 'Produzir';
     if (tela === 'contar')     return 'Contar';
     if (tela === 'requisicoes') return 'Requisições';
+    if (tela === 'reposicao')  return 'Reposição de balcão';
     return tela;
   };
 
@@ -150,6 +152,7 @@ const AdvancedInventory: React.FC = () => {
             if (acao === 'produzir')   navegar('operacao', 'produzir');
             if (acao === 'contar')     navegar('operacao', 'contar');
             if (acao === 'requisicoes') navegar('operacao', 'requisicoes');
+            if (acao === 'reposicao')  navegar('operacao', 'reposicao');
           }}
         />
       );
@@ -159,6 +162,7 @@ const AdvancedInventory: React.FC = () => {
     if (tela === 'produzir')   return <ProducaoEstoque />;
     if (tela === 'contar')     return <ContagemEstoque />;
     if (tela === 'requisicoes') return <RequisicoesInternas />;
+    if (tela === 'reposicao')  return <ReposicaoBalcao />;
 
     // Compras
     if (area === 'compras' && tela === 'semana') return <ComprasDaSemana />;
