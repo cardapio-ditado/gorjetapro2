@@ -50,16 +50,6 @@ function qtd(txt: string): number {
 const STORAGE_NOME = 'pedido-setor-nome';
 const OUTRO = '__outro__';
 
-const GRUPO_LABEL: Record<Grupo, string> = {
-  vendido: 'baixa pela ZIG',
-  ficha: 'baixa pela ficha',
-  sem_baixa: 'Precisa contar',
-};
-const GRUPO_CLASSE: Record<Grupo, string> = {
-  vendido: 'bg-white/5 text-white/40',
-  ficha: 'bg-white/5 text-white/40',
-  sem_baixa: 'bg-amber-500/15 text-amber-300 font-semibold',
-};
 const STATUS_PEDIDO: Record<UltimoPedido['status'], { label: string; classe: string }> = {
   pendente:  { label: 'pendente',  classe: 'bg-yellow-500/15 text-yellow-300' },
   aprovado:  { label: 'aprovado',  classe: 'bg-blue-500/15 text-blue-300' },
@@ -220,9 +210,12 @@ export default function PedidoSetor() {
   }
 
   // ─── Derivados ──────────────────────────────────────────────────────────────
+  // A folha mostra só o que precisa ser contado. O que baixa pela venda é
+  // reposto sozinho todo dia pela rotina de reposição de balcão.
   const grupos = useMemo(() => {
     const mapa = new Map<string, ItemSetor[]>();
     for (const it of dados?.itens || []) {
+      if (it.grupo !== 'sem_baixa') continue;
       const cat = it.categoria || 'Sem categoria';
       if (!mapa.has(cat)) mapa.set(cat, []);
       mapa.get(cat)!.push(it);
@@ -230,21 +223,31 @@ export default function PedidoSetor() {
     return Array.from(mapa.entries());
   }, [dados]);
 
+  // Para pedir algo a mais vale qualquer item: os do balcão que baixam pela
+  // venda (cerveja no meio da noite) e os que nem ficam no balcão.
+  const buscaveis = useMemo<OutroItem[]>(() => [
+    ...(dados?.itens || []).filter(it => it.grupo !== 'sem_baixa').map(it => ({
+      item_id: it.item_id, nome: it.nome, categoria: it.categoria, um: it.um, saldo_central: it.saldo_central,
+    })),
+    ...(dados?.outros_itens || []),
+  ], [dados]);
+
   const resultadosBusca = useMemo(() => {
     const tokens = normalizar(busca).split(/\s+/).filter(Boolean);
     if (tokens.length === 0) return [];
     const jaTem = new Set(extras.map(e => e.item.item_id));
-    return (dados?.outros_itens || [])
+    return buscaveis
       .filter(o => !jaTem.has(o.item_id))
       .filter(o => { const n = normalizar(o.nome); return tokens.every(t => n.includes(t)); })
       .slice(0, 20);
-  }, [busca, dados, extras]);
+  }, [busca, buscaveis, extras]);
 
   const totalItensPedidos = useMemo(() => {
-    const daFolha = Object.values(linhas).filter(l => qtd(l.pedir) > 0).length;
+    const daFolha = (dados?.itens || [])
+      .filter(it => it.grupo === 'sem_baixa' && qtd(linhas[it.item_id]?.pedir ?? '') > 0).length;
     const dosExtras = extras.filter(e => qtd(e.pedir) > 0).length;
     return daFolha + dosExtras;
-  }, [linhas, extras]);
+  }, [dados, linhas, extras]);
 
   const temContagemSemBaixa = useMemo(() =>
     (dados?.itens || []).some(it => it.grupo === 'sem_baixa' && parseNum(linhas[it.item_id]?.tem ?? '') !== null),
@@ -260,7 +263,9 @@ export default function PedidoSetor() {
     setErroEnvio(null);
     try {
       const pItens = [
-        ...dados.itens.map(it => {
+        // Só o que está na folha: os itens que baixam pela venda nem aparecem
+        // aqui, então não podem ir junto com contagem ou pedido escondido.
+        ...dados.itens.filter(it => it.grupo === 'sem_baixa').map(it => {
           const l = linhas[it.item_id];
           return { item_id: it.item_id, contado: parseNum(l?.tem ?? ''), pedir: qtd(l?.pedir ?? '') };
         }),
@@ -394,8 +399,8 @@ export default function PedidoSetor() {
         {/* Cabeçalho */}
         <div className="bg-[#12141f] rounded-2xl p-5">
           <p className="text-xs text-white/40 uppercase tracking-wide capitalize">{hoje}</p>
-          <h1 className="text-2xl font-bold text-white/90 mt-1">Pedido do {dados.setor.nome}</h1>
-          <p className="text-sm text-white/60 mt-2">Conte o que tem em mãos, confira quanto pedir e envie. O estoquista recebe na hora.</p>
+          <h1 className="text-2xl font-bold text-white/90 mt-1">Contagem do {dados.setor.nome}</h1>
+          <p className="text-sm text-white/60 mt-2">Conte o que tem em mãos nos itens abaixo e envie. O que baixa pela venda é reposto sozinho todo dia. Para algo urgente, use "Pedir algo a mais".</p>
         </div>
 
         {/* Quem está pedindo */}
@@ -439,7 +444,7 @@ export default function PedidoSetor() {
         {/* Itens por categoria */}
         {grupos.length === 0 && (
           <div className="bg-[#12141f] rounded-2xl p-5 text-white/50 text-sm">
-            Este setor ainda não tem níveis de balcão cadastrados. Use a busca abaixo para pedir itens.
+            Nenhum item para contar neste setor. Marque os itens como "Precisa contar" no Cadastro do balcão. Para pedir algo, use a busca abaixo.
           </div>
         )}
         {grupos.map(([categoria, itens]) => (
@@ -458,7 +463,7 @@ export default function PedidoSetor() {
                       <div className="min-w-0">
                         <p className="text-white font-semibold leading-tight">{it.nome} <span className="text-white/40 font-normal text-sm">{it.um}</span></p>
                         <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
-                          <span className={`px-2 py-0.5 rounded-full text-caption ${GRUPO_CLASSE[it.grupo]}`}>{GRUPO_LABEL[it.grupo]}</span>
+                          <span className="px-2 py-0.5 rounded-full text-caption bg-amber-500/15 text-amber-300 font-semibold">Precisa contar</span>
                           <span className="text-caption text-white/40">nível: {fmt(it.nivel)}</span>
                         </div>
                       </div>
@@ -571,7 +576,8 @@ export default function PedidoSetor() {
 
         {/* Adicionar outro item */}
         <div className="bg-[#12141f] rounded-2xl p-5">
-          <h2 className="text-sm font-semibold text-white/60 uppercase tracking-wide mb-3">Adicionar outro item</h2>
+          <h2 className="text-sm font-semibold text-white/60 uppercase tracking-wide">Pedir algo a mais</h2>
+          <p className="text-xs text-white/40 mb-3 mt-1">Para o que não pode esperar a reposição de amanhã, como cerveja no meio da noite.</p>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-white/30" />
             <input
@@ -648,8 +654,8 @@ export default function PedidoSetor() {
             {enviando
               ? 'Enviando...'
               : soContagem
-                ? 'Registrar contagem'
-                : `${totalItensPedidos} ${totalItensPedidos === 1 ? 'item' : 'itens'} · Enviar pedido`}
+                ? 'Enviar contagem'
+                : `${totalItensPedidos} ${totalItensPedidos === 1 ? 'item' : 'itens'} · Enviar contagem e pedido`}
           </button>
         </div>
       </div>

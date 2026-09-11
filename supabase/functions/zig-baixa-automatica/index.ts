@@ -55,7 +55,7 @@ type ProdutoZig = {
 
 async function baixarItem(
   supabase: any, itemId: string, estoqueId: string, quantidade: number,
-  dataVenda: string, produto: string, productId: string,
+  dataVenda: string, produto: string, productId: string, jaBaixado = 0,
 ): Promise<string> {
   const { data: item } = await supabase
     .from('itens_estoque').select('custo_medio, nome').eq('id', itemId).single();
@@ -75,7 +75,9 @@ async function baixarItem(
       observacoes:       `Baixa automática ZIG | produto: ${produto}`,
       origem_tipo:       'zig',
       item_descricao:    item?.nome || produto,
-      idempotency_key:   `zig_auto_${productId}_${dataVenda}_${itemId}`,
+      // A chave inclui o que já tinha sido baixado no dia: cada rodada (noite,
+      // manhã) baixa só a diferença e nunca repete a mesma diferença.
+      idempotency_key:   jaBaixado > 0 ? `zig_auto_${productId}_${dataVenda}_${itemId}_${jaBaixado}` : `zig_auto_${productId}_${dataVenda}_${itemId}`,
     })
     .select('id').single();
   if (error) throw new Error(error.message);
@@ -202,12 +204,16 @@ Deno.serve(async (req) => {
       const dataVenda = (p.eventDate || dtfim).split('T')[0];
       const m = p.mapeamento!;
 
+      // Baixa por diferença: quanto o dia já tinha baixado × quanto a ZIG diz
+      // agora. Linha antiga sem quantidade = dia fechado pela versão anterior.
       const { data: jaSync } = await supabase
-        .from('zig_vendas_sync_ids').select('id')
+        .from('zig_vendas_sync_ids').select('id, quantidade')
         .eq('zig_product_id', p.productId).eq('data_venda', dataVenda).maybeSingle();
-      if (jaSync) { totalDup++; continue; }
+      const jaBaixado = jaSync ? (jaSync.quantidade === null || jaSync.quantidade === undefined ? Number(p.count) : Number(jaSync.quantidade)) : 0;
+      const delta = Number(p.count) - jaBaixado;
+      if (delta <= 0) { totalDup++; continue; }
 
-      if (dryRun) { processados.push({ nome: p.productName, quantidade: p.count, data_venda: dataVenda, simulado: true }); continue; }
+      if (dryRun) { processados.push({ nome: p.productName, quantidade: delta, total_dia: p.count, data_venda: dataVenda, simulado: true }); continue; }
 
       try {
         const movIds: string[] = [];
@@ -218,22 +224,27 @@ Deno.serve(async (req) => {
           for (const ing of ingredientes || []) {
             if (!ing.item_estoque_id) continue;
             movIds.push(await baixarItem(supabase, ing.item_estoque_id, m.estoque_id!,
-              Number(ing.quantidade) * Number(p.count), dataVenda, p.productName, p.productId));
+              Number(ing.quantidade) * delta, dataVenda, p.productName, p.productId, jaBaixado));
           }
         } else if (m.item_estoque_id) {
           movIds.push(await baixarItem(supabase, m.item_estoque_id, m.estoque_id!,
-            Number(p.count), dataVenda, p.productName, p.productId));
+            delta, dataVenda, p.productName, p.productId, jaBaixado));
         }
 
         if (movIds.length > 0) {
           totalMov += movIds.length;
-          await supabase.from('zig_vendas_sync_ids').insert({
-            zig_product_id: p.productId, zig_product_name: p.productName,
-            data_venda: dataVenda, movimentacao_id: movIds[0],
-          });
+          if (jaSync) {
+            await supabase.from('zig_vendas_sync_ids')
+              .update({ quantidade: Number(p.count), sincronizado_em: new Date().toISOString() }).eq('id', jaSync.id);
+          } else {
+            await supabase.from('zig_vendas_sync_ids').insert({
+              zig_product_id: p.productId, zig_product_name: p.productName,
+              data_venda: dataVenda, movimentacao_id: movIds[0], quantidade: Number(p.count),
+            });
+          }
           await supabase.rpc('fn_registrar_uso_mapeamento_zig', { p_nome_externo: p.productName })
             .then(() => {}, () => {});
-          processados.push({ nome: p.productName, quantidade: p.count, data_venda: dataVenda, movimentacoes: movIds.length, expandido_de: p.expandido_de || null });
+          processados.push({ nome: p.productName, quantidade: delta, total_dia: p.count, data_venda: dataVenda, movimentacoes: movIds.length, expandido_de: p.expandido_de || null });
         }
       } catch (e: any) {
         erros.push(`${p.productName}: ${e.message}`);
