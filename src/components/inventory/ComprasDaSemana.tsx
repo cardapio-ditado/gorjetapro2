@@ -12,6 +12,7 @@ import {
   type Situacao, type Criterio, type Mensagem,
 } from './comprasShared';
 import { PainelListaDoDia, urlListaPublica, normalizarListaDoDia, type ListaDoDia } from './PainelListaDoDia';
+import { agruparPorCategoria } from './agruparPorCategoria';
 
 // ─── Tipos ───────────────────────────────────────────────────────────────────
 type TipoCompra = 'fornecedor' | 'rua' | 'ambos';
@@ -390,13 +391,22 @@ export default function ComprasDaSemana() {
     && cardsVisiveis.length === 0 && ruaVisiveis.length === 0 && semFornVisiveis.length === 0;
   const nomeDia = dia === hoje ? 'hoje' : DIAS[dia - 1].sigla;
 
-  const renderLinhas = (lista: ItemReposicao[], editavel: boolean) => lista.map(it => (
-    <LinhaItem key={it.item_id} item={it} editavel={editavel}
-      marcado={!!marcados[it.item_id]}
-      quantidade={quantidades[it.item_id] ?? 0}
-      onMarcar={() => setMarcados(prev => ({ ...prev, [it.item_id]: !prev[it.item_id] }))}
-      onQuantidade={q => setQuantidades(prev => ({ ...prev, [it.item_id]: q }))} />
-  ));
+  // Linhas agrupadas por categoria (cabeçalho ocupa todas as colunas de CabecalhoTabela)
+  const renderLinhas = (lista: ItemReposicao[], editavel: boolean) =>
+    agruparPorCategoria(lista).flatMap(([categoria, doGrupo]) => [
+      <tr key={`cat:${categoria}`}>
+        <td colSpan={editavel ? 9 : 8} className="px-3 py-1.5 bg-white/[0.04] text-[11px] font-semibold uppercase tracking-wide text-white/50">
+          {categoria} <span className="normal-case font-normal text-white/30">· {doGrupo.length} {doGrupo.length === 1 ? 'item' : 'itens'}</span>
+        </td>
+      </tr>,
+      ...doGrupo.map(it => (
+        <LinhaItem key={it.item_id} item={it} editavel={editavel}
+          marcado={!!marcados[it.item_id]}
+          quantidade={quantidades[it.item_id] ?? 0}
+          onMarcar={() => setMarcados(prev => ({ ...prev, [it.item_id]: !prev[it.item_id] }))}
+          onQuantidade={q => setQuantidades(prev => ({ ...prev, [it.item_id]: q }))} />
+      )),
+    ]);
 
   return (
     <div className="space-y-4">

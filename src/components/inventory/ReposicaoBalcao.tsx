@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { Fragment, useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import {
   RefreshCw, Loader2, PackageCheck, Sparkles, AlertTriangle, Check,
@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import NiveisBalcao from './NiveisBalcao';
+import { agruparPorCategoria } from './agruparPorCategoria';
 
 // ─── Tipos ───────────────────────────────────────────────────────────────────
 interface ItemRequisicao {
@@ -365,7 +366,14 @@ export default function ReposicaoBalcao() {
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-white/5">
-                            {req.itens.map(it => {
+                            {agruparPorCategoria(req.itens).map(([categoria, itensCat]) => (
+                              <Fragment key={categoria}>
+                                <tr>
+                                  <td colSpan={5} className="px-3 py-1.5 bg-white/[0.04] text-[11px] font-semibold uppercase tracking-wide text-white/50">
+                                    {categoria} <span className="normal-case font-normal text-white/30">· {itensCat.length} {itensCat.length === 1 ? 'item' : 'itens'}</span>
+                                  </td>
+                                </tr>
+                                {itensCat.map(it => {
                               const chave = chaveLinha(req.id, it.item_id);
                               const falta = faltaNoCentral(it);
                               const valor = entregas[chave] ?? String(valorInicial(it));
@@ -405,7 +413,9 @@ export default function ReposicaoBalcao() {
                                   </td>
                                 </tr>
                               );
-                            })}
+                                })}
+                              </Fragment>
+                            ))}
                           </tbody>
                         </table>
                       </div>

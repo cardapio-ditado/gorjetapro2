@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { CheckCircle2, Circle, ShoppingCart, RefreshCw, Package, ChevronDown, ChevronRight, Phone, Share2, Store, Truck, Send } from 'lucide-react';
+import { agruparPorCategoria } from '../components/inventory/agruparPorCategoria';
 
 const SUPABASE_URL  = import.meta.env.VITE_SUPABASE_URL as string;
 const SUPABASE_ANON = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
@@ -75,6 +76,12 @@ function agrupar(itens: ItemLista[]): Grupo[] {
   }
   const ordem = (g: Grupo) => (g.tipo === 'rua' ? 0 : g.tipo === 'fornecedor' ? 1 : 2);
   return grupos.sort((a, b) => ordem(a) - ordem(b) || a.nome.localeCompare(b.nome, 'pt-BR'));
+}
+
+/** Sub-grupos por categoria dentro de um fornecedor/loja (itens por nome_item). */
+function subgruposPorCategoria(itens: ItemLista[]): Array<[string, ItemLista[]]> {
+  return agruparPorCategoria(itens.map(item => ({ categoria: item.categoria, nome: item.nome_item, item })))
+    .map(([categoria, lista]) => [categoria, lista.map(w => w.item)]);
 }
 
 interface Lista {
@@ -256,7 +263,11 @@ export default function ListaComprasPublica() {
 
               {isExp && (
                 <div className="divide-y" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
-                  {itensGrupo.map(item => (
+                  {subgruposPorCategoria(itensGrupo).flatMap(([categoria, itensCat]) => [
+                    <div key={`cat:${categoria}`} className="px-4 py-1 text-[11px] font-semibold uppercase tracking-wide text-white/40 bg-white/[0.03]">
+                      {categoria} · {itensCat.length}
+                    </div>,
+                    ...itensCat.map(item => (
                     <button
                       key={item.id}
                       onClick={() => toggleComprado(item)}
@@ -281,13 +292,11 @@ export default function ListaComprasPublica() {
                               {item.tipo_compra === 'rua' ? 'Rua' : 'Fornecedor'}
                             </span>
                           )}
-                          {item.categoria && (
-                            <span className="text-caption text-white/40">{item.categoria}</span>
-                          )}
                         </div>
                       </div>
                     </button>
-                  ))}
+                    )),
+                  ])}
                 </div>
               )}
             </div>

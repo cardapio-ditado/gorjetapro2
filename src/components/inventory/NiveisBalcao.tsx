@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback } from 'react';
+import { Fragment, useState, useEffect, useCallback } from 'react';
 import { X, Search, Plus, Trash2, Loader2, Info, Check } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { agruparPorCategoria, SEM_CATEGORIA } from './agruparPorCategoria';
 
 interface Props {
   estoqueId: string;
@@ -37,6 +38,7 @@ export default function NiveisBalcao({ estoqueId, estoqueNome, onClose }: Props)
   const [linhas, setLinhas]           = useState<LinhaNivel[]>([]);
   const [loading, setLoading]         = useState(false);
   const [filtro, setFiltro]           = useState('');
+  const [filtroCat, setFiltroCat]     = useState('');
   const [edicao, setEdicao]           = useState<Record<string, string>>({});
   const [salvando, setSalvando]       = useState<Record<string, boolean>>({});
   const [erro, setErro]               = useState<string | null>(null);
@@ -190,9 +192,13 @@ export default function NiveisBalcao({ estoqueId, estoqueNome, onClose }: Props)
   }
 
   const termoFiltro = filtro.trim().toLowerCase();
-  const linhasFiltradas = termoFiltro
-    ? linhas.filter(l => l.nome.toLowerCase().includes(termoFiltro) || (l.categoria || '').toLowerCase().includes(termoFiltro))
-    : linhas;
+  const categoriaDe = (l: LinhaNivel) => (l.categoria ?? '').trim() || SEM_CATEGORIA;
+  const categorias = agruparPorCategoria(linhas).map(([cat]) => cat);
+  const linhasFiltradas = linhas.filter(l =>
+    (!filtroCat || categoriaDe(l) === filtroCat) &&
+    (!termoFiltro || l.nome.toLowerCase().includes(termoFiltro) || (l.categoria || '').toLowerCase().includes(termoFiltro)),
+  );
+  const grupos = agruparPorCategoria(linhasFiltradas);
   const totalEmFalta = linhas.filter(l => l.nivel - l.saldo > 0).length;
 
   return (
@@ -282,13 +288,23 @@ export default function NiveisBalcao({ estoqueId, estoqueNome, onClose }: Props)
           </div>
 
           {/* Filtro */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
-            <input
-              type="text" value={filtro} onChange={e => setFiltro(e.target.value)}
-              placeholder="Filtrar itens com nível..."
-              className={`w-full pl-9 ${INPUT}`}
-            />
+          <div className="flex gap-2">
+            <div className="relative flex-1 min-w-0">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+              <input
+                type="text" value={filtro} onChange={e => setFiltro(e.target.value)}
+                placeholder="Filtrar itens com nível..."
+                className={`w-full pl-9 ${INPUT}`}
+              />
+            </div>
+            <select
+              value={filtroCat} onChange={e => setFiltroCat(e.target.value)}
+              aria-label="Filtrar por categoria"
+              className={`${INPUT} bg-[#12141f] max-w-[45%] shrink-0`}
+            >
+              <option value="">Todas</option>
+              {categorias.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
           </div>
 
           {/* Tabela */}
@@ -312,15 +328,19 @@ export default function NiveisBalcao({ estoqueId, estoqueNome, onClose }: Props)
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/5">
-                    {linhasFiltradas.map(l => {
+                    {grupos.map(([categoria, itensCat]) => (
+                      <Fragment key={categoria}>
+                        <tr>
+                          <td colSpan={6} className="px-3 py-1.5 bg-white/[0.04] text-[11px] font-semibold uppercase tracking-wide text-white/50">
+                            {categoria} <span className="normal-case font-normal text-white/30">· {itensCat.length} {itensCat.length === 1 ? 'item' : 'itens'}</span>
+                          </td>
+                        </tr>
+                        {itensCat.map(l => {
                       const falta = Math.max(l.nivel - l.saldo, 0);
                       const emEdicao = edicao[l.item_id];
                       return (
                         <tr key={l.item_id} className="hover:bg-white/5 transition-colors">
-                          <td className="px-4 py-2 text-sm text-white">
-                            {l.nome}
-                            {l.categoria && <span className="block text-caption text-white/40">{l.categoria}</span>}
-                          </td>
+                          <td className="px-4 py-2 text-sm text-white">{l.nome}</td>
                           <td className="px-4 py-2 text-sm text-white/50 whitespace-nowrap">{l.unidade_medida}</td>
                           <td className="px-4 py-2">
                             <div className="flex items-center gap-2">
@@ -354,7 +374,9 @@ export default function NiveisBalcao({ estoqueId, estoqueNome, onClose }: Props)
                           </td>
                         </tr>
                       );
-                    })}
+                        })}
+                      </Fragment>
+                    ))}
                   </tbody>
                 </table>
               </div>

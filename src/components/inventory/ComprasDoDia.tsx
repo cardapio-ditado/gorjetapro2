@@ -7,6 +7,7 @@ import {
   type Situacao, type Criterio, type Mensagem,
 } from './comprasShared';
 import { PainelListaDoDia, urlListaPublica, urlWhatsApp, normalizarListaDoDia, type ListaDoDia } from './PainelListaDoDia';
+import { agruparPorCategoria, SEM_CATEGORIA } from './agruparPorCategoria';
 
 // ─── Tipos ───────────────────────────────────────────────────────────────────
 type Modalidade = 'entrega' | 'rua';
@@ -158,6 +159,9 @@ function estadoInicial(it: ItemDoDia): LinhaState {
 
 function plural(n: number, um: string, varios: string) { return `${n} ${n === 1 ? um : varios}`; }
 
+const ORDEM_SITUACAO: Record<string, number> = { zerado: 0, comprar: 1, atencao: 2 };
+const nomeCategoria = (c: string | null) => (c ?? '').trim() || SEM_CATEGORIA;
+
 // ─── Componente principal ────────────────────────────────────────────────────
 export default function ComprasDoDia() {
   const [itens, setItens] = useState<ItemDoDia[]>([]);
@@ -172,6 +176,8 @@ export default function ComprasDoDia() {
   const [filtroSit, setFiltroSit] = useState<Record<'zerado' | 'comprar' | 'atencao', boolean>>({ zerado: true, comprar: true, atencao: false });
   const [busca, setBusca] = useState('');
   const [mostrarPedidos, setMostrarPedidos] = useState(false);
+  /** categoria escolhida no filtro rápido (null = todas) */
+  const [filtroCat, setFiltroCat] = useState<string | null>(null);
 
   const carregar = useCallback(async () => {
     setCarregando(true); setErro('');
@@ -235,12 +241,32 @@ export default function ComprasDoDia() {
 
   // ── Filtros ──
   const buscaLower = busca.trim().toLowerCase();
-  const visiveis = useMemo(() => itens.filter(it => {
+  // Situação + busca + "já pedidos" — antes do filtro de categoria (base dos chips)
+  const visiveisBase = useMemo(() => itens.filter(it => {
     if (it.situacao === 'ok' || !filtroSit[it.situacao]) return false;
     if (!mostrarPedidos && (it.em_pedido_pendente > 0 || it.em_lista_aberta > 0)) return false;
     if (buscaLower && !it.nome.toLowerCase().includes(buscaLower) && !(it.categoria || '').toLowerCase().includes(buscaLower)) return false;
     return true;
   }), [itens, filtroSit, mostrarPedidos, buscaLower]);
+
+  // Categorias presentes (com contagem), na mesma ordem dos grupos da tabela
+  const categorias = useMemo(() =>
+    agruparPorCategoria(visiveisBase).map(([nome, lista]) => ({ nome, total: lista.length })),
+  [visiveisBase]);
+
+  // Se a categoria escolhida sumiu (busca/situação mudou), volta para "Todas"
+  const catAtiva = filtroCat && categorias.some(c => c.nome === filtroCat) ? filtroCat : null;
+
+  const visiveis = useMemo(() =>
+    catAtiva ? visiveisBase.filter(it => nomeCategoria(it.categoria) === catAtiva) : visiveisBase,
+  [visiveisBase, catAtiva]);
+
+  // Grupos por categoria; dentro de cada uma: zerado → comprar → atenção, depois nome
+  const grupos = useMemo(() =>
+    agruparPorCategoria(visiveis).map(([cat, lista]) =>
+      [cat, [...lista].sort((a, b) =>
+        (ORDEM_SITUACAO[a.situacao] ?? 9) - (ORDEM_SITUACAO[b.situacao] ?? 9) || a.nome.localeCompare(b.nome, 'pt-BR'))] as const),
+  [visiveis]);
 
   // ── Estado por linha ──
   const setLinha = (id: string, patch: Partial<LinhaState>) =>
@@ -365,6 +391,23 @@ export default function ComprasDoDia() {
             Mostrar já pedidos / em lista
           </label>
         </div>
+
+        {/* Filtro rápido por categoria */}
+        {categorias.length > 0 && (
+          <div className="flex items-center gap-1.5 flex-wrap mt-3">
+            <span className="text-caption text-white/40 mr-1">Categoria:</span>
+            <button onClick={() => setFiltroCat(null)}
+              className={`px-2.5 py-1 rounded-lg text-caption font-medium border transition-colors ${catAtiva === null ? 'bg-white/15 text-white border-white/30' : 'bg-white/5 text-white/50 border-white/10 hover:bg-white/10'}`}>
+              Todas <span className="opacity-60">({visiveisBase.length})</span>
+            </button>
+            {categorias.map(c => (
+              <button key={c.nome} onClick={() => setFiltroCat(prev => (prev === c.nome ? null : c.nome))}
+                className={`px-2.5 py-1 rounded-lg text-caption font-medium border transition-colors ${catAtiva === c.nome ? 'bg-white/15 text-white border-white/30' : 'bg-white/5 text-white/50 border-white/10 hover:bg-white/10'}`}>
+                {c.nome} <span className="opacity-60">({c.total})</span>
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {listaDia && <PainelListaDoDia lista={listaDia} />}
@@ -408,7 +451,13 @@ export default function ComprasDoDia() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
-                {visiveis.map(it => {
+                {grupos.flatMap(([categoria, lista]) => [
+                  <tr key={`cat:${categoria}`}>
+                    <td colSpan={8} className="px-3 py-1.5 bg-white/[0.04] text-[11px] font-semibold uppercase tracking-wide text-white/50">
+                      {categoria} <span className="normal-case font-normal text-white/30">· {plural(lista.length, 'item', 'itens')}</span>
+                    </td>
+                  </tr>,
+                  ...lista.map(it => {
                   const st = linhas[it.item_id] ?? estadoInicial(it);
                   const escolhido = infoFornecedor(it, st.fornecedorId);
                   const custo = Number((st.quantidade * it.custo_medio).toFixed(2));
@@ -481,7 +530,8 @@ export default function ComprasDoDia() {
                       </td>
                     </tr>
                   );
-                })}
+                  }),
+                ])}
               </tbody>
             </table>
           </div>
