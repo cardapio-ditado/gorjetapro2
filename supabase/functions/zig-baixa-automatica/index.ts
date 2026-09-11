@@ -9,9 +9,12 @@ import { createClient } from 'npm:@supabase/supabase-js@2';
 // compostos e aplica o mapeamento salvo), dá baixa só no que está mapeado e
 // avisa os gestores pelo Telegram o que ficou sem mapeamento.
 //
-// Corpo opcional: { dtinicio, dtfim, dry_run }.
+// Corpo opcional: { dtinicio, dtfim, dry_run, avisar }.
 //   - sem corpo: ontem (fuso de Cuiabá).
 //   - dry_run: só lista o que faria, sem gravar nada nem avisar.
+//   - avisar: false silencia o Telegram numa rodada real (reprocessamento).
+// Produto ZIG sem mapeamento entra em mapeamento_itens_vendas como "sem
+// vínculo", para aparecer na aba Mapeamento assistido.
 // A ZIG limita 5 dias por chamada, então períodos maiores são fatiados.
 //
 // Regra importante: aqui só se insere a movimentação. Quem atualiza o saldo é
@@ -25,6 +28,7 @@ const cors = {
 };
 
 const fmt = (d: Date) => d.toISOString().split('T')[0];
+const normalizar = (s: string) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ').trim();
 const brDate = (iso: string) => iso.split('-').reverse().join('/');
 
 function fatiar(dtinicio: string, dtfim: string, tamanho = 5): Array<{ ini: string; fim: string }> {
@@ -136,7 +140,7 @@ Deno.serve(async (req) => {
   }
 
   const prontos: ProdutoZig[] = [];
-  const pendentes: Array<{ nome: string; quantidade: number; data_venda: string; motivo: string; expandido_de: string | null }> = [];
+  const pendentes: Array<{ nome: string; quantidade: number; data_venda: string; motivo: string; expandido_de: string | null; categoria: string | null }> = [];
   const ignorados: Array<{ nome: string; motivo: string }> = [];
   const erros: string[] = [];
   let totalProdutosZig = 0;
@@ -166,8 +170,27 @@ Deno.serve(async (req) => {
             nome: p.productName, quantidade: p.count, data_venda: (p.eventDate || b.fim).split('T')[0],
             motivo: p.mapeado ? 'Mapeamento sem estoque de origem' : 'Sem mapeamento',
             expandido_de: p.expandido_de || null,
+            categoria: p.productCategory || null,
           });
         }
+      }
+    }
+
+    // 1b. Produto sem mapeamento entra na tabela como "sem vínculo", para
+    //     aparecer em Estoque › ZIG Vendas › Mapeamento assistido. Antes ele só
+    //     ficava no log e ninguém via.
+    if (!dryRun) {
+      const vistos = new Set<string>();
+      for (const p of pendentes) {
+        if (p.motivo !== 'Sem mapeamento' || vistos.has(p.nome)) continue;
+        vistos.add(p.nome);
+        const { data: existe } = await supabase
+          .from('mapeamento_itens_vendas').select('id').eq('nome_externo', p.nome).maybeSingle();
+        if (existe) continue;
+        await supabase.from('mapeamento_itens_vendas').insert({
+          nome_externo: p.nome, nome_normalizado: normalizar(p.nome), zig_category: p.categoria,
+          tipo_mapeamento: 'manual', origem: 'manual', confianca: 0, usado_vezes: 0, ignorar_estoque: false,
+        }).then(() => {}, () => {});
       }
     }
 
@@ -233,7 +256,7 @@ Deno.serve(async (req) => {
 
     // 3. Aviso no Telegram (em simulação só quando pedido, com o rótulo de teste)
     let enviados: string[] = [];
-    if (!dryRun || body.avisar === true) {
+    if ((!dryRun && body.avisar !== false) || body.avisar === true) {
       const periodo = dtinicio === dtfim ? brDate(dtinicio) : `${brDate(dtinicio)} a ${brDate(dtfim)}`;
       let msg = dryRun ? `\u{1F9EA} <b>[SIMULAÇÃO] Baixa ZIG no estoque — ${periodo}</b>\nNada foi gravado. A baixa real começa amanhã às 6h.\n` : `\u{1F4E6} <b>Baixa ZIG no estoque — ${periodo}</b>\n`;
       msg += `✅ ${processados.length} produtos baixados (${totalMov} movimentações)\n`;
@@ -243,7 +266,7 @@ Deno.serve(async (req) => {
         msg += `\n⚠️ <b>${pendentes.length} sem mapeamento (não baixaram):</b>\n`;
         for (const p of pendentes.slice(0, 25)) msg += `• ${p.nome} — ${p.quantidade}\n`;
         if (pendentes.length > 25) msg += `• e mais ${pendentes.length - 25}…\n`;
-        msg += `\nMapeie em Estoque › ZIG Vendas › Mapeamento e rode o dia de novo pela tela.\n`;
+        msg += `\nJá estão em Estoque › ZIG Vendas › Mapeamento assistido. Depois de mapear, a baixa entra na rodada seguinte.\n`;
       }
       if (erros.length > 0) {
         msg += `\n❌ <b>${erros.length} erros:</b>\n`;
