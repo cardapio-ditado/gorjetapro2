@@ -53,7 +53,7 @@ const OUTRO = '__outro__';
 const GRUPO_LABEL: Record<Grupo, string> = {
   vendido: 'baixa pela ZIG',
   ficha: 'baixa pela ficha',
-  sem_baixa: 'só contagem',
+  sem_baixa: 'Precisa contar',
 };
 const GRUPO_CLASSE: Record<Grupo, string> = {
   vendido: 'bg-white/5 text-white/40',

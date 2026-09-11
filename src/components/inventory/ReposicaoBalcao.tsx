@@ -2,7 +2,7 @@ import { Fragment, useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import {
   RefreshCw, Loader2, PackageCheck, Sparkles, AlertTriangle, Check,
-  ExternalLink, SlidersHorizontal, Store, ClipboardList,
+  ExternalLink, Settings2, Store, ClipboardList,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import NiveisBalcao from './NiveisBalcao';
@@ -314,7 +314,7 @@ export default function ReposicaoBalcao() {
                 <div className="flex items-center gap-2 flex-wrap">
                   <button onClick={() => setModalNiveis({ estoqueId: b.estoque_id, estoqueNome: b.nome })}
                     className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-white/10 text-xs font-medium text-white/70 hover:bg-white/5 transition-colors">
-                    <SlidersHorizontal size={12} /> Níveis
+                    <Settings2 size={12} /> Cadastro do balcão
                   </button>
                   <a href={urlBalcao(b.slug)} target="_blank" rel="noopener noreferrer"
                     className="inline-flex items-center gap-1 text-xs text-blue-400 hover:underline">
@@ -446,7 +446,7 @@ export default function ReposicaoBalcao() {
                     <div className="flex items-start gap-2">
                       <ClipboardList size={14} className="flex-shrink-0 mt-0.5 text-amber-300" />
                       <div className="min-w-0 flex-1">
-                        <p className="font-semibold">Precisa contagem (não baixam com a venda):</p>
+                        <p className="font-semibold">Itens marcados como Precisa contar sem contagem nos últimos 2 dias:</p>
                         <div className="flex items-center gap-1.5 flex-wrap mt-1.5">
                           {b.sem_contagem.map(s => (
                             <span key={s.item_id} className="px-2 py-0.5 rounded-md border border-amber-500/30 bg-amber-500/10 text-amber-100 whitespace-nowrap"

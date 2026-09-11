@@ -907,7 +907,7 @@ export default function RequisicoesInternas() {
                         className="flex items-center gap-1.5 px-3 py-2 text-white/60 hover:text-white hover:bg-white/5 rounded-xl text-xs font-semibold"
                       >
                         <SlidersHorizontal className="w-3.5 h-3.5" />
-                        Níveis de balcão
+                        Cadastro do balcão
                       </button>
                     </div>
                   )}
