@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import {
-  Minus, Plus, Search, X, Send, ClipboardCheck, CheckCircle, AlertTriangle, Loader2, Package,
+  Minus, Plus, Search, X, Send, ClipboardCheck, CheckCircle, AlertTriangle, Loader2, Package, Moon, Truck,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
@@ -36,6 +36,24 @@ interface Resultado {
   numero: string | null; itens: number; contagens: number;
   faltas: string | null; so_contagem?: boolean;
 }
+
+// ─── Aba de abastecimento noturno ────────────────────────────────────────────
+type Aba = 'contagem' | 'abastecimento';
+
+interface ItemAbastecer {
+  item_id: string; nome: string; categoria: string | null; um: string;
+  nivel: number; saldo_local: number; saldo_central: number; fracionado: boolean;
+}
+interface UltimoAbastecimento { numero: string; quando: string; quem: string; itens: number; }
+interface DadosAbastecimento {
+  erro?: string;
+  setor: { slug: string; estoque_id: string; nome: string };
+  itens: ItemAbastecer[];
+  outros_itens: OutroItem[];
+  pessoas: Pessoa[];
+  ultimos: UltimoAbastecimento[];
+}
+interface ResultadoAbastecimento { numero: string; itens: number; faltas: string | null; }
 
 // Estado por linha da folha. "pedir" fica como texto para o usuário poder
 // digitar "1.5" sem o input controlado engolir o ponto; o número sai de parseNum.
@@ -113,6 +131,15 @@ export default function PedidoSetor() {
   const [enviando, setEnviando]   = useState(false);
   const [erroEnvio, setErroEnvio] = useState<string | null>(null);
   const [resultado, setResultado] = useState<Resultado | null>(null);
+
+  // Aba de abastecimento noturno
+  const [aba, setAba] = useState<Aba>('contagem');
+  const [dadosAb, setDadosAb] = useState<DadosAbastecimento | null>(null);
+  const [carregandoAb, setCarregandoAb] = useState(false);
+  const [qtdAb, setQtdAb] = useState<Record<string, string>>({});
+  const [buscaAb, setBuscaAb] = useState('');
+  const [avulsosAb, setAvulsosAb] = useState<OutroItem[]>([]);
+  const [resultadoAb, setResultadoAb] = useState<ResultadoAbastecimento | null>(null);
 
   const montarLinhas = useCallback((itens: ItemSetor[]) => {
     const novas: Record<string, Linha> = {};
@@ -289,6 +316,94 @@ export default function PedidoSetor() {
     }
   }
 
+  // ─── Abastecimento noturno ──────────────────────────────────────────────────
+  const carregarAb = useCallback(async () => {
+    setCarregandoAb(true);
+    try {
+      const { data, error } = await supabase.rpc('fn_abastecimento_dados', { p_setor: setorSlug });
+      if (error) throw error;
+      setDadosAb(data as DadosAbastecimento);
+    } catch (e) {
+      setErroEnvio(e instanceof Error ? e.message : 'Erro ao carregar os itens de abastecimento');
+    } finally {
+      setCarregandoAb(false);
+    }
+  }, [setorSlug]);
+
+  useEffect(() => {
+    if (aba === 'abastecimento' && !dadosAb && !carregandoAb) carregarAb();
+  }, [aba, dadosAb, carregandoAb, carregarAb]);
+
+  function digitarAb(itemId: string, txt: string) {
+    setQtdAb(prev => ({ ...prev, [itemId]: txt }));
+  }
+
+  function somarAb(itemId: string, delta: number, fracionado: boolean) {
+    setQtdAb(prev => ({ ...prev, [itemId]: String(arredondar(qtd(prev[itemId] ?? '') + delta, fracionado)) }));
+  }
+
+  const resultadosBuscaAb = useMemo(() => {
+    const tokens = normalizar(buscaAb).split(/\s+/).filter(Boolean);
+    if (tokens.length === 0) return [];
+    const jaTem = new Set([...(dadosAb?.itens || []).map(i => i.item_id), ...avulsosAb.map(a => a.item_id)]);
+    return (dadosAb?.outros_itens || [])
+      .filter(o => !jaTem.has(o.item_id))
+      .filter(o => { const n = normalizar(o.nome); return tokens.every(t => n.includes(t)); })
+      .slice(0, 20);
+  }, [buscaAb, dadosAb, avulsosAb]);
+
+  const gruposAb = useMemo(() => {
+    const mapa = new Map<string, ItemAbastecer[]>();
+    for (const it of dadosAb?.itens || []) {
+      const cat = it.categoria || 'Sem categoria';
+      if (!mapa.has(cat)) mapa.set(cat, []);
+      mapa.get(cat)!.push(it);
+    }
+    return Array.from(mapa.entries());
+  }, [dadosAb]);
+
+  const totalAb = useMemo(
+    () => Object.values(qtdAb).filter(v => qtd(v) > 0).length,
+    [qtdAb],
+  );
+  const podeEnviarAb = !!nomeFinal && totalAb > 0 && !enviando;
+
+  async function enviarAbastecimento() {
+    if (!podeEnviarAb) return;
+    setEnviando(true);
+    setErroEnvio(null);
+    try {
+      const pItens = Object.entries(qtdAb)
+        .map(([item_id, v]) => ({ item_id, quantidade: qtd(v) }))
+        .filter(i => i.quantidade > 0);
+      const { data, error } = await supabase.rpc('fn_abastecimento_enviar', {
+        p_setor: setorSlug,
+        p_nome: nomeFinal,
+        p_itens: pItens,
+        p_observacoes: observacoes.trim() || null,
+      });
+      if (error) throw error;
+      salvarNome(nomeFinal);
+      setResultadoAb(data as ResultadoAbastecimento);
+      window.scrollTo({ top: 0 });
+    } catch (e) {
+      setErroEnvio(e instanceof Error ? e.message : 'Erro ao registrar o abastecimento. Tente de novo.');
+    } finally {
+      setEnviando(false);
+    }
+  }
+
+  function novoAbastecimento() {
+    setResultadoAb(null);
+    setErroEnvio(null);
+    setQtdAb({});
+    setAvulsosAb([]);
+    setBuscaAb('');
+    setObservacoes('');
+    setDadosAb(null);
+    window.scrollTo({ top: 0 });
+  }
+
   function novoPedido() {
     setResultado(null);
     setErroEnvio(null);
@@ -322,6 +437,38 @@ export default function PedidoSetor() {
   }
 
   const hoje = new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' });
+
+  // ─── Sucesso do abastecimento noturno ───────────────────────────────────────
+  if (resultadoAb) {
+    return (
+      <div className="min-h-screen bg-[#0d0f1a] p-4 pb-10">
+        <div className="max-w-md mx-auto space-y-4">
+          <div className="bg-[#12141f] rounded-2xl p-6 text-center">
+            <div className="mx-auto w-16 h-16 bg-green-500/15 rounded-full flex items-center justify-center mb-4">
+              <CheckCircle className="h-9 w-9 text-green-400" />
+            </div>
+            <h2 className="text-2xl font-bold text-white/85 mb-1">Abastecimento registrado</h2>
+            <p className="text-white/60">{resultadoAb.numero} · {resultadoAb.itens} {resultadoAb.itens === 1 ? 'item' : 'itens'}</p>
+            <p className="text-sm text-white/50 mt-3">Já saiu do Estoque Central e entrou no {dados.setor.nome}. Nada mais a fazer.</p>
+          </div>
+          {resultadoAb.faltas && (
+            <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-5 text-sm text-amber-200">
+              <p className="font-semibold mb-2 flex items-center gap-2"><AlertTriangle className="w-4 h-4" /> Saiu mais do que o Central tinha</p>
+              <pre className="whitespace-pre-wrap font-sans text-amber-100/80">{resultadoAb.faltas}</pre>
+              <p className="mt-2 text-amber-200/70">Avise o estoquista para conferir.</p>
+            </div>
+          )}
+          <button
+            type="button"
+            onClick={novoAbastecimento}
+            className="w-full bg-wine text-white py-4 rounded-xl font-semibold text-lg"
+          >
+            Registrar outro abastecimento
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   // ─── Tela de sucesso ────────────────────────────────────────────────────────
   if (resultado) {
@@ -399,8 +546,34 @@ export default function PedidoSetor() {
         {/* Cabeçalho */}
         <div className="bg-[#12141f] rounded-2xl p-5">
           <p className="text-xs text-white/40 uppercase tracking-wide capitalize">{hoje}</p>
-          <h1 className="text-2xl font-bold text-white/90 mt-1">Contagem do {dados.setor.nome}</h1>
-          <p className="text-sm text-white/60 mt-2">Conte o que tem em mãos nos itens abaixo e envie. O que baixa pela venda é reposto sozinho todo dia. Para algo urgente, use "Pedir algo a mais".</p>
+          <h1 className="text-2xl font-bold text-white/90 mt-1">{dados.setor.nome}</h1>
+          <p className="text-sm text-white/60 mt-2">
+            {aba === 'contagem'
+              ? 'Conte o que tem em mãos nos itens abaixo e envie. O que baixa pela venda é reposto sozinho todo dia.'
+              : 'Pegou mercadoria no Central agora, no fechamento? Marque aqui a quantidade que levou. A transferência é registrada na hora.'}
+          </p>
+        </div>
+
+        {/* Abas */}
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={() => { setAba('contagem'); setErroEnvio(null); }}
+            className={`flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold border transition-colors ${
+              aba === 'contagem' ? 'bg-wine border-wine text-white' : 'bg-[#12141f] border-white/10 text-white/60'
+            }`}
+          >
+            <ClipboardCheck className="w-4 h-4" /> Contagem do dia
+          </button>
+          <button
+            type="button"
+            onClick={() => { setAba('abastecimento'); setErroEnvio(null); }}
+            className={`flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold border transition-colors ${
+              aba === 'abastecimento' ? 'bg-wine border-wine text-white' : 'bg-[#12141f] border-white/10 text-white/60'
+            }`}
+          >
+            <Moon className="w-4 h-4" /> Abastecer agora
+          </button>
         </div>
 
         {/* Quem está pedindo */}
@@ -441,6 +614,7 @@ export default function PedidoSetor() {
           )}
         </div>
 
+        {aba === 'contagem' && (<>
         {/* Itens por categoria */}
         {grupos.length === 0 && (
           <div className="bg-[#12141f] rounded-2xl p-5 text-white/50 text-sm">
@@ -618,6 +792,152 @@ export default function PedidoSetor() {
           )}
         </div>
 
+        </>)}
+
+        {aba === 'abastecimento' && (<>
+          {carregandoAb && !dadosAb && (
+            <div className="bg-[#12141f] rounded-2xl p-8 flex justify-center">
+              <Loader2 className="w-6 h-6 animate-spin text-white/40" />
+            </div>
+          )}
+
+          {dadosAb && (dadosAb.ultimos || []).length > 0 && (
+            <div className="bg-[#12141f] rounded-2xl p-5">
+              <h2 className="text-sm font-semibold text-white/60 uppercase tracking-wide mb-2">Últimos abastecimentos</h2>
+              <ul className="space-y-1.5">
+                {dadosAb.ultimos.map(u => (
+                  <li key={u.numero} className="flex items-center justify-between text-sm">
+                    <span className="text-white/70">{new Date(u.quando).toLocaleDateString('pt-BR')} · {u.quem}</span>
+                    <span className="text-white/40">{u.itens} {u.itens === 1 ? 'item' : 'itens'}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {gruposAb.map(([categoria, itens]) => (
+            <div key={categoria} className="bg-[#12141f] rounded-2xl overflow-hidden">
+              <h2 className="px-5 py-3 text-sm font-semibold text-white/60 uppercase tracking-wide border-b border-white/10">{categoria}</h2>
+              <ul className="divide-y divide-white/5">
+                {itens.map(it => {
+                  const q = qtd(qtdAb[it.item_id] ?? '');
+                  const faltaCentral = q > it.saldo_central;
+                  return (
+                    <li key={it.item_id} className={`p-4 ${q > 0 ? 'bg-wine/5' : ''}`}>
+                      <div className="flex items-start justify-between gap-2 mb-3">
+                        <div className="min-w-0">
+                          <p className="text-white font-semibold leading-tight">{it.nome} <span className="text-white/40 font-normal text-sm">{it.um}</span></p>
+                          <p className="text-caption text-white/40 mt-1">Central tem {fmt(it.saldo_central)} · nível do balcão {fmt(it.nivel)}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button type="button" aria-label={`Menos ${it.nome}`} onClick={() => somarAb(it.item_id, -1, it.fracionado)}
+                          className="p-3 bg-white/5 border border-white/15 rounded-xl">
+                          <Minus className="w-5 h-5 text-white/70" />
+                        </button>
+                        <input
+                          type="text" inputMode="decimal" value={qtdAb[it.item_id] ?? ''}
+                          onChange={e => digitarAb(it.item_id, e.target.value)}
+                          placeholder="0"
+                          className={`${inputClasse} ${q > 0 ? 'border-wine/60' : ''}`}
+                        />
+                        <button type="button" aria-label={`Mais ${it.nome}`} onClick={() => somarAb(it.item_id, 1, it.fracionado)}
+                          className="p-3 bg-white/5 border border-white/15 rounded-xl">
+                          <Plus className="w-5 h-5 text-wine-light" />
+                        </button>
+                      </div>
+                      {faltaCentral && (
+                        <p className="text-caption text-amber-300 mt-2 flex items-center gap-1">
+                          <AlertTriangle className="w-3.5 h-3.5" /> O Central só tem {fmt(it.saldo_central)} no sistema
+                        </p>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          ))}
+
+          {avulsosAb.length > 0 && (
+            <div className="bg-[#12141f] rounded-2xl overflow-hidden">
+              <h2 className="px-5 py-3 text-sm font-semibold text-white/60 uppercase tracking-wide border-b border-white/10">Outros itens</h2>
+              <ul className="divide-y divide-white/5">
+                {avulsosAb.map(o => {
+                  const q = qtd(qtdAb[o.item_id] ?? '');
+                  return (
+                    <li key={o.item_id} className={`p-4 ${q > 0 ? 'bg-wine/5' : ''}`}>
+                      <div className="flex items-start justify-between gap-2 mb-3">
+                        <div className="min-w-0">
+                          <p className="text-white font-semibold leading-tight">{o.nome} <span className="text-white/40 font-normal text-sm">{o.um}</span></p>
+                          <p className="text-caption text-white/40 mt-1">Central tem {fmt(o.saldo_central)}</p>
+                        </div>
+                        <button type="button" aria-label={`Tirar ${o.nome}`}
+                          onClick={() => { setAvulsosAb(prev => prev.filter(x => x.item_id !== o.item_id)); setQtdAb(prev => { const n = { ...prev }; delete n[o.item_id]; return n; }); }}
+                          className="p-1.5 text-white/40">
+                          <X className="w-5 h-5" />
+                        </button>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button type="button" aria-label={`Menos ${o.nome}`} onClick={() => somarAb(o.item_id, -1, true)}
+                          className="p-3 bg-white/5 border border-white/15 rounded-xl">
+                          <Minus className="w-5 h-5 text-white/70" />
+                        </button>
+                        <input
+                          type="text" inputMode="decimal" value={qtdAb[o.item_id] ?? ''}
+                          onChange={e => digitarAb(o.item_id, e.target.value)}
+                          placeholder="0"
+                          className={`${inputClasse} ${q > 0 ? 'border-wine/60' : ''}`}
+                        />
+                        <button type="button" aria-label={`Mais ${o.nome}`} onClick={() => somarAb(o.item_id, 1, true)}
+                          className="p-3 bg-white/5 border border-white/15 rounded-xl">
+                          <Plus className="w-5 h-5 text-wine-light" />
+                        </button>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          )}
+
+          {dadosAb && (
+            <div className="bg-[#12141f] rounded-2xl p-5">
+              <h2 className="text-sm font-semibold text-white/60 uppercase tracking-wide mb-3">Levar outro item</h2>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-white/30" />
+                <input
+                  type="text" value={buscaAb} onChange={e => setBuscaAb(e.target.value)}
+                  placeholder="Buscar item..."
+                  className="w-full pl-10 pr-10 py-3 bg-white/5 border border-white/20 text-white rounded-xl text-base focus:outline-none focus:ring-2 focus:ring-wine placeholder-white/30"
+                />
+                {buscaAb && (
+                  <button type="button" aria-label="Limpar busca" onClick={() => setBuscaAb('')} className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-white/40">
+                    <X className="w-5 h-5" />
+                  </button>
+                )}
+              </div>
+              {buscaAb.trim() && (
+                resultadosBuscaAb.length === 0 ? (
+                  <p className="text-sm text-white/40 mt-3">Nenhum item encontrado.</p>
+                ) : (
+                  <ul className="mt-2 divide-y divide-white/5 border border-white/10 rounded-xl overflow-hidden">
+                    {resultadosBuscaAb.map(o => (
+                      <li key={o.item_id}>
+                        <button type="button"
+                          onClick={() => { setAvulsosAb(prev => [...prev, o]); setQtdAb(prev => ({ ...prev, [o.item_id]: '1' })); setBuscaAb(''); }}
+                          className="w-full text-left p-4 hover:bg-white/5">
+                          <p className="text-white font-medium">{o.nome} <span className="text-white/40 font-normal text-sm">{o.um}</span></p>
+                          <p className="text-caption text-white/40">{o.categoria || 'Sem categoria'} · Central: {fmt(o.saldo_central)}</p>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )
+              )}
+            </div>
+          )}
+        </>)}
+
         {/* Observação */}
         <div className="bg-[#12141f] rounded-2xl p-5">
           <label className="block text-sm font-semibold text-white/60 uppercase tracking-wide mb-2">Observação <span className="normal-case font-normal text-white/35">(opcional)</span></label>
@@ -642,21 +962,35 @@ export default function PedidoSetor() {
       <div className="fixed bottom-0 inset-x-0 bg-[#0d0f1a]/95 backdrop-blur border-t border-white/10 p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
         <div className="max-w-md mx-auto">
           {!nomeFinal && (
-            <p className="text-caption text-white/40 text-center mb-2">Escolha quem está pedindo para enviar</p>
+            <p className="text-caption text-white/40 text-center mb-2">
+              {aba === 'contagem' ? 'Escolha quem está pedindo para enviar' : 'Escolha quem está abastecendo para registrar'}
+            </p>
           )}
-          <button
-            type="button"
-            onClick={enviar}
-            disabled={!podeEnviar}
-            className="w-full bg-wine text-white py-4 rounded-xl font-semibold text-lg flex items-center justify-center gap-2 disabled:bg-white/10 disabled:text-white/40"
-          >
-            {enviando ? <Loader2 className="w-5 h-5 animate-spin" /> : soContagem ? <ClipboardCheck className="w-5 h-5" /> : <Send className="w-5 h-5" />}
-            {enviando
-              ? 'Enviando...'
-              : soContagem
-                ? 'Enviar contagem'
-                : `${totalItensPedidos} ${totalItensPedidos === 1 ? 'item' : 'itens'} · Enviar contagem e pedido`}
-          </button>
+          {aba === 'contagem' ? (
+            <button
+              type="button"
+              onClick={enviar}
+              disabled={!podeEnviar}
+              className="w-full bg-wine text-white py-4 rounded-xl font-semibold text-lg flex items-center justify-center gap-2 disabled:bg-white/10 disabled:text-white/40"
+            >
+              {enviando ? <Loader2 className="w-5 h-5 animate-spin" /> : soContagem ? <ClipboardCheck className="w-5 h-5" /> : <Send className="w-5 h-5" />}
+              {enviando
+                ? 'Enviando...'
+                : soContagem
+                  ? 'Enviar contagem'
+                  : `${totalItensPedidos} ${totalItensPedidos === 1 ? 'item' : 'itens'} · Enviar contagem e pedido`}
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={enviarAbastecimento}
+              disabled={!podeEnviarAb}
+              className="w-full bg-wine text-white py-4 rounded-xl font-semibold text-lg flex items-center justify-center gap-2 disabled:bg-white/10 disabled:text-white/40"
+            >
+              {enviando ? <Loader2 className="w-5 h-5 animate-spin" /> : <Truck className="w-5 h-5" />}
+              {enviando ? 'Registrando...' : `${totalAb} ${totalAb === 1 ? 'item' : 'itens'} · Registrar abastecimento`}
+            </button>
+          )}
         </div>
       </div>
     </div>
