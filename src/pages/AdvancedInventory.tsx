@@ -28,6 +28,7 @@ import MapeamentoItensExcel    from '../components/inventory/MapeamentoItensExce
 import MovimentacoesCompostas  from '../components/inventory/MovimentacoesCompostas';
 import ComprasDaSemana         from '../components/inventory/ComprasDaSemana';
 import ReposicaoBalcao         from '../components/inventory/ReposicaoBalcao';
+import ComprasDoDia            from '../components/inventory/ComprasDoDia';
 
 // ── Componentes novos ────────────────────────────────────────────────────────
 import OperacaoHome      from '../components/inventory/operacao/OperacaoHome';
@@ -37,7 +38,7 @@ import TransferirEstoque from '../components/inventory/operacao/TransferirEstoqu
 type Area = 'operacao' | 'compras' | 'analise' | 'cadastros';
 type Tela =
   | 'home' | 'receber' | 'transferir' | 'produzir' | 'contar' | 'requisicoes' | 'reposicao'
-  | 'semana' | 'compras' | 'lista-compras'
+  | 'dia' | 'semana' | 'compras' | 'lista-compras'
   | 'dashboard' | 'kardex' | 'inventario' | 'relatorios' | 'zig' | 'movimentacoes-avancadas'
   | 'itens' | 'fichas' | 'estoques' | 'mapeamento';
 
@@ -47,10 +48,11 @@ interface TelaConfig {
   icon: React.ElementType;
 }
 
+// "Compras" (lançar nota) e "Lista de Compras" (listas antigas) continuam
+// acessíveis pela URL, mas saem das abas: o fluxo é Compras do dia → Receber.
 const TELAS_COMPRAS: TelaConfig[] = [
+  { key: 'dia',          label: 'Compras do dia',    icon: ShoppingCart },
   { key: 'semana',       label: 'Compras da semana', icon: CalendarDays },
-  { key: 'compras',      label: 'Compras',        icon: ShoppingCart },
-  { key: 'lista-compras', label: 'Lista de Compras', icon: FileText },
 ];
 
 const TELAS_ANALISE: TelaConfig[] = [
@@ -165,6 +167,7 @@ const AdvancedInventory: React.FC = () => {
     if (tela === 'reposicao')  return <ReposicaoBalcao />;
 
     // Compras
+    if (area === 'compras' && tela === 'dia')    return <ComprasDoDia />;
     if (area === 'compras' && tela === 'semana') return <ComprasDaSemana />;
     if (tela === 'compras')      return <ComprasEstoque />;
     if (tela === 'lista-compras') return <ListaCompras />;

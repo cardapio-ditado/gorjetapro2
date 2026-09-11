@@ -31,13 +31,22 @@ interface Grupo {
   pedidoEnviado: boolean;
 }
 
-const KEY_RUA = '__rua';
 const KEY_SEM = '__sem';
 
 function chaveGrupo(i: ItemLista): string {
-  if (i.tipo_compra === 'rua') return KEY_RUA;
+  // Itens de rua agrupam pela loja (fornecedor_nome); sem loja definida caem em "Compra de rua"
+  if (i.tipo_compra === 'rua') return `rua:${(i.fornecedor_nome || '').trim()}`;
   if (i.tipo_compra === 'fornecedor' || i.fornecedor_nome) return `forn:${(i.fornecedor_nome || '').trim() || 'Fornecedor'}`;
   return KEY_SEM;
+}
+
+function nomeGrupo(key: string): string {
+  if (key === KEY_SEM) return 'Sem fornecedor';
+  if (key.startsWith('rua:')) {
+    const loja = key.slice(4);
+    return loja ? `Rua · ${loja}` : 'Compra de rua';
+  }
+  return key.slice(5);
 }
 
 function agrupar(itens: ItemLista[]): Grupo[] {
@@ -48,8 +57,8 @@ function agrupar(itens: ItemLista[]): Grupo[] {
     if (!g) {
       g = {
         key,
-        nome: key === KEY_RUA ? 'Compra de rua' : key === KEY_SEM ? 'Sem fornecedor' : key.slice(5),
-        tipo: key === KEY_RUA ? 'rua' : key === KEY_SEM ? 'sem' : 'fornecedor',
+        nome: nomeGrupo(key),
+        tipo: key.startsWith('rua:') ? 'rua' : key === KEY_SEM ? 'sem' : 'fornecedor',
         telefone: null,
         itens: [],
         pedidoEnviado: false,

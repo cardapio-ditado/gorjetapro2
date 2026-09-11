@@ -2,15 +2,20 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import {
   CalendarDays, RefreshCw, Search, X, Truck, Store, AlertTriangle,
-  ChevronDown, ChevronRight, Phone, Send, CheckCircle2, ShoppingCart,
-  Package, Info, ExternalLink, Users, Wallet, ClipboardList, Copy, Check, MessageCircle,
+  ChevronDown, ChevronRight, Phone, Send, ShoppingCart,
+  Package, Info, ExternalLink, Users, Wallet,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import {
+  DIAS, fmt, fmtQtd, fmtMoeda, ehFracionado,
+  BadgeSituacao, BadgeCriterio, DiasCompra, MensagemBox,
+  type Situacao, type Criterio, type Mensagem,
+} from './comprasShared';
+import { PainelListaDoDia, urlListaPublica, normalizarListaDoDia, type ListaDoDia } from './PainelListaDoDia';
 
 // ─── Tipos ───────────────────────────────────────────────────────────────────
-type Situacao = 'zerado' | 'comprar' | 'atencao' | 'ok';
-type Criterio = 'manual' | 'consumo' | 'sem_consumo';
 type TipoCompra = 'fornecedor' | 'rua' | 'ambos';
+type Modalidade = 'entrega' | 'rua';
 
 interface ItemReposicao {
   item_id: string;
@@ -49,77 +54,7 @@ interface CardFornecedor {
   dias_compra: number[] | null;
   itens: ItemReposicao[];
 }
-
-interface Mensagem {
-  tipo: 'ok' | 'erro';
-  texto: string;
-  link?: string;
-  linkLabel?: string;
-  /** Link externo (abre em nova aba) — usado para a lista do comprador */
-  linkExterno?: { href: string; label: string };
-}
-
-interface ListaDoDia {
-  lista_id: string;
-  numero: string;
-  titulo: string;
-  status: string;
-  itens: number;
-  comprados: number;
-  valor: number;
-  fornecedores: number;
-}
-
-function urlListaPublica(listaId: string): string {
-  return `${window.location.origin}/compras-publica/${listaId}`;
-}
-
-function urlWhatsApp(titulo: string, url: string): string {
-  return `https://wa.me/?text=${encodeURIComponent(`Lista de compras de hoje, ${titulo}: ${url}`)}`;
-}
-
-// ─── Constantes ──────────────────────────────────────────────────────────────
-const DIAS = [
-  { n: 1, sigla: 'Seg', letra: 'S' },
-  { n: 2, sigla: 'Ter', letra: 'T' },
-  { n: 3, sigla: 'Qua', letra: 'Q' },
-  { n: 4, sigla: 'Qui', letra: 'Q' },
-  { n: 5, sigla: 'Sex', letra: 'S' },
-  { n: 6, sigla: 'Sáb', letra: 'S' },
-  { n: 7, sigla: 'Dom', letra: 'D' },
-];
-
-const SITUACAO_LABEL: Record<Situacao, string> = {
-  zerado: 'Zerado', comprar: 'Comprar', atencao: 'Atenção', ok: 'OK',
-};
-const SITUACAO_COLOR: Record<Situacao, string> = {
-  zerado: 'bg-red-500/15 text-red-400 border-red-500/30',
-  comprar: 'bg-amber-500/15 text-amber-400 border-amber-500/30',
-  atencao: 'bg-yellow-500/10 text-yellow-300 border-yellow-500/40',
-  ok: 'bg-green-500/10 text-green-400 border-green-500/30',
-};
-const CRITERIO_LABEL: Record<Criterio, string> = {
-  consumo: 'pelo consumo',
-  manual: 'mínimo travado',
-  sem_consumo: 'sem histórico (mínimo digitado)',
-};
-const CRITERIO_COLOR: Record<Criterio, string> = {
-  consumo: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
-  manual: 'bg-purple-500/10 text-purple-400 border-purple-500/30',
-  sem_consumo: 'bg-white/5 text-white/50 border-white/10',
-};
-
-const UNIDADES_FRACIONAVEIS = ['kg', 'g', 'grama', 'gramas', 'l', 'litro', 'litros', 'ml', 'mililitro', 'mililitros'];
-function ehFracionado(um: string | null | undefined): boolean {
-  return UNIDADES_FRACIONAVEIS.includes((um || '').trim().toLowerCase());
-}
-
-function fmt(n: number, dec = 2) {
-  return n.toLocaleString('pt-BR', { minimumFractionDigits: dec, maximumFractionDigits: dec });
-}
-function fmtQtd(n: number) { return fmt(n, n % 1 === 0 ? 0 : 2); }
-function fmtMoeda(n: number) { return 'R$ ' + fmt(n); }
-
+// ─── Helpers ─────────────────────────────────────────────────────────────────
 function hojeIso(): number {
   // getDay(): 0=Dom..6=Sáb → ISO 1=Seg..7=Dom
   return ((new Date().getDay() + 6) % 7) + 1;
@@ -162,40 +97,7 @@ function normalizar(raw: Record<string, unknown>): ItemReposicao {
     situacao: ((raw.situacao as Situacao) || 'ok'),
   };
 }
-
 // ─── Sub-componentes ─────────────────────────────────────────────────────────
-function BadgeSituacao({ s }: { s: Situacao }) {
-  return (
-    <span className={`text-caption px-1.5 py-0.5 rounded-md border whitespace-nowrap ${SITUACAO_COLOR[s]}`}>
-      {SITUACAO_LABEL[s]}
-    </span>
-  );
-}
-
-function BadgeCriterio({ c }: { c: Criterio }) {
-  return (
-    <span className={`text-caption px-1.5 py-0.5 rounded-md border whitespace-nowrap ${CRITERIO_COLOR[c]}`}>
-      {CRITERIO_LABEL[c]}
-    </span>
-  );
-}
-
-function DiasCompra({ dias }: { dias: number[] | null }) {
-  if (!dias || dias.length === 0) {
-    return <span className="text-caption text-white/50">qualquer dia</span>;
-  }
-  return (
-    <span className="flex items-center gap-0.5" title={dias.map(d => DIAS[d - 1]?.sigla).filter(Boolean).join(', ')}>
-      {DIAS.map(d => (
-        <span key={d.n}
-          className={`w-4 h-4 rounded text-[10px] font-bold flex items-center justify-center ${dias.includes(d.n) ? 'bg-wine text-white' : 'bg-white/5 text-white/25'}`}>
-          {d.letra}
-        </span>
-      ))}
-    </span>
-  );
-}
-
 interface LinhaProps {
   item: ItemReposicao;
   editavel: boolean;
@@ -284,99 +186,6 @@ function CabecalhoTabela({ editavel }: { editavel: boolean }) {
     </thead>
   );
 }
-
-function MensagemBox({ msg, onFechar }: { msg: Mensagem; onFechar: () => void }) {
-  const ok = msg.tipo === 'ok';
-  return (
-    <div className={`mx-4 my-3 rounded-xl border px-3 py-2.5 text-sm flex items-start gap-2 ${ok ? 'bg-green-500/10 border-green-500/30 text-green-300' : 'bg-red-500/10 border-red-500/30 text-red-400'}`}>
-      {ok ? <CheckCircle2 size={16} className="flex-shrink-0 mt-0.5" /> : <AlertTriangle size={16} className="flex-shrink-0 mt-0.5" />}
-      <div className="flex-1 min-w-0">
-        <p>{msg.texto}</p>
-        <div className="flex items-center gap-3 flex-wrap">
-          {msg.link && (
-            <Link to={msg.link} className="inline-flex items-center gap-1 mt-1 text-xs font-semibold underline underline-offset-2 hover:opacity-80">
-              <ExternalLink size={12} /> {msg.linkLabel || 'Abrir'}
-            </Link>
-          )}
-          {msg.linkExterno && (
-            <a href={msg.linkExterno.href} target="_blank" rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 mt-1 text-xs font-semibold underline underline-offset-2 hover:opacity-80">
-              <ClipboardList size={12} /> {msg.linkExterno.label}
-            </a>
-          )}
-        </div>
-      </div>
-      <button onClick={onFechar} className="text-white/30 hover:text-white/60 flex-shrink-0"><X size={14} /></button>
-    </div>
-  );
-}
-
-function PainelListaDoDia({ lista }: { lista: ListaDoDia }) {
-  const [copiado, setCopiado] = useState(false);
-  const [mostrarUrl, setMostrarUrl] = useState(false);
-  const url = urlListaPublica(lista.lista_id);
-
-  useEffect(() => {
-    if (!copiado) return;
-    const t = setTimeout(() => setCopiado(false), 2500);
-    return () => clearTimeout(t);
-  }, [copiado]);
-
-  const copiarLink = async () => {
-    try {
-      if (!navigator.clipboard?.writeText) throw new Error('clipboard indisponível');
-      await navigator.clipboard.writeText(url);
-      setCopiado(true); setMostrarUrl(false);
-    } catch {
-      setMostrarUrl(true);
-    }
-  };
-
-  return (
-    <div className="bg-[#12141f] rounded-2xl border border-wine/50 ring-1 ring-wine/20 px-5 py-4">
-      <div className="flex items-start justify-between gap-3 flex-wrap">
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="w-10 h-10 bg-wine/20 rounded-xl flex items-center justify-center flex-shrink-0">
-            <ClipboardList size={20} className="text-wine" />
-          </div>
-          <div className="min-w-0">
-            <p className="text-white font-bold leading-tight">
-              Lista do comprador de hoje <span className="text-white/50 font-medium">· {lista.numero}</span>
-            </p>
-            <p className="text-xs text-white/60 mt-0.5">
-              {lista.itens} {lista.itens === 1 ? 'item' : 'itens'} ({lista.comprados} {lista.comprados === 1 ? 'comprado' : 'comprados'})
-              {' · '}{fmtMoeda(lista.valor)}
-              {' · '}{lista.fornecedores} {lista.fornecedores === 1 ? 'fornecedor' : 'fornecedores'}
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          <a href={url} target="_blank" rel="noopener noreferrer"
-            className="flex items-center gap-1.5 bg-wine hover:bg-[#6a1a25] text-white text-sm font-semibold px-3 py-2 rounded-xl transition-colors">
-            <ExternalLink size={14} /> Abrir lista
-          </a>
-          <button onClick={copiarLink}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-white/10 text-sm font-medium text-white/70 hover:bg-white/5 transition-colors">
-            {copiado ? <Check size={14} className="text-green-400" /> : <Copy size={14} />}
-            {copiado ? 'Copiado' : 'Copiar link'}
-          </button>
-          <a href={urlWhatsApp(lista.titulo, url)} target="_blank" rel="noopener noreferrer"
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-green-500/30 bg-green-500/10 text-sm font-medium text-green-300 hover:bg-green-500/20 transition-colors">
-            <MessageCircle size={14} /> Enviar no WhatsApp
-          </a>
-        </div>
-      </div>
-      {mostrarUrl && (
-        <div className="mt-3">
-          <p className="text-caption text-white/50 mb-1">Não foi possível copiar automaticamente. Selecione e copie o link:</p>
-          <input readOnly value={url} onFocus={e => e.target.select()}
-            className="w-full text-xs border border-white/10 rounded-lg px-2 py-1.5 bg-[#0c1018] text-white/80 focus:outline-none focus:ring-2 focus:ring-wine/30" />
-        </div>
-      )}
-    </div>
-  );
-}
-
 // ─── Componente principal ────────────────────────────────────────────────────
 export default function ComprasDaSemana() {
   const hoje = hojeIso();
@@ -393,23 +202,13 @@ export default function ComprasDaSemana() {
   const [gerando, setGerando] = useState<string | null>(null);
   const [mensagens, setMensagens] = useState<Record<string, Mensagem>>({});
   const [listaDia, setListaDia] = useState<ListaDoDia | null>(null);
+  /** modalidade de cada fornecedor ativo (entrega | rua) */
+  const [modalidades, setModalidades] = useState<Record<string, Modalidade>>({});
 
   const carregarListaDia = useCallback(async (): Promise<ListaDoDia | null> => {
     try {
       const { data, error } = await supabase.rpc('fn_lista_do_dia_resumo');
-      if (error || !data) { setListaDia(null); return null; }
-      const r = data as Record<string, unknown>;
-      if (!r.lista_id) { setListaDia(null); return null; }
-      const l: ListaDoDia = {
-        lista_id: String(r.lista_id),
-        numero: String(r.numero ?? ''),
-        titulo: String(r.titulo ?? ''),
-        status: String(r.status ?? ''),
-        itens: Number(r.itens ?? 0),
-        comprados: Number(r.comprados ?? 0),
-        valor: Number(r.valor ?? 0),
-        fornecedores: Number(r.fornecedores ?? 0),
-      };
+      const l = error ? null : normalizarListaDoDia(data);
       setListaDia(l);
       return l;
     } catch {
@@ -421,8 +220,16 @@ export default function ComprasDaSemana() {
   const carregar = useCallback(async () => {
     setCarregando(true); setErro('');
     try {
-      const { data, error } = await supabase.rpc('fn_reposicao_central');
+      const [{ data, error }, rForn] = await Promise.all([
+        supabase.rpc('fn_reposicao_central'),
+        supabase.from('fornecedores').select('id, modalidade').eq('status', 'ativo'),
+      ]);
       if (error) { setErro(error.message); return; }
+      const mods: Record<string, Modalidade> = {};
+      for (const f of (rForn.data || []) as { id: string; modalidade: string | null }[]) {
+        mods[f.id] = f.modalidade === 'rua' ? 'rua' : 'entrega';
+      }
+      setModalidades(mods);
       const lista = (Array.isArray(data) ? data : []).map(r => normalizar(r as Record<string, unknown>));
       setItens(lista);
       // Reinicia seleção/quantidades com a sugestão nova
@@ -452,11 +259,16 @@ export default function ComprasDaSemana() {
     precisaComprar(it.situacao) || (incluirAtencao && it.situacao === 'atencao'),
   [incluirAtencao]);
 
+  // Item é "de rua" pelo tipo de compra ou porque o fornecedor preferido é uma loja de rua
+  const ehRua = useCallback((it: ItemReposicao) =>
+    it.tipo_compra === 'rua' || (!!it.fornecedor_id && modalidades[it.fornecedor_id] === 'rua'),
+  [modalidades]);
+
   // Cards por fornecedor (itens de rua ficam no card de rua)
   const cardsFornecedor = useMemo<CardFornecedor[]>(() => {
     const map = new Map<string, CardFornecedor>();
     for (const it of itens) {
-      if (!it.fornecedor_id || it.tipo_compra === 'rua') continue;
+      if (!it.fornecedor_id || ehRua(it)) continue;
       if (!relevante(it)) continue;
       if (!mostrarTodos && !compraNoDia(it.dias_compra, dia)) continue;
       let card = map.get(it.fornecedor_id);
@@ -474,15 +286,15 @@ export default function ComprasDaSemana() {
       card.itens.push(it);
     }
     return [...map.values()].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
-  }, [itens, relevante, mostrarTodos, dia]);
+  }, [itens, relevante, mostrarTodos, dia, ehRua]);
 
   const itensRua = useMemo(() =>
-    itens.filter(it => it.tipo_compra === 'rua' && precisaComprar(it.situacao)),
-  [itens]);
+    itens.filter(it => ehRua(it) && precisaComprar(it.situacao)),
+  [itens, ehRua]);
 
   const itensSemFornecedor = useMemo(() =>
-    itens.filter(it => !it.fornecedor_id && it.tipo_compra !== 'rua' && precisaComprar(it.situacao)),
-  [itens]);
+    itens.filter(it => !it.fornecedor_id && !ehRua(it) && precisaComprar(it.situacao)),
+  [itens, ehRua]);
 
   // Aplicação da busca
   const cardsVisiveis = useMemo(() =>
@@ -553,7 +365,7 @@ export default function ComprasDaSemana() {
     setGerando(key); setMsg(key, null);
     try {
       const { data, error } = await supabase.rpc('fn_gerar_lista_rua', {
-        p_itens: sel.map(it => ({ item_id: it.item_id, quantidade: quantidades[it.item_id] })),
+        p_itens: sel.map(it => ({ item_id: it.item_id, quantidade: quantidades[it.item_id], fornecedor_id: it.fornecedor_id ?? null })),
         p_titulo: `Compra de rua – ${new Date().toLocaleDateString('pt-BR')}`,
       });
       if (error) { setMsg(key, { tipo: 'erro', texto: error.message }); return; }

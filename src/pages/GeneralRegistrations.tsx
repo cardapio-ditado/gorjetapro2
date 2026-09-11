@@ -519,6 +519,10 @@ const GeneralRegistrations: React.FC = () => {
               }))
             ]
           },
+          { name: 'modalidade', label: 'Como compramos dele', type: 'select', options: [
+            { value: 'entrega', label: 'Mandamos pedido e ele entrega' },
+            { value: 'rua', label: 'Loja de rua: o comprador vai buscar' }
+          ], helpText: 'Define se o item vira pedido (entrega) ou entra na lista de rua.' },
           { name: 'ciclo_compra_dias', label: 'Ciclo de compra (dias)', type: 'number', helpText: 'Preenchido pelo histórico de compras; ajuste se precisar. Vazio = compra diária.' },
           { name: 'dias_compra', label: 'Dias de compra', type: 'weekdays', helpText: 'Nenhum selecionado = qualquer dia.' },
           { name: 'endereco', label: 'Endereço', type: 'textarea', fullWidth: true },
