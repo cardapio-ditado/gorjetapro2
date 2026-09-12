@@ -178,6 +178,25 @@ Deno.serve(async (req) => {
       }
     }
 
+    // 1a. Rede de segurança. Em 12/09/2026 a leitura da tabela de mapeamento
+    //     falhou em silêncio dentro de zig-buscar-vendas: ela devolveu os 99
+    //     produtos do dia com "sem mapeamento", nada baixou e o aviso listou
+    //     itens que estavam mapeados havia dias. Se nada ficou pronto mas a
+    //     tabela de mapeamento tem vínculos, o problema é de leitura, não de
+    //     cadastro: aborta sem gravar nada e sem poluir o mapeamento.
+    if (prontos.length === 0 && pendentes.length > 3) {
+      const { count: vinculos } = await supabase
+        .from('mapeamento_itens_vendas')
+        .select('id', { count: 'exact', head: true })
+        .not('item_estoque_id', 'is', null);
+      if ((vinculos ?? 0) > 0) {
+        throw new Error(
+          `Nenhum dos ${pendentes.length} produtos voltou mapeado, mas existem ${vinculos} mapeamentos com vínculo. ` +
+          'Provável falha na leitura do mapeamento em zig-buscar-vendas. Rodada abortada; rode de novo pela tela.',
+        );
+      }
+    }
+
     // 1b. Produto sem mapeamento entra na tabela como "sem vínculo", para
     //     aparecer em Estoque › ZIG Vendas › Mapeamento assistido. Antes ele só
     //     ficava no log e ninguém via.
