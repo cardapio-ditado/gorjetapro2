@@ -177,9 +177,12 @@ const AdvancedInventory: React.FC = () => {
         onNavigate={(tab) => {
           const map: Record<string, { area: Area; tela: Tela }> = {
             compras:    { area: 'compras',  tela: 'compras' },
+            dia:        { area: 'compras',  tela: 'dia' },
             requisicoes:{ area: 'operacao', tela: 'transferir' },
             contagem:   { area: 'operacao', tela: 'contar' },
             inventario: { area: 'analise',  tela: 'inventario' },
+            zig:        { area: 'analise',  tela: 'zig' },
+            itens:      { area: 'cadastros', tela: 'itens' },
           };
           if (map[tab]) navegar(map[tab].area, map[tab].tela);
         }}
