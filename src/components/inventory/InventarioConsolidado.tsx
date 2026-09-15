@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
-  Search, Download, X, ChevronUp, ChevronDown,
+  Search, Download, ChevronUp, ChevronDown,
   AlertTriangle, Package, Loader2, History, ShoppingCart, ArrowDownToLine, Info,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
@@ -32,21 +33,6 @@ interface VwInventarioRow {
   valor_total: number;
 }
 
-interface KardexRow {
-  id: string;
-  tipo_movimentacao: string;
-  quantidade: number;
-  custo_unitario: number | null;
-  custo_total: number | null;
-  data_movimentacao: string;
-  motivo: string | null;
-  observacoes: string | null;
-  criado_em: string;
-  estoque_origem_id: string | null;
-  estoque_destino_id: string | null;
-  origem_tipo: string | null;
-}
-
 interface Estoque { id: string; nome: string; tipo: string; }
 
 // Linha de fn_reposicao_central (só os campos usados aqui)
@@ -72,21 +58,6 @@ interface RowStatus {
 }
 
 type SortField = 'nome' | 'saldo' | 'valor';
-
-const TIPO_LABEL: Record<string, string> = {
-  entrada: 'Entrada', saida: 'Saída', transferencia: 'Transf.',
-  ajuste_positivo: 'Aj.+', ajuste_negativo: 'Aj.-',
-  producao: 'Produção', consumo: 'Consumo', perda: 'Perda',
-  venda: 'Venda', devolucao: 'Devolução',
-};
-
-function tipoColor(tipo: string) {
-  if (['entrada', 'producao', 'devolucao', 'ajuste_positivo'].includes(tipo))
-    return 'bg-green-500/15 text-green-300';
-  if (['saida', 'consumo', 'perda', 'venda', 'ajuste_negativo'].includes(tipo))
-    return 'bg-red-500/15 text-red-300';
-  return 'bg-blue-500/15 text-blue-300';
-}
 
 const SITUACAO_META: Record<Situacao, { label: string; cls: string }> = {
   negativo:     { label: 'Negativo',        cls: 'bg-red-500/20 text-red-300' },
@@ -127,6 +98,7 @@ function resolveStatus(
 }
 
 export default function InventarioConsolidado() {
+  const navigate = useNavigate();
   const [rows, setRows]         = useState<VwInventarioRow[]>([]);
   const [estoques, setEstoques] = useState<Estoque[]>([]);
   const [reposicao, setReposicao] = useState<Record<string, ReposicaoCentral>>({});
@@ -140,11 +112,6 @@ export default function InventarioConsolidado() {
   const [categoriaFilter, setCategoriaFilter] = useState('all');
   const [sortBy, setSortBy]                 = useState<SortField>('nome');
   const [sortAsc, setSortAsc]               = useState(true);
-
-  // Kardex modal
-  const [kardexItem, setKardexItem]         = useState<{ id: string; nome: string; estoqueId: string } | null>(null);
-  const [kardexRows, setKardexRows]         = useState<KardexRow[]>([]);
-  const [kardexLoading, setKardexLoading]   = useState(false);
 
   useEffect(() => { load(); }, []);
 
@@ -188,25 +155,11 @@ export default function InventarioConsolidado() {
     }
   }
 
-  async function abrirKardex(itemId: string, itemNome: string, estoqueId: string) {
-    setKardexItem({ id: itemId, nome: itemNome, estoqueId });
-    setKardexLoading(true);
-    setKardexRows([]);
-    try {
-      const { data, error } = await supabase
-        .from('movimentacoes_estoque')
-        .select('id, tipo_movimentacao, quantidade, custo_unitario, custo_total, data_movimentacao, motivo, observacoes, criado_em, estoque_origem_id, estoque_destino_id, origem_tipo')
-        .eq('item_id', itemId)
-        .or(`estoque_origem_id.eq.${estoqueId},estoque_destino_id.eq.${estoqueId}`)
-        .order('criado_em', { ascending: false })
-        .limit(50);
-      if (error) throw error;
-      setKardexRows((data || []) as KardexRow[]);
-    } catch (e: unknown) {
-      console.error(e);
-    } finally {
-      setKardexLoading(false);
-    }
+  // O histórico era um modalzinho com as últimas 50 linhas e sem saldo. Agora
+  // manda para o Extrato do item, que traz saldo acumulado, custo médio,
+  // gráfico e exportação — já com o item aberto e no estoque desta linha.
+  function abrirKardex(itemId: string, estoqueId: string) {
+    navigate(`/advanced-inventory?area=analise&tela=kardex&item=${itemId}&estoque=${estoqueId}`);
   }
 
   const categorias = useMemo(() =>
@@ -502,9 +455,9 @@ export default function InventarioConsolidado() {
                       </td>
                       <td className="px-4 py-3 text-center">
                         <button
-                          onClick={() => abrirKardex(row.item_id, row.item_nome, row.estoque_id)}
+                          onClick={() => abrirKardex(row.item_id, row.estoque_id)}
                           className="p-1.5 text-white/40 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
-                          title="Ver Histórico"
+                          title="Abrir o extrato completo do item"
                         >
                           <History className="w-4 h-4" />
                         </button>
@@ -518,76 +471,6 @@ export default function InventarioConsolidado() {
         )}
       </div>
 
-      {/* Modal Kardex */}
-      {kardexItem && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-[#0f1020] border border-white/10 rounded-2xl max-w-3xl w-full max-h-[85vh] flex flex-col">
-            <div className="flex items-center justify-between p-5 border-b border-white/10">
-              <div>
-                <h3 className="text-lg font-bold text-white">{kardexItem.nome}</h3>
-                <p className="text-xs text-white/60 mt-0.5">
-                  {estoques.find(e => e.id === kardexItem.estoqueId)?.nome || kardexItem.estoqueId} · Últimas 50 movimentações
-                </p>
-              </div>
-              <button
-                onClick={() => { setKardexItem(null); setKardexRows([]); }}
-                className="p-1.5 hover:bg-white/10 rounded-lg"
-              >
-                <X className="w-5 h-5 text-white/50" />
-              </button>
-            </div>
-
-            <div className="flex-1 overflow-y-auto">
-              {kardexLoading ? (
-                <div className="flex items-center justify-center py-12">
-                  <Loader2 className="w-6 h-6 animate-spin text-white/30" />
-                </div>
-              ) : kardexRows.length === 0 ? (
-                <p className="text-center text-white/60 py-12 text-sm">Nenhuma movimentação encontrada</p>
-              ) : (
-                <table className="min-w-full">
-                  <thead className="bg-white/5 border-b border-white/10 sticky top-0">
-                    <tr>
-                      {['Data', 'Tipo', 'Qtd', 'Custo Unit.', 'Total', 'Origem', 'Obs'].map(h => (
-                        <th key={h} className="px-4 py-2.5 text-left text-xs font-semibold text-white/60 uppercase tracking-wide">{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-white/5">
-                    {kardexRows.map(row => (
-                      <tr key={row.id} className="hover:bg-white/5">
-                        <td className="px-4 py-2.5 text-xs text-white/50 whitespace-nowrap">
-                          {new Date(row.data_movimentacao).toLocaleDateString('pt-BR')}
-                        </td>
-                        <td className="px-4 py-2.5">
-                          <span className={`text-xs px-2 py-0.5 rounded-lg font-semibold ${tipoColor(row.tipo_movimentacao)}`}>
-                            {TIPO_LABEL[row.tipo_movimentacao] || row.tipo_movimentacao}
-                          </span>
-                        </td>
-                        <td className="px-4 py-2.5 text-sm font-semibold text-white tabular-nums whitespace-nowrap">
-                          {fmtQtd(row.quantidade)}
-                        </td>
-                        <td className="px-4 py-2.5 text-sm text-white/50 tabular-nums whitespace-nowrap">
-                          {row.custo_unitario != null ? fmtCurrency(row.custo_unitario) : '—'}
-                        </td>
-                        <td className="px-4 py-2.5 text-sm text-white/60 tabular-nums whitespace-nowrap">
-                          {row.custo_total != null ? fmtCurrency(row.custo_total) : '—'}
-                        </td>
-                        <td className="px-4 py-2.5 text-xs text-white/60">
-                          {row.origem_tipo || '—'}
-                        </td>
-                        <td className="px-4 py-2.5 text-xs text-white/60 max-w-[150px] truncate">
-                          {row.observacoes || row.motivo || '—'}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

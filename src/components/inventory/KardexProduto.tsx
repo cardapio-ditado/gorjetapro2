@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import {
   ArrowLeft,
   Search,
@@ -127,6 +128,7 @@ interface MovimentacaoGrafico {
 }
 
 const KardexProduto: React.FC = () => {
+  const location = useLocation();
   const [itensEstoque, setItensEstoque] = useState<ItemEstoque[]>([]);
   const [itemSelecionado, setItemSelecionado] = useState<ItemEstoque | null>(null);
   const [movimentacoes, setMovimentacoes] = useState<MovimentacaoKardex[]>([]);
@@ -161,6 +163,25 @@ const KardexProduto: React.FC = () => {
       fetchKardexProduto();
     }
   }, [itemSelecionado, dataInicial, dataFinal, tipoFilter, estoqueFilter]);
+
+  // Chegou por link direto (botão Histórico da Posição do estoque):
+  // já abre o item, com o estoque de onde o usuário veio e um ano de período,
+  // em vez de cair na lista e obrigar a procurar o item de novo.
+  useEffect(() => {
+    if (itensEstoque.length === 0) return;
+    const params = new URLSearchParams(location.search);
+    const itemParam = params.get('item');
+    if (!itemParam || itemSelecionado?.id === itemParam) return;
+
+    const item = itensEstoque.find(i => i.id === itemParam);
+    if (!item) return;
+
+    const estoqueParam = params.get('estoque');
+    if (estoqueParam) setEstoqueFilter(estoqueParam);
+    setDataInicial(dayjs().subtract(1, 'year').format('YYYY-MM-DD'));
+    setDataFinal(dayjs().format('YYYY-MM-DD'));
+    setItemSelecionado(item);
+  }, [itensEstoque, location.search]);
 
   const fetchItensEstoque = async () => {
     try {
