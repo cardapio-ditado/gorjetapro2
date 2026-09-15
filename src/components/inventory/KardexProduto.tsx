@@ -62,11 +62,38 @@ interface MovimentacaoKardex {
   saldo_quantidade: number;
   saldo_valor: number;
   custo_medio_ponderado: number;
+  /** Efeito real desta linha sobre o escopo em tela (+ entra, − sai, 0 neutro). */
+  delta: number;
   motivo?: string;
   observacoes?: string;
   estoque_origem_nome?: string;
   estoque_destino_nome?: string;
   criado_em: string;
+}
+
+/** Linha crua vinda de movimentacoes_estoque, com os nomes dos estoques já resolvidos. */
+interface MovimentacaoBruta {
+  id: string;
+  data_movimentacao: string;
+  tipo_movimentacao: string;
+  quantidade: number | string;
+  custo_unitario: number | string | null;
+  custo_total: number | string | null;
+  estoque_origem_id: string | null;
+  estoque_destino_id: string | null;
+  motivo?: string;
+  observacoes?: string;
+  estoque_origem_nome?: string;
+  estoque_destino_nome?: string;
+  criado_em?: string;
+}
+
+/** Saldo que o item já tinha antes do primeiro dia do período mostrado. */
+interface SaldoAnterior {
+  quantidade: number;
+  valor: number;
+  custo_medio: number;
+  movimentacoes: number;
 }
 
 interface SaldoEstoque {
@@ -103,6 +130,7 @@ const KardexProduto: React.FC = () => {
   const [itensEstoque, setItensEstoque] = useState<ItemEstoque[]>([]);
   const [itemSelecionado, setItemSelecionado] = useState<ItemEstoque | null>(null);
   const [movimentacoes, setMovimentacoes] = useState<MovimentacaoKardex[]>([]);
+  const [saldoAnterior, setSaldoAnterior] = useState<SaldoAnterior | null>(null);
   const [saldosEstoque, setSaldosEstoque] = useState<SaldoEstoque[]>([]);
   const [indicadores, setIndicadores] = useState<IndicadoresProduto | null>(null);
   const [dadosGrafico, setDadosGrafico] = useState<MovimentacaoGrafico[]>([]);
@@ -172,8 +200,11 @@ const KardexProduto: React.FC = () => {
       setLoading(true);
       setError(null);
 
-      // Buscar movimentações
-      let queryMovimentacoes = supabase
+      // Buscar o histórico COMPLETO do item. Os filtros de período, tipo e
+      // estoque são de exibição: o saldo tem que ser acumulado desde a primeira
+      // movimentação, senão a coluna Saldo começa do zero no primeiro dia da
+      // tela e mostra um número que não existe no estoque.
+      const { data: movimentacoesData, error: movError } = await supabase
         .from('movimentacoes_estoque')
         .select(`
           *,
@@ -181,29 +212,15 @@ const KardexProduto: React.FC = () => {
           estoque_destino:estoques!estoque_destino_id(nome),
           item:itens_estoque!inner(codigo, nome, unidade_medida)
         `)
-        .eq('item_id', itemSelecionado.id);
-
-      // Aplicar filtros
-      if (dataInicial) {
-        queryMovimentacoes = queryMovimentacoes.gte('data_movimentacao', dataInicial);
-      }
-      if (dataFinal) {
-        queryMovimentacoes = queryMovimentacoes.lte('data_movimentacao', dataFinal);
-      }
-      if (tipoFilter !== 'all') {
-        queryMovimentacoes = queryMovimentacoes.eq('tipo_movimentacao', tipoFilter);
-      }
-      if (estoqueFilter !== 'all') {
-        queryMovimentacoes = queryMovimentacoes.or(`estoque_origem_id.eq.${estoqueFilter},estoque_destino_id.eq.${estoqueFilter}`);
-      }
-
-      const { data: movimentacoesData, error: movError } = await queryMovimentacoes
-        .order('data_movimentacao', { ascending: true });
+        .eq('item_id', itemSelecionado.id)
+        .order('data_movimentacao', { ascending: true })
+        .order('criado_em', { ascending: true })
+        .limit(5000);
 
       if (movError) throw movError;
 
       // Processar movimentações com saldo acumulado
-      const movimentacoesProcessadas = calcularSaldosAcumulados((movimentacoesData || []).map(mov => ({
+      const { linhas, anterior } = calcularSaldosAcumulados((movimentacoesData || []).map(mov => ({
         ...mov,
         estoque_origem_nome: mov.estoque_origem?.nome,
         estoque_destino_nome: mov.estoque_destino?.nome,
@@ -211,7 +228,9 @@ const KardexProduto: React.FC = () => {
         item_nome: mov.item?.nome,
         unidade_medida: mov.item?.unidade_medida
       })));
+      const movimentacoesProcessadas = linhas;
       setMovimentacoes(movimentacoesProcessadas);
+      setSaldoAnterior(anterior);
 
       // Buscar todos os estoques e calcular saldo REAL via SQL function
       const { data: estoquesData, error: estoquesError } = await supabase
@@ -273,68 +292,103 @@ const KardexProduto: React.FC = () => {
     }
   };
 
-  const calcularSaldosAcumulados = (movimentacoes: any[]): MovimentacaoKardex[] => {
+  /**
+   * Quanto esta movimentação mexeu no escopo em tela.
+   *
+   * Mesma regra da função do banco (fn_saldo_por_movimentacoes), que é quem
+   * manda no saldo real: a movimentação entra pelo lado do destino e sai pelo
+   * lado da origem. Com "Todos os estoques" os dois lados contam, então uma
+   * transferência Central → Bar fica neutra no total da casa — que é o certo:
+   * a mercadoria só mudou de lugar, não entrou nem saiu.
+   */
+  const deltaDaMovimentacao = (mov: MovimentacaoBruta, estoqueId: string): number => {
+    const quantidade = Number(mov.quantidade) || 0;
+    const tipo = mov.tipo_movimentacao;
+    const conta = (lado: string | null | undefined) =>
+      estoqueId === 'all' ? !!lado : lado === estoqueId;
+
+    let delta = 0;
+    if (tipo === 'entrada' && conta(mov.estoque_destino_id)) delta += quantidade;
+    if (tipo === 'saida' && conta(mov.estoque_origem_id)) delta -= quantidade;
+    if (tipo === 'transferencia' || tipo === 'ajuste') {
+      if (conta(mov.estoque_destino_id)) delta += quantidade;
+      if (conta(mov.estoque_origem_id)) delta -= quantidade;
+    }
+    return delta;
+  };
+
+  const soData = (valor: string) => String(valor || '').slice(0, 10);
+
+  /**
+   * Percorre o histórico inteiro do item acumulando o saldo e devolve só as
+   * linhas que cabem nos filtros da tela, junto com o saldo que já existia
+   * antes do período (o "saldo anterior" de um extrato bancário).
+   */
+  const calcularSaldosAcumulados = (
+    todasMovimentacoes: MovimentacaoBruta[]
+  ): { linhas: MovimentacaoKardex[]; anterior: SaldoAnterior } => {
     let saldoQuantidade = 0;
     let saldoValor = 0;
     let custoMedioPonderado = 0;
 
-    return movimentacoes.map(mov => {
-      const quantidade = mov.quantidade || 0;
-      const custoUnitario = mov.custo_unitario || 0;
-      const custoTotal = Math.abs(mov.custo_total || 0);
+    const linhas: MovimentacaoKardex[] = [];
+    const anterior: SaldoAnterior = { quantidade: 0, valor: 0, custo_medio: 0, movimentacoes: 0 };
 
-      if (mov.tipo_movimentacao === 'entrada' || 
-         (mov.tipo_movimentacao === 'transferencia' && mov.estoque_destino_id === estoqueFilter)) {
-        // Entrada ou transferência para o estoque filtrado
-        const valorAnterior = saldoValor;
-        const quantidadeAnterior = saldoQuantidade;
-        
-        saldoQuantidade += quantidade;
+    for (const mov of todasMovimentacoes) {
+      const quantidade = Number(mov.quantidade) || 0;
+      const custoUnitario = Number(mov.custo_unitario) || 0;
+      const custoTotal = Math.abs(Number(mov.custo_total) || 0);
+      const delta = deltaDaMovimentacao(mov, estoqueFilter);
+
+      if (delta > 0) {
+        saldoQuantidade += delta;
         saldoValor += custoTotal;
-        
-        // Calcular novo custo médio ponderado
         custoMedioPonderado = saldoQuantidade > 0 ? saldoValor / saldoQuantidade : custoUnitario;
-        
-      } else if (mov.tipo_movimentacao === 'saida' ||
-                (mov.tipo_movimentacao === 'transferencia' && mov.estoque_origem_id === estoqueFilter)) {
-        // Saída ou transferência do estoque filtrado
-        saldoQuantidade -= quantidade;
-        saldoValor -= (quantidade * custoMedioPonderado);
-
-        // PERMITIR SALDO NEGATIVO - não forçar a zero
-        custoMedioPonderado = saldoQuantidade !== 0 ? saldoValor / saldoQuantidade : custoMedioPonderado;
-
-      } else if (mov.tipo_movimentacao === 'ajuste') {
-        // Ajuste (pode ser positivo ou negativo)
-        if (quantidade > 0) {
-          saldoQuantidade += quantidade;
-          saldoValor += custoTotal;
-        } else {
-          saldoQuantidade += quantidade; // quantidade já é negativa em ajustes de redução
-          saldoValor += custoTotal; // custoTotal já considera o sinal
-        }
-
+      } else if (delta < 0) {
+        saldoQuantidade += delta;
+        saldoValor -= Math.abs(delta) * custoMedioPonderado;
         // PERMITIR SALDO NEGATIVO - não forçar a zero
         custoMedioPonderado = saldoQuantidade !== 0 ? saldoValor / saldoQuantidade : custoMedioPonderado;
       }
 
-      return {
+      const data = soData(mov.data_movimentacao);
+
+      // Antes do período: não aparece, mas forma o saldo anterior.
+      if (dataInicial && data < dataInicial) {
+        anterior.quantidade = saldoQuantidade;
+        anterior.valor = saldoValor;
+        anterior.custo_medio = custoMedioPonderado;
+        anterior.movimentacoes += 1;
+        continue;
+      }
+      // Depois do período: o saldo continua sendo acumulado para o caso de o
+      // usuário voltar a data final, mas a linha não entra na tela.
+      if (dataFinal && data > dataFinal) continue;
+      if (tipoFilter !== 'all' && mov.tipo_movimentacao !== tipoFilter) continue;
+      if (estoqueFilter !== 'all' &&
+          mov.estoque_origem_id !== estoqueFilter &&
+          mov.estoque_destino_id !== estoqueFilter) continue;
+
+      linhas.push({
         id: mov.id,
         data_movimentacao: mov.data_movimentacao,
-        tipo_movimentacao: mov.tipo_movimentacao,
+        tipo_movimentacao: mov.tipo_movimentacao as MovimentacaoKardex['tipo_movimentacao'],
         quantidade: quantidade,
         custo_unitario: custoUnitario,
         custo_total: custoTotal,
         saldo_quantidade: saldoQuantidade,
         saldo_valor: saldoValor,
         custo_medio_ponderado: custoMedioPonderado,
+        delta,
         motivo: mov.motivo,
         observacoes: mov.observacoes,
         estoque_origem_nome: mov.estoque_origem_nome,
         estoque_destino_nome: mov.estoque_destino_nome,
         criado_em: mov.criado_em || mov.data_movimentacao
-      };
-    });
+      });
+    }
+
+    return { linhas, anterior };
   };
 
   const calcularIndicadores = (movimentacoes: MovimentacaoKardex[], saldos: SaldoEstoque[]) => {
@@ -342,16 +396,16 @@ const KardexProduto: React.FC = () => {
     const valorTotal = saldos.reduce((sum, s) => sum + s.valor_total, 0);
     const custoMedioGeral = quantidadeTotal > 0 ? valorTotal / quantidadeTotal : 0;
     
-    const entradasPeriodo = movimentacoes.filter(m => 
-      m.tipo_movimentacao === 'entrada' || 
-      (m.tipo_movimentacao === 'transferencia' && m.estoque_destino_nome)
-    ).reduce((sum, m) => sum + m.quantidade, 0);
-    
-    const saidasPeriodo = movimentacoes.filter(m => 
-      m.tipo_movimentacao === 'saida' || 
-      (m.tipo_movimentacao === 'transferencia' && m.estoque_origem_nome)
-    ).reduce((sum, m) => sum + m.quantidade, 0);
-    
+    // Entrou / saiu de verdade no escopo em tela: transferência entre estoques
+    // da casa não conta como entrada nem como saída quando se olha o total.
+    const entradasPeriodo = movimentacoes
+      .filter(m => m.delta > 0)
+      .reduce((sum, m) => sum + m.delta, 0);
+
+    const saidasPeriodo = movimentacoes
+      .filter(m => m.delta < 0)
+      .reduce((sum, m) => sum + Math.abs(m.delta), 0);
+
     const giroPeriodo = quantidadeTotal > 0 ? saidasPeriodo / quantidadeTotal : 0;
     
     const ultimaEntrada = movimentacoes
@@ -397,10 +451,10 @@ const KardexProduto: React.FC = () => {
         };
       }
 
-      if (mov.tipo_movimentacao === 'entrada') {
-        dadosPorData[dataFormatada].entrada += mov.quantidade;
-      } else if (mov.tipo_movimentacao === 'saida') {
-        dadosPorData[dataFormatada].saida += mov.quantidade;
+      if (mov.delta > 0) {
+        dadosPorData[dataFormatada].entrada += mov.delta;
+      } else if (mov.delta < 0) {
+        dadosPorData[dataFormatada].saida += Math.abs(mov.delta);
       }
 
       // Atualizar com o último saldo do dia
@@ -504,20 +558,27 @@ const KardexProduto: React.FC = () => {
       getTipoText(mov.tipo_movimentacao),
       mov.estoque_origem_nome || '-',
       mov.estoque_destino_nome || '-',
-      mov.tipo_movimentacao === 'entrada' || 
-      (mov.tipo_movimentacao === 'transferencia' && mov.estoque_destino_nome) || 
-      (mov.tipo_movimentacao === 'ajuste' && mov.quantidade > 0) 
-        ? `${mov.quantidade.toFixed(3)}` : '-',
-      mov.tipo_movimentacao === 'saida' || 
-      (mov.tipo_movimentacao === 'transferencia' && mov.estoque_origem_nome) || 
-      (mov.tipo_movimentacao === 'ajuste' && mov.quantidade < 0) 
-        ? `${Math.abs(mov.quantidade).toFixed(3)}` : '-',
+      mov.delta > 0 ? mov.delta.toFixed(3) : '-',
+      mov.delta < 0 ? Math.abs(mov.delta).toFixed(3) : '-',
       `${mov.saldo_quantidade.toFixed(3)}`,
       formatCurrency(mov.custo_unitario),
       formatCurrency(mov.custo_medio_ponderado),
       formatCurrency(mov.saldo_valor),
       mov.motivo || '-'
     ]);
+
+    // Abre o extrato pelo saldo que já existia, igual à tela.
+    if (saldoAnterior && saldoAnterior.movimentacoes > 0) {
+      data.unshift([
+        `até ${dayjs(dataInicial).subtract(1, 'day').format('DD/MM/YYYY')}`,
+        'Saldo anterior', '-', '-', '-', '-',
+        saldoAnterior.quantidade.toFixed(3),
+        '-',
+        formatCurrency(saldoAnterior.custo_medio),
+        formatCurrency(saldoAnterior.valor),
+        '-'
+      ]);
+    }
 
     currentY = reportGenerator.addSection('Kardex Detalhado', [], currentY + 10);
     reportGenerator.addTable(headers, data, currentY);
@@ -547,7 +608,7 @@ const KardexProduto: React.FC = () => {
       'Observações'
     ];
 
-    const data = movimentacoes.map(mov => [
+    const data: (string | number)[][] = movimentacoes.map(mov => [
       dayjs(mov.data_movimentacao).format('DD/MM/YYYY'),
       dayjs(mov.criado_em).format('HH:mm'),
       getTipoText(mov.tipo_movimentacao),
@@ -562,6 +623,17 @@ const KardexProduto: React.FC = () => {
       mov.motivo || '',
       mov.observacoes || ''
     ]);
+
+    if (saldoAnterior && saldoAnterior.movimentacoes > 0) {
+      data.unshift([
+        `até ${dayjs(dataInicial).subtract(1, 'day').format('DD/MM/YYYY')}`,
+        '', 'Saldo anterior', '', '', '', '', '',
+        saldoAnterior.quantidade.toFixed(3),
+        saldoAnterior.valor,
+        saldoAnterior.custo_medio,
+        '', ''
+      ]);
+    }
 
     const fileName = `kardex-produto-${itemSelecionado.nome.replace(/\s+/g, '-')}-${dayjs().format('YYYY-MM-DD')}`;
     exportToExcel(data, fileName, headers);
@@ -1082,10 +1154,18 @@ const KardexProduto: React.FC = () => {
       {/* Kardex Detalhado */}
       <div className="bg-[#12141f] rounded-lg border border-white/10">
         <div className="p-6">
-          <h4 className="text-lg font-medium text-white mb-4 flex items-center">
+          <h4 className="text-lg font-medium text-white mb-1 flex items-center">
             <FileText className="w-5 h-5 mr-2 text-wine" />
             Kardex Detalhado
           </h4>
+          <p className="text-xs text-white/50 mb-4">
+            A coluna Saldo vem acumulada desde a primeira movimentação do item, então a última linha
+            bate com o estoque de verdade
+            {estoqueFilter === 'all'
+              ? ' (soma de todos os estoques; transferência entre eles não muda o total)'
+              : ' neste estoque'}.
+            {tipoFilter !== 'all' && ' O filtro de tipo esconde linhas, mas o saldo continua contando todas elas.'}
+          </p>
 
           {loading ? (
             <div className="w-full">
@@ -1099,7 +1179,7 @@ const KardexProduto: React.FC = () => {
             </div>
           ) : (
             <>
-              {movimentacoes.length > 0 ? (
+              {movimentacoes.length > 0 || (saldoAnterior && saldoAnterior.movimentacoes > 0) ? (
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
@@ -1119,6 +1199,29 @@ const KardexProduto: React.FC = () => {
                       </tr>
                     </thead>
                     <tbody className="bg-[#12141f] divide-y divide-white/5">
+                      {saldoAnterior && saldoAnterior.movimentacoes > 0 && (
+                        <tr className="bg-white/5">
+                          <td className="px-4 py-3 whitespace-nowrap text-sm text-white/60">
+                            até {dayjs(dataInicial).subtract(1, 'day').format('DD/MM/YYYY')}
+                          </td>
+                          <td className="px-4 py-3 whitespace-nowrap text-sm text-white/60" colSpan={3}>
+                            Saldo anterior ({saldoAnterior.movimentacoes} movimentaç{saldoAnterior.movimentacoes === 1 ? 'ão' : 'ões'} antes do período)
+                          </td>
+                          <td className="px-4 py-3 text-sm text-white/40">-</td>
+                          <td className="px-4 py-3 text-sm text-white/40">-</td>
+                          <td className={`px-4 py-3 whitespace-nowrap text-sm font-bold ${saldoAnterior.quantidade < 0 ? 'text-red-400' : 'text-white/90'}`}>
+                            {saldoAnterior.quantidade.toFixed(3)}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-white/40">-</td>
+                          <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-blue-400">
+                            {formatCurrency(saldoAnterior.custo_medio)}
+                          </td>
+                          <td className={`px-4 py-3 whitespace-nowrap text-sm font-medium ${saldoAnterior.valor < 0 ? 'text-red-400' : 'text-green-400'}`}>
+                            {formatCurrency(saldoAnterior.valor)}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-white/40" colSpan={2}>-</td>
+                        </tr>
+                      )}
                       {movimentacoes.map((mov) => {
                         const saldoNegativo = mov.saldo_quantidade < 0;
                         return (
@@ -1139,16 +1242,16 @@ const KardexProduto: React.FC = () => {
                             {mov.estoque_destino_nome || '-'}
                           </td>
                           <td className="px-4 py-3 whitespace-nowrap text-sm">
-                            {(mov.tipo_movimentacao === 'entrada' || 
-                             (mov.tipo_movimentacao === 'transferencia' && mov.estoque_destino_nome) ||
-                             (mov.tipo_movimentacao === 'ajuste' && mov.quantidade > 0)) 
-                              ? `+${mov.quantidade.toFixed(3)}` : '-'}
+                            {mov.delta > 0 ? `+${mov.delta.toFixed(3)}`
+                              : mov.delta === 0 && mov.tipo_movimentacao === 'transferencia'
+                                ? <span className="text-white/40" title="Só mudou de estoque: não altera o total da casa">↔ {mov.quantidade.toFixed(3)}</span>
+                                : '-'}
                           </td>
                           <td className="px-4 py-3 whitespace-nowrap text-sm">
-                            {(mov.tipo_movimentacao === 'saida' || 
-                             (mov.tipo_movimentacao === 'transferencia' && mov.estoque_origem_nome) ||
-                             (mov.tipo_movimentacao === 'ajuste' && mov.quantidade < 0)) 
-                              ? `-${Math.abs(mov.quantidade).toFixed(3)}` : '-'}
+                            {mov.delta < 0 ? `-${Math.abs(mov.delta).toFixed(3)}`
+                              : mov.delta === 0 && mov.tipo_movimentacao === 'transferencia'
+                                ? <span className="text-white/40" title="Só mudou de estoque: não altera o total da casa">↔ {mov.quantidade.toFixed(3)}</span>
+                                : '-'}
                           </td>
                           <td className={`px-4 py-3 whitespace-nowrap text-sm font-bold ${saldoNegativo ? 'text-red-400' : 'text-white/90'}`}>
                             {saldoNegativo && <AlertTriangle className="inline h-4 w-4 mr-1" />}
