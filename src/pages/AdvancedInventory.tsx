@@ -36,7 +36,7 @@ import Transferencias   from '../components/inventory/operacao/Transferencias';
 // ── Tipos ────────────────────────────────────────────────────────────────────
 type Area = 'operacao' | 'compras' | 'analise' | 'cadastros';
 type Tela =
-  | 'home' | 'receber' | 'transferir' | 'produzir' | 'contar' | 'requisicoes' | 'reposicao'
+  | 'home' | 'receber' | 'transferir' | 'produzir' | 'contar' | 'reposicao'
   | 'dia' | 'semana' | 'compras' | 'lista-compras'
   | 'dashboard' | 'kardex' | 'inventario' | 'relatorios' | 'zig' | 'movimentacoes-avancadas'
   | 'itens' | 'fichas' | 'estoques' | 'mapeamento';
@@ -115,7 +115,10 @@ const AdvancedInventory: React.FC = () => {
     }
 
     const areaParam = params.get('area') as Area | null;
-    const telaParam = params.get('tela') as Tela | null;
+    // 'requisicoes' virou a aba Pendentes dentro de Transferências; links
+    // antigos (cartaz, Telegram, favoritos) continuam caindo no lugar certo.
+    const telaBruta = params.get('tela');
+    const telaParam = (telaBruta === 'requisicoes' ? 'transferir' : telaBruta) as Tela | null;
     if (areaParam) setArea(areaParam);
     if (telaParam) setTela(telaParam);
   }, [location.search]);
@@ -136,7 +139,6 @@ const AdvancedInventory: React.FC = () => {
     if (tela === 'transferir') return 'Transferências';
     if (tela === 'produzir')   return 'Produzir';
     if (tela === 'contar')     return 'Contar';
-    if (tela === 'requisicoes') return 'Transferências';
     if (tela === 'reposicao')  return 'Reposição de balcão';
     return tela;
   };
@@ -152,7 +154,6 @@ const AdvancedInventory: React.FC = () => {
             if (acao === 'transferir') navegar('operacao', 'transferir');
             if (acao === 'produzir')   navegar('operacao', 'produzir');
             if (acao === 'contar')     navegar('operacao', 'contar');
-            if (acao === 'requisicoes') navegar('operacao', 'requisicoes');
             if (acao === 'reposicao')  navegar('operacao', 'reposicao');
           }}
         />
@@ -162,7 +163,6 @@ const AdvancedInventory: React.FC = () => {
     if (tela === 'transferir') return <Transferencias onVoltar={() => navegar('operacao', 'home')} />;
     if (tela === 'produzir')   return <ProducaoEstoque />;
     if (tela === 'contar')     return <ContagemEstoque />;
-    if (tela === 'requisicoes') return <Transferencias onVoltar={() => navegar('operacao', 'home')} />;
     if (tela === 'reposicao')  return <ReposicaoBalcao />;
 
     // Compras

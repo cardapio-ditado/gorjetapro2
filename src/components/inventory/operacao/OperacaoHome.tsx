@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { Package, ArrowLeftRight, Factory, ClipboardCheck, Clock, FileText, Loader2, Store } from 'lucide-react';
+import { Package, ArrowLeftRight, Factory, ClipboardCheck, Clock, Loader2, Store } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
 import { useAuth } from '../../../contexts/AuthContext';
 
 interface Props {
-  onAcao: (acao: 'receber' | 'transferir' | 'produzir' | 'contar' | 'requisicoes' | 'reposicao') => void;
+  onAcao: (acao: 'receber' | 'transferir' | 'produzir' | 'contar' | 'reposicao') => void;
 }
 
 interface MovRecente {
@@ -181,21 +181,6 @@ export default function OperacaoHome({ onAcao }: Props) {
         )}
       </button>
 
-      {/* Histórico de requisições */}
-      <button
-        onClick={() => onAcao('requisicoes')}
-        className="flex items-center justify-between w-full px-5 py-3 bg-[#12141f] border border-white/[0.07] rounded-2xl hover:border-white/20 transition-all group"
-      >
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-white/5">
-            <FileText className="w-4 h-4 text-white/50" />
-          </div>
-          <div className="text-left">
-            <p className="text-white/80 font-semibold text-sm">Pendentes e histórico</p>
-            <p className="text-white/50 text-xs mt-0.5">Fila de transferências a entregar, histórico e impressão</p>
-          </div>
-        </div>
-      </button>
 
       {/* Últimas ações */}
       <div className="bg-[#12141f] border border-white/[0.07] rounded-2xl overflow-hidden">
