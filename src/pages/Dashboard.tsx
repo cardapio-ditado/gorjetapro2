@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   Music, Calendar, AlertTriangle, X, RefreshCw,
-  UserCheck, UserX, Gift, Briefcase, MessageSquare, Package, BookOpen, Inbox,
+  UserCheck, UserX, Gift, Briefcase, MessageSquare, Package, Inbox,
 } from 'lucide-react';
 import { EmptyState } from '../components/ui/EmptyState';
 import { CardSkeleton } from '../components/ui/Skeleton';
@@ -175,7 +175,6 @@ const Dashboard: React.FC = () => {
   const refSemana   = React.useRef<HTMLDivElement>(null);
   const refMusicos  = React.useRef<HTMLDivElement>(null);
   const refExtras   = React.useRef<HTMLDivElement>(null);
-  const refDiario   = React.useRef<HTMLDivElement>(null);
 
   const load = useCallback(async () => {
     try {
@@ -221,7 +220,6 @@ const Dashboard: React.FC = () => {
     rh_contas: { qtd: 0, valor: 0, lista: [] },
   };
   const estoque = painel.estoque ?? { valor_total: 0, negativos: 0, abaixo_minimo: 0 };
-  const diario  = painel.diario  ?? { pendencias: 0, criticas: 0, lista: [] };
   const eventos = painel.eventos ?? [];
 
   const resultadoMes = Number(caixa.mes.entradas) - Number(caixa.mes.saidas);
@@ -341,10 +339,6 @@ const Dashboard: React.FC = () => {
               valor={fmtR(Number(equipe.extras.valor))} sub={`${equipe.extras.qtd} extra${equipe.extras.qtd !== 1 ? 's' : ''}`}
               sev={(equipe.extras.lista ?? []).some(e => new Date(e.data) < new Date()) ? 'red' : equipe.extras.qtd > 0 ? 'amber' : 'ok'}
               onClick={() => scrollTo(refExtras)} />
-            <RadarRow icon={BookOpen} label="Diário de bordo"
-              valor={`${diario.pendencias}`} sub={diario.criticas > 0 ? `${diario.criticas} crítica${diario.criticas !== 1 ? 's' : ''}` : 'pendências'}
-              sev={diario.criticas > 0 ? 'red' : diario.pendencias > 0 ? 'amber' : 'ok'}
-              onClick={() => scrollTo(refDiario)} />
           </div>
         </div>
 
@@ -560,8 +554,8 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* ── DETALHES: EVENTOS + DIÁRIO ────────────────────────────────── */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* ── PRÓXIMOS EVENTOS ───────────────────────────────────────────── */}
+      <div>
         <ListaScroll
           titulo="Eventos — próximos 14 dias"
           items={eventos}
@@ -583,29 +577,6 @@ const Dashboard: React.FC = () => {
           )}
         />
 
-        <div ref={refDiario}>
-          <ListaScroll
-            titulo="Diário de Bordo — pendências"
-            items={diario.lista}
-            emptyMsg="Nenhuma pendência aberta"
-            renderItem={(p, i) => (
-              <div key={i} className="flex items-center gap-3 px-4 py-3 hover:bg-yellow-500/5 transition-colors">
-                <span className={`text-caption font-black px-1.5 py-0.5 rounded-md shrink-0 uppercase ${
-                  p.gravidade === 'critica' || p.gravidade === 'alta'
-                    ? 'bg-red-500/20 text-red-400'
-                    : 'bg-yellow-500/20 text-yellow-400'
-                }`}>
-                  {p.setor}
-                </span>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold text-white truncate">{p.titulo}</p>
-                  <p className="text-caption text-white/50">gravidade {p.gravidade}</p>
-                </div>
-                <p className="text-caption font-bold text-white/50 shrink-0">{p.dias}d aberto</p>
-              </div>
-            )}
-          />
-        </div>
       </div>
 
       {/* ── MODAL DETALHE ESTOQUE ─────────────────────────────────────── */}

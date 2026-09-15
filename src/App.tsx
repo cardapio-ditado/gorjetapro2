@@ -17,7 +17,6 @@ const Musicians           = lazy(() => import('./pages/Musicians'));
 const Events              = lazy(() => import('./pages/Events'));
 const Settings            = lazy(() => import('./pages/Settings'));
 const MetasTarefas        = lazy(() => import('./pages/MetasTarefas'));
-const Ocorrencias         = lazy(() => import('./pages/Ocorrencias'));
 const ManualUsuario       = lazy(() => import('./pages/ManualUsuario'));
 const Recruitment         = lazy(() => import('./pages/Recruitment'));
 const PreEntrevista       = lazy(() => import('./pages/PreEntrevista'));
@@ -157,7 +156,6 @@ function AppContent() {
                 <Route path="/musicians"           element={<ProtectedRoute moduloSlug="musicos">       <Musicians />           </ProtectedRoute>} />
                 <Route path="/events"              element={<ProtectedRoute moduloSlug="eventos">       <Events />              </ProtectedRoute>} />
                 <Route path="/metas-tarefas"       element={<ProtectedRoute moduloSlug="solicitacoes">  <MetasTarefas />        </ProtectedRoute>} />
-                <Route path="/ocorrencias"         element={<ProtectedRoute moduloSlug="ocorrencias">   <Ocorrencias />         </ProtectedRoute>} />
                 <Route path="/gestao-estrategica"  element={<ProtectedRoute moduloSlug="financeiro">    <GestaoEstrategica />   </ProtectedRoute>} />
                 <Route path="/zig-vendas"          element={<ProtectedRoute moduloSlug="estoque">       <ZigVendasSync />       </ProtectedRoute>} />
                 <Route path="/zig-recebimentos"    element={<ProtectedRoute moduloSlug="financeiro">    <ZigRecebimentos />     </ProtectedRoute>} />

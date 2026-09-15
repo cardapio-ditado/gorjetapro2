@@ -114,7 +114,6 @@ export const MODULES: Module[] = [
     ],
   },
   { name: 'Metas & Tarefas', path: '/metas-tarefas',    icon: Target,        slug: 'solicitacoes',    group: 'gestao' },
-  { name: 'Diário de Bordo', path: '/ocorrencias',        icon: BookOpen,      slug: 'ocorrencias',     group: 'operacao' },
   { name: 'Manual',         path: '/manual',             icon: BookOpen,      slug: 'manual',          group: 'gestao' },
   { name: 'Configurações',  path: '/settings',           icon: Settings,      slug: 'configuracoes',   group: 'gestao' },
 ];
