@@ -1,11 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, Filter, CreditCard as Edit, Trash2, Eye, Package, DollarSign, AlertTriangle, CheckCircle, Download, FileText, ShoppingCart, Calendar, Building2, Clock, XCircle, X, Truck, Receipt, Target, Activity, Sparkles, Camera, TrendingDown } from 'lucide-react';
+import { Plus, Search, Filter, CreditCard as Edit, Trash2, Eye, Package, DollarSign, AlertTriangle, CheckCircle, FileText, ShoppingCart, Calendar, Building2, Clock, XCircle, X, Truck, Receipt, Target, Sparkles, TrendingDown } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
-import { exportToExcel } from '../../utils/reportGenerator';
 import dayjs from 'dayjs';
-import ComprasIAModal from './ComprasIAModal';
-import ConferenciaRecebimentoModal from './ConferenciaRecebimentoModal';
-import ListaComprasMetricas from './ListaComprasMetricas';
 import ConsultaHistoricoIA from './ConsultaHistoricoIA';
 import ModalVisualizacaoCompra from './ModalVisualizacaoCompra';
 import { SearchableSelect } from '../common/SearchableSelect';
@@ -102,11 +98,7 @@ const ComprasEstoque: React.FC = () => {
   const [valorDescontoRecebimento, setValorDescontoRecebimento] = useState(0);
   const [percentualDescontoRecebimento, setPercentualDescontoRecebimento] = useState(0);
   const [motivoDescontoRecebimento, setMotivoDescontoRecebimento] = useState('');
-  const [showIAModal, setShowIAModal] = useState(false);
   const [showConsultaHistoricoModal, setShowConsultaHistoricoModal] = useState(false);
-  const [showConferenciaModal, setShowConferenciaModal] = useState(false);
-  const [compraConferencia, setCompraConferencia] = useState<EntradaCompra | null>(null);
-  const [showMetricasModal, setShowMetricasModal] = useState(false);
   
   // Filtros
   const [searchTerm, setSearchTerm] = useState('');
@@ -589,111 +581,6 @@ const ComprasEstoque: React.FC = () => {
     }
   };
 
-  const handleConferenciaComIA = async (compraId: string) => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      // Buscar compra com seus itens
-      const { data: compra, error: compraError } = await supabase
-        .from('entradas_compras')
-        .select('*, fornecedores(nome)')
-        .eq('id', compraId)
-        .single();
-
-      if (compraError) throw compraError;
-
-      // Buscar itens da compra
-      const { data: itens, error: itensError } = await supabase
-        .from('itens_entrada_compra')
-        .select(`
-          *,
-          itens_estoque(nome, codigo, unidade_medida)
-        `)
-        .eq('entrada_compra_id', compraId);
-
-      if (itensError) throw itensError;
-
-      const itensFormatados = (itens || []).map(item => ({
-        id: item.id,
-        entrada_compra_id: item.entrada_compra_id,
-        item_id: item.item_id,
-        item_nome: item.itens_estoque.nome,
-        item_codigo: item.itens_estoque.codigo,
-        unidade_medida: item.itens_estoque.unidade_medida,
-        quantidade_pedida: item.quantidade_pedida || item.quantidade,
-        quantidade_recebida: item.quantidade_pedida || item.quantidade,
-        custo_unitario: item.custo_unitario,
-        divergencia: false,
-        motivo_divergencia: '',
-      }));
-
-      // Criar objeto simples para compra (sem referências circulares)
-      const compraSimples = {
-        id: compra.id,
-        fornecedor_id: compra.fornecedor_id,
-        numero_documento: compra.numero_documento,
-        data_compra: compra.data_compra,
-        estoque_destino_id: compra.estoque_destino_id,
-        valor_total: compra.valor_total,
-        status: compra.status,
-        fornecedores: {
-          nome: compra.fornecedores?.nome || '',
-        },
-      };
-
-      setCompraConferencia(compraSimples);
-      setCompraRecebimento(compraSimples);
-      setItensRecebimento(itensFormatados);
-      setShowConferenciaModal(true);
-    } catch (err) {
-      console.error('Erro ao carregar conferência:', err);
-      setError(err instanceof Error ? err.message : 'Erro ao carregar conferência');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleConfirmarConferencia = (comparacoes: any[]) => {
-    // Atualizar itens recebimento com base nas comparações
-    const itensAtualizados = itensRecebimento.map(item => {
-      const comparacao = comparacoes.find(c =>
-        c.item_pedido.item_nome === item.item_nome || c.item_pedido.id === item.id
-      );
-
-      if (!comparacao) return item;
-
-      const itemRecebido = comparacao.item_recebido;
-      if (!itemRecebido) {
-        return {
-          ...item,
-          quantidade_recebida: 0,
-          divergencia: true,
-          motivo_divergencia: 'Item não recebido'
-        };
-      }
-
-      const quantidadeRecebida = itemRecebido.quantidade || item.quantidade_pedida;
-      const custoRecebido = itemRecebido.valor_unitario || item.custo_unitario;
-
-      return {
-        ...item,
-        quantidade_recebida: quantidadeRecebida,
-        custo_unitario: custoRecebido,
-        divergencia: comparacao.status !== 'ok',
-        motivo_divergencia: comparacao.status === 'divergencia'
-          ? Object.keys(comparacao.diferencas).join(', ')
-          : comparacao.status === 'faltando'
-          ? 'Item não recebido'
-          : ''
-      };
-    });
-
-    setItensRecebimento(itensAtualizados);
-    setShowConferenciaModal(false);
-    setShowRecebimentoModal(true);
-  };
-
   const atualizarQuantidadeRecebida = (itemId: string, quantidade: number) => {
     setItensRecebimento(prev => prev.map(item => {
       if (item.id === itemId) {
@@ -809,132 +696,6 @@ const ComprasEstoque: React.FC = () => {
     });
   };
 
-  const handleIAExtraction = async (extractionData: any) => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      const extracted = extractionData.extracted;
-      const fornecedorNome = extracted.emitente?.nome;
-      const fornecedorCnpj = extracted.emitente?.cnpj?.replace(/\D/g, '');
-
-      let fornecedorId = null;
-
-      if (fornecedorNome) {
-        const { data: fornecedorExistente } = await supabase
-          .from('fornecedores')
-          .select('id')
-          .eq('nome', fornecedorNome)
-          .maybeSingle();
-
-        if (fornecedorExistente) {
-          fornecedorId = fornecedorExistente.id;
-        } else {
-          const { data: novoFornecedor, error: fornecedorError } = await supabase
-            .from('fornecedores')
-            .insert([{
-              nome: fornecedorNome,
-              cnpj: fornecedorCnpj || null,
-              status: 'ativo'
-            }])
-            .select()
-            .single();
-
-          if (fornecedorError) throw fornecedorError;
-          fornecedorId = novoFornecedor.id;
-        }
-      }
-
-      const compraData = {
-        fornecedor_id: fornecedorId,
-        numero_documento: extracted.documento?.numero || null,
-        data_compra: extracted.documento?.data_emissao || dayjs().format('YYYY-MM-DD'),
-        estoque_destino_id: extractionData.estoqueDestinoId,
-        observacoes: extracted.observacoes || null,
-        status: 'pendente' as const,
-        valor_total: extracted.totais.valor_total,
-        origem_arquivo_url: extractionData.file?.url || null,
-        origem_hash: extractionData.file?.hash || null,
-        ia_confidences: extracted.confidences || null
-      };
-
-      const { data: novaCompra, error: compraError } = await supabase
-        .from('entradas_compras')
-        .insert([compraData])
-        .select()
-        .single();
-
-      if (compraError) throw compraError;
-
-      // Usar mapeamentos se disponíveis, caso contrário criar novos itens
-      const itemMappings = extractionData.itemMappings || [];
-
-      const itensPromises = extracted.itens.map(async (itemIA: any, index: number) => {
-        let itemEstoqueId = null;
-
-        // Verificar se há mapeamento para este item
-        const mapping = itemMappings[index];
-
-        if (mapping && mapping.itemId) {
-          // Item mapeado para existente
-          itemEstoqueId = mapping.itemId;
-        } else {
-          // Criar novo item
-          const { data: novoItem, error: itemError } = await supabase
-            .from('itens_estoque')
-            .insert([{
-              nome: itemIA.descricao,
-              codigo: itemIA.codigo || null,
-              tipo_item: 'insumo',
-              categoria: 'Geral',
-              unidade_medida: itemIA.unidade || 'un',
-              status: 'ativo'
-            }])
-            .select()
-            .single();
-
-          if (itemError) throw itemError;
-          itemEstoqueId = novoItem.id;
-        }
-
-        return {
-          entrada_compra_id: novaCompra.id,
-          item_id: itemEstoqueId,
-          quantidade: itemIA.quantidade,
-          custo_unitario: itemIA.valor_unitario,
-          custo_total: itemIA.valor_total,
-          data_validade: null
-        };
-      });
-
-      const itensParaInserir = await Promise.all(itensPromises);
-
-      const { error: itensError } = await supabase
-        .from('itens_entrada_compra')
-        .insert(itensParaInserir);
-
-      if (itensError) throw itensError;
-
-      if (extractionData.extraction_id) {
-        await supabase
-          .from('ai_extractions')
-          .update({ entrada_compra_id: novaCompra.id })
-          .eq('id', extractionData.extraction_id);
-      }
-
-      setShowIAModal(false);
-      fetchData();
-      fetchIndicadores();
-
-      alert('Compra importada com sucesso via IA!');
-    } catch (err) {
-      console.error('Erro ao importar compra via IA:', err);
-      setError(err instanceof Error ? err.message : 'Erro ao importar compra');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const adicionarItem = () => {
     setFormData({
       ...formData,
@@ -1018,68 +779,17 @@ const ComprasEstoque: React.FC = () => {
     }
   };
 
-  const exportData = () => {
-    if (filteredCompras.length === 0) {
-      alert('Não há dados para exportar');
-      return;
-    }
-
-    const headers = [
-      'Fornecedor',
-      'Número Documento',
-      'Data Compra',
-      'Estoque Destino',
-      'Valor Total',
-      'Status',
-      'Observações'
-    ];
-
-    const data = filteredCompras.map(compra => [
-      compra.fornecedor_nome || '',
-      compra.numero_documento || '',
-      dayjs(compra.data_compra).format('DD/MM/YYYY'),
-      compra.estoque_destino_nome || '',
-      compra.valor_total,
-      getStatusText(compra.status),
-      compra.observacoes || ''
-    ]);
-
-    const fileName = `compras-estoque-${dayjs().format('YYYY-MM-DD')}`;
-    exportToExcel(data, fileName, headers);
-  };
-
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-medium text-white">Compras de Estoque</h3>
         <div className="flex gap-2">
           <button
-            onClick={() => setShowMetricasModal(true)}
-            className="px-4 py-2 bg-white/5 border border-white/20 rounded-lg text-white/80 hover:bg-white/10 flex items-center"
-          >
-            <Activity className="w-4 h-4 mr-2" />
-            Métricas e Análises
-          </button>
-          <button
-            onClick={exportData}
-            className="px-4 py-2 bg-white/5 border border-white/20 rounded-lg text-white/80 hover:bg-white/10"
-          >
-            <Download className="w-4 h-4 inline mr-2" />
-            Exportar Excel
-          </button>
-          <button
             onClick={() => setShowConsultaHistoricoModal(true)}
             className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 flex items-center"
           >
             <Sparkles className="w-4 h-4 mr-2" />
             Consultar Histórico (IA)
-          </button>
-          <button
-            onClick={() => setShowIAModal(true)}
-            className="px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg hover:from-purple-700 hover:to-blue-700 flex items-center"
-          >
-            <Sparkles className="w-4 h-4 mr-2" />
-            Importar com IA
           </button>
           <button
             onClick={() => openForm()}
@@ -1338,13 +1048,6 @@ const ComprasEstoque: React.FC = () => {
                               title="Editar"
                             >
                               <Edit className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => handleConferenciaComIA(compra.id)}
-                              className="text-blue-400 hover:text-blue-300"
-                              title="Conferir com IA"
-                            >
-                              <Camera className="w-4 h-4" />
                             </button>
                             <button
                               onClick={() => handleReceberCompra(compra.id)}
@@ -2250,45 +1953,6 @@ const ComprasEstoque: React.FC = () => {
         onClose={() => setShowConsultaHistoricoModal(false)}
       />
 
-      <ComprasIAModal
-        isOpen={showIAModal}
-        onClose={() => setShowIAModal(false)}
-        onConfirm={handleIAExtraction}
-        estoques={estoques}
-      />
-
-      <ConferenciaRecebimentoModal
-        isOpen={showConferenciaModal}
-        onClose={() => setShowConferenciaModal(false)}
-        onConfirm={handleConfirmarConferencia}
-        compra={compraConferencia}
-        itens={itensRecebimento}
-      />
-
-      {/* Modal de Métricas e Análises */}
-      {showMetricasModal && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-[#0f1020] rounded-lg w-full max-w-7xl max-h-[90vh] overflow-hidden flex flex-col border border-white/10">
-            <div className="p-6 border-b border-white/10 flex justify-between items-center">
-              <div>
-                <h3 className="text-xl font-semibold text-white">Métricas e Análises de Compras</h3>
-                <p className="text-sm text-white/60 mt-1">
-                  Visão completa das compras com filtros e indicadores
-                </p>
-              </div>
-              <button
-                onClick={() => setShowMetricasModal(false)}
-                className="text-white/30 hover:text-white/50"
-              >
-                <XCircle className="w-6 h-6" />
-              </button>
-            </div>
-            <div className="p-6 overflow-y-auto flex-1">
-              <ListaComprasMetricas />
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

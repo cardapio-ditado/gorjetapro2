@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Search, Bell, Settings, LogOut, ChevronDown, Command, ChevronRight, Menu, X, Home, DollarSign, Warehouse, Users, Music, CalendarDays, BookOpen, AlertTriangle, Target, TrendingUp, Star, Sun, Moon } from 'lucide-react';
+import { Search, Bell, Settings, LogOut, ChevronDown, Command, ChevronRight, Menu, X, Home, DollarSign, Warehouse, Users, Music, CalendarDays, BookOpen, Target, TrendingUp, Star, Sun, Moon } from 'lucide-react';
 import { Usuario } from '../../contexts/AuthContext';
 import { alternarTema, lerTema, Tema } from '../../lib/tema';
 
@@ -77,7 +77,6 @@ const ALL_ROUTES: SearchResult[] = [
   { label: 'Fidelidade — Programa de Pontos', path: '/fidelidade?tab=pontos',                           icon: Star },
   // Sistema
   { label: 'Metas & Tarefas',  path: '/metas-tarefas',  icon: Target },
-  { label: 'Ocorrências',      path: '/ocorrencias',     icon: AlertTriangle },
   { label: 'Manual',           path: '/manual',          icon: BookOpen },
   { label: 'Configurações',    path: '/settings',        icon: Settings },
 ];
@@ -192,7 +191,6 @@ const Topbar: React.FC<TopbarProps> = ({ toggleSidebar, user, onLogout }) => {
       '/musicians': { module: 'Músicos' },
       '/events': { module: 'Eventos' },
       '/solicitacoes': { module: 'Solicitações' },
-      '/ocorrencias': { module: 'Ocorrências' },
       '/marketing': { module: 'Marketing' },
       '/gestao-estrategica': { module: 'OKRs Estratégicos' },
       '/zig-recebimentos': { module: 'Financeiro', sub: 'ZIG Recebimentos' },
