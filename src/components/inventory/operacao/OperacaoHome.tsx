@@ -112,9 +112,9 @@ export default function OperacaoHome({ onAcao }: Props) {
     },
     {
       key: 'transferir',
-      label: 'Transferir estoque',
+      label: 'Transferências',
       icon: ArrowLeftRight,
-      desc: 'Mover itens entre estoques',
+      desc: 'Mover itens entre estoques e entregar pendentes',
       color: 'from-blue-600/30 to-blue-700/20',
       border: 'border-blue-500/30',
       iconColor: 'text-blue-400',
@@ -191,8 +191,8 @@ export default function OperacaoHome({ onAcao }: Props) {
             <FileText className="w-4 h-4 text-white/50" />
           </div>
           <div className="text-left">
-            <p className="text-white/80 font-semibold text-sm">Requisições</p>
-            <p className="text-white/50 text-xs mt-0.5">Histórico, impressão e requisições para outros estoques</p>
+            <p className="text-white/80 font-semibold text-sm">Pendentes e histórico</p>
+            <p className="text-white/50 text-xs mt-0.5">Fila de transferências a entregar, histórico e impressão</p>
           </div>
         </div>
       </button>

@@ -2,7 +2,7 @@ import { Fragment, useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import {
   RefreshCw, Loader2, PackageCheck, Sparkles, AlertTriangle, Check,
-  ExternalLink, Settings2, Store, ClipboardList,
+  ExternalLink, Settings2, Store, ClipboardList, QrCode,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import NiveisBalcao from './NiveisBalcao';
@@ -320,6 +320,11 @@ export default function ReposicaoBalcao() {
                     className="inline-flex items-center gap-1 text-xs text-blue-400 hover:underline">
                     <ExternalLink size={12} /> Link do balcão
                   </a>
+                  <a href={`/cartaz-requisicao?setor=${b.slug}`} target="_blank" rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-xs text-white/50 hover:text-white/80 hover:underline"
+                    title="Folha com QR Code para imprimir e colar na parede">
+                    <QrCode size={12} /> Cartaz
+                  </a>
                 </div>
               </div>
 
@@ -475,8 +480,8 @@ export default function ReposicaoBalcao() {
       {dados && dados.outras_abertas > 0 && (
         <p className="text-xs text-white/50 flex items-center gap-1.5 flex-wrap">
           {dados.outras_abertas} {dados.outras_abertas === 1 ? 'requisição aberta' : 'requisições abertas'} para outros estoques em{' '}
-          <Link to="/advanced-inventory?area=operacao&tela=requisicoes" className="inline-flex items-center gap-1 text-blue-400 hover:underline font-medium">
-            Requisições <ExternalLink size={11} />
+          <Link to="/advanced-inventory?area=operacao&tela=transferir&aba=pendentes" className="inline-flex items-center gap-1 text-blue-400 hover:underline font-medium">
+            Transferências <ExternalLink size={11} />
           </Link>.
         </p>
       )}

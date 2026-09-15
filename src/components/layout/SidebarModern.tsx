@@ -10,10 +10,9 @@ import {
 const ESTOQUE_SUBMODS_ADMIN = [
   { name: 'Reposição de balcão',   path: '/advanced-inventory?area=operacao&tela=reposicao' },
   { name: 'Receber mercadoria',    path: '/advanced-inventory?area=operacao&tela=receber' },
-  { name: 'Transferir',            path: '/advanced-inventory?area=operacao&tela=transferir' },
+  { name: 'Transferências',        path: '/advanced-inventory?area=operacao&tela=transferir' },
   { name: 'Produzir',              path: '/advanced-inventory?area=operacao&tela=produzir' },
   { name: 'Contagem',              path: '/advanced-inventory?area=operacao&tela=contar' },
-  { name: 'Requisições',           path: '/advanced-inventory?area=operacao&tela=requisicoes' },
   { name: '─ Compras',             path: '/advanced-inventory?area=compras&tela=dia' },
   { name: 'Compras do dia',        path: '/advanced-inventory?area=compras&tela=dia' },
   { name: 'Compras da semana',     path: '/advanced-inventory?area=compras&tela=semana' },

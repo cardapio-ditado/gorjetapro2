@@ -16,9 +16,9 @@ interface LinhaTransferencia {
   saldoOrigem: number | null;
 }
 
-interface Props { onVoltar: () => void; }
+interface Props { onVoltar: () => void; onVerPendentes?: () => void; }
 
-export default function TransferirEstoque({ onVoltar }: Props) {
+export default function TransferirEstoque({ onVoltar, onVerPendentes }: Props) {
   const { usuario } = useAuth();
   const [passo, setPasso] = useState(1);
 
@@ -45,7 +45,7 @@ export default function TransferirEstoque({ onVoltar }: Props) {
   // Passo 4 — Confirmar
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
-  const [requisicaoCriada, setRequisicaoCriada] = useState<{ id: string; numero: string } | null>(null);
+  const [requisicaoCriada, setRequisicaoCriada] = useState<{ id: string; numero: string; pendente: boolean } | null>(null);
 
   useEffect(() => {
     const load = async () => {
@@ -185,7 +185,10 @@ export default function TransferirEstoque({ onVoltar }: Props) {
           setor,
           estoque_origem_id: origem.id,
           estoque_destino_id: destino.id,
-          status: entregar ? 'concluido' : 'pendente',
+          // A etapa de aprovação saiu do processo: o que não é entregue na hora
+          // já nasce 'aprovado' (a entregar) e entra direto na fila de pendentes.
+          status: entregar ? 'concluido' : 'aprovado',
+          data_aprovacao: entregar ? null : new Date().toISOString(),
           concluido_por: entregar
             ? (usuario?.id || null)
             : null,
@@ -230,7 +233,11 @@ export default function TransferirEstoque({ onVoltar }: Props) {
         if (movErr) throw movErr;
       }
 
-      setRequisicaoCriada({ id: req.id, numero: req.numero_requisicao || req.id.slice(0, 8) });
+      setRequisicaoCriada({
+        id: req.id,
+        numero: req.numero_requisicao || req.id.slice(0, 8),
+        pendente: !entregar,
+      });
     } catch (e) {
       setErro(e instanceof Error ? e.message : 'Erro ao salvar');
     } finally {
@@ -254,7 +261,15 @@ export default function TransferirEstoque({ onVoltar }: Props) {
             Solicitante: {funcionarioSelecionado?.nome_completo} ({setor})
           </p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex flex-wrap justify-center gap-3">
+          {requisicaoCriada.pendente && onVerPendentes && (
+            <button
+              onClick={onVerPendentes}
+              className="px-5 py-2.5 bg-wine border border-wine text-white rounded-xl text-sm font-semibold hover:bg-[#6a1a25]"
+            >
+              Ver pendentes
+            </button>
+          )}
           <button
             onClick={() => {
               setFuncionarioSelecionado(null); setBuscaFunc(''); setSetor('');

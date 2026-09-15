@@ -16,7 +16,6 @@ import ComprasEstoque          from '../components/inventory/ComprasEstoque';
 import ItensEstoque            from '../components/inventory/ItensEstoque';
 import FichasTecnicas          from '../components/inventory/FichasTecnicas';
 import KardexProduto           from '../components/inventory/KardexProduto';
-import RequisicoesInternas     from '../components/inventory/RequisicoesInternas';
 import ContagemEstoque         from '../components/inventory/contagem/ContagemEstoque';
 import ChatFinanceiroIA        from '../components/financeiro/ChatFinanceiroIA';
 import InventarioConsolidado   from '../components/inventory/InventarioConsolidado';
@@ -32,7 +31,7 @@ import ComprasDoDia            from '../components/inventory/ComprasDoDia';
 
 // ── Componentes novos ────────────────────────────────────────────────────────
 import OperacaoHome      from '../components/inventory/operacao/OperacaoHome';
-import TransferirEstoque from '../components/inventory/operacao/TransferirEstoque';
+import Transferencias   from '../components/inventory/operacao/Transferencias';
 
 // ── Tipos ────────────────────────────────────────────────────────────────────
 type Area = 'operacao' | 'compras' | 'analise' | 'cadastros';
@@ -134,10 +133,10 @@ const AdvancedInventory: React.FC = () => {
     const found = todas.find(t2 => t2.key === tela);
     if (found) return found.label;
     if (tela === 'receber')    return 'Receber mercadoria';
-    if (tela === 'transferir') return 'Transferir estoque';
+    if (tela === 'transferir') return 'Transferências';
     if (tela === 'produzir')   return 'Produzir';
     if (tela === 'contar')     return 'Contar';
-    if (tela === 'requisicoes') return 'Requisições';
+    if (tela === 'requisicoes') return 'Transferências';
     if (tela === 'reposicao')  return 'Reposição de balcão';
     return tela;
   };
@@ -160,10 +159,10 @@ const AdvancedInventory: React.FC = () => {
       );
     }
     if (tela === 'receber')    return <ComprasEstoque />;
-    if (tela === 'transferir') return <TransferirEstoque onVoltar={() => navegar('operacao', 'home')} />;
+    if (tela === 'transferir') return <Transferencias onVoltar={() => navegar('operacao', 'home')} />;
     if (tela === 'produzir')   return <ProducaoEstoque />;
     if (tela === 'contar')     return <ContagemEstoque />;
-    if (tela === 'requisicoes') return <RequisicoesInternas />;
+    if (tela === 'requisicoes') return <Transferencias onVoltar={() => navegar('operacao', 'home')} />;
     if (tela === 'reposicao')  return <ReposicaoBalcao />;
 
     // Compras
