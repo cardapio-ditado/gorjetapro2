@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { ShoppingBag, RefreshCw, Search, X, Loader2, Package, AlertTriangle, CheckCircle2, Plus, Store, Truck, ClipboardList } from 'lucide-react';
+import { ShoppingBag, RefreshCw, Search, X, Loader2, Package, AlertTriangle, CheckCircle2, Plus, Store, Truck, ClipboardList, CalendarClock, Undo2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { SearchableSelect } from '../common/SearchableSelect';
 import { fmtQtd, fmtMoeda, type Situacao } from './comprasShared';
@@ -42,6 +42,8 @@ interface ItemCompra {
   preco: number;
   em_lista: number;
   em_lista_onde: string | null;
+  /** Tirado da lista de hoje: fica escondido até esta data (volta no dia seguinte). */
+  adiado_ate: string | null;
   origem: Origem | null;
   recentes: FornecedorRecente[];
 }
@@ -93,6 +95,7 @@ function normalizarItem(raw: Record<string, unknown>): ItemCompra {
     preco: num(raw.preco),
     em_lista: num(raw.em_lista),
     em_lista_onde: (raw.em_lista_onde as string | null) ?? null,
+    adiado_ate: raw.adiado_ate ? String(raw.adiado_ate).slice(0, 10) : null,
     origem: o && (o.tipo === 'rua' || o.tipo === 'fornecedor')
       ? { tipo: o.tipo as Destino, fornecedor_id: (o.fornecedor_id as string | null) ?? null } : null,
     recentes: (Array.isArray(raw.recentes) ? (raw.recentes as Record<string, unknown>[]) : []).map(r => ({
@@ -193,8 +196,42 @@ export default function Compras() {
     return { destino: 'fornecedor', fornecedorId: f.id, lojaId: null, nome: f.nome };
   }, [fornPorId]);
 
+  // ── Adiados: fora da lista de hoje, voltam sozinhos amanhã ──
+  const adiados = useMemo(() => (tela?.itens ?? []).filter(it => it.adiado_ate), [tela]);
+  const valorAdiado = useMemo(() => adiados.reduce((s, it) => s + it.sugerida * it.preco, 0), [adiados]);
+  const [adiando, setAdiando] = useState<string | null>(null);
+
+  const marcarAdiado = (itemId: string, ate: string | null) =>
+    setTela(prev => prev ? { ...prev, itens: prev.itens.map(it => (it.item_id === itemId ? { ...it, adiado_ate: ate } : it)) } : prev);
+
+  /** Tira da lista de hoje; o item volta sozinho no dia seguinte. */
+  const adiar = async (it: ItemCompra) => {
+    setAdiando(it.item_id);
+    try {
+      const { data, error } = await supabase.rpc('fn_compras_adiar', { p_item_id: it.item_id, p_dias: 1 });
+      const r = (data || {}) as { success?: boolean; error?: string; adiado_ate?: string };
+      if (error || r.success === false) { setErro(error?.message || r.error || 'Não foi possível adiar'); return; }
+      marcarAdiado(it.item_id, String(r.adiado_ate ?? tela?.hoje ?? ''));
+      setLinha(it.item_id, { quantidade: 0 });
+    } finally {
+      setAdiando(null);
+    }
+  };
+
+  const trazerDeVolta = async (it: ItemCompra) => {
+    setAdiando(it.item_id);
+    try {
+      const { error } = await supabase.rpc('fn_compras_adiar_desfazer', { p_item_id: it.item_id });
+      if (error) { setErro(error.message); return; }
+      marcarAdiado(it.item_id, null);
+      setLinha(it.item_id, { quantidade: it.em_lista > 0 ? 0 : it.sugerida });
+    } finally {
+      setAdiando(null);
+    }
+  };
+
   // ── Itens visíveis ──
-  const todos = useMemo(() => [...(tela?.itens ?? []), ...extras], [tela, extras]);
+  const todos = useMemo(() => [...(tela?.itens ?? []).filter(it => !it.adiado_ate), ...extras], [tela, extras]);
   const buscaLower = busca.trim().toLowerCase();
 
   const visiveisBase = useMemo(() => todos.filter(it => {
@@ -217,7 +254,7 @@ export default function Compras() {
 
   const totais = useMemo(() => {
     const t = { zerado: 0, comprar: 0, atencao: 0 };
-    for (const it of tela?.itens ?? []) if (it.situacao in t) t[it.situacao as keyof typeof t] += 1;
+    for (const it of tela?.itens ?? []) if (!it.adiado_ate && it.situacao in t) t[it.situacao as keyof typeof t] += 1;
     return t;
   }, [tela]);
 
@@ -249,7 +286,7 @@ export default function Compras() {
     const it: ItemCompra = {
       item_id: c.item_id, nome: c.nome, categoria: c.categoria, um: c.um, fracionado: c.fracionado,
       saldo: c.saldo, ponto: c.ponto, situacao: 'extra', sugerida: 0, preco: c.preco,
-      em_lista: 0, em_lista_onde: null, origem: null, recentes: [],
+      em_lista: 0, em_lista_onde: null, adiado_ate: null, origem: null, recentes: [],
     };
     setExtras(prev => [...prev, it]);
     setLinhas(prev => ({ ...prev, [it.item_id]: { quantidade: 0, origem: '', outro: false } }));
@@ -476,6 +513,48 @@ export default function Compras() {
         <div className="bg-[#12141f] rounded-2xl border border-white/10 text-center py-14 text-white/40">
           <Package size={32} className="mx-auto mb-3 opacity-40" />
           <p className="text-white/70 font-medium">Nada abaixo do ponto com esses filtros.</p>
+          {adiados.length > 0 && <p className="text-xs mt-1">{plural(adiados.length, 'item adiado', 'itens adiados')} para amanhã, logo abaixo.</p>}
+        </div>
+      )}
+
+      {/* Adiados para amanhã: fora da lista de hoje, com o valor cortado */}
+      {tela && adiados.length > 0 && (
+        <div className="bg-[#12141f] rounded-2xl border border-amber-500/30">
+          <div className="px-5 py-3 border-b border-white/10 flex items-center justify-between gap-3 flex-wrap">
+            <p className="text-sm font-semibold text-amber-300 flex items-center gap-2">
+              <CalendarClock size={16} /> Adiados para amanhã
+              <span className="px-2 py-0.5 text-xs rounded-full bg-amber-500/15 text-amber-200">{adiados.length}</span>
+            </p>
+            <p className="text-xs text-white/60">
+              Cortado da compra de hoje: <span className="text-amber-300 font-semibold">{fmtMoeda(valorAdiado)}</span>. Voltam sozinhos na lista de amanhã.
+            </p>
+          </div>
+          <div className="overflow-x-auto rounded-b-2xl">
+            <table className="w-full text-sm">
+              <tbody className="divide-y divide-white/5">
+                {[...adiados].sort((a, b) => nomeCat(a.categoria).localeCompare(nomeCat(b.categoria), 'pt-BR') || a.nome.localeCompare(b.nome, 'pt-BR')).map(it => (
+                  <tr key={it.item_id} className="hover:bg-white/[0.02]">
+                    <td className="px-3 py-1.5">
+                      <span className="text-white/80">{it.nome.trim()}</span>
+                      <span className="ml-2 text-caption text-white/40">{nomeCat(it.categoria)}</span>
+                    </td>
+                    <td className="px-3 py-1.5 text-right tabular-nums whitespace-nowrap text-white/60" title="no Central">
+                      {fmtQtd(it.saldo)} {it.um}
+                    </td>
+                    <td className="px-3 py-1.5 text-right tabular-nums whitespace-nowrap text-white/60" title="sugestão de compra × preço médio">
+                      {fmtQtd(it.sugerida)} {it.um} · <span className="text-amber-300">{fmtMoeda(it.sugerida * it.preco)}</span>
+                    </td>
+                    <td className="px-3 py-1.5 text-right w-40">
+                      <button onClick={() => trazerDeVolta(it)} disabled={adiando === it.item_id}
+                        className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium border border-white/15 text-white/70 hover:bg-white/10 disabled:opacity-50">
+                        {adiando === it.item_id ? <Loader2 size={12} className="animate-spin" /> : <Undo2 size={12} />} Trazer de volta
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
@@ -529,8 +608,14 @@ export default function Compras() {
                             <div className="flex items-center gap-2 flex-wrap">
                               <span className="text-white/90">{it.nome.trim()}</span>
                               <span className="text-caption text-white/40">{it.um}</span>
-                              {it.situacao === 'extra' && (
+                              {it.situacao === 'extra' ? (
                                 <button onClick={() => removerExtra(it.item_id)} className="text-white/30 hover:text-white/60" title="Tirar da tela"><X size={12} /></button>
+                              ) : (
+                                <button onClick={() => adiar(it)} disabled={adiando === it.item_id}
+                                  className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[11px] font-medium text-white/40 border border-transparent hover:text-amber-300 hover:border-amber-500/40 hover:bg-amber-500/10 disabled:opacity-50"
+                                  title="Tirar da lista de hoje e jogar para amanhã (corte de custo)">
+                                  {adiando === it.item_id ? <Loader2 size={11} className="animate-spin" /> : <CalendarClock size={11} />} Amanhã
+                                </button>
                               )}
                               {it.em_lista > 0 && (
                                 <span className="text-caption text-orange-300/80">já na lista: {it.em_lista_onde || fmtQtd(it.em_lista)}</span>
@@ -573,7 +658,7 @@ export default function Compras() {
           </div>
 
           <p className="px-4 py-2 text-caption text-white/40 border-t border-white/5">
-            Comprar = o que falta para chegar ao ponto (ponto 5, tem 3 → 2). Zero = não compra. 🚚 fornecedor entrega (vira pedido) · 🛒 loja de rua (vai na lista do comprador).
+            Comprar = o que falta para chegar ao ponto (ponto 5, tem 3 → 2). Zero = não compra. "Amanhã" tira o item da lista de hoje para cortar custo; ele volta sozinho no dia seguinte. 🚚 fornecedor entrega (vira pedido) · 🛒 loja de rua (vai na lista do comprador).
           </p>
 
           {/* Rodapé fixo */}
@@ -583,6 +668,7 @@ export default function Compras() {
                 <span className="text-white font-semibold">{plural(resumo.itens, 'item', 'itens')} · {fmtMoeda(resumo.valor)} estimado</span>
                 {resumo.rua > 0 && <span className="ml-2 inline-flex items-center gap-1 text-orange-300"><Store size={12} /> Rua ({resumo.rua})</span>}
                 {resumo.pedidosTxt && <span className="ml-2 inline-flex items-center gap-1 text-blue-300"><Truck size={12} /> {resumo.pedidosTxt}</span>}
+                {adiados.length > 0 && <span className="ml-2 inline-flex items-center gap-1 text-amber-300"><CalendarClock size={12} /> {adiados.length} p/ amanhã ({fmtMoeda(valorAdiado)} cortado)</span>}
               </p>
               {resumo.semOrigem > 0 && (
                 <p className="text-red-300 flex items-center gap-2 flex-wrap">
