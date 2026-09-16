@@ -1,0 +1,4 @@
+-- Compra todo dia: a meta de reposição é o próprio ponto de pedido.
+-- Ponto 5 e tem 3 → comprar 2 (descontando o que já está em lista/pedido).
+-- Única mudança em fn_reposicao_central: alvo_calc = ponto (era ponto × 2).
+-- A definição completa e atualizada está em 20260916100000_compras_simples.sql.

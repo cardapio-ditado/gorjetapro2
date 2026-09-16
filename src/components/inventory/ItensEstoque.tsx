@@ -805,7 +805,7 @@ const ItensEstoque: React.FC = () => {
                   className="w-full md:w-1/2 rounded-xl border-white/20 shadow-sm focus:border-wine focus:ring focus:ring-wine/20" />
                 <p className="text-xs text-white/60 mt-1">
                   Quando o Central ficar <span className="text-white/90 font-medium">abaixo</span> desse número, o item entra em Compras.
-                  Ex.: ponto 5 e tem 4 → aparece. A sugestão de compra leva até o dobro do ponto. Zero = não controla.
+                  Ex.: ponto 5 e tem 3 → aparece com sugestão de comprar 2 (repõe até o ponto). Com 5 não entra. Zero = não controla.
                 </p>
               </div>
 

@@ -621,7 +621,7 @@ export default function Compras() {
           </div>
 
           <p className="px-4 py-2 text-caption text-white/40 border-t border-white/5">
-            "Comprar" sugere chegar ao dobro do ponto. Preço médio = média das últimas 5 compras recebidas; em cinza, é o custo do cadastro.
+            "Comprar" sugere o que falta para chegar ao ponto (ponto 5, tem 3 → 2). Preço médio = média das últimas 5 compras recebidas; em cinza, é o custo do cadastro.
             🚚 fornecedor entrega (vira pedido) · 🛒 loja de rua (vai na lista do comprador).
           </p>
 

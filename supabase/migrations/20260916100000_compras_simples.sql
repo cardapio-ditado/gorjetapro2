@@ -154,7 +154,7 @@ base as (
 ),
 calc as (
   select b.*,
-         round(b.ponto * 2, 3) as alvo_calc,
+         round(b.ponto, 3) as alvo_calc,   -- compra todo dia: a meta é o próprio ponto
          case when b.consumo_dia > 0 then round(b.saldo_central / b.consumo_dia, 1) else null end as cobertura,
          case when b.ponto <= 0 then 'ok'
               when b.saldo_central <= 0 then 'zerado'
