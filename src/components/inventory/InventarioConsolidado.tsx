@@ -41,7 +41,7 @@ interface ReposicaoCentral {
   cobertura_dias: number | null;
   consumo_dia: number;
   situacao: 'zerado' | 'comprar' | 'atencao' | 'ok';
-  criterio: 'manual' | 'consumo' | 'sem_consumo';
+  criterio: 'ponto' | 'sem_ponto';
 }
 
 type Situacao = 'negativo' | 'zerado' | 'comprar' | 'atencao' | 'abaixo_nivel' | 'ok';
@@ -63,13 +63,13 @@ const SITUACAO_META: Record<Situacao, { label: string; cls: string }> = {
   negativo:     { label: 'Negativo',        cls: 'bg-red-500/20 text-red-300' },
   zerado:       { label: 'Zerado',          cls: 'bg-red-500/15 text-red-300' },
   comprar:      { label: 'Comprar',         cls: 'bg-amber-500/15 text-amber-300' },
-  atencao:      { label: 'Atenção',         cls: 'bg-yellow-500/15 text-yellow-300' },
+  atencao:      { label: 'No ponto',        cls: 'bg-yellow-500/15 text-yellow-300' },
   abaixo_nivel: { label: 'Abaixo do nível', cls: 'bg-orange-500/15 text-orange-300' },
   ok:           { label: 'OK',              cls: 'bg-green-500/15 text-green-300' },
 };
 
 const CRITERIO_LABEL: Record<ReposicaoCentral['criterio'], string> = {
-  consumo: 'consumo', manual: 'travado', sem_consumo: 'sem histórico',
+  ponto: 'ponto de pedido', sem_ponto: 'sem ponto',
 };
 
 function resolveStatus(
@@ -138,7 +138,7 @@ export default function InventarioConsolidado() {
           cobertura_dias: r.cobertura_dias == null ? null : Number(r.cobertura_dias),
           consumo_dia:    Number(r.consumo_dia ?? 0),
           situacao:       (r.situacao as ReposicaoCentral['situacao']) || 'ok',
-          criterio:       (r.criterio as ReposicaoCentral['criterio']) || 'sem_consumo',
+          criterio:       (r.criterio as ReposicaoCentral['criterio']) || 'sem_ponto',
         };
       });
       setReposicao(repIdx);

@@ -3,7 +3,6 @@ import { AlertTriangle, CheckCircle2, ClipboardList, ExternalLink, MessageCircle
 
 // ─── Tipos compartilhados das telas de compras ───────────────────────────────
 export type Situacao = 'zerado' | 'comprar' | 'atencao' | 'ok';
-export type Criterio = 'manual' | 'consumo' | 'sem_consumo';
 
 export interface Mensagem {
   tipo: 'ok' | 'erro';
@@ -16,35 +15,14 @@ export interface Mensagem {
   whatsapp?: string;
 }
 
-// ─── Constantes ──────────────────────────────────────────────────────────────
-export const DIAS = [
-  { n: 1, sigla: 'Seg', letra: 'S' },
-  { n: 2, sigla: 'Ter', letra: 'T' },
-  { n: 3, sigla: 'Qua', letra: 'Q' },
-  { n: 4, sigla: 'Qui', letra: 'Q' },
-  { n: 5, sigla: 'Sex', letra: 'S' },
-  { n: 6, sigla: 'Sáb', letra: 'S' },
-  { n: 7, sigla: 'Dom', letra: 'D' },
-];
-
 const SITUACAO_LABEL: Record<Situacao, string> = {
-  zerado: 'Zerado', comprar: 'Comprar', atencao: 'Atenção', ok: 'OK',
+  zerado: 'Zerado', comprar: 'Comprar', atencao: 'No ponto', ok: 'OK',
 };
 const SITUACAO_COLOR: Record<Situacao, string> = {
   zerado: 'bg-red-500/15 text-red-400 border-red-500/30',
   comprar: 'bg-amber-500/15 text-amber-400 border-amber-500/30',
   atencao: 'bg-yellow-500/10 text-yellow-300 border-yellow-500/40',
   ok: 'bg-green-500/10 text-green-400 border-green-500/30',
-};
-const CRITERIO_LABEL: Record<Criterio, string> = {
-  consumo: 'pelo consumo',
-  manual: 'mínimo travado',
-  sem_consumo: 'sem histórico (mínimo digitado)',
-};
-const CRITERIO_COLOR: Record<Criterio, string> = {
-  consumo: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
-  manual: 'bg-purple-500/10 text-purple-400 border-purple-500/30',
-  sem_consumo: 'bg-white/5 text-white/50 border-white/10',
 };
 
 const UNIDADES_FRACIONAVEIS = ['kg', 'g', 'grama', 'gramas', 'l', 'litro', 'litros', 'ml', 'mililitro', 'mililitros'];
@@ -58,36 +36,48 @@ export function fmt(n: number, dec = 2) {
 }
 export function fmtQtd(n: number) { return fmt(n, n % 1 === 0 ? 0 : 2); }
 export function fmtMoeda(n: number) { return 'R$ ' + fmt(n); }
+export function fmtData(iso: string | null | undefined): string {
+  if (!iso) return '';
+  const s = String(iso).slice(0, 10);
+  return /^\d{4}-\d{2}-\d{2}$/.test(s) ? `${s.slice(8, 10)}/${s.slice(5, 7)}/${s.slice(0, 4)}` : s;
+}
+
+// ─── Links da lista pública ──────────────────────────────────────────────────
+export function urlListaPublica(listaId: string): string {
+  return `${window.location.origin}/compras-publica/${listaId}`;
+}
+
+/** Só dígitos; número nacional ganha o 55 na frente para o wa.me funcionar. */
+export function telefoneWhatsApp(tel: string | null | undefined): string | null {
+  const d = (tel || '').replace(/\D/g, '');
+  if (d.length < 10) return null;
+  return d.startsWith('55') && d.length >= 12 ? d : `55${d}`;
+}
+
+export function urlWhatsApp(texto: string, telefone?: string | null): string {
+  const fone = telefoneWhatsApp(telefone);
+  return `https://wa.me/${fone ?? ''}?text=${encodeURIComponent(texto)}`;
+}
+
+/** Mensagem para o comprador da rua: abre o link e vai marcando. */
+export function textoListaRua(titulo: string, url: string): string {
+  return `🛒 ${titulo}\nAbra a lista e vá marcando o que comprar:\n${url}`;
+}
+
+/** Mensagem de pedido para o fornecedor, com os itens por extenso. */
+export function textoPedidoFornecedor(
+  fornecedor: string, data: string,
+  itens: { nome: string; quantidade: number; um: string; observacao?: string | null }[],
+): string {
+  const linhas = itens.map(i => `• ${fmtQtd(i.quantidade)} ${i.um} ${i.nome.trim()}${i.observacao ? ` (${i.observacao})` : ''}`);
+  return `📦 Pedido Ditado Popular · ${data}\nPara: ${fornecedor}\n\n${linhas.join('\n')}\n\nPode confirmar disponibilidade e previsão de entrega? Obrigado!`;
+}
 
 // ─── Sub-componentes ─────────────────────────────────────────────────────────
 export function BadgeSituacao({ s }: { s: Situacao }) {
   return (
     <span className={`text-caption px-1.5 py-0.5 rounded-md border whitespace-nowrap ${SITUACAO_COLOR[s]}`}>
       {SITUACAO_LABEL[s]}
-    </span>
-  );
-}
-
-export function BadgeCriterio({ c }: { c: Criterio }) {
-  return (
-    <span className={`text-caption px-1.5 py-0.5 rounded-md border whitespace-nowrap ${CRITERIO_COLOR[c]}`}>
-      {CRITERIO_LABEL[c]}
-    </span>
-  );
-}
-
-export function DiasCompra({ dias }: { dias: number[] | null }) {
-  if (!dias || dias.length === 0) {
-    return <span className="text-caption text-white/50">qualquer dia</span>;
-  }
-  return (
-    <span className="flex items-center gap-0.5" title={dias.map(d => DIAS[d - 1]?.sigla).filter(Boolean).join(', ')}>
-      {DIAS.map(d => (
-        <span key={d.n}
-          className={`w-4 h-4 rounded text-[10px] font-bold flex items-center justify-center ${dias.includes(d.n) ? 'bg-wine text-white' : 'bg-white/5 text-white/25'}`}>
-          {d.letra}
-        </span>
-      ))}
     </span>
   );
 }

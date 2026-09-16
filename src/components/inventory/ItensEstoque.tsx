@@ -50,20 +50,20 @@ interface ReposicaoCentral {
   consumo_dia: number;
   cobertura_dias: number | null;
   ponto_pedido: number;
-  criterio: 'manual' | 'consumo' | 'sem_consumo';
+  quantidade_sugerida: number;
+  criterio: 'ponto' | 'sem_ponto';
   situacao: 'zerado' | 'comprar' | 'atencao' | 'ok';
 }
 
 const CRITERIO_BADGE: Record<ReposicaoCentral['criterio'], { label: string; cls: string }> = {
-  consumo:     { label: 'consumo',       cls: 'bg-blue-500/15 text-blue-300' },
-  manual:      { label: 'travado',       cls: 'bg-purple-500/15 text-purple-300' },
-  sem_consumo: { label: 'sem histórico', cls: 'bg-white/10 text-white/50' },
+  ponto:     { label: 'ponto de pedido', cls: 'bg-blue-500/15 text-blue-300' },
+  sem_ponto: { label: 'sem ponto',       cls: 'bg-white/10 text-white/50' },
 };
 
 const SITUACAO_DOT: Record<ReposicaoCentral['situacao'], { title: string; cls: string }> = {
   zerado:  { title: 'Zerado no Central',  cls: 'bg-red-500' },
-  comprar: { title: 'Comprar',            cls: 'bg-amber-500' },
-  atencao: { title: 'Atenção',            cls: 'bg-yellow-400' },
+  comprar: { title: 'Abaixo do ponto',    cls: 'bg-amber-500' },
+  atencao: { title: 'No ponto',           cls: 'bg-yellow-400' },
   ok:      { title: 'OK',                 cls: 'bg-green-500' },
 };
 
@@ -235,7 +235,8 @@ const ItensEstoque: React.FC = () => {
         consumo_dia:    Number(r.consumo_dia ?? 0),
         cobertura_dias: r.cobertura_dias == null ? null : Number(r.cobertura_dias),
         ponto_pedido:   Number(r.ponto_pedido ?? 0),
-        criterio:       (r.criterio as ReposicaoCentral['criterio']) || 'sem_consumo',
+        quantidade_sugerida: Number(r.quantidade_sugerida ?? 0),
+        criterio:       (r.criterio as ReposicaoCentral['criterio']) || 'sem_ponto',
         situacao:       (r.situacao as ReposicaoCentral['situacao']) || 'ok',
       };
     });
@@ -269,11 +270,12 @@ const ItensEstoque: React.FC = () => {
       const dataToSave = {
         ...formData,
         custo_medio:        parseFloat(formData.custo_medio.toString()) || 0,
-        estoque_minimo:     parseFloat(formData.estoque_minimo.toString()) || 0,
+        // Um ponto só: o "estoque mínimo" antigo acompanha o ponto de pedido.
+        estoque_minimo:     parseFloat(formData.ponto_reposicao.toString()) || 0,
         ponto_reposicao:    parseFloat(formData.ponto_reposicao.toString()) || 0,
         estoque_nativo_id:  formData.estoque_nativo_id  || null,
         fornecedor_padrao_id: formData.fornecedor_padrao_id || null,
-        minimo_manual:      !!formData.minimo_manual,
+        minimo_manual:      true,
       };
 
       if (editingItem) {
@@ -388,14 +390,14 @@ const ItensEstoque: React.FC = () => {
   const exportData = () => {
     if (filteredItens.length === 0) { alert('Não há dados para exportar'); return; }
     const headers = ['Nome','Código','Tipo','Categoria','Grupo Contagem','Não Contar','Unidade',
-                     'Custo Médio','Est. Mínimo','Ponto de Pedido','Critério','Situação','Validade','Status','Observações','Criado em'];
+                     'Custo Médio','Ponto de Pedido','Sugestão de compra','Critério','Situação','Validade','Status','Observações','Criado em'];
     const data = filteredItens.map(item => [
       item.nome, item.codigo || '', item.tipo_item === 'insumo' ? 'Insumo' : 'Produto para Venda',
       item.categoria || 'Geral',
       GRUPOS_CONTAGEM.find(g => g.value === item.grupo_contagem)?.label || item.grupo_contagem || '',
       item.ignorar_contagem ? 'Sim' : 'Não',
-      item.unidade_medida, item.custo_medio, item.estoque_minimo,
-      reposicao[item.id]?.ponto_pedido ?? '',
+      item.unidade_medida, item.custo_medio, item.ponto_reposicao ?? '',
+      reposicao[item.id]?.quantidade_sugerida ?? '',
       reposicao[item.id] ? CRITERIO_BADGE[reposicao[item.id].criterio].label : '',
       reposicao[item.id]?.situacao ?? '',
       item.tem_validade ? 'Sim' : 'Não', item.status,
@@ -626,7 +628,7 @@ const ItensEstoque: React.FC = () => {
                         </div>
                       ) : (
                         <span className="text-sm text-white/40" title="Sem cálculo do Central (item inativo ou sem dados)">
-                          {item.estoque_minimo || '—'}
+                          {item.ponto_reposicao || '—'}
                         </span>
                       )}
                     </td>
@@ -795,41 +797,16 @@ const ItensEstoque: React.FC = () => {
                 </div>
               </div>
 
-              {/* Estoque mínimo (ponto de pedido manual) */}
-              <div>
-                <label className="block text-sm font-medium text-white/80 mb-1">Estoque Mínimo</label>
-                <input type="number" step="0.001" min="0" value={formData.estoque_minimo}
-                  onChange={e => setFormData({ ...formData, estoque_minimo: parseFloat(e.target.value) || 0 })}
-                  className="w-full rounded-xl border-white/20 shadow-sm focus:border-wine focus:ring focus:ring-wine/20" />
-                <p className="text-xs text-white/60 mt-1">
-                  Sem a trava, o ponto de pedido é calculado pelo consumo que sai do Estoque Central; o mínimo digitado só vale para itens sem histórico.
-                </p>
-                <label className={`mt-2 flex items-center gap-2 p-2 rounded-xl cursor-pointer transition-colors border ${
-                  formData.minimo_manual
-                    ? 'bg-purple-500/10 border-purple-500/30 hover:bg-purple-500/15'
-                    : 'bg-white/5 border-transparent hover:bg-white/10'
-                }`}>
-                  <input type="checkbox" checked={formData.minimo_manual}
-                    onChange={e => setFormData({ ...formData, minimo_manual: e.target.checked })}
-                    className="w-4 h-4 rounded text-purple-500 border-white/20 focus:ring-purple-500" />
-                  <div>
-                    <p className={`text-sm font-medium ${formData.minimo_manual ? 'text-purple-300' : 'text-white/80'}`}>
-                      Travar mínimo manual
-                    </p>
-                    <p className="text-xs text-white/60">
-                      {formData.minimo_manual ? 'O mínimo digitado é o ponto de pedido' : 'Ponto de pedido segue o consumo'}
-                    </p>
-                  </div>
-                </label>
-              </div>
-
-              {/* Ponto de reposição */}
-              <div>
-                <label className="block text-sm font-medium text-white/80 mb-1">Ponto de Reposição</label>
+              {/* Ponto de pedido — a única régua de Compras */}
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-white/80 mb-1">Ponto de pedido (no Estoque Central)</label>
                 <input type="number" step="0.001" min="0" value={formData.ponto_reposicao}
                   onChange={e => setFormData({ ...formData, ponto_reposicao: parseFloat(e.target.value) || 0 })}
-                  className="w-full rounded-xl border-white/20 shadow-sm focus:border-wine focus:ring focus:ring-wine/20" />
-                <p className="text-xs text-yellow-400 mt-1">Abaixo desta qtd = ESTOQUE BAIXO</p>
+                  className="w-full md:w-1/2 rounded-xl border-white/20 shadow-sm focus:border-wine focus:ring focus:ring-wine/20" />
+                <p className="text-xs text-white/60 mt-1">
+                  Quando o Central ficar <span className="text-white/90 font-medium">abaixo</span> desse número, o item entra em Compras.
+                  Ex.: ponto 5 e tem 4 → aparece. A sugestão de compra leva até o dobro do ponto. Zero = não controla.
+                </p>
               </div>
 
               {/* Calculado pelo sistema (somente ao editar) */}
@@ -849,10 +826,10 @@ const ItensEstoque: React.FC = () => {
                     {rep ? (
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                         {[
+                          { label: 'No Central',         value: `${fmtNum(rep.saldo_central, 3)} ${editingItem.unidade_medida}` },
                           { label: 'Consumo/dia',        value: `${fmtNum(rep.consumo_dia, 3)} ${editingItem.unidade_medida}` },
                           { label: 'Cobre',              value: rep.cobertura_dias == null ? '—' : `${fmtNum(rep.cobertura_dias, 1)} dias` },
-                          { label: 'Ponto de pedido',    value: `${fmtNum(rep.ponto_pedido, 3)} ${editingItem.unidade_medida}` },
-                          { label: 'Ciclo do fornecedor', value: rep.ciclo_dias == null ? 'diário' : `${rep.ciclo_dias} dias` },
+                          { label: 'Sugestão de compra', value: `${fmtNum(rep.quantidade_sugerida, 3)} ${editingItem.unidade_medida}` },
                         ].map(({ label, value }) => (
                           <div key={label}>
                             <p className="text-[11px] text-white/50">{label}</p>

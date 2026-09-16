@@ -340,10 +340,10 @@ export default function DashboardEstoque({ onNavigate }: { onNavigate?: (tab: st
               </div>
               <div className="bg-yellow-500/10 rounded-lg py-2">
                 <p className="text-xl font-bold text-yellow-300">{acao.central.atencao}</p>
-                <p className="text-caption text-white/50">atenção</p>
+                <p className="text-caption text-white/50">no ponto</p>
               </div>
             </div>
-            <p className="text-xs text-white/50 mt-3">Mesmo motor da Compras do dia. Clique para montar a lista.</p>
+            <p className="text-xs text-white/50 mt-3">Abaixo do ponto de pedido do cadastro. Clique para montar as listas.</p>
           </button>
 
           {/* Sem custo */}

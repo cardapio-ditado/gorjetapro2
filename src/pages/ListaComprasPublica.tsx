@@ -1,169 +1,128 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
-import { CheckCircle2, Circle, ShoppingCart, RefreshCw, Package, ChevronDown, ChevronRight, Phone, Share2, Store, Truck, Send } from 'lucide-react';
+import { CheckCircle2, Circle, ShoppingCart, RefreshCw, Package, Share2, Store, Truck, Phone, MessageCircle, XCircle } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 import { agruparPorCategoria } from '../components/inventory/agruparPorCategoria';
+import { fmtQtd, fmtMoeda, fmtData, urlWhatsApp, textoListaRua, textoPedidoFornecedor } from '../components/inventory/comprasShared';
 
-const SUPABASE_URL  = import.meta.env.VITE_SUPABASE_URL as string;
-const SUPABASE_ANON = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
-
-type TipoCompra = 'todos' | 'rua' | 'fornecedor' | 'ambos';
-type StatusLista = 'aberta' | 'em_andamento' | 'concluida' | 'cancelada';
-
-interface ItemLista {
-  id: string; lista_id: string; item_id: string;
-  nome_item: string; categoria: string; unidade_medida: string;
-  tipo_compra: TipoCompra;
-  fornecedor_nome: string | null; fornecedor_tel: string | null;
-  estoque_atual: number; estoque_minimo: number;
-  quantidade_sugerida: number; quantidade_comprar: number;
-  custo_unitario: number; custo_estimado: number;
-  comprado: boolean; comprado_em: string | null;
-  observacao: string | null;
-  entrada_compra_id: string | null;
-}
-
-interface Grupo {
-  key: string;
-  nome: string;
-  tipo: 'rua' | 'fornecedor' | 'sem';
-  telefone: string | null;
-  itens: ItemLista[];
-  /** true quando todos os itens já viraram pedido ao fornecedor (só receber/conferir) */
-  pedidoEnviado: boolean;
-}
-
-const KEY_SEM = '__sem';
-
-function chaveGrupo(i: ItemLista): string {
-  // Itens de rua agrupam pela loja (fornecedor_nome); sem loja definida caem em "Compra de rua"
-  if (i.tipo_compra === 'rua') return `rua:${(i.fornecedor_nome || '').trim()}`;
-  if (i.tipo_compra === 'fornecedor' || i.fornecedor_nome) return `forn:${(i.fornecedor_nome || '').trim() || 'Fornecedor'}`;
-  return KEY_SEM;
-}
-
-function nomeGrupo(key: string): string {
-  if (key === KEY_SEM) return 'Sem fornecedor';
-  if (key.startsWith('rua:')) {
-    const loja = key.slice(4);
-    return loja ? `Rua · ${loja}` : 'Compra de rua';
-  }
-  return key.slice(5);
-}
-
-function agrupar(itens: ItemLista[]): Grupo[] {
-  const map = new Map<string, Grupo>();
-  for (const i of itens) {
-    const key = chaveGrupo(i);
-    let g = map.get(key);
-    if (!g) {
-      g = {
-        key,
-        nome: nomeGrupo(key),
-        tipo: key.startsWith('rua:') ? 'rua' : key === KEY_SEM ? 'sem' : 'fornecedor',
-        telefone: null,
-        itens: [],
-        pedidoEnviado: false,
-      };
-      map.set(key, g);
-    }
-    if (!g.telefone && i.fornecedor_tel) g.telefone = i.fornecedor_tel;
-    g.itens.push(i);
-  }
-  const grupos = [...map.values()];
-  for (const g of grupos) {
-    g.itens.sort((a, b) => a.nome_item.localeCompare(b.nome_item, 'pt-BR'));
-    g.pedidoEnviado = g.itens.length > 0 && g.itens.every(i => !!i.entrada_compra_id);
-  }
-  const ordem = (g: Grupo) => (g.tipo === 'rua' ? 0 : g.tipo === 'fornecedor' ? 1 : 2);
-  return grupos.sort((a, b) => ordem(a) - ordem(b) || a.nome.localeCompare(b.nome, 'pt-BR'));
-}
-
-/** Sub-grupos por categoria dentro de um fornecedor/loja (itens por nome_item). */
-function subgruposPorCategoria(itens: ItemLista[]): Array<[string, ItemLista[]]> {
-  return agruparPorCategoria(itens.map(item => ({ categoria: item.categoria, nome: item.nome_item, item })))
-    .map(([categoria, lista]) => [categoria, lista.map(w => w.item)]);
-}
+/**
+ * Link público de uma lista de compras — uma lista por link.
+ * Rua: o comprador abre no celular e vai marcando. Fornecedor: é o pedido,
+ * com botão para mandar o texto no WhatsApp do fornecedor.
+ */
 
 interface Lista {
-  id: string; numero: string; titulo: string;
-  tipo_compra: TipoCompra; status: StatusLista;
-  gerado_por: string; observacoes: string | null;
-  total_itens: number; itens_comprados: number;
-  valor_estimado: number; criado_em: string;
+  lista_id: string; numero: string; titulo: string;
+  tipo: 'rua' | 'fornecedor'; status: string;
+  fornecedor_nome: string | null; fornecedor_tel: string | null;
+  data: string; itens: number; comprados: number; valor: number;
+  observacoes: string | null; criado_em: string; concluido_em: string | null;
 }
 
-const TIPO_COLOR: Record<string, string> = {
-  rua: 'bg-orange-500/15 text-orange-400 border-orange-500/30',
-  fornecedor: 'bg-blue-500/15 text-blue-400 border-blue-500/30',
-  ambos: 'bg-purple-500/15 text-purple-400 border-purple-500/30',
-};
+interface Item {
+  id: string; item_id: string; nome: string; categoria: string | null; um: string;
+  quantidade: number; preco: number; estimado: number;
+  comprado: boolean; comprado_em: string | null; observacao: string | null; loja: string | null;
+}
 
-function fmt(n: number, dec = 2) {
-  return n.toLocaleString('pt-BR', { minimumFractionDigits: dec, maximumFractionDigits: dec });
+const num = (v: unknown) => (v === null || v === undefined || v === '' ? 0 : Number(v));
+
+function normalizar(raw: Record<string, unknown>): { lista: Lista; itens: Item[] } {
+  const l = (raw.lista || {}) as Record<string, unknown>;
+  const itens = (Array.isArray(raw.itens) ? (raw.itens as Record<string, unknown>[]) : []).map(i => ({
+    id: String(i.id), item_id: String(i.item_id), nome: String(i.nome ?? ''), categoria: (i.categoria as string | null) ?? null,
+    um: String(i.um ?? ''), quantidade: num(i.quantidade), preco: num(i.preco), estimado: num(i.estimado),
+    comprado: Boolean(i.comprado), comprado_em: (i.comprado_em as string | null) ?? null,
+    observacao: (i.observacao as string | null) ?? null, loja: (i.loja as string | null) ?? null,
+  }));
+  return {
+    lista: {
+      lista_id: String(l.lista_id), numero: String(l.numero ?? ''), titulo: String(l.titulo ?? ''),
+      tipo: l.tipo === 'fornecedor' ? 'fornecedor' : 'rua', status: String(l.status ?? ''),
+      fornecedor_nome: (l.fornecedor_nome as string | null) ?? null, fornecedor_tel: (l.fornecedor_tel as string | null) ?? null,
+      data: String(l.data ?? ''), itens: num(l.itens), comprados: num(l.comprados), valor: num(l.valor),
+      observacoes: (l.observacoes as string | null) ?? null, criado_em: String(l.criado_em ?? ''), concluido_em: (l.concluido_em as string | null) ?? null,
+    },
+    itens,
+  };
 }
 
 export default function ListaComprasPublica() {
   const { id } = useParams<{ id: string }>();
   const [lista, setLista] = useState<Lista | null>(null);
-  const [itens, setItens] = useState<ItemLista[]>([]);
+  const [itens, setItens] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState('');
   const [salvando, setSalvando] = useState<string | null>(null);
-  const [expandidas, setExpandidas] = useState<Set<string>>(new Set());
+  const [concluindo, setConcluindo] = useState(false);
 
-  const headers = { apikey: SUPABASE_ANON, Authorization: `Bearer ${SUPABASE_ANON}`, 'Content-Type': 'application/json' };
-
-  useEffect(() => { if (id) carregar(); }, [id]);
-
-  const carregar = async () => {
-    setLoading(true);
+  const carregar = useCallback(async () => {
+    if (!id) return;
+    setLoading(true); setErro('');
     try {
-      const [rLista, rItens] = await Promise.all([
-        fetch(`${SUPABASE_URL}/rest/v1/listas_compra?id=eq.${id}&select=*`, { headers }),
-        fetch(`${SUPABASE_URL}/rest/v1/listas_compra_itens?lista_id=eq.${id}&order=fornecedor_nome,nome_item`, { headers }),
-      ]);
-      const [dLista, dItens] = await Promise.all([rLista.json(), rItens.json()]);
-      if (!dLista[0]) { setErro('Lista não encontrada.'); return; }
-      setLista(dLista[0]);
-      if (Array.isArray(dItens)) {
-        setItens(dItens);
-        setExpandidas(new Set(dItens.map((i: ItemLista) => chaveGrupo(i))));
-      }
+      const { data, error } = await supabase.rpc('fn_lista_publica', { p_lista_id: id });
+      if (error) throw error;
+      if (!data) { setErro('Lista não encontrada.'); return; }
+      const n = normalizar(data as Record<string, unknown>);
+      setLista(n.lista); setItens(n.itens);
     } catch {
       setErro('Erro ao carregar a lista. Tente novamente.');
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
 
-  const toggleComprado = async (item: ItemLista) => {
-    if (lista?.status === 'concluida') return;
+  useEffect(() => { carregar(); }, [carregar]);
+
+  const aberta = lista?.status === 'aberta' || lista?.status === 'em_andamento';
+
+  const toggle = async (item: Item) => {
+    if (!aberta || salvando) return;
     const novo = !item.comprado;
     setSalvando(item.id);
-    setItens(prev => prev.map(i => i.id === item.id ? { ...i, comprado: novo, comprado_em: novo ? new Date().toISOString() : null } : i));
-
-    await fetch(`${SUPABASE_URL}/rest/v1/listas_compra_itens?id=eq.${item.id}`, {
-      method: 'PATCH', headers: { ...headers, Prefer: 'return=minimal' },
-      body: JSON.stringify({ comprado: novo, comprado_em: novo ? new Date().toISOString() : null }),
-    });
-
-    // Atualiza contagem na lista
-    const r = await fetch(`${SUPABASE_URL}/rest/v1/listas_compra?id=eq.${id}&select=*`, { headers });
-    const d = await r.json();
-    if (d[0]) setLista(d[0]);
-    setSalvando(null);
+    setItens(prev => prev.map(i => (i.id === item.id ? { ...i, comprado: novo, comprado_em: novo ? new Date().toISOString() : null } : i)));
+    try {
+      const { data, error } = await supabase.rpc('fn_lista_publica_marcar', { p_item_id: item.id, p_comprado: novo });
+      if (error) throw error;
+      const r = (data || {}) as Record<string, unknown>;
+      setLista(prev => (prev ? { ...prev, status: String(r.status ?? prev.status), itens: num(r.itens), comprados: num(r.comprados) } : prev));
+    } catch {
+      // desfaz o otimista e recarrega o estado real
+      setItens(prev => prev.map(i => (i.id === item.id ? { ...i, comprado: !novo } : i)));
+      carregar();
+    } finally {
+      setSalvando(null);
+    }
   };
 
-  const grupos = agrupar(itens);
-  const totalComprados = itens.filter(i => i.comprado).length;
-  const pct = itens.length > 0 ? Math.round((totalComprados / itens.length) * 100) : 0;
+  const concluir = async () => {
+    if (!lista || !aberta) return;
+    const faltam = itens.filter(i => !i.comprado).length;
+    if (!window.confirm(faltam > 0 ? `Concluir a lista com ${faltam} ${faltam === 1 ? 'item' : 'itens'} sem marcar?` : 'Concluir a lista?')) return;
+    setConcluindo(true);
+    try {
+      const { error } = await supabase.rpc('fn_lista_publica_concluir', { p_lista_id: lista.lista_id });
+      if (error) throw error;
+      await carregar();
+    } catch {
+      setErro('Não foi possível concluir. Tente de novo.');
+    } finally {
+      setConcluindo(false);
+    }
+  };
 
   const urlAtual = typeof window !== 'undefined' ? window.location.href : '';
-  const linkWhatsApp = lista
-    ? `https://wa.me/?text=${encodeURIComponent(`Lista de compras de hoje, ${lista.titulo}: ${urlAtual}`)}`
+  const rua = lista?.tipo === 'rua';
+  const totalComprados = itens.filter(i => i.comprado).length;
+  const pct = itens.length > 0 ? Math.round((totalComprados / itens.length) * 100) : 0;
+  const totalEstimado = itens.reduce((s, i) => s + i.estimado, 0);
+
+  const linkCompartilhar = lista ? urlWhatsApp(textoListaRua(lista.titulo, urlAtual)) : '';
+  const linkPedido = lista && !rua
+    ? urlWhatsApp(textoPedidoFornecedor(lista.fornecedor_nome || 'fornecedor', fmtData(lista.data), itens), lista.fornecedor_tel)
     : '';
 
-  if (loading) return (
+  if (loading && !lista) return (
     <div className="min-h-screen flex items-center justify-center" style={{ background: '#080c14' }}>
       <div className="flex flex-col items-center gap-4">
         <RefreshCw size={28} className="animate-spin text-white/40" />
@@ -172,7 +131,7 @@ export default function ListaComprasPublica() {
     </div>
   );
 
-  if (erro) return (
+  if (erro && !lista) return (
     <div className="min-h-screen flex items-center justify-center" style={{ background: '#080c14' }}>
       <div className="text-center">
         <Package size={48} className="mx-auto mb-4 text-white/20" />
@@ -183,27 +142,44 @@ export default function ListaComprasPublica() {
 
   if (!lista) return null;
 
+  const Icone = rua ? Store : Truck;
+
   return (
     <div className="min-h-screen" style={{ background: '#080c14', color: '#e8edf8' }}>
-      {/* Header */}
-      <div style={{ background: 'linear-gradient(135deg, #7D1F2C 0%, #5a1520 60%, #3d0f16 100%)' }}>
+      {/* Cabeçalho */}
+      <div style={{ background: rua
+        ? 'linear-gradient(135deg, #7D1F2C 0%, #5a1520 60%, #3d0f16 100%)'
+        : 'linear-gradient(135deg, #1e3a8a 0%, #1e2f6b 60%, #14224d 100%)' }}>
         <div className="max-w-2xl mx-auto px-4 py-5">
           <div className="flex items-center gap-3 mb-3">
             <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(255,255,255,0.15)' }}>
-              <ShoppingCart size={20} className="text-white" />
+              <Icone size={20} className="text-white" />
             </div>
             <div className="flex-1 min-w-0">
-              <h1 className="text-xl font-bold text-white leading-tight">{lista.numero}</h1>
-              <p className="text-white/60 text-sm truncate">{lista.titulo}</p>
+              <h1 className="text-xl font-bold text-white leading-tight truncate">{rua ? 'Compras da rua' : `Pedido · ${lista.fornecedor_nome || 'fornecedor'}`}</h1>
+              <p className="text-white/70 text-sm truncate">{fmtData(lista.data)} · {lista.numero}</p>
             </div>
-            <a href={linkWhatsApp} target="_blank" rel="noopener noreferrer"
-              className="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium text-white transition-colors hover:bg-white/20"
+            <a href={linkCompartilhar} target="_blank" rel="noopener noreferrer"
+              className="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium text-white hover:bg-white/20"
               style={{ background: 'rgba(255,255,255,0.15)' }}>
               <Share2 size={15} /> Compartilhar
             </a>
           </div>
 
-          {/* Progresso */}
+          {!rua && (
+            <div className="flex items-center gap-2 flex-wrap mb-3">
+              <a href={linkPedido} target="_blank" rel="noopener noreferrer"
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold text-white bg-green-600 hover:bg-green-700">
+                <MessageCircle size={15} /> Enviar pedido no WhatsApp
+              </a>
+              {lista.fornecedor_tel && (
+                <a href={`tel:${lista.fornecedor_tel.replace(/\s/g, '')}`} className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm text-white/90 hover:bg-white/20" style={{ background: 'rgba(255,255,255,0.12)' }}>
+                  <Phone size={14} /> {lista.fornecedor_tel}
+                </a>
+              )}
+            </div>
+          )}
+
           <div className="flex items-center gap-3">
             <div className="flex-1 h-2.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.15)' }}>
               <div className="h-full bg-green-400 rounded-full transition-all duration-500" style={{ width: `${pct}%` }} />
@@ -214,94 +190,52 @@ export default function ListaComprasPublica() {
           {lista.status === 'concluida' && (
             <div className="mt-3 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-green-500/20 border border-green-500/30 w-fit">
               <CheckCircle2 size={14} className="text-green-400" />
-              <span className="text-green-400 text-xs font-medium">Lista concluída</span>
+              <span className="text-green-300 text-xs font-medium">Lista concluída{lista.concluido_em ? ` em ${new Date(lista.concluido_em).toLocaleString('pt-BR')}` : ''}</span>
+            </div>
+          )}
+          {lista.status === 'cancelada' && (
+            <div className="mt-3 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-red-500/20 border border-red-500/30 w-fit">
+              <XCircle size={14} className="text-red-300" />
+              <span className="text-red-200 text-xs font-medium">Lista cancelada</span>
             </div>
           )}
         </div>
       </div>
 
-      {/* Itens */}
+      {/* Itens por categoria */}
       <div className="max-w-2xl mx-auto px-4 py-4 space-y-3">
-        {grupos.map(grupo => {
-          const { key, itens: itensGrupo } = grupo;
-          const comprados = itensGrupo.filter(i => i.comprado).length;
-          const isExp = expandidas.has(key);
-          const borda = grupo.tipo === 'rua' ? 'rgba(249,115,22,0.3)' : grupo.tipo === 'sem' ? 'rgba(239,68,68,0.25)' : 'rgba(255,255,255,0.08)';
-          const Icone = grupo.tipo === 'rua' ? Store : grupo.tipo === 'fornecedor' ? Truck : Package;
-          const corIcone = grupo.tipo === 'rua' ? 'text-orange-400' : grupo.tipo === 'fornecedor' ? 'text-blue-400' : 'text-red-400';
-          return (
-            <div key={key} className="rounded-2xl overflow-hidden" style={{ background: '#101520', border: `1px solid ${borda}` }}>
-              <button
-                onClick={() => setExpandidas(prev => { const s = new Set(prev); if (s.has(key)) s.delete(key); else s.add(key); return s; })}
-                className="w-full flex items-start justify-between gap-2 px-4 py-3 transition-colors hover:bg-white/5 text-left"
-              >
-                <div className="flex items-start gap-2 min-w-0">
-                  {isExp ? <ChevronDown size={15} className="text-white/30 flex-shrink-0 mt-0.5" /> : <ChevronRight size={15} className="text-white/30 flex-shrink-0 mt-0.5" />}
-                  <Icone size={15} className={`${corIcone} flex-shrink-0 mt-0.5`} />
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-semibold text-white/90 text-sm">{grupo.nome}</span>
-                      <span className="text-xs text-white/60">{itensGrupo.length} {itensGrupo.length === 1 ? 'item' : 'itens'}</span>
-                      {grupo.telefone && (
-                        <a href={`tel:${grupo.telefone.replace(/\s/g, '')}`} onClick={e => e.stopPropagation()}
-                          className="inline-flex items-center gap-1 text-xs text-blue-400 hover:underline">
-                          <Phone size={11} /> {grupo.telefone}
-                        </a>
-                      )}
-                    </div>
-                    {grupo.pedidoEnviado && (
-                      <p className="inline-flex items-center gap-1 text-xs text-blue-300/80 mt-1">
-                        <Send size={11} /> Pedido já enviado ao fornecedor — só receber e conferir
-                      </p>
-                    )}
-                  </div>
-                </div>
-                {comprados > 0 && (
-                  <span className="text-xs text-green-400 font-medium flex-shrink-0">{comprados}/{itensGrupo.length} ✓</span>
-                )}
-              </button>
+        {erro && <p className="text-sm text-red-300 px-1">{erro}</p>}
 
-              {isExp && (
-                <div className="divide-y" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
-                  {subgruposPorCategoria(itensGrupo).flatMap(([categoria, itensCat]) => [
-                    <div key={`cat:${categoria}`} className="px-4 py-1 text-[11px] font-semibold uppercase tracking-wide text-white/40 bg-white/[0.03]">
-                      {categoria} · {itensCat.length}
-                    </div>,
-                    ...itensCat.map(item => (
-                    <button
-                      key={item.id}
-                      onClick={() => toggleComprado(item)}
-                      disabled={salvando === item.id}
-                      className={`w-full flex items-start gap-3 px-4 py-3.5 text-left transition-all active:scale-[0.99] ${item.comprado ? 'opacity-60' : ''} ${salvando === item.id ? 'opacity-40' : ''}`}
-                      style={item.comprado ? { background: 'rgba(34,197,94,0.06)' } : undefined}
-                    >
-                      <div className="flex-shrink-0 mt-0.5">
-                        {item.comprado
-                          ? <CheckCircle2 size={24} className="text-green-400" />
-                          : <Circle size={24} className="text-white/25" />
-                        }
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className={`text-sm font-semibold ${item.comprado ? 'line-through text-white/60' : 'text-white/90'}`}>
-                          {item.nome_item}
-                        </p>
-                        <div className="flex items-center gap-2 mt-1 flex-wrap">
-                          <span className="text-base font-bold text-white">{fmt(item.quantidade_comprar, item.quantidade_comprar % 1 === 0 ? 0 : 2)} <span className="text-xs font-normal text-white/50">{item.unidade_medida}</span></span>
-                          {item.tipo_compra && item.tipo_compra !== 'todos' && (
-                            <span className={`text-caption px-1.5 py-0.5 rounded border ${TIPO_COLOR[item.tipo_compra] || ''}`}>
-                              {item.tipo_compra === 'rua' ? 'Rua' : 'Fornecedor'}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </button>
-                    )),
-                  ])}
-                </div>
-              )}
+        {agruparPorCategoria(itens).map(([categoria, lista2]) => (
+          <div key={categoria} className="rounded-2xl overflow-hidden" style={{ background: '#101520', border: '1px solid rgba(255,255,255,0.08)' }}>
+            <div className="px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-white/50 bg-white/[0.04] flex items-center justify-between">
+              <span>{categoria}</span>
+              <span className="font-normal normal-case text-white/40">{lista2.filter(i => i.comprado).length}/{lista2.length}</span>
             </div>
-          );
-        })}
+            <div className="divide-y" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
+              {lista2.map(item => (
+                <button key={item.id} onClick={() => toggle(item)} disabled={!aberta || salvando === item.id}
+                  className={`w-full flex items-start gap-3 px-4 py-3.5 text-left transition-all active:scale-[0.99] ${item.comprado ? 'opacity-60' : ''} ${salvando === item.id ? 'opacity-40' : ''}`}
+                  style={item.comprado ? { background: 'rgba(34,197,94,0.06)' } : undefined}>
+                  <div className="flex-shrink-0 mt-0.5">
+                    {item.comprado ? <CheckCircle2 size={24} className="text-green-400" /> : <Circle size={24} className="text-white/25" />}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className={`text-sm font-semibold ${item.comprado ? 'line-through text-white/60' : 'text-white/90'}`}>{item.nome.trim()}</p>
+                    <div className="flex items-center gap-2 mt-1 flex-wrap">
+                      <span className="text-base font-bold text-white">{fmtQtd(item.quantidade)} <span className="text-xs font-normal text-white/50">{item.um}</span></span>
+                      {item.loja && <span className="text-caption px-1.5 py-0.5 rounded border bg-orange-500/15 text-orange-300 border-orange-500/30">{item.loja}</span>}
+                      {item.observacao && <span className="text-xs text-white/50">{item.observacao}</span>}
+                    </div>
+                  </div>
+                  {item.estimado > 0 && (
+                    <span className="text-xs text-white/40 tabular-nums flex-shrink-0 mt-1" title="Estimado pela média de preço">~{fmtMoeda(item.estimado)}</span>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+        ))}
 
         {itens.length === 0 && (
           <div className="text-center py-16 text-white/30">
@@ -310,8 +244,23 @@ export default function ListaComprasPublica() {
           </div>
         )}
 
-        <p className="text-center text-xs text-white/60 py-4">
-          Gerado em {new Date(lista.criado_em).toLocaleString('pt-BR')} · Toque para marcar como comprado
+        {itens.length > 0 && (
+          <div className="rounded-2xl px-4 py-3 flex items-center justify-between gap-3 flex-wrap" style={{ background: '#101520', border: '1px solid rgba(255,255,255,0.08)' }}>
+            <div>
+              <p className="text-xs text-white/50">Gasto estimado (média de preço)</p>
+              <p className="text-lg font-bold text-white">{fmtMoeda(totalEstimado)}</p>
+            </div>
+            {aberta && (
+              <button onClick={concluir} disabled={concluindo}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold text-white bg-green-600 hover:bg-green-700 disabled:opacity-50">
+                <CheckCircle2 size={15} /> {concluindo ? 'Concluindo...' : 'Concluir lista'}
+              </button>
+            )}
+          </div>
+        )}
+
+        <p className="text-center text-xs text-white/50 py-4 flex items-center justify-center gap-1.5">
+          <ShoppingCart size={12} /> Gerada em {new Date(lista.criado_em).toLocaleString('pt-BR')}{aberta ? ' · toque no item para marcar como comprado' : ''}
         </p>
       </div>
     </div>

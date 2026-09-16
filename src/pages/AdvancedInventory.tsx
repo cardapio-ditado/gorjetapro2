@@ -4,7 +4,7 @@ import {
   Warehouse, MessageSquare,
   ArrowLeftRight, ClipboardCheck, Package,
   ShoppingCart, BarChart3, FileText, Eye,
-  Settings, Zap, ChevronRight, CalendarDays,
+  Settings, Zap, ChevronRight,
 } from 'lucide-react';
 
 import { useAuth } from '../contexts/AuthContext';
@@ -25,9 +25,8 @@ import ListaCompras            from './ListaCompras';
 import RelatoriosEstoque       from '../components/inventory/RelatoriosEstoque';
 import MapeamentoItensExcel    from '../components/inventory/MapeamentoItensExcel';
 import MovimentacoesCompostas  from '../components/inventory/MovimentacoesCompostas';
-import ComprasDaSemana         from '../components/inventory/ComprasDaSemana';
 import ReposicaoBalcao         from '../components/inventory/ReposicaoBalcao';
-import ComprasDoDia            from '../components/inventory/ComprasDoDia';
+import Compras                 from '../components/inventory/Compras';
 
 // ── Componentes novos ────────────────────────────────────────────────────────
 import OperacaoHome      from '../components/inventory/operacao/OperacaoHome';
@@ -37,7 +36,7 @@ import Transferencias   from '../components/inventory/operacao/Transferencias';
 type Area = 'operacao' | 'compras' | 'analise' | 'cadastros';
 type Tela =
   | 'home' | 'receber' | 'transferir' | 'produzir' | 'contar' | 'reposicao'
-  | 'dia' | 'semana' | 'compras' | 'lista-compras'
+  | 'dia' | 'compras' | 'lista-compras'
   | 'dashboard' | 'kardex' | 'inventario' | 'relatorios' | 'zig' | 'movimentacoes-avancadas'
   | 'itens' | 'fichas' | 'estoques' | 'mapeamento';
 
@@ -48,10 +47,9 @@ interface TelaConfig {
 }
 
 // "Compras" (lançar nota) e "Lista de Compras" (listas antigas) continuam
-// acessíveis pela URL, mas saem das abas: o fluxo é Compras do dia → Receber.
+// acessíveis pela URL, mas saem das abas: o fluxo é Compras → Receber.
 const TELAS_COMPRAS: TelaConfig[] = [
-  { key: 'dia',          label: 'Compras do dia',    icon: ShoppingCart },
-  { key: 'semana',       label: 'Compras da semana', icon: CalendarDays },
+  { key: 'dia',          label: 'Compras',           icon: ShoppingCart },
 ];
 
 const TELAS_ANALISE: TelaConfig[] = [
@@ -117,8 +115,9 @@ const AdvancedInventory: React.FC = () => {
     const areaParam = params.get('area') as Area | null;
     // 'requisicoes' virou a aba Pendentes dentro de Transferências; links
     // antigos (cartaz, Telegram, favoritos) continuam caindo no lugar certo.
+    // 'semana' (Compras da semana) foi unificada em Compras.
     const telaBruta = params.get('tela');
-    const telaParam = (telaBruta === 'requisicoes' ? 'transferir' : telaBruta) as Tela | null;
+    const telaParam = (telaBruta === 'requisicoes' ? 'transferir' : telaBruta === 'semana' ? 'dia' : telaBruta) as Tela | null;
     if (areaParam) setArea(areaParam);
     if (telaParam) setTela(telaParam);
   }, [location.search]);
@@ -166,8 +165,7 @@ const AdvancedInventory: React.FC = () => {
     if (tela === 'reposicao')  return <ReposicaoBalcao />;
 
     // Compras
-    if (area === 'compras' && tela === 'dia')    return <ComprasDoDia />;
-    if (area === 'compras' && tela === 'semana') return <ComprasDaSemana />;
+    if (area === 'compras' && tela === 'dia')    return <Compras />;
     if (tela === 'compras')      return <ComprasEstoque />;
     if (tela === 'lista-compras') return <ListaCompras />;
 
