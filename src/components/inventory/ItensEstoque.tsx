@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, Filter, CreditCard as Edit, Trash2, Eye, EyeOff, Package, DollarSign, AlertTriangle, CheckCircle, Download, Target, X, ClipboardX, ChevronDown, ChevronUp } from 'lucide-react';
+import { Plus, Search, Filter, CreditCard as Edit, Trash2, Eye, EyeOff, Package, DollarSign, AlertTriangle, CheckCircle, Download, Target, X, ClipboardX } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { exportToExcel } from '../../utils/reportGenerator';
 import { formatarQuantidade } from '../../utils/formatarQuantidade';
@@ -112,23 +112,22 @@ const ItensEstoque: React.FC = () => {
   const [editingItem, setEditingItem] = useState<ItemEstoque | null>(null);
   // Reposição calculada pelo Estoque Central, indexada por item_id
   const [reposicao, setReposicao]     = useState<Record<string, ReposicaoCentral>>({});
-  // Seção "Itens inativos" recolhida/aberta
-  const [inativosAbertos, setInativosAbertos] = useState(true);
 
   // Filtros
   const [searchTerm, setSearchTerm]       = useState('');
-  const [statusFilter, setStatusFilter]   = useState<'all' | 'ativo' | 'inativo'>('all');
+  // Qual lista está aberta: botão "Ativos" ou "Inativos"
+  const [statusFilter, setStatusFilter]   = useState<'ativo' | 'inativo'>('ativo');
   const [unidadeFilter, setUnidadeFilter] = useState('all');
   const [custoFilter, setCustoFilter]     = useState<'all' | 'sem_custo' | 'com_custo'>('all');
   const [estoqueFilter, setEstoqueFilter] = useState('all');
   const [grupoFilter, setGrupoFilter]     = useState('all');
   const [ignorarFilter, setIgnorarFilter] = useState<'all' | 'ignorados' | 'nao_ignorados'>('all');
 
-  const hasActiveFilters = statusFilter !== 'all' || unidadeFilter !== 'all' || custoFilter !== 'all'
+  const hasActiveFilters = unidadeFilter !== 'all' || custoFilter !== 'all'
     || searchTerm !== '' || estoqueFilter !== 'all' || grupoFilter !== 'all' || ignorarFilter !== 'all';
 
   const clearAllFilters = () => {
-    setSearchTerm(''); setStatusFilter('all'); setUnidadeFilter('all');
+    setSearchTerm(''); setUnidadeFilter('all');
     setCustoFilter('all'); setEstoqueFilter('all'); setGrupoFilter('all'); setIgnorarFilter('all');
     localStorage.removeItem('itensEstoque_filters');
     fetchData();
@@ -163,7 +162,7 @@ const ItensEstoque: React.FC = () => {
     if (saved) {
       try {
         const f = JSON.parse(saved);
-        if (f.statusFilter)   setStatusFilter(f.statusFilter);
+        setStatusFilter(f.statusFilter === 'inativo' ? 'inativo' : 'ativo');
         if (f.unidadeFilter)  setUnidadeFilter(f.unidadeFilter);
         if (f.custoFilter)    setCustoFilter(f.custoFilter);
         if (f.estoqueFilter)  setEstoqueFilter(f.estoqueFilter);
@@ -174,18 +173,23 @@ const ItensEstoque: React.FC = () => {
     fetchData(); fetchIndicadores(); fetchEstoques(); fetchFornecedores(); fetchReposicao();
   }, []);
 
+  // Os dois status vêm carregados de uma vez; os botões Ativos/Inativos só
+  // trocam a lista mostrada, sem ir ao banco.
   useEffect(() => {
     localStorage.setItem('itensEstoque_filters', JSON.stringify({
       statusFilter, unidadeFilter, custoFilter, estoqueFilter, grupoFilter, ignorarFilter,
     }));
-    if (estoques.length > 0) fetchData();
   }, [statusFilter, unidadeFilter, custoFilter, estoqueFilter, grupoFilter, ignorarFilter]);
+
+  useEffect(() => {
+    if (estoques.length > 0) fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [unidadeFilter, custoFilter, estoqueFilter, grupoFilter, ignorarFilter]);
 
   const fetchData = async () => {
     try {
       setLoading(true); setError(null);
       let query = supabase.from('itens_estoque').select('*');
-      if (statusFilter !== 'all')     query = query.eq('status', statusFilter);
       if (unidadeFilter !== 'all')    query = query.eq('unidade_medida', unidadeFilter);
       if (grupoFilter !== 'all')      query = query.eq('grupo_contagem', grupoFilter);
       if (ignorarFilter === 'ignorados')     query = query.eq('ignorar_contagem', true);
@@ -389,16 +393,17 @@ const ItensEstoque: React.FC = () => {
   // meio da lista e quem procura um item desligado acha de cara.
   const itensAtivos   = filteredItens.filter(i => i.status === 'ativo');
   const itensInativos = filteredItens.filter(i => i.status !== 'ativo');
-  const mostrarAtivos = statusFilter !== 'inativo';
 
   const formatCurrency = (value: number) =>
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 
   const exportData = () => {
-    if (filteredItens.length === 0) { alert('Não há dados para exportar'); return; }
+    // Exporta a lista que está na tela (Ativos ou Inativos)
+    const lista = statusFilter === 'ativo' ? itensAtivos : itensInativos;
+    if (lista.length === 0) { alert('Não há dados para exportar'); return; }
     const headers = ['Nome','Código','Tipo','Categoria','Grupo Contagem','Não Contar','Unidade',
                      'Custo Médio','Ponto de Pedido','Sugestão de compra','Critério','Situação','Validade','Status','Observações','Criado em'];
-    const data = filteredItens.map(item => [
+    const data = lista.map(item => [
       item.nome, item.codigo || '', item.tipo_item === 'insumo' ? 'Insumo' : 'Produto para Venda',
       item.categoria || 'Geral',
       GRUPOS_CONTAGEM.find(g => g.value === item.grupo_contagem)?.label || item.grupo_contagem || '',
@@ -473,7 +478,9 @@ const ItensEstoque: React.FC = () => {
             <AlertTriangle className="h-5 w-5 text-yellow-400" />
             <div>
               <p className="text-sm font-medium text-yellow-300">Filtros ativos — alguns itens podem estar ocultos</p>
-              <p className="text-sm text-yellow-400">Mostrando {filteredItens.length} de {itens.length} itens</p>
+              <p className="text-sm text-yellow-400">
+                Mostrando {statusFilter === 'ativo' ? itensAtivos.length : itensInativos.length} {statusFilter === 'ativo' ? 'ativos' : 'inativos'} de {itens.length} itens
+              </p>
             </div>
           </div>
           <button onClick={clearAllFilters}
@@ -490,7 +497,7 @@ const ItensEstoque: React.FC = () => {
             <Filter className="w-4 h-4" /> Filtros
             {hasActiveFilters && (
               <span className="px-2 py-0.5 bg-yellow-500/15 text-yellow-300 text-xs font-medium rounded-full">
-                {[statusFilter!=='all', unidadeFilter!=='all', custoFilter!=='all',
+                {[unidadeFilter!=='all', custoFilter!=='all',
                   estoqueFilter!=='all', grupoFilter!=='all', ignorarFilter!=='all', searchTerm!=='']
                   .filter(Boolean).length} ativo(s)
               </span>
@@ -510,13 +517,6 @@ const ItensEstoque: React.FC = () => {
             className={`border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-wine ${estoqueFilter!=='all' ? 'border-yellow-400 bg-yellow-500/10' : 'border-white/20'}`}>
             <option value="all">Todos estoques</option>
             {estoques.map(e => <option key={e.id} value={e.id}>{e.nome}</option>)}
-          </select>
-          {/* Status */}
-          <select value={statusFilter} onChange={e => setStatusFilter(e.target.value as typeof statusFilter)}
-            className={`border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-wine ${statusFilter!=='all' ? 'border-yellow-400 bg-yellow-500/10' : 'border-white/20'}`}>
-            <option value="all">Todos status</option>
-            <option value="ativo">Ativo</option>
-            <option value="inativo">Inativo</option>
           </select>
           {/* Grupo contagem */}
           <select value={grupoFilter} onChange={e => setGrupoFilter(e.target.value)}
@@ -541,21 +541,42 @@ const ItensEstoque: React.FC = () => {
         </div>
       </div>
 
-      {/* Tabela de itens ativos */}
+      {/* Botões Ativos / Inativos: cada um abre a sua lista */}
+      <div className="flex items-center gap-2">
+        <button type="button" onClick={() => setStatusFilter('ativo')}
+          className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold border transition-all ${
+            statusFilter === 'ativo'
+              ? 'bg-green-500/15 text-green-300 border-green-500/40'
+              : 'bg-white/5 text-white/60 border-white/15 hover:bg-white/10'
+          }`}>
+          <CheckCircle className="w-4 h-4" /> Ativos
+          <span className={`px-2 py-0.5 text-xs rounded-full ${statusFilter === 'ativo' ? 'bg-green-900/40 text-green-200' : 'bg-white/10 text-white/60'}`}>
+            {itensAtivos.length}
+          </span>
+        </button>
+        <button type="button" onClick={() => setStatusFilter('inativo')}
+          className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold border transition-all ${
+            statusFilter === 'inativo'
+              ? 'bg-red-500/15 text-red-300 border-red-500/40'
+              : 'bg-white/5 text-white/60 border-white/15 hover:bg-white/10'
+          }`}>
+          <EyeOff className="w-4 h-4" /> Inativos
+          <span className={`px-2 py-0.5 text-xs rounded-full ${statusFilter === 'inativo' ? 'bg-red-900/40 text-red-200' : 'bg-white/10 text-white/60'}`}>
+            {itensInativos.length}
+          </span>
+        </button>
+        <span className="text-xs text-white/40 ml-2 hidden md:inline">
+          {statusFilter === 'ativo' ? 'Contam, entram no Kardex e nas compras' : 'Não contam e não entram nas compras'}
+        </span>
+      </div>
+
+      {/* Lista de itens ativos */}
       {loading ? (
         <div className="flex justify-center items-center h-64">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-wine" />
         </div>
-      ) : mostrarAtivos && (
+      ) : statusFilter === 'ativo' && (
         <div className="bg-[#12141f] rounded-lg border border-white/10 overflow-hidden">
-          <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 bg-white/5">
-            <h4 className="text-sm font-semibold text-white flex items-center gap-2">
-              <CheckCircle className="w-4 h-4 text-green-400" />
-              Itens ativos
-              <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-green-900/30 text-green-300">{itensAtivos.length}</span>
-            </h4>
-            <span className="text-xs text-white/40">Contam, entram no Kardex e nas compras</span>
-          </div>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
@@ -686,28 +707,19 @@ const ItensEstoque: React.FC = () => {
         </div>
       )}
 
-      {/* Itens inativos: seção própria, separada dos ativos */}
-      {!loading && (itensInativos.length > 0 || statusFilter === 'inativo') && (
+      {/* Lista de itens inativos */}
+      {!loading && statusFilter === 'inativo' && (
         <div className="bg-[#12141f] rounded-lg border border-white/10 overflow-hidden">
-          <button
-            type="button"
-            onClick={() => setInativosAbertos(v => !v)}
-            className="w-full flex items-center justify-between px-4 py-3 bg-white/5 hover:bg-white/10 text-left"
-            title={inativosAbertos ? 'Recolher' : 'Mostrar'}>
-            <h4 className="text-sm font-semibold text-white/80 flex items-center gap-2">
-              <EyeOff className="w-4 h-4 text-white/50" />
-              Itens inativos
-              <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-red-900/30 text-red-300">{itensInativos.length}</span>
-            </h4>
-            <span className="text-xs text-white/40 flex items-center gap-2">
-              Não contam, não entram nas compras
-              {inativosAbertos ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-            </span>
-          </button>
-
-          {inativosAbertos && (
-            itensInativos.length === 0 ? (
-              <div className="text-center py-10 text-sm text-white/50">Nenhum item inativo encontrado.</div>
+          {itensInativos.length === 0 ? (
+              <div className="text-center py-12">
+                <EyeOff className="w-16 h-16 text-white/30 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-white mb-2">Nenhum item inativo</h3>
+                {hasActiveFilters
+                  ? <button onClick={clearAllFilters} className="px-4 py-2 bg-wine text-white rounded-lg hover:bg-[#6a1a25]">
+                      Limpar filtros
+                    </button>
+                  : <p className="text-white/60">Todos os itens estão ativos.</p>}
+              </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full">
@@ -756,8 +768,7 @@ const ItensEstoque: React.FC = () => {
                   </tbody>
                 </table>
               </div>
-            )
-          )}
+            )}
         </div>
       )}
 
