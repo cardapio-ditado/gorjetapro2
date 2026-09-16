@@ -44,7 +44,11 @@ const ContagemEstoque: React.FC = () => {
       if (result?.success === false) { alert(result.error || 'Erro ao finalizar'); return; }
       setView('result');
     } catch (err: any) {
-      alert('Erro ao finalizar: ' + err.message);
+      const msg = String(err?.message || '');
+      // A contagem já está gravada; só a finalização falhou.
+      alert(/jwt|expired|token/i.test(msg)
+        ? 'Sua sessão venceu. Nada foi perdido: a contagem está salva. Entre de novo e clique em Finalizar.'
+        : 'Erro ao finalizar: ' + msg);
     }
   }, [contagemId]);
 
