@@ -15,6 +15,16 @@ const GRUPOS_CONTAGEM = [
   { value: 'outros',          label: '🗂️ Outros'        },
 ];
 
+// Cabeçalho de bloco por categoria dentro da tabela
+const LinhaCategoria = ({ nome, total, colunas }: { nome: string; total: number; colunas: number }) => (
+  <tr className="bg-wine/20 border-y border-white/10">
+    <td colSpan={colunas} className="px-4 py-2">
+      <span className="text-xs font-bold uppercase tracking-wider text-white/90">{nome}</span>
+      <span className="ml-2 px-2 py-0.5 text-[10px] font-medium rounded-full bg-white/10 text-white/70">{total}</span>
+    </td>
+  </tr>
+);
+
 interface ItemEstoque {
   id: string;
   nome: string;
@@ -394,12 +404,24 @@ const ItensEstoque: React.FC = () => {
   const itensAtivos   = filteredItens.filter(i => i.status === 'ativo');
   const itensInativos = filteredItens.filter(i => i.status !== 'ativo');
 
+  // Blocos por categoria (ordem alfabética; itens já vêm ordenados por nome)
+  const agruparPorCategoria = (lista: ItemEstoque[]): [string, ItemEstoque[]][] => {
+    const grupos: Record<string, ItemEstoque[]> = {};
+    lista.forEach(i => {
+      const cat = (i.categoria || 'Geral').trim() || 'Geral';
+      (grupos[cat] ||= []).push(i);
+    });
+    return Object.entries(grupos).sort(([a], [b]) => a.localeCompare(b, 'pt-BR'));
+  };
+  const blocosAtivos   = agruparPorCategoria(itensAtivos);
+  const blocosInativos = agruparPorCategoria(itensInativos);
+
   const formatCurrency = (value: number) =>
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 
   const exportData = () => {
     // Exporta a lista que está na tela (Ativos ou Inativos)
-    const lista = statusFilter === 'ativo' ? itensAtivos : itensInativos;
+    const lista = (statusFilter === 'ativo' ? blocosAtivos : blocosInativos).flatMap(([, l]) => l);
     if (lista.length === 0) { alert('Não há dados para exportar'); return; }
     const headers = ['Nome','Código','Tipo','Categoria','Grupo Contagem','Não Contar','Unidade',
                      'Custo Médio','Ponto de Pedido','Sugestão de compra','Critério','Situação','Validade','Status','Observações','Criado em'];
@@ -591,7 +613,10 @@ const ItensEstoque: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/10">
-                {itensAtivos.map(item => {
+                {blocosAtivos.map(([categoria, lista]) => (
+                <React.Fragment key={categoria}>
+                <LinhaCategoria nome={categoria} total={lista.length} colunas={13} />
+                {lista.map(item => {
                   const rep = reposicao[item.id];
                   const limiteQtd = rep ? rep.ponto_pedido : item.estoque_minimo;
                   return (
@@ -689,6 +714,8 @@ const ItensEstoque: React.FC = () => {
                   </tr>
                   );
                 })}
+                </React.Fragment>
+                ))}
               </tbody>
             </table>
           </div>
@@ -733,7 +760,10 @@ const ItensEstoque: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/10">
-                    {itensInativos.map(item => (
+                    {blocosInativos.map(([categoria, lista]) => (
+                    <React.Fragment key={categoria}>
+                    <LinhaCategoria nome={categoria} total={lista.length} colunas={9} />
+                    {lista.map(item => (
                       <tr key={item.id} className="hover:bg-white/5 text-white/60">
                         <td className="px-4 py-3">
                           <div className="font-medium text-sm text-white/80">{item.nome}</div>
@@ -764,6 +794,8 @@ const ItensEstoque: React.FC = () => {
                           </div>
                         </td>
                       </tr>
+                    ))}
+                    </React.Fragment>
                     ))}
                   </tbody>
                 </table>
