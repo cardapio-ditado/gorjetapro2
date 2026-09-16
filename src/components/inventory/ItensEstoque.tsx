@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, Filter, CreditCard as Edit, Trash2, Eye, EyeOff, Package, DollarSign, AlertTriangle, CheckCircle, Download, Target, X, ClipboardX } from 'lucide-react';
+import { Plus, Search, Filter, CreditCard as Edit, Trash2, Eye, EyeOff, Package, DollarSign, AlertTriangle, CheckCircle, Download, Target, X, ClipboardX, ChevronDown, ChevronUp } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { exportToExcel } from '../../utils/reportGenerator';
 import { formatarQuantidade } from '../../utils/formatarQuantidade';
@@ -112,6 +112,8 @@ const ItensEstoque: React.FC = () => {
   const [editingItem, setEditingItem] = useState<ItemEstoque | null>(null);
   // Reposição calculada pelo Estoque Central, indexada por item_id
   const [reposicao, setReposicao]     = useState<Record<string, ReposicaoCentral>>({});
+  // Seção "Itens inativos" recolhida/aberta
+  const [inativosAbertos, setInativosAbertos] = useState(true);
 
   // Filtros
   const [searchTerm, setSearchTerm]       = useState('');
@@ -383,6 +385,11 @@ const ItensEstoque: React.FC = () => {
   const filteredItens = itens.filter(item =>
     item.nome.toLowerCase().includes(searchTerm.toLowerCase())
   );
+  // Ativos e inativos ficam em seções separadas: o inativo não se perde no
+  // meio da lista e quem procura um item desligado acha de cara.
+  const itensAtivos   = filteredItens.filter(i => i.status === 'ativo');
+  const itensInativos = filteredItens.filter(i => i.status !== 'ativo');
+  const mostrarAtivos = statusFilter !== 'inativo';
 
   const formatCurrency = (value: number) =>
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
@@ -534,19 +541,27 @@ const ItensEstoque: React.FC = () => {
         </div>
       </div>
 
-      {/* Tabela */}
+      {/* Tabela de itens ativos */}
       {loading ? (
         <div className="flex justify-center items-center h-64">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-wine" />
         </div>
-      ) : (
+      ) : mostrarAtivos && (
         <div className="bg-[#12141f] rounded-lg border border-white/10 overflow-hidden">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 bg-white/5">
+            <h4 className="text-sm font-semibold text-white flex items-center gap-2">
+              <CheckCircle className="w-4 h-4 text-green-400" />
+              Itens ativos
+              <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-green-900/30 text-green-300">{itensAtivos.length}</span>
+            </h4>
+            <span className="text-xs text-white/40">Contam, entram no Kardex e nas compras</span>
+          </div>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="text-left bg-white/5 border-b">
                   {['Item','Código','Tipo','Categoria','Grupo Contagem','Não Contar',
-                    'Unidade','Custo Médio','Qtd.',`Valor Total`,'Ponto de pedido','Status','Criado em','Ações']
+                    'Unidade','Custo Médio','Qtd.',`Valor Total`,'Ponto de pedido','Criado em','Ações']
                     .map(h => (
                       <th key={h} className="px-4 py-3 text-xs font-medium text-white/60 uppercase tracking-wider whitespace-nowrap">
                         {h}
@@ -555,7 +570,7 @@ const ItensEstoque: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/10">
-                {filteredItens.map(item => {
+                {itensAtivos.map(item => {
                   const rep = reposicao[item.id];
                   const limiteQtd = rep ? rep.ponto_pedido : item.estoque_minimo;
                   return (
@@ -632,13 +647,6 @@ const ItensEstoque: React.FC = () => {
                         </span>
                       )}
                     </td>
-                    <td className="px-4 py-3 whitespace-nowrap">
-                      <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${
-                        item.status === 'ativo' ? 'text-green-300 bg-green-900/30' : 'text-red-300 bg-red-900/30'
-                      }`}>
-                        {item.status === 'ativo' ? 'Ativo' : 'Inativo'}
-                      </span>
-                    </td>
                     <td className="px-4 py-3 whitespace-nowrap text-sm text-white/60">
                       {dayjs(item.criado_em).format('DD/MM/YYYY')}
                     </td>
@@ -648,9 +656,9 @@ const ItensEstoque: React.FC = () => {
                           <Edit className="w-4 h-4" />
                         </button>
                         <button onClick={() => toggleStatus(item)}
-                          className={`${item.status === 'ativo' ? 'text-green-400' : 'text-white/30'} hover:opacity-75`}
-                          title={item.status === 'ativo' ? 'Desativar' : 'Ativar'}>
-                          {item.status === 'ativo' ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                          className="text-green-400 hover:opacity-75"
+                          title="Desativar (vai para a seção Itens inativos)">
+                          <Eye className="w-4 h-4" />
                         </button>
                         <button onClick={() => handleDelete(item.id)} className="text-red-400 hover:text-red-300" title="Excluir">
                           <Trash2 className="w-4 h-4" />
@@ -664,16 +672,91 @@ const ItensEstoque: React.FC = () => {
             </table>
           </div>
 
-          {filteredItens.length === 0 && (
+          {itensAtivos.length === 0 && (
             <div className="text-center py-12">
               <Package className="w-16 h-16 text-white/30 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-white mb-2">Nenhum item encontrado</h3>
+              <h3 className="text-lg font-medium text-white mb-2">Nenhum item ativo encontrado</h3>
               {hasActiveFilters
                 ? <button onClick={clearAllFilters} className="px-4 py-2 bg-wine text-white rounded-lg hover:bg-[#6a1a25]">
                     Limpar filtros
                   </button>
                 : <p className="text-white/60">Nenhum item cadastrado.</p>}
             </div>
+          )}
+        </div>
+      )}
+
+      {/* Itens inativos: seção própria, separada dos ativos */}
+      {!loading && (itensInativos.length > 0 || statusFilter === 'inativo') && (
+        <div className="bg-[#12141f] rounded-lg border border-white/10 overflow-hidden">
+          <button
+            type="button"
+            onClick={() => setInativosAbertos(v => !v)}
+            className="w-full flex items-center justify-between px-4 py-3 bg-white/5 hover:bg-white/10 text-left"
+            title={inativosAbertos ? 'Recolher' : 'Mostrar'}>
+            <h4 className="text-sm font-semibold text-white/80 flex items-center gap-2">
+              <EyeOff className="w-4 h-4 text-white/50" />
+              Itens inativos
+              <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-red-900/30 text-red-300">{itensInativos.length}</span>
+            </h4>
+            <span className="text-xs text-white/40 flex items-center gap-2">
+              Não contam, não entram nas compras
+              {inativosAbertos ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            </span>
+          </button>
+
+          {inativosAbertos && (
+            itensInativos.length === 0 ? (
+              <div className="text-center py-10 text-sm text-white/50">Nenhum item inativo encontrado.</div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="text-left bg-white/5 border-b border-white/10">
+                      {['Item','Código','Tipo','Categoria','Unidade','Custo Médio','Qtd.','Criado em','Ações'].map(h => (
+                        <th key={h} className="px-4 py-3 text-xs font-medium text-white/50 uppercase tracking-wider whitespace-nowrap">
+                          {h}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/10">
+                    {itensInativos.map(item => (
+                      <tr key={item.id} className="hover:bg-white/5 text-white/60">
+                        <td className="px-4 py-3">
+                          <div className="font-medium text-sm text-white/80">{item.nome}</div>
+                          {item.descricao && <div className="text-xs text-white/40 truncate max-w-[160px]">{item.descricao}</div>}
+                        </td>
+                        <td className="px-4 py-3 text-sm whitespace-nowrap">{item.codigo || '-'}</td>
+                        <td className="px-4 py-3 text-sm whitespace-nowrap">{item.tipo_item === 'insumo' ? 'Insumo' : 'Venda'}</td>
+                        <td className="px-4 py-3 text-sm whitespace-nowrap">{item.categoria || 'Geral'}</td>
+                        <td className="px-4 py-3 text-sm whitespace-nowrap">{item.unidade_medida}</td>
+                        <td className="px-4 py-3 text-sm whitespace-nowrap">{formatCurrency(item.custo_medio)}</td>
+                        <td className="px-4 py-3 text-sm whitespace-nowrap">
+                          {formatarQuantidade(item.quantidade_total)} {item.unidade_medida}
+                        </td>
+                        <td className="px-4 py-3 text-sm whitespace-nowrap">{dayjs(item.criado_em).format('DD/MM/YYYY')}</td>
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          <div className="flex items-center gap-2">
+                            <button onClick={() => toggleStatus(item)}
+                              className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold border bg-green-500/10 text-green-400 border-green-500/30 hover:bg-green-500/15"
+                              title="Reativar item">
+                              <Eye className="w-3 h-3" /> Ativar
+                            </button>
+                            <button onClick={() => openForm(item)} className="text-blue-400 hover:text-blue-300" title="Editar">
+                              <Edit className="w-4 h-4" />
+                            </button>
+                            <button onClick={() => handleDelete(item.id)} className="text-red-400 hover:text-red-300" title="Excluir">
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )
           )}
         </div>
       )}
