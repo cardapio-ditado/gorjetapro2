@@ -66,9 +66,12 @@ interface Linha {
   quantidade: number;
   /** 'rua' | 'f:<uuid>' | '' (sem origem) */
   origem: string;
+  /** "Outro fornecedor…" aberto (busca) */
+  outro: boolean;
 }
 
 const RUA = 'rua';
+const OUTRO = '__outro';
 const fId = (id: string) => `f:${id}`;
 const idDe = (v: string) => (v.startsWith('f:') ? v.slice(2) : null);
 
@@ -114,7 +117,7 @@ function origemInicial(it: ItemCompra): string {
 
 function linhaInicial(it: ItemCompra): Linha {
   // Já em lista aberta: começa zerado para não duplicar sem querer.
-  return { quantidade: it.em_lista > 0 ? 0 : it.sugerida, origem: origemInicial(it) };
+  return { quantidade: it.em_lista > 0 ? 0 : it.sugerida, origem: origemInicial(it), outro: false };
 }
 
 const plural = (n: number, um: string, varios: string) => `${n} ${n === 1 ? um : varios}`;
@@ -135,6 +138,8 @@ export default function Compras() {
   const [busca, setBusca] = useState('');
   const [filtroCat, setFiltroCat] = useState<string | null>(null);
   const [adicionando, setAdicionando] = useState(false);
+  /** categoria com a busca "Outro fornecedor…" aberta no cabeçalho */
+  const [catOutro, setCatOutro] = useState<string | null>(null);
 
   const carregar = useCallback(async () => {
     setCarregando(true); setErro('');
@@ -171,6 +176,10 @@ export default function Compras() {
     for (const f of tela?.fornecedores ?? []) m.set(f.id, f);
     return m;
   }, [tela]);
+
+  const opcoesFornecedor = useMemo(() => (tela?.fornecedores ?? []).map(f => ({
+    value: f.id, label: f.nome, sublabel: f.modalidade === 'rua' ? 'Loja de rua · vai na lista do comprador' : 'Entrega · vira pedido',
+  })), [tela]);
 
   /** Resolve o valor do select em destino + fornecedor/loja. */
   const resolver = useCallback((origem: string): { destino: Destino; fornecedorId: string | null; lojaId: string | null; nome: string } | null => {
@@ -219,7 +228,7 @@ export default function Compras() {
   const origemDaCategoria = (lista: readonly ItemCompra[], origem: string) =>
     setLinhas(prev => {
       const n = { ...prev };
-      for (const it of lista) n[it.item_id] = { ...n[it.item_id], origem };
+      for (const it of lista) n[it.item_id] = { ...n[it.item_id], origem, outro: false };
       return n;
     });
 
@@ -229,7 +238,7 @@ export default function Compras() {
       const n = { ...prev };
       for (const it of todos) {
         const st = n[it.item_id];
-        if (st && st.quantidade > 0 && !resolver(st.origem)) n[it.item_id] = { ...st, origem: RUA };
+        if (st && st.quantidade > 0 && !resolver(st.origem)) n[it.item_id] = { ...st, origem: RUA, outro: false };
       }
       return n;
     });
@@ -243,7 +252,7 @@ export default function Compras() {
       em_lista: 0, em_lista_onde: null, origem: null, recentes: [],
     };
     setExtras(prev => [...prev, it]);
-    setLinhas(prev => ({ ...prev, [it.item_id]: { quantidade: 0, origem: '' } }));
+    setLinhas(prev => ({ ...prev, [it.item_id]: { quantidade: 0, origem: '', outro: false } }));
     setAdicionando(false);
   };
 
@@ -317,27 +326,35 @@ export default function Compras() {
   const listasHoje = (tela?.listas ?? []).filter(l => l.data === tela?.hoje);
   const listasAnteriores = (tela?.listas ?? []).filter(l => l.data !== tela?.hoje);
 
-  /** Opções do select de origem: Rua, quem já vendeu o item, e todos os fornecedores. */
-  const opcoesOrigem = (it: ItemCompra | null) => (
-    <>
-      <option value="">—</option>
-      <option value={RUA}>🛒 Rua</option>
-      {it && it.recentes.length > 0 && (
-        <optgroup label="Já comprou de">
-          {it.recentes.map(f => (
-            <option key={f.fornecedor_id} value={fId(f.fornecedor_id)}>
-              {f.modalidade === 'rua' ? '🛒 ' : '🚚 '}{f.nome}{f.ultimo_preco ? ` · ${fmtMoeda(f.ultimo_preco)}` : ''}
-            </option>
-          ))}
-        </optgroup>
-      )}
-      <optgroup label="Todos os fornecedores">
-        {(tela?.fornecedores ?? []).map(f => (
-          <option key={f.id} value={fId(f.id)}>{f.modalidade === 'rua' ? '🛒 ' : '🚚 '}{f.nome}</option>
-        ))}
-      </optgroup>
-    </>
-  );
+  /**
+   * Opções do select de origem: Rua, quem já vendeu o item, a origem atual (se
+   * veio de fora dessa lista) e "Outro fornecedor…", que abre a busca. A lista
+   * completa de fornecedores NÃO entra aqui: são 550 nomes, e repetir isso em
+   * 300 linhas travava o navegador.
+   */
+  const opcoesOrigem = (it: ItemCompra | null, origemAtual: string) => {
+    const idAtual = idDe(origemAtual);
+    const foraDosRecentes = idAtual && !(it?.recentes ?? []).some(f => f.fornecedor_id === idAtual) ? fornPorId.get(idAtual) : null;
+    return (
+      <>
+        <option value="">—</option>
+        <option value={RUA}>🛒 Rua</option>
+        {it && it.recentes.length > 0 && (
+          <optgroup label="Já comprou de">
+            {it.recentes.map(f => (
+              <option key={f.fornecedor_id} value={fId(f.fornecedor_id)}>
+                {f.modalidade === 'rua' ? '🛒 ' : '🚚 '}{f.nome}{f.ultimo_preco ? ` · ${fmtMoeda(f.ultimo_preco)}` : ''}
+              </option>
+            ))}
+          </optgroup>
+        )}
+        {foraDosRecentes && (
+          <option value={fId(foraDosRecentes.id)}>{foraDosRecentes.modalidade === 'rua' ? '🛒 ' : '🚚 '}{foraDosRecentes.nome}</option>
+        )}
+        <option value={OUTRO}>Outro fornecedor…</option>
+      </>
+    );
+  };
 
   // ── Render ──
   return (
@@ -484,11 +501,22 @@ export default function Compras() {
                         {categoria} <span className="normal-case font-normal text-white/30">· {ativasCat} de {lista.length}</span>
                       </td>
                       <td className="px-3 py-1">
-                        <select value="" onChange={e => { if (e.target.value) origemDaCategoria(lista, e.target.value); }}
-                          className="w-full text-xs border border-white/10 rounded-md px-2 py-1 bg-[#0c1018] text-white/60 focus:outline-none" title="Origem de todos os itens desta categoria">
-                          <option value="">Origem de todos…</option>
-                          {opcoesOrigem(null)}
-                        </select>
+                        {catOutro === categoria ? (
+                          <div className="flex items-center gap-1">
+                            <div className="flex-1 min-w-0">
+                              <SearchableSelect theme="dark" options={opcoesFornecedor} value="" placeholder="Fornecedor para toda a categoria..." emptyMessage="Nenhum"
+                                onChange={v => { if (v) origemDaCategoria(lista, fId(v)); setCatOutro(null); }} />
+                            </div>
+                            <button onClick={() => setCatOutro(null)} className="text-white/30 hover:text-white/60"><X size={12} /></button>
+                          </div>
+                        ) : (
+                          <select value="" onChange={e => { if (e.target.value === OUTRO) setCatOutro(categoria); else if (e.target.value) origemDaCategoria(lista, e.target.value); }}
+                            className="w-full text-xs border border-white/10 rounded-md px-2 py-1 bg-[#0c1018] text-white/60 focus:outline-none" title="Origem de todos os itens desta categoria">
+                            <option value="">Origem de todos…</option>
+                            <option value={RUA}>🛒 Rua</option>
+                            <option value={OUTRO}>Fornecedor…</option>
+                          </select>
+                        )}
                       </td>
                     </tr>,
                     ...lista.map(it => {
@@ -523,10 +551,17 @@ export default function Compras() {
                               className="w-24 text-right text-sm font-bold border border-white/10 rounded-md px-2 py-1 bg-[#0c1018] text-white focus:outline-none focus:ring-2 focus:ring-wine/30" />
                           </td>
                           <td className="px-3 py-1">
-                            <select value={st.origem} onChange={e => setLinha(it.item_id, { origem: e.target.value })}
+                            <select value={st.outro ? OUTRO : st.origem}
+                              onChange={e => (e.target.value === OUTRO
+                                ? setLinha(it.item_id, { outro: true, origem: '' })
+                                : setLinha(it.item_id, { origem: e.target.value, outro: false }))}
                               className={`w-full text-xs border rounded-md px-2 py-1.5 bg-[#0c1018] text-white focus:outline-none focus:ring-2 focus:ring-wine/30 ${ativa && !r ? 'border-red-500/60' : 'border-white/10'}`}>
-                              {opcoesOrigem(it)}
+                              {opcoesOrigem(it, st.origem)}
                             </select>
+                            {st.outro && (
+                              <SearchableSelect theme="dark" className="mt-1" options={opcoesFornecedor} value="" placeholder="Buscar fornecedor..." emptyMessage="Nenhum"
+                                onChange={v => setLinha(it.item_id, { origem: v ? fId(v) : '', outro: false })} />
+                            )}
                           </td>
                         </tr>
                       );
