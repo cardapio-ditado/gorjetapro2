@@ -16,7 +16,9 @@ export interface ListaResumo {
   data: string;
   itens: number;
   comprados: number;
+  nao_encontrados: number;
   valor: number;
+  valor_pago: number;
 }
 
 export function normalizarLista(raw: Record<string, unknown>): ListaResumo {
@@ -32,7 +34,9 @@ export function normalizarLista(raw: Record<string, unknown>): ListaResumo {
     data: String(raw.data ?? ''),
     itens: Number(raw.itens ?? 0),
     comprados: Number(raw.comprados ?? 0),
+    nao_encontrados: Number(raw.nao_encontrados ?? 0),
     valor: Number(raw.valor ?? 0),
+    valor_pago: Number(raw.valor_pago ?? 0),
   };
 }
 
@@ -121,7 +125,11 @@ export function CardListaCompra({ lista, onMudou, destaque }: Props) {
               {lista.titulo} <span className="text-white/40 font-medium text-xs">· {lista.numero}</span>
             </p>
             <p className="text-xs text-white/60 mt-0.5">
-              {lista.itens} {lista.itens === 1 ? 'item' : 'itens'} · {lista.comprados} {lista.comprados === 1 ? 'comprado' : 'comprados'} · {fmtMoeda(lista.valor)} estimado
+              {lista.itens} {lista.itens === 1 ? 'item' : 'itens'} · {lista.comprados} {lista.comprados === 1 ? 'comprado' : 'comprados'}
+              {rua && lista.nao_encontrados > 0 && <span className="text-orange-300"> · {lista.nao_encontrados} não achou</span>}
+              {rua && lista.valor_pago > 0
+                ? <> · <span className="text-white/90">pago {fmtMoeda(lista.valor_pago)}</span> (estimado {fmtMoeda(lista.valor)})</>
+                : <> · {fmtMoeda(lista.valor)} estimado</>}
               {!rua && lista.fornecedor_tel && (
                 <a href={`tel:${lista.fornecedor_tel.replace(/\s/g, '')}`} className="inline-flex items-center gap-1 ml-2 text-blue-300 hover:underline">
                   <Phone size={11} /> {lista.fornecedor_tel}
