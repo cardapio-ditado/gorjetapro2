@@ -11,10 +11,12 @@ import { fmtQtd, fmtMoeda, fmtData, ehFracionado, urlWhatsApp, textoListaRua, te
 /**
  * Link público de uma lista de compras — uma lista por link.
  *
- * Rua: o comprador escolhe a loja uma vez (botões grandes), e a cada item
- * informa quantidade e preço da etiqueta e toca "Comprei". "Não achei" tira o
- * item da rodada e ele volta a aparecer em Compras. Tudo pensado para ser
- * feito com uma mão, dentro do mercado.
+ * Rua: o comprador passa por vários mercados com a mesma lista. As lojas
+ * ficam sempre no topo — toca na que está, marca os itens (quantidade e
+ * preço da etiqueta), troca de loja com um toque, segue. "Não achei" não
+ * existe por item: ao tocar "Terminei", o que sobrou é marcado como não
+ * encontrado e volta a aparecer em Compras. Tudo pensado para uma mão,
+ * dentro do mercado.
  *
  * Fornecedor: é o pedido — marcar simples e botão para mandar no WhatsApp.
  */
@@ -88,7 +90,6 @@ export default function ListaComprasPublica() {
 
   // Rua: loja atual (persistida no aparelho) e painel do item aberto
   const [loja, setLoja] = useState<Loja | null>(null);
-  const [escolhendoLoja, setEscolhendoLoja] = useState(false);
   const [buscaLoja, setBuscaLoja] = useState('');
   const [aberto, setAberto] = useState<Item | null>(null);
   const [qtd, setQtd] = useState('');
@@ -123,7 +124,7 @@ export default function ListaComprasPublica() {
   }, [aberto]);
 
   const escolherLoja = (l: Loja) => {
-    setLoja(l); setEscolhendoLoja(false); setBuscaLoja('');
+    setLoja(l); setBuscaLoja('');
     try { if (id) localStorage.setItem(chaveLoja(id), JSON.stringify(l)); } catch { /* sem storage */ }
   };
 
@@ -171,28 +172,12 @@ export default function ListaComprasPublica() {
     }
   };
 
-  const naoAchei = async () => {
-    if (!aberto) return;
-    setSalvando(aberto.id);
-    try {
-      const { data, error } = await supabase.rpc('fn_lista_publica_nao_encontrei', { p_item_id: aberto.id });
-      if (error) throw error;
-      setItens(prev => prev.map(i => (i.id === aberto.id ? { ...i, comprado: false, nao_encontrado: true, loja_nome: null, preco_pago: null, valor_pago: null, quantidade_comprada: null } : i)));
-      aplicarResumo((data || {}) as Record<string, unknown>);
-      fechar();
-    } catch (e: unknown) {
-      setErro(e instanceof Error ? e.message : 'Não deu para salvar. Tente de novo.');
-    } finally {
-      setSalvando(null);
-    }
-  };
-
   const desfazer = async (item: Item) => {
     setSalvando(item.id);
     try {
       const { data, error } = await supabase.rpc('fn_lista_publica_marcar', { p_item_id: item.id, p_comprado: false });
       if (error) throw error;
-      setItens(prev => prev.map(i => (i.id === item.id ? { ...i, comprado: false, nao_encontrado: false, comprado_em: null, loja_nome: null, loja_id: null, preco_pago: null, valor_pago: null, quantidade_comprada: null } : i)));
+      setItens(prev => prev.map(i => (i.id === item.id ? { ...i, comprado: false, comprado_em: null, loja_nome: null, loja_id: null, preco_pago: null, valor_pago: null, quantidade_comprada: null } : i)));
       aplicarResumo((data || {}) as Record<string, unknown>);
       fechar();
     } catch (e: unknown) {
@@ -220,17 +205,21 @@ export default function ListaComprasPublica() {
     }
   };
 
-  const concluir = async () => {
+  // Fim da rodada: o que ficou sem comprar vira "não achou" e volta para Compras amanhã.
+  const terminar = async () => {
     if (!lista || !aberta) return;
-    const faltam = itens.filter(i => !i.comprado && !i.nao_encontrado).length;
-    if (!window.confirm(faltam > 0 ? `Terminar com ${faltam} ${faltam === 1 ? 'item' : 'itens'} sem marcar?` : 'Terminar a lista?')) return;
+    const faltam = itens.filter(i => !i.comprado).length;
+    const pergunta = faltam === 0 ? 'Terminar a lista?'
+      : rua ? `Faltam ${faltam} ${faltam === 1 ? 'item' : 'itens'}. Não achou em nenhum lugar? Eles voltam para a lista de amanhã.`
+      : `Faltam ${faltam} ${faltam === 1 ? 'item' : 'itens'}. Concluir mesmo assim? Eles voltam a aparecer em Compras.`;
+    if (!window.confirm(pergunta)) return;
     setConcluindo(true);
     try {
-      const { error } = await supabase.rpc('fn_lista_publica_concluir', { p_lista_id: lista.lista_id });
+      const { error } = await supabase.rpc('fn_lista_publica_terminar', { p_lista_id: lista.lista_id });
       if (error) throw error;
       await carregar();
     } catch {
-      setErro('Não foi possível concluir. Tente de novo.');
+      setErro('Não foi possível terminar. Tente de novo.');
     } finally {
       setConcluindo(false);
     }
@@ -240,7 +229,7 @@ export default function ListaComprasPublica() {
   const urlAtual = typeof window !== 'undefined' ? window.location.href : '';
   const totalComprados = itens.filter(i => i.comprado).length;
   const totalNao = itens.filter(i => i.nao_encontrado && !i.comprado).length;
-  const pct = itens.length > 0 ? Math.round(((totalComprados + totalNao) / itens.length) * 100) : 0;
+  const pct = itens.length > 0 ? Math.round((totalComprados / itens.length) * 100) : 0;
   const totalEstimado = itens.reduce((s, i) => s + i.estimado, 0);
   const totalPago = itens.reduce((s, i) => s + (i.comprado ? (i.valor_pago ?? 0) : 0), 0);
   const semPreco = itens.filter(i => i.comprado && !i.preco_pago).length;
@@ -349,16 +338,12 @@ export default function ListaComprasPublica() {
             <div className="flex items-center gap-2 mb-2">
               <MapPin size={14} className={loja ? 'text-green-400' : 'text-orange-400'} />
               <p className="text-xs font-semibold uppercase tracking-wide text-white/60">
-                {loja ? <>Você está em <span className="text-white">{loja.nome}</span></> : 'Onde você está?'}
+                {loja ? <>Você está em <span className="text-white">{loja.nome}</span></> : 'Onde você está? Toque na loja'}
               </p>
-              {loja && (
-                <button onClick={() => setEscolhendoLoja(v => !v)} className="ml-auto text-xs text-white/60 underline underline-offset-2">trocar</button>
-              )}
             </div>
-            {(!loja || escolhendoLoja) && (
               <div className="space-y-2">
                 <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
-                  {lojasTop.map(l => (
+                  {(loja && !lojasTop.some(l => l.nome === loja.nome) ? [loja, ...lojasTop] : lojasTop).map(l => (
                     <button key={l.id ?? l.nome} onClick={() => escolherLoja(l)}
                       className={`flex-shrink-0 px-4 py-2.5 rounded-xl text-sm font-semibold border ${loja?.nome === l.nome ? 'bg-green-600 border-green-500 text-white' : 'bg-white/5 border-white/10 text-white/90 active:bg-white/10'}`}>
                       {l.nome}
@@ -390,7 +375,6 @@ export default function ListaComprasPublica() {
                   </div>
                 )}
               </div>
-            )}
           </div>
         </div>
       )}
@@ -459,12 +443,12 @@ export default function ListaComprasPublica() {
               <div>
                 <p className="text-xs text-white/50">{rua ? 'Gasto até agora' : 'Estimado'}</p>
                 <p className="text-xl font-bold text-white">{fmtMoeda(rua ? totalPago : totalEstimado)}</p>
-                {rua && <p className="text-xs text-white/50">estimado {fmtMoeda(totalEstimado)}{semPreco > 0 ? ` · ${semPreco} sem preço` : ''}{totalNao > 0 ? ` · ${totalNao} não achou` : ''}</p>}
+                {rua && <p className="text-xs text-white/50">estimado {fmtMoeda(totalEstimado)}{semPreco > 0 ? ` · ${semPreco} sem preço` : ''}{totalNao > 0 ? ` · ${totalNao} não achou` : ''}{aberta && itens.length - totalComprados > 0 ? ` · faltam ${itens.length - totalComprados}` : ''}</p>}
               </div>
               {aberta && (
-                <button onClick={concluir} disabled={concluindo}
+                <button onClick={terminar} disabled={concluindo}
                   className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-green-600 hover:bg-green-700 disabled:opacity-50">
-                  <CheckCircle2 size={15} /> {concluindo ? 'Terminando...' : 'Terminei'}
+                  <CheckCircle2 size={15} /> {concluindo ? 'Terminando...' : (rua ? 'Terminei as compras' : 'Concluir')}
                 </button>
               )}
             </div>
@@ -472,7 +456,7 @@ export default function ListaComprasPublica() {
         )}
 
         <p className="text-center text-xs text-white/50 py-4 flex items-center justify-center gap-1.5">
-          <ShoppingCart size={12} /> Gerada em {new Date(lista.criado_em).toLocaleString('pt-BR')}{aberta && rua ? ' · toque no item para marcar' : ''}
+          <ShoppingCart size={12} /> Gerada em {new Date(lista.criado_em).toLocaleString('pt-BR')}{aberta && rua ? ' · toque no item quando pegar' : ''}
         </p>
       </div>
 
@@ -493,9 +477,7 @@ export default function ListaComprasPublica() {
 
             {/* Loja */}
             {loja ? (
-              <p className="text-sm text-white/70 flex items-center gap-1.5"><MapPin size={14} className="text-green-400" /> {loja.nome}
-                <button onClick={() => { setEscolhendoLoja(true); fechar(); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="ml-1 text-xs underline underline-offset-2 text-white/50">trocar</button>
-              </p>
+              <p className="text-sm text-white/70 flex items-center gap-1.5"><MapPin size={14} className="text-green-400" /> {loja.nome}</p>
             ) : (
               <div className="rounded-xl px-3 py-2 text-sm text-orange-200 bg-orange-500/10 border border-orange-500/30">
                 Escolha a loja lá em cima antes de marcar.
@@ -531,17 +513,11 @@ export default function ListaComprasPublica() {
             </div>
 
             {/* Ações */}
-            <div className="flex gap-2">
-              <button onClick={comprei} disabled={!loja || salvando === aberto.id}
-                className="flex-1 h-14 rounded-2xl text-lg font-bold text-white bg-green-600 active:bg-green-700 disabled:opacity-40 flex items-center justify-center gap-2">
-                <CheckCircle2 size={22} /> Comprei
-              </button>
-              <button onClick={naoAchei} disabled={salvando === aberto.id}
-                className="h-14 px-4 rounded-2xl text-sm font-semibold text-orange-200 bg-orange-500/15 border border-orange-500/30 active:bg-orange-500/25 disabled:opacity-40 flex items-center justify-center gap-1.5">
-                <Ban size={18} /> Não achei
-              </button>
-            </div>
-            {(aberto.comprado || aberto.nao_encontrado) && (
+            <button onClick={comprei} disabled={!loja || salvando === aberto.id}
+              className="w-full h-14 rounded-2xl text-lg font-bold text-white bg-green-600 active:bg-green-700 disabled:opacity-40 flex items-center justify-center gap-2">
+              <CheckCircle2 size={22} /> Comprei
+            </button>
+            {aberto.comprado && (
               <button onClick={() => desfazer(aberto)} disabled={salvando === aberto.id}
                 className="w-full text-sm text-white/50 flex items-center justify-center gap-1.5 py-1">
                 <Undo2 size={14} /> Desfazer marcação
