@@ -25,9 +25,14 @@ interface FornecedorRecente {
   nome: string;
   modalidade: Modalidade;
   ultimo_preco: number | null;
+  /** quantas vezes o item foi comprado ali (180 dias) */
+  compras: number;
 }
 
-interface Origem { tipo: Destino; fornecedor_id?: string | null }
+type MotivoOrigem = 'historico' | 'ultima_lista' | 'cadastro';
+
+/** Sugestão de origem do banco: onde mais comprou → última lista → cadastro. */
+interface Origem { tipo: Destino; fornecedor_id?: string | null; motivo?: MotivoOrigem | null; compras?: number }
 
 interface ItemCompra {
   item_id: string;
@@ -97,10 +102,16 @@ function normalizarItem(raw: Record<string, unknown>): ItemCompra {
     em_lista_onde: (raw.em_lista_onde as string | null) ?? null,
     adiado_ate: raw.adiado_ate ? String(raw.adiado_ate).slice(0, 10) : null,
     origem: o && (o.tipo === 'rua' || o.tipo === 'fornecedor')
-      ? { tipo: o.tipo as Destino, fornecedor_id: (o.fornecedor_id as string | null) ?? null } : null,
+      ? {
+          tipo: o.tipo as Destino, fornecedor_id: (o.fornecedor_id as string | null) ?? null,
+          motivo: (o.motivo === 'historico' || o.motivo === 'ultima_lista' || o.motivo === 'cadastro') ? o.motivo : null,
+          compras: num(o.compras),
+        }
+      : null,
     recentes: (Array.isArray(raw.recentes) ? (raw.recentes as Record<string, unknown>[]) : []).map(r => ({
       fornecedor_id: String(r.fornecedor_id), nome: String(r.nome ?? ''),
       modalidade: (r.modalidade === 'rua' ? 'rua' : 'entrega') as Modalidade, ultimo_preco: numOuNull(r.ultimo_preco),
+      compras: num(r.compras),
     })),
   };
 }
@@ -114,8 +125,22 @@ function normalizarCatalogo(raw: Record<string, unknown>): ItemCatalogo {
 
 function origemInicial(it: ItemCompra): string {
   if (!it.origem) return '';
-  if (it.origem.tipo === 'rua') return RUA;
-  return it.origem.fornecedor_id ? fId(it.origem.fornecedor_id) : '';
+  // Loja de rua com histórico vem com o id: a linha mostra a loja, e o
+  // resolver manda para a lista da Rua com a loja anotada.
+  if (it.origem.fornecedor_id) return fId(it.origem.fornecedor_id);
+  return it.origem.tipo === 'rua' ? RUA : '';
+}
+
+const MOTIVO_LABEL: Record<MotivoOrigem, string> = {
+  historico: 'onde mais comprou', ultima_lista: 'última lista', cadastro: 'cadastro',
+};
+
+/** Legenda curta do porquê da sugestão ("onde mais comprou · 5x"). */
+function motivoSugestao(it: ItemCompra): string {
+  const o = it.origem;
+  if (!o?.motivo) return '';
+  const vezes = o.motivo === 'historico' && o.compras ? ` · ${o.compras}x` : '';
+  return `${MOTIVO_LABEL[o.motivo]}${vezes}`;
 }
 
 function linhaInicial(it: ItemCompra): Linha {
@@ -383,7 +408,7 @@ export default function Compras() {
           <optgroup label="Já comprou de">
             {it.recentes.map(f => (
               <option key={f.fornecedor_id} value={fId(f.fornecedor_id)}>
-                {f.modalidade === 'rua' ? '🛒 ' : '🚚 '}{f.nome}{f.ultimo_preco ? ` · ${fmtMoeda(f.ultimo_preco)}` : ''}
+                {f.modalidade === 'rua' ? '🛒 ' : '🚚 '}{f.nome}{f.compras > 0 ? ` · ${f.compras}x` : ''}{f.ultimo_preco ? ` · ${fmtMoeda(f.ultimo_preco)}` : ''}
               </option>
             ))}
           </optgroup>
@@ -409,7 +434,7 @@ export default function Compras() {
             <div>
               <h2 className="text-lg font-bold text-white">Compras</h2>
               <p className="text-sm text-white/60">
-                Baseado no Estoque Central: o que está abaixo do ponto de pedido. Ajuste a quantidade, escolha Rua ou o fornecedor e gere as listas.
+                Baseado no Estoque Central: o que está abaixo do ponto de pedido. A origem já vem sugerida por onde o item é mais comprado; ajuste a quantidade, troque a origem se mudou algo e gere as listas.
               </p>
             </div>
           </div>
@@ -662,6 +687,20 @@ export default function Compras() {
                             {st.outro && (
                               <SearchableSelect theme="dark" className="mt-1" options={opcoesFornecedor} value="" placeholder="Buscar fornecedor..." emptyMessage="Nenhum"
                                 onChange={v => setLinha(it.item_id, { origem: v ? fId(v) : '', outro: false })} />
+                            )}
+                            {/* Por que o sistema sugeriu essa origem; se mudou, avisa e deixa voltar */}
+                            {it.origem?.motivo && !st.outro && (
+                              st.origem === origemInicial(it) ? (
+                                <p className="text-[10px] text-white/35 mt-0.5 leading-tight">sugerido: {motivoSugestao(it)}</p>
+                              ) : (
+                                <p className="text-[10px] text-amber-300/80 mt-0.5 leading-tight">
+                                  alterado ·{' '}
+                                  <button type="button" onClick={() => setLinha(it.item_id, { origem: origemInicial(it), outro: false })}
+                                    className="underline underline-offset-2 hover:text-amber-200">
+                                    voltar para {resolver(origemInicial(it))?.nome ?? 'sugestão'}
+                                  </button>
+                                </p>
+                              )
                             )}
                           </td>
                         </tr>
