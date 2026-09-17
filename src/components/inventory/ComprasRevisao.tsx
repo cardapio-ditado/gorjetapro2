@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Loader2, Search, X, Store, Truck, Ban, Check, AlertTriangle, RefreshCw, ClipboardList } from 'lucide-react';
+import { Loader2, Search, X, Store, Truck, Ban, Check, AlertTriangle, RefreshCw, ClipboardList, EyeOff } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { fmtQtd, fmtData } from './comprasShared';
 import { agruparPorCategoria } from './agruparPorCategoria';
@@ -188,6 +188,25 @@ export function ComprasRevisao({ onMudou }: Props) {
     }
   };
 
+  /** Inativar direto da lista: some de Compras, da contagem e das listas. Reativa em Cadastros › Itens. */
+  const inativar = async (p: ItemRev) => {
+    if (!window.confirm(`Inativar "${p.nome}"? Ele sai de Compras e da contagem. Dá para reativar em Cadastros › Itens.`)) return;
+    setOcupado(p.item_id); setErro('');
+    try {
+      const { error } = await supabase.from('itens_estoque').update({ status: 'inativo', atualizado_em: new Date().toISOString() }).eq('id', p.item_id);
+      if (error) throw error;
+      setItens(prev => prev.filter(x => x.item_id !== p.item_id));
+      setSemGiro(prev => prev.filter(x => x.item_id !== p.item_id));
+      setTotais(prev => {
+        const t = { ...prev, total: Math.max(0, (prev.total ?? 1) - 1) };
+        if (p.classe === null) t.pendentes = Math.max(0, (t.pendentes ?? 0) - 1); else t[p.classe] = Math.max(0, (t[p.classe] ?? 0) - 1);
+        return t;
+      });
+      onMudou();
+    } catch (e: unknown) { setErro(e instanceof Error ? e.message : String(e)); }
+    finally { setOcupado(null); }
+  };
+
   const pct = totais.total ? Math.round(((totais.total - (totais.pendentes ?? 0)) / totais.total) * 100) : 0;
   const comSugestao = visiveis.filter(p => p.sugestao && p.classe === null).length;
 
@@ -271,7 +290,7 @@ export function ComprasRevisao({ onMudou }: Props) {
                     <th className="px-3 py-2 text-right font-medium w-20">Central</th>
                     <th className="px-3 py-2 text-right font-medium w-32">Ponto de pedido</th>
                     <th className="px-3 py-2 text-left font-medium w-52">Histórico (180 dias)</th>
-                    <th className="px-3 py-2 text-left font-medium w-80">Classe</th>
+                    <th className="px-3 py-2 text-left font-medium w-96">Classe</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
@@ -314,7 +333,15 @@ export function ComprasRevisao({ onMudou }: Props) {
                             ? <>{p.ultimo_fornecedor.modalidade === 'rua' ? '🛒 ' : '🚚 '}{p.ultimo_fornecedor.nome} <span className="text-white/30">· {p.compras_180d}x · {p.ultima_compra ? fmtData(p.ultima_compra) : ''}</span></>
                             : <span className="text-white/30">sem compra em 180 dias{p.consumo_dia > 0 ? ' · tem consumo' : ''}</span>}
                         </td>
-                        <td className="px-3 py-1.5"><div className="flex items-center gap-1 flex-wrap">{(['rua', 'pedido', 'sob_demanda'] as Classe[]).map(c => botaoClasse(p, c))}</div></td>
+                        <td className="px-3 py-1.5">
+                          <div className="flex items-center gap-1 flex-wrap">
+                            {(['rua', 'pedido', 'sob_demanda'] as Classe[]).map(c => botaoClasse(p, c))}
+                            <button onClick={() => inativar(p)} disabled={ocupado !== null} title="Inativar o item (sai de Compras e da contagem)"
+                              className="ml-1 inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs border border-transparent text-white/30 hover:text-red-300 hover:border-red-500/40 hover:bg-red-500/10 disabled:opacity-50">
+                              <EyeOff size={11} /> Inativar
+                            </button>
+                          </div>
+                        </td>
                       </tr>
                     )),
                   ])}
