@@ -30,6 +30,7 @@ const ZigVendasSync       = lazy(() => import('./pages/ZigVendasSync'));
 const ZigRecebimentos     = lazy(() => import('./pages/ZigRecebimentos'));
 const ListaCompras        = lazy(() => import('./pages/ListaCompras'));
 const ListaComprasPublica = lazy(() => import('./pages/ListaComprasPublica'));
+const ConferenciaCompras  = lazy(() => import('./pages/ConferenciaCompras'));
 const MapaMesasPublico    = lazy(() => import('./pages/MapaMesasPublico'));
 const ContagemMobile      = lazy(() => import('./components/inventory/contagem/ContagemMobile'));
 const DiscPublico         = lazy(() => import('./pages/DiscPublico'));
@@ -58,7 +59,7 @@ function AppContent() {
 
   useEffect(() => { testConnection(); }, []);
 
-  const rotasPublicas = ['/pre-entrevista', '/solicitacao', '/requisicao-estoque', '/pedido', '/cartaz-requisicao', '/contagem-mobile', '/disc', '/compras-publica', '/reservar-mesa', '/mapademesas', '/login', '/redefinir-senha'];
+  const rotasPublicas = ['/pre-entrevista', '/solicitacao', '/requisicao-estoque', '/pedido', '/cartaz-requisicao', '/contagem-mobile', '/disc', '/compras-publica', '/conferencia-compras', '/reservar-mesa', '/mapademesas', '/login', '/redefinir-senha'];
   const isRotaPublica = rotasPublicas.some(r => location.pathname.startsWith(r));
 
   if (location.pathname === '/login') return <Login />;
@@ -83,6 +84,7 @@ function AppContent() {
           <Route path="/contagem-mobile/:token"   element={<ContagemMobile />} />
           <Route path="/disc"                     element={<DiscPublico />} />
           <Route path="/compras-publica/:id"      element={<ListaComprasPublica />} />
+          <Route path="/conferencia-compras/:id"  element={<ConferenciaCompras />} />
           <Route path="/reservar-mesa"            element={<MapaMesasPublico />} />
           <Route path="/mapademesas"              element={<MapaMesasPublico />} />
         </Routes>

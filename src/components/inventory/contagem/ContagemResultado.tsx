@@ -84,31 +84,42 @@ const ContagemResultado: React.FC<Props> = ({ contagemId, onVoltar, onReconferir
     const contados = resultado.itens.filter(i => i.quantidade_contada !== null);
     const divergentes = contados.filter(i => i.diferenca !== null && i.diferenca !== 0);
 
-    const linhas = divergentes.map(item => `
-      <tr>
-        <td>${item.item_codigo}</td>
-        <td>${item.item_nome}</td>
-        <td>${item.unidade_medida}</td>
+    const esc = (s: unknown) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const linha = (item: ContagemItem) => {
+      const dif = item.diferenca ?? 0;
+      const divergente = dif !== 0;
+      return `
+      <tr class="${divergente ? 'div' : ''}">
+        <td>${esc(item.item_codigo)}</td>
+        <td>${esc(item.item_nome)}</td>
+        <td>${esc(item.unidade_medida)}</td>
         <td style="text-align:center">${item.quantidade_sistema}</td>
         <td style="text-align:center;font-weight:bold">${item.quantidade_contada}</td>
-        <td style="text-align:center;color:${item.diferenca! > 0 ? 'green' : 'red'}">${item.diferenca! > 0 ? '+' : ''}${item.diferenca}</td>
+        <td style="text-align:center;color:${dif > 0 ? 'green' : dif < 0 ? 'red' : '#888'}">${dif > 0 ? '+' : ''}${dif}</td>
         <td style="text-align:right">${formatCurrency(item.valor_unitario)}</td>
-        <td style="text-align:right;color:${item.valor_diferenca! > 0 ? 'green' : 'red'}">${item.valor_diferenca! > 0 ? '+' : ''}${formatCurrency(item.valor_diferenca || 0)}</td>
-        <td>${item.observacao || ''}</td>
-      </tr>`).join('');
+        <td style="text-align:right;color:${dif > 0 ? 'green' : dif < 0 ? 'red' : '#888'}">${(item.valor_diferenca || 0) > 0 ? '+' : ''}${formatCurrency(item.valor_diferenca || 0)}</td>
+        <td>${esc(item.observacao)}</td>
+      </tr>`;
+    };
+    const cabecalho = `<thead><tr><th>Código</th><th>Item</th><th>Un.</th><th>Sistema</th><th>Contado</th>
+    <th>Dif.</th><th>Val. Unit.</th><th>Val. Dif.</th><th>Obs.</th></tr></thead>`;
+    const porNome = (a: ContagemItem, b: ContagemItem) => a.item_nome.localeCompare(b.item_nome, 'pt-BR');
 
+    // Duas seções: só as divergências (para ajustar) e todos os contados (registro completo).
     const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Contagem</title>
-    <style>body{font-family:Arial,sans-serif;font-size:12px;margin:20px}h1{font-size:16px}h2{font-size:13px;margin-top:16px}
+    <style>body{font-family:Arial,sans-serif;font-size:12px;margin:20px}h1{font-size:16px}h2{font-size:13px;margin-top:18px}
     table{width:100%;border-collapse:collapse;margin-top:8px}th,td{border:1px solid #ddd;padding:4px 6px;text-align:left}
-    th{background:#f5f5f5;font-size:10px}@media print{@page{margin:1cm;size:landscape}}</style></head><body>
-    <h1>Resultado de Contagem — ${resultado.contagem.estoque_nome}</h1>
-    <p>Responsável: ${resultado.contagem.responsavel} · ${dayjs(resultado.contagem.data_contagem).format('DD/MM/YYYY HH:mm')}</p>
-    <p>Itens contados: <b>${stats.contados}</b> · Divergências: <b>${stats.comDiferenca}</b> · 
+    th{background:#f5f5f5;font-size:10px}tr.div td{background:#fff7e6}
+    .quebra{page-break-before:always}@media print{@page{margin:1cm;size:landscape}}</style></head><body>
+    <h1>Resultado de Contagem — ${esc(resultado.contagem.estoque_nome)}</h1>
+    <p>Responsável: ${esc(resultado.contagem.responsavel)} · ${dayjs(resultado.contagem.data_contagem).format('DD/MM/YYYY HH:mm')}</p>
+    <p>Itens contados: <b>${stats.contados}</b> · Divergências: <b>${stats.comDiferenca}</b> ·
     Sobras: <b>${formatCurrency(stats.valorSobras)}</b> · Perdas: <b>${formatCurrency(stats.valorPerdas)}</b></p>
-    <h2>Itens com Divergência (${divergentes.length})</h2>
-    <table><thead><tr><th>Código</th><th>Item</th><th>Un.</th><th>Sistema</th><th>Contado</th>
-    <th>Dif.</th><th>Val. Unit.</th><th>Val. Dif.</th><th>Obs.</th></tr></thead>
-    <tbody>${linhas}</tbody></table>
+    <h2>1. Itens com Divergência (${divergentes.length})</h2>
+    ${divergentes.length === 0 ? '<p>Nenhuma divergência.</p>' : `<table>${cabecalho}<tbody>${[...divergentes].sort(porNome).map(linha).join('')}</tbody></table>`}
+    <h2 class="quebra">2. Todos os Itens Contados (${contados.length})</h2>
+    <p style="color:#666">Linhas destacadas = com divergência.</p>
+    <table>${cabecalho}<tbody>${[...contados].sort(porNome).map(linha).join('')}</tbody></table>
     </body></html>`;
 
     const iframe = document.createElement('iframe');

@@ -46,6 +46,9 @@ export function fmtData(iso: string | null | undefined): string {
 export function urlListaPublica(listaId: string): string {
   return `${window.location.origin}/compras-publica/${listaId}`;
 }
+export function urlConferencia(conferenciaId: string): string {
+  return `${window.location.origin}/conferencia-compras/${conferenciaId}`;
+}
 
 /** Só dígitos; número nacional ganha o 55 na frente para o wa.me funcionar. */
 export function telefoneWhatsApp(tel: string | null | undefined): string | null {

@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { ShoppingBag, RefreshCw, Search, X, Loader2, Package, AlertTriangle, CheckCircle2, Plus, Store, Truck, ClipboardList, CalendarClock, Undo2 } from 'lucide-react';
+import { ShoppingBag, RefreshCw, Search, X, Loader2, Package, AlertTriangle, CheckCircle2, Plus, Store, Truck, ClipboardList, CalendarClock, Undo2, Smartphone, Copy, Check, MessageCircle, Lock, RotateCcw } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { SearchableSelect } from '../common/SearchableSelect';
-import { fmtQtd, fmtMoeda, type Situacao } from './comprasShared';
+import { fmtQtd, fmtMoeda, fmtData, urlConferencia, urlWhatsApp, type Situacao } from './comprasShared';
 import { CardListaCompra, normalizarLista, type ListaResumo } from './CardListaCompra';
 import { agruparPorCategoria, SEM_CATEGORIA } from './agruparPorCategoria';
 
@@ -60,12 +60,34 @@ interface ItemCatalogo {
 
 interface Fornecedor { id: string; nome: string; modalidade: Modalidade }
 
+/** Anotação feita no celular (conferência in loco). */
+interface Anotacao {
+  item_id: string; nome: string; um: string;
+  encontrado: number | null; comprar: number | null; obs: string | null; anotado_em: string;
+}
+interface Conferencia { id: string; data: string; status: 'aberta' | 'fechada'; titulo: string | null; itens: Anotacao[] }
+
 interface Tela {
   hoje: string;
   itens: ItemCompra[];
   catalogo: ItemCatalogo[];
   listas: ListaResumo[];
   fornecedores: Fornecedor[];
+  conferencia: Conferencia | null;
+}
+
+function normalizarConferencia(raw: unknown): Conferencia | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const c = raw as Record<string, unknown>;
+  return {
+    id: String(c.id), data: String(c.data ?? ''), status: c.status === 'fechada' ? 'fechada' : 'aberta',
+    titulo: (c.titulo as string | null) ?? null,
+    itens: (Array.isArray(c.itens) ? (c.itens as Record<string, unknown>[]) : []).map(a => ({
+      item_id: String(a.item_id), nome: String(a.nome ?? '').trim(), um: String(a.um ?? ''),
+      encontrado: numOuNull(a.encontrado), comprar: numOuNull(a.comprar), obs: (a.obs as string | null) ?? null,
+      anotado_em: String(a.anotado_em ?? ''),
+    })),
+  };
 }
 
 /** Estado editável de cada linha: quantidade (0 = não compra) e origem do select. */
@@ -176,18 +198,37 @@ export default function Compras() {
       if (error) { setErro(error.message); return; }
       const d = (data || {}) as Record<string, unknown>;
       const itens = (Array.isArray(d.itens) ? (d.itens as Record<string, unknown>[]) : []).map(normalizarItem);
+      const catalogo = (Array.isArray(d.catalogo) ? (d.catalogo as Record<string, unknown>[]) : []).map(normalizarCatalogo);
+      const conferencia = normalizarConferencia(d.conferencia);
       setTela({
         hoje: String(d.hoje ?? ''),
         itens,
-        catalogo: (Array.isArray(d.catalogo) ? (d.catalogo as Record<string, unknown>[]) : []).map(normalizarCatalogo),
+        catalogo,
         listas: (Array.isArray(d.listas) ? (d.listas as Record<string, unknown>[]) : []).map(normalizarLista),
         fornecedores: (Array.isArray(d.fornecedores) ? (d.fornecedores as Record<string, unknown>[]) : []).map(f => ({
           id: String(f.id), nome: String(f.nome ?? '').trim(), modalidade: (f.modalidade === 'rua' ? 'rua' : 'entrega') as Modalidade,
         })),
+        conferencia,
       });
-      setExtras([]);
       const l: Record<string, Linha> = {};
       for (const it of itens) l[it.item_id] = linhaInicial(it);
+
+      // Conferência de hoje: a quantidade anotada no celular manda. Item
+      // anotado que não está abaixo do ponto entra na planilha como extra.
+      const extrasIniciais: ItemCompra[] = [];
+      for (const a of conferencia?.itens ?? []) {
+        if (a.comprar === null) continue;
+        if (l[a.item_id]) { l[a.item_id] = { ...l[a.item_id], quantidade: a.comprar }; continue; }
+        const c = catalogo.find(x => x.item_id === a.item_id);
+        if (!c) continue;
+        extrasIniciais.push({
+          item_id: c.item_id, nome: c.nome, categoria: c.categoria, um: c.um, fracionado: c.fracionado,
+          saldo: c.saldo, ponto: c.ponto, situacao: 'extra', sugerida: a.comprar, preco: c.preco,
+          em_lista: 0, em_lista_onde: null, adiado_ate: null, origem: null, recentes: [],
+        });
+        l[c.item_id] = { quantidade: a.comprar, origem: '', outro: false };
+      }
+      setExtras(extrasIniciais);
       setLinhas(l);
     } catch (e: unknown) {
       setErro(e instanceof Error ? e.message : String(e));
@@ -220,6 +261,47 @@ export default function Compras() {
     if (f.modalidade === 'rua') return { destino: 'rua', fornecedorId: null, lojaId: f.id, nome: f.nome };
     return { destino: 'fornecedor', fornecedorId: f.id, lojaId: null, nome: f.nome };
   }, [fornPorId]);
+
+  // ── Conferência no celular ──
+  const anotacaoPorItem = useMemo(() => {
+    const m = new Map<string, Anotacao>();
+    for (const a of tela?.conferencia?.itens ?? []) m.set(a.item_id, a);
+    return m;
+  }, [tela]);
+  const [confOcupado, setConfOcupado] = useState<'criar' | 'status' | 'copiar' | null>(null);
+  const [linkCopiado, setLinkCopiado] = useState(false);
+
+  const criarConferencia = async () => {
+    setConfOcupado('criar'); setErro('');
+    try {
+      const { error } = await supabase.rpc('fn_conferencia_criar');
+      if (error) { setErro(error.message); return; }
+      await carregar();
+    } finally {
+      setConfOcupado(null);
+    }
+  };
+
+  const statusConferencia = async (status: 'aberta' | 'fechada') => {
+    const c = tela?.conferencia;
+    if (!c) return;
+    if (status === 'fechada' && !window.confirm('Fechar a conferência de hoje? O celular para de aceitar anotações.')) return;
+    setConfOcupado('status'); setErro('');
+    try {
+      const { error } = await supabase.rpc('fn_conferencia_status', { p_id: c.id, p_status: status });
+      if (error) { setErro(error.message); return; }
+      await carregar();
+    } finally {
+      setConfOcupado(null);
+    }
+  };
+
+  const copiarLinkConferencia = async () => {
+    const c = tela?.conferencia;
+    if (!c) return;
+    try { await navigator.clipboard.writeText(urlConferencia(c.id)); setLinkCopiado(true); setTimeout(() => setLinkCopiado(false), 2500); }
+    catch { window.prompt('Copie o link:', urlConferencia(c.id)); }
+  };
 
   // ── Adiados: fora da lista de hoje, voltam sozinhos amanhã ──
   const adiados = useMemo(() => (tela?.itens ?? []).filter(it => it.adiado_ate), [tela]);
@@ -445,6 +527,68 @@ export default function Compras() {
         </div>
       </div>
 
+      {/* Conferência no celular */}
+      {tela && (
+        <div className={`rounded-2xl border px-4 py-3.5 bg-[#12141f] ${tela.conferencia?.status === 'aberta' ? 'border-teal-500/30' : 'border-white/10'}`}>
+          <div className="flex items-start justify-between gap-3 flex-wrap">
+            <div className="flex items-start gap-3 min-w-0">
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 bg-teal-500/15">
+                <Smartphone size={17} className="text-teal-300" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-white font-bold leading-tight">
+                  Conferência no celular
+                  {tela.conferencia && (
+                    <span className={`ml-2 px-1.5 py-0.5 text-[10px] font-semibold rounded-md align-middle ${tela.conferencia.status === 'aberta' ? 'bg-teal-500/15 text-teal-300' : 'bg-white/10 text-white/50'}`}>
+                      {tela.conferencia.status === 'aberta' ? 'aberta' : 'fechada'}
+                    </span>
+                  )}
+                </p>
+                <p className="text-xs text-white/60 mt-0.5">
+                  {tela.conferencia
+                    ? <>{tela.conferencia.titulo || fmtData(tela.conferencia.data)} · {plural(tela.conferencia.itens.length, 'item anotado', 'itens anotados')}. O que foi anotado já está na planilha abaixo (quantidade e itens extras).</>
+                    : <>Quem confere o estoque abre um link no celular, busca o item pelo nome e anota quanto tem e quanto comprar. As anotações entram aqui na planilha.</>}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {tela.conferencia ? (
+                <>
+                  <a href={urlConferencia(tela.conferencia.id)} target="_blank" rel="noopener noreferrer"
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-white/10 text-xs font-medium text-white/70 hover:bg-white/5">
+                    <Smartphone size={13} /> Abrir
+                  </a>
+                  <button onClick={copiarLinkConferencia} className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-white/10 text-xs font-medium text-white/70 hover:bg-white/5">
+                    {linkCopiado ? <Check size={13} className="text-green-400" /> : <Copy size={13} />} {linkCopiado ? 'Copiado' : 'Copiar link'}
+                  </button>
+                  <a href={urlWhatsApp(`📋 Conferência do estoque · ${fmtData(tela.conferencia.data)}\nAbra o link, busque o item pelo nome e anote quanto tem e quanto comprar:\n${urlConferencia(tela.conferencia.id)}`)}
+                    target="_blank" rel="noopener noreferrer"
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-green-500/30 bg-green-500/10 text-xs font-medium text-green-300 hover:bg-green-500/20">
+                    <MessageCircle size={13} /> Mandar no WhatsApp
+                  </a>
+                  {tela.conferencia.status === 'aberta' ? (
+                    <button onClick={() => statusConferencia('fechada')} disabled={confOcupado !== null} title="Fechar a conferência de hoje"
+                      className="flex items-center gap-1.5 px-2.5 py-2 rounded-xl border border-white/10 text-xs text-white/50 hover:bg-white/5 disabled:opacity-50">
+                      {confOcupado === 'status' ? <Loader2 size={13} className="animate-spin" /> : <Lock size={13} />} Fechar
+                    </button>
+                  ) : (
+                    <button onClick={() => statusConferencia('aberta')} disabled={confOcupado !== null}
+                      className="flex items-center gap-1.5 px-2.5 py-2 rounded-xl border border-white/10 text-xs text-white/50 hover:bg-white/5 disabled:opacity-50">
+                      {confOcupado === 'status' ? <Loader2 size={13} className="animate-spin" /> : <RotateCcw size={13} />} Reabrir
+                    </button>
+                  )}
+                </>
+              ) : (
+                <button onClick={criarConferencia} disabled={confOcupado !== null}
+                  className="flex items-center gap-1.5 bg-teal-600 hover:bg-teal-500 text-white text-xs font-semibold px-3 py-2 rounded-xl transition-colors disabled:opacity-50">
+                  {confOcupado === 'criar' ? <Loader2 size={13} className="animate-spin" /> : <Smartphone size={13} />} Gerar link de conferência
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Listas abertas */}
       {(listasHoje.length > 0 || listasAnteriores.length > 0) && (
         <div className="space-y-2">
@@ -661,6 +805,18 @@ export default function Compras() {
                               {it.em_lista > 0 && (
                                 <span className="text-caption text-orange-300/80">já na lista: {it.em_lista_onde || fmtQtd(it.em_lista)}</span>
                               )}
+                              {anotacaoPorItem.has(it.item_id) && (() => {
+                                const a = anotacaoPorItem.get(it.item_id)!;
+                                return (
+                                  <span className="text-caption text-teal-300/90 inline-flex items-center gap-1" title={a.obs ? `Obs: ${a.obs}` : 'Anotado na conferência do celular'}>
+                                    <Smartphone size={10} />
+                                    {a.encontrado !== null ? `tem ${fmtQtd(a.encontrado)}` : ''}
+                                    {a.encontrado !== null && a.comprar !== null ? ' · ' : ''}
+                                    {a.comprar !== null ? `pediu ${fmtQtd(a.comprar)}` : ''}
+                                    {a.obs ? ` · “${a.obs}”` : ''}
+                                  </span>
+                                );
+                              })()}
                             </div>
                           </td>
                           <td className={`px-3 py-1.5 text-right tabular-nums whitespace-nowrap ${it.saldo <= 0 ? 'text-red-400 font-semibold' : 'text-white/80'}`}
