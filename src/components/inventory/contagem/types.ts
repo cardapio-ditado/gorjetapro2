@@ -35,6 +35,34 @@ export interface Contagem {
   criado_em: string;
   finalizado_em: string | null;
   processado_em: string | null;
+  /** contagem por bloco (categoria); '__zerados' = bloco especial; null = contagem completa */
+  bloco?: string | null;
+}
+
+export const BLOCO_ZERADOS = '__zerados';
+export const nomeBloco = (b: string | null | undefined) => (b === BLOCO_ZERADOS ? 'Zerados na última contagem' : (b || ''));
+
+export type SituacaoBloco = 'em_andamento' | 'atrasado' | 'vence_hoje' | 'nunca' | 'em_dia' | 'concluido_hoje';
+
+export interface BlocoResumo {
+  bloco: string;
+  especial: boolean;
+  itens: number;
+  ciclo_dias: number;
+  ultima_contagem: string | null;
+  vence_em: string | null;
+  situacao: SituacaoBloco;
+  contagem_hoje_id: string | null;
+  contagem_hoje_status: string | null;
+  contados_hoje: number;
+  total_hoje: number;
+}
+
+export interface PainelBlocos {
+  hoje: string;
+  estoque: { id: string; nome: string; tipo: string };
+  blocos: BlocoResumo[];
+  resumo: { blocos: number; devidos_hoje: number; concluidos_hoje: number; em_andamento: number; faltam_itens: number };
 }
 
 export interface ContagemResultado {

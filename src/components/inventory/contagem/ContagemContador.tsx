@@ -6,7 +6,7 @@ import {
   X, TrendingUp, TrendingDown,
 } from 'lucide-react';
 import type { ContagemItem, GrupoContagem } from './types';
-import { GRUPOS } from './types';
+import { GRUPOS, nomeBloco } from './types';
 import * as service from './contagemService';
 import { itemEstaIgnorado } from './contagemService';
 import { formatCurrency } from '../../../utils/currency';
@@ -15,6 +15,8 @@ import { formatarQuantidade } from '../../../utils/formatarQuantidade';
 interface Props {
   contagemId: string;
   estoqueName: string;
+  /** contagem por bloco: muda título e o botão vira "Concluir bloco" */
+  bloco?: string | null;
   onVoltar: () => void;
   onFinalizar: () => void;
 }
@@ -37,7 +39,7 @@ const COR_ABA: Record<string, string> = {
   gray:   'border-gray-500 text-white/80 bg-white/5',
 };
 
-export default function ContagemContador({ contagemId, estoqueName, onVoltar, onFinalizar }: Props) {
+export default function ContagemContador({ contagemId, estoqueName, bloco, onVoltar, onFinalizar }: Props) {
   const [itens, setItens]             = useState<ContagemItem[]>([]);
   const [loading, setLoading]         = useState(true);
   const [searchTerm, setSearchTerm]   = useState('');
@@ -46,6 +48,11 @@ export default function ContagemContador({ contagemId, estoqueName, onVoltar, on
   const [savedItems, setSavedItems]   = useState<Set<string>>(new Set());
   const [errorItems, setErrorItems]   = useState<Set<string>>(new Set());
   const [filtroPendentes, setFiltroPendentes] = useState(false);
+  /** gravações ainda no debounce (não podem ser perdidas ao concluir) */
+  const [agendados, setAgendados]     = useState(0);
+  /** zeros confirmados pelo usuário em itens com saldo no sistema */
+  const zerosConfirmados = useRef<Set<string>>(new Set());
+  const [retentando, setRetentando]   = useState(false);
 
   // Adicionar item ausente
   const [showAdicionar, setShowAdicionar]         = useState(false);
@@ -101,24 +108,52 @@ export default function ContagemContador({ contagemId, estoqueName, onVoltar, on
     }
   };
 
+  const gravar = useCallback(async (itemId: string, updates: Parameters<typeof service.atualizarItem>[1]) => {
+    setSavingItems(p => new Set(p).add(itemId));
+    try {
+      await service.atualizarItem(itemId, updates);
+      setErrorItems(p => { const n = new Set(p); n.delete(itemId); return n; });
+      setSavedItems(p => new Set(p).add(itemId));
+      setTimeout(() => setSavedItems(p => { const n = new Set(p); n.delete(itemId); return n; }), 2000);
+    } catch {
+      setErrorItems(p => new Set(p).add(itemId));
+    } finally {
+      setSavingItems(p => { const n = new Set(p); n.delete(itemId); return n; });
+    }
+  }, []);
+
   const salvarCampo = useCallback((itemId: string, updates: Parameters<typeof service.atualizarItem>[1]) => {
     const key = Object.keys(updates)[0] + '-' + itemId;
     const ex = debounceTimers.current.get(key);
-    if (ex) clearTimeout(ex);
+    if (ex) clearTimeout(ex); else setAgendados(n => n + 1);
     debounceTimers.current.set(key, setTimeout(async () => {
       debounceTimers.current.delete(key);
-      setSavingItems(p => new Set(p).add(itemId));
-      try {
-        await service.atualizarItem(itemId, updates);
-        setSavedItems(p => new Set(p).add(itemId));
-        setTimeout(() => setSavedItems(p => { const n = new Set(p); n.delete(itemId); return n; }), 2000);
-      } catch {
-        setErrorItems(p => new Set(p).add(itemId));
-      } finally {
-        setSavingItems(p => { const n = new Set(p); n.delete(itemId); return n; });
-      }
+      setAgendados(n => Math.max(0, n - 1));
+      await gravar(itemId, updates);
     }, 600));
-  }, []);
+  }, [gravar]);
+
+  /** Itens que não salvaram (sessão vencida, rede): tenta de novo com o valor que está na tela. */
+  const tentarDeNovo = useCallback(async () => {
+    setRetentando(true);
+    try {
+      const pendentes = itens.filter(i => errorItems.has(i.id));
+      for (const i of pendentes) await gravar(i.id, { quantidade_contada: i.quantidade_contada, observacao: i.observacao || '' });
+    } finally {
+      setRetentando(false);
+    }
+  }, [itens, errorItems, gravar]);
+
+  /** Zero em item com saldo no sistema pede confirmação (evita o "0 na pressa" que zera 66 kg). */
+  const confirmarZero = useCallback((item: ContagemItem) => {
+    if (item.quantidade_contada !== 0 || item.quantidade_sistema <= 0) return;
+    if (zerosConfirmados.current.has(item.id)) return;
+    const ok = window.confirm(`${item.item_nome}: o sistema diz ${formatarQuantidade(item.quantidade_sistema)} ${item.unidade_medida} e você digitou ZERO. Confirma que não tem nada?`);
+    if (ok) { zerosConfirmados.current.add(item.id); return; }
+    // desiste do zero: limpa o campo (volta a "não contado")
+    setItens(prev => prev.map(i => i.id === item.id ? { ...i, quantidade_contada: null, diferenca: null, valor_diferenca: null } : i));
+    salvarCampo(item.id, { quantidade_contada: null });
+  }, [salvarCampo]);
 
   const handleQtd = useCallback((itemId: string, value: string) => {
     const parsed = value === '' ? null : parseFloat(value);
@@ -207,9 +242,10 @@ export default function ContagemContador({ contagemId, estoqueName, onVoltar, on
               <ArrowLeft className="w-5 h-5 text-white/50" />
             </button>
             <div className="min-w-0">
-              <h2 className="text-base font-bold text-white truncate">{estoqueName}</h2>
+              <h2 className="text-base font-bold text-white truncate">{estoqueName}{bloco ? <span className="text-white/60 font-medium"> · {nomeBloco(bloco)}</span> : ''}</h2>
               <p className="text-xs text-white/60">
                 {statsGeral.contados}/{statsGeral.total} contados
+                {statsGeral.total - statsGeral.contados > 0 && <span className="text-amber-300 ml-1">· faltam {statsGeral.total - statsGeral.contados}</span>}
                 {statsGeral.ignorados > 0 && <span className="text-white/60 ml-1">· {statsGeral.ignorados} ignorados</span>}
               </p>
             </div>
@@ -221,12 +257,29 @@ export default function ContagemContador({ contagemId, estoqueName, onVoltar, on
               }`}>
               <PackagePlus className="w-4 h-4" /> + Item
             </button>
-            <button onClick={onFinalizar} disabled={statsGeral.contados === 0}
+            <button onClick={onFinalizar}
+              disabled={statsGeral.contados === 0 || errorItems.size > 0 || savingItems.size > 0 || agendados > 0}
+              title={errorItems.size > 0 ? 'Há itens não salvos' : savingItems.size > 0 || agendados > 0 ? 'Salvando...' : undefined}
               className="px-4 py-2 bg-gradient-to-r from-emerald-600 to-green-600 text-white rounded-xl text-sm font-semibold hover:opacity-90 disabled:opacity-40 flex items-center gap-2">
-              <Calculator className="w-4 h-4" /> Finalizar
+              {savingItems.size > 0 || agendados > 0 ? <Loader2 className="w-4 h-4 animate-spin" /> : <Calculator className="w-4 h-4" />}
+              {bloco ? 'Concluir bloco' : 'Finalizar'}
             </button>
           </div>
         </div>
+
+        {/* Itens não salvos: trava o concluir até resolver (a lição do dia 16) */}
+        {errorItems.size > 0 && (
+          <div className="mt-2.5 rounded-xl bg-red-500/10 border border-red-500/40 px-3 py-2 flex items-center gap-3 flex-wrap">
+            <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
+            <p className="text-sm text-red-300 flex-1">
+              <span className="font-semibold">{errorItems.size} {errorItems.size === 1 ? 'item não salvou' : 'itens não salvaram'}.</span> Os valores estão só na tela. Tente de novo antes de concluir.
+            </p>
+            <button onClick={tentarDeNovo} disabled={retentando}
+              className="px-3 py-1.5 rounded-lg bg-red-600 text-white text-xs font-semibold hover:bg-red-700 disabled:opacity-50 flex items-center gap-1.5">
+              {retentando ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RotateCcw className="w-3.5 h-3.5" />} Tentar de novo
+            </button>
+          </div>
+        )}
 
         {/* Progresso */}
         <div className="mt-2.5 flex items-center gap-2">
@@ -474,6 +527,7 @@ export default function ContagemContador({ contagemId, estoqueName, onVoltar, on
                     <input type="number" inputMode="decimal" step="0.001"
                       value={item.quantidade_contada === null ? '' : item.quantidade_contada}
                       onChange={e => handleQtd(item.id, e.target.value)}
+                      onBlur={() => confirmarZero(item)}
                       placeholder="—"
                       className={`w-full text-center text-2xl font-bold border-2 rounded-xl py-2 focus:outline-none focus:ring-2 transition-colors tabular-nums ${
                         hasError               ? 'border-red-500/50 bg-red-500/10 text-red-300 focus:ring-red-500/20'

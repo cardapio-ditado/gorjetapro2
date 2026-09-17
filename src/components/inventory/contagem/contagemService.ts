@@ -1,6 +1,46 @@
 // contagemService.ts
 import { supabase } from '../../../lib/supabase';
-import type { Contagem, ContagemItem, Estoque } from './types';
+import type { Contagem, ContagemItem, Estoque, PainelBlocos, BlocoResumo } from './types';
+
+// ─── Contagem por blocos ─────────────────────────────────────────────────────
+const num = (v: unknown) => (v === null || v === undefined || v === '' ? 0 : Number(v));
+
+export async function loadBlocos(estoqueId: string): Promise<PainelBlocos> {
+  const { data, error } = await supabase.rpc('fn_contagem_blocos', { p_estoque_id: estoqueId });
+  if (error) throw error;
+  const d = (data || {}) as Record<string, unknown>;
+  const e = (d.estoque || {}) as Record<string, unknown>;
+  const r = (d.resumo || {}) as Record<string, unknown>;
+  return {
+    hoje: String(d.hoje ?? ''),
+    estoque: { id: String(e.id ?? estoqueId), nome: String(e.nome ?? ''), tipo: String(e.tipo ?? '') },
+    blocos: (Array.isArray(d.blocos) ? (d.blocos as Record<string, unknown>[]) : []).map((b): BlocoResumo => ({
+      bloco: String(b.bloco), especial: Boolean(b.especial), itens: num(b.itens), ciclo_dias: num(b.ciclo_dias),
+      ultima_contagem: b.ultima_contagem ? String(b.ultima_contagem) : null, vence_em: b.vence_em ? String(b.vence_em) : null,
+      situacao: (b.situacao as BlocoResumo['situacao']) || 'nunca',
+      contagem_hoje_id: b.contagem_hoje_id ? String(b.contagem_hoje_id) : null,
+      contagem_hoje_status: b.contagem_hoje_status ? String(b.contagem_hoje_status) : null,
+      contados_hoje: num(b.contados_hoje), total_hoje: num(b.total_hoje),
+    })),
+    resumo: { blocos: num(r.blocos), devidos_hoje: num(r.devidos_hoje), concluidos_hoje: num(r.concluidos_hoje), em_andamento: num(r.em_andamento), faltam_itens: num(r.faltam_itens) },
+  };
+}
+
+/** Abre (ou continua) a contagem de um bloco. Devolve o id da contagem. */
+export async function abrirBloco(estoqueId: string, bloco: string, responsavel?: string): Promise<{ id: string; criada: boolean; nome: string }> {
+  const { data, error } = await supabase.rpc('fn_contagem_bloco_abrir', { p_estoque_id: estoqueId, p_bloco: bloco, p_responsavel: responsavel || null });
+  if (error) throw error;
+  const d = (data || {}) as Record<string, unknown>;
+  return { id: String(d.id), criada: Boolean(d.criada), nome: String(d.nome ?? bloco) };
+}
+
+/** Concluir bloco = finalizar + processar num passo. */
+export async function concluirBloco(contagemId: string, usuarioId?: string): Promise<{ success: boolean; error?: string; total_ajustes?: number; total_sem_diff?: number }> {
+  const { data, error } = await supabase.rpc('fn_contagem_bloco_concluir', { p_contagem_id: contagemId, p_usuario_id: usuarioId || null });
+  if (error) throw error;
+  const d = (data || {}) as Record<string, unknown>;
+  return { success: d.success !== false, error: d.error ? String(d.error) : undefined, total_ajustes: num(d.total_ajustes), total_sem_diff: num(d.total_sem_diff) };
+}
 
 export async function loadEstoques(): Promise<Estoque[]> {
   const { data, error } = await supabase
@@ -110,9 +150,11 @@ export async function atualizarItem(
     ignorar_override?: boolean | null;
   }
 ): Promise<void> {
+  // contado_em marca a hora real da digitação (antes ficava só a hora de criação da contagem)
+  const payload = 'quantidade_contada' in updates ? { ...updates, contado_em: new Date().toISOString() } : updates;
   const { error } = await supabase
     .from('contagens_estoque_itens')
-    .update(updates)
+    .update(payload)
     .eq('id', itemId);
   if (error) throw error;
 }
