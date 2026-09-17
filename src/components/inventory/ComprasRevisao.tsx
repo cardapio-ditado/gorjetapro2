@@ -198,7 +198,7 @@ export function ComprasRevisao({ onMudou }: Props) {
       setItens(prev => prev.filter(x => x.item_id !== p.item_id));
       setSemGiro(prev => prev.filter(x => x.item_id !== p.item_id));
       setTotais(prev => {
-        const t = { ...prev, total: Math.max(0, (prev.total ?? 1) - 1) };
+        const t: Record<string, number> = { ...prev, total: Math.max(0, (prev.total ?? 1) - 1) };
         if (p.classe === null) t.pendentes = Math.max(0, (t.pendentes ?? 0) - 1); else t[p.classe] = Math.max(0, (t[p.classe] ?? 0) - 1);
         return t;
       });
