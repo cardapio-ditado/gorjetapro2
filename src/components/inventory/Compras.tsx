@@ -360,8 +360,11 @@ export default function Compras() {
     .map(c => ({ value: c.item_id, label: c.nome, sublabel: `${nomeCat(c.categoria)} · ${fmtQtd(c.saldo)} ${c.um} no Central` })),
   [tela, todos]);
 
-  const listasHoje = (tela?.listas ?? []).filter(l => l.data === tela?.hoje);
-  const listasAnteriores = (tela?.listas ?? []).filter(l => l.data !== tela?.hoje);
+  const listasAbertas = (tela?.listas ?? []).filter(l => l.status !== 'concluida');
+  const listasHoje = listasAbertas.filter(l => l.data === tela?.hoje);
+  const listasAnteriores = listasAbertas.filter(l => l.data !== tela?.hoje);
+  // Concluídas dos últimos 7 dias: ficam à mão para imprimir em PDF.
+  const listasConcluidas = (tela?.listas ?? []).filter(l => l.status === 'concluida');
 
   /**
    * Opções do select de origem: Rua, quem já vendeu o item, a origem atual (se
@@ -435,6 +438,19 @@ export default function Compras() {
             </details>
           )}
         </div>
+      )}
+
+      {/* Concluídas: imprimir em PDF */}
+      {listasConcluidas.length > 0 && (
+        <details className="group" open={listasHoje.length === 0 && listasAnteriores.length === 0}>
+          <summary className="cursor-pointer text-xs font-semibold uppercase tracking-wide text-white/50 flex items-center gap-2 px-1 py-1 select-none">
+            <CheckCircle2 size={14} className="text-green-400" /> Listas concluídas · últimos 7 dias ({listasConcluidas.length})
+            <span className="normal-case font-normal text-white/30 tracking-normal">— clique para ver e imprimir em PDF</span>
+          </summary>
+          <div className="space-y-2 mt-2">
+            {listasConcluidas.map(l => <CardListaCompra key={l.lista_id} lista={l} onMudou={carregar} />)}
+          </div>
+        </details>
       )}
 
       {resultado && (
