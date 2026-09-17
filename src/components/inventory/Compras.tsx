@@ -268,8 +268,40 @@ export default function Compras() {
     for (const a of tela?.conferencia?.itens ?? []) m.set(a.item_id, a);
     return m;
   }, [tela]);
-  const [confOcupado, setConfOcupado] = useState<'criar' | 'status' | 'copiar' | null>(null);
+  const [confOcupado, setConfOcupado] = useState<'criar' | 'status' | 'copiar' | 'gerar' | null>(null);
   const [linkCopiado, setLinkCopiado] = useState(false);
+  /** Planilha só com o que foi conferido no celular (liga sozinho quando há anotações). */
+  const [soConferidos, setSoConferidos] = useState(false);
+  const temConferidos = anotacaoPorItem.size > 0;
+  useEffect(() => { setSoConferidos(anotacaoPorItem.size > 0); }, [anotacaoPorItem]);
+
+  /** Um clique: lista da Rua só com o que a pessoa conferiu no celular. */
+  const gerarRuaConferidos = async () => {
+    const c = tela?.conferencia;
+    if (!c) return;
+    const linhasEnvio = c.itens
+      .filter(a => a.comprar !== null && a.comprar > 0)
+      .map(a => ({
+        item_id: a.item_id, quantidade: a.comprar, destino: 'rua' as Destino, fornecedor_id: null, loja_id: null,
+        observacao: a.encontrado !== null ? `conferido: tinha ${fmtQtd(a.encontrado)}` : null,
+      }));
+    if (linhasEnvio.length === 0) { setErro('Nenhum item conferido com quantidade para comprar.'); return; }
+    if (!window.confirm(`Gerar a lista da Rua com ${plural(linhasEnvio.length, 'item conferido', 'itens conferidos')}? Os outros itens da planilha ficam de fora.`)) return;
+    setConfOcupado('gerar'); setResultado(null); setErro('');
+    try {
+      const { data, error } = await supabase.rpc('fn_compras_gerar', { p_linhas: linhasEnvio });
+      if (error) { setResultado({ ok: false, texto: error.message, ids: [] }); return; }
+      const r = (data || {}) as { linhas?: number; listas?: Record<string, unknown>[] };
+      const listas = (r.listas ?? []).map(normalizarLista);
+      setResultado({ ok: true, texto: `Lista da Rua gerada com ${plural(num(r.linhas), 'item conferido', 'itens conferidos')}. O link está logo acima.`, ids: listas.map(l => l.lista_id) });
+      await carregar();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (e: unknown) {
+      setResultado({ ok: false, texto: e instanceof Error ? e.message : String(e), ids: [] });
+    } finally {
+      setConfOcupado(null);
+    }
+  };
 
   const criarConferencia = async () => {
     setConfOcupado('criar'); setErro('');
@@ -342,10 +374,15 @@ export default function Compras() {
   const buscaLower = busca.trim().toLowerCase();
 
   const visiveisBase = useMemo(() => todos.filter(it => {
-    if (it.situacao !== 'extra' && (it.situacao === 'ok' || !filtroSit[it.situacao])) return false;
+    // Modo conferência: só o que foi anotado no celular, seja qual for a situação.
+    if (soConferidos && temConferidos) {
+      if (!anotacaoPorItem.has(it.item_id)) return false;
+    } else if (it.situacao !== 'extra' && (it.situacao === 'ok' || !filtroSit[it.situacao])) {
+      return false;
+    }
     if (buscaLower && !it.nome.toLowerCase().includes(buscaLower) && !(it.categoria || '').toLowerCase().includes(buscaLower)) return false;
     return true;
-  }), [todos, filtroSit, buscaLower]);
+  }), [todos, filtroSit, buscaLower, soConferidos, temConferidos, anotacaoPorItem]);
 
   const categorias = useMemo(() =>
     agruparPorCategoria(visiveisBase).map(([nome, lista]) => ({ nome, total: lista.length })),
@@ -376,11 +413,11 @@ export default function Compras() {
       return n;
     });
 
-  /** Um clique: linhas com quantidade e sem origem vão para a Rua. */
+  /** Um clique: linhas visíveis com quantidade e sem origem vão para a Rua. */
   const semOrigemParaRua = () =>
     setLinhas(prev => {
       const n = { ...prev };
-      for (const it of todos) {
+      for (const it of visiveisBase) {
         const st = n[it.item_id];
         if (st && st.quantidade > 0 && !resolver(st.origem)) n[it.item_id] = { ...st, origem: RUA, outro: false };
       }
@@ -406,10 +443,16 @@ export default function Compras() {
   };
 
   // ── Resumo: linhas com quantidade > 0 ──
-  const ativas = useMemo(() => todos
+  // Só o que está na tela entra na lista. Item escondido por filtro (situação,
+  // busca, modo conferência) não é gerado, para não misturar o que ninguém conferiu.
+  const ativas = useMemo(() => visiveisBase
     .map(it => ({ it, st: linhas[it.item_id] }))
     .filter(({ st }) => st && st.quantidade > 0),
-  [todos, linhas]);
+  [visiveisBase, linhas]);
+  const ocultasComQuantidade = useMemo(() => {
+    const visiveisIds = new Set(visiveisBase.map(it => it.item_id));
+    return todos.filter(it => !visiveisIds.has(it.item_id) && (linhas[it.item_id]?.quantidade ?? 0) > 0).length;
+  }, [todos, visiveisBase, linhas]);
 
   const resumo = useMemo(() => {
     let valor = 0, rua = 0, semOrigem = 0;
@@ -546,7 +589,11 @@ export default function Compras() {
                 </p>
                 <p className="text-xs text-white/60 mt-0.5">
                   {tela.conferencia
-                    ? <>{tela.conferencia.titulo || fmtData(tela.conferencia.data)} · {plural(tela.conferencia.itens.length, 'item anotado', 'itens anotados')}. O que foi anotado já está na planilha abaixo (quantidade e itens extras).</>
+                    ? <>{tela.conferencia.titulo || fmtData(tela.conferencia.data)} · {plural(tela.conferencia.itens.length, 'item anotado', 'itens anotados')}.
+                        {temConferidos && (soConferidos
+                          ? <> A planilha está mostrando <span className="text-teal-300">só o que foi conferido</span>; "Gerar listas" usa só isso.</>
+                          : <> A planilha está mostrando <span className="text-amber-300">todos os itens</span>, conferidos ou não.</>)}
+                      </>
                     : <>Quem confere o estoque abre um link no celular, busca o item pelo nome e anota quanto tem e quanto comprar. As anotações entram aqui na planilha.</>}
                 </p>
               </div>
@@ -554,6 +601,14 @@ export default function Compras() {
             <div className="flex items-center gap-1.5 flex-wrap">
               {tela.conferencia ? (
                 <>
+                  {temConferidos && (
+                    <button onClick={gerarRuaConferidos} disabled={confOcupado !== null || gerando}
+                      title="Gera a lista da Rua só com os itens conferidos, com as quantidades anotadas"
+                      className="flex items-center gap-1.5 bg-teal-600 hover:bg-teal-500 text-white text-xs font-semibold px-3 py-2 rounded-xl transition-colors disabled:opacity-50">
+                      {confOcupado === 'gerar' ? <Loader2 size={13} className="animate-spin" /> : <Store size={13} />}
+                      Gerar lista da Rua com os conferidos ({tela.conferencia.itens.filter(a => a.comprar !== null && a.comprar > 0).length})
+                    </button>
+                  )}
                   <a href={urlConferencia(tela.conferencia.id)} target="_blank" rel="noopener noreferrer"
                     className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-white/10 text-xs font-medium text-white/70 hover:bg-white/5">
                     <Smartphone size={13} /> Abrir
@@ -642,9 +697,16 @@ export default function Compras() {
       {tela && (
         <div className="bg-[#12141f] rounded-2xl border border-white/10 px-5 py-3 space-y-3">
           <div className="flex items-center gap-2 flex-wrap">
+            {temConferidos && (
+              <button onClick={() => setSoConferidos(v => !v)}
+                title="Mostrar só o que foi conferido no celular"
+                className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-colors inline-flex items-center gap-1.5 ${soConferidos ? 'bg-teal-500/20 text-teal-200 border-teal-500/40' : 'bg-white/5 text-white/40 border-white/10 hover:bg-white/10'}`}>
+                <Smartphone size={12} /> Só conferidos ({anotacaoPorItem.size})
+              </button>
+            )}
             {chips.map(c => (
-              <button key={c.s} onClick={() => toggleSit(c.s)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-colors ${filtroSit[c.s] ? c.ativo : 'bg-white/5 text-white/40 border-white/10 hover:bg-white/10'}`}>
+              <button key={c.s} onClick={() => toggleSit(c.s)} disabled={soConferidos && temConferidos}
+                className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-colors disabled:opacity-30 ${filtroSit[c.s] ? c.ativo : 'bg-white/5 text-white/40 border-white/10 hover:bg-white/10'}`}>
                 {c.label}
               </button>
             ))}
@@ -881,6 +943,11 @@ export default function Compras() {
                 {resumo.pedidosTxt && <span className="ml-2 inline-flex items-center gap-1 text-blue-300"><Truck size={12} /> {resumo.pedidosTxt}</span>}
                 {adiados.length > 0 && <span className="ml-2 inline-flex items-center gap-1 text-amber-300"><CalendarClock size={12} /> {adiados.length} p/ amanhã ({fmtMoeda(valorAdiado)} cortado)</span>}
               </p>
+              {ocultasComQuantidade > 0 && (
+                <p className="text-white/40">
+                  {plural(ocultasComQuantidade, 'item com quantidade está escondido pelos filtros e não entra', 'itens com quantidade estão escondidos pelos filtros e não entram')}.
+                </p>
+              )}
               {resumo.semOrigem > 0 && (
                 <p className="text-red-300 flex items-center gap-2 flex-wrap">
                   <span>{plural(resumo.semOrigem, 'item sem origem', 'itens sem origem')}</span>
