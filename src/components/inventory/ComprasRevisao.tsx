@@ -46,9 +46,13 @@ export function ComprasRevisao({ onMudou }: Props) {
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState('');
   const [busca, setBusca] = useState('');
-  const [soPendentes, setSoPendentes] = useState(true);
+  const [soPendentes, setSoPendentes] = useState(false);
   const [secao, setSecao] = useState<'classe' | 'pontos'>('classe');
   const [ocupado, setOcupado] = useState<string | null>(null);
+  /** ponto em edição por item (texto do input) e itens com ponto salvo há pouco */
+  const [pontoDraft, setPontoDraft] = useState<Record<string, string>>({});
+  const [pontoSalvo, setPontoSalvo] = useState<Set<string>>(new Set());
+  const [pontoSalvando, setPontoSalvando] = useState<Set<string>>(new Set());
 
   const carregar = useCallback(async () => {
     setLoading(true); setErro('');
@@ -160,6 +164,30 @@ export function ComprasRevisao({ onMudou }: Props) {
     finally { setOcupado(null); }
   };
 
+  /** Ponto de pedido digitado na lista: salva ao sair do campo (Enter também). */
+  const salvarPonto = async (p: ItemRev) => {
+    const texto = pontoDraft[p.item_id];
+    if (texto === undefined) return;
+    const valor = parseFloat(texto.replace(',', '.'));
+    if (!Number.isFinite(valor) || valor < 0) { setPontoDraft(prev => { const n = { ...prev }; delete n[p.item_id]; return n; }); return; }
+    if (valor === p.ponto) { setPontoDraft(prev => { const n = { ...prev }; delete n[p.item_id]; return n; }); return; }
+    setPontoSalvando(prev => new Set(prev).add(p.item_id)); setErro('');
+    try {
+      const { error } = await supabase.rpc('fn_ponto_revisar', { p_item_id: p.item_id, p_acao: 'definir', p_ponto: valor });
+      if (error) throw error;
+      setItens(prev => prev.map(x => (x.item_id === p.item_id ? { ...x, ponto: valor } : x)));
+      setSemGiro(prev => prev.filter(x => x.item_id !== p.item_id));
+      setPontoDraft(prev => { const n = { ...prev }; delete n[p.item_id]; return n; });
+      setPontoSalvo(prev => new Set(prev).add(p.item_id));
+      setTimeout(() => setPontoSalvo(prev => { const n = new Set(prev); n.delete(p.item_id); return n; }), 2000);
+      onMudou();
+    } catch (e: unknown) {
+      setErro(e instanceof Error ? e.message : String(e));
+    } finally {
+      setPontoSalvando(prev => { const n = new Set(prev); n.delete(p.item_id); return n; });
+    }
+  };
+
   const pct = totais.total ? Math.round(((totais.total - (totais.pendentes ?? 0)) / totais.total) * 100) : 0;
   const comSugestao = visiveis.filter(p => p.sugestao && p.classe === null).length;
 
@@ -178,7 +206,8 @@ export function ComprasRevisao({ onMudou }: Props) {
           <div>
             <h3 className="text-white font-bold flex items-center gap-2"><ClipboardList size={16} /> Revisão do cadastro de compras</h3>
             <p className="text-xs text-white/60 mt-0.5">
-              Diga o que cada item é: <span className="text-orange-300">Rua</span> (comprador), <span className="text-blue-300">Pedido</span> (fornecedor escolhido no dia) ou <span className="text-white/80">Sob demanda</span> (nunca entra sozinho). Uma vez só, item a item ou a categoria inteira.
+              Diga o que cada item é: <span className="text-orange-300">Rua</span> (comprador), <span className="text-blue-300">Pedido</span> (fornecedor escolhido no dia) ou <span className="text-white/80">Sob demanda</span> (nunca entra sozinho). Item a item ou a categoria inteira.
+              Na mesma linha, ajuste o <span className="text-white/80">ponto de pedido</span>: digite e saia do campo. Fichas técnicas não entram.
             </p>
           </div>
           <button onClick={carregar} disabled={loading} className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-white/10 text-xs text-white/60 hover:bg-white/5 disabled:opacity-50">
@@ -224,7 +253,7 @@ export function ComprasRevisao({ onMudou }: Props) {
       ) : secao === 'classe' ? (
         <div className="bg-[#12141f] rounded-2xl border border-white/10">
           <div className="px-4 py-3 border-b border-white/10 flex items-center justify-between gap-3 flex-wrap">
-            <p className="text-sm text-white/70"><span className="text-white font-semibold">{visiveis.length}</span> itens{soPendentes ? ' pendentes' : ''}. O botão com contorno verde é a sugestão do histórico.</p>
+            <p className="text-sm text-white/70"><span className="text-white font-semibold">{visiveis.length}</span> itens{soPendentes ? ' pendentes' : ''}. O botão com contorno verde é a sugestão do histórico. Ponto zero = não entra na lista automática.</p>
             {comSugestao > 0 && (
               <button onClick={aplicarSugestoes} disabled={ocupado !== null} className="flex items-center gap-1.5 bg-teal-600 hover:bg-teal-500 text-white text-xs font-semibold px-3 py-2 rounded-xl disabled:opacity-50">
                 {ocupado === 'lote:sugestao' ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />} Aplicar as {comSugestao} sugestões
@@ -239,7 +268,8 @@ export function ComprasRevisao({ onMudou }: Props) {
                 <thead>
                   <tr className="bg-[#0c1018] text-white/50 text-xs">
                     <th className="px-3 py-2 text-left font-medium">Item</th>
-                    <th className="px-3 py-2 text-right font-medium w-16">Ponto</th>
+                    <th className="px-3 py-2 text-right font-medium w-20">Central</th>
+                    <th className="px-3 py-2 text-right font-medium w-32">Ponto de pedido</th>
                     <th className="px-3 py-2 text-left font-medium w-52">Histórico (180 dias)</th>
                     <th className="px-3 py-2 text-left font-medium w-80">Classe</th>
                   </tr>
@@ -247,7 +277,7 @@ export function ComprasRevisao({ onMudou }: Props) {
                 <tbody className="divide-y divide-white/5">
                   {grupos.flatMap(([categoria, lista]) => [
                     <tr key={`cat:${categoria}`} className="bg-white/[0.05]">
-                      <td colSpan={3} className="px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-white/60">
+                      <td colSpan={4} className="px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-white/60">
                         {categoria} <span className="normal-case font-normal text-white/30">· {lista.length}</span>
                       </td>
                       <td className="px-3 py-1">
@@ -265,7 +295,20 @@ export function ComprasRevisao({ onMudou }: Props) {
                     ...lista.map(p => (
                       <tr key={p.item_id} className="hover:bg-white/[0.02]">
                         <td className="px-3 py-1.5"><span className="text-white/90">{p.nome}</span><span className="ml-2 text-caption text-white/40">{p.um}</span></td>
-                        <td className="px-3 py-1.5 text-right tabular-nums text-white/60">{p.ponto > 0 ? fmtQtd(p.ponto) : '—'}</td>
+                        <td className="px-3 py-1.5 text-right tabular-nums text-white/50" title="saldo no Estoque Central">{fmtQtd(p.saldo)}</td>
+                        <td className="px-3 py-1">
+                          <div className="flex items-center justify-end gap-1.5">
+                            {pontoSalvando.has(p.item_id) ? <Loader2 size={12} className="animate-spin text-white/40" /> : pontoSalvo.has(p.item_id) ? <Check size={12} className="text-green-400" /> : null}
+                            <input type="text" inputMode="decimal"
+                              value={pontoDraft[p.item_id] ?? (p.ponto > 0 ? String(p.ponto).replace('.', ',') : '')}
+                              placeholder="0"
+                              onChange={e => setPontoDraft(prev => ({ ...prev, [p.item_id]: e.target.value }))}
+                              onBlur={() => salvarPonto(p)}
+                              onKeyDown={e => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
+                              onFocus={e => e.target.select()}
+                              className={`w-20 text-right text-sm font-bold border rounded-md px-2 py-1 bg-[#0c1018] text-white focus:outline-none focus:ring-2 focus:ring-wine/30 ${p.ponto > 0 ? 'border-white/15' : 'border-white/5 text-white/40'}`} />
+                          </div>
+                        </td>
                         <td className="px-3 py-1.5 text-xs text-white/50">
                           {p.ultimo_fornecedor
                             ? <>{p.ultimo_fornecedor.modalidade === 'rua' ? '🛒 ' : '🚚 '}{p.ultimo_fornecedor.nome} <span className="text-white/30">· {p.compras_180d}x · {p.ultima_compra ? fmtData(p.ultima_compra) : ''}</span></>
