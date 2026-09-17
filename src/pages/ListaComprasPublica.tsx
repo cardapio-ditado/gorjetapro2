@@ -43,9 +43,9 @@ interface Loja { id: string | null; nome: string; usos: number }
 const num = (v: unknown) => (v === null || v === undefined || v === '' ? 0 : Number(v));
 const numOuNull = (v: unknown) => (v === null || v === undefined || v === '' ? null : Number(v));
 
-/** "12,50" → 12.5 ; vazio/inválido → null */
+/** "12,50" → 12.5 e "12.50" → 12.5 (ponto é decimal, não milhar); vazio/inválido → null */
 function parsePreco(s: string): number | null {
-  const n = parseFloat(s.replace(/\./g, '').replace(',', '.'));
+  const n = parseFloat(s.trim().replace(/\s/g, '').replace(',', '.'));
   return Number.isFinite(n) && n > 0 ? n : null;
 }
 

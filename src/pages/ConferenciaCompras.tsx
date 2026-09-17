@@ -23,9 +23,12 @@ interface Conferencia { id: string; data: string; titulo: string | null; status:
 const num = (v: unknown) => (v === null || v === undefined || v === '' ? 0 : Number(v));
 const numOuNull = (v: unknown) => (v === null || v === undefined || v === '' ? null : Number(v));
 
-/** "12,5" → 12.5 ; vazio/inválido → null */
+/**
+ * "12,5" → 12.5 e "1.000" → 1 (ponto é decimal, não milhar: quem digita
+ * "2.800" quer dizer 2,8 kg). Vazio/inválido → null.
+ */
 function parseNum(s: string): number | null {
-  const n = parseFloat(s.trim().replace(/\./g, '').replace(',', '.'));
+  const n = parseFloat(s.trim().replace(/\s/g, '').replace(',', '.'));
   return Number.isFinite(n) && n >= 0 ? n : null;
 }
 const paraTexto = (n: number | null, fracionado: boolean) =>
