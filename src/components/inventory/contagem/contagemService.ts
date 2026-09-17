@@ -1,6 +1,44 @@
 // contagemService.ts
 import { supabase } from '../../../lib/supabase';
-import type { Contagem, ContagemItem, Estoque, PainelBlocos, BlocoResumo } from './types';
+import type { Contagem, ContagemItem, Estoque, PainelBlocos, BlocoResumo, AgendaItem } from './types';
+
+// ─── Calendário da contagem ──────────────────────────────────────────────────
+export async function loadAgenda(estoqueId: string, inicio: string, fim: string): Promise<{ hoje: string; itens: AgendaItem[] }> {
+  const { data, error } = await supabase.rpc('fn_contagem_agenda', { p_estoque_id: estoqueId, p_inicio: inicio, p_fim: fim });
+  if (error) throw error;
+  const d = (data || {}) as Record<string, unknown>;
+  return {
+    hoje: String(d.hoje ?? ''),
+    itens: (Array.isArray(d.itens) ? (d.itens as Record<string, unknown>[]) : []).map((a): AgendaItem => ({
+      id: String(a.id), bloco: String(a.bloco), dia: String(a.dia).slice(0, 10),
+      contagem_id: a.contagem_id ? String(a.contagem_id) : null, contagem_status: a.contagem_status ? String(a.contagem_status) : null,
+      situacao: (a.situacao as AgendaItem['situacao']) || 'agendada',
+    })),
+  };
+}
+export async function agendar(estoqueId: string, bloco: string, dia: string): Promise<string> {
+  const { data, error } = await supabase.rpc('fn_contagem_agenda_definir', { p_estoque_id: estoqueId, p_bloco: bloco, p_dia: dia });
+  if (error) throw error;
+  return String((data as Record<string, unknown>)?.id ?? '');
+}
+export async function moverAgenda(id: string, dia: string): Promise<void> {
+  const { error } = await supabase.rpc('fn_contagem_agenda_mover', { p_id: id, p_dia: dia });
+  if (error) throw error;
+}
+export async function removerAgenda(id: string): Promise<void> {
+  const { error } = await supabase.rpc('fn_contagem_agenda_remover', { p_id: id });
+  if (error) throw error;
+}
+export async function replicarAgenda(estoqueId: string, inicio: string, semanas: number): Promise<number> {
+  const { data, error } = await supabase.rpc('fn_contagem_agenda_replicar', { p_estoque_id: estoqueId, p_inicio: inicio, p_semanas: semanas });
+  if (error) throw error;
+  return Number((data as Record<string, unknown>)?.criados ?? 0);
+}
+export async function limparAgenda(estoqueId: string, aPartir: string): Promise<number> {
+  const { data, error } = await supabase.rpc('fn_contagem_agenda_limpar', { p_estoque_id: estoqueId, p_a_partir: aPartir });
+  if (error) throw error;
+  return Number((data as Record<string, unknown>)?.removidos ?? 0);
+}
 
 // ─── Contagem por blocos ─────────────────────────────────────────────────────
 const num = (v: unknown) => (v === null || v === undefined || v === '' ? 0 : Number(v));
@@ -14,6 +52,7 @@ export async function loadBlocos(estoqueId: string): Promise<PainelBlocos> {
   return {
     hoje: String(d.hoje ?? ''),
     estoque: { id: String(e.id ?? estoqueId), nome: String(e.nome ?? ''), tipo: String(e.tipo ?? '') },
+    tem_agenda: Boolean(d.tem_agenda),
     blocos: (Array.isArray(d.blocos) ? (d.blocos as Record<string, unknown>[]) : []).map((b): BlocoResumo => ({
       bloco: String(b.bloco), especial: Boolean(b.especial), itens: num(b.itens), ciclo_dias: num(b.ciclo_dias),
       ultima_contagem: b.ultima_contagem ? String(b.ultima_contagem) : null, vence_em: b.vence_em ? String(b.vence_em) : null,

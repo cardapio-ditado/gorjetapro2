@@ -42,7 +42,17 @@ export interface Contagem {
 export const BLOCO_ZERADOS = '__zerados';
 export const nomeBloco = (b: string | null | undefined) => (b === BLOCO_ZERADOS ? 'Zerados na última contagem' : (b || ''));
 
-export type SituacaoBloco = 'em_andamento' | 'atrasado' | 'vence_hoje' | 'nunca' | 'em_dia' | 'concluido_hoje';
+export type SituacaoBloco = 'em_andamento' | 'atrasado' | 'vence_hoje' | 'nunca' | 'em_dia' | 'concluido_hoje' | 'sem_agenda';
+
+/** Um bloco agendado num dia do calendário. */
+export interface AgendaItem {
+  id: string;
+  bloco: string;
+  dia: string;
+  contagem_id: string | null;
+  contagem_status: string | null;
+  situacao: 'feita' | 'em_andamento' | 'perdida' | 'hoje' | 'agendada';
+}
 
 export interface BlocoResumo {
   bloco: string;
@@ -61,6 +71,8 @@ export interface BlocoResumo {
 export interface PainelBlocos {
   hoje: string;
   estoque: { id: string; nome: string; tipo: string };
+  /** o estoque tem calendário: o painel obedece a ele em vez do ciclo */
+  tem_agenda: boolean;
   blocos: BlocoResumo[];
   resumo: { blocos: number; devidos_hoje: number; concluidos_hoje: number; em_andamento: number; faltam_itens: number };
 }

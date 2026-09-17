@@ -1,9 +1,10 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { ClipboardCheck, History, Loader2, Play, Eye, AlertTriangle, RefreshCw, Layers, Trash2, CheckCircle2 } from 'lucide-react';
+import { ClipboardCheck, History, Loader2, Play, Eye, AlertTriangle, RefreshCw, Layers, Trash2, CheckCircle2, CalendarDays, ListChecks } from 'lucide-react';
 import dayjs from 'dayjs';
 import type { BlocoResumo, Contagem, Estoque, PainelBlocos } from './types';
 import { nomeBloco } from './types';
 import * as service from './contagemService';
+import ContagemCalendario from './ContagemCalendario';
 import { supabase } from '../../../lib/supabase';
 import { useAuth } from '../../../contexts/AuthContext';
 
@@ -27,6 +28,7 @@ const CHIP: Record<BlocoResumo['situacao'], { cls: string; label: string }> = {
   nunca:          { cls: 'bg-white/10 text-white/60',      label: 'nunca contado' },
   em_dia:         { cls: 'bg-green-500/10 text-green-300', label: 'em dia' },
   concluido_hoje: { cls: 'bg-green-500/15 text-green-300', label: 'concluído hoje' },
+  sem_agenda:     { cls: 'bg-white/10 text-white/50',      label: 'sem dia marcado' },
 };
 const CICLOS = [1, 2, 3, 7, 15, 30];
 const chave = 'contagem:estoque';
@@ -40,6 +42,7 @@ const ContagemBlocos: React.FC<Props> = ({ onAbrirContagem, onVerResultado, onHi
   const [loading, setLoading] = useState(true);
   const [abrindo, setAbrindo] = useState<string | null>(null);
   const [erro, setErro] = useState('');
+  const [modo, setModo] = useState<'hoje' | 'calendario'>('hoje');
 
   useEffect(() => {
     service.loadEstoques().then(lista => {
@@ -94,6 +97,7 @@ const ContagemBlocos: React.FC<Props> = ({ onAbrirContagem, onVerResultado, onHi
     { titulo: 'Para contar hoje', lista: blocos.filter(b => b.situacao === 'atrasado' || b.situacao === 'vence_hoje' || b.situacao === 'nunca'), cor: 'text-amber-300' },
     { titulo: 'Concluídos hoje', lista: blocos.filter(b => b.situacao === 'concluido_hoje'), cor: 'text-green-300' },
     { titulo: 'Próximos dias', lista: [...blocos.filter(b => b.situacao === 'em_dia')].sort((a, b) => (a.vence_em ?? '').localeCompare(b.vence_em ?? '')), cor: 'text-white/50' },
+    { titulo: 'Sem dia marcado no calendário', lista: blocos.filter(b => b.situacao === 'sem_agenda'), cor: 'text-white/40' },
   ];
   const r = painel?.resumo;
 
@@ -105,6 +109,10 @@ const ContagemBlocos: React.FC<Props> = ({ onAbrirContagem, onVerResultado, onHi
           <p className="text-sm text-white/60 mt-1">Um bloco de cada vez. Conte, conclua, e o ajuste entra na hora.</p>
         </div>
         <div className="flex gap-2 flex-wrap">
+          <div className="inline-flex rounded-xl border border-white/10 overflow-hidden">
+            <button onClick={() => setModo('hoje')} className={`px-3 py-2 text-sm font-medium flex items-center gap-1.5 ${modo === 'hoje' ? 'bg-wine text-white' : 'bg-white/5 text-white/60 hover:bg-white/10'}`}><ListChecks className="w-4 h-4" /> Hoje</button>
+            <button onClick={() => setModo('calendario')} className={`px-3 py-2 text-sm font-medium flex items-center gap-1.5 ${modo === 'calendario' ? 'bg-wine text-white' : 'bg-white/5 text-white/60 hover:bg-white/10'}`}><CalendarDays className="w-4 h-4" /> Calendário</button>
+          </div>
           <button onClick={carregar} disabled={loading} className="px-3 py-2 bg-white/5 border border-white/10 text-white/60 rounded-xl hover:bg-white/10 text-sm disabled:opacity-50" title="Atualizar"><RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} /></button>
           <button onClick={onHistorico} className="px-3 py-2 bg-white/5 border border-white/10 text-white/80 rounded-xl hover:bg-white/10 flex items-center gap-2 text-sm font-medium"><History className="w-4 h-4" /> Histórico</button>
           <button onClick={onContagemCompleta} className="px-3 py-2 bg-white/5 border border-white/10 text-white/50 rounded-xl hover:bg-white/10 flex items-center gap-2 text-sm" title="Abrir o estoque inteiro de uma vez"><Layers className="w-4 h-4" /> Completa</button>
@@ -119,17 +127,21 @@ const ContagemBlocos: React.FC<Props> = ({ onAbrirContagem, onVerResultado, onHi
 
       {erro && <div className="rounded-xl p-3 text-sm border bg-red-500/10 border-red-500/30 text-red-400 flex items-center gap-2"><AlertTriangle className="w-4 h-4" /> {erro}</div>}
 
-      {r && painel && (
+      {modo === 'calendario' && painel && estoqueId && (
+        <ContagemCalendario estoqueId={estoqueId} estoqueNome={painel.estoque.nome} blocos={painel.blocos} onAbrirContagem={onAbrirContagem} onAgendaMudou={carregar} />
+      )}
+
+      {modo === 'hoje' && r && painel && (
         <div className="bg-[#12141f] rounded-2xl border border-white/10 px-5 py-3.5 flex items-center gap-3 flex-wrap">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-wine to-gold flex items-center justify-center"><ClipboardCheck className="w-5 h-5 text-white" /></div>
           <div className="flex-1 min-w-0">
             <p className="text-white font-bold">{painel.estoque.nome} · {dayjs(painel.hoje).format('DD/MM')}: {r.concluidos_hoje} de {r.devidos_hoje} {r.devidos_hoje === 1 ? 'bloco concluído' : 'blocos concluídos'}</p>
-            <p className="text-sm text-white/60">{r.faltam_itens > 0 ? <><span className="text-amber-300 font-semibold">faltam {r.faltam_itens} itens</span> para fechar o dia</> : <span className="text-green-300">dia fechado, nada pendente</span>}</p>
+            <p className="text-sm text-white/60">{r.faltam_itens > 0 ? <><span className="text-amber-300 font-semibold">faltam {r.faltam_itens} itens</span> para fechar o dia</> : <span className="text-green-300">dia fechado, nada pendente</span>}{painel.tem_agenda ? <span className="text-white/40"> · pelo calendário</span> : <span className="text-white/40"> · pelo ciclo (sem calendário montado)</span>}</p>
           </div>
         </div>
       )}
 
-      {loading && !painel ? (
+      {modo === 'hoje' && (loading && !painel ? (
         <div className="flex items-center justify-center py-24"><Loader2 className="w-8 h-8 animate-spin text-white/30" /></div>
       ) : (
         <div className="bg-[#12141f] rounded-2xl border border-white/10 overflow-hidden">
@@ -188,7 +200,7 @@ const ContagemBlocos: React.FC<Props> = ({ onAbrirContagem, onVerResultado, onHi
             </tbody>
           </table>
         </div>
-      )}
+      ))}
 
       {antigas.length > 0 && (
         <div className="bg-[#12141f] rounded-2xl border border-white/10 overflow-hidden">
