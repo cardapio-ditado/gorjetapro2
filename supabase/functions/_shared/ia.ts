@@ -32,6 +32,24 @@ function aceitaFerramentaForcada(modelo: string): boolean {
   return !/^claude-(fable|mythos)/.test(modelo);
 }
 
+/**
+ * Modelos que aceitam raciocínio adaptativo e nível de esforço.
+ * Os mais antigos (Haiku 4.5, Sonnet 4.5 e anteriores) recusam esses campos,
+ * então neles a chamada vai sem eles.
+ */
+function aceitaRaciocinio(modelo: string): boolean {
+  return /^claude-(fable|mythos|opus-(5|4-6|4-7|4-8)|sonnet-(5|4-6))/.test(modelo);
+}
+
+/** Só inclui thinking e effort quando o modelo aceita. */
+function opcoesRaciocinio(modelo: string, esforco?: Esforco) {
+  if (!aceitaRaciocinio(modelo)) return {};
+  return {
+    thinking: { type: "adaptive" as const },
+    output_config: { effort: esforco ?? "medium" },
+  };
+}
+
 const IMAGENS_SUPORTADAS = ["image/jpeg", "image/png", "image/gif", "image/webp"];
 
 export interface Anexo {
@@ -166,8 +184,7 @@ export async function responderTexto(p: PedidoIA): Promise<RespostaIA<string>> {
       model: modelo,
       max_tokens: p.maxTokens ?? 8000,
       system: p.system,
-      thinking: { type: "adaptive" },
-      output_config: { effort: p.esforco ?? "medium" },
+      ...opcoesRaciocinio(modelo, p.esforco),
       messages: montarMensagens(p),
     });
     msg = await stream.finalMessage();
@@ -220,8 +237,7 @@ export async function extrairJson<T>(p: PedidoJson): Promise<RespostaIA<T>> {
       model: modelo,
       max_tokens: p.maxTokens ?? 16000,
       system: `${p.system}\n\nResponda sempre chamando a ferramenta "${p.nome}". Não escreva texto fora dela.`,
-      thinking: { type: "adaptive" },
-      output_config: { effort: p.esforco ?? "medium" },
+      ...opcoesRaciocinio(modelo, p.esforco),
       tools: [ferramenta],
       tool_choice: aceitaFerramentaForcada(modelo)
         ? { type: "tool", name: p.nome }
