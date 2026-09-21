@@ -1,10 +1,85 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { corsIA as corsHeaders, extrairJson } from "../_shared/ia.ts";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
-};
+interface AnaliseDISC {
+  resumo: string;
+  pontos_fortes: string[];
+  pontos_fracos: string[];
+  areas_desenvolvimento: string[];
+  estilo_comunicacao: string;
+  estilo_lideranca: string;
+  como_motivar: string;
+  como_desafia: string;
+  visao_equipe: string;
+  visao_trabalho: string;
+}
+
+const SCHEMA_DISC = {
+  type: "object",
+  properties: {
+    resumo: {
+      type: "string",
+      description: "2-3 frases descrevendo o perfil de forma positiva e específica",
+    },
+    pontos_fortes: {
+      type: "array",
+      items: { type: "string" },
+      description: "4 forças específicas para o contexto de bar/restaurante",
+      minItems: 4,
+      maxItems: 4,
+    },
+    pontos_fracos: {
+      type: "array",
+      items: { type: "string" },
+      description: "2 pontos a desenvolver, em tom construtivo",
+      minItems: 2,
+      maxItems: 2,
+    },
+    areas_desenvolvimento: {
+      type: "array",
+      items: { type: "string" },
+      description: "2 áreas para crescimento profissional",
+      minItems: 2,
+      maxItems: 2,
+    },
+    estilo_comunicacao: {
+      type: "string",
+      description: "Como comunicar com esta pessoa (1-2 frases práticas)",
+    },
+    estilo_lideranca: {
+      type: "string",
+      description: "Estilo de liderança desta pessoa (1-2 frases)",
+    },
+    como_motivar: {
+      type: "string",
+      description: "O que motiva e engaja esta pessoa no trabalho (1-2 frases)",
+    },
+    como_desafia: {
+      type: "string",
+      description: "O que gera estresse ou desconforto nesta pessoa (1-2 frases)",
+    },
+    visao_equipe: {
+      type: "string",
+      description: "Como esta pessoa se comporta e contribui na equipe (2-3 frases)",
+    },
+    visao_trabalho: {
+      type: "string",
+      description: "Como esta pessoa trabalha, seu ritmo e estilo (2-3 frases)",
+    },
+  },
+  required: [
+    "resumo",
+    "pontos_fortes",
+    "pontos_fracos",
+    "areas_desenvolvimento",
+    "estilo_comunicacao",
+    "estilo_lideranca",
+    "como_motivar",
+    "como_desafia",
+    "visao_equipe",
+    "visao_trabalho",
+  ],
+} as const;
 
 const fallback = (dominante: string, secundario: string) => ({
   resumo: `Perfil ${dominante}/${secundario} com características marcantes de ${dominante === 'D' ? 'liderança e foco em resultados' : dominante === 'I' ? 'entusiasmo e comunicação' : dominante === 'S' ? 'estabilidade e lealdade' : 'precisão e qualidade'}.`,
@@ -34,75 +109,37 @@ Deno.serve(async (req: Request) => {
     return new Response(null, { status: 200, headers: corsHeaders });
   }
 
+  // Guardados fora do try para que o fallback funcione mesmo se a IA falhar.
+  let dominante = "D";
+  let secundario = "I";
+
   try {
-    const { nome, scoreD, scoreI, scoreS, scoreC, dominante, secundario } = await req.json();
+    const corpo = await req.json();
+    const { nome, scoreD, scoreI, scoreS, scoreC } = corpo;
+    dominante = corpo.dominante ?? "D";
+    secundario = corpo.secundario ?? "I";
 
-    const apiKey = Deno.env.get("ANTHROPIC_API_KEY");
-    if (!apiKey) {
-      return new Response(JSON.stringify(fallback(dominante, secundario)), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const resp = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
-        max_tokens: 1200,
-        system: `Você é especialista em metodologia DISC aplicada a bares e restaurantes brasileiros.
-Analise o perfil DISC e retorne APENAS JSON válido (sem markdown, sem explicações):
-{
-  "resumo": "2-3 frases descrevendo o perfil de forma positiva e específica",
-  "pontos_fortes": ["força 1 específica para bar/restaurante", "força 2", "força 3", "força 4"],
-  "pontos_fracos": ["ponto a desenvolver 1 (tom construtivo)", "ponto a desenvolver 2"],
-  "areas_desenvolvimento": ["área 1 para crescimento profissional", "área 2"],
-  "estilo_comunicacao": "como comunicar com esta pessoa (1-2 frases práticas)",
-  "estilo_lideranca": "estilo de liderança desta pessoa (1-2 frases)",
-  "como_motivar": "o que motiva e engaja esta pessoa no trabalho (1-2 frases)",
-  "como_desafia": "o que gera estresse ou desconforto nesta pessoa (1-2 frases)",
-  "visao_equipe": "como esta pessoa se comporta e contribui na equipe (2-3 frases)",
-  "visao_trabalho": "como esta pessoa trabalha, seu ritmo e estilo (2-3 frases)"
-}`,
-        messages: [{
-          role: "user",
-          content: `Nome: ${nome}
+    const { dados: analise } = await extrairJson<AnaliseDISC>({
+      nome: "registrar_analise_disc",
+      descricao: "Registra a análise do perfil DISC do colaborador para bar/restaurante.",
+      schema: SCHEMA_DISC,
+      system:
+        `Você é especialista em metodologia DISC aplicada a bares e restaurantes brasileiros.
+Analise o perfil DISC do colaborador.`,
+      prompt: `Nome: ${nome}
 Scores DISC: D=${scoreD}% I=${scoreI}% S=${scoreS}% C=${scoreC}%
 Perfil dominante: ${dominante} / Secundário: ${secundario}
 Contexto: colaborador de bar/restaurante (garçom, cozinheiro, atendente, barman, etc.)
 Seja específico e prático para o contexto de hospitalidade e serviços.`,
-        }],
-      }),
     });
-
-    if (!resp.ok) {
-      const err = await resp.json().catch(() => ({}));
-      throw new Error((err as any)?.error?.message ?? `HTTP ${resp.status}`);
-    }
-
-    const iaData = await resp.json();
-    const texto = iaData.content?.[0]?.text ?? "";
-
-    let analise;
-    try {
-      // Remove possível markdown wrapper
-      const clean = texto.replace(/^```json\s*/i, "").replace(/\s*```$/i, "").trim();
-      analise = JSON.parse(clean);
-    } catch {
-      analise = fallback(dominante, secundario);
-    }
 
     return new Response(JSON.stringify(analise), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
-  } catch (err: any) {
+  } catch (err) {
     // Retorna fallback em vez de erro para não quebrar o fluxo
-    const body = await req.clone().json().catch(() => ({ dominante: "D", secundario: "I" }));
-    return new Response(JSON.stringify(fallback(body.dominante ?? "D", body.secundario ?? "I")), {
+    console.error("Erro na análise DISC:", err);
+    return new Response(JSON.stringify(fallback(dominante, secundario)), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }

@@ -1,13 +1,60 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { corsIA as corsHeaders, extrairJson } from "../_shared/ia.ts";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
+const SCHEMA_LOTE = {
+  type: "object",
+  properties: {
+    data_vencimento_geral: { type: ["string", "null"], description: "YYYY-MM-DD" },
+    contexto: { type: "string", description: "Descrição do contexto do lote" },
+    lancamentos: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          nome_pessoa: { type: "string", description: "Nome extraído. Ex.: kadu, augusto, cristiano" },
+          descricao: { type: "string", description: "Formato: [Tipo] - [Nome Real]" },
+          valor: { type: "number", description: "Decimal com ponto. Ex.: 1000.00" },
+          data_vencimento: { type: "string", description: "YYYY-MM-DD" },
+          fornecedor_match: {
+            type: "object",
+            properties: {
+              encontrado: { type: "boolean" },
+              tipo: { type: ["string", "null"], enum: ["colaborador", "fornecedor", null] },
+              id: { type: ["string", "null"], description: "UUID do cadastro, ou null" },
+              nome_cadastrado: { type: ["string", "null"], description: "Nome exato do banco" },
+              confianca: { type: "number", description: "0.0 a 1.0" },
+            },
+            required: ["encontrado", "confianca"],
+          },
+          categoria_sugerida: {
+            type: "object",
+            properties: {
+              id: { type: ["string", "null"] },
+              nome: { type: ["string", "null"] },
+            },
+            required: ["id", "nome"],
+          },
+          tipo_conta: {
+            type: "string",
+            enum: ["salario", "ferias", "freelancer", "vale", "outros"],
+          },
+          observacoes: { type: ["string", "null"] },
+        },
+        required: [
+          "nome_pessoa",
+          "descricao",
+          "valor",
+          "data_vencimento",
+          "fornecedor_match",
+          "categoria_sugerida",
+          "tipo_conta",
+        ],
+      },
+    },
+  },
+  required: ["contexto", "lancamentos"],
 };
-
-const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
 
 function escaparTexto(texto: string): string {
   return texto
@@ -181,71 +228,18 @@ REGRAS CRITICAS:
 
 6. VALOR:
    - Extraia apenas numeros
-   - Formato decimal: use ponto (1000.00, 1750.00)
-
-Retorne APENAS JSON valido no formato:
-{
-  "data_vencimento_geral": "YYYY-MM-DD",
-  "contexto": "descricao do contexto",
-  "lancamentos": [
-    {
-      "nome_pessoa": "nome extraido (ex: kadu, augusto, cristiano)",
-      "descricao": "Salario Novembro/2025 - [Nome Real]",
-      "valor": 1000.00,
-      "data_vencimento": "YYYY-MM-DD",
-      "fornecedor_match": {
-        "encontrado": true/false,
-        "tipo": "colaborador" ou "fornecedor",
-        "id": "uuid ou null",
-        "nome_cadastrado": "nome exato do banco",
-        "confianca": 0.0 a 1.0
-      },
-      "categoria_sugerida": {
-        "id": "uuid",
-        "nome": "nome da categoria"
-      },
-      "tipo_conta": "salario|ferias|freelancer|vale|outros",
-      "observacoes": "observacoes"
-    }
-  ]
-}`;
+   - Formato decimal: use ponto (1000.00, 1750.00)`;
 
     console.log('[IA] Extraindo e estruturando lancamentos...');
 
-    const extractionResponse = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${OPENAI_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: "gpt-4o",
-        messages: [
-          {
-            role: "system",
-            content: extractionPrompt,
-          },
-          {
-            role: "user",
-            content: mensagem,
-          },
-        ],
-        response_format: {
-          type: "json_object",
-        },
-        max_tokens: 2000,
-        temperature: 0.1,
-      }),
+    const { dados: estruturado } = await extrairJson<any>({
+      nome: "estruturar_lancamentos",
+      descricao: "Registra os lançamentos financeiros extraídos da mensagem.",
+      schema: SCHEMA_LOTE,
+      esforco: "high",
+      system: extractionPrompt,
+      prompt: mensagem,
     });
-
-    if (!extractionResponse.ok) {
-      const errorText = await extractionResponse.text();
-      console.error(`OpenAI API error: ${extractionResponse.status} - ${errorText}`);
-      throw new Error("Erro ao processar lancamentos com IA");
-    }
-
-    const extractionData = await extractionResponse.json();
-    const estruturado = JSON.parse(extractionData.choices[0].message.content);
 
     console.log('[IA] Estrutura extraida');
 

@@ -1,12 +1,11 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { responderTexto } from "../_shared/ia.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
 };
-
-const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
 
 interface Message {
   role: 'user' | 'assistant' | 'system';
@@ -61,35 +60,33 @@ IMPORTANTE:
 - Seja objetivo e eficiente
 - Não faça perguntas pessoais inadequadas (idade, estado civil, etc.)`;
 
-    const messages: Message[] = [
-      { role: 'system', content: systemPrompt },
-      ...(conversa_anterior || []),
-      { role: 'user', content: mensagem }
-    ];
+    // O histórico vai separado do system: a instrução de sistema é um campo próprio
+    const historico = ((conversa_anterior || []) as Message[])
+      .filter((msg) => msg.role === 'user' || msg.role === 'assistant')
+      .map((msg) => ({ role: msg.role as 'user' | 'assistant', content: msg.content }));
 
-    // Chamar OpenAI
-    const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${OPENAI_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages,
-        temperature: 0.7,
-        max_tokens: 500
-      }),
-    });
-
-    if (!openaiResponse.ok) {
-      const error = await openaiResponse.text();
-      console.error('Erro OpenAI:', error);
-      throw new Error('Erro ao processar com IA');
+    // A conversa salva começa com a mensagem de boas-vindas da IA, mas o histórico
+    // precisa começar por uma fala do candidato. Recolocamos a abertura que o
+    // front-end envia no início da pré-entrevista.
+    if (historico.length > 0 && historico[0].role === 'assistant') {
+      historico.unshift({
+        role: 'user',
+        content: 'Olá! Estou pronto para começar a pré-entrevista.',
+      });
     }
 
-    const openaiData = await openaiResponse.json();
-    const resposta = openaiData.choices[0].message.content;
+    // Chamar a IA
+    const { dados: resposta, uso } = await responderTexto({
+      system: systemPrompt,
+      prompt: mensagem,
+      historico,
+      maxTokens: 2000,
+      esforco: 'low',
+    });
+
+    console.log(
+      `Resposta da pré-entrevista gerada (${uso.modelo}): ${uso.tokens_total} tokens em ${uso.tempo_ms}ms`
+    );
 
     return new Response(
       JSON.stringify({ resposta }),

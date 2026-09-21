@@ -1,5 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { extrairJson } from "../_shared/ia.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -59,6 +60,78 @@ INSTRUÇÕES DE ANÁLISE:
 - LEMBRE-SE: Você é um assistente. A decisão final é SEMPRE humana.
 `;
 
+const SCHEMA_ANALISE_CURRICULO = {
+  type: "object",
+  properties: {
+    notas: {
+      type: "object",
+      description:
+        "Uma nota de 0 a 100 para CADA competência obrigatória e desejável. A chave é o nome exato da competência como foi informada; o valor é a nota.",
+      additionalProperties: { type: "number" },
+    },
+    pontuacao_geral: {
+      type: "number",
+      description: "Pontuação geral do candidato, de 0 a 100",
+    },
+    pontos_fortes: {
+      type: "array",
+      description: "Pontos fortes em relação aos valores da empresa",
+      items: { type: "string" },
+    },
+    pontos_fracos: {
+      type: "array",
+      description: "Pontos fracos e red flags em relação aos valores da empresa",
+      items: { type: "string" },
+    },
+    alinhamento_valores: {
+      type: "object",
+      description: "Nota de 0 a 100 de alinhamento com cada um dos 5 valores",
+      properties: {
+        hospitalidade: { type: "number" },
+        respeito: { type: "number" },
+        qualidade: { type: "number" },
+        inovacao: { type: "number" },
+        proatividade: { type: "number" },
+      },
+      required: ["hospitalidade", "respeito", "qualidade", "inovacao", "proatividade"],
+    },
+    parecer: {
+      type: "string",
+      description: "Parecer detalhado sobre o candidato",
+    },
+    recomendacao: {
+      type: "string",
+      description: "Recomendação final sobre o candidato",
+      enum: ["apto", "banco_talentos", "nao_recomendado"],
+    },
+    justificativa: {
+      type: "string",
+      description: "Justificativa objetiva e construtiva da recomendação",
+    },
+  },
+  required: [
+    "notas",
+    "pontuacao_geral",
+    "pontos_fortes",
+    "pontos_fracos",
+    "alinhamento_valores",
+    "parecer",
+    "recomendacao",
+    "justificativa",
+  ],
+} as const;
+
+interface AnaliseCurriculo {
+  notas: Record<string, number>;
+  pontuacao_geral: number;
+  pontos_fortes: string[];
+  pontos_fracos: string[];
+  alinhamento_valores: Record<string, number>;
+  parecer: string;
+  recomendacao: "apto" | "banco_talentos" | "nao_recomendado";
+  justificativa: string;
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 200, headers: corsHeaders });
@@ -67,11 +140,6 @@ Deno.serve(async (req: Request) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const openaiKey = Deno.env.get("OPENAI_API_KEY");
-
-    if (!openaiKey) {
-      throw new Error("OPENAI_API_KEY não configurada");
-    }
 
     const supabase = createClient(supabaseUrl, supabaseKey);
     const { candidatura_id, curriculo_texto } = await req.json();
@@ -125,45 +193,22 @@ Avalie OBJETIVAMENTE:
 2. Identifique pontos fortes e fracos em relação aos nossos VALORES (Hospitalidade, Respeito, Qualidade, Inovação, Proatividade)
 3. Faça uma recomendação: "apto", "banco_talentos" ou "nao_recomendado"
 4. Justifique sua análise de forma objetiva e construtiva
-
-Responda APENAS em JSON no formato:
-{
-  "notas": {"competencia": nota},
-  "pontuacao_geral": numero_0_a_100,
-  "pontos_fortes": ["ponto1", "ponto2"],
-  "pontos_fracos": ["ponto1", "ponto2"],
-  "alinhamento_valores": {"hospitalidade": nota, "respeito": nota, "qualidade": nota, "inovacao": nota, "proatividade": nota},
-  "parecer": "texto_detalhado",
-  "recomendacao": "apto" | "banco_talentos" | "nao_recomendado",
-  "justificativa": "texto"
-}
 `;
 
-    // Chamar OpenAI
-    const openaiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${openaiKey}`,
-      },
-      body: JSON.stringify({
-        model: "gpt-4o-mini",
-        messages: [
-          { role: "system", content: CULTURA_DITADO_POPULAR },
-          { role: "user", content: prompt }
-        ],
-        response_format: { type: "json_object" },
-        temperature: 0.3,
-      }),
+    // Analisar com a IA
+    const { dados: analise, uso } = await extrairJson<AnaliseCurriculo>({
+      nome: "registrar_analise_curriculo",
+      descricao:
+        "Registra a análise do currículo do candidato: notas por competência, alinhamento com os valores e a recomendação final.",
+      schema: SCHEMA_ANALISE_CURRICULO,
+      esforco: "high",
+      system: CULTURA_DITADO_POPULAR,
+      prompt,
     });
 
-    if (!openaiResponse.ok) {
-      const errorData = await openaiResponse.text();
-      throw new Error(`Erro OpenAI: ${errorData}`);
-    }
-
-    const openaiData = await openaiResponse.json();
-    const analise = JSON.parse(openaiData.choices[0].message.content);
+    console.log(
+      `Análise de currículo concluída (${uso.modelo}): ${uso.tokens_total} tokens em ${uso.tempo_ms}ms`
+    );
 
     // Atualizar candidatura com análise
     const { error: errUpdate } = await supabase

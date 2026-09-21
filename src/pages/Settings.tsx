@@ -13,8 +13,6 @@ import {
   UserCog,
   ShieldCheck,
   Bot,
-  Eye,
-  EyeOff,
   Save,
   CheckCircle,
   Settings as SettingsIcon
@@ -26,10 +24,8 @@ const Settings: React.FC = () => {
   const [activeTab, setActiveTab] = useState('profile');
 
   // Estados para configurações de IA
-  const [openaiApiKey, setOpenaiApiKey] = useState('');
-  const [openaiModel, setOpenaiModel] = useState('gpt-4o-mini');
+  const [iaModelo, setIaModelo] = useState('claude-opus-5');
   const [iaHabilitada, setIaHabilitada] = useState(true);
-  const [showApiKey, setShowApiKey] = useState(false);
   const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
 
@@ -44,17 +40,14 @@ const Settings: React.FC = () => {
       const { data, error } = await supabase
         .from('configuracoes_sistema')
         .select('chave, valor')
-        .in('chave', ['openai_api_key', 'openai_model', 'ia_habilitada']);
+        .in('chave', ['ia_modelo', 'ia_habilitada']);
 
       if (error) throw error;
 
       data?.forEach((config: any) => {
         switch (config.chave) {
-          case 'openai_api_key':
-            setOpenaiApiKey(config.valor || '');
-            break;
-          case 'openai_model':
-            setOpenaiModel(config.valor || 'gpt-4o-mini');
+          case 'ia_modelo':
+            setIaModelo(config.valor || 'claude-opus-5');
             break;
           case 'ia_habilitada':
             setIaHabilitada(config.valor === 'true');
@@ -73,16 +66,11 @@ const Settings: React.FC = () => {
     try {
       // Atualizar configurações usando service role
       const { error } = await supabase.rpc('atualizar_configuracao_sistema', {
-        p_chave: 'openai_api_key',
-        p_valor: openaiApiKey
+        p_chave: 'ia_modelo',
+        p_valor: iaModelo
       });
 
       if (error) throw error;
-
-      await supabase.rpc('atualizar_configuracao_sistema', {
-        p_chave: 'openai_model',
-        p_valor: openaiModel
-      });
 
       await supabase.rpc('atualizar_configuracao_sistema', {
         p_chave: 'ia_habilitada',
@@ -503,74 +491,36 @@ const Settings: React.FC = () => {
                     </label>
                   </div>
 
-                  {/* API Key da OpenAI */}
-                  <div>
-                    <label className="block text-sm font-medium text-white/80 mb-2">
-                      Chave de API da OpenAI
-                      <span className="text-red-500 ml-1">*</span>
-                    </label>
-                    <div className="relative">
-                      <input
-                        type={showApiKey ? 'text' : 'password'}
-                        value={openaiApiKey}
-                        onChange={(e) => setOpenaiApiKey(e.target.value)}
-                        placeholder="sk-..."
-                        className="w-full px-4 py-2 pr-12 bg-[#12141f]/5 border border-white/20 rounded-lg text-white focus:ring-2 focus:ring-wine focus:border-transparent"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowApiKey(!showApiKey)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/80"
-                      >
-                        {showApiKey ? (
-                          <EyeOff className="w-5 h-5" />
-                        ) : (
-                          <Eye className="w-5 h-5" />
-                        )}
-                      </button>
-                    </div>
-                    <p className="text-xs text-white/60 mt-2">
-                      Obtenha sua chave em{' '}
-                      <a
-                        href="https://platform.openai.com/api-keys"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-400 hover:underline"
-                      >
-                        platform.openai.com/api-keys
-                      </a>
-                    </p>
-                  </div>
-
                   {/* Modelo */}
                   <div>
                     <label className="block text-sm font-medium text-white/80 mb-2">
-                      Modelo da OpenAI
+                      Modelo do Claude
                     </label>
                     <select
-                      value={openaiModel}
-                      onChange={(e) => setOpenaiModel(e.target.value)}
+                      value={iaModelo}
+                      onChange={(e) => setIaModelo(e.target.value)}
                       className="w-full px-4 py-2 bg-[#12141f]/5 border border-white/20 rounded-lg text-white placeholder-white/30 focus:ring-2 focus:ring-wine focus:border-transparent"
                     >
-                      <option value="gpt-4o-mini">GPT-4o Mini (Rápido e econômico)</option>
-                      <option value="gpt-4o">GPT-4o (Melhor performance)</option>
-                      <option value="gpt-3.5-turbo">GPT-3.5 Turbo (Mais barato)</option>
+                      <option value="claude-opus-5">Opus 5 (melhor leitura de documentos)</option>
+                      <option value="claude-sonnet-5">Sonnet 5 (equilíbrio entre custo e qualidade)</option>
+                      <option value="claude-haiku-4-5">Haiku 4.5 (mais barato e mais rápido)</option>
                     </select>
                     <p className="text-xs text-white/60 mt-2">
-                      <strong>Recomendado:</strong> GPT-4o Mini oferece ótimo custo-benefício
+                      Vale para todas as funções de IA do sistema. A chave de acesso fica só no
+                      servidor, nunca no banco nem nesta tela.
                     </p>
                   </div>
 
                   {/* Info Box */}
                   <div className="bg-[#12141f]/5 border border-white/10 rounded-lg p-4">
                     <h4 className="text-sm font-medium text-white mb-2">
-                      💡 Como funciona o Super Agente IA
+                      💡 Onde a IA é usada
                     </h4>
                     <ul className="text-xs text-white/60 space-y-1">
-                      <li>• Processa suas perguntas em linguagem natural</li>
-                      <li>• Acessa dados do sistema em tempo real (compras, estoque, RH, financeiro)</li>
-                      <li>• Gera respostas contextualizadas e humanizadas</li>
-                      <li>• Mantém histórico de conversas para contexto contínuo</li>
+                      <li>• Estoque: leitura de nota, pedido, conferência de recebimento e importação de vendas</li>
+                      <li>• Financeiro: leitura de boleto, lançamento em lote e chat financeiro</li>
+                      <li>• RH: currículo, DISC, pré-entrevista, entrevista e férias</li>
+                      <li>• A transcrição de áudio da entrevista usa o Whisper, que lê áudio</li>
                     </ul>
                   </div>
 
@@ -578,7 +528,7 @@ const Settings: React.FC = () => {
                   <div className="flex justify-end pt-4 border-t">
                     <button
                       onClick={salvarConfiguracoesIA}
-                      disabled={loading || !openaiApiKey}
+                      disabled={loading}
                       className="flex items-center px-6 py-2.5 bg-wine text-white rounded-lg hover:bg-[#6a1a25] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
                       <Save className="w-5 h-5 mr-2" />

@@ -1,4 +1,5 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { extrairJson } from "../_shared/ia.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -11,6 +12,103 @@ interface AnaliseFeriasRequest {
   colaborador_id?: string;
 }
 
+const SISTEMA_FERIAS =
+  "Você é um especialista em Recursos Humanos e legislação trabalhista brasileira (CLT). Sempre responda em português do Brasil.";
+
+const SCHEMA_ALERTAS_FERIAS = {
+  type: "object",
+  properties: {
+    resumo_geral: {
+      type: "string",
+      description: "Resumo geral da situação das férias pendentes",
+    },
+    alertas_criticos: {
+      type: "array",
+      description: "Um item para cada alerta crítico (urgente ou alto)",
+      items: {
+        type: "object",
+        properties: {
+          colaborador: {
+            type: "string",
+            description: "Nome do colaborador, exatamente como aparece nos dados enviados",
+          },
+          situacao: { type: "string", description: "Análise da situação" },
+          riscos: {
+            type: "array",
+            description: "Riscos trabalhistas envolvidos",
+            items: { type: "string" },
+          },
+          recomendacoes: {
+            type: "array",
+            description: "Recomendações imediatas",
+            items: { type: "string" },
+          },
+          periodos_sugeridos: {
+            type: "array",
+            description: "Sugestões de período para agendamento",
+            items: { type: "string" },
+          },
+          observacoes: {
+            type: "string",
+            description: "Considerações sobre fracionamento, se aplicável",
+          },
+        },
+        required: [
+          "colaborador",
+          "situacao",
+          "riscos",
+          "recomendacoes",
+          "periodos_sugeridos",
+          "observacoes",
+        ],
+      },
+    },
+    estatisticas: {
+      type: "object",
+      properties: {
+        total_alertas: { type: "number" },
+        urgentes: { type: "number" },
+        dias_total_vencendo: { type: "number" },
+      },
+      required: ["total_alertas", "urgentes", "dias_total_vencendo"],
+    },
+  },
+  required: ["resumo_geral", "alertas_criticos", "estatisticas"],
+} as const;
+
+const SCHEMA_ESCALA_FERIAS = {
+  type: "object",
+  properties: {
+    escala_sugerida: {
+      type: "array",
+      description: "Escala de férias sugerida para os próximos 6 meses",
+      items: {
+        type: "object",
+        properties: {
+          colaborador_id: { type: "string" },
+          nome: { type: "string" },
+          funcao: { type: "string" },
+          mes_sugerido: { type: "string" },
+          periodo_sugerido: { type: "string" },
+          dias: { type: "number", description: "Quantidade de dias de férias" },
+          justificativa: { type: "string" },
+        },
+        required: [
+          "colaborador_id",
+          "nome",
+          "funcao",
+          "mes_sugerido",
+          "periodo_sugerido",
+          "dias",
+          "justificativa",
+        ],
+      },
+    },
+    observacoes_gerais: { type: "string" },
+  },
+  required: ["escala_sugerida", "observacoes_gerais"],
+} as const;
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, {
@@ -21,11 +119,6 @@ Deno.serve(async (req: Request) => {
 
   try {
     const { action, colaborador_id }: AnaliseFeriasRequest = await req.json();
-    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
-
-    if (!OPENAI_API_KEY) {
-      throw new Error("OPENAI_API_KEY não configurada");
-    }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -49,8 +142,16 @@ Deno.serve(async (req: Request) => {
 
     let prompt = "";
     let analiseDetalhada: any = {};
+    let nomeExtracao = "";
+    let descricaoExtracao = "";
+    let schemaExtracao: Record<string, unknown> = {};
 
     if (action === 'analisar_alertas') {
+      nomeExtracao = "registrar_analise_alertas_ferias";
+      descricaoExtracao =
+        "Registra a análise dos alertas de férias pendentes, com os alertas críticos detalhados e as estatísticas.";
+      schemaExtracao = SCHEMA_ALERTAS_FERIAS;
+
       prompt = `Você é um especialista em Recursos Humanos e Gestão de Férias trabalhistas no Brasil.
 
 Analise os seguintes alertas de férias pendentes e forneça recomendações práticas:
@@ -62,29 +163,14 @@ Para cada alerta crítico (urgente ou alto), forneça:
 2. Riscos trabalhistas envolvidos
 3. Recomendações imediatas
 4. Sugestões de período para agendamento
-5. Considerações sobre fracionamento (se aplicável)
-
-Responda em formato JSON estruturado com as seguintes chaves:
-{
-  "resumo_geral": "string",
-  "alertas_criticos": [
-    {
-      "colaborador": "string",
-      "situacao": "string",
-      "riscos": ["string"],
-      "recomendacoes": ["string"],
-      "periodos_sugeridos": ["string"],
-      "observacoes": "string"
-    }
-  ],
-  "estatisticas": {
-    "total_alertas": number,
-    "urgentes": number,
-    "dias_total_vencendo": number
-  }
-}`;
+5. Considerações sobre fracionamento (se aplicável)`;
 
     } else if (action === 'sugerir_escalas') {
+      nomeExtracao = "registrar_escala_ferias";
+      descricaoExtracao =
+        "Registra a escala de férias sugerida para os próximos 6 meses e as observações gerais.";
+      schemaExtracao = SCHEMA_ESCALA_FERIAS;
+
       // Buscar colaboradores ativos
       const colaboradoresResponse = await fetch(
         `${supabaseUrl}/rest/v1/colaboradores?status=eq.ativo&select=*`,
@@ -112,23 +198,7 @@ Sugira uma escala de férias para os próximos 6 meses que:
 1. Priorize os colaboradores com prazos mais próximos
 2. Evite ter muitas pessoas da mesma função de férias ao mesmo tempo
 3. Considere uma distribuição equilibrada ao longo do semestre
-4. Respeite a CLT brasileira
-
-Responda em formato JSON:
-{
-  "escala_sugerida": [
-    {
-      "colaborador_id": "string",
-      "nome": "string",
-      "funcao": "string",
-      "mes_sugerido": "string",
-      "periodo_sugerido": "string",
-      "dias": number,
-      "justificativa": "string"
-    }
-  ],
-  "observacoes_gerais": "string"
-}`;
+4. Respeite a CLT brasileira`;
 
     } else if (action === 'calcular_periodos') {
       // Calcular períodos para colaborador específico
@@ -167,48 +237,25 @@ Responda em formato JSON:
       );
     }
 
-    // Chamar OpenAI
-    const openaiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${OPENAI_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "gpt-4o-mini",
-        messages: [
-          {
-            role: "system",
-            content: "Você é um especialista em Recursos Humanos e legislação trabalhista brasileira (CLT). Sempre responda em português do Brasil e em formato JSON válido.",
-          },
-          {
-            role: "user",
-            content: prompt,
-          },
-        ],
-        temperature: 0.7,
-        max_tokens: 2000,
-      }),
+    if (!prompt) {
+      throw new Error(`Ação não suportada: ${action}`);
+    }
+
+    // Chamar a IA
+    const { dados, uso } = await extrairJson<any>({
+      nome: nomeExtracao,
+      descricao: descricaoExtracao,
+      schema: schemaExtracao,
+      esforco: "high",
+      system: SISTEMA_FERIAS,
+      prompt,
     });
 
-    if (!openaiResponse.ok) {
-      const errorData = await openaiResponse.text();
-      throw new Error(`Erro na OpenAI: ${errorData}`);
-    }
+    analiseDetalhada = dados;
 
-    const openaiData = await openaiResponse.json();
-    const analiseTexto = openaiData.choices[0].message.content;
-
-    // Parse do JSON retornado pela IA
-    try {
-      analiseDetalhada = JSON.parse(analiseTexto);
-    } catch (e) {
-      // Se não conseguir fazer parse, retornar como texto
-      analiseDetalhada = {
-        analise_texto: analiseTexto,
-        erro_parse: "Não foi possível fazer parse do JSON",
-      };
-    }
+    console.log(
+      `Análise de férias (${action}) concluída (${uso.modelo}): ${uso.tokens_total} tokens em ${uso.tempo_ms}ms`
+    );
 
     // Salvar análise nos alertas
     if (action === 'analisar_alertas' && analiseDetalhada.alertas_criticos) {

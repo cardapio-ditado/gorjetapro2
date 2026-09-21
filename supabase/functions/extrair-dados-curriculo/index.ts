@@ -1,10 +1,83 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { corsIA as corsHeaders, extrairJson, normalizarAnexo } from "../_shared/ia.ts";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
-};
+const AREAS = [
+  "Cozinha",
+  "Bar",
+  "Atendimento",
+  "Caixa",
+  "Delivery",
+  "Limpeza",
+  "Administração",
+  "Marketing",
+  "TI",
+  "RH",
+  "Financeiro",
+  "Produção",
+  "Logística",
+  "Outro",
+];
+
+interface DadosCurriculo {
+  nome: string | null;
+  email: string | null;
+  telefone: string | null;
+  disponibilidade: string;
+  pretensao_salarial: number | null;
+  areas_interesse: string[];
+  observacoes: string;
+}
+
+const SCHEMA_CURRICULO = {
+  type: "object",
+  properties: {
+    nome: { type: ["string", "null"], description: "Nome completo do candidato" },
+    email: { type: ["string", "null"], description: "E-mail do candidato" },
+    telefone: {
+      type: ["string", "null"],
+      description: "Telefone com DDD no formato (XX) XXXXX-XXXX",
+    },
+    disponibilidade: {
+      type: "string",
+      enum: ["imediata", "15_dias", "30_dias", "a_combinar"],
+      description: 'Infira pelo contexto ou use "a_combinar" se não informado',
+    },
+    pretensao_salarial: {
+      type: ["number", "null"],
+      description: "Número em reais (sem R$, sem formatação), use 0 se não informado",
+    },
+    areas_interesse: {
+      type: "array",
+      items: { type: "string", enum: AREAS },
+      description:
+        "Escolha APENAS as áreas desta lista que se aplicam ao candidato. Pode ser um array vazio.",
+    },
+    observacoes: {
+      type: "string",
+      description:
+        "Resumo profissional em 2-3 frases descrevendo experiência, habilidades principais e objetivo profissional. Pode ser uma string vazia.",
+    },
+  },
+  required: [
+    "nome",
+    "email",
+    "telefone",
+    "disponibilidade",
+    "pretensao_salarial",
+    "areas_interesse",
+    "observacoes",
+  ],
+} as const;
+
+const SYSTEM = `Você é um especialista em triagem de currículos para bares e restaurantes.
+Leia o currículo e extraia as informações do candidato.
+
+Regras:
+- areas_interesse: escolha APENAS as que se aplicam desta lista: ${AREAS.join(", ")}
+- disponibilidade: infira pelo contexto ou use "a_combinar" se não informado
+- pretensao_salarial: número em reais (sem R$, sem formatação), use 0 se não informado
+- telefone: com DDD no formato (XX) XXXXX-XXXX
+- Se algum campo não for encontrado, use null (exceto areas_interesse e observacoes que podem ser arrays/strings vazias)`;
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
@@ -12,11 +85,6 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    const anthropicKey = Deno.env.get("ANTHROPIC_API_KEY");
-    if (!anthropicKey) {
-      throw new Error("ANTHROPIC_API_KEY não configurada");
-    }
-
     const formData = await req.formData();
     const file = formData.get("file") as File;
 
@@ -27,135 +95,60 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    const fileBuffer = await file.arrayBuffer();
-    // Chunk-based base64 to avoid call stack overflow on large files
-    const uint8 = new Uint8Array(fileBuffer);
-    let binary = '';
-    const CHUNK = 8192;
-    for (let i = 0; i < uint8.length; i += CHUNK) {
-      binary += String.fromCharCode(...uint8.subarray(i, i + CHUNK));
-    }
-    const base64 = btoa(binary);
     const mimeType = file.type || "application/pdf";
-
     const isPdf = mimeType === "application/pdf";
     const isImage = mimeType.startsWith("image/");
 
-    let messageContent: any[];
+    let anexos: { base64: string; mimeType: string }[] | undefined;
+    let prompt: string;
 
     if (isPdf || isImage) {
-      const mediaType = isPdf ? "application/pdf" : mimeType as "image/jpeg" | "image/png" | "image/gif" | "image/webp";
-      messageContent = [
-        {
-          type: isPdf ? "document" : "image",
-          source: {
-            type: "base64",
-            media_type: mediaType,
-            data: base64,
-          },
-        },
-        {
-          type: "text",
-          text: `Analise este currículo e extraia as informações do candidato. Retorne APENAS um JSON válido com a estrutura abaixo (sem texto adicional, sem markdown, apenas o JSON):
+      const fileBuffer = await file.arrayBuffer();
+      // Chunk-based base64 to avoid call stack overflow on large files
+      const uint8 = new Uint8Array(fileBuffer);
+      let binary = '';
+      const CHUNK = 8192;
+      for (let i = 0; i < uint8.length; i += CHUNK) {
+        binary += String.fromCharCode(...uint8.subarray(i, i + CHUNK));
+      }
+      const base64 = btoa(binary);
 
-{
-  "nome": "nome completo",
-  "email": "email@exemplo.com",
-  "telefone": "(00) 00000-0000",
-  "disponibilidade": "imediata|15_dias|30_dias|a_combinar",
-  "pretensao_salarial": 0,
-  "areas_interesse": ["area1", "area2"],
-  "observacoes": "resumo profissional em 2-3 frases descrevendo experiência, habilidades principais e objetivo profissional"
-}
-
-Regras:
-- areas_interesse: escolha APENAS as que se aplicam desta lista: Cozinha, Bar, Atendimento, Caixa, Delivery, Limpeza, Administração, Marketing, TI, RH, Financeiro, Produção, Logística, Outro
-- disponibilidade: infira pelo contexto ou use "a_combinar" se não informado
-- pretensao_salarial: número em reais (sem R$, sem formatação), use 0 se não informado
-- telefone: com DDD no formato (XX) XXXXX-XXXX
-- Se algum campo não for encontrado, use null (exceto areas_interesse e observacoes que podem ser arrays/strings vazias)`,
-        },
-      ];
+      anexos = [normalizarAnexo(base64, mimeType)];
+      prompt = "Analise este currículo e extraia as informações do candidato.";
     } else {
       // For Word docs or other text-based files, try to read as text
       const text = await file.text();
-      messageContent = [
-        {
-          type: "text",
-          text: `Analise o seguinte currículo e extraia as informações do candidato. Retorne APENAS um JSON válido com a estrutura abaixo:
+      prompt = `Analise o seguinte currículo e extraia as informações do candidato.
 
 CONTEÚDO DO CURRÍCULO:
-${text.slice(0, 8000)}
-
-JSON ESPERADO (retorne apenas isso, sem markdown):
-{
-  "nome": "nome completo",
-  "email": "email@exemplo.com",
-  "telefone": "(00) 00000-0000",
-  "disponibilidade": "imediata|15_dias|30_dias|a_combinar",
-  "pretensao_salarial": 0,
-  "areas_interesse": ["area1", "area2"],
-  "observacoes": "resumo profissional em 2-3 frases"
-}
-
-Regras:
-- areas_interesse: escolha APENAS as que se aplicam: Cozinha, Bar, Atendimento, Caixa, Delivery, Limpeza, Administração, Marketing, TI, RH, Financeiro, Produção, Logística, Outro
-- disponibilidade: infira pelo contexto ou use "a_combinar"
-- pretensao_salarial: número em reais, use 0 se não informado
-- Se algum campo não for encontrado, use null`,
-        },
-      ];
+${text.slice(0, 8000)}`;
     }
 
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": anthropicKey,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-5",
-        max_tokens: 1024,
-        messages: [
-          {
-            role: "user",
-            content: messageContent,
-          },
-        ],
-      }),
+    const { dados, uso } = await extrairJson<DadosCurriculo>({
+      nome: "extrair_dados_curriculo",
+      descricao: "Registra os dados do candidato lidos do currículo.",
+      schema: SCHEMA_CURRICULO,
+      system: SYSTEM,
+      prompt,
+      anexos,
     });
 
-    if (!response.ok) {
-      const err = await response.text();
-      throw new Error(`Erro Anthropic API: ${err}`);
-    }
-
-    const result = await response.json();
-    const rawText = result.content[0]?.text || "{}";
-
-    // Parse JSON from response
-    let dados: any = {};
-    try {
-      // Remove markdown code blocks if present
-      const cleaned = rawText.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
-      dados = JSON.parse(cleaned);
-    } catch {
-      // Try to extract JSON from the text
-      const match = rawText.match(/\{[\s\S]*\}/);
-      if (match) {
-        dados = JSON.parse(match[0]);
-      }
-    }
+    console.log(
+      `Currículo lido (modelo: ${uso.modelo}, tokens: ${uso.tokens_total}, tempo: ${uso.tempo_ms}ms)`
+    );
 
     return new Response(
       JSON.stringify({ success: true, dados }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (error: any) {
+  } catch (error) {
     console.error("Erro ao extrair dados do currículo:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({
+        error: (error instanceof Error && error.message)
+          ? error.message
+          : "Erro ao processar o currículo",
+      }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

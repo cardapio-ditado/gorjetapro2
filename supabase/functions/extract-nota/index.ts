@@ -1,32 +1,81 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { corsIA as corsHeaders, extrairJson, normalizarAnexo } from "../_shared/ia.ts";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
-};
-
-const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
 const MAX_FILE_SIZE = 20 * 1024 * 1024;
 
-async function extractFromImage(imageBase64: string, mimeType: string) {
-  const startTime = Date.now();
-
-  console.log(`Calling OpenAI with mime type: ${mimeType}, base64 length: ${imageBase64.length}`);
-
-  const response = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${OPENAI_API_KEY}`,
+const SCHEMA_NOTA = {
+  type: "object",
+  properties: {
+    emitente: {
+      type: "object",
+      description: "Quem emitiu o documento",
+      properties: {
+        nome: { type: ["string", "null"], description: "Nome completo do fornecedor" },
+        cnpj: { type: ["string", "null"], description: "Apenas números" },
+      },
+      required: ["nome", "cnpj"],
     },
-    body: JSON.stringify({
-      model: "gpt-4o",
-      messages: [
-        {
-          role: "system",
-          content: `Você é um assistente especializado em extração de dados de notas fiscais, pedidos e cupons fiscais brasileiros.
+    documento: {
+      type: "object",
+      properties: {
+        numero: { type: ["string", "null"] },
+        serie: { type: ["string", "null"] },
+        data_emissao: { type: ["string", "null"], description: "Formato YYYY-MM-DD" },
+      },
+      required: ["numero", "serie", "data_emissao"],
+    },
+    itens: {
+      type: "array",
+      description: "Todos os itens do documento, na ordem em que aparecem",
+      items: {
+        type: "object",
+        properties: {
+          descricao: { type: "string", description: "Nome COMPLETO do produto, sem abreviar" },
+          codigo: { type: ["string", "null"], description: "Código ou SKU do produto" },
+          quantidade: { type: "number", description: "Decimal. Ex.: 1.5, 2, 10.25" },
+          unidade: { type: ["string", "null"], description: "UN, KG, LT, CX, PC..." },
+          valor_unitario: { type: "number" },
+          valor_total: { type: "number", description: "quantidade x valor_unitario" },
+          desconto: { type: ["number", "null"] },
+        },
+        required: ["descricao", "codigo", "quantidade", "unidade", "valor_unitario", "valor_total"],
+      },
+    },
+    totais: {
+      type: "object",
+      properties: {
+        valor_produtos: { type: ["number", "null"] },
+        valor_descontos: { type: ["number", "null"] },
+        valor_total: { type: "number", description: "Soma de todos os itens" },
+      },
+      required: ["valor_total"],
+    },
+    observacoes: { type: ["string", "null"] },
+    confidences: {
+      type: "object",
+      description: "Confiança de 0 a 1 em cada parte da leitura",
+      properties: {
+        emitente: { type: "number" },
+        itens: { type: "number" },
+        totais: { type: "number" },
+      },
+      required: ["emitente", "itens", "totais"],
+    },
+  },
+  required: ["emitente", "documento", "itens", "totais", "confidences"],
+} as const;
+
+async function extractFromImage(imageBase64: string, mimeType: string) {
+  console.log(`Lendo documento com a IA: ${mimeType}, base64 length: ${imageBase64.length}`);
+
+  const { dados, uso } = await extrairJson<Record<string, any>>({
+    nome: "registrar_documento",
+    descricao: "Registra os dados lidos da nota fiscal, pedido ou cupom fiscal.",
+    schema: SCHEMA_NOTA,
+    esforco: "high",
+    anexos: [normalizarAnexo(imageBase64, mimeType)],
+    system: `Você é um assistente especializado em extração de dados de notas fiscais, pedidos e cupons fiscais brasileiros.
 
 INSTRUÇÕES CRÍTICAS:
 1. Leia TODOS os itens do documento com MÁXIMA ATENÇÃO aos detalhes
@@ -45,97 +94,18 @@ INSTRUÇÕES CRÍTICAS:
 EXEMPLOS DE LEITURA CORRETA:
 - "ARROZ TIPO 1 5KG" → descricao: "ARROZ TIPO 1 5KG", quantidade: 1, unidade: "UN"
 - "TOMATE 2,500 KG" → descricao: "TOMATE", quantidade: 2.5, unidade: "KG"
-- "REFRIGERANTE 2L CX C/6" → descricao: "REFRIGERANTE 2L", quantidade: 6, unidade: "UN"
-
-Retorne JSON válido nesta estrutura EXATA:
-{
-  "emitente": {
-    "nome": "string (nome completo do fornecedor)",
-    "cnpj": "string ou null (apenas números)"
-  },
-  "documento": {
-    "numero": "string ou null (número da nota/pedido)",
-    "serie": "string ou null",
-    "data_emissao": "string ou null (formato YYYY-MM-DD)"
-  },
-  "itens": [
-    {
-      "descricao": "string (nome COMPLETO do produto)",
-      "codigo": "string ou null (código/SKU do produto)",
-      "quantidade": number (DECIMAL, ex: 1.5, 2, 10.25)",
-      "unidade": "string ou null (UN, KG, LT, CX, PC, etc)",
-      "valor_unitario": number (DECIMAL, ex: 10.50, 2.99)",
-      "valor_total": number (quantidade × valor_unitario)",
-      "desconto": number ou null
-    }
-  ],
-  "totais": {
-    "valor_produtos": number ou null,
-    "valor_descontos": number ou null,
-    "valor_total": number (soma de TODOS os itens)
-  },
-  "observacoes": "string ou null (informações adicionais)",
-  "confidences": {
-    "emitente": 0.95 (0.0-1.0, confiança na extração),
-    "itens": 0.90 (0.0-1.0, confiança nos itens),
-    "totais": 0.95 (0.0-1.0, confiança nos valores)
-  }
-}`,
-        },
-        {
-          role: "user",
-          content: [
-            {
-              type: "text",
-              text: `Analise esta imagem de nota fiscal/pedido com MÁXIMA ATENÇÃO.
+- "REFRIGERANTE 2L CX C/6" → descricao: "REFRIGERANTE 2L", quantidade: 6, unidade: "UN"`,
+    prompt: `Analise este documento (nota fiscal, pedido ou cupom) com MÁXIMA ATENÇÃO.
 
 IMPORTANTE:
 - Leia TODOS os itens listados, linha por linha
 - Extraia TODOS os produtos com seus valores EXATOS
-- Use números decimais onde apropriado (ex: 1.5 não 1,5)
-- Valide: soma dos itens deve bater com o total
-- Se houver tabela de produtos, leia TODAS as linhas
-
-Retorne o JSON completo com TODOS os dados extraídos.`,
-            },
-            {
-              type: "image_url",
-              image_url: {
-                url: `data:${mimeType};base64,${imageBase64}`,
-              },
-            },
-          ],
-        },
-      ],
-      response_format: {
-        type: "json_object",
-      },
-      max_tokens: 4096,
-    }),
+- Use números decimais onde apropriado (ex: 1.5 e não 1,5)
+- Valide: a soma dos itens deve bater com o total
+- Se houver tabela de produtos, leia TODAS as linhas`,
   });
 
-  const processingTime = Date.now() - startTime;
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error(`OpenAI API error: ${response.status} - ${errorText}`);
-    throw new Error(`OpenAI API error: ${response.status} - ${errorText}`);
-  }
-
-  const data = await response.json();
-  const content = data.choices?.[0]?.message?.content;
-
-  if (!content) {
-    throw new Error("No content in OpenAI response");
-  }
-
-  const extracted = JSON.parse(content);
-
-  return {
-    extracted,
-    tokens: data.usage?.total_tokens || 0,
-    processingTime,
-  };
+  return { extracted: dados, uso };
 }
 
 async function calculateFileHash(buffer: Uint8Array): Promise<string> {
@@ -226,7 +196,7 @@ Deno.serve(async (req: Request) => {
 
     const signedUrl = urlData?.signedUrl || "";
 
-    const { extracted, tokens, processingTime } = await extractFromImage(base64, normalizedMimeType);
+    const { extracted, uso } = await extractFromImage(base64, normalizedMimeType);
 
     const somaItens = (extracted.itens || []).reduce(
       (sum: number, item: any) => sum + (Number(item.valor_total) || 0),
@@ -244,9 +214,9 @@ Deno.serve(async (req: Request) => {
         fileType: file.type,
       },
       response_payload: extracted,
-      model_used: "gpt-4o",
-      tokens_used: tokens,
-      processing_time_ms: processingTime,
+      model_used: uso.modelo,
+      tokens_used: uso.tokens_total,
+      processing_time_ms: uso.tempo_ms,
       success: true,
     };
 
@@ -274,8 +244,10 @@ Deno.serve(async (req: Request) => {
           diferenca: Number(diff.toFixed(2)),
         },
         meta: {
-          tokens,
-          processingTime,
+          tokens: uso.tokens_total,
+          processingTime: uso.tempo_ms,
+          modelo: uso.modelo,
+          custoUsd: uso.custo_usd,
         },
       }),
       {

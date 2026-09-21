@@ -1,11 +1,57 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { extrairJson, MODELO_PADRAO, responderTexto } from "../_shared/ia.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
 };
+
+const SCHEMA_CONTAS = {
+  type: "object",
+  properties: {
+    contas: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          descricao: {
+            type: "string",
+            description: "Apenas o tipo de despesa: Aluguel, Energia, Água, Telefone, Internet, Salários...",
+          },
+          valor: { type: "number" },
+          vencimento_relativo: {
+            type: "string",
+            enum: ["hoje", "amanha", "proxima_semana", "proximo_mes", "padrao"],
+          },
+          fornecedor_sugerido: {
+            type: ["string", "null"],
+            description: 'Nome do fornecedor se citado na mensagem (ex.: "ENERGISA"), senão null',
+          },
+        },
+        required: ["descricao", "valor", "vencimento_relativo", "fornecedor_sugerido"],
+      },
+    },
+  },
+  required: ["contas"],
+};
+
+/**
+ * O histórico precisa começar por uma fala do usuário e só aceita os papéis
+ * user e assistant.
+ */
+function historicoValido(
+  contexto: Array<{ role: string; content: string }>,
+): Array<{ role: "user" | "assistant"; content: string }> {
+  const limpo = contexto
+    .filter((m) => (m.role === "user" || m.role === "assistant") && !!m.content)
+    .map((m) => ({ role: m.role as "user" | "assistant", content: m.content }));
+
+  while (limpo.length > 0 && limpo[0].role !== "user") limpo.shift();
+
+  return limpo;
+}
 
 interface ChatRequest {
   mensagem: string;
@@ -52,19 +98,18 @@ Deno.serve(async (req: Request) => {
     const { data: configs } = await supabase
       .from('configuracoes_sistema')
       .select('chave, valor')
-      .in('chave', ['openai_api_key', 'openai_model', 'ia_habilitada']);
+      .in('chave', ['ia_modelo', 'ia_habilitada']);
 
     const configMap = new Map(configs?.map(c => [c.chave, c.valor]) || []);
-    const openaiKey = configMap.get('openai_api_key');
-    const model = configMap.get('openai_model') || 'gpt-4o-mini';
+    const model = (configMap.get('ia_modelo') || '').trim() || MODELO_PADRAO;
     const iaHabilitada = configMap.get('ia_habilitada') === 'true';
 
-    console.log('🤖 IA:', iaHabilitada ? 'ATIVA' : 'INATIVA');
+    console.log('🤖 IA:', iaHabilitada ? 'ATIVA' : 'INATIVA', '| modelo:', model);
 
     let resultado;
 
-    if (iaHabilitada && openaiKey) {
-      resultado = await processarComGPT(mensagem, contexto, supabase, openaiKey, model, usuarioIdValido);
+    if (iaHabilitada) {
+      resultado = await processarComGPT(mensagem, contexto, supabase, model, usuarioIdValido);
     } else {
       resultado = { resposta: '🤖 IA desabilitada. Configure em Configurações > IA', tokens: 0 };
     }
@@ -105,7 +150,6 @@ async function processarComGPT(
   mensagem: string,
   contexto: Array<{ role: string; content: string }>,
   supabase: any,
-  openaiKey: string,
   model: string,
   usuario_id: string | null
 ) {
@@ -114,7 +158,7 @@ async function processarComGPT(
   console.log('🎯 Intenção:', intencao);
 
   if (intencao === 'conversa') {
-    return respostaConversacional(mensagem, openaiKey, model, contexto);
+    return respostaConversacional(mensagem, model, contexto);
   }
 
   console.log('🚀 Executando:', intencao);
@@ -125,7 +169,7 @@ async function processarComGPT(
   try {
     switch (intencao) {
       case 'lancar_conta_pagar':
-        const contasExtraidas = await extrairMultiplasContas(mensagem, openaiKey, model);
+        const contasExtraidas = await extrairMultiplasContas(mensagem, model);
         console.log('  📋 Contas detectadas:', contasExtraidas.length);
         parametros = { total_contas: contasExtraidas.length };
         dadosBanco = await executarLancamentoMultiplo(supabase, contasExtraidas, usuario_id);
@@ -152,7 +196,7 @@ async function processarComGPT(
         break;
       
       default:
-        return respostaConversacional(mensagem, openaiKey, model, contexto);
+        return respostaConversacional(mensagem, model, contexto);
     }
 
     console.log('✅ Ação concluída');
@@ -175,35 +219,18 @@ ${JSON.stringify(dadosBanco, null, 2)}
 Formate uma resposta clara, objetiva e humanizada. Se foram lançadas várias contas, liste todas com seus fornecedores, valores e vencimentos.`;
 
   try {
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${openaiKey}`
-      },
-      body: JSON.stringify({
-        model,
-        messages: [
-          { role: 'system', content: 'Assistente financeiro prestativo.' },
-          ...contexto.slice(-3),
-          { role: 'user', content: promptFormatacao }
-        ],
-        temperature: 0.7,
-        max_tokens: 1500
-      })
+    const { dados: respostaFormatada, uso } = await responderTexto({
+      modelo: model,
+      system: 'Assistente financeiro prestativo de um bar e restaurante.',
+      historico: historicoValido(contexto.slice(-3)),
+      prompt: promptFormatacao,
+      esforco: 'low',
+      maxTokens: 4000,
     });
-
-    if (!response.ok) {
-      throw new Error(`OpenAI: ${response.status}`);
-    }
-
-    const gptData = await response.json();
-    const respostaFormatada = gptData.choices[0].message.content;
-    const tokens = gptData.usage?.total_tokens || 0;
 
     return {
       resposta: respostaFormatada,
-      tokens,
+      tokens: uso.tokens_total,
       acao: { tipo: intencao, parametros, dados: dadosBanco },
       sugestoes: gerarSugestoes(intencao)
     };
@@ -269,22 +296,12 @@ function detectarIntencao(mensagem: string): string {
   return 'conversa';
 }
 
-async function extrairMultiplasContas(mensagem: string, openaiKey: string, model: string): Promise<any[]> {
+async function extrairMultiplasContas(mensagem: string, model: string): Promise<any[]> {
   console.log('  🤖 Usando IA para extrair contas...');
 
   const prompt = `Extraia informações de contas a pagar desta mensagem:
 
 "${mensagem}"
-
-Retorne JSON array com:
-[
-  {
-    "descricao": "descrição curta (ex: Aluguel, Energia, Telefone, Água)",
-    "valor": 123.45,
-    "vencimento_relativo": "hoje" | "amanha" | "proxima_semana" | "proximo_mes" | "padrao",
-    "fornecedor_sugerido": "nome aproximado do fornecedor se mencionado na mensagem, senão null"
-  }
-]
 
 REGRAS IMPORTANTES:
 - Descrição: APENAS o tipo de despesa (Aluguel, Energia, Água, Telefone, Internet, Salários, etc)
@@ -294,36 +311,17 @@ REGRAS IMPORTANTES:
 - fornecedor_sugerido: se usuário mencionar fornecedor específico (ex: "ENERGISA", "AGUAS CUIABA"), senão null`;
 
   try {
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${openaiKey}`
-      },
-      body: JSON.stringify({
-        model,
-        messages: [
-          { role: 'system', content: 'Você extrai dados estruturados de texto. Retorne APENAS o JSON, sem explicações.' },
-          { role: 'user', content: prompt }
-        ],
-        temperature: 0.2,
-        max_tokens: 1000
-      })
+    const { dados } = await extrairJson<{ contas: any[] }>({
+      nome: 'registrar_contas_a_pagar',
+      descricao: 'Registra as contas a pagar citadas na mensagem.',
+      schema: SCHEMA_CONTAS,
+      modelo: model,
+      esforco: 'medium',
+      system: 'Você extrai dados estruturados de mensagens do gestor de um bar e restaurante.',
+      prompt,
     });
 
-    if (!response.ok) {
-      throw new Error(`OpenAI: ${response.status}`);
-    }
-
-    const gptData = await response.json();
-    const respostaTexto = gptData.choices[0].message.content;
-    
-    const jsonMatch = respostaTexto.match(/\[.*\]/s);
-    if (!jsonMatch) {
-      throw new Error('IA não retornou JSON válido');
-    }
-
-    const contas = JSON.parse(jsonMatch[0]);
+    const contas = dados.contas || [];
     console.log('  ✅ IA extraiu:', JSON.stringify(contas, null, 2));
 
     return contas.map((conta: any) => {
@@ -558,33 +556,19 @@ function extrairPeriodo(mensagem: string): string {
 
 async function respostaConversacional(
   mensagem: string,
-  openaiKey: string,
   model: string,
   contexto: Array<{ role: string; content: string }>
 ) {
-  const response = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${openaiKey}`
-    },
-    body: JSON.stringify({
-      model,
-      messages: [
-        { role: 'system', content: 'Assistente financeiro amigável.' },
-        ...contexto.slice(-5),
-        { role: 'user', content: mensagem }
-      ],
-      temperature: 0.8,
-      max_tokens: 500
-    })
+  const { dados, uso } = await responderTexto({
+    modelo: model,
+    system: 'Assistente financeiro amigável de um bar e restaurante. Responda de forma curta e direta.',
+    historico: historicoValido(contexto.slice(-5)),
+    prompt: mensagem,
+    esforco: 'low',
+    maxTokens: 4000,
   });
 
-  const data = await response.json();
-  return {
-    resposta: data.choices[0].message.content,
-    tokens: data.usage?.total_tokens || 0
-  };
+  return { resposta: dados, tokens: uso.tokens_total };
 }
 
 async function executarConsultaCompras(supabase: any, args: any) {

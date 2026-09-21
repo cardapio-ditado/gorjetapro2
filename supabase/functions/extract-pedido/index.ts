@@ -1,14 +1,69 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { corsIA as corsHeaders, extrairJson, normalizarAnexo } from "../_shared/ia.ts";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
-};
-
-const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
 const MAX_FILE_SIZE = 20 * 1024 * 1024;
+
+const SCHEMA_PEDIDO = {
+  type: "object",
+  properties: {
+    fornecedor: {
+      type: "object",
+      properties: {
+        nome: { type: ["string", "null"] },
+        cnpj: { type: ["string", "null"], description: "Apenas números" },
+        telefone: { type: ["string", "null"] },
+        email: { type: ["string", "null"] },
+      },
+      required: ["nome", "cnpj"],
+    },
+    documento: {
+      type: "object",
+      properties: {
+        numero: { type: ["string", "null"] },
+        serie: { type: ["string", "null"] },
+        data_emissao: { type: ["string", "null"], description: "YYYY-MM-DD" },
+        data_entrega: { type: ["string", "null"], description: "YYYY-MM-DD" },
+      },
+      required: ["numero", "data_emissao"],
+    },
+    itens: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          descricao: { type: "string", description: "Exatamente como aparece no documento" },
+          codigo: { type: ["string", "null"] },
+          quantidade: { type: "number" },
+          unidade: { type: ["string", "null"], description: "kg, un, lt, cx, pc..." },
+          valor_unitario: { type: "number" },
+          valor_total: { type: "number" },
+          item_estoque_match: {
+            type: "string",
+            description:
+              "Nome EXATO do item cadastrado que corresponde a esta linha. Vazio se não houver correspondência segura.",
+          },
+        },
+        required: ["descricao", "quantidade", "valor_unitario", "valor_total", "item_estoque_match"],
+      },
+    },
+    totais: {
+      type: "object",
+      properties: {
+        valor_produtos: { type: ["number", "null"] },
+        valor_descontos: { type: ["number", "null"] },
+        valor_frete: { type: ["number", "null"] },
+        valor_total: { type: "number" },
+      },
+      required: ["valor_total"],
+    },
+    observacoes: {
+      type: ["string", "null"],
+      description: "Condições de pagamento, prazo de entrega e outras informações relevantes",
+    },
+  },
+  required: ["fornecedor", "documento", "itens", "totais"],
+};
 
 interface ItemEstoque {
   id: string;
@@ -70,8 +125,6 @@ function matchItemEstoque(itemDescricao: string, itensEstoque: ItemEstoque[]): s
 }
 
 async function extractFromImage(imageBase64: string, mimeType: string, itensEstoque: ItemEstoque[]) {
-  const startTime = Date.now();
-
   const itensConhecidos = itensEstoque.slice(0, 100).map(item => ({
     codigo: item.codigo || '',
     nome: item.nome,
@@ -124,57 +177,17 @@ REGRAS IMPORTANTES:
 - Compare cuidadosamente cada item extra\u00eddo com os ITENS CADASTRADOS
 - Considere varia\u00e7\u00f5es de nome (ex: \"CERVEJA SKOL LATA 350ML\" pode corresponder a \"Cerveja Skol 350ml\")
 - Se n\u00e3o tiver certeza do match, deixe item_estoque_match vazio
-- Seja conservador: s\u00f3 fa\u00e7a match se tiver confian\u00e7a
-- Retorne apenas JSON v\u00e1lido`;
+- Seja conservador: s\u00f3 fa\u00e7a match se tiver confian\u00e7a`;
 
-  const response = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${OPENAI_API_KEY}`,
-    },
-    body: JSON.stringify({
-      model: "gpt-4o",
-      messages: [
-        {
-          role: "user",
-          content: [
-            {
-              type: "text",
-              text: prompt,
-            },
-            {
-              type: "image_url",
-              image_url: {
-                url: `data:${mimeType};base64,${imageBase64}`,
-              },
-            },
-          ],
-        },
-      ],
-      response_format: {
-        type: "json_object",
-      },
-      max_tokens: 4096,
-    }),
+  const { dados: extracted, uso } = await extrairJson<Record<string, any>>({
+    nome: "registrar_pedido",
+    descricao: "Registra os dados lidos do pedido de compra ou nota fiscal.",
+    schema: SCHEMA_PEDIDO,
+    esforco: "high",
+    system: "Voc\u00ea \u00e9 um assistente especializado em extra\u00e7\u00e3o de dados de pedidos de compra e notas fiscais brasileiras.",
+    prompt,
+    anexos: [normalizarAnexo(imageBase64, mimeType)],
   });
-
-  const processingTime = Date.now() - startTime;
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error(`OpenAI API error: ${response.status} - ${errorText}`);
-    throw new Error(`OpenAI API error: ${response.status}`);
-  }
-
-  const data = await response.json();
-  const content = data.choices?.[0]?.message?.content;
-
-  if (!content) {
-    throw new Error("No content in OpenAI response");
-  }
-
-  const extracted = JSON.parse(content);
 
   if (extracted.itens && Array.isArray(extracted.itens)) {
     extracted.itens = extracted.itens.map((item: any) => {
@@ -201,11 +214,7 @@ REGRAS IMPORTANTES:
     });
   }
 
-  return {
-    extracted,
-    tokens: data.usage?.total_tokens || 0,
-    processingTime,
-  };
+  return { extracted, uso };
 }
 
 async function calculateFileHash(buffer: Uint8Array): Promise<string> {
@@ -301,7 +310,7 @@ Deno.serve(async (req: Request) => {
     const signedUrl = urlData?.signedUrl || "";
 
     console.log('Processando com IA...');
-    const { extracted, tokens, processingTime } = await extractFromImage(
+    const { extracted, uso } = await extractFromImage(
       base64,
       normalizedMimeType,
       itensEstoque
@@ -322,9 +331,9 @@ Deno.serve(async (req: Request) => {
         fileType: file.type,
       },
       response_payload: extracted,
-      model_used: "gpt-4o",
-      tokens_used: tokens,
-      processing_time_ms: processingTime,
+      model_used: uso.modelo,
+      tokens_used: uso.tokens_total,
+      processing_time_ms: uso.tempo_ms,
       success: true,
     };
 
@@ -353,8 +362,10 @@ Deno.serve(async (req: Request) => {
           taxa_match: totalItens > 0 ? Math.round((itensComMatch / totalItens) * 100) : 0
         },
         meta: {
-          tokens,
-          processingTime,
+          tokens: uso.tokens_total,
+          processingTime: uso.tempo_ms,
+          modelo: uso.modelo,
+          custoUsd: uso.custo_usd,
         },
       }),
       {

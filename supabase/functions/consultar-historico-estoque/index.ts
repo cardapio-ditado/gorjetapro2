@@ -1,13 +1,26 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { corsIA as corsHeaders, extrairJson, responderTexto } from "../_shared/ia.ts";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
+const SCHEMA_INTENCAO = {
+  type: "object",
+  properties: {
+    item_procurado: {
+      type: "string",
+      description: 'Nome do produto procurado. Ex.: "azeite", "cerveja", "carne"',
+    },
+    tipo_busca: {
+      type: "string",
+      enum: ["ultima_entrada", "ultimas_movimentacoes", "frequencia_compra", "preco_historico"],
+      description: "Que informação o usuário quer",
+    },
+    periodo_dias: {
+      type: "number",
+      description: "Quantos dias para trás buscar. Padrão 90.",
+    },
+  },
+  required: ["item_procurado", "tipo_busca", "periodo_dias"],
 };
-
-const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
 
 interface MovimentacaoHistorico {
   id: string;
@@ -47,57 +60,23 @@ Deno.serve(async (req: Request) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const extractionPrompt = `Voc\u00ea \u00e9 um assistente especializado em an\u00e1lise de estoque.
-
-TAREFA: Extrair informa\u00e7\u00f5es da pergunta do usu\u00e1rio sobre movimenta\u00e7\u00f5es de estoque.
-
-PERGUNTA DO USU\u00c1RIO: "${pergunta}"
-
-Analise a pergunta e extraa:
-1. item_procurado: O nome do produto/item que o usu\u00e1rio est\u00e1 procurando (ex: "azeite", "cerveja", "carne")
-2. tipo_busca: O tipo de informa\u00e7\u00e3o que o usu\u00e1rio quer:
-   - "ultima_entrada" - \u00faltima vez que o produto entrou no estoque
-   - "ultimas_movimentacoes" - hist\u00f3rico recente de movimenta\u00e7\u00f5es
-   - "frequencia_compra" - com que frequ\u00eancia \u00e9 comprado
-   - "preco_historico" - hist\u00f3rico de pre\u00e7os
-3. periodo_dias: Quantos dias para tr\u00e1s buscar (padr\u00e3o 90 dias)
-
-Retorne APENAS JSON v\u00e1lido no formato:
-{
-  "item_procurado": "nome do item",
-  "tipo_busca": "tipo",
-  "periodo_dias": 90
-}`;
-
     console.log('[IA] Extraindo inten\u00e7\u00e3o da pergunta...');
 
-    const extractionResponse = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${OPENAI_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: "gpt-4o-mini",
-        messages: [
-          {
-            role: "user",
-            content: extractionPrompt,
-          },
-        ],
-        response_format: {
-          type: "json_object",
-        },
-        max_tokens: 200,
-      }),
+    const { dados: intencao } = await extrairJson<{
+      item_procurado: string;
+      tipo_busca: string;
+      periodo_dias: number;
+    }>({
+      nome: "entender_pergunta",
+      descricao: "Registra o que o usu\u00e1rio quer saber sobre as movimenta\u00e7\u00f5es de estoque.",
+      schema: SCHEMA_INTENCAO,
+      esforco: "low",
+      maxTokens: 2000,
+      system: "Voc\u00ea \u00e9 um assistente especializado em an\u00e1lise de estoque de bar e restaurante.",
+      prompt: `Extraia as informa\u00e7\u00f5es desta pergunta sobre movimenta\u00e7\u00f5es de estoque.
+
+PERGUNTA DO USU\u00c1RIO: "${pergunta}"`,
     });
-
-    if (!extractionResponse.ok) {
-      throw new Error("Erro ao processar pergunta com IA");
-    }
-
-    const extractionData = await extractionResponse.json();
-    const intencao = JSON.parse(extractionData.choices[0].message.content);
 
     console.log('[IA] Inten\u00e7\u00e3o extra\u00edda:', intencao);
 
@@ -192,9 +171,7 @@ Retorne APENAS JSON v\u00e1lido no formato:
       periodo_consultado: intencao.periodo_dias,
     };
 
-    const analysisPrompt = `Voc\u00ea \u00e9 um assistente especializado em gest\u00e3o de estoque de restaurantes e bares.
-
-PERGUNTA DO USU\u00c1RIO: "${pergunta}"
+    const analysisPrompt = `PERGUNTA DO USU\u00c1RIO: "${pergunta}"
 
 DADOS DO SISTEMA:
 ${JSON.stringify(contexto, null, 2)}
@@ -224,30 +201,12 @@ Responda em portugu\u00eas brasileiro, de forma profissional mas acess\u00edvel.
 
     console.log('[IA] Gerando an\u00e1lise inteligente...');
 
-    const analysisResponse = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${OPENAI_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: "gpt-4o-mini",
-        messages: [
-          {
-            role: "user",
-            content: analysisPrompt,
-          },
-        ],
-        max_tokens: 500,
-      }),
+    const { dados: resposta } = await responderTexto({
+      system: "Voc\u00ea \u00e9 um assistente especializado em gest\u00e3o de estoque de restaurantes e bares.",
+      prompt: analysisPrompt,
+      esforco: "medium",
+      maxTokens: 4000,
     });
-
-    if (!analysisResponse.ok) {
-      throw new Error("Erro ao gerar an\u00e1lise");
-    }
-
-    const analysisData = await analysisResponse.json();
-    const resposta = analysisData.choices[0].message.content;
 
     console.log('[IA] An\u00e1lise conclu\u00edda com sucesso');
 

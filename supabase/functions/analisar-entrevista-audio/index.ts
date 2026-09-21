@@ -1,10 +1,71 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { corsIA as corsHeaders, extrairJson } from "../_shared/ia.ts";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
-};
+interface AnaliseEntrevista {
+  pontuacao: number;
+  recomendacao: "contratar" | "segunda_entrevista" | "banco_talentos" | "recusar";
+  pontos_fortes: string[];
+  pontos_fracos: string[];
+  resumo: string;
+  comunicacao: string;
+  conhecimento_tecnico: string;
+  experiencia: string;
+  fit_cultural: string;
+  motivacao: string;
+  sugestoes: string[];
+}
+
+const SCHEMA_ANALISE = {
+  type: "object",
+  properties: {
+    pontuacao: {
+      type: "number",
+      description: "Pontuação de 0 a 100 do candidato na entrevista",
+    },
+    recomendacao: {
+      type: "string",
+      enum: ["contratar", "segunda_entrevista", "banco_talentos", "recusar"],
+      description: "Recomendação final, coerente com a pontuação",
+    },
+    pontos_fortes: {
+      type: "array",
+      items: { type: "string" },
+      description: "Principais pontos fortes do candidato",
+    },
+    pontos_fracos: {
+      type: "array",
+      items: { type: "string" },
+      description: "Principais pontos fracos do candidato",
+    },
+    resumo: {
+      type: "string",
+      description: "Resumo geral em 2-3 parágrafos sobre o candidato",
+    },
+    comunicacao: { type: "string", description: "Avaliação da comunicação" },
+    conhecimento_tecnico: { type: "string", description: "Avaliação do conhecimento técnico" },
+    experiencia: { type: "string", description: "Avaliação da experiência" },
+    fit_cultural: { type: "string", description: "Avaliação do fit cultural" },
+    motivacao: { type: "string", description: "Avaliação da motivação" },
+    sugestoes: {
+      type: "array",
+      items: { type: "string" },
+      description: "Sugestões para a próxima etapa ou para o desenvolvimento do candidato",
+    },
+  },
+  required: [
+    "pontuacao",
+    "recomendacao",
+    "pontos_fortes",
+    "pontos_fracos",
+    "resumo",
+    "comunicacao",
+    "conhecimento_tecnico",
+    "experiencia",
+    "fit_cultural",
+    "motivacao",
+    "sugestoes",
+  ],
+} as const;
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
@@ -27,6 +88,7 @@ Deno.serve(async (req: Request) => {
       );
     }
 
+    // A transcrição continua na OpenAI (Whisper): o Claude não lê áudio.
     const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
     if (!openaiApiKey) {
       throw new Error('OPENAI_API_KEY não configurada');
@@ -66,68 +128,31 @@ Deno.serve(async (req: Request) => {
 
     console.log('Transcrição concluída, tamanho:', transcricao.length, 'caracteres');
 
-    // Passo 3: Analisar transcrição com GPT
-    console.log('Analisando entrevista com GPT...');
-    const analysisPrompt = `Você é um especialista em Recursos Humanos analisando uma entrevista de emprego. Analise a seguinte transcrição e forneça uma avaliação detalhada em formato JSON.
+    // Passo 3: Analisar transcrição com a IA
+    console.log('Analisando entrevista com a IA...');
 
-TRANSCRIÇÃO DA ENTREVISTA:
-${transcricao}
-
-Forneça a análise no seguinte formato JSON:
-{
-  "pontuacao": 75,
-  "recomendacao": "contratar/segunda_entrevista/banco_talentos/recusar",
-  "pontos_fortes": ["ponto 1", "ponto 2", "ponto 3"],
-  "pontos_fracos": ["ponto 1", "ponto 2"],
-  "resumo": "Resumo geral em 2-3 parágrafos sobre o candidato",
-  "comunicacao": "Avaliação da comunicação",
-  "conhecimento_tecnico": "Avaliação do conhecimento técnico",
-  "experiencia": "Avaliação da experiência",
-  "fit_cultural": "Avaliação do fit cultural",
-  "motivacao": "Avaliação da motivação",
-  "sugestoes": ["sugestão 1", "sugestão 2"]
-}
+    const { dados: analise, uso } = await extrairJson<AnaliseEntrevista>({
+      nome: "avaliar_entrevista",
+      descricao: "Registra a avaliação detalhada do candidato a partir da transcrição da entrevista.",
+      schema: SCHEMA_ANALISE,
+      esforco: "high",
+      system: `Você é um especialista em RH que analisa entrevistas de forma objetiva e construtiva.
 
 Critérios:
 - Comunicação: clareza, articulação, confiança
 - Conhecimento técnico: experiência relevante, habilidades
 - Fit cultural: valores, atitude, comprometimento
 - Motivação: interesse na vaga, energia
-- Pontuação: 0-100 (>=80 contratar, 60-79 segunda entrevista, 40-59 banco talentos, <40 recusar)`;
+- Pontuação: 0-100 (>=80 contratar, 60-79 segunda entrevista, 40-59 banco talentos, <40 recusar)`,
+      prompt: `Você é um especialista em Recursos Humanos analisando uma entrevista de emprego. Analise a seguinte transcrição e forneça uma avaliação detalhada.
 
-    const gptResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${openaiApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          {
-            role: 'system',
-            content: 'Você é um especialista em RH que analisa entrevistas de forma objetiva e construtiva.'
-          },
-          {
-            role: 'user',
-            content: analysisPrompt
-          }
-        ],
-        temperature: 0.7,
-        response_format: { type: "json_object" }
-      }),
+TRANSCRIÇÃO DA ENTREVISTA:
+${transcricao}`,
     });
 
-    if (!gptResponse.ok) {
-      const errorData = await gptResponse.text();
-      console.error('Erro GPT:', errorData);
-      throw new Error('Erro na análise da entrevista');
-    }
-
-    const gptData = await gptResponse.json();
-    const analise = JSON.parse(gptData.choices[0].message.content);
-
-    console.log('Análise concluída');
+    console.log(
+      `Análise concluída (modelo: ${uso.modelo}, tokens: ${uso.tokens_total}, tempo: ${uso.tempo_ms}ms)`
+    );
 
     // Passo 4: Atualizar no banco de dados
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -180,7 +205,9 @@ Critérios:
   } catch (error) {
     console.error('Erro:', error);
     return new Response(
-      JSON.stringify({ error: error.message || 'Erro interno' }),
+      JSON.stringify({
+        error: (error instanceof Error && error.message) ? error.message : 'Erro interno',
+      }),
       {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

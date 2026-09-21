@@ -1,9 +1,33 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { extrairJson, normalizarAnexo } from "../_shared/ia.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
+};
+
+const SCHEMA_ITENS_NOTA = {
+  type: "object",
+  properties: {
+    itens: {
+      type: "array",
+      description: "Todos os itens da nota, na ordem em que aparecem",
+      items: {
+        type: "object",
+        properties: {
+          descricao: { type: "string", description: "Nome do produto" },
+          codigo: { type: ["string", "null"], description: "Código do produto, se houver" },
+          quantidade: { type: "number" },
+          unidade: { type: "string", description: "UN, KG, LT, CX..." },
+          valor_unitario: { type: "number" },
+          valor_total: { type: "number" },
+        },
+        required: ["descricao", "quantidade", "unidade", "valor_unitario", "valor_total"],
+      },
+    },
+  },
+  required: ["itens"],
 };
 
 interface ItemPedido {
@@ -59,11 +83,6 @@ Deno.serve(async (req: Request) => {
 
     console.log(`Total de itens no pedido: ${itensPedido.length}`);
 
-    const openaiApiKey = Deno.env.get("OPENAI_API_KEY");
-    if (!openaiApiKey) {
-      throw new Error("OPENAI_API_KEY não configurada");
-    }
-
     const fileBytes = await file.arrayBuffer();
     const base64Image = btoa(
       new Uint8Array(fileBytes).reduce(
@@ -72,89 +91,25 @@ Deno.serve(async (req: Request) => {
       )
     );
 
-    const prompt = `Você é um assistente especializado em extrair informações de notas fiscais.
-
-Analise a imagem da nota fiscal e extraia TODOS os itens com suas informações.
-
-Retorne um JSON com o seguinte formato:
-{
-  "itens": [
-    {
-      "descricao": "Nome do produto",
-      "codigo": "Código do produto (se houver)",
-      "quantidade": 10.5,
-      "unidade": "UN, KG, LT, etc",
-      "valor_unitario": 12.50,
-      "valor_total": 131.25
-    }
-  ]
-}
+    const prompt = `Analise a nota fiscal e extraia TODOS os itens com suas informações.
 
 IMPORTANTE:
-- Extraia TODOS os itens da nota
+- Extraia TODOS os itens da nota, linha por linha
 - Quantidade e valores devem ser números
 - Se não houver código, use null
 - Seja preciso com os valores`;
 
-    console.log("Enviando imagem para OpenAI...");
+    console.log("Enviando documento para a IA...");
 
-    const openaiResponse = await fetch(
-      "https://api.openai.com/v1/chat/completions",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${openaiApiKey}`,
-        },
-        body: JSON.stringify({
-          model: "gpt-4o",
-          messages: [
-            {
-              role: "user",
-              content: [
-                { type: "text", text: prompt },
-                {
-                  type: "image_url",
-                  image_url: {
-                    url: `data:${file.type};base64,${base64Image}`,
-                  },
-                },
-              ],
-            },
-          ],
-          max_tokens: 4000,
-        }),
-      }
-    );
-
-    if (!openaiResponse.ok) {
-      const errorText = await openaiResponse.text();
-      console.error("Erro da OpenAI:", errorText);
-      throw new Error(`Erro ao processar imagem: ${openaiResponse.status}`);
-    }
-
-    const openaiData = await openaiResponse.json();
-
-    if (!openaiData.choices?.[0]?.message?.content) {
-      throw new Error("Resposta inválida da OpenAI");
-    }
-
-    let extractedText = openaiData.choices[0].message.content.trim();
-
-    if (extractedText.startsWith("```json")) {
-      extractedText = extractedText.replace(/```json\n?/g, "").replace(/```\n?/g, "");
-    } else if (extractedText.startsWith("```")) {
-      extractedText = extractedText.replace(/```\n?/g, "");
-    }
-
-    let parsedData;
-    try {
-      parsedData = JSON.parse(extractedText);
-    } catch (parseError) {
-      console.error("Erro ao fazer parse do JSON:", parseError);
-      console.error("Texto extraído:", extractedText);
-      throw new Error("Erro ao processar resposta da IA");
-    }
+    const { dados: parsedData } = await extrairJson<{ itens: ItemRecebido[] }>({
+      nome: "registrar_itens_recebidos",
+      descricao: "Registra os itens lidos na nota fiscal recebida.",
+      schema: SCHEMA_ITENS_NOTA,
+      esforco: "high",
+      system: "Você é um assistente especializado em extrair informações de notas fiscais brasileiras.",
+      prompt,
+      anexos: [normalizarAnexo(base64Image, file.type)],
+    });
 
     const itensRecebidos: ItemRecebido[] = parsedData.itens || [];
     console.log(`Total de itens recebidos extraídos: ${itensRecebidos.length}`);

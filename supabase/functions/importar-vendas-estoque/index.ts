@@ -1,14 +1,27 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import * as XLSX from "npm:xlsx@0.18.5";
+import { corsIA as corsHeaders, extrairJson } from "../_shared/ia.ts";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
+const SCHEMA_VENDAS_PDF = {
+  type: "object",
+  properties: {
+    produtos: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          sku: { type: ["string", "null"], description: "Código ou SKU, se houver" },
+          nome: { type: "string" },
+          quantidade: { type: "number" },
+          valor_unitario: { type: ["number", "null"] },
+        },
+        required: ["sku", "nome", "quantidade", "valor_unitario"],
+      },
+    },
+  },
+  required: ["produtos"],
 };
-
-const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
 
 function normalizar(texto: string): string {
   return texto
@@ -136,59 +149,23 @@ async function processarPDF(fileBuffer: ArrayBuffer) {
 
   const base64 = btoa(String.fromCharCode(...new Uint8Array(fileBuffer)));
 
-  const prompt = `Analise este PDF de vendas e extraia os produtos vendidos.
+  const prompt = `Analise este PDF de vendas e extraia TODOS os produtos vendidos, linha por linha.
 
-Para cada produto, retorne:
-- sku (código/SKU se tiver)
-- nome (nome do produto)
-- quantidade (quantidade vendida)
-- valor_unitario (valor unitário se tiver)
+Para cada produto:
+- sku: código ou SKU, se houver
+- nome: nome do produto
+- quantidade: quantidade vendida
+- valor_unitario: valor unitário, se houver`;
 
-Retorne JSON:
-{
-  "produtos": [
-    {
-      "sku": "código ou null",
-      "nome": "nome do produto",
-      "quantidade": número,
-      "valor_unitario": número ou null
-    }
-  ]
-}`;
-
-  const response = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${OPENAI_API_KEY}`,
-    },
-    body: JSON.stringify({
-      model: "gpt-4o",
-      messages: [
-        {
-          role: "user",
-          content: [
-            { type: "text", text: prompt },
-            {
-              type: "image_url",
-              image_url: {
-                url: `data:application/pdf;base64,${base64}`
-              }
-            }
-          ]
-        }
-      ],
-      response_format: { type: "json_object" },
-      max_tokens: 4000,
-    }),
+  const { dados: resultado } = await extrairJson<{ produtos: any[] }>({
+    nome: "registrar_vendas",
+    descricao: "Registra os produtos vendidos lidos no relatório em PDF.",
+    schema: SCHEMA_VENDAS_PDF,
+    esforco: "high",
+    system: "Você lê relatórios de venda de bar e restaurante e extrai os produtos vendidos.",
+    prompt,
+    anexos: [{ base64, mimeType: "application/pdf" }],
   });
-
-  if (!response.ok) {
-    throw new Error("Erro ao processar PDF com IA: " + response.statusText);
-  }
-
-  const data = await response.json();
-  const resultado = JSON.parse(data.choices[0].message.content);
 
   return resultado.produtos.map((p: any, i: number) => ({
     linha: i + 1,
@@ -236,9 +213,6 @@ Deno.serve(async (req: Request) => {
         file.type.includes('spreadsheet') || file.type.includes('excel')) {
       dadosVendas = await processarExcel(fileBuffer);
     } else if (fileName.endsWith('.pdf') || file.type.includes('pdf')) {
-      if (!OPENAI_API_KEY) {
-        throw new Error("PDF requer OpenAI API Key configurada. Use arquivos Excel (.xls ou .xlsx).");
-      }
       dadosVendas = await processarPDF(fileBuffer);
     } else {
       throw new Error("Formato não suportado. Use arquivos XLS ou XLSX de vendas.");

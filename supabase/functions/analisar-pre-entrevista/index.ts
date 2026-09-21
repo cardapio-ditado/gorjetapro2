@@ -1,4 +1,5 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { extrairJson } from "../_shared/ia.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -10,6 +11,51 @@ interface Message {
   role: 'user' | 'assistant';
   content: string;
   timestamp: string;
+}
+
+const SCHEMA_ANALISE_PRE_ENTREVISTA = {
+  type: "object",
+  properties: {
+    pontos_fortes: {
+      type: "array",
+      description: "Pontos fortes do candidato, objetivos e específicos",
+      items: { type: "string" },
+    },
+    pontos_fracos: {
+      type: "array",
+      description: "Pontos fracos do candidato, objetivos e específicos",
+      items: { type: "string" },
+    },
+    resumo: {
+      type: "string",
+      description: "Um parágrafo com resumo geral do candidato",
+    },
+    pontuacao: {
+      type: "number",
+      description: "Pontuação do candidato, de 0 a 100",
+    },
+    recomendacao: {
+      type: "string",
+      description:
+        'Recomendação final: "aprovar" (pontuação >= 70), "analisar_melhor" (40-69) ou "recusar" (< 40)',
+      enum: ["aprovar", "analisar_melhor", "recusar"],
+    },
+    sugestoes: {
+      type: "array",
+      description: "Sugestões para o time de RH sobre os próximos passos com este candidato",
+      items: { type: "string" },
+    },
+  },
+  required: ["pontos_fortes", "pontos_fracos", "resumo", "pontuacao", "recomendacao", "sugestoes"],
+} as const;
+
+interface AnalisePreEntrevista {
+  pontos_fortes: string[];
+  pontos_fracos: string[];
+  resumo: string;
+  pontuacao: number;
+  recomendacao: "aprovar" | "analisar_melhor" | "recusar";
+  sugestoes: string[];
 }
 
 Deno.serve(async (req: Request) => {
@@ -38,26 +84,10 @@ Deno.serve(async (req: Request) => {
       .map((msg: Message) => `${msg.role === 'user' ? 'Candidato' : 'IA'}: ${msg.content}`)
       .join('\n\n');
 
-    // Fazer análise com a API OpenAI
-    const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
-    if (!openaiApiKey) {
-      throw new Error('OPENAI_API_KEY não configurada');
-    }
-
-    const analysisPrompt = `Você é um especialista em Recursos Humanos e análise de entrevistas. Analise a seguinte conversa de pré-entrevista e forneça uma análise detalhada em formato JSON.
+    const analysisPrompt = `Você é um especialista em Recursos Humanos e análise de entrevistas. Analise a seguinte conversa de pré-entrevista e forneça uma análise detalhada.
 
 CONVERSA:
 ${conversaTexto}
-
-Forneça a análise no seguinte formato JSON:
-{
-  "pontos_fortes": ["ponto 1", "ponto 2", ...],
-  "pontos_fracos": ["ponto 1", "ponto 2", ...],
-  "resumo": "Um parágrafo com resumo geral do candidato",
-  "pontuacao": 75,
-  "recomendacao": "aprovar/analisar_melhor/recusar",
-  "sugestoes": ["sugestão 1", "sugestão 2", ...]
-}
 
 Critérios de avaliação:
 - Comunicação e clareza nas respostas
@@ -69,37 +99,21 @@ Critérios de avaliação:
 Seja objetivo e específico nos pontos fortes e fracos. A pontuação deve ser de 0 a 100.
 Recomendação deve ser: "aprovar" (>=70), "analisar_melhor" (40-69), ou "recusar" (<40).`;
 
-    const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${openaiApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          {
-            role: 'system',
-            content: 'Você é um especialista em RH que analisa entrevistas de forma objetiva e construtiva.'
-          },
-          {
-            role: 'user',
-            content: analysisPrompt
-          }
-        ],
-        temperature: 0.7,
-        response_format: { type: "json_object" }
-      }),
+    // Fazer análise com a IA
+    const { dados: analise, uso } = await extrairJson<AnalisePreEntrevista>({
+      nome: "registrar_analise_pre_entrevista",
+      descricao:
+        "Registra a análise da conversa de pré-entrevista: pontos fortes e fracos, resumo, pontuação, recomendação e sugestões.",
+      schema: SCHEMA_ANALISE_PRE_ENTREVISTA,
+      esforco: "high",
+      system:
+        'Você é um especialista em RH que analisa entrevistas de forma objetiva e construtiva.',
+      prompt: analysisPrompt,
     });
 
-    if (!openaiResponse.ok) {
-      const errorData = await openaiResponse.text();
-      console.error('Erro OpenAI:', errorData);
-      throw new Error('Erro ao comunicar com OpenAI');
-    }
-
-    const openaiData = await openaiResponse.json();
-    const analise = JSON.parse(openaiData.choices[0].message.content);
+    console.log(
+      `Análise de pré-entrevista concluída (${uso.modelo}): ${uso.tokens_total} tokens em ${uso.tempo_ms}ms`
+    );
 
     // Atualizar no banco de dados
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
