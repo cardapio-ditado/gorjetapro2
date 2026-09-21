@@ -18,6 +18,40 @@ export type Esforco = "low" | "medium" | "high" | "xhigh" | "max";
 /** Modelo padrão. Trocar aqui (ou na env ANTHROPIC_MODEL) muda todo o sistema. */
 export const MODELO_PADRAO = Deno.env.get("ANTHROPIC_MODEL") ?? "claude-opus-5";
 
+/**
+ * Modelo escolhido em Configurações › IA (chave `ia_modelo`).
+ * Fica em cache por um minuto: a troca na tela vale para todas as funções sem
+ * precisar de deploy, e sem uma consulta ao banco a cada chamada.
+ */
+let modeloCache: { valor: string; ate: number } | null = null;
+
+async function modeloEmUso(): Promise<string> {
+  if (modeloCache && Date.now() < modeloCache.ate) return modeloCache.valor;
+
+  const url = Deno.env.get("SUPABASE_URL");
+  const chave = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  let valor = MODELO_PADRAO;
+
+  if (url && chave) {
+    try {
+      const resposta = await fetch(
+        `${url}/rest/v1/configuracoes_sistema?chave=eq.ia_modelo&select=valor`,
+        { headers: { apikey: chave, Authorization: `Bearer ${chave}` } },
+      );
+      if (resposta.ok) {
+        const linhas = await resposta.json();
+        const configurado = (linhas?.[0]?.valor ?? "").trim();
+        if (configurado) valor = configurado;
+      }
+    } catch (erro) {
+      console.error("Não consegui ler ia_modelo, usando o padrão:", erro);
+    }
+  }
+
+  modeloCache = { valor, ate: Date.now() + 60_000 };
+  return valor;
+}
+
 /** Preço por milhão de tokens, para estimar o custo de cada chamada. */
 const PRECOS: Record<string, { entrada: number; saida: number }> = {
   "claude-opus-5": { entrada: 5, saida: 25 },
@@ -176,7 +210,7 @@ function conferirParada(msg: Anthropic.Message) {
  */
 export async function responderTexto(p: PedidoIA): Promise<RespostaIA<string>> {
   const inicio = Date.now();
-  const modelo = p.modelo ?? MODELO_PADRAO;
+  const modelo = p.modelo ?? (await modeloEmUso());
 
   let msg: Anthropic.Message;
   try {
@@ -223,7 +257,7 @@ export interface PedidoJson extends PedidoIA {
  */
 export async function extrairJson<T>(p: PedidoJson): Promise<RespostaIA<T>> {
   const inicio = Date.now();
-  const modelo = p.modelo ?? MODELO_PADRAO;
+  const modelo = p.modelo ?? (await modeloEmUso());
 
   const ferramenta: Anthropic.Tool = {
     name: p.nome,

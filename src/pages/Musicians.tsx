@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, Filter, CreditCard as Edit, Trash2, Eye, Music, Calendar, DollarSign, Clock, User, Phone, CheckCircle, XCircle, AlertTriangle, Download, Building2, Receipt, CreditCard, ChevronLeft, ChevronRight, CalendarDays, FileText, Grid3x3 as Grid3X3, List } from 'lucide-react';
+import { Sparkles, Plus, Search, Filter, CreditCard as Edit, Trash2, Eye, Music, Calendar, DollarSign, Clock, User, Phone, CheckCircle, XCircle, AlertTriangle, Download, Building2, Receipt, CreditCard, ChevronLeft, ChevronRight, CalendarDays, FileText, Grid3x3 as Grid3X3, List } from 'lucide-react';
 import { ReportGenerator, exportToExcel } from '../utils/reportGenerator';
 import { supabase } from '../lib/supabase';
 import { testConnection } from '../lib/supabase';
 import dayjs from 'dayjs';
 import { SearchableSelect } from '../components/common/SearchableSelect';
 import { PageHeader, KPICard, SectionCard, Badge } from '../components/ui';
+import ImportarAgendaMusicosIA from '../components/musicos/ImportarAgendaMusicosIA';
 
 interface Musico {
   id: string;
@@ -95,6 +96,8 @@ const Musicians: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const [showImportarAgenda, setShowImportarAgenda] = useState(false);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [editingMusico, setEditingMusico] = useState<Musico | null>(null);
   const [sugestedFornecedorId, setSugestedFornecedorId] = useState<string>('');
   
@@ -994,6 +997,16 @@ const Musicians: React.FC = () => {
               </button>
 
               <button
+                onClick={() => setShowImportarAgenda(true)}
+                className="px-3 py-1.5 text-xs font-medium text-white rounded-lg transition-all"
+                style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.15)' }}
+                title="Ler a agenda de shows de uma foto ou PDF e lançar as apresentações"
+              >
+                <Sparkles className="w-3 h-3 inline mr-1" />
+                Importar agenda
+              </button>
+
+              <button
                 onClick={() => openForm()}
                 className="px-4 py-1.5 text-xs font-medium rounded-lg transition-all"
                 style={{ background: 'linear-gradient(135deg, #D4AF37, #C5A028)', color: '#000' }}
@@ -1058,6 +1071,13 @@ const Musicians: React.FC = () => {
         {error && (
           <div className="mb-6 p-4 rounded-lg" style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#fca5a5' }}>
             {error}
+          </div>
+        )}
+
+        {successMessage && (
+          <div className="mb-6 p-4 rounded-lg flex items-center gap-2" style={{ background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.3)', color: '#6ee7b7' }}>
+            <CheckCircle className="w-4 h-4" />
+            {successMessage}
           </div>
         )}
 
@@ -1594,6 +1614,21 @@ const Musicians: React.FC = () => {
             </div>
           </div>
         )}
+
+        <ImportarAgendaMusicosIA
+          isOpen={showImportarAgenda}
+          onClose={() => setShowImportarAgenda(false)}
+          onImportado={(quantidade) => {
+            fetchData();
+            fetchIndicadores();
+            if (quantidade > 0) {
+              setSuccessMessage(
+                `${quantidade} apresentação(ões) lançadas a partir da agenda.`,
+              );
+              setTimeout(() => setSuccessMessage(null), 5000);
+            }
+          }}
+        />
     </div>
   );
 };
