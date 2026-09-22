@@ -1,11 +1,14 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { ArrowLeft, Check, Loader, Settings2 } from 'lucide-react';
+import { ArrowLeft, Check, Loader, PackagePlus, Settings2, Warehouse } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import { betaApi, emojiDaCategoria, fmt, type Abertura, type ItemMontagem, type Painel } from '../components/estoque-beta/api';
+import { betaApi, emojiDaCategoria, fmt, type Abertura, type Balcao, type ItemMontagem, type Painel } from '../components/estoque-beta/api';
 import Montar from '../components/estoque-beta/Montar';
 import Configurar from '../components/estoque-beta/Configurar';
+import Receber from '../components/estoque-beta/Receber';
+import PedirMais from '../components/estoque-beta/PedirMais';
+import ContarCentral from '../components/estoque-beta/ContarCentral';
 
-type Tela = 'mapa' | 'montar' | 'levar' | 'pronto' | 'configurar';
+type Tela = 'mapa' | 'montar' | 'levar' | 'pronto' | 'configurar' | 'receber' | 'pedir' | 'central';
 
 const CENA: Record<string, string> = { Bar: '🍺', Cozinha: '🍳' };
 
@@ -13,17 +16,18 @@ const CENA: Record<string, string> = { Bar: '🍺', Cozinha: '🍳' };
  * Estoque Beta.
  *
  * Um jeito mais simples de operar o estoque, em teste ao lado do módulo
- * atual. A pessoa do Central "monta" cada balcão até o nível: conta o que
- * tem, o sistema diz o que levar, ela confirma. Contagem e transferência
- * saem do mesmo gesto.
+ * atual. Quatro gestos: montar o balcão, receber mercadoria, pedir mais e
+ * contar o Central. Cada um é uma tela de um item por vez.
  */
 const EstoqueBeta: React.FC = () => {
   const { usuario, isAdmin, isMaster } = useAuth();
   const gestor = isAdmin() || isMaster();
+  const responsavel = usuario?.nome_completo || null;
 
   const [tela, setTela] = useState<Tela>('mapa');
   const [painel, setPainel] = useState<Painel | null>(null);
   const [abertura, setAbertura] = useState<Abertura | null>(null);
+  const [balcaoPedir, setBalcaoPedir] = useState<Balcao | null>(null);
   const [carregando, setCarregando] = useState(true);
   const [ocupado, setOcupado] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
@@ -46,11 +50,19 @@ const EstoqueBeta: React.FC = () => {
     carregarPainel();
   }, [carregarPainel]);
 
+  const prepararEntregas = (itens: ItemMontagem[]) => {
+    const mapa: Record<string, number> = {};
+    itens.forEach((i) => {
+      if (i.levar > 0) mapa[i.item_id] = i.entregue ?? i.levar;
+    });
+    setEntregas(mapa);
+  };
+
   const abrirBalcao = async (estoqueId: string) => {
     setOcupado(true);
     setErro(null);
     try {
-      const a = await betaApi.abrir(estoqueId, usuario?.nome_completo || null);
+      const a = await betaApi.abrir(estoqueId, responsavel);
       setAbertura(a);
       if (a.montagem.status === 'concluida') {
         setResultado(null);
@@ -66,14 +78,6 @@ const EstoqueBeta: React.FC = () => {
     } finally {
       setOcupado(false);
     }
-  };
-
-  const prepararEntregas = (itens: ItemMontagem[]) => {
-    const mapa: Record<string, number> = {};
-    itens.forEach((i) => {
-      if (i.levar > 0) mapa[i.item_id] = i.entregue ?? i.levar;
-    });
-    setEntregas(mapa);
   };
 
   const terminarContagem = async () => {
@@ -116,14 +120,16 @@ const EstoqueBeta: React.FC = () => {
 
   const voltarAoMapa = () => {
     setAbertura(null);
+    setBalcaoPedir(null);
     setTela('mapa');
     carregarPainel();
   };
 
   // ---------------------------------------------------------------------
-  if (tela === 'configurar' && painel?.balcoes) {
-    return <Configurar balcoes={painel.balcoes} onVoltar={voltarAoMapa} />;
-  }
+  if (tela === 'configurar' && painel?.balcoes) return <Configurar balcoes={painel.balcoes} onVoltar={voltarAoMapa} />;
+  if (tela === 'receber') return <Receber onVoltar={voltarAoMapa} />;
+  if (tela === 'central') return <ContarCentral responsavel={responsavel} onVoltar={voltarAoMapa} />;
+  if (tela === 'pedir' && balcaoPedir) return <PedirMais balcao={balcaoPedir} responsavel={responsavel} onVoltar={voltarAoMapa} />;
 
   if (tela === 'montar' && abertura) {
     return (
@@ -146,9 +152,7 @@ const EstoqueBeta: React.FC = () => {
           </button>
           <h1 className="font-black text-3xl mt-1">Buscar no Central</h1>
           <p className="text-white/60">
-            {paraLevar.length === 0
-              ? 'Nada para levar. O balcão já está no nível.'
-              : `Leve estes ${paraLevar.length} itens e marque cada um.`}
+            {paraLevar.length === 0 ? 'Nada para levar. O balcão já está no nível.' : `Leve estes ${paraLevar.length} itens e marque cada um.`}
           </p>
         </div>
 
@@ -156,35 +160,22 @@ const EstoqueBeta: React.FC = () => {
           {paraLevar.map((i) => {
             const marcado = (entregas[i.item_id] ?? 0) > 0;
             return (
-              <div
-                key={i.item_id}
-                className={`rounded-2xl p-3 flex items-center gap-3 border-2 ${
-                  marcado ? 'bg-emerald-500/10 border-emerald-500/60' : 'bg-white/5 border-white/10'
-                }`}
-              >
+              <div key={i.item_id} className={`rounded-2xl p-3 flex items-center gap-3 border-2 ${marcado ? 'bg-emerald-500/10 border-emerald-500/60' : 'bg-white/5 border-white/10'}`}>
                 <button
                   onClick={() => setEntregas((e) => ({ ...e, [i.item_id]: marcado ? 0 : i.levar }))}
-                  className={`w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                    marcado ? 'bg-emerald-500 text-black' : 'bg-white/10 text-white/30'
-                  }`}
+                  className={`w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0 ${marcado ? 'bg-emerald-500 text-black' : 'bg-white/10 text-white/30'}`}
                   aria-label="levei"
                 >
                   <Check className="w-8 h-8" />
                 </button>
                 <div className="w-12 h-12 rounded-lg bg-black/30 flex items-center justify-center overflow-hidden flex-shrink-0">
-                  {i.foto_url ? (
-                    <img src={i.foto_url} alt="" className="w-full h-full object-cover" />
-                  ) : (
-                    <span className="text-2xl">{emojiDaCategoria(i.categoria)}</span>
-                  )}
+                  {i.foto_url ? <img src={i.foto_url} alt="" className="w-full h-full object-cover" /> : <span className="text-2xl">{emojiDaCategoria(i.categoria)}</span>}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="font-bold leading-tight">{i.nome}</div>
                   <div className="text-sm text-white/60">
                     levar <span className="text-white font-black text-lg">{fmt(i.levar)}</span> {i.rotulo_solto}
-                    {i.saldo_central < i.levar && (
-                      <span className="ml-2 text-amber-300">· Central mostra {fmt(i.saldo_central)}</span>
-                    )}
+                    {i.saldo_central < i.levar && <span className="ml-2 text-amber-300">· Central mostra {fmt(i.saldo_central)}</span>}
                   </div>
                 </div>
                 <input
@@ -223,16 +214,9 @@ const EstoqueBeta: React.FC = () => {
         <div className="text-8xl mb-4">{CENA[abertura.estoque.nome] || '✅'}</div>
         <h1 className="font-black text-4xl">{abertura.estoque.nome} montado!</h1>
         <p className="text-white/60 mt-2 text-lg">
-          {resultado
-            ? `${resultado.transferencias} itens levados e ${resultado.ajustes} saldos acertados.`
-            : 'Este balcão já foi montado hoje.'}
+          {resultado ? `${resultado.transferencias} itens levados e ${resultado.ajustes} saldos acertados.` : 'Este balcão já foi montado hoje.'}
         </p>
-        <button
-          onClick={voltarAoMapa}
-          className="mt-8 px-10 h-16 rounded-2xl bg-white/10 text-white font-bold text-xl"
-        >
-          Voltar ao mapa
-        </button>
+        <button onClick={voltarAoMapa} className="mt-8 px-10 h-16 rounded-2xl bg-white/10 text-white font-bold text-xl">Voltar ao mapa</button>
       </div>
     );
   }
@@ -244,23 +228,18 @@ const EstoqueBeta: React.FC = () => {
       <div className="px-5 pt-6 pb-4 flex items-start justify-between gap-4">
         <div>
           <div className="text-xs font-bold tracking-widest uppercase text-[#D4AF37]">Estoque Beta</div>
-          <h1 className="font-black text-3xl leading-tight mt-1">O que montar hoje</h1>
+          <h1 className="font-black text-3xl leading-tight mt-1">O que fazer hoje</h1>
           {painel && (
             <p className="text-white/60 mt-1">
               {new Date(`${painel.hoje}T12:00:00`).toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' })}
               {painel.dia_conferencia && (
-                <span className="ml-2 px-2 py-0.5 rounded-lg bg-[#7d1f2c] text-white text-xs font-bold align-middle">
-                  dia de conferência: conta tudo
-                </span>
+                <span className="ml-2 px-2 py-0.5 rounded-lg bg-[#7d1f2c] text-white text-xs font-bold align-middle">dia de conferência: conta tudo</span>
               )}
             </p>
           )}
         </div>
         {gestor && (
-          <button
-            onClick={() => setTela('configurar')}
-            className="px-4 py-3 rounded-xl bg-white/10 text-white/80 flex items-center gap-2 text-sm font-bold"
-          >
+          <button onClick={() => setTela('configurar')} className="px-4 py-3 rounded-xl bg-white/10 text-white/80 flex items-center gap-2 text-sm font-bold">
             <Settings2 className="w-4 h-4" /> Configurar
           </button>
         )}
@@ -271,59 +250,68 @@ const EstoqueBeta: React.FC = () => {
       {carregando ? (
         <div className="p-10 text-center text-white/50">Carregando...</div>
       ) : (
-        <div className="px-5 pb-10 grid grid-cols-1 md:grid-cols-2 gap-5 max-w-4xl">
-          {(painel?.balcoes || []).map((b) => {
-            const m = b.montagem;
-            const pct = m && m.total ? Math.round((m.contados / m.total) * 100) : 0;
-            const concluida = m?.status === 'concluida';
-            const emAndamento = m && !concluida;
-            return (
-              <button
-                key={b.id}
-                onClick={() => abrirBalcao(b.id)}
-                disabled={ocupado}
-                className={`text-left rounded-3xl p-6 border-2 transition-transform active:scale-[0.98] ${
-                  concluida
-                    ? 'bg-emerald-500/10 border-emerald-500/50'
-                    : emAndamento
-                      ? 'bg-[#D4AF37]/10 border-[#D4AF37]'
-                      : 'bg-white/5 border-white/10'
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-7xl">{CENA[b.nome] || '🏪'}</span>
-                  <span
-                    className={`px-3 py-1 rounded-full text-xs font-bold ${
-                      concluida ? 'bg-emerald-500 text-black' : emAndamento ? 'bg-[#D4AF37] text-black' : 'bg-white/10 text-white/60'
-                    }`}
-                  >
-                    {concluida ? 'montado' : emAndamento ? (m?.status === 'levando' ? 'levando' : `${pct}% contado`) : 'para montar'}
-                  </span>
-                </div>
-                <div className="font-black text-3xl mt-4">{b.nome}</div>
-                <div className="text-white/60 mt-1">
-                  {b.itens_contagem} itens para contar todo dia · {b.itens - b.itens_contagem} repostos pela venda
-                </div>
-                {emAndamento && (
-                  <div className="h-2 rounded-full bg-white/10 mt-4 overflow-hidden">
-                    <div className="h-full bg-[#D4AF37]" style={{ width: `${pct}%` }} />
-                  </div>
-                )}
+        <div className="px-5 pb-10 space-y-5 max-w-4xl">
+          {/* Balcões */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {(painel?.balcoes || []).map((b) => {
+              const m = b.montagem;
+              const pct = m && m.total ? Math.round((m.contados / m.total) * 100) : 0;
+              const concluida = m?.status === 'concluida';
+              const emAndamento = m && !concluida;
+              return (
                 <div
-                  className={`mt-5 h-14 rounded-2xl flex items-center justify-center font-black text-xl ${
-                    concluida ? 'bg-white/10 text-white/70' : 'bg-[#D4AF37] text-black'
-                  }`}
+                  key={b.id}
+                  className={`rounded-3xl p-6 border-2 ${concluida ? 'bg-emerald-500/10 border-emerald-500/50' : emAndamento ? 'bg-[#D4AF37]/10 border-[#D4AF37]' : 'bg-white/5 border-white/10'}`}
                 >
-                  {ocupado ? <Loader className="w-6 h-6 animate-spin" /> : concluida ? 'VER' : emAndamento ? 'CONTINUAR' : 'MONTAR'}
+                  <div className="flex items-center justify-between">
+                    <span className="text-7xl">{CENA[b.nome] || '🏪'}</span>
+                    <span className={`px-3 py-1 rounded-full text-xs font-bold ${concluida ? 'bg-emerald-500 text-black' : emAndamento ? 'bg-[#D4AF37] text-black' : 'bg-white/10 text-white/60'}`}>
+                      {concluida ? 'montado' : emAndamento ? (m?.status === 'levando' ? 'levando' : `${pct}% contado`) : 'para montar'}
+                    </span>
+                  </div>
+                  <div className="font-black text-3xl mt-4">{b.nome}</div>
+                  <div className="text-white/60 mt-1">
+                    {b.itens_contagem} itens para contar todo dia · {b.itens - b.itens_contagem} repostos pela venda
+                  </div>
+                  {emAndamento && (
+                    <div className="h-2 rounded-full bg-white/10 mt-4 overflow-hidden">
+                      <div className="h-full bg-[#D4AF37]" style={{ width: `${pct}%` }} />
+                    </div>
+                  )}
+                  <button
+                    onClick={() => abrirBalcao(b.id)}
+                    disabled={ocupado}
+                    className={`mt-5 w-full h-14 rounded-2xl flex items-center justify-center font-black text-xl ${concluida ? 'bg-white/10 text-white/70' : 'bg-[#D4AF37] text-black'}`}
+                  >
+                    {ocupado ? <Loader className="w-6 h-6 animate-spin" /> : concluida ? 'VER' : emAndamento ? 'CONTINUAR' : 'MONTAR'}
+                  </button>
+                  <button
+                    onClick={() => { setBalcaoPedir(b); setTela('pedir'); }}
+                    className="mt-2 w-full h-12 rounded-2xl bg-white/5 text-white/70 font-bold flex items-center justify-center gap-2"
+                  >
+                    <PackagePlus className="w-5 h-5" /> Pedir mais
+                  </button>
                 </div>
-              </button>
-            );
-          })}
-          {painel && (painel.balcoes || []).length === 0 && (
-            <div className="col-span-full text-white/50 p-6 rounded-2xl bg-white/5">
-              Nenhum balcão tem nível cadastrado ainda. Peça ao gestor para configurar.
-            </div>
-          )}
+              );
+            })}
+            {painel && (painel.balcoes || []).length === 0 && (
+              <div className="col-span-full text-white/50 p-6 rounded-2xl bg-white/5">Nenhum balcão tem nível cadastrado ainda. Peça ao gestor para configurar.</div>
+            )}
+          </div>
+
+          {/* Central */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <button onClick={() => setTela('receber')} className="text-left rounded-3xl p-6 bg-white/5 border-2 border-white/10 active:scale-[0.98]">
+              <span className="text-6xl">📦</span>
+              <div className="font-black text-2xl mt-3">Receber mercadoria</div>
+              <div className="text-white/60 mt-1">Chegou nota? Tire a foto e confirme.</div>
+            </button>
+            <button onClick={() => setTela('central')} className="text-left rounded-3xl p-6 bg-white/5 border-2 border-white/10 active:scale-[0.98]">
+              <span className="text-6xl"><Warehouse className="w-14 h-14 text-white/80" /></span>
+              <div className="font-black text-2xl mt-3">Contar o Central</div>
+              <div className="text-white/60 mt-1">Por zona, na ordem do que está vencendo.</div>
+            </button>
+          </div>
         </div>
       )}
     </div>
