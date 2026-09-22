@@ -12,6 +12,7 @@ import { testConnection } from './lib/supabase';
 const PainelInicial       = lazy(() => import('./pages/PainelInicial'));
 const Finance             = lazy(() => import('./pages/Finance'));
 const AdvancedInventory   = lazy(() => import('./pages/AdvancedInventory'));
+const EstoqueBeta         = lazy(() => import('./pages/EstoqueBeta'));
 const Staff               = lazy(() => import('./pages/Staff'));
 const Musicians           = lazy(() => import('./pages/Musicians'));
 const Events              = lazy(() => import('./pages/Events'));
@@ -164,6 +165,7 @@ function AppContent() {
                 <Route path="/lista-compras"       element={<ProtectedRoute moduloSlug="estoque">       <ListaCompras />        </ProtectedRoute>} />
                 <Route path="/dre-simplificado"    element={<ProtectedRoute moduloSlug="financeiro">    <DRESimplificado />     </ProtectedRoute>} />
                 <Route path="/controle-deville"    element={<ProtectedRoute moduloSlug="estoque">       <ControleDeville />     </ProtectedRoute>} />
+                <Route path="/estoque-beta"        element={<ProtectedRoute moduloSlug="estoque">       <EstoqueBeta />         </ProtectedRoute>} />
                 <Route path="/fidelidade"          element={<ProtectedRoute moduloSlug="dashboard">     <FidelidadeModule />    </ProtectedRoute>} />
                 <Route path="/manual"              element={<ManualUsuario />} />
                 <Route path="/settings"            element={<ProtectedRoute moduloSlug="configuracoes"> <Settings />            </ProtectedRoute>} />

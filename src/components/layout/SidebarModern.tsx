@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 
 const ESTOQUE_SUBMODS_ADMIN = [
+  { name: '★ Estoque Beta',        path: '/estoque-beta' },
   { name: 'Reposição de balcão',   path: '/advanced-inventory?area=operacao&tela=reposicao' },
   { name: 'Receber mercadoria',    path: '/advanced-inventory?area=operacao&tela=receber' },
   { name: 'Transferências',        path: '/advanced-inventory?area=operacao&tela=transferir' },
@@ -29,6 +30,7 @@ const ESTOQUE_SUBMODS_ADMIN = [
 ];
 
 const ESTOQUE_SUBMODS_USER = [
+  { name: '★ Estoque Beta', path: '/estoque-beta' },
   { name: 'Operação', path: '/advanced-inventory?area=operacao&tela=home' },
   { name: 'Reposição de balcão', path: '/advanced-inventory?area=operacao&tela=reposicao' },
 ];
