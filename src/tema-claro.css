@@ -1,7 +1,7 @@
 /* GERADO por scripts/gerar-tema-claro.mjs — não edite à mão.
  * A pele clara do sistema: cada utilitário de tema escuro em uso no código
  * ganha aqui o equivalente claro, escopado ao shell dos módulos.
- * 480 regras. */
+ * 481 regras. */
 [data-theme="light"] .app-shell .bg-amber-900\/10{background-color:rgba(245,158,11,0.040)}
 [data-theme="light"] .app-shell .bg-amber-900\/15{background-color:rgba(245,158,11,0.060)}
 [data-theme="light"] .app-shell .bg-amber-900\/20{background-color:rgba(245,158,11,0.080)}
@@ -279,6 +279,7 @@
 [data-theme="light"] .app-shell .text-purple-500{color:#9333ea}
 [data-theme="light"] .app-shell .text-red-100{color:#991b1b}
 [data-theme="light"] .app-shell .text-red-200{color:#991b1b}
+[data-theme="light"] .app-shell .text-red-200\/70{color:#991b1b}
 [data-theme="light"] .app-shell .text-red-300{color:#b91c1c}
 [data-theme="light"] .app-shell .text-red-300\/60{color:#b91c1c}
 [data-theme="light"] .app-shell .text-red-300\/70{color:#b91c1c}
