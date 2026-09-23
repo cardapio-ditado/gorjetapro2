@@ -240,6 +240,7 @@ return <div className="b2-root -m-5 lg:-m-7">
  auditoriaPrevista={auditoriaPrevista}
  auditoriaRecebida={auditoriaRecebida}
  restockViewed={restockViewed}
+ niveisCompletos={!dadosFechamento.linhas.some(l=>dadosFechamento.setores.some(e=>e.id===l.estoque_id)&&l.nivel_reposicao===null)}
  kitDone={kitDone} handoffDone={handoffDone}
  onHandoff={()=>{setHandoffDone(true);setNotice('Roteiro encerrado apenas na simulação.');}}
 />}
