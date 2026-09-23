@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import CadastrosBeta2, { type Cadastro } from '../components/estoque-beta2/CadastrosBeta2';
 import RotinaEstoquistaBeta2 from '../components/estoque-beta2/RotinaEstoquistaBeta2';
-import { Home, Package, Users, ClipboardCheck, Truck, Store, FileBox, Clock3, BarChart3, RotateCcw, Warehouse, BookOpen } from 'lucide-react';
+import { Home, Package, Users, ClipboardCheck, Truck, Store, FileBox, Clock3, BarChart3, RotateCcw, Warehouse, BookOpen, ChevronDown } from 'lucide-react';
 
 /** Beta 2 no React, sem iframe. Cadastros oficiais são compartilhados; fluxos operacionais usam dados simulados. */
 type View = 'inicio' | 'itens' | 'fichas' | 'fornecedores' | 'estoques' | 'inventario' | 'recebimento' | 'abastecimento' | 'kits' | 'noite' | 'gestao';
@@ -34,14 +34,31 @@ const linesSeed:Line[]=[
 const clone=<T,>(v:T):T=>JSON.parse(JSON.stringify(v)) as T;
 const num=(n:number)=>n.toLocaleString('pt-BR',{maximumFractionDigits:2});
 const money=(n:number)=>n.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
-const menu:{v:View;n:string;icon:React.ElementType}[]=[
-{v:'inicio',n:'Rotina do dia',icon:Home},{v:'itens',n:'Cadastro de itens',icon:Package},{v:'fichas',n:'Fichas técnicas',icon:BookOpen},{v:'fornecedores',n:'Fornecedores',icon:Users},{v:'estoques',n:'Cadastro de estoques',icon:Warehouse},
-{v:'inventario',n:'Inventário',icon:ClipboardCheck},{v:'recebimento',n:'Recebimento',icon:Truck},
-{v:'abastecimento',n:'Abastecimento',icon:Store},{v:'kits',n:'Kits de limpeza',icon:FileBox},
-{v:'noite',n:'Retiradas noturnas',icon:Clock3},{v:'gestao',n:'Gestão',icon:BarChart3}
+type MenuSection = 'operacao' | 'cadastros' | 'gestao';
+type MenuItem = {v:View;n:string;icon:React.ElementType};
+const menuSections:{id:MenuSection;title:string;hint:string;icon:React.ElementType;items:MenuItem[]}[]=[
+ {id:'operacao',title:'Operação',hint:'Tarefas do estoquista',icon:Store,items:[
+  {v:'noite',n:'Retiradas noturnas',icon:Clock3},
+  {v:'recebimento',n:'Recebimento',icon:Truck},
+  {v:'inventario',n:'Inventário',icon:ClipboardCheck},
+  {v:'abastecimento',n:'Abastecimento',icon:Store},
+  {v:'kits',n:'Kits de limpeza',icon:FileBox}
+ ]},
+ {id:'cadastros',title:'Cadastros',hint:'Base compartilhada',icon:Package,items:[
+  {v:'itens',n:'Itens do estoque',icon:Package},
+  {v:'fichas',n:'Fichas técnicas',icon:BookOpen},
+  {v:'estoques',n:'Estoques',icon:Warehouse},
+  {v:'fornecedores',n:'Fornecedores',icon:Users}
+ ]},
+ {id:'gestao',title:'Gestão',hint:'Aprovações',icon:BarChart3,items:[
+  {v:'gestao',n:'Divergências e aprovação',icon:ClipboardCheck}
+ ]}
 ];
+const sectionOf=(screen:View):MenuSection|undefined=>
+ menuSections.find(section=>section.items.some(item=>item.v===screen))?.id;
 const EstoqueBeta2:React.FC=()=>{
 const[view,setView]=useState<View>('inicio');
+const[openSections,setOpenSections]=useState<Record<MenuSection,boolean>>({operacao:true,cadastros:false,gestao:false});
 const[products,setProducts]=useState<Product[]>(()=>clone(productsSeed));
 const[suppliers,setSuppliers]=useState<Supplier[]>(()=>clone(suppliersSeed));
 const[notice,setNotice]=useState('');
@@ -63,10 +80,40 @@ const[nightReason,setNightReason]=useState('Reposição emergencial');
 
 const sector=sectors.find(s=>s.id===sectorId)||sectors[0];
 const differences=products.filter(p=>(count[p.id]??p.central)!==p.central);
-const go=(v:View)=>{setView(v);setNotice('');setError('');};
-const reset=()=>{setProducts(clone(productsSeed));setSuppliers(clone(suppliersSeed));setLines(clone(linesSeed));setSectors(clone(sectionsSeed));setCount({});setCountSent(false);setCountApproved(false);setReceived(false);setKitDone(false);setNightReviewed(false);setHandoffDone(false);setNight([]);setView('inicio');setError('');setNotice('Demonstração reiniciada.');};
+const go=(v:View)=>{
+  setView(v);setNotice('');setError('');
+  const section=sectionOf(v);
+  if(section)setOpenSections(prev=>({...prev,[section]:true}));
+};
+const reset=()=>{setProducts(clone(productsSeed));setSuppliers(clone(suppliersSeed));setLines(clone(linesSeed));setSectors(clone(sectionsSeed));setCount({});setCountSent(false);setCountApproved(false);setReceived(false);setKitDone(false);setNightReviewed(false);setHandoffDone(false);setNight([]);setView('inicio');setOpenSections({operacao:true,cadastros:false,gestao:false});setError('');setNotice('Demonstração reiniciada.');};
 const field=(label:string,value:string|number,onChange:(v:string)=>void,choices?:string[])=>
 <label className="b2-field"><span>{label}</span>{choices?<select value={String(value)} onChange={e=>onChange(e.target.value)}>{choices.map(v=><option key={v}>{v}</option>)}</select>:<input value={value} onChange={e=>onChange(e.target.value)}/>}</label>;
+const beta2MenuCSS = `
+.b2-root .b2-side{display:flex;flex-direction:column;gap:0}
+.b2-root .b2-menu{display:flex;flex-direction:column;gap:7px}
+.b2-root .b2-nav-home{background:linear-gradient(120deg,#49273d,#352135);border:1px solid #765167!important;min-height:46px;color:#ffe9f5!important}
+.b2-root .b2-nav-home[aria-current=page]{background:#713750;border-color:#d69a92!important;color:#fff!important}
+.b2-root .b2-menu-section{border:1px solid #4e374c;border-radius:12px;overflow:hidden;background:#211827}
+.b2-root .b2-section-trigger{display:flex;align-items:center;gap:9px;text-align:left;width:100%;border:0;padding:13px 10px;color:#f8e4f0!important}
+.b2-root .b2-section-trigger:hover,.b2-root .b2-section-trigger[data-active=true]{background:#3f293c}
+.b2-root .b2-section-trigger>svg:first-child{color:#edc487;flex-shrink:0}
+.b2-root .b2-section-title{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.b2-root .b2-section-title strong{color:#fff3fa!important;font-size:12px;font-weight:850}
+.b2-root .b2-section-title small{color:#d4bccd!important;font-size:10px}
+.b2-root .b2-chevron{color:#e0c2d0;flex-shrink:0;transition:transform .2s ease}
+.b2-root .b2-chevron.open{transform:rotate(180deg)}
+.b2-root .b2-section-items{border-top:1px solid #51374e;background:#1b1520;padding:6px 5px 8px 10px;display:flex;flex-direction:column;gap:2px}
+.b2-root .b2-section-items .b2-nav{margin:0;padding:10px 8px;border-radius:9px;font-size:12px;color:#e7d5e1!important;min-height:38px}
+.b2-root .b2-section-items .b2-nav[aria-current=page]{background:#653049;color:#fff!important;border-color:#aa6377}
+.b2-root .b2-menu-section button:focus-visible,.b2-root .b2-nav-home:focus-visible{outline:2px solid #f2c78f;outline-offset:-2px}
+@media(max-width:1000px){
+ .b2-root .b2-menu{display:flex;flex-direction:column;gap:7px;overflow:visible}
+ .b2-root .b2-section-items{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+ .b2-root .b2-section-items .b2-nav{white-space:normal}
+ .b2-root .b2-side>.b2-hint{margin-top:12px}
+}
+@media(max-width:480px){.b2-root .b2-section-items{grid-template-columns:1fr}}
+`;
 const beta2CadastroCSS = `/* Beta 2: identidade do protótipo também nos cadastros reais */
 .b2-root .b2-catalog-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .b2-root .b2-catalog-notice{display:flex;align-items:flex-start;gap:12px;padding:15px 17px;background:#213c33;border:1px solid #438367;border-radius:13px;margin:0 0 20px;color:#d4ffe9}
@@ -146,8 +193,37 @@ return <div className="b2-root -m-5 lg:-m-7">
 <style>{'.b2-root{color:#f6edf0;background:radial-gradient(ellipse at 92% 0,#432638,#140f19 44%);min-height:calc(100dvh - 70px);font-family:Inter,system-ui,sans-serif}.b2-root *{box-sizing:border-box}.b2-root .b2-shell{display:grid;grid-template-columns:205px minmax(0,1fr);min-height:calc(100dvh - 70px)}.b2-root .b2-side{padding:20px 11px;background:#1a1320;border-right:1px solid #4d374b}.b2-root .b2-logo{padding:0 11px 18px;font-weight:900;letter-spacing:.04em}.b2-root .b2-logo small{display:block;color:#edc487;font-size:11px;letter-spacing:.12em}.b2-root .b2-nav{display:flex;align-items:center;gap:9px;border-radius:11px;width:100%;padding:10px;border:1px solid transparent;color:#d4bfce;text-align:left;font-size:12px;font-weight:750;margin-bottom:4px}.b2-root .b2-nav:hover,.b2-root .b2-nav[aria-current=page]{background:#49273a;color:white;border-color:#9b5368}.b2-root .b2-main{padding:24px clamp(16px,3vw,40px) 44px;min-width:0}.b2-root .b2-head{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:25px}.b2-root .b2-tag{border:1px solid #a86d75;background:#59293e;color:#f9dccc;border-radius:99px;font-size:11px;font-weight:900;letter-spacing:.08em;padding:7px 12px}.b2-root .b2-eyebrow{color:#edc487;font-size:11px;font-weight:900;letter-spacing:.15em;text-transform:uppercase;margin-bottom:5px}.b2-root h1{font-weight:900;letter-spacing:-.04em;font-size:clamp(28px,3vw,43px);line-height:1.1;margin:0 0 9px}.b2-root h2{font-weight:850;font-size:21px;margin:0 0 13px}.b2-root .b2-lead,.b2-root .b2-muted{color:#bcaabb}.b2-root .b2-lead{max-width:790px;margin-bottom:25px}.b2-root .b2-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px}.b2-root .b2-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}.b2-root .b2-split{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}.b2-root .b2-card{background:linear-gradient(145deg,#281c2c,#1d1823);border:1px solid #4d3849;border-radius:18px;padding:19px;min-width:0}.b2-root .b2-stat{font-size:30px;letter-spacing:-.05em;font-weight:900;color:#f5dfc6}.b2-root .b2-section{margin-top:28px}.b2-root .b2-action{display:flex;align-items:center;gap:14px;text-align:left;border:1px solid #674352;background:linear-gradient(130deg,#492539,#261d2a);padding:17px;border-radius:17px;min-height:98px}.b2-root .b2-action:hover{border-color:#edc487}.b2-root .b2-action strong{display:block;font-size:16px;font-weight:850}.b2-root .b2-action small{display:block;color:#d5becb;margin-top:2px}.b2-root .b2-row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:14px 0;border-bottom:1px solid #493547}.b2-root .b2-row:last-child{border:0}.b2-root .b2-row strong{display:block}.b2-root .b2-row small{color:#baa8b8;display:block;font-size:12px;margin-top:3px}.b2-root .b2-btn{background:linear-gradient(130deg,#b54660,#842d46);border:1px solid transparent;color:white;padding:10px 14px;border-radius:11px;font-weight:850;font-size:13px}.b2-root .b2-btn:hover{filter:brightness(1.1)}.b2-root .b2-btn:disabled{opacity:.5;cursor:default}.b2-root .b2-btn.alt{background:#3c3041;border-color:#70546c}.b2-root .b2-btn.green{background:#207b5c}.b2-root .b2-btn.small{padding:7px 10px;font-size:12px}.b2-root .b2-pill{background:#513549;color:#f3dded;border:1px solid #695061;border-radius:99px;font-size:11px;font-weight:800;padding:5px 9px;display:inline-block}.b2-root .b2-pill.green{color:#a6efd0;background:#1c453a;border-color:#2d6b53}.b2-root .b2-pill.red{color:#ffb1bb;background:#542b3b;border-color:#9b4b5b}.b2-root .b2-hint{background:#382a2a;color:#efce9a;border:1px solid #755843;border-radius:11px;padding:11px 13px;font-size:12px;margin:14px 0}.b2-root .b2-success{background:#173c30;color:#b5efd0;border:1px solid #367957;border-radius:11px;padding:12px 14px;font-size:13px;margin:15px 0}.b2-root .b2-error{background:#522737;color:#ffd2d4;border:1px solid #a44b60;border-radius:11px;padding:12px 14px;font-size:13px;margin:15px 0}.b2-root .b2-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.b2-root .b2-field{display:grid;gap:7px;color:#e8d5e1;font-size:12px;font-weight:800}.b2-root input,.b2-root select{width:100%;border-radius:10px;padding:10px 11px;border:1px solid #6b516b;background:#17111d;color:white;min-width:0}.b2-root input[type=checkbox]{width:auto}.b2-root select option{background:#201824;color:white}.b2-root .b2-table-scroll{overflow-x:auto}.b2-root table{width:100%;border-collapse:collapse;min-width:540px}.b2-root th{color:#bba5b8;text-align:left;text-transform:uppercase;letter-spacing:.08em;font-size:11px;padding:12px 9px;border-bottom:1px solid #4d3849}.b2-root td{padding:12px 9px;border-bottom:1px solid #453444;font-size:13px}.b2-root td input{max-width:100px}.b2-root .b2-topline{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}.b2-root .b2-chips{display:flex;flex-wrap:wrap;gap:8px;margin:15px 0}.b2-root .b2-chip{border:1px solid #65465a;padding:8px 11px;border-radius:11px;font-size:12px;font-weight:800;background:#352537}.b2-root .b2-chip[aria-pressed=true]{background:#7d3049;color:white}@media(max-width:1000px){.b2-root .b2-shell{display:block}.b2-root .b2-side{padding:12px;border-right:0;border-bottom:1px solid #4d374b}.b2-root .b2-logo{padding-bottom:8px}.b2-root .b2-menu{display:flex;gap:4px;overflow-x:auto}.b2-root .b2-nav{width:auto;white-space:nowrap;padding:9px}.b2-root .b2-main{padding:17px}.b2-root .b2-split{grid-template-columns:1fr}}@media(max-width:600px){.b2-root .b2-grid,.b2-root .b2-actions,.b2-root .b2-form{grid-template-columns:1fr}.b2-root .b2-card{padding:15px}}'}
 {beta2ContrastCSS}
 {beta2CadastroCSS}
+{beta2MenuCSS}
 </style>
-<div className="b2-shell"><aside className="b2-side"><div className="b2-logo">✦ DITADO POPULAR<small>GORJETA PRO · BETA 2</small></div><nav className="b2-menu">{menu.map(m=><button key={m.v} className="b2-nav" aria-current={view===m.v?'page':undefined} onClick={()=>go(m.v)}><m.icon size={17}/>{m.n}</button>)}</nav><div className="b2-hint">Cadastros: dados oficiais compartilhados. Inventário, recebimento, abastecimento e demais operações: simulação isolada.</div></aside>
+<div className="b2-shell"><aside className="b2-side">
+ <div className="b2-logo">✦ DITADO POPULAR<small>GORJETA PRO · BETA 2</small></div>
+ <nav className="b2-menu" aria-label="Seções do Estoque Beta 2">
+  <button className="b2-nav b2-nav-home" aria-current={view==='inicio'?'page':undefined} onClick={()=>go('inicio')}>
+   <Home size={19}/>Rotina do dia
+  </button>
+  {menuSections.map(section=>{
+   const expanded=openSections[section.id];
+   const active=section.items.some(item=>item.v===view);
+   const SectionIcon=section.icon;
+   return <div className="b2-menu-section" key={section.id}>
+    <button type="button" className="b2-section-trigger" aria-expanded={expanded} aria-controls={'b2-nav-'+section.id}
+     data-active={active||undefined}
+     onClick={()=>setOpenSections(prev=>({...prev,[section.id]:!prev[section.id]}))}>
+      <SectionIcon size={18}/>
+      <span className="b2-section-title"><strong>{section.title}</strong><small>{section.hint}</small></span>
+      <ChevronDown size={17} className={expanded?'b2-chevron open':'b2-chevron'}/>
+    </button>
+    {expanded&&<div className="b2-section-items" id={'b2-nav-'+section.id}>
+      {section.items.map(item=><button key={item.v} className="b2-nav b2-nav-child"
+       aria-current={view===item.v?'page':undefined} onClick={()=>go(item.v)}>
+       <item.icon size={16}/>{item.n}
+      </button>)}
+    </div>}
+   </div>;
+  })}
+ </nav>
+ <div className="b2-hint">Cadastros: dados oficiais compartilhados. Operação: testes sem movimentar saldos reais.</div>
+ </aside>
 <main className="b2-main"><div className="b2-head"><span className="b2-tag">● ESTOQUE BETA 2</span><span className="b2-muted" style={{fontSize:12}}>
 {(['itens','fichas','fornecedores','estoques'] as View[]).includes(view)
   ? 'CADASTRO OFICIAL · GRAVA NO SISTEMA REAL'
