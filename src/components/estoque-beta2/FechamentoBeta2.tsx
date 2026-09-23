@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { AlertTriangle, ArrowRight, CheckCircle2, ClipboardCheck, RefreshCw, Search } from 'lucide-react';
 import {
  type FechamentoPreview,type ItemDoSetor,type FrequenciaManual,
- useControleZigBeta2,fmt3,dataBR,diaOperacional,diaAuditoria,dataSeguinte,keyOf
+ useControleZigBeta2,fmt3,dataBR,diaOperacional,diaAuditoria,dataSeguinte,dataAnterior,cuiabaDate,keyOf
 } from './FechamentoDadosBeta2';
 import './OperacoesBeta2.css';
 import './FechamentoBeta2.css';
@@ -22,7 +22,7 @@ const formatDate=(s:string)=>s?dataBR(s):'—';
 
 const FechamentoBeta2:React.FC<Props>=({mode,dados,fechamentos,onSave,go})=>{
  const[stockId,setStockId]=useState('');
- const[date,setDate]=useState(diaOperacional());
+ const[date,setDate]=useState(mode==='reposicao'?dataAnterior(cuiabaDate()):diaOperacional());
  const[manager,setManager]=useState('');
  const[values,setValues]=useState<Record<string,QuantidadeDigitada>>({});
  const[extraAudit,setExtraAudit]=useState(false);
@@ -48,7 +48,7 @@ const FechamentoBeta2:React.FC<Props>=({mode,dados,fechamentos,onSave,go})=>{
  useEffect(()=>{
   const found=fechamentos.find(f=>f.estoqueId===stockId&&f.dataOperacional===date);
   setValues(Object.fromEntries(Object.entries(found?.quantidades||{}).map(([k,v])=>[k,{soltos:String(v),fechados:''}])));
-  setManager(found?.responsavel||'');
+  setManager(dados.colaboradores.find(e=>e.nome_completo===found?.responsavel)?.id||'');
   setExtraAudit(found?.auditoria||false);
   setNotice('');setError('');setFilter('');
  // eslint-disable-next-line react-hooks/exhaustive-deps
