@@ -4,14 +4,14 @@ import { supabase } from '../../lib/supabase';
 import './OperacoesBeta2.css';
 
 type Row = {id:string;nome:string;[key:string]:any};
-type NoteItem = {key:string;itemId:string;documentQty:string;quantity:string;ordered:string;unitCost:string;expiry:string;batch:string};
+type NoteItem = {key:string;itemId:string;documentQty:string;quantity:string;ordered:string;unitCost:string};
 export interface NotePreview {
   id:string;invoice:string;supplierId:string;supplier:string;stock:string;date:string;observations:string;
-  order:string;items:{item:string;documentQty:number;quantity:number;ordered:number|null;price:number;expiry:string;batch:string}[];
+  order:string;items:{item:string;documentQty:number;quantity:number;ordered:number|null;price:number}[];
   total:number;
 }
 interface Props{receipts:NotePreview[];onSave:(note:NotePreview)=>void}
-const mkLine=():NoteItem=>({key:Math.random().toString(36).slice(2),itemId:'',documentQty:'',quantity:'',ordered:'',unitCost:'',expiry:'',batch:''});
+const mkLine=():NoteItem=>({key:Math.random().toString(36).slice(2),itemId:'',documentQty:'',quantity:'',ordered:'',unitCost:''});
 const numeric=(n:unknown)=>Number(String(n??0).replace(',','.'))||0;
 const price=(n:number)=>n.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
 const today=()=>new Date(Date.now()-new Date().getTimezoneOffset()*60000).toISOString().slice(0,10);
@@ -91,15 +91,14 @@ const RecebimentoBeta2:React.FC<Props>=({receipts,onSave})=>{
    const order=orders.find(o=>o.id===id);
    if(order){setSupplierId(String(order.fornecedor_id||''));setStockId(String(order.estoque_destino_id||''));}
    const{data,error:e}=await supabase.from('itens_entrada_compra')
-     .select('item_id,quantidade,quantidade_pedida,quantidade_recebida,custo_unitario,data_validade')
+     .select('item_id,quantidade,quantidade_pedida,quantidade_recebida,custo_unitario')
      .eq('entrada_compra_id',id);
    if(e)throw e;
    const mapped=(data||[]).map((row:any)=>({
     key:Math.random().toString(36).slice(2),itemId:String(row.item_id||''),
     ordered:String(row.quantidade_pedida??row.quantidade??''),
     documentQty:'',quantity:'',
-    unitCost:String(row.custo_unitario??0),
-    expiry:String(row.data_validade||''),batch:''
+    unitCost:String(row.custo_unitario??0)
    }));
    setLines(mapped.length?mapped:[mkLine()]);
   }catch(ex){setError(ex instanceof Error?ex.message:'Não foi possível abrir o pedido.');}
@@ -129,7 +128,7 @@ const RecebimentoBeta2:React.FC<Props>=({receipts,onSave})=>{
    items:lines.map(l=>({
     item:itemById.get(l.itemId)?.nome||'Item',documentQty:numeric(l.documentQty),quantity:numeric(l.quantity),
     ordered:mode==='pedido'?numeric(l.ordered):null,
-    price:numeric(l.unitCost),expiry:l.expiry,batch:l.batch
+    price:numeric(l.unitCost)
    })),total
   });
   setSuccess('Nota com '+lines.length+' linha(s) conferida SOMENTE nesta prévia. O saldo oficial não foi alterado.');
@@ -166,8 +165,8 @@ const RecebimentoBeta2:React.FC<Props>=({receipts,onSave})=>{
      </div>
     </section>
     <section className="b2-section b2-card">
-     <div className="b2-op-section-title"><h2>2 · Produtos desta nota</h2><button className="b2-btn" type="button" onClick={()=>setLines(prev=>[...prev,mkLine()])}><Plus size={14} style={{display:'inline',marginRight:4}}/>Adicionar produto</button></div>
-     <p className="b2-op-help">Informe a quantidade da nota; a quantidade física é preenchida igual por padrão, mas pode ser corrigida. Pode lançar todos os itens juntos e repetir produto em lotes diferentes.</p>
+     <div className="b2-op-section-title"><h2>2 · Produtos desta nota</h2><span className="b2-pill">{lines.length} linha(s)</span></div>
+     <p className="b2-op-help">Informe a quantidade da nota; a quantidade física começa igual, mas pode ser corrigida. Lance todos os itens da mesma nota aqui.</p>
      <div className="b2-op-lines">{lines.map((l,index)=>{
       const term=(search[l.key]||'').toLocaleLowerCase('pt-BR').trim();
       const options=items.filter(i=>i.status==='ativo'||i.id===l.itemId)
@@ -175,22 +174,23 @@ const RecebimentoBeta2:React.FC<Props>=({receipts,onSave})=>{
        .sort((a,b)=>Number(b.id===l.itemId)-Number(a.id===l.itemId)).slice(0,90);
       const selected=itemById.get(l.itemId);
       const diff=mode==='pedido'?numeric(l.quantity)-numeric(l.ordered):0;
-      return <div className="b2-op-line" key={l.key}>
+      return <div className="b2-op-line b2-op-line-compact" key={l.key}>
        <div className="b2-op-line-head"><strong>Produto {index+1}</strong><button className="b2-btn alt small" type="button" disabled={lines.length===1} onClick={()=>setLines(prev=>prev.filter(x=>x.key!==l.key))}><Trash2 size={13} style={{display:'inline',marginRight:4}}/>Remover</button></div>
-       <label className="b2-field"><span>Buscar no cadastro original</span><input type="search" placeholder="Digite parte do nome ou código..." value={search[l.key]||''} onChange={e=>setSearch(prev=>({...prev,[l.key]:e.target.value}))}/></label>
-       <div className="b2-op-line-fields" style={{marginTop:9}}>
+       <label className="b2-field b2-op-search"><span>Localizar produto</span><input type="search" placeholder="Digite parte do nome ou código..." value={search[l.key]||''} onChange={e=>setSearch(prev=>({...prev,[l.key]:e.target.value}))}/></label>
+       <div className="b2-op-line-fields" style={{marginTop:7}}>
         <label className="b2-field"><span>Item *</span><select value={l.itemId} onChange={e=>changeLine(l.key,'itemId',e.target.value)}><option value="">Selecione...</option>{options.map(i=><option key={i.id} value={i.id}>{i.codigo?i.codigo+' — ':''}{i.nome}</option>)}</select></label>
         <label className="b2-field"><span>Qtd. na nota * {selected?.unidade_medida||''}</span><input type="number" min="0" step="0.001" value={l.documentQty} onChange={e=>changeLine(l.key,'documentQty',e.target.value)}/></label>
         <label className="b2-field"><span>Qtd. física * {selected?.unidade_medida||''}</span><input type="number" min="0" step="0.001" value={l.quantity} onChange={e=>changeLine(l.key,'quantity',e.target.value)}/></label>
         <label className="b2-field"><span>Custo unitário R$</span><input type="number" min="0" step="0.01" value={l.unitCost} onChange={e=>changeLine(l.key,'unitCost',e.target.value)}/></label>
-        <label className="b2-field"><span>Validade</span><input type="date" value={l.expiry} onChange={e=>changeLine(l.key,'expiry',e.target.value)}/></label>
        </div>
-       <label className="b2-field" style={{marginTop:10}}><span>Lote (opcional)</span><input value={l.batch} onChange={e=>changeLine(l.key,'batch',e.target.value)} placeholder="Ex.: lote 2026-09-A"/></label>
-       <p className="b2-op-help">Nota: {l.documentQty||'—'} · Físico: {l.quantity||'—'} · Diferença: <strong className={numeric(l.quantity)!==numeric(l.documentQty)?'b2-pill red':'b2-op-good'}>{(numeric(l.quantity)-numeric(l.documentQty)).toLocaleString('pt-BR',{maximumFractionDigits:3})}</strong></p>
-       {mode==='pedido'&&<p className="b2-op-help">Pedido prévio: {l.ordered||'—'} · recebido: {l.quantity||'—'} · diferença frente ao pedido: <strong className={diff!==0?'b2-pill red':'b2-op-good'}>{diff>0?'+':''}{diff.toLocaleString('pt-BR',{maximumFractionDigits:3})}</strong></p>}
-       <p className="b2-op-help">Subtotal: <strong style={{color:'#ffe5b9'}}>{price(numeric(l.quantity)*numeric(l.unitCost))}</strong></p>
+       <div className="b2-op-line-summary">
+        <span>Diferença nota × físico: <strong className={numeric(l.quantity)!==numeric(l.documentQty)?'b2-pill red':'b2-op-good'}>{(numeric(l.quantity)-numeric(l.documentQty)).toLocaleString('pt-BR',{maximumFractionDigits:3})}</strong></span>
+        {mode==='pedido'&&<span>Diferença do pedido: <strong className={diff!==0?'b2-pill red':'b2-op-good'}>{diff>0?'+':''}{diff.toLocaleString('pt-BR',{maximumFractionDigits:3})}</strong></span>}
+        <span>Subtotal: <strong className="b2-op-subtotal">{price(numeric(l.quantity)*numeric(l.unitCost))}</strong></span>
+       </div>
       </div>;
      })}</div>
+     <button className="b2-op-add-line" type="button" onClick={()=>setLines(prev=>[...prev,mkLine()])}><Plus size={17}/> Adicionar outro produto</button>
      <div className="b2-op-totals"><span>{lines.length} linha(s) na nota</span><strong>{price(total)}</strong></div>
      <div className="b2-op-actions"><button className="b2-btn" type="submit" disabled={orderLoading}>Concluir conferência nesta prévia</button><button className="b2-btn alt" type="button" onClick={reset}>Nova nota</button></div>
     </section>
