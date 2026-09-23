@@ -220,9 +220,33 @@ const HistoricoPedidosBeta2:React.FC<Props>=({
       <tbody>{selectedDemo.lines.map((l,i)=><tr key={i}><td><strong>{l.item}</strong></td><td>{fmt(l.quantity)} {l.unit}</td>
        <td>{movementStatus(selectedDemo)}</td></tr>)}</tbody>
      </table></div>
-     {selectedDemo.kind==='noturna'&&selectedDemo.status==='pendente'&&onReconcile&&
-       <button type="button" className="b2-btn" onClick={()=>onReconcile(selectedDemo.id)}>✓ Marcar retirada como conferida</button>}
-     <div className="b2-hint">{selectedDemo.kind==='noturna'?'Conferir esta retirada não gera uma segunda baixa. ':''}Este registro desaparece ao reiniciar os testes do Beta 2.</div>
+     {!readOnly&&selectedDemo.status==='pendente'&&onDispatch&&<section className="b2-op-box">
+      <h3>Registrar saída na origem (prévia)</h3>
+      <p className="b2-op-help">Quem entregou ou retirou a mercadoria? A saída é registrada uma única vez.</p>
+      <label className="b2-field"><span>Responsável pela saída *</span>
+       <select value={dispatchingEmployee} onChange={e=>{setDispatchingEmployee(e.target.value);setFormError('');}}>
+        <option value="">Selecione o funcionário...</option>
+        {employees.map(e=><option value={e.id} key={e.id}>{e.nome_completo}</option>)}
+       </select>
+      </label>
+      <button className="b2-btn" type="button" onClick={dispatch} style={{marginTop:12}}>Registrar saída (somente prévia)</button>
+     </section>}
+     {!readOnly&&selectedDemo.status==='entregue'&&!selectedDemo.receiptConfirmedAt&&onConfirmReceipt&&<section className="b2-op-box">
+      <h3>Confirmação pelo setor de destino (prévia)</h3>
+      <p className="b2-op-help">Quem recebeu no destino confirma a chegada. O estoquista não confirma por ele.</p>
+      <label className="b2-field"><span>Quem recebeu no destino? *</span>
+       <select value={receivingEmployee} onChange={e=>{setReceivingEmployee(e.target.value);setFormError('');}}>
+        <option value="">Selecione o funcionário...</option>
+        {employees.filter(e=>e.nome_completo!==selectedDemo.withdrawnBy).map(e=><option value={e.id} key={e.id}>{e.nome_completo}</option>)}
+       </select>
+      </label>
+      <button className="b2-btn" type="button" onClick={confirmReceipt} style={{marginTop:12}}>Confirmar recebimento (somente prévia)</button>
+      <p className="b2-op-small">Demonstração: selecionar o nome não autentica o funcionário. Na operação real, a confirmação deverá ficar vinculada à sessão do responsável pelo destino.</p>
+     </section>}
+     {formError&&<div className="b2-error" role="alert">{formError}</div>}
+     <div className="b2-hint">{selectedDemo.status==='entregue'
+      ?'A saída está registrada uma vez; confirmar o destino não gera nova movimentação. '
+      :'Nenhuma saída registrada ainda. '}Este registro é apenas demonstrativo e desaparece ao reiniciar os testes.</div>
     </>:<div className="b2-history-placeholder"><History size={32}/><h2>Abra um pedido</h2>
      <p>Selecione um pedido na lista para ver solicitante, origem, destino, data, status e todos os itens.</p>
      <ArrowRight size={18}/></div>}
