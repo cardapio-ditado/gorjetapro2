@@ -1,8 +1,8 @@
-import React, { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { ArrowRight, BookOpen, Check, CheckCircle2, Edit3, Package, Plus, RefreshCw, Search, Users, Warehouse, X } from 'lucide-react';
 
-const OriginalFichasEditor = lazy(() => import('../inventory/FichasTecnicas'));
+import EditorFichaTecnicaBeta2 from './EditorFichaTecnicaBeta2';
 export type Cadastro = 'itens' | 'fichas' | 'estoques' | 'fornecedores';
 type Row = { id:string; nome:string; [key:string]:any };
 const metadata:Record<Cadastro,{title:string;singular:string;table:string;desc:string;icon:React.ElementType}>={
@@ -48,6 +48,7 @@ const CadastrosBeta2:React.FC<Props>=({view,onNavigate})=>{
  const[busy,setBusy]=useState(false);
  const[page,setPage]=useState(0);
  const[editorOpen,setEditorOpen]=useState(false);
+ const[editorFicha,setEditorFicha]=useState<Row|null>(null);
  const reload=useCallback(async()=>{
   setLoading(true);setError('');
   try{
@@ -68,7 +69,7 @@ const CadastrosBeta2:React.FC<Props>=({view,onNavigate})=>{
   }catch(e){setError(e instanceof Error?e.message:'Falha ao carregar o cadastro oficial.');}
   finally{setLoading(false);}
  },[view]);
- useEffect(()=>{setDraft(null);setSearch('');setFilter('todos');setPage(0);setEditorOpen(false);setNotice('');void reload();},[reload]);
+ useEffect(()=>{setDraft(null);setSearch('');setFilter('todos');setPage(0);setEditorOpen(false);setEditorFicha(null);setNotice('');void reload();},[reload]);
  const filtered=useMemo(()=>rows.filter(r=>{
    const term=search.toLocaleLowerCase('pt-BR').trim();
    const text=[r.nome,r.codigo,r.categoria,r.cnpj,r.localizacao].filter(Boolean).join(' ').toLocaleLowerCase('pt-BR');
@@ -77,11 +78,14 @@ const CadastrosBeta2:React.FC<Props>=({view,onNavigate})=>{
  const record=rows.find(r=>r.id===selected)||rows[0];
  const maxPage=Math.max(1,Math.ceil(filtered.length/35));
  const show=filtered.slice(page*35,page*35+35);
+ const openFichaEditor=(row?:Row)=>{
+   setDraft(null);setEditorFicha(row||null);setEditorOpen(true);setError('');setNotice('');
+ };
  const edit=(row?:Row)=>{
    const current=row?{...row}:newRow(view);
    if(view==='itens')current.ponto_reposicao=Number(current.ponto_reposicao??current.estoque_minimo??0);
    setDraft(current);setWeekdays(Array.isArray(current.dias_compra)?current.dias_compra.map(Number):[]);
-   setNotice('');setError('');setEditorOpen(false);
+   setNotice('');setError('');setEditorOpen(false);setEditorFicha(null);
  };
  const set=(key:string,v:unknown)=>setDraft(p=>p?{...p,[key]:v}:null);
  const field=(key:string,label:string,type='text',wide=false)=><label className={'b2-field'+(wide?' b2-wide':'')} key={key}>
@@ -149,14 +153,14 @@ const CadastrosBeta2:React.FC<Props>=({view,onNavigate})=>{
    <div className="b2-catalog-columns">
      <div className="b2-card">
        <div className="b2-topline"><h2>{view==='fichas'?'Receitas cadastradas':'Catálogo de '+config.singular}</h2>
-         {view==='fichas'?<button className="b2-btn" onClick={()=>setEditorOpen(true)}><Plus size={15}/>Nova ficha</button>:<button className="b2-btn" onClick={()=>edit()}><Plus size={15}/>Novo {config.singular}</button>}
+         {view==='fichas'?<button className="b2-btn" onClick={()=>openFichaEditor()}><Plus size={15}/>Nova ficha</button>:<button className="b2-btn" onClick={()=>edit()}><Plus size={15}/>Novo {config.singular}</button>}
        </div>
        <div className="b2-search"><Search size={18}/><input value={search} onChange={e=>{setSearch(e.target.value);setPage(0)}} placeholder={view==='itens'?'Nome, código ou categoria...':'Buscar '+config.singular+'...'} aria-label="Pesquisar cadastro"/></div>
        <div className="b2-chips">{(['todos','ativos','inativos'] as const).map(f=><button className="b2-chip" aria-pressed={filter===f} key={f} onClick={()=>{setFilter(f);setPage(0)}}>{f==='todos'?'Todos':f==='ativos'?'Ativos':'Inativos'}</button>)}
          <button className="b2-chip" onClick={()=>void reload()}><RefreshCw size={14}/> Atualizar</button>
        </div>
        {loading?<div className="b2-hint">Carregando dados oficiais...</div>:show.length===0?<div className="b2-hint">Nenhum registro encontrado.</div>:<div className="b2-catalog-list">
-       {show.map(r=><button key={r.id} className={'b2-catalog-row'+(record?.id===r.id&&!draft?' selected':'')} onClick={()=>{setSelected(r.id);setDraft(null);setError('');setNotice('');setEditorOpen(false)}}>
+       {show.map(r=><button key={r.id} className={'b2-catalog-row'+(record?.id===r.id&&!draft?' selected':'')} onClick={()=>{setSelected(r.id);setDraft(null);setError('');setNotice('');setEditorOpen(false);setEditorFicha(null)}}>
          <span className="b2-catalog-icon"><Icon size={18}/></span><span className="b2-catalog-name"><strong>{r.nome}</strong><small>
          {view==='itens'?[r.codigo,r.categoria].filter(Boolean).join(' · '):view==='fornecedores'?(r.modalidade==='rua'?'Compra de rua':'Entrega')+(r.cnpj?' · '+r.cnpj:''):view==='estoques'?String(r.tipo):String(r.tipo_consumo==='venda_direta'?'Venda direta':'Produção')}
          </small></span><span className={'b2-pill '+(ativo(view,r)?'green':'red')}>{ativo(view,r)?'Ativo':'Inativo'}</span><ArrowRight size={15}/></button>)}
@@ -228,17 +232,19 @@ const CadastrosBeta2:React.FC<Props>=({view,onNavigate})=>{
          <div className="b2-row"><div><strong>Porções / rendimento</strong><small>{fmt(record.porcoes||1)} · {fmt(record.rendimento||1)} {record.unidade_rendimento||'porções'}</small></div></div>
          <div className="b2-row"><div><strong>Custo total</strong><small>Calculado pela ficha oficial</small></div><span className="b2-stat" style={{fontSize:23}}>{brl(record.custo_total)}</span></div>
          {record.modo_preparo&&<div className="b2-row"><div><strong>Modo de preparo</strong><small style={{whiteSpace:'pre-wrap'}}>{record.modo_preparo}</small></div></div>}
-         <div className="b2-hint">Para preservar as regras de sub-receitas, ingredientes e custo, a edição completa abre somente quando você solicita.</div>
+         <div className="b2-hint">Clique em Editar para abrir os mesmos campos e ingredientes em um formulário completo no visual do Beta 2.</div>
        </>}
-       <button className="b2-btn b2-catalog-save" onClick={()=>view==='fichas'?setEditorOpen(true):edit(record)}><Edit3 size={15}/>{view==='fichas'?'Gerenciar receitas':'Editar '+config.singular}</button></>
+       <button className="b2-btn b2-catalog-save" onClick={()=>view==='fichas'?openFichaEditor(record):edit(record)}><Edit3 size={15}/>{view==='fichas'?'Editar ficha técnica':'Editar '+config.singular}</button></>
        :<div className="b2-hint">Selecione uma ficha à esquerda.</div>}
      </div>
    </div>
-   {view==='fichas'&&editorOpen&&<div className="b2-section b2-card b2-original-editor">
-     <div className="b2-topline"><h2>Editor completo de fichas técnicas</h2><button className="b2-btn alt" onClick={()=>{setEditorOpen(false);void reload()}}><X size={15}/> Fechar editor</button></div>
-     <p className="b2-lead">Aberto apenas para editar ingredientes, sub-receitas e custos com as regras já existentes.</p>
-     <Suspense fallback={<div className="b2-hint">Carregando editor técnico...</div>}><OriginalFichasEditor/></Suspense>
-   </div>}
+   {view==='fichas'&&editorOpen&&<EditorFichaTecnicaBeta2
+     key={editorFicha?.id||'nova'}
+     ficha={editorFicha}
+     fichas={rows}
+     onClose={()=>{setEditorOpen(false);setEditorFicha(null);}}
+     onSaved={async(id)=>{setEditorOpen(false);setEditorFicha(null);setSearch('');setFilter('todos');setPage(0);setNotice('Ficha técnica salva no cadastro oficial com o layout Beta 2.');await reload();setSelected(id);}}
+   />}
  </div>;
 };
 export default CadastrosBeta2;
