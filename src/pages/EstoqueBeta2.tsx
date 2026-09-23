@@ -64,6 +64,19 @@ const[countSent,setCountSent]=useState(false);
 const[countApproved,setCountApproved]=useState(false);
 
 const differences=products.filter(p=>(count[p.id]??p.central)!==p.central);
+const diaReposicao=dataAnterior(cuiabaDate());
+const setoresComContagem=dadosFechamento.setores.filter(e=>
+ dadosFechamento.linhas.some(l=>l.estoque_id===e.id&&l.controleEfetivo==='diario')
+);
+const fechamentosRecebidos=setoresComContagem.filter(e=>
+ fechamentos.some(f=>f.estoqueId===e.id&&f.dataOperacional===diaReposicao)
+).length;
+const logDaReposicao=dadosFechamento.logs.find(l=>l.dtinicio<=diaReposicao&&l.dtfim>=diaReposicao&&
+ Boolean(l.finalizado_em)&&new Date(l.finalizado_em!).getTime()>=new Date(cuiabaDate()+'T06:00:00-04:00').getTime());
+const zigPronta=logDaReposicao?.status==='sucesso'&&Number(logDaReposicao.total_nao_mapeados||0)===0;
+const auditoriaPrevista=diaAuditoria(diaReposicao);
+const auditoriaRecebida=!auditoriaPrevista||dadosFechamento.setores.every(e=>
+ fechamentos.some(f=>f.estoqueId===e.id&&f.dataOperacional===diaReposicao&&f.auditoria));
 const go=(v:View)=>{
   setView(v);setNotice('');setError('');
   if(v==='reposicao')setRestockViewed(true);
@@ -218,13 +231,15 @@ return <div className="b2-root -m-5 lg:-m-7">
  nightReviewed={nightReviewed}
  nightCount={requests.filter(req=>req.kind==='noturna').length}
  nightAwaitingReceiptCount={requests.filter(req=>req.kind==='noturna'&&!req.receiptConfirmedAt).length}
- received={received} countSent={countSent}
- countApproved={countApproved} differenceCount={differences.length}
- sectorsDone={sectors.filter(x=>x.status==='concluido').length}
- sectorsTotal={sectors.length}
- sectorsStarted={sectors.some(x=>x.status!=='pendente')}
+ received={received}
+ fechamentoTotal={setoresComContagem.length}
+ fechamentoRecebidos={fechamentosRecebidos}
+ zigReady={zigPronta}
+ auditoriaPrevista={auditoriaPrevista}
+ auditoriaRecebida={auditoriaRecebida}
+ restockViewed={restockViewed}
  kitDone={kitDone} handoffDone={handoffDone}
- onHandoff={()=>{setHandoffDone(true);setNotice('Rotina concluída somente na simulação, sem alterar o estoque oficial.');}}
+ onHandoff={()=>{setHandoffDone(true);setNotice('Roteiro encerrado apenas na simulação.');}}
 />}
 
 {(['itens','fichas','estoques','fornecedores'] as View[]).includes(view) && <CadastrosBeta2 view={view as Cadastro} onNavigate={v=>go(v)}/>}
