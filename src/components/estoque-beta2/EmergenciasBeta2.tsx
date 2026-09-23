@@ -221,7 +221,7 @@ const EmergenciasBeta2:React.FC<Props>=({requests,onSave,startOnNightReview=fals
     <div className="b2-op-totals"><span>{isNight?'Uma única retirada registrada':'Um único pedido emergencial'}</span><strong>{lines.length} linha(s) de produtos</strong></div>
    </section>
    <section className="b2-section b2-card">
-    <h2>4 · Conferência e confirmação</h2>
+    <h2>4 · Registrar solicitação ou saída</h2>
     <p className="b2-op-help">{isNight
      ?'A saída fica registrada uma única vez no horário informado. Quem recebeu no destino deve confirmar; o estoquista somente consulta.'
      :'O pedido pendente não dá baixa. Quando ocorrer a saída, ela será registrada uma vez; o destino confirma o recebimento separadamente.'}</p>
