@@ -14,7 +14,7 @@ export interface EmbalagemControle {item_id:string;rotulo_solto:string|null;rotu
 export type FrequenciaManual='diario'|'periodico';
 export type ControleEfetivo='zig'|'diario'|'periodico';
 export interface ItemDoSetor extends NivelControle {
- item:ItemControle;controleEfetivo:ControleEfetivo;mapeadoZig:boolean;saldo:number;
+ item:ItemControle;controleEfetivo:ControleEfetivo;mapeadoZig:boolean;saldo:number;semNivel:boolean;
 }
 export interface FechamentoPreview {
  id:string;estoqueId:string;estoqueNome:string;dataOperacional:string;
@@ -125,17 +125,31 @@ export function useControleZigBeta2(){
   return estoques.filter(e=>e.status&&configured.has(e.id)&&e.tipo!=='central').sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR'));
  },[estoques,niveis]);
  const linhas=useMemo(()=>{
-  const byId=new Map(items.filter(i=>i.status==='ativo').map(i=>[i.id,i]));
+  const active=items.filter(i=>i.status==='ativo');
+  const byId=new Map(active.map(i=>[i.id,i]));
   const out:ItemDoSetor[]=[];
+  const registered=new Set<string>();
   for(const level of niveis){
    const item=byId.get(level.item_id);if(!item)continue;
    const k=keyOf(level.estoque_id,item.id);
+   registered.add(k);
    const mapeado=zigPorEstoque.has(k);
    const controleEfetivo:ControleEfetivo=mapeado?'zig':overrides[k]||'diario';
-   out.push({...level,item,controleEfetivo,mapeadoZig:mapeado,saldo:saldos[k]||0});
+   out.push({...level,item,controleEfetivo,mapeadoZig:mapeado,saldo:saldos[k]||0,semNivel:false});
+  }
+  // Produto com saldo no Bar/Cozinha não pode desaparecer da contagem por falta de nível cadastrado.
+  for(const sector of setores)for(const item of active){
+   const k=keyOf(sector.id,item.id);
+   if(registered.has(k)||!saldos[k])continue;
+   const mapeado=zigPorEstoque.has(k);
+   const controleEfetivo:ControleEfetivo=mapeado?'zig':overrides[k]||'diario';
+   out.push({
+    item_id:item.id,estoque_id:sector.id,nivel_reposicao:null,controle:null,
+    item,controleEfetivo,mapeadoZig:mapeado,saldo:saldos[k],semNivel:true
+   });
   }
   return out.sort((a,b)=>a.item.nome.localeCompare(b.item.nome,'pt-BR'));
- },[items,niveis,saldos,overrides,zigPorEstoque]);
+ },[items,niveis,saldos,overrides,zigPorEstoque,setores]);
  return {
   loading,error,items,niveis,estoques,setores,linhas,saldos,embalagens,logs,colaboradores,overrides,
   mapeamentos,refresh:()=>setReload(v=>v+1),resetFrequencias:()=>setOverrides({}),
