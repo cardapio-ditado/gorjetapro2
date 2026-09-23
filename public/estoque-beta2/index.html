@@ -107,6 +107,8 @@ var demoSuppliers=[
 {id:"f2",name:"Atacado (exemplo)",cnpj:"",telefone:"",email:"",responsavel:"",modalidade:"rua",ciclo:"",dias:"",obs:"Destilados e limpeza",status:"ativo"},
 {id:"f3",name:"Alimentos (exemplo)",cnpj:"",telefone:"",email:"",responsavel:"",modalidade:"entrega",ciclo:"",dias:"",obs:"Produtos congelados",status:"ativo"}
 ];
+var initialDemoItems=JSON.parse(JSON.stringify(demoItems));
+var initialDemoSuppliers=JSON.parse(JSON.stringify(demoSuppliers));
 function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}
 function productForm(){
 var p=state.productDraft||{},isNew=state.newProduct,chosen=state.newProduct?null:demoItems.find(function(x){return x.id===state.product});
@@ -149,7 +151,7 @@ if(act==="edit-supplier"){state.supplierEdit=true;state.newSupplier=false;state.
 if(act==="cancel-supplier"){state.supplierEdit=false;state.supplierDraft=null;if(state.returnProduct){state.returnProduct=false;go("produtos")}else render();return}
 if(act==="supplier-from-product"){var f=document.getElementById("itemForm");if(f){var d=new FormData(f);state.productDraft=Object.assign({},state.productDraft,Object.fromEntries(d.entries()),{cmv:d.get("cmv")==="on"})}state.returnProduct=true;state.supplierEdit=true;state.newSupplier=true;state.supplierDraft={};go("fornecedores");return}
 
- if(act==="reset"){state={view:"inicio",sector:"drinks",base:JSON.parse(JSON.stringify(base)),kits:JSON.parse(JSON.stringify(kits)),kitStatus:"pendente",countItems:JSON.parse(JSON.stringify(countItems)),countSent:false,approved:false,night:[],notice:"Demonstração reiniciada.",product:"stella",supplier:"Distribuidora de bebidas (exemplo)",receiveDone:false,rx:[{id:"stella",nome:"Stella Pure Gold 600 ml",pedido:48,recebido:48,custo:7.71},{id:"original",nome:"Original 600 ml",pedido:60,recebido:58,custo:8.96},{id:"gin",nome:"Gin — garrafa",pedido:6,recebido:6,custo:73.90}],productEdit:false,newProduct:false,productDraft:null,supplierEdit:false,newSupplier:false,supplierDraft:null,returnProduct:false};render();return}
+ if(act==="reset"){demoItems=JSON.parse(JSON.stringify(initialDemoItems));demoSuppliers=JSON.parse(JSON.stringify(initialDemoSuppliers));state={view:"inicio",sector:"drinks",base:JSON.parse(JSON.stringify(base)),kits:JSON.parse(JSON.stringify(kits)),kitStatus:"pendente",countItems:JSON.parse(JSON.stringify(countItems)),countSent:false,approved:false,night:[],notice:"Demonstração reiniciada.",product:"stella",supplier:"Distribuidora de bebidas (exemplo)",receiveDone:false,rx:[{id:"stella",nome:"Stella Pure Gold 600 ml",pedido:48,recebido:48,custo:7.71},{id:"original",nome:"Original 600 ml",pedido:60,recebido:58,custo:8.96},{id:"gin",nome:"Gin — garrafa",pedido:6,recebido:6,custo:73.90}],productEdit:false,newProduct:false,productDraft:null,supplierEdit:false,newSupplier:false,supplierDraft:null,returnProduct:false};render();return}
  if(act==="separar"){state.base[state.sector].status="separado";state.notice="Separação registrada na simulação. O próximo passo é o aceite do setor."}
  if(act==="receber"){var s=state.base[state.sector];s.items.forEach(function(i){i.count=i.target});s.status="recebido";state.notice=s.name+" confirmou o recebimento demonstrativo."}
  if(act==="kit-separar"){state.kitStatus="separado";state.notice="Kit separado. Falta confirmar a reposição."}
