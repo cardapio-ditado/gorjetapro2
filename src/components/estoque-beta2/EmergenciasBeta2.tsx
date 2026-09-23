@@ -178,15 +178,6 @@ const EmergenciasBeta2:React.FC<Props>=({requests,onSave})=>{
      <button className="b2-btn alt" type="button" disabled={balanceLoading} onClick={()=>save('entregue')}>Simular entrega imediata</button>
     </div>
    </section>
-   {requests.length>0&&<section className="b2-section b2-card">
-    <h2>Solicitações desta demonstração</h2>
-    {requests.map(req=><div className="b2-op-summary" key={req.id}>
-     <div className="b2-op-inline"><strong>{req.requester} · {req.sector}</strong><span className={'b2-pill '+(req.status==='entregue'?'green':'')}>{req.status==='entregue'?'Entrega simulada':'A entregar'}</span></div>
-     <p>{req.from} → {req.to} · {req.created}</p>
-     <small>{req.lines.map(x=>x.item+' ('+fmt(x.quantity)+' '+x.unit+')').join(' · ')}</small>
-     <p>Motivo: {req.reason}</p>
-    </div>)}
-   </section>}
   </>}
   </>}
   {tab!=='novo'&&<HistoricoPedidosBeta2 mode={tab} preview={requests} openId={openPreviewId}/>}
