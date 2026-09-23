@@ -205,10 +205,14 @@ const HistoricoPedidosBeta2:React.FC<Props>=({
      <span className={'b2-pill '+(selectedDemo.receiptConfirmedAt?'green':'')}>TESTE · {movementStatus(selectedDemo)}</span>
      <div className="b2-history-meta">
       {[['Solicitante',selectedDemo.requester],
-       ...(selectedDemo.kind==='noturna'?[['Quem retirou',selectedDemo.withdrawnBy||'—'],['Data/hora da retirada',when(selectedDemo.occurredAt)]]:[]),
-       ['Setor',selectedDemo.sector],['Criado em',selectedDemo.created],
+       ['Responsável pela saída',selectedDemo.withdrawnBy||'—'],
+       ['Saída registrada em',when(selectedDemo.dispatchedAt||selectedDemo.occurredAt)],
+       ['Recebimento no destino',selectedDemo.receiptConfirmedAt?'CONFIRMADO':'SEM CONFIRMAÇÃO'],
+       ['Confirmado por',selectedDemo.receiptConfirmedBy||'—'],
+       ['Confirmado em',when(selectedDemo.receiptConfirmedAt)],
+       ['Setor',selectedDemo.sector],['Registro criado',selectedDemo.created],
        ['Estoque de origem',selectedDemo.from],['Estoque de destino',selectedDemo.to],
-       ['Motivo',selectedDemo.reason],...(selectedDemo.kind==='noturna'&&selectedDemo.reconciledAt?[['Conferido em',selectedDemo.reconciledAt]]:[])]
+       ['Motivo',selectedDemo.reason]]
        .map(([k,v])=><div key={k}><small>{k}</small><strong>{v||'—'}</strong></div>)}
      </div>
      <h3 className="b2-history-items-title">{selectedDemo.kind==='noturna'?'Produtos retirados':'Produtos solicitados'}</h3>
