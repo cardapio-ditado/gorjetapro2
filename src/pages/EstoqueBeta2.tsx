@@ -1,11 +1,5 @@
-import React, { Suspense, lazy, useState } from 'react';
-import { useAuth } from '../contexts/AuthContext';
-
-// Os mesmos componentes do módulo original. Cadastro é REAL e compartilhado.
-const ItensEstoque = lazy(() => import('../components/inventory/ItensEstoque'));
-const FichasTecnicas = lazy(() => import('../components/inventory/FichasTecnicas'));
-const EstoquesGerenciamento = lazy(() => import('../components/inventory/EstoquesGerenciamento'));
-const GeneralRegistrations = lazy(() => import('./GeneralRegistrations'));
+import React, { useState } from 'react';
+import CadastrosBeta2, { type Cadastro } from '../components/estoque-beta2/CadastrosBeta2';
 import { Home, Package, Users, ClipboardCheck, Truck, Store, FileBox, Clock3, BarChart3, RotateCcw, Warehouse, BookOpen } from 'lucide-react';
 
 /** Beta 2 no React, sem iframe. Cadastros oficiais são compartilhados; fluxos operacionais usam dados simulados. */
@@ -46,8 +40,6 @@ const menu:{v:View;n:string;icon:React.ElementType}[]=[
 {v:'noite',n:'Retiradas noturnas',icon:Clock3},{v:'gestao',n:'Gestão',icon:BarChart3}
 ];
 const EstoqueBeta2:React.FC=()=>{
-const { isAdmin, isMaster } = useAuth();
-const podeEditarCadastros = isAdmin() || isMaster();
 const[view,setView]=useState<View>('inicio');
 const[products,setProducts]=useState<Product[]>(()=>clone(productsSeed));
 const[suppliers,setSuppliers]=useState<Supplier[]>(()=>clone(suppliersSeed));
@@ -73,6 +65,36 @@ const reset=()=>{setProducts(clone(productsSeed));setSuppliers(clone(suppliersSe
 const field=(label:string,value:string|number,onChange:(v:string)=>void,choices?:string[])=>
 <label className="b2-field"><span>{label}</span>{choices?<select value={String(value)} onChange={e=>onChange(e.target.value)}>{choices.map(v=><option key={v}>{v}</option>)}</select>:<input value={value} onChange={e=>onChange(e.target.value)}/>}</label>;
 const btn=(v:View,icon:React.ElementType,label:string,sub:string)=>{const Icon=icon;return <button key={v} className="b2-action" onClick={()=>go(v)}><Icon size={30} color="#edc487"/><span><strong>{label}</strong><small>{sub}</small></span></button>;};
+const beta2CadastroCSS = `/* Beta 2: identidade do protótipo também nos cadastros reais */
+.b2-root .b2-catalog-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.b2-root .b2-catalog-notice{display:flex;align-items:flex-start;gap:12px;padding:15px 17px;background:#213c33;border:1px solid #438367;border-radius:13px;margin:0 0 20px;color:#d4ffe9}
+.b2-root .b2-catalog-notice svg{color:#9af4ca;flex-shrink:0}
+.b2-root .b2-catalog-notice strong{color:#e0fff0!important}
+.b2-root .b2-catalog-notice p{color:#c1ecd8!important;font-size:13px;line-height:1.5;margin:3px 0 0}
+.b2-root .b2-catalog-columns{display:grid;grid-template-columns:minmax(0,1.08fr) minmax(0,1fr);align-items:start;gap:14px}
+.b2-root .b2-catalog-list{overflow-y:auto;max-height:650px;scrollbar-color:#945e75 #291c2c;margin-top:10px}
+.b2-root .b2-catalog-row{display:flex;gap:10px;align-items:center;text-align:left;width:100%;padding:13px 8px;color:#fff5fb!important;border-bottom:1px solid #553d51;border-left:3px solid transparent}
+.b2-root .b2-catalog-row:hover,.b2-root .b2-catalog-row.selected{background:#4c2b42;border-left-color:#f0c18b}
+.b2-root .b2-catalog-icon{color:#f5d09c;padding:9px;background:#553348;border-radius:10px;flex-shrink:0}
+.b2-root .b2-catalog-name{min-width:0;flex:1}.b2-root .b2-catalog-name strong{display:block;color:#fff6fb!important;font-size:14px;overflow-wrap:anywhere}
+.b2-root .b2-catalog-name small{display:block;color:#dfcbda!important;font-size:12px;margin-top:3px;overflow-wrap:anywhere}
+.b2-root .b2-catalog-detail h2{overflow-wrap:anywhere}
+.b2-root .b2-catalog-pages{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;color:#decbd8;font-size:12px;margin-top:16px}
+.b2-root .b2-catalog-pages>div{display:flex;gap:7px}
+.b2-root .b2-search{display:flex;align-items:center;gap:8px;background:#241a2a;border:1px solid #92748e;border-radius:11px;color:#f0c18b;margin-top:14px;padding-left:10px}
+.b2-root .b2-search input{background:transparent!important;border:none!important;min-height:42px}
+.b2-root .b2-search input:focus{box-shadow:none!important}
+.b2-root .b2-btn svg,.b2-root .b2-chip svg{display:inline;vertical-align:middle;margin-right:5px}
+.b2-root .b2-catalog-save{display:inline-flex;align-items:center;min-height:43px;gap:6px;margin-top:19px}
+.b2-root .b2-checks{display:flex;gap:10px;flex-wrap:wrap}
+.b2-root .b2-check{display:flex;gap:9px;align-items:center;color:#fff!important;border:1px solid #886b82;border-radius:10px;padding:11px;font-size:13px}
+.b2-root .b2-check input{width:17px;accent-color:#c5546a}
+.b2-root .b2-wide{grid-column:1/-1}
+.b2-root .b2-original-editor{background:#17131d;color:#f7eef5}
+.b2-root .b2-original-editor [class*="text-white"]{color:#f7eef5!important}
+.b2-root .b2-original-editor [class*="text-gray"],.b2-root .b2-original-editor [class*="text-slate"]{color:#e4d2dc!important}
+@media(max-width:1120px){.b2-root .b2-catalog-columns{grid-template-columns:1fr}.b2-root .b2-catalog-list{max-height:450px}}
+@media(max-width:610px){.b2-root .b2-catalog-icon{display:none}.b2-root .b2-catalog-row{gap:6px;padding:11px 4px}.b2-root .b2-catalog-row .b2-pill{font-size:9px;padding:4px}}`;
 const beta2ContrastCSS = `
 /* Contraste explícito: o Gorjeta Pro alterna tokens globais no tema claro.
    Beta 2 mantém sua própria paleta escura em ambos os temas. */
@@ -121,6 +143,7 @@ const beta2ContrastCSS = `
 return <div className="b2-root -m-5 lg:-m-7">
 <style>{'.b2-root{color:#f6edf0;background:radial-gradient(ellipse at 92% 0,#432638,#140f19 44%);min-height:calc(100dvh - 70px);font-family:Inter,system-ui,sans-serif}.b2-root *{box-sizing:border-box}.b2-root .b2-shell{display:grid;grid-template-columns:205px minmax(0,1fr);min-height:calc(100dvh - 70px)}.b2-root .b2-side{padding:20px 11px;background:#1a1320;border-right:1px solid #4d374b}.b2-root .b2-logo{padding:0 11px 18px;font-weight:900;letter-spacing:.04em}.b2-root .b2-logo small{display:block;color:#edc487;font-size:11px;letter-spacing:.12em}.b2-root .b2-nav{display:flex;align-items:center;gap:9px;border-radius:11px;width:100%;padding:10px;border:1px solid transparent;color:#d4bfce;text-align:left;font-size:12px;font-weight:750;margin-bottom:4px}.b2-root .b2-nav:hover,.b2-root .b2-nav[aria-current=page]{background:#49273a;color:white;border-color:#9b5368}.b2-root .b2-main{padding:24px clamp(16px,3vw,40px) 44px;min-width:0}.b2-root .b2-head{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:25px}.b2-root .b2-tag{border:1px solid #a86d75;background:#59293e;color:#f9dccc;border-radius:99px;font-size:11px;font-weight:900;letter-spacing:.08em;padding:7px 12px}.b2-root .b2-eyebrow{color:#edc487;font-size:11px;font-weight:900;letter-spacing:.15em;text-transform:uppercase;margin-bottom:5px}.b2-root h1{font-weight:900;letter-spacing:-.04em;font-size:clamp(28px,3vw,43px);line-height:1.1;margin:0 0 9px}.b2-root h2{font-weight:850;font-size:21px;margin:0 0 13px}.b2-root .b2-lead,.b2-root .b2-muted{color:#bcaabb}.b2-root .b2-lead{max-width:790px;margin-bottom:25px}.b2-root .b2-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px}.b2-root .b2-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}.b2-root .b2-split{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}.b2-root .b2-card{background:linear-gradient(145deg,#281c2c,#1d1823);border:1px solid #4d3849;border-radius:18px;padding:19px;min-width:0}.b2-root .b2-stat{font-size:30px;letter-spacing:-.05em;font-weight:900;color:#f5dfc6}.b2-root .b2-section{margin-top:28px}.b2-root .b2-action{display:flex;align-items:center;gap:14px;text-align:left;border:1px solid #674352;background:linear-gradient(130deg,#492539,#261d2a);padding:17px;border-radius:17px;min-height:98px}.b2-root .b2-action:hover{border-color:#edc487}.b2-root .b2-action strong{display:block;font-size:16px;font-weight:850}.b2-root .b2-action small{display:block;color:#d5becb;margin-top:2px}.b2-root .b2-row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:14px 0;border-bottom:1px solid #493547}.b2-root .b2-row:last-child{border:0}.b2-root .b2-row strong{display:block}.b2-root .b2-row small{color:#baa8b8;display:block;font-size:12px;margin-top:3px}.b2-root .b2-btn{background:linear-gradient(130deg,#b54660,#842d46);border:1px solid transparent;color:white;padding:10px 14px;border-radius:11px;font-weight:850;font-size:13px}.b2-root .b2-btn:hover{filter:brightness(1.1)}.b2-root .b2-btn:disabled{opacity:.5;cursor:default}.b2-root .b2-btn.alt{background:#3c3041;border-color:#70546c}.b2-root .b2-btn.green{background:#207b5c}.b2-root .b2-btn.small{padding:7px 10px;font-size:12px}.b2-root .b2-pill{background:#513549;color:#f3dded;border:1px solid #695061;border-radius:99px;font-size:11px;font-weight:800;padding:5px 9px;display:inline-block}.b2-root .b2-pill.green{color:#a6efd0;background:#1c453a;border-color:#2d6b53}.b2-root .b2-pill.red{color:#ffb1bb;background:#542b3b;border-color:#9b4b5b}.b2-root .b2-hint{background:#382a2a;color:#efce9a;border:1px solid #755843;border-radius:11px;padding:11px 13px;font-size:12px;margin:14px 0}.b2-root .b2-success{background:#173c30;color:#b5efd0;border:1px solid #367957;border-radius:11px;padding:12px 14px;font-size:13px;margin:15px 0}.b2-root .b2-error{background:#522737;color:#ffd2d4;border:1px solid #a44b60;border-radius:11px;padding:12px 14px;font-size:13px;margin:15px 0}.b2-root .b2-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.b2-root .b2-field{display:grid;gap:7px;color:#e8d5e1;font-size:12px;font-weight:800}.b2-root input,.b2-root select{width:100%;border-radius:10px;padding:10px 11px;border:1px solid #6b516b;background:#17111d;color:white;min-width:0}.b2-root input[type=checkbox]{width:auto}.b2-root select option{background:#201824;color:white}.b2-root .b2-table-scroll{overflow-x:auto}.b2-root table{width:100%;border-collapse:collapse;min-width:540px}.b2-root th{color:#bba5b8;text-align:left;text-transform:uppercase;letter-spacing:.08em;font-size:11px;padding:12px 9px;border-bottom:1px solid #4d3849}.b2-root td{padding:12px 9px;border-bottom:1px solid #453444;font-size:13px}.b2-root td input{max-width:100px}.b2-root .b2-topline{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}.b2-root .b2-chips{display:flex;flex-wrap:wrap;gap:8px;margin:15px 0}.b2-root .b2-chip{border:1px solid #65465a;padding:8px 11px;border-radius:11px;font-size:12px;font-weight:800;background:#352537}.b2-root .b2-chip[aria-pressed=true]{background:#7d3049;color:white}@media(max-width:1000px){.b2-root .b2-shell{display:block}.b2-root .b2-side{padding:12px;border-right:0;border-bottom:1px solid #4d374b}.b2-root .b2-logo{padding-bottom:8px}.b2-root .b2-menu{display:flex;gap:4px;overflow-x:auto}.b2-root .b2-nav{width:auto;white-space:nowrap;padding:9px}.b2-root .b2-main{padding:17px}.b2-root .b2-split{grid-template-columns:1fr}}@media(max-width:600px){.b2-root .b2-grid,.b2-root .b2-actions,.b2-root .b2-form{grid-template-columns:1fr}.b2-root .b2-card{padding:15px}}'}
 {beta2ContrastCSS}
+{beta2CadastroCSS}
 </style>
 <div className="b2-shell"><aside className="b2-side"><div className="b2-logo">✦ DITADO POPULAR<small>GORJETA PRO · BETA 2</small></div><nav className="b2-menu">{menu.map(m=><button key={m.v} className="b2-nav" aria-current={view===m.v?'page':undefined} onClick={()=>go(m.v)}><m.icon size={17}/>{m.n}</button>)}</nav><div className="b2-hint">Cadastros: dados oficiais compartilhados. Inventário, recebimento, abastecimento e demais operações: simulação isolada.</div></aside>
 <main className="b2-main"><div className="b2-head"><span className="b2-tag">● ESTOQUE BETA 2</span><span className="b2-muted" style={{fontSize:12}}>
@@ -143,26 +166,7 @@ return <div className="b2-root -m-5 lg:-m-7">
 {btn('kits',FileBox,'Kit de limpeza','Reposição programada')}
 </div></section></>}
 
-{(['itens','fichas','estoques','fornecedores'] as View[]).includes(view) && <>
-<p className="b2-eyebrow">Cadastros compartilhados · Gorjeta Pro</p>
-<h1>{view==='itens'?'Cadastro de itens':view==='fichas'?'Fichas técnicas':view==='estoques'?'Cadastro de estoques':'Fornecedores'}</h1>
-<p className="b2-lead">Esta é a tela ORIGINAL do Gorjeta Pro, reutilizada no Estoque Beta 2. Não existe cópia de cadastro nem de tabela.</p>
-<div className="b2-hint" style={{fontSize:14}}>
-<strong>ATENÇÃO · CADASTRO REAL:</strong> aqui a consulta, inclusão e edição são feitas no cadastro oficial. Salvar, inativar ou excluir pode afetar o módulo antigo.
-As telas de inventário, recebimento e abastecimento permanecem demonstrativas e não movimentam saldos.
-</div>
-{podeEditarCadastros ? <div className="b2-live-catalog">
-<Suspense fallback={<div className="b2-card">Carregando cadastro original...</div>}>
-{view==='itens'&&<ItensEstoque/>}
-{view==='fichas'&&<FichasTecnicas/>}
-{view==='estoques'&&<EstoquesGerenciamento/>}
-{view==='fornecedores'&&<GeneralRegistrations supplierOnly/>}
-</Suspense>
-</div> : <div className="b2-card">
-<h2>Acesso restrito aos responsáveis pelos cadastros</h2>
-<p className="b2-muted">Seu perfil possui acesso operacional ao estoque, mas os cadastros originais são destinados ao administrador ou master.</p>
-</div>}
-</>}
+{(['itens','fichas','estoques','fornecedores'] as View[]).includes(view) && <CadastrosBeta2 view={view as Cadastro} onNavigate={v=>go(v)}/>}
 {view==='inventario'&&<><p className="b2-eyebrow">Posição e contagem</p><h1>Inventário</h1><p className="b2-lead">Contagem do Central com avaliação de divergências por Cristiano.</p><div className="b2-card"><div className="b2-topline"><h2>Contagem por endereço</h2><span className="b2-pill">{countApproved?'Aprovado':countSent?'Aguardando Cristiano':'Em andamento'}</span></div><div className="b2-table-scroll"><table><thead><tr><th>Item</th><th>Local</th><th>Teórico</th><th>Físico</th><th>Diferença</th></tr></thead><tbody>{products.map(p=>{const fisico=count[p.id]??p.central,diff=fisico-p.central;return <tr key={p.id}><td>{p.nome}</td><td>{p.endereco}</td><td>{num(p.central)}</td><td><input type="number" min="0" value={fisico} disabled={countSent} onChange={e=>setCount(c=>({...c,[p.id]:Number(e.target.value)}))}/></td><td><span className={'b2-pill '+(diff?'red':'green')}>{num(diff)}</span></td></tr>})}</tbody></table></div><div style={{marginTop:18}}>{countSent?<button className="b2-btn alt" onClick={()=>go('gestao')}>Ver fila do Cristiano →</button>:<button className="b2-btn" onClick={()=>{setCountSent(true);setNotice('Contagem enviada apenas nesta simulação.')}}>Enviar contagem →</button>}</div></div></>}
 {view==='recebimento'&&<><p className="b2-eyebrow">Compras e entradas</p><h1>Recebimento de mercadoria</h1><p className="b2-lead">Pedido versus recebido, nota, fornecedor, custo e divergências.</p><div className="b2-grid"><div className="b2-card"><div className="b2-eyebrow">Itens na nota</div><div className="b2-stat">{lines.length}</div></div><div className="b2-card"><div className="b2-eyebrow">Divergências</div><div className="b2-stat">{lines.filter(l=>l.pedido!==l.recebido).length}</div></div><div className="b2-card"><div className="b2-eyebrow">Valor recebido</div><div className="b2-stat" style={{fontSize:24}}>{money(lines.reduce((a,l)=>a+l.recebido*l.custo,0))}</div></div></div><section className="b2-section b2-card"><h2>1 · Nota e fornecedor</h2><div className="b2-form"><label className="b2-field">Fornecedor<select>{suppliers.map(s=><option key={s.id}>{s.nome}</option>)}</select></label><label className="b2-field">Número da nota<input defaultValue="NF-DEMO-001"/></label><label className="b2-field">Destino<select><option>Estoque Central</option><option>Bar</option><option>Cozinha</option></select></label><label className="b2-field">Data<input type="date" defaultValue="2026-09-22"/></label></div></section><section className="b2-section b2-card"><h2>2 · Conferir linha por linha</h2><div className="b2-table-scroll"><table><thead><tr><th>Produto</th><th>Pedido</th><th>Recebido</th><th>Preço</th><th>Validade</th><th>Status</th></tr></thead><tbody>{lines.map(l=><tr key={l.id}><td>{l.produto}</td><td>{l.pedido}</td><td><input type="number" min="0" disabled={received} value={l.recebido} onChange={e=>setLines(a=>a.map(x=>x.id===l.id?{...x,recebido:Number(e.target.value)}:x))}/></td><td>{money(l.custo)}</td><td><input type="date" disabled={received}/></td><td><span className={'b2-pill '+(l.pedido===l.recebido?'green':'red')}>{l.pedido===l.recebido?'Conforme':'Divergência'}</span></td></tr>)}</tbody></table></div><button className="b2-btn green" style={{marginTop:18}} disabled={received} onClick={()=>{setReceived(true);setNotice('Recebimento confirmado apenas na simulação.')}}>{received?'✓ Recebimento concluído':'Confirmar recebimento simulado'}</button></section></>}
 {view==='abastecimento'&&<><p className="b2-eyebrow">Operação diária</p><h1>Abastecimento</h1><p className="b2-lead">Confira o setor, separe a diferença e confirme a entrega.</p><div className="b2-chips">{sectors.map(s=><button key={s.id} className="b2-chip" aria-pressed={s.id===sectorId} onClick={()=>setSectorId(s.id)}>{s.nome}</button>)}</div><div className="b2-card"><div className="b2-topline"><h2>{sector.nome}</h2><span className="b2-pill">{sector.status}</span></div><p className="b2-muted">{sector.encarregado}</p><div className="b2-table-scroll"><table><thead><tr><th>Item</th><th>Referência</th><th>Tem</th><th>Repor</th></tr></thead><tbody>{sector.itens.map((i,idx)=><tr key={i.nome}><td>{i.nome}<small style={{display:'block'}}>{i.unidade}</small></td><td>{i.alvo}</td><td><input type="number" min="0" disabled={sector.status==='concluido'} value={i.atual} onChange={e=>setSectors(s=>s.map(sec=>sec.id===sectorId?{...sec,itens:sec.itens.map((it,j)=>j===idx?{...it,atual:Number(e.target.value)}:it)}:sec))}/></td><td>{num(Math.max(0,i.alvo-i.atual))}</td></tr>)}</tbody></table></div>{sector.status!=='concluido'&&<button className="b2-btn" style={{marginTop:18}} onClick={()=>setSectors(s=>s.map(sec=>sec.id===sectorId?{...sec,status:sec.status==='pendente'?'separado':'concluido',itens:sec.status==='separado'?sec.itens.map(i=>({...i,atual:i.alvo})):sec.itens}:sec))}>{sector.status==='pendente'?'Marcar separado →':'Confirmar recebimento →'}</button>}</div></>}
