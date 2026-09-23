@@ -131,7 +131,7 @@ export function useControleZigBeta2(){
    const item=byId.get(level.item_id);if(!item)continue;
    const k=keyOf(level.estoque_id,item.id);
    const mapeado=zigPorEstoque.has(k);
-   const controleEfetivo:ControleEfetivo=mapeado?'zig':overrides[k]||(item.grupo_controle==='gasta'?'periodico':'diario');
+   const controleEfetivo:ControleEfetivo=mapeado?'zig':overrides[k]||'diario';
    out.push({...level,item,controleEfetivo,mapeadoZig:mapeado,saldo:saldos[k]||0});
   }
   return out.sort((a,b)=>a.item.nome.localeCompare(b.item.nome,'pt-BR'));
