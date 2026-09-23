@@ -32,6 +32,7 @@ const RecebimentoBeta2:React.FC<Props>=({receipts,onSave})=>{
  const[stocks,setStocks]=useState<Row[]>([]);
  const[orders,setOrders]=useState<Row[]>([]);
  const[lines,setLines]=useState<NoteItem[]>([mkLine()]);
+ const[focusLine,setFocusLine]=useState('');
  const[invoice,setInvoice]=useState('');
  const[supplierId,setSupplierId]=useState('');
  const[stockId,setStockId]=useState('');
@@ -173,7 +174,7 @@ const RecebimentoBeta2:React.FC<Props>=({receipts,onSave})=>{
       return <div className="b2-op-line b2-op-line-compact" key={l.key}>
        <div className="b2-op-line-head"><strong>Produto {index+1}</strong><button className="b2-btn alt small" type="button" disabled={lines.length===1} onClick={()=>setLines(prev=>prev.filter(x=>x.key!==l.key))}><Trash2 size={13} style={{display:'inline',marginRight:4}}/>Remover</button></div>
        <div className="b2-op-line-fields" style={{marginTop:7}}>
-        <PesquisaItemBeta2 items={items} selectedId={l.itemId} onSelect={id=>changeLine(l.key,'itemId',id)} label="Item *"/>
+        <PesquisaItemBeta2 items={items} selectedId={l.itemId} onSelect={id=>changeLine(l.key,'itemId',id)} label="Item *" focusOnMount={focusLine===l.key}/>
         <label className="b2-field"><span>Qtd. na nota * {selected?.unidade_medida||''}</span><input type="number" min="0" step="0.001" value={l.documentQty} onChange={e=>changeLine(l.key,'documentQty',e.target.value)}/></label>
         <label className="b2-field"><span>Qtd. física * {selected?.unidade_medida||''}</span><input type="number" min="0" step="0.001" value={l.quantity} onChange={e=>changeLine(l.key,'quantity',e.target.value)}/></label>
         <label className="b2-field"><span>Custo unitário R$</span><input type="number" min="0" step="0.01" value={l.unitCost} onChange={e=>changeLine(l.key,'unitCost',e.target.value)}/></label>
@@ -185,7 +186,7 @@ const RecebimentoBeta2:React.FC<Props>=({receipts,onSave})=>{
        </div>
       </div>;
      })}</div>
-     <button className="b2-op-add-line" type="button" onClick={()=>setLines(prev=>[...prev,mkLine()])}><Plus size={17}/> Adicionar outro produto</button>
+     <button className="b2-op-add-line" type="button" onClick={()=>{const next=mkLine();setFocusLine(next.key);setLines(prev=>[...prev,next]);}}><Plus size={17}/> Adicionar outro produto</button>
      <div className="b2-op-totals"><span>{lines.length} linha(s) na nota</span><strong>{price(total)}</strong></div>
      <div className="b2-op-actions"><button className="b2-btn" type="submit" disabled={orderLoading}>Concluir conferência nesta prévia</button><button className="b2-btn alt" type="button" onClick={reset}>Nova nota</button></div>
     </section>
