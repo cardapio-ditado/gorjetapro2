@@ -8,8 +8,6 @@ import { Home, Package, Users, ClipboardCheck, Truck, Store, FileBox, Clock3, Ba
 /** Beta 2 no React, sem iframe. Cadastros oficiais são compartilhados; fluxos operacionais usam dados simulados. */
 type View = 'inicio' | 'itens' | 'fichas' | 'fornecedores' | 'estoques' | 'inventario' | 'recebimento' | 'abastecimento' | 'kits' | 'noite' | 'emergencias' | 'gestao';
 type Product = { id:string; nome:string; codigo:string; categoria:string; tipo:string; unidade:string; embalagem:string; fator:number; fornecedorId:string; endereco:string; minimo:number; ponto:number; controle:string; classe:string; cmv:boolean; central:number };
-type Supplier = { id:string; nome:string; cnpj:string; telefone:string; email:string; responsavel:string; modalidade:string; ciclo:string; dias:string; observacoes:string };
-type Line = { id:string; produto:string; pedido:number; recebido:number; custo:number };
 type Sector = { id:string; nome:string; encarregado:string; status:string; itens:{ nome:string; alvo:number; atual:number; unidade:string }[] };
 const productsSeed:Product[]=[
 {id:'stella',nome:'Stella Pure Gold 600 ml',codigo:'BEV-001',categoria:'Bebidas',tipo:'insumo',unidade:'unidade',embalagem:'Caixa com 12',fator:12,fornecedorId:'dist',endereco:'Central seco / Bebidas',minimo:60,ponto:72,controle:'vende',classe:'pedido',cmv:true,central:120},
@@ -18,24 +16,13 @@ const productsSeed:Product[]=[
 {id:'batata',nome:'Batata palito',codigo:'ALM-004',categoria:'Congelados',tipo:'insumo',unidade:'pacote',embalagem:'Caixa com 10',fator:10,fornecedorId:'alim',endereco:'Central congelado / Alimentos',minimo:14,ponto:18,controle:'vende',classe:'pedido',cmv:true,central:34},
 {id:'bolinho',nome:'Bolinho pronto',codigo:'PRD-002',categoria:'Produção',tipo:'produto_final',unidade:'unidade',embalagem:'Caixa organizadora',fator:1,fornecedorId:'',endereco:'Central congelado / Preparações',minimo:150,ponto:180,controle:'conta',classe:'sob_demanda',cmv:true,central:320}
 ];
-const suppliersSeed:Supplier[]=[
-{id:'dist',nome:'Distribuidora de bebidas (exemplo)',cnpj:'',telefone:'',email:'',responsavel:'',modalidade:'entrega',ciclo:'1',dias:'Seg–Sex',observacoes:'Bebidas e chopp'},
-{id:'atac',nome:'Atacado (exemplo)',cnpj:'',telefone:'',email:'',responsavel:'',modalidade:'rua',ciclo:'',dias:'',observacoes:'Destilados e limpeza'},
-{id:'alim',nome:'Alimentos (exemplo)',cnpj:'',telefone:'',email:'',responsavel:'',modalidade:'entrega',ciclo:'',dias:'',observacoes:'Congelados'}
-];
 const sectionsSeed:Sector[]=[
 {id:'drinks',nome:'Bar de drinks',encarregado:'Henrian',status:'pendente',itens:[{nome:'Gin',alvo:6,atual:2,unidade:'garrafas'},{nome:'Energético',alvo:36,atual:14,unidade:'latas'},{nome:'Polpa de maracujá',alvo:25,atual:7,unidade:'pacotes'}]},
 {id:'cerveja',nome:'Bar de cervejas',encarregado:'Henrian',status:'pendente',itens:[{nome:'Stella Pure Gold',alvo:80,atual:28,unidade:'un.'},{nome:'Original',alvo:110,atual:45,unidade:'un.'},{nome:'Água sem gás',alvo:75,atual:26,unidade:'un.'}]},
 {id:'cozinha',nome:'Cozinha',encarregado:'João Vitor',status:'pendente',itens:[{nome:'Batata palito',alvo:22,atual:7,unidade:'pacotes'},{nome:'Bolinho pronto',alvo:200,atual:65,unidade:'un.'},{nome:'Carne',alvo:24,atual:9,unidade:'kg'}]}
 ];
-const linesSeed:Line[]=[
-{id:'r1',produto:'Stella Pure Gold 600 ml',pedido:48,recebido:48,custo:7.71},
-{id:'r2',produto:'Original 600 ml',pedido:60,recebido:58,custo:8.96},
-{id:'r3',produto:'Gin — garrafa',pedido:6,recebido:6,custo:73.90}
-];
 const clone=<T,>(v:T):T=>JSON.parse(JSON.stringify(v)) as T;
 const num=(n:number)=>n.toLocaleString('pt-BR',{maximumFractionDigits:2});
-const money=(n:number)=>n.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
 type MenuSection = 'operacao' | 'cadastros' | 'gestao';
 type MenuItem = {v:View;n:string;icon:React.ElementType};
 const menuSections:{id:MenuSection;title:string;hint:string;icon:React.ElementType;items:MenuItem[]}[]=[
@@ -63,10 +50,8 @@ const EstoqueBeta2:React.FC=()=>{
 const[view,setView]=useState<View>('inicio');
 const[openSections,setOpenSections]=useState<Record<MenuSection,boolean>>({operacao:true,cadastros:false,gestao:false});
 const[products,setProducts]=useState<Product[]>(()=>clone(productsSeed));
-const[suppliers,setSuppliers]=useState<Supplier[]>(()=>clone(suppliersSeed));
 const[notice,setNotice]=useState('');
 const[error,setError]=useState('');
-const[lines,setLines]=useState<Line[]>(()=>clone(linesSeed));
 const[received,setReceived]=useState(false);
 const[receipts,setReceipts]=useState<NotePreview[]>([]);
 const[emergencyRequests,setEmergencyRequests]=useState<EmergencyPreview[]>([]);
@@ -90,7 +75,7 @@ const go=(v:View)=>{
   const section=sectionOf(v);
   if(section)setOpenSections(prev=>({...prev,[section]:true}));
 };
-const reset=()=>{setProducts(clone(productsSeed));setSuppliers(clone(suppliersSeed));setLines(clone(linesSeed));setSectors(clone(sectionsSeed));setCount({});setCountSent(false);setCountApproved(false);setReceived(false);setReceipts([]);setEmergencyRequests([]);setKitDone(false);setNightReviewed(false);setHandoffDone(false);setNight([]);setView('inicio');setOpenSections({operacao:true,cadastros:false,gestao:false});setError('');setNotice('Demonstração reiniciada.');};
+const reset=()=>{setProducts(clone(productsSeed));setSectors(clone(sectionsSeed));setCount({});setCountSent(false);setCountApproved(false);setReceived(false);setReceipts([]);setEmergencyRequests([]);setKitDone(false);setNightReviewed(false);setHandoffDone(false);setNight([]);setView('inicio');setOpenSections({operacao:true,cadastros:false,gestao:false});setError('');setNotice('Demonstração reiniciada.');};
 const field=(label:string,value:string|number,onChange:(v:string)=>void,choices?:string[])=>
 <label className="b2-field"><span>{label}</span>{choices?<select value={String(value)} onChange={e=>onChange(e.target.value)}>{choices.map(v=><option key={v}>{v}</option>)}</select>:<input value={value} onChange={e=>onChange(e.target.value)}/>}</label>;
 const beta2MenuCSS = `
