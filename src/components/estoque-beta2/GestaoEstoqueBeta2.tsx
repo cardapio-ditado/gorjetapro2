@@ -235,7 +235,7 @@ const GestaoEstoqueBeta2:React.FC<Props>=({dados,go})=>{
           {opened?'Fechar':'Configurar'} <ChevronDown size={14} className={opened?'b2-simple-chevron open':'b2-simple-chevron'}/>
          </button>
          <button type="button" className="b2-simple-remove" title={'Remover '+row.item.nome+' da lista do '+sector?.nome}
-          aria-label={'Remover '+row.item.nome+' da lista do '+sector?.nome} onClick={()=>removerItem(row)}><Trash2 size={16}/></button>
+          aria-label={'Remover '+row.item.nome+' da lista do '+sector?.nome} onClick={()=>removerItem(row)}><Trash2 size={15}/> Remover</button>
         </div>
        </div>
        {opened&&<div className="b2-simple-detail">
@@ -245,6 +245,11 @@ const GestaoEstoqueBeta2:React.FC<Props>=({dados,go})=>{
           <small>{st.nome}</small><strong>{fmt3(dados.saldos[keyOf(st.id,id)]||0)} {row.item.unidade_medida||''}</strong>
          </div>)}
         </div>
+        {(row.mapeadoZig||Math.abs(dados.saldos[keyOf(sectorId,id)]||0)>0.0001)&&<div className="b2-op-warn">
+         Para remover da lista, primeiro regularize {Math.abs(dados.saldos[keyOf(sectorId,id)]||0)>0.0001?'o saldo no setor':''}
+         {row.mapeadoZig?(Math.abs(dados.saldos[keyOf(sectorId,id)]||0)>0.0001?' e ':'')+'o vínculo Zig de origem':''}.
+         Remover da lista não apaga o cadastro geral nem transfere mercadorias.
+        </div>}
         <div className="b2-simple-config">
          <div><h4>Controle deste produto no {sector?.nome}</h4>
           <p>{row.mapeadoZig?'As vendas Zig ligadas a este item já baixam automaticamente deste estoque. Não descontar novamente na contagem.':'Sem baixa automática Zig neste setor.'}</p></div>
@@ -274,7 +279,10 @@ const GestaoEstoqueBeta2:React.FC<Props>=({dados,go})=>{
      </div>}
     </div>
     <div className="b2-simple-footer"><span>O nível indica quanto o setor deve ter após a reposição.</span>
-     <button type="button" className="b2-btn alt" onClick={()=>go('fechamento')}>Testar fechamento <ArrowRight size={14}/></button></div>
+     <div className="b2-simple-footer-actions">
+      <button type="button" className="b2-btn alt" onClick={()=>go('fechamento')}>Testar fechamento <ArrowRight size={14}/></button>
+      <button type="button" className="b2-btn alt" onClick={()=>go('reposicao')}>Ver reposição <ArrowRight size={14}/></button>
+     </div></div>
    </section>
    {adicionarAberto&&<div className="b2-simple-overlay" role="presentation">
     <div className="b2-simple-modal" role="dialog" aria-modal="true" aria-label={'Adicionar produtos à lista do '+sector?.nome}
@@ -396,10 +404,6 @@ const GestaoEstoqueBeta2:React.FC<Props>=({dados,go})=>{
     </div>
    </div>
   </>}
-  {tab==='itens'&&<div className="b2-manage-actions">
-   <button type="button" className="b2-btn alt" onClick={()=>go('fechamento')}>Testar fechamento com esta configuração <ArrowRight size={14}/></button>
-   <button type="button" className="b2-btn alt" onClick={()=>go('reposicao')}>Ver reposição calculada <ArrowRight size={14}/></button>
-  </div>}
  </div>;
 };
 export default GestaoEstoqueBeta2;
