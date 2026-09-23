@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Check, ChefHat, CheckCircle2, Plus, Trash2, X } from 'lucide-react';
+import { Check, Plus, Trash2, X } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import './EditorFichaTecnicaBeta2.css';
 
