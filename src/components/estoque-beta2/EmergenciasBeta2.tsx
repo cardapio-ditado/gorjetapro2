@@ -12,7 +12,7 @@ export interface EmergencyPreview {
  lines:{item:string;quantity:number;unit:string}[];status:'pendente'|'entregue';created:string;
  kind?:'emergencial'|'noturna';withdrawnBy?:string;occurredAt?:string;reconciledAt?:string;
 }
-interface Props{requests:EmergencyPreview[];onSave:(req:EmergencyPreview)=>void;kind?:'emergencial'|'noturna';onReconcile?:(id:string)=>void}
+interface Props{requests:EmergencyPreview[];onSave:(req:EmergencyPreview)=>void;startOnNightReview?:boolean;onReconcile?:(id:string)=>void}
 const line=():EmergencyLine=>({key:Math.random().toString(36).slice(2),itemId:'',quantity:''});
 const q=(raw:string)=>Number(raw.replace(',','.'));
 const fmt=(raw:number)=>raw.toLocaleString('pt-BR',{maximumFractionDigits:3});
@@ -27,7 +27,8 @@ async function read(table:string,cols:string){
  }
  return data;
 }
-const EmergenciasBeta2:React.FC<Props>=({requests,onSave,kind='emergencial',onReconcile})=>{
+const EmergenciasBeta2:React.FC<Props>=({requests,onSave,startOnNightReview=false,onReconcile})=>{
+ const[kind,setKind]=useState<'emergencial'|'noturna'>('emergencial');
  const isNight=kind==='noturna';
  const[stockList,setStockList]=useState<Row[]>([]);
  const[employees,setEmployees]=useState<Row[]>([]);
@@ -46,8 +47,9 @@ const EmergenciasBeta2:React.FC<Props>=({requests,onSave,kind='emergencial',onRe
  const[balanceLoading,setBalanceLoading]=useState(false);
  const[error,setError]=useState('');
  const[notice,setNotice]=useState('');
- const[tab,setTab]=useState<'novo'|'pendentes'|'historico'>('novo');
+ const[tab,setTab]=useState<'novo'|'pendentes'|'historico'>(startOnNightReview?'pendentes':'novo');
  const[openPreviewId,setOpenPreviewId]=useState('');
+ const[initialNightFilter,setInitialNightFilter]=useState(startOnNightReview);
  useEffect(()=>{
   let active=true;
   const load=async()=>{
@@ -129,33 +131,42 @@ const EmergenciasBeta2:React.FC<Props>=({requests,onSave,kind='emergencial',onRe
      ?'Solicitação emergencial registrada SOMENTE nesta prévia; nenhum saldo movimentado.'
      :'Entrega imediata SIMULADA. Nenhum saldo oficial foi movimentado.');
   setOpenPreviewId(demoId);
+  setInitialNightFilter(false);
   setTab(status==='pendente'?'pendentes':'historico');
   setLines([line()]);setReason('Reposição emergencial');
  };
  return <div>
-  <p className="b2-eyebrow">{isNight?'Operação · fora do expediente do estoquista':'Operação · solicitação fora da rotina'}</p>
-  <h1>{isNight?'Retiradas noturnas':'Pedido emergencial'}</h1>
-  <p className="b2-lead">{isNight
-   ?'Mesmo formulário do pedido emergencial: quem pediu, quem retirou, horário, origem, destino e vários produtos na mesma ocorrência.'
-   :'Um único pedido pode levar vários produtos. Identifique quem solicitou e registre de qual estoque cada item sai e para onde vai.'}</p>
-  <div className="b2-hint">{isNight
-   ?'A retirada já ocorreu e ficará a conciliar no próximo turno. Esta versão é demonstrativa: não cria transferência nem dá baixa novamente.'
-   :'Este formulário usa os cadastros originais de colaboradores, itens e estoques para consulta. Registrar ou simular entrega não grava requisição nem movimentação no estoque oficial.'}</div>
-  <div className="b2-op-tabs" role="tablist" aria-label={isNight?'Retiradas noturnas':'Pedidos emergenciais'}>
+  <p className="b2-eyebrow">Operação · movimentações fora do abastecimento programado</p>
+  <h1>Solicitações e retiradas</h1>
+  <p className="b2-lead">Um único lugar para solicitar ou registrar mercadorias retiradas: funcionário, origem, destino, motivo e vários produtos no mesmo lançamento.</p>
+  <div className="b2-hint">Cadastros originais para consulta. Os lançamentos deste Beta 2 são simulados e não movimentam saldos reais.</div>
+  <div className="b2-op-tabs" role="tablist" aria-label="Solicitações e retiradas">
    <button type="button" role="tab" className="b2-op-tab" aria-selected={tab==='novo'} aria-pressed={tab==='novo'} onClick={()=>setTab('novo')}>
-    <Plus size={15}/>{isNight?'Nova retirada':'Novo pedido'}</button>
-   <button type="button" role="tab" className="b2-op-tab" aria-selected={tab==='pendentes'} aria-pressed={tab==='pendentes'} onClick={()=>{setTab('pendentes');setOpenPreviewId('');}}>
-    <History size={15}/>{isNight?'A conciliar':'A entregar'}</button>
-   <button type="button" role="tab" className="b2-op-tab" aria-selected={tab==='historico'} aria-pressed={tab==='historico'} onClick={()=>{setTab('historico');setOpenPreviewId('');}}>
-    <History size={15}/>{isNight?'Histórico de retiradas':'Histórico de pedidos'}</button>
+    <Plus size={15}/>Novo lançamento</button>
+   <button type="button" role="tab" className="b2-op-tab" aria-selected={tab==='pendentes'} aria-pressed={tab==='pendentes'} onClick={()=>{setTab('pendentes');setOpenPreviewId('');setInitialNightFilter(false);}}>
+    <History size={15}/>Pendentes</button>
+   <button type="button" role="tab" className="b2-op-tab" aria-selected={tab==='historico'} aria-pressed={tab==='historico'} onClick={()=>{setTab('historico');setOpenPreviewId('');setInitialNightFilter(false);}}>
+    <History size={15}/>Histórico</button>
   </div>
   {notice&&<div className="b2-op-summary" role="status"><CheckCircle2 size={19}/><strong>{notice}</strong></div>}
   {tab==='novo'&&<>
+   <section className="b2-card b2-op-kind-card">
+    <h2>O que aconteceu?</h2>
+    <p className="b2-op-help">É o mesmo lançamento. Se a mercadoria já saiu, informe quem retirou e a data/hora.</p>
+    <div className="b2-op-kind-options" role="group" aria-label="Tipo da movimentação">
+     <button type="button" className="b2-op-kind-choice" aria-pressed={!isNight} onClick={()=>{setKind('emergencial');setError('');}}>
+      <strong>Solicitar mercadoria</strong><small>Preciso de itens para um setor; ainda pode aguardar entrega.</small>
+     </button>
+     <button type="button" className="b2-op-kind-choice" aria-pressed={isNight} onClick={()=>{setKind('noturna');setError('');}}>
+      <strong>Registrar retirada já feita</strong><small>A mercadoria saiu sem o estoquista; precisa de conferência.</small>
+     </button>
+    </div>
+   </section>
    <div className="b2-op-steps"><span className="b2-op-step current">01 · Solicitante</span><span className="b2-op-step current">02 · Origem e destino</span><span className="b2-op-step current">03 · Vários itens</span><span className="b2-op-step current">04 · Confirmar</span></div>
   {loading?<div className="b2-card">Carregando funcionários, estoques e itens reais...</div>:<>
    {error&&<div className="b2-error" role="alert">{error}</div>}
    <section className="b2-card">
-    <h2>1 · {isNight?'Quem solicitou e quem retirou?':'Quem está solicitando?'}</h2>
+    <h2>1 · Funcionário e setor</h2>
     <div className="b2-op-fields">
      <label className="b2-field"><span>Nome do funcionário solicitante *</span><select value={employee} onChange={e=>setEmployee(e.target.value)}><option value="">Escolha o colaborador...</option>{employees.map(e=><option key={e.id} value={e.id}>{e.nome_completo}{e.funcao_personalizada?' · '+e.funcao_personalizada:''}</option>)}</select></label>
      <label className="b2-field"><span>Setor solicitante *</span><input value={department} onChange={e=>setDepartment(e.target.value)} placeholder="Ex.: Bar de drinks, cozinha, bar de cervejas"/></label>
@@ -202,7 +213,8 @@ const EmergenciasBeta2:React.FC<Props>=({requests,onSave,kind='emergencial',onRe
    </section>
   </>}
   </>}
-  {tab!=='novo'&&<HistoricoPedidosBeta2 mode={tab} preview={requests} openId={openPreviewId} onlyPreview={isNight} onReconcile={isNight?onReconcile:undefined} night={isNight}/>}
+  {tab!=='novo'&&<HistoricoPedidosBeta2 mode={tab} preview={requests} openId={openPreviewId} onReconcile={onReconcile} initialNightFilter={initialNightFilter}/>}
+
 
  </div>;
 };
