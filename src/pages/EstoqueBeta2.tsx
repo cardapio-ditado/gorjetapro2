@@ -3,12 +3,13 @@ import CadastrosBeta2, { type Cadastro } from '../components/estoque-beta2/Cadas
 import RotinaEstoquistaBeta2 from '../components/estoque-beta2/RotinaEstoquistaBeta2';
 import RecebimentoBeta2, { type NotePreview } from '../components/estoque-beta2/RecebimentoBeta2';
 import EmergenciasBeta2, { type EmergencyPreview } from '../components/estoque-beta2/EmergenciasBeta2';
+import FechamentoBeta2 from '../components/estoque-beta2/FechamentoBeta2';
+import { useControleZigBeta2, type FechamentoPreview, cuiabaDate, dataAnterior, diaAuditoria } from '../components/estoque-beta2/FechamentoDadosBeta2';
 import { Home, Package, Users, ClipboardCheck, Truck, Store, FileBox, Clock3, BarChart3, RotateCcw, Warehouse, BookOpen, ChevronDown } from 'lucide-react';
 
 /** Beta 2 no React, sem iframe. Cadastros oficiais são compartilhados; fluxos operacionais usam dados simulados. */
-type View = 'inicio' | 'itens' | 'fichas' | 'fornecedores' | 'estoques' | 'inventario' | 'recebimento' | 'abastecimento' | 'kits' | 'emergencias' | 'gestao';
+type View = 'inicio' | 'itens' | 'fichas' | 'fornecedores' | 'estoques' | 'inventario' | 'recebimento' | 'reposicao' | 'fechamento' | 'politica' | 'kits' | 'emergencias' | 'gestao';
 type Product = { id:string; nome:string; codigo:string; categoria:string; tipo:string; unidade:string; embalagem:string; fator:number; fornecedorId:string; endereco:string; minimo:number; ponto:number; controle:string; classe:string; cmv:boolean; central:number };
-type Sector = { id:string; nome:string; encarregado:string; status:string; itens:{ nome:string; alvo:number; atual:number; unidade:string }[] };
 const productsSeed:Product[]=[
 {id:'stella',nome:'Stella Pure Gold 600 ml',codigo:'BEV-001',categoria:'Bebidas',tipo:'insumo',unidade:'unidade',embalagem:'Caixa com 12',fator:12,fornecedorId:'dist',endereco:'Central seco / Bebidas',minimo:60,ponto:72,controle:'vende',classe:'pedido',cmv:true,central:120},
 {id:'original',nome:'Original 600 ml',codigo:'BEV-002',categoria:'Bebidas',tipo:'insumo',unidade:'unidade',embalagem:'Caixa com 12',fator:12,fornecedorId:'dist',endereco:'Central seco / Bebidas',minimo:90,ponto:108,controle:'vende',classe:'pedido',cmv:true,central:180},
@@ -16,21 +17,17 @@ const productsSeed:Product[]=[
 {id:'batata',nome:'Batata palito',codigo:'ALM-004',categoria:'Congelados',tipo:'insumo',unidade:'pacote',embalagem:'Caixa com 10',fator:10,fornecedorId:'alim',endereco:'Central congelado / Alimentos',minimo:14,ponto:18,controle:'vende',classe:'pedido',cmv:true,central:34},
 {id:'bolinho',nome:'Bolinho pronto',codigo:'PRD-002',categoria:'Produção',tipo:'produto_final',unidade:'unidade',embalagem:'Caixa organizadora',fator:1,fornecedorId:'',endereco:'Central congelado / Preparações',minimo:150,ponto:180,controle:'conta',classe:'sob_demanda',cmv:true,central:320}
 ];
-const sectionsSeed:Sector[]=[
-{id:'drinks',nome:'Bar de drinks',encarregado:'Henrian',status:'pendente',itens:[{nome:'Gin',alvo:6,atual:2,unidade:'garrafas'},{nome:'Energético',alvo:36,atual:14,unidade:'latas'},{nome:'Polpa de maracujá',alvo:25,atual:7,unidade:'pacotes'}]},
-{id:'cerveja',nome:'Bar de cervejas',encarregado:'Henrian',status:'pendente',itens:[{nome:'Stella Pure Gold',alvo:80,atual:28,unidade:'un.'},{nome:'Original',alvo:110,atual:45,unidade:'un.'},{nome:'Água sem gás',alvo:75,atual:26,unidade:'un.'}]},
-{id:'cozinha',nome:'Cozinha',encarregado:'João Vitor',status:'pendente',itens:[{nome:'Batata palito',alvo:22,atual:7,unidade:'pacotes'},{nome:'Bolinho pronto',alvo:200,atual:65,unidade:'un.'},{nome:'Carne',alvo:24,atual:9,unidade:'kg'}]}
-];
 const clone=<T,>(v:T):T=>JSON.parse(JSON.stringify(v)) as T;
 const num=(n:number)=>n.toLocaleString('pt-BR',{maximumFractionDigits:2});
 type MenuSection = 'operacao' | 'cadastros' | 'gestao';
 type MenuItem = {v:View;n:string;icon:React.ElementType};
 const menuSections:{id:MenuSection;title:string;hint:string;icon:React.ElementType;items:MenuItem[]}[]=[
- {id:'operacao',title:'Operação',hint:'Tarefas do estoquista',icon:Store,items:[
+ {id:'operacao',title:'Operação',hint:'Gerentes e estoquista',icon:Store,items:[
   {v:'emergencias',n:'Solicitações e retiradas',icon:Clock3},
   {v:'recebimento',n:'Recebimento',icon:Truck},
-  {v:'inventario',n:'Inventário',icon:ClipboardCheck},
-  {v:'abastecimento',n:'Abastecimento',icon:Store},
+  {v:'fechamento',n:'Fechamento dos setores',icon:ClipboardCheck},
+  {v:'reposicao',n:'Lista de reposição · Zig',icon:Store},
+  {v:'inventario',n:'Inventário (central)',icon:ClipboardCheck},
   {v:'kits',n:'Kits de limpeza',icon:FileBox}
  ]},
  {id:'cadastros',title:'Cadastros',hint:'Base compartilhada',icon:Package,items:[
@@ -40,6 +37,7 @@ const menuSections:{id:MenuSection;title:string;hint:string;icon:React.ElementTy
   {v:'fornecedores',n:'Fornecedores',icon:Users}
  ]},
  {id:'gestao',title:'Gestão',hint:'Aprovações',icon:BarChart3,items:[
+  {v:'politica',n:'Política de controle · Zig',icon:BarChart3},
   {v:'gestao',n:'Divergências e aprovação',icon:ClipboardCheck}
  ]}
 ];
@@ -55,8 +53,9 @@ const[received,setReceived]=useState(false);
 const[receipts,setReceipts]=useState<NotePreview[]>([]);
 const[requests,setRequests]=useState<EmergencyPreview[]>([]);
 const[focusNightReview,setFocusNightReview]=useState(false);
-const[sectors,setSectors]=useState<Sector[]>(()=>clone(sectionsSeed));
-const[sectorId,setSectorId]=useState('drinks');
+const[fechamentos,setFechamentos]=useState<FechamentoPreview[]>([]);
+const[restockViewed,setRestockViewed]=useState(false);
+const dadosFechamento=useControleZigBeta2();
 const[kitDone,setKitDone]=useState(false);
 const[nightReviewed,setNightReviewed]=useState(false);
 const[handoffDone,setHandoffDone]=useState(false);
@@ -64,15 +63,15 @@ const[count,setCount]=useState<Record<string,number>>({});
 const[countSent,setCountSent]=useState(false);
 const[countApproved,setCountApproved]=useState(false);
 
-const sector=sectors.find(s=>s.id===sectorId)||sectors[0];
 const differences=products.filter(p=>(count[p.id]??p.central)!==p.central);
 const go=(v:View)=>{
   setView(v);setNotice('');setError('');
+  if(v==='reposicao')setRestockViewed(true);
   if(v==='emergencias')setFocusNightReview(false);
   const section=sectionOf(v);
   if(section)setOpenSections(prev=>({...prev,[section]:true}));
 };
-const reset=()=>{setProducts(clone(productsSeed));setSectors(clone(sectionsSeed));setCount({});setCountSent(false);setCountApproved(false);setReceived(false);setReceipts([]);setRequests([]);setFocusNightReview(false);setKitDone(false);setNightReviewed(false);setHandoffDone(false);setView('inicio');setOpenSections({operacao:true,cadastros:false,gestao:false});setError('');setNotice('Demonstração reiniciada.');};
+const reset=()=>{setProducts(clone(productsSeed));setFechamentos([]);setRestockViewed(false);setCount({});setCountSent(false);setCountApproved(false);setReceived(false);setReceipts([]);setRequests([]);setFocusNightReview(false);setKitDone(false);setNightReviewed(false);setHandoffDone(false);setView('inicio');setOpenSections({operacao:true,cadastros:false,gestao:false});setError('');setNotice('Demonstração reiniciada.');};
 const beta2MenuCSS = `
 .b2-root .b2-side{display:flex;flex-direction:column;gap:0}
 .b2-root .b2-menu{display:flex;flex-direction:column;gap:7px}
@@ -255,7 +254,13 @@ return <div className="b2-root -m-5 lg:-m-7">
   setNotice('Recebimento confirmado somente na prévia, sem nova saída ou entrada nos saldos oficiais.');
  }}
 />}
-{view==='abastecimento'&&<><p className="b2-eyebrow">Operação diária</p><h1>Abastecimento</h1><p className="b2-lead">Confira o setor, separe a diferença e confirme a entrega.</p><div className="b2-chips">{sectors.map(s=><button key={s.id} className="b2-chip" aria-pressed={s.id===sectorId} onClick={()=>setSectorId(s.id)}>{s.nome}</button>)}</div><div className="b2-card"><div className="b2-topline"><h2>{sector.nome}</h2><span className="b2-pill">{sector.status}</span></div><p className="b2-muted">{sector.encarregado}</p><div className="b2-table-scroll"><table><thead><tr><th>Item</th><th>Referência</th><th>Tem</th><th>Repor</th></tr></thead><tbody>{sector.itens.map((i,idx)=><tr key={i.nome}><td>{i.nome}<small style={{display:'block'}}>{i.unidade}</small></td><td>{i.alvo}</td><td><input type="number" min="0" disabled={sector.status==='concluido'} value={i.atual} onChange={e=>setSectors(s=>s.map(sec=>sec.id===sectorId?{...sec,itens:sec.itens.map((it,j)=>j===idx?{...it,atual:Number(e.target.value)}:it)}:sec))}/></td><td>{num(Math.max(0,i.alvo-i.atual))}</td></tr>)}</tbody></table></div>{sector.status!=='concluido'&&<button className="b2-btn" style={{marginTop:18}} onClick={()=>setSectors(s=>s.map(sec=>sec.id===sectorId?{...sec,status:sec.status==='pendente'?'separado':'concluido',itens:sec.status==='separado'?sec.itens.map(i=>({...i,atual:i.alvo})):sec.itens}:sec))}>{sector.status==='pendente'?'Marcar separado →':'Confirmar recebimento →'}</button>}</div></>}
+{(['politica','fechamento','reposicao'] as View[]).includes(view)&&<FechamentoBeta2
+ mode={view as 'politica'|'fechamento'|'reposicao'}
+ dados={dadosFechamento}
+ fechamentos={fechamentos}
+ onSave={f=>{setFechamentos(prev=>[...prev.filter(x=>!(x.estoqueId===f.estoqueId&&x.dataOperacional===f.dataOperacional)),f]);setNotice('Fechamento guardado apenas nesta prévia.');}}
+ go={v=>go(v)}
+/>}
 {view==='kits'&&<><p className="b2-eyebrow">Consumo interno</p><h1>Kit compartilhado da limpeza</h1><p className="b2-lead">Armário único para equipe diurna e noturna; produtos químicos separados dos itens de contato alimentar.</p><div className="b2-card"><h2>Reposição ilustrativa</h2>{['Perflex · 10 unidades','Papel toalha · 8 pacotes','Detergente · 4 frascos','Saco de lixo · 20 unidades'].map(x=><div className="b2-row" key={x}><strong>{x}</strong><span className="b2-pill">Referência</span></div>)}<button className="b2-btn" style={{marginTop:18}} disabled={kitDone} onClick={()=>{setKitDone(true);setNotice('Kit reposto na simulação.')}}>{kitDone?'✓ Reposição concluída':'Confirmar kit reposto'}</button></div></>}
 
 {view==='gestao'&&<><p className="b2-eyebrow">Gestor · Cristiano</p><h1>Aprovação de divergências</h1><p className="b2-lead">Contagem não deve ajustar saldos sem aprovação do gestor.</p><div className="b2-card"><h2>Fila de aprovação</h2>{!countSent?<p className="b2-hint">Envie uma contagem em Inventário para testar.</p>:countApproved?<p className="b2-success">Aprovação simulada concluída, sem ajuste real.</p>:differences.length?<>{differences.map(p=><div className="b2-row" key={p.id}><div><strong>{p.nome}</strong><small>Teórico {p.central} · físico {count[p.id]??p.central}</small></div><span className="b2-pill red">{num((count[p.id]??p.central)-p.central)}</span></div>)}<button className="b2-btn" style={{marginTop:16}} onClick={()=>{setCountApproved(true);setNotice('Aprovado somente na simulação.')}}>Aprovar na simulação</button></>:<p className="b2-success">Contagem sem diferenças.</p>}</div></>}
