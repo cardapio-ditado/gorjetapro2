@@ -47,6 +47,7 @@ const HistoricoPedidosBeta2:React.FC<Props>=({
  const [detailError,setDetailError]=useState('');
  const [refreshKey,setRefreshKey]=useState(0);
  const reload=useCallback(async()=>{
+  if(mode==='monitoramento'){setRecords([]);setStocks({});setBusy(false);setError('');return;}
   setBusy(true);setError('');
   try{
    const statuses=mode==='pendentes'?['pendente','aprovado']:mode==='historico'?['concluido','rejeitado']:['pendente','aprovado','concluido','rejeitado'];
@@ -59,7 +60,8 @@ const HistoricoPedidosBeta2:React.FC<Props>=({
    ]);
    if(req.error)throw req.error;
    if(loc.error)throw loc.error;
-   if(people.error&&!readOnly)throw people.error;
+   // Falha na consulta de funcionários não deve ocultar os pedidos do histórico.
+   if(people.error)setFormError('Não foi possível carregar colaboradores para confirmar o recebimento: '+people.error.message);
    setRecords((req.data||[]) as Request[]);
    setStocks(Object.fromEntries((loc.data||[]).map(s=>[s.id,s.nome])));
    setEmployees((people.data||[]).map(person=>({id:person.id,nome_completo:person.nome_completo})));
