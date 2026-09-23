@@ -76,3 +76,98 @@
  .b2-root .b2-manage-stock-grid{grid-template-columns:1fr}
  .b2-root .b2-manage-choice{grid-template-columns:1fr}
 }
+
+/* Gestão simplificada: uma lista editável em vez de ficha técnica aberta em duas colunas. */
+.b2-root .b2-simple-sectors{display:flex;flex-wrap:wrap;gap:10px;margin:22px 0 18px}
+.b2-root .b2-simple-sector{display:flex;align-items:center;justify-content:center;gap:9px;flex-wrap:wrap;min-height:52px;min-width:155px;padding:12px 20px;border:1px solid #816078;border-radius:13px;background:#302238;color:#f9e8f1!important;font-size:15px;font-weight:850}
+.b2-root .b2-simple-sector[aria-pressed=true]{background:linear-gradient(130deg,#793750,#562d43);border-color:#eab88c;box-shadow:inset 0 0 0 1px #b98772;color:#fff!important}
+.b2-root .b2-simple-sector small{color:#e2c7d7!important;font-size:11px;font-weight:650}
+.b2-root .b2-simple-catalog{border-radius:17px;background:#201925;border:1px solid #634559;padding:20px 19px 25px}
+.b2-root .b2-simple-title{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.b2-root .b2-simple-title h2{font-size:26px;line-height:1.2;margin:0}
+.b2-root .b2-simple-title p:not(.b2-eyebrow){color:#dec4d5!important;font-size:12px;margin:7px 0}
+.b2-root .b2-simple-add{min-height:43px;display:flex;gap:7px;align-items:center}
+.b2-root .b2-simple-search{margin:18px 0;max-width:850px}
+.b2-root .b2-simple-list{border:1px solid #63485c;border-radius:13px;overflow:hidden}
+.b2-root .b2-simple-table-head,.b2-root .b2-simple-item-main{display:grid;grid-template-columns:minmax(190px,2.15fr) minmax(115px,.8fr) minmax(130px,1.08fr) minmax(145px,1fr);gap:15px;align-items:center}
+.b2-root .b2-simple-table-head{padding:12px 16px;background:#392a3b;color:#f2dce9!important;font-size:11px;font-weight:850;letter-spacing:.035em}
+.b2-root .b2-simple-item{border-top:1px solid #5b4356;background:#2b2030}
+.b2-root .b2-simple-item:first-of-type{border-top:0}
+.b2-root .b2-simple-item.expanded{background:#322337}
+.b2-root .b2-simple-item-main{padding:14px 16px}
+.b2-root .b2-simple-name{min-width:0}
+.b2-root .b2-simple-name strong{color:#fff8fc!important;display:block;font-size:14px;line-height:1.35;overflow-wrap:anywhere}
+.b2-root .b2-simple-name small{display:block;font-size:11px;color:#e1c9da!important;margin-top:4px;line-height:1.4}
+.b2-root .b2-simple-name .b2-pill{margin-top:7px;font-size:9px}
+.b2-root .b2-simple-level{display:flex;flex-wrap:wrap;gap:5px;align-items:center;font-size:11px}
+.b2-root .b2-simple-level span{display:none}
+.b2-root .b2-simple-level input{max-width:108px;height:41px;font-size:16px!important;font-weight:800;text-align:center}
+.b2-root .b2-simple-level small{font-size:10px;color:#dac0d0!important}
+.b2-root .b2-simple-mode{min-width:0}
+.b2-root .b2-simple-mode .b2-pill{font-size:10px;white-space:normal;line-height:1.3}
+.b2-root .b2-simple-actions{display:flex;align-items:center;gap:7px;justify-content:flex-start}
+.b2-root .b2-simple-actions .b2-btn{white-space:nowrap;min-height:36px}
+.b2-root .b2-simple-chevron{display:inline;vertical-align:middle;margin-left:3px;transition:transform .15s ease}
+.b2-root .b2-simple-chevron.open{transform:rotate(180deg)}
+.b2-root .b2-simple-remove,.b2-root .b2-simple-close{border:1px solid #83556a;background:#3d2838;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;width:37px;height:37px;color:#ffd4dc!important}
+.b2-root .b2-simple-remove:hover,.b2-root .b2-simple-close:hover{background:#6d3246;border-color:#eaa4af}
+.b2-root .b2-simple-detail{padding:17px 20px 21px;background:#261e2e;border-top:1px solid #775365}
+.b2-root .b2-simple-detail h3,.b2-root .b2-simple-detail h4{color:#fff8fc!important}
+.b2-root .b2-simple-detail h3{font-size:17px;margin:0}
+.b2-root .b2-simple-detail h4{font-size:13px;margin:0 0 6px}
+.b2-root .b2-simple-detail-heading{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.b2-root .b2-simple-balances{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0}
+.b2-root .b2-simple-balance{display:flex;flex-direction:column;gap:5px;min-width:120px;padding:11px 13px;border-radius:11px;border:1px solid #715269;background:#30253a}
+.b2-root .b2-simple-balance.selected{border-color:#f0be8e;background:#52334b}
+.b2-root .b2-simple-balance small{font-size:11px;color:#ddc3d5!important}
+.b2-root .b2-simple-balance strong{color:#fff8fa!important;font-size:13px}
+.b2-root .b2-simple-config{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin:15px 0;border:1px solid #695066;background:#2e2434;border-radius:11px;padding:14px}
+.b2-root .b2-simple-config p{font-size:12px;color:#e3ccdb!important;margin:0;max-width:600px}
+.b2-root .b2-simple-config .b2-field{min-width:210px;flex:1;max-width:450px}
+.b2-root .b2-simple-zig-links{margin:18px 0 8px}
+.b2-root .b2-simple-zig-links .b2-manage-zig-link{max-width:650px}
+.b2-root .b2-simple-zig-links .b2-btn{margin-top:10px}
+.b2-root .b2-simple-empty{text-align:center;padding:35px 18px;color:#efd6e4!important}
+.b2-root .b2-simple-empty .b2-btn{margin-top:13px}
+.b2-root .b2-simple-footer{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-top:17px;color:#d9c3d2!important;font-size:12px}
+.b2-root .b2-simple-overlay{position:fixed;inset:0;z-index:1100;display:grid;place-items:center;background:#100c16dc;padding:14px}
+.b2-root .b2-simple-modal{width:min(660px,100%);max-height:min(88dvh,790px);display:flex;flex-direction:column;background:#291e30;border:1px solid #a27791;border-radius:18px;box-shadow:0 22px 75px #000b;overflow:hidden;padding:20px}
+.b2-root .b2-simple-modal-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.b2-root .b2-simple-modal-head h2{font-size:24px;margin:0}
+.b2-root .b2-simple-modal-head p:not(.b2-eyebrow){color:#e3c7d9!important;font-size:12px;margin-top:6px}
+.b2-root .b2-simple-modal>.b2-history-search{margin:13px 0}
+.b2-root .b2-simple-modal-list{min-height:100px;overflow-y:auto;flex:1;border:1px solid #64485c;border-radius:11px;background:#201924}
+.b2-root .b2-simple-option{display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid #563f53;cursor:pointer}
+.b2-root .b2-simple-option:hover,.b2-root .b2-simple-option.checked{background:#483047}
+.b2-root .b2-simple-option input{width:18px;height:18px;flex-shrink:0;accent-color:#ca6a86}
+.b2-root .b2-simple-option strong{font-size:13px;color:#fff8fc!important;display:block}
+.b2-root .b2-simple-option small{font-size:11px;color:#e1c6d9!important;display:block;margin-top:3px}
+.b2-root .b2-simple-option .b2-simple-existing{color:#f4d49f!important}
+.b2-root .b2-simple-modal-footer{display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap;padding-top:15px}
+.b2-root .b2-simple-modal-footer span{margin-right:auto;color:#ead4e0!important;font-size:12px}
+.b2-root .b2-simple-modal-footer .b2-btn{display:inline-flex;align-items:center;gap:6px}
+@media(max-width:1050px){
+ .b2-root .b2-simple-table-head,.b2-root .b2-simple-item-main{grid-template-columns:minmax(170px,1.5fr) minmax(95px,.65fr) minmax(110px,.9fr) minmax(130px,.9fr);gap:9px}
+ .b2-root .b2-simple-item-main{padding:12px}
+ .b2-root .b2-simple-table-head{padding:11px 12px}
+}
+@media(max-width:730px){
+ .b2-root .b2-simple-catalog{padding:14px 10px}
+ .b2-root .b2-simple-table-head{display:none}
+ .b2-root .b2-simple-item-main{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:11px;padding:15px 12px}
+ .b2-root .b2-simple-name{grid-column:1/-1}
+ .b2-root .b2-simple-level span{display:block;font-size:11px}
+ .b2-root .b2-simple-mode{justify-self:start}
+ .b2-root .b2-simple-actions{justify-self:end}
+ .b2-root .b2-simple-detail{padding:14px 12px}
+ .b2-root .b2-simple-modal{padding:15px}
+ .b2-root .b2-simple-sector{min-width:125px;padding:11px 13px}
+}
+@media(max-width:430px){
+ .b2-root .b2-simple-item-main{grid-template-columns:1fr}
+ .b2-root .b2-simple-name{grid-column:auto}
+ .b2-root .b2-simple-actions{justify-self:start}
+ .b2-root .b2-simple-mode{justify-self:start}
+ .b2-root .b2-simple-modal-footer{justify-content:stretch}
+ .b2-root .b2-simple-modal-footer span{width:100%}
+}
