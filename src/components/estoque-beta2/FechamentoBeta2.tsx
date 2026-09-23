@@ -163,8 +163,9 @@ const FechamentoBeta2:React.FC<Props>=({mode,dados,fechamentos,onSave,go})=>{
    <label className="b2-close-check"><input type="checkbox" checked={onlyProblems} onChange={e=>setOnlyProblems(e.target.checked)}/> Mostrar somente divergências entre cadastro antigo e Zig</label>
    <div className="b2-close-policy">
     {rows.filter(r=>(!filter||[r.item.nome,r.item.codigo].join(' ').toLocaleLowerCase('pt-BR').includes(filter.toLocaleLowerCase('pt-BR')))
-      &&(!onlyProblems||(r.mapeadoZig&&r.controle==='contagem')||(!r.mapeadoZig&&r.controle==='venda'))).map(r=><div key={r.item_id} className="b2-close-policy-row">
-     <div><strong>{r.item.nome}</strong><small>{r.item.categoria||'Sem categoria'} · cadastro anterior: {r.controle==='venda'?'Venda':'Contagem'}</small>
+      &&(!onlyProblems||r.semNivel||(r.mapeadoZig&&r.controle==='contagem')||(!r.mapeadoZig&&r.controle==='venda'))).map(r=><div key={r.item_id} className="b2-close-policy-row">
+     <div><strong>{r.item.nome}</strong><small>{r.item.categoria||'Sem categoria'} · cadastro anterior: {r.controle==='venda'?'Venda':r.controle==='contagem'?'Contagem':'Sem regra de setor'}</small>
+      {r.semNivel&&<span className="b2-pill red">Falta nível de reposição neste setor</span>}
       {((r.mapeadoZig&&r.controle==='contagem')||(!r.mapeadoZig&&r.controle==='venda'))&&
        <span className="b2-pill red">Revisar conflito</span>}</div>
      <span className={'b2-pill '+tone[r.controleEfetivo]}>{labels[r.controleEfetivo]}</span>
@@ -230,6 +231,9 @@ const FechamentoBeta2:React.FC<Props>=({mode,dados,fechamentos,onSave,go})=>{
       :'Não há execução concluída APÓS as 6h de Cuiabá do dia seguinte para esta data de venda. A Zig permanece no agendamento oficial; não rodei processamento por esta tela.'}</p>
     {!synced&&<div className="b2-error"><AlertTriangle size={16}/> Lista apenas provisória. Não liberar automaticamente a reposição enquanto a Zig não processar corretamente, inclusive produtos sem mapeamento.</div>}
    </section>
+   {rows.some(row=>row.nivel_reposicao===null)&&<div className="b2-error">
+    Há {rows.filter(row=>row.nivel_reposicao===null).length} item(ns) sem nível de reposição configurado nos setores exibidos. Eles aparecem para contagem, mas a reposição NÃO deve ser liberada até o gestor definir o nível.
+   </div>}
    <div className="b2-close-received">
     {dados.setores.map(st=>{
      const f=period.find(p=>p.estoqueId===st.id);
@@ -260,7 +264,7 @@ const FechamentoBeta2:React.FC<Props>=({mode,dados,fechamentos,onSave,go})=>{
      return <tr key={keyOf(row.estoque_id,row.item_id)}><td>{dados.setores.find(st=>st.id===row.estoque_id)?.nome||'Setor'}</td><td><strong>{row.item.nome}</strong><small>{row.item.unidade_medida||'un.'}</small></td>
       <td><span className={'b2-pill '+tone[row.controleEfetivo]}>{labels[row.controleEfetivo]}</span></td>
       <td>{!physical&&row.controleEfetivo==='diario'?'Pendente':fmt3(stock)}</td>
-      <td>{target===null?'Configurar':fmt3(target)}</td>
+      <td>{target===null?<span className="b2-pill red">Configurar nível</span>:fmt3(target)}</td>
       <td><strong>{row.controleEfetivo==='diario'&&!physical?'—':qty===null?'—':fmt3(qty)}</strong>
        {qty!==null&&qty>inCentral&&<small className="b2-close-warning">Central insuficiente</small>}</td>
       <td>{fmt3(inCentral)}</td>
