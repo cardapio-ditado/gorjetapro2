@@ -10,6 +10,7 @@ interface MapZig {id:string;item_estoque_id:string|null;ficha_tecnica_id:string|
 interface Ingrediente {ficha_id:string;item_estoque_id:string|null;baixa_estoque:boolean}
 export interface LogZig {id:string;dtinicio:string;dtfim:string;status:string;iniciado_em:string;finalizado_em:string|null;total_nao_mapeados:number|null;erro_mensagem:string|null}
 export interface ColaboradorControle {id:string;nome_completo:string}
+export interface EmbalagemControle {item_id:string;rotulo_solto:string|null;rotulo_fechado:string|null;fator_fechado:number|null;permite_fracao:boolean;dica:string|null}
 export type FrequenciaManual='diario'|'periodico';
 export type ControleEfetivo='zig'|'diario'|'periodico';
 export interface ItemDoSetor extends NivelControle {
@@ -62,6 +63,7 @@ export function useControleZigBeta2(){
  const[mapeamentos,setMapeamentos]=useState<MapZig[]>([]);
  const[ingredientes,setIngredientes]=useState<Ingrediente[]>([]);
  const[saldos,setSaldos]=useState<Record<string,number>>({});
+ const[embalagens,setEmbalagens]=useState<Record<string,EmbalagemControle>>({});
  const[logs,setLogs]=useState<LogZig[]>([]);
  const[colaboradores,setColaboradores]=useState<ColaboradorControle[]>([]);
  const[overrides,setOverrides]=useState<Record<string,FrequenciaManual>>({});
@@ -70,13 +72,14 @@ export function useControleZigBeta2(){
   const load=async()=>{
    setLoading(true);setError('');
    try{
-    const [it,nv,es,mp,fi,sa,lg,co]=await Promise.all([
+    const [it,nv,es,mp,fi,sa,bc,lg,co]=await Promise.all([
      paginar('itens_estoque','id,nome,codigo,unidade_medida,categoria,grupo_controle,status','nome'),
      paginar('itens_estoque_niveis','item_id,estoque_id,nivel_reposicao,controle','item_id'),
      paginar('estoques','id,nome,tipo,status','nome'),
      paginar('mapeamento_itens_vendas','id,item_estoque_id,ficha_tecnica_id,estoque_id,ignorar_estoque','id'),
      paginar('ficha_ingredientes','id,ficha_id,item_estoque_id,baixa_estoque','id'),
      paginar('saldos_estoque','id,estoque_id,item_id,quantidade_atual','id'),
+     paginar('beta_item_config','item_id,rotulo_solto,rotulo_fechado,fator_fechado,permite_fracao,dica','item_id'),
      supabase.from('zig_vendas_sync_logs')
       .select('id,dtinicio,dtfim,status,iniciado_em,finalizado_em,total_nao_mapeados,erro_mensagem')
       .order('iniciado_em',{ascending:false}).limit(40),
@@ -91,6 +94,7 @@ export function useControleZigBeta2(){
     setMapeamentos(mp as unknown as MapZig[]);
     setIngredientes(fi as unknown as Ingrediente[]);
     setSaldos(Object.fromEntries(sa.map(x=>[keyOf(String(x.estoque_id),String(x.item_id)),n(x.quantidade_atual)])));
+    setEmbalagens(Object.fromEntries(bc.map(x=>[String(x.item_id),x as EmbalagemControle])));
     setLogs((lg.data||[]) as LogZig[]);
     setColaboradores((co.data||[]) as ColaboradorControle[]);
    }catch(ex){if(live)setError(ex instanceof Error?ex.message:'Não foi possível consultar o mapeamento Zig.');}
@@ -107,8 +111,8 @@ export function useControleZigBeta2(){
   const cobertos=new Set<string>();
   for(const m of mapeamentos){
    if(m.ignorar_estoque||!m.estoque_id)continue;
-   if(m.item_estoque_id)cobertos.add(keyOf(m.estoque_id,m.item_estoque_id));
-   if(m.ficha_tecnica_id)for(const itemId of fichas.get(m.ficha_tecnica_id)||[])cobertos.add(keyOf(m.estoque_id,itemId));
+   if(m.ficha_tecnica_id){for(const itemId of fichas.get(m.ficha_tecnica_id)||[])cobertos.add(keyOf(m.estoque_id,itemId));}
+   else if(m.item_estoque_id)cobertos.add(keyOf(m.estoque_id,m.item_estoque_id));
   }
   return cobertos;
  },[mapeamentos,ingredientes]);
@@ -129,7 +133,7 @@ export function useControleZigBeta2(){
   return out.sort((a,b)=>a.item.nome.localeCompare(b.item.nome,'pt-BR'));
  },[items,niveis,saldos,overrides,zigPorEstoque]);
  return {
-  loading,error,items,niveis,estoques,setores,linhas,saldos,logs,colaboradores,overrides,
+  loading,error,items,niveis,estoques,setores,linhas,saldos,embalagens,logs,colaboradores,overrides,
   mapeamentos,refresh:()=>setReload(v=>v+1),
   setFrequencia:(estoqueId:string,itemId:string,value:FrequenciaManual)=>{
    const k=keyOf(estoqueId,itemId);
