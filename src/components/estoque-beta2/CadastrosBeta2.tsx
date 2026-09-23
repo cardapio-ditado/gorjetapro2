@@ -121,13 +121,19 @@ const CadastrosBeta2:React.FC<Props>=({view,onNavigate})=>{
       tipo:draft.tipo||'geral',modalidade:draft.modalidade||'entrega',categoria_padrao_id:draft.categoria_padrao_id||null,
       ciclo_compra_dias:cycle,dias_compra:weekdays.length?weekdays:null,status:draft.status||'ativo'};
    }
-   const {error:e}=await (draft.id
-    ?supabase.from(config.table).update({...payload,atualizado_em:new Date().toISOString()}).eq('id',draft.id)
-    :supabase.from(config.table).insert([payload]));
-   if(e)throw e;
-   const originalId=draft.id;
-   setDraft(null);setNotice('Cadastro oficial salvo. A alteração aparece também no módulo original.');
-   await reload();if(originalId)setSelected(originalId);
+   let savedId=draft.id;
+   if(draft.id){
+     const {error:e}=await supabase.from(config.table)
+       .update({...payload,atualizado_em:new Date().toISOString()}).eq('id',draft.id);
+     if(e)throw e;
+   }else{
+     const {data:created,error:e}=await supabase.from(config.table).insert([payload]).select('id').single();
+     if(e)throw e;
+     savedId=created?.id||'';
+   }
+   setDraft(null);setSearch('');setFilter('todos');setPage(0);
+   setNotice('Cadastro oficial salvo. A alteração aparece também no módulo original.');
+   await reload();if(savedId)setSelected(savedId);
   }catch(e){setError(e instanceof Error?e.message:'Não foi possível salvar o cadastro.');}
   finally{setBusy(false);}
  };
