@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { ArrowRight, CheckCircle2, Link2, Package, RefreshCw, Search, Warehouse } from 'lucide-react';
 import PesquisaItemBeta2 from './PesquisaItemBeta2';
 import {
- type ItemControle,type MapZig,type NivelRascunho,type FrequenciaManual,
+ type MapZig,type NivelRascunho,type FrequenciaManual,
  useControleZigBeta2,keyOf,fmt3
 } from './FechamentoDadosBeta2';
 import './OperacoesBeta2.css';
@@ -70,7 +70,7 @@ const GestaoEstoqueBeta2:React.FC<Props>=({dados,go})=>{
  }).sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR')),[activeItems,rowById,buscaItem,apenasSetor]);
 
  const selectedMap=dados.mapeamentos.find(m=>m.id===mapId);
- useEffect(()=>{setDraft(selectedMap?{...selectedMap}:null);setNotice('');setError('');},[selectedMap]);
+ useEffect(()=>{setDraft(selectedMap?{...selectedMap}:null);setError('');},[selectedMap]);
  const draftType=draft?tipo(draft):'pendente';
  const itemById=useMemo(()=>new Map(dados.items.map(x=>[x.id,x])),[dados.items]);
  const fichaById=useMemo(()=>new Map(dados.fichas.map(x=>[x.id,x])),[dados.fichas]);
@@ -166,6 +166,8 @@ const GestaoEstoqueBeta2:React.FC<Props>=({dados,go})=>{
   </div>
 
   {tab==='itens'&&<>
+   {notice&&<div className="b2-success" role="status"><CheckCircle2 size={16}/> {notice}</div>}
+   {error&&<div className="b2-error" role="alert">{error}</div>}
    <div className="b2-manage-section">
     <div className="b2-op-section-title"><h2>1 · Onde o produto fica?</h2><span className="b2-pill">{sector?.nome||'Escolha o estoque'}</span></div>
     <p className="b2-op-help">A lista vem de <strong>itens_estoque_niveis</strong> e dos produtos com saldo no setor. Adicionar um item a um setor não movimenta mercadoria; isso é feito por transferência.</p>
