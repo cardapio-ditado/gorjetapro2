@@ -28,6 +28,7 @@ const GestaoEstoqueBeta2:React.FC<Props>=({dados,go})=>{
  const[zigFilter,setZigFilter]=useState<'todos'|'pendentes'|'alterados'>('todos');
  const[mapId,setMapId]=useState('');
  const[draft,setDraft]=useState<MapZig|null>(null);
+ const[draftType,setDraftType]=useState<TipoVinculo>('pendente');
  const[notice,setNotice]=useState('');
  const[error,setError]=useState('');
 
@@ -70,8 +71,7 @@ const GestaoEstoqueBeta2:React.FC<Props>=({dados,go})=>{
  }).sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR')),[activeItems,rowById,buscaItem,apenasSetor]);
 
  const selectedMap=dados.mapeamentos.find(m=>m.id===mapId);
- useEffect(()=>{setDraft(selectedMap?{...selectedMap}:null);setError('');},[selectedMap]);
- const draftType=draft?tipo(draft):'pendente';
+ useEffect(()=>{setDraft(selectedMap?{...selectedMap}:null);setDraftType(selectedMap?tipo(selectedMap):'pendente');setError('');},[selectedMap]);
  const itemById=useMemo(()=>new Map(dados.items.map(x=>[x.id,x])),[dados.items]);
  const fichaById=useMemo(()=>new Map(dados.fichas.map(x=>[x.id,x])),[dados.fichas]);
  const stockById=useMemo(()=>new Map(dados.estoques.map(x=>[x.id,x])),[dados.estoques]);
@@ -108,6 +108,7 @@ const GestaoEstoqueBeta2:React.FC<Props>=({dados,go})=>{
  };
  const chooseKind=(v:TipoVinculo)=>{
   if(!draft)return;
+  setDraftType(v);
   setDraft({...draft,ignorar_estoque:v==='ignorar',
    item_estoque_id:v==='item'?draft.item_estoque_id:null,
    ficha_tecnica_id:v==='ficha'?draft.ficha_tecnica_id:null,
