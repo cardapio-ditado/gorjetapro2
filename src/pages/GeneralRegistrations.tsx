@@ -87,12 +87,8 @@ interface FinancialCategory {
   caminho_completo?: string;
 }
 
-interface GeneralRegistrationsProps {
-  /** Mostra somente a aba Fornecedores, com o mesmo CRUD do Financeiro. */
-  supplierOnly?: boolean;
-}
-const GeneralRegistrations: React.FC<GeneralRegistrationsProps> = ({ supplierOnly = false }) => {
-  const [selectedTab, setSelectedTab] = useState(supplierOnly ? 1 : 0);
+const GeneralRegistrations: React.FC = () => {
+  const [selectedTab, setSelectedTab] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
@@ -857,7 +853,7 @@ const GeneralRegistrations: React.FC<GeneralRegistrationsProps> = ({ supplierOnl
       <div className="min-h-screen bg-[#0d0f1a]">
         <div className="container mx-auto px-4 py-8">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-semibold text-white/90">{supplierOnly ? "Fornecedores" : "Cadastros Gerais"}</h2>
+            <h2 className="text-2xl font-semibold text-white/90">Cadastros Gerais</h2>
           </div>
 
           <Tab.Group selectedIndex={selectedTab} onChange={(index) => setSelectedTab(index)}>
@@ -867,9 +863,8 @@ const GeneralRegistrations: React.FC<GeneralRegistrationsProps> = ({ supplierOnl
                 return (
                   <Tab
                     key={title}
-                    disabled={supplierOnly && index !== 1}
                     className={({ selected }) =>
-                      `${supplierOnly && index !== 1 ? 'hidden ' : ''}flex items-center whitespace-nowrap rounded-lg py-2.5 px-4 text-sm font-medium leading-5 transition-all
+                      `flex items-center whitespace-nowrap rounded-lg py-2.5 px-4 text-sm font-medium leading-5 transition-all
                       ${selected
                         ? 'bg-wine text-white shadow'
                         : 'text-white/80 hover:bg-[#12141f]/10 hover:text-white'
@@ -910,7 +905,7 @@ const GeneralRegistrations: React.FC<GeneralRegistrationsProps> = ({ supplierOnl
       <div className="min-h-screen bg-[#0d0f1a]">
         <div className="container mx-auto px-4 py-8">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-semibold text-white/90">{supplierOnly ? "Fornecedores" : "Cadastros Gerais"}</h2>
+            <h2 className="text-2xl font-semibold text-white/90">Cadastros Gerais</h2>
           </div>
 
           <Tab.Group selectedIndex={selectedTab} onChange={(index) => setSelectedTab(index)}>
@@ -920,9 +915,8 @@ const GeneralRegistrations: React.FC<GeneralRegistrationsProps> = ({ supplierOnl
                 return (
                   <Tab
                     key={title}
-                    disabled={supplierOnly && index !== 1}
                     className={({ selected }) =>
-                      `${supplierOnly && index !== 1 ? 'hidden ' : ''}flex items-center whitespace-nowrap rounded-lg py-2.5 px-4 text-sm font-medium leading-5 transition-all
+                      `flex items-center whitespace-nowrap rounded-lg py-2.5 px-4 text-sm font-medium leading-5 transition-all
                       ${selected
                         ? 'bg-wine text-white shadow'
                         : 'text-white/80 hover:bg-[#12141f]/10 hover:text-white'
@@ -961,7 +955,7 @@ const GeneralRegistrations: React.FC<GeneralRegistrationsProps> = ({ supplierOnl
     <div className="min-h-screen bg-[#0d0f1a]">
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-semibold text-white/90">{supplierOnly ? "Fornecedores" : "Cadastros Gerais"}</h2>
+          <h2 className="text-2xl font-semibold text-white/90">Cadastros Gerais</h2>
           <div className="flex gap-2">
             <button 
               onClick={exportData}
@@ -995,9 +989,8 @@ const GeneralRegistrations: React.FC<GeneralRegistrationsProps> = ({ supplierOnl
               return (
                 <Tab
                   key={title}
-                    disabled={supplierOnly && index !== 1}
                   className={({ selected }) =>
-                    `${supplierOnly && index !== 1 ? 'hidden ' : ''}flex items-center whitespace-nowrap rounded-lg py-2.5 px-4 text-sm font-medium leading-5 transition-all
+                    `flex items-center whitespace-nowrap rounded-lg py-2.5 px-4 text-sm font-medium leading-5 transition-all
                     ${selected
                       ? 'bg-wine text-white shadow'
                       : 'text-white/80 hover:bg-[#12141f]/10 hover:text-white'
