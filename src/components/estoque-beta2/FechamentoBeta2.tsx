@@ -221,7 +221,9 @@ const FechamentoBeta2:React.FC<Props>=({mode,dados,fechamentos,onSave,go})=>{
     &&dados.linhas.some(l=>l.estoque_id===st.id&&l.controleEfetivo==='diario')
     &&!period.some(f=>f.estoqueId===st.id)).map(st=>
     <div className="b2-error" key={st.id}>Falta o fechamento de {st.nome} para {formatDate(date)}. Esta lista NÃO está pronta.</div>)}
-   {audit&&!previous?.auditoria&&<div className="b2-hint">Há contagem geral programada para este dia; a auditoria ainda não foi enviada nesta prévia.</div>}
+   {audit&&dados.setores.some(st=>(stockId==='todos'||st.id===stockId)
+    &&!period.some(f=>f.estoqueId===st.id&&f.auditoria))&&
+    <div className="b2-hint">Há contagem geral programada para este dia; ainda falta auditoria em pelo menos um dos setores exibidos.</div>}
    <div className="b2-op-section-title"><h2>Sugestão de separação · {estoque?.nome||'Todos os setores'}</h2>
     <span className="b2-pill">{rows.length} itens configurados</span></div>
    <div className="b2-table-scroll"><table className="b2-close-table"><thead><tr><th>Setor</th><th>Produto</th><th>Como baixa</th><th>Saldo para cálculo</th><th>Nível alvo</th><th>Separar</th><th>Central</th></tr></thead>
@@ -229,7 +231,7 @@ const FechamentoBeta2:React.FC<Props>=({mode,dados,fechamentos,onSave,go})=>{
      const closure=period.find(f=>f.estoqueId===row.estoque_id);
      const closed=closure?.quantidades[row.item_id];
      const physical=row.controleEfetivo==='diario'&&closed!==undefined;
-     const stock=physical?closed:row.saldo;
+     const stock=physical?Number(closed??0):row.saldo;
      const target=row.nivel_reposicao;
      const qty=target===null?null:Math.max(0,target-stock);
      const central=dados.estoques.find(e=>e.tipo==='central');
