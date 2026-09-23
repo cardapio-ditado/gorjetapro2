@@ -136,7 +136,7 @@ const HistoricoPedidosBeta2:React.FC<Props>=({
      ?'Pedidos aguardando saída e mercadorias que já saíram, mas ainda não tiveram o recebimento confirmado pelo destino.'
      :'Saídas com recebimento confirmado e solicitações anteriores em um único histórico.'}</p>
   <div className="b2-hint">{readOnly
-    ?'VISUALIZAÇÃO DO ESTOQUISTA · somente consulta. Confirmar recebimento é responsabilidade de quem recebeu no setor, não do estoque central.'
+    ?'VISUALIZAÇÃO DO ESTOQUISTA · somente consulta das retiradas registradas na prévia. O histórico original ainda não classifica automaticamente as retiradas fora do expediente nem comprova recebimento no destino. A confirmação é responsabilidade de quem recebeu no setor.'
     :'Registros OFICIAIS do módulo antigo: somente leitura. TESTES do Beta 2: saída e confirmação simuladas, sem gravar saldo nem movimentação oficial.'}</div>
   <div className="b2-chips" role="group" aria-label="Filtrar tipo de movimentação">
    {([
