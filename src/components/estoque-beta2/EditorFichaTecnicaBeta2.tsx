@@ -255,11 +255,15 @@ const EditorFichaTecnicaBeta2:React.FC<Props>=({ficha,fichas,onClose,onSaved})=>
        const item=line.tipo==='item'?itemById.get(line.item_estoque_id):null;
        const recipe=line.tipo==='ficha'?fichaById.get(line.ficha_tecnica_ingrediente_id):null;
        const search=(ingredientSearch[index]||'').toLocaleLowerCase('pt-BR').trim();
+       // A seleção existente precisa permanecer no select mesmo quando há milhares
+       // de itens e o limite de sugestões seria atingido antes de chegar nela.
        const availableItems=items.filter(i=>(i.status==='ativo'||i.id===line.item_estoque_id)
-         &&(i.id===line.item_estoque_id||(i.nome+' '+(i.codigo||'')).toLocaleLowerCase('pt-BR').includes(search))).slice(0,130);
+         &&(i.id===line.item_estoque_id||(i.nome+' '+(i.codigo||'')).toLocaleLowerCase('pt-BR').includes(search)))
+         .sort((a,b)=>Number(b.id===line.item_estoque_id)-Number(a.id===line.item_estoque_id)).slice(0,130);
        const availableFichas=fichas.filter(f=>f.id!==currentId&&f.id!==''
          &&(f.ativo!==false||f.id===line.ficha_tecnica_ingrediente_id)
-         &&(f.id===line.ficha_tecnica_ingrediente_id||f.nome.toLocaleLowerCase('pt-BR').includes(search))).slice(0,130);
+         &&(f.id===line.ficha_tecnica_ingrediente_id||f.nome.toLocaleLowerCase('pt-BR').includes(search)))
+         .sort((a,b)=>Number(b.id===line.ficha_tecnica_ingrediente_id)-Number(a.id===line.ficha_tecnica_ingrediente_id)).slice(0,130);
        return <div className="b2-ficha-ingredient" key={index}>
         <div className="b2-ficha-ingredient-head"><strong>Ingrediente {index+1}</strong><button className="b2-btn alt small" type="button" onClick={()=>remove(index)}><Trash2 size={14} style={{display:'inline',marginRight:5}}/>Remover</button></div>
         <div className="b2-ficha-ingredient-grid">
