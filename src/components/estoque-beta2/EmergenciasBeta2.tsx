@@ -10,8 +10,9 @@ type EmergencyLine = {key:string;itemId:string;quantity:string};
 export interface EmergencyPreview {
  id:string;requester:string;sector:string;from:string;to:string;reason:string;
  lines:{item:string;quantity:number;unit:string}[];status:'pendente'|'entregue';created:string;
+ kind?:'emergencial'|'noturna';withdrawnBy?:string;occurredAt?:string;reconciledAt?:string;
 }
-interface Props{requests:EmergencyPreview[];onSave:(req:EmergencyPreview)=>void}
+interface Props{requests:EmergencyPreview[];onSave:(req:EmergencyPreview)=>void;kind?:'emergencial'|'noturna';onReconcile?:(id:string)=>void}
 const line=():EmergencyLine=>({key:Math.random().toString(36).slice(2),itemId:'',quantity:''});
 const q=(raw:string)=>Number(raw.replace(',','.'));
 const fmt=(raw:number)=>raw.toLocaleString('pt-BR',{maximumFractionDigits:3});
@@ -26,11 +27,14 @@ async function read(table:string,cols:string){
  }
  return data;
 }
-const EmergenciasBeta2:React.FC<Props>=({requests,onSave})=>{
+const EmergenciasBeta2:React.FC<Props>=({requests,onSave,kind='emergencial',onReconcile})=>{
+ const isNight=kind==='noturna';
  const[stockList,setStockList]=useState<Row[]>([]);
  const[employees,setEmployees]=useState<Row[]>([]);
  const[items,setItems]=useState<Row[]>([]);
  const[employee,setEmployee]=useState('');
+ const[withdrawer,setWithdrawer]=useState('');
+ const[occurredAt,setOccurredAt]=useState(()=>{const date=new Date();return new Date(date.getTime()-date.getTimezoneOffset()*60000).toISOString().slice(0,16);});
  const[department,setDepartment]=useState('');
  const[from,setFrom]=useState('');
  const[to,setTo]=useState('');
@@ -91,8 +95,11 @@ const EmergenciasBeta2:React.FC<Props>=({requests,onSave})=>{
   const staff=employees.find(x=>x.id===employee);
   const source=stockList.find(x=>x.id===from),destination=stockList.find(x=>x.id===to);
   if(!staff||!department.trim()){setError('Escolha o funcionário solicitante e informe o setor.');return;}
+  if(isNight&&(!employees.some(e=>e.id===withdrawer)||!occurredAt||!Number.isFinite(new Date(occurredAt).getTime()))){
+   setError('Informe quem retirou a mercadoria e a data/hora da retirada noturna.');return;
+  }
   if(!source||!destination||source.id===destination.id){setError('Selecione estoques de origem e destino diferentes.');return;}
-  if(!reason.trim()){setError('Descreva o motivo da solicitação emergencial.');return;}
+  if(!reason.trim()){setError(isNight?'Descreva o motivo da retirada noturna.':'Descreva o motivo da solicitação emergencial.');return;}
   if(!lines.length){setError('Adicione pelo menos um produto.');return;}
   const ids=lines.map(x=>x.itemId);
   if(new Set(ids).size!==ids.length){setError('O mesmo produto foi incluído duas vezes. Some a quantidade em uma única linha.');return;}
@@ -101,35 +108,43 @@ const EmergenciasBeta2:React.FC<Props>=({requests,onSave})=>{
    if(!itemById.has(current.itemId)||!Number.isFinite(qty)||qty<=0){
     setError('Corrija item e quantidade da linha '+(i+1)+'.');return;
    }
-   if(status==='entregue'&&qty>(balances[current.itemId]??0)){
+   if(!isNight&&status==='entregue'&&qty>(balances[current.itemId]??0)){
     setError('O saldo na origem é insuficiente para entregar imediatamente o item da linha '+(i+1)+'. Registre uma solicitação pendente ou ajuste a quantidade.');return;
    }
   }
   const demoId=Math.random().toString(36).slice(2);
   onSave({
-   id:demoId,requester:String(staff.nome_completo),
+   id:demoId,kind,requester:String(staff.nome_completo),
+   ...(isNight?{withdrawnBy:String(employees.find(e=>e.id===withdrawer)?.nome_completo||''),occurredAt:new Date(occurredAt).toISOString()}:{}),
    sector:department.trim(),from:source.nome,to:destination.nome,reason:reason.trim(),
    status,created:new Date().toLocaleString('pt-BR'),
    lines:lines.map(x=>({item:itemById.get(x.itemId)?.nome||'Item',quantity:q(x.quantity),unit:String(itemById.get(x.itemId)?.unidade_medida||'un')}))
   });
-  setNotice(status==='pendente'
-   ?'Solicitação emergencial registrada SOMENTE nesta prévia; nenhum saldo movimentado.'
-   :'Entrega imediata SIMULADA. Nenhum saldo oficial foi movimentado.');
+  setNotice(isNight
+   ?'Retirada noturna registrada apenas nesta simulação para conferência no próximo turno. Nenhuma baixa oficial foi efetuada.'
+   :status==='pendente'
+     ?'Solicitação emergencial registrada SOMENTE nesta prévia; nenhum saldo movimentado.'
+     :'Entrega imediata SIMULADA. Nenhum saldo oficial foi movimentado.');
   setOpenPreviewId(demoId);
   setTab(status==='pendente'?'pendentes':'historico');
   setLines([line()]);setReason('Reposição emergencial');
  };
  return <div>
-  <p className="b2-eyebrow">Operação · solicitação fora da rotina</p><h1>Pedido emergencial</h1>
-  <p className="b2-lead">Um único pedido pode levar vários produtos. Identifique quem solicitou e registre de qual estoque cada item sai e para onde vai.</p>
-  <div className="b2-hint">Este formulário usa os cadastros originais de colaboradores, itens e estoques para consulta. Registrar ou simular entrega não grava requisição nem movimentação no estoque oficial.</div>
-  <div className="b2-op-tabs" role="tablist" aria-label="Pedidos emergenciais">
+  <p className="b2-eyebrow">{isNight?'Operação · fora do expediente do estoquista':'Operação · solicitação fora da rotina'}</p>
+  <h1>{isNight?'Retiradas noturnas':'Pedido emergencial'}</h1>
+  <p className="b2-lead">{isNight
+   ?'Mesmo formulário do pedido emergencial: quem pediu, quem retirou, horário, origem, destino e vários produtos na mesma ocorrência.'
+   :'Um único pedido pode levar vários produtos. Identifique quem solicitou e registre de qual estoque cada item sai e para onde vai.'}</p>
+  <div className="b2-hint">{isNight
+   ?'A retirada já ocorreu e ficará a conciliar no próximo turno. Esta versão é demonstrativa: não cria transferência nem dá baixa novamente.'
+   :'Este formulário usa os cadastros originais de colaboradores, itens e estoques para consulta. Registrar ou simular entrega não grava requisição nem movimentação no estoque oficial.'}</div>
+  <div className="b2-op-tabs" role="tablist" aria-label={isNight?'Retiradas noturnas':'Pedidos emergenciais'}>
    <button type="button" role="tab" className="b2-op-tab" aria-selected={tab==='novo'} aria-pressed={tab==='novo'} onClick={()=>setTab('novo')}>
-    <Plus size={15}/>Novo pedido</button>
+    <Plus size={15}/>{isNight?'Nova retirada':'Novo pedido'}</button>
    <button type="button" role="tab" className="b2-op-tab" aria-selected={tab==='pendentes'} aria-pressed={tab==='pendentes'} onClick={()=>{setTab('pendentes');setOpenPreviewId('');}}>
-    <History size={15}/>A entregar</button>
+    <History size={15}/>{isNight?'A conciliar':'A entregar'}</button>
    <button type="button" role="tab" className="b2-op-tab" aria-selected={tab==='historico'} aria-pressed={tab==='historico'} onClick={()=>{setTab('historico');setOpenPreviewId('');}}>
-    <History size={15}/>Histórico de pedidos</button>
+    <History size={15}/>{isNight?'Histórico de retiradas':'Histórico de pedidos'}</button>
   </div>
   {notice&&<div className="b2-op-summary" role="status"><CheckCircle2 size={19}/><strong>{notice}</strong></div>}
   {tab==='novo'&&<>
@@ -137,11 +152,15 @@ const EmergenciasBeta2:React.FC<Props>=({requests,onSave})=>{
   {loading?<div className="b2-card">Carregando funcionários, estoques e itens reais...</div>:<>
    {error&&<div className="b2-error" role="alert">{error}</div>}
    <section className="b2-card">
-    <h2>1 · Quem está solicitando?</h2>
+    <h2>1 · {isNight?'Quem solicitou e quem retirou?':'Quem está solicitando?'}</h2>
     <div className="b2-op-fields">
      <label className="b2-field"><span>Nome do funcionário solicitante *</span><select value={employee} onChange={e=>setEmployee(e.target.value)}><option value="">Escolha o colaborador...</option>{employees.map(e=><option key={e.id} value={e.id}>{e.nome_completo}{e.funcao_personalizada?' · '+e.funcao_personalizada:''}</option>)}</select></label>
      <label className="b2-field"><span>Setor solicitante *</span><input value={department} onChange={e=>setDepartment(e.target.value)} placeholder="Ex.: Bar de drinks, cozinha, bar de cervejas"/></label>
-     <label className="b2-field b2-op-wide"><span>Motivo da emergência *</span><input value={reason} onChange={e=>setReason(e.target.value)} placeholder="Ex.: acabou o gelo na abertura"/></label>
+     {isNight&&<>
+      <label className="b2-field"><span>Funcionário que retirou *</span><select value={withdrawer} onChange={e=>setWithdrawer(e.target.value)}><option value="">Escolha o responsável...</option>{employees.map(e=><option key={e.id} value={e.id}>{e.nome_completo}{e.funcao_personalizada?' · '+e.funcao_personalizada:''}</option>)}</select></label>
+      <label className="b2-field"><span>Data e hora da retirada *</span><input type="datetime-local" value={occurredAt} onChange={e=>setOccurredAt(e.target.value)}/></label>
+     </>}
+     <label className="b2-field b2-op-wide"><span>{isNight?'Motivo da retirada *':'Motivo da emergência *'}</span><input value={reason} onChange={e=>setReason(e.target.value)} placeholder={isNight?'Ex.: troca de barril às 23h':'Ex.: acabou o gelo na abertura'}/></label>
     </div>
    </section>
    <section className="b2-section b2-card">
@@ -152,8 +171,8 @@ const EmergenciasBeta2:React.FC<Props>=({requests,onSave})=>{
     </div>
    </section>
    <section className="b2-section b2-card">
-    <div className="b2-op-section-title"><h2>3 · Produtos solicitados</h2><span className="b2-pill">{lines.length} linha(s)</span></div>
-    <p className="b2-op-help">Adicione quantos itens forem necessários ao mesmo pedido. O solicitante, a origem e o destino valem para todos eles.</p>
+    <div className="b2-op-section-title"><h2>3 · {isNight?'Produtos retirados':'Produtos solicitados'}</h2><span className="b2-pill">{lines.length} linha(s)</span></div>
+    <p className="b2-op-help">Adicione quantos itens forem necessários à mesma {isNight?'retirada':'solicitação'}. Os funcionários, a origem e o destino valem para todos eles.</p>
     <div className="b2-op-lines">{lines.map((l,index)=>{
      const selected=itemById.get(l.itemId);
      const bal=balances[l.itemId]??0;
@@ -168,19 +187,20 @@ const EmergenciasBeta2:React.FC<Props>=({requests,onSave})=>{
      </div>;
     })}</div>
     <button className="b2-op-add-line" type="button" onClick={()=>{const next=line();setFocusLine(next.key);setLines(p=>[...p,next]);}}><Plus size={17}/> Adicionar outro item</button>
-    <div className="b2-op-totals"><span>Um único pedido emergencial</span><strong>{lines.length} linha(s) de produtos</strong></div>
+    <div className="b2-op-totals"><span>{isNight?'Uma única retirada noturna':'Um único pedido emergencial'}</span><strong>{lines.length} linha(s) de produtos</strong></div>
    </section>
    <section className="b2-section b2-card">
     <h2>4 · Conferência e confirmação</h2>
-    <p className="b2-op-help">No sistema definitivo, a solicitação pendente não dá baixa. A movimentação acontecerá somente na entrega real, conforme a transferência original já funciona.</p>
+    <p className="b2-op-help">{isNight?'O registro ficará aguardando conferência. Não aplique uma segunda baixa ao conciliar uma mercadoria já retirada.':'No sistema definitivo, a solicitação pendente não dá baixa. A movimentação acontecerá somente na entrega real, conforme a transferência original já funciona.'}</p>
     <div className="b2-op-actions">
-     <button className="b2-btn" type="button" onClick={()=>save('pendente')}>Registrar pedido emergencial (prévia)</button>
-     <button className="b2-btn alt" type="button" disabled={balanceLoading} onClick={()=>save('entregue')}>Simular entrega imediata</button>
+     <button className="b2-btn" type="button" onClick={()=>save('pendente')}>{isNight?'Registrar retirada noturna (prévia)':'Registrar pedido emergencial (prévia)'}</button>
+     {!isNight&&<button className="b2-btn alt" type="button" disabled={balanceLoading} onClick={()=>save('entregue')}>Simular entrega imediata</button>}
     </div>
    </section>
   </>}
   </>}
-  {tab!=='novo'&&<HistoricoPedidosBeta2 mode={tab} preview={requests} openId={openPreviewId}/>}
+  {tab!=='novo'&&<HistoricoPedidosBeta2 mode={tab} preview={requests} openId={openPreviewId} onlyPreview={isNight} onReconcile={isNight?onReconcile:undefined} night={isNight}/>}
+
  </div>;
 };
 export default EmergenciasBeta2;
