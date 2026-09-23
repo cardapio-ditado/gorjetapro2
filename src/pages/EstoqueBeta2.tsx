@@ -215,14 +215,11 @@ return <div className="b2-root -m-5 lg:-m-7">
   : 'OPERAÇÃO DEMONSTRATIVA · DADOS SIMULADOS'}
 </span></div>
 {view==='inicio'&&<RotinaEstoquistaBeta2
- go={v=>{go(v);if(v==='emergencias')setFocusNightReview(true);}} nightReviewed={nightReviewed}
- onNightReviewed={()=>{
-  setRequests(prev=>prev.map(req=>req.kind==='noturna'&&req.status==='pendente'
-   ?{...req,status:'entregue',reconciledAt:new Date().toLocaleString('pt-BR')}:req));
-  setNightReviewed(true);
-  setNotice('Retiradas noturnas conferidas apenas nesta simulação. Nenhuma segunda baixa foi feita.');
- }}
- nightCount={requests.filter(req=>req.kind==='noturna'&&req.status==='pendente').length} received={received} countSent={countSent}
+ go={v=>{go(v);if(v==='emergencias'){setFocusNightReview(true);setNightReviewed(true);}}}
+ nightReviewed={nightReviewed}
+ nightCount={requests.filter(req=>req.kind==='noturna').length}
+ nightAwaitingReceiptCount={requests.filter(req=>req.kind==='noturna'&&!req.receiptConfirmedAt).length}
+ received={received} countSent={countSent}
  countApproved={countApproved} differenceCount={differences.length}
  sectorsDone={sectors.filter(x=>x.status==='concluido').length}
  sectorsTotal={sectors.length}
@@ -245,11 +242,17 @@ return <div className="b2-root -m-5 lg:-m-7">
   if(request.kind==='noturna')setNightReviewed(false);
   setNotice('Solicitação ou retirada registrada somente na demonstração.');
  }}
- onReconcile={id=>{
-  setRequests(prev=>prev.map(req=>req.id===id&&req.kind==='noturna'
-   ?{...req,status:'entregue',reconciledAt:new Date().toLocaleString('pt-BR')}:req));
-  if(requests.filter(req=>req.kind==='noturna').every(req=>req.id===id||req.status==='entregue'))setNightReviewed(true);
-  setNotice('Retirada conferida na prévia. Não foi feita uma segunda movimentação.');
+ onDispatch={(id,employeeName)=>{
+  setRequests(prev=>prev.map(req=>req.id===id&&req.status==='pendente'
+   ?{...req,status:'entregue',withdrawnBy:employeeName,dispatchedAt:new Date().toISOString()}
+   :req));
+  setNotice('Saída registrada somente na prévia. O recebimento ainda precisa ser confirmado pelo setor de destino.');
+ }}
+ onConfirmReceipt={(id,employeeName)=>{
+  setRequests(prev=>prev.map(req=>req.id===id&&req.status==='entregue'&&!req.receiptConfirmedAt&&req.withdrawnBy!==employeeName
+   ?{...req,receiptConfirmedBy:employeeName,receiptConfirmedAt:new Date().toISOString()}
+   :req));
+  setNotice('Recebimento confirmado somente na prévia, sem nova saída ou entrada nos saldos oficiais.');
  }}
 />}
 {view==='abastecimento'&&<><p className="b2-eyebrow">Operação diária</p><h1>Abastecimento</h1><p className="b2-lead">Confira o setor, separe a diferença e confirme a entrega.</p><div className="b2-chips">{sectors.map(s=><button key={s.id} className="b2-chip" aria-pressed={s.id===sectorId} onClick={()=>setSectorId(s.id)}>{s.nome}</button>)}</div><div className="b2-card"><div className="b2-topline"><h2>{sector.nome}</h2><span className="b2-pill">{sector.status}</span></div><p className="b2-muted">{sector.encarregado}</p><div className="b2-table-scroll"><table><thead><tr><th>Item</th><th>Referência</th><th>Tem</th><th>Repor</th></tr></thead><tbody>{sector.itens.map((i,idx)=><tr key={i.nome}><td>{i.nome}<small style={{display:'block'}}>{i.unidade}</small></td><td>{i.alvo}</td><td><input type="number" min="0" disabled={sector.status==='concluido'} value={i.atual} onChange={e=>setSectors(s=>s.map(sec=>sec.id===sectorId?{...sec,itens:sec.itens.map((it,j)=>j===idx?{...it,atual:Number(e.target.value)}:it)}:sec))}/></td><td>{num(Math.max(0,i.alvo-i.atual))}</td></tr>)}</tbody></table></div>{sector.status!=='concluido'&&<button className="b2-btn" style={{marginTop:18}} onClick={()=>setSectors(s=>s.map(sec=>sec.id===sectorId?{...sec,status:sec.status==='pendente'?'separado':'concluido',itens:sec.status==='separado'?sec.itens.map(i=>({...i,atual:i.alvo})):sec.itens}:sec))}>{sector.status==='pendente'?'Marcar separado →':'Confirmar recebimento →'}</button>}</div></>}
