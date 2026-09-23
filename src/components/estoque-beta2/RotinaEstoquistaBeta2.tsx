@@ -27,7 +27,7 @@ const RotinaEstoquistaBeta2:React.FC<Props>=({
  const inventoryDone=countSent&&(differenceCount===0||countApproved);
  const steps=[
   {number:'01',key:'noite',title:'Conferir as retiradas da noite',desc:'Ver o que saiu fora do expediente do estoquista e deixar as pendências anotadas.',screen:'noite' as Destination,button:'Abrir retiradas noturnas',done:nightReviewed,partial:false},
-  {number:'02',key:'recebimento',title:'Conferir mercadorias recebidas',desc:'Comparar pedido, nota e mercadoria física. Conferir quantidade, validade e diferenças.',screen:'recebimento' as Destination,button:'Conferir recebimentos',done:received,partial:false},
+  {number:'02',key:'recebimento',title:'Conferir mercadorias recebidas',desc:'Comparar pedido, nota e mercadoria física. Conferir quantidades, preços e diferenças.',screen:'recebimento' as Destination,button:'Conferir recebimentos',done:received,partial:false},
   {number:'03',key:'inventario',title:'Conferir saldos e divergências',desc:'Contar os itens previstos e encaminhar ao gestor o que precisar de aprovação.',screen:'inventario' as Destination,button:'Abrir contagem',done:inventoryDone,partial:countSent&&!inventoryDone},
   {number:'04',key:'abastecimento',title:'Abastecer drinks, cervejas e cozinha',desc:'Ver quanto cada setor tem, separar a diferença e confirmar o recebimento.',screen:'abastecimento' as Destination,button:'Montar setores',done:sectorsTotal>0&&sectorsDone===sectorsTotal,partial:sectorsStarted},
   {number:'05',key:'kits',title:'Repor o kit compartilhado de limpeza',desc:'Conferir o armário e deixar o material preparado para os dois turnos.',screen:'kits' as Destination,button:'Conferir limpeza',done:kitDone,partial:false},
