@@ -168,7 +168,8 @@ const EditorFichaTecnicaBeta2:React.FC<Props>=({ficha,fichas,onClose,onSaved})=>
       }else{
         const{data,error:e}=await supabase.from('fichas_tecnicas').insert([base]).select('id').single();
         if(e)throw e;
-        savedId=String(data.id);
+        savedId=String(data?.id||'');
+        if(!savedId)throw Error('O cadastro não retornou o identificador da ficha.');
       }
       parentSaved=true;
       if(currentId){
