@@ -68,9 +68,11 @@ const diaReposicao=dataAnterior(cuiabaDate());
 const setoresComContagem=dadosFechamento.setores.filter(e=>
  dadosFechamento.linhas.some(l=>l.estoque_id===e.id&&l.controleEfetivo==='diario')
 );
-const fechamentosRecebidos=setoresComContagem.filter(e=>
- fechamentos.some(f=>f.estoqueId===e.id&&f.dataOperacional===diaReposicao)
-).length;
+const fechamentosRecebidos=setoresComContagem.filter(e=>{
+ const f=fechamentos.find(x=>x.estoqueId===e.id&&x.dataOperacional===diaReposicao);
+ return Boolean(f)&&dadosFechamento.linhas.filter(l=>l.estoque_id===e.id&&l.controleEfetivo==='diario')
+  .every(l=>f?.quantidades[l.item_id]!==undefined&&Number.isFinite(f.quantidades[l.item_id]));
+}).length;
 const logDaReposicao=dadosFechamento.logs.find(l=>l.dtinicio<=diaReposicao&&l.dtfim>=diaReposicao&&
  Boolean(l.finalizado_em)&&new Date(l.finalizado_em!).getTime()>=new Date(cuiabaDate()+'T06:00:00-04:00').getTime());
 const zigPronta=logDaReposicao?.status==='sucesso'&&Number(logDaReposicao.total_nao_mapeados||0)===0;
