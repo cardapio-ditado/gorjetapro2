@@ -66,6 +66,12 @@ const FechamentoBeta2:React.FC<Props>=({mode,dados,fechamentos,onSave,go})=>{
  };
  const countDone=required.filter(r=>total(r)!==null&&Number.isFinite(total(r))).length;
  const period=fechamentos.filter(f=>f.dataOperacional===date);
+ const fechamentoCompleto=(sectorId:string)=>{
+  const needed=dados.linhas.filter(l=>l.estoque_id===sectorId&&l.controleEfetivo==='diario');
+  if(!needed.length)return true;
+  const f=period.find(p=>p.estoqueId===sectorId);
+  return Boolean(f)&&needed.every(l=>f?.quantidades[l.item_id]!==undefined&&Number.isFinite(f.quantidades[l.item_id]));
+ };
  const sync=useMemo(()=>{
   const min=new Date(dataSeguinte(date)+'T06:00:00-04:00').getTime();
   return dados.logs.find(x=>x.dtinicio<=date&&x.dtfim>=date&&Boolean(x.finalizado_em)&&
@@ -214,13 +220,14 @@ const FechamentoBeta2:React.FC<Props>=({mode,dados,fechamentos,onSave,go})=>{
     {dados.setores.map(st=>{
      const f=period.find(p=>p.estoqueId===st.id);
      const hasDaily=dados.linhas.some(l=>l.estoque_id===st.id&&l.controleEfetivo==='diario');
-     return <span key={st.id} className={'b2-pill '+(!hasDaily||f?'green':'red')}>{st.nome}: {f?'fechamento recebido':hasDaily?'falta fechamento':'sem contagem diária'}</span>;
+     const complete=fechamentoCompleto(st.id);
+     return <span key={st.id} className={'b2-pill '+(complete?'green':'red')}>{st.nome}: {complete?(hasDaily?'fechamento recebido':'sem contagem diária'):f?'fechamento incompleto':'falta fechamento'}</span>;
     })}
    </div>
    {dados.setores.filter(st=>(stockId==='todos'||stockId===st.id)
     &&dados.linhas.some(l=>l.estoque_id===st.id&&l.controleEfetivo==='diario')
-    &&!period.some(f=>f.estoqueId===st.id)).map(st=>
-    <div className="b2-error" key={st.id}>Falta o fechamento de {st.nome} para {formatDate(date)}. Esta lista NÃO está pronta.</div>)}
+    &&!fechamentoCompleto(st.id)).map(st=>
+    <div className="b2-error" key={st.id}>Falta o fechamento completo de {st.nome} para {formatDate(date)}. Esta lista NÃO está pronta.</div>)}
    {audit&&dados.setores.some(st=>(stockId==='todos'||st.id===stockId)
     &&!period.some(f=>f.estoqueId===st.id&&f.auditoria))&&
     <div className="b2-hint">Há contagem geral programada para este dia; ainda falta auditoria em pelo menos um dos setores exibidos.</div>}
