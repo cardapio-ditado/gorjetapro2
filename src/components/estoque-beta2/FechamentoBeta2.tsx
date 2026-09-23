@@ -203,6 +203,20 @@ const FechamentoBeta2:React.FC<Props>=({mode,dados,fechamentos,onSave,go})=>{
    <div className="b2-close-footer"><span>{countDone} de {required.length} itens contados · {formatDate(date)}</span>
     <button type="button" className="b2-btn" disabled={!required.length||countDone!==required.length} onClick={sent}>Enviar fechamento (prévia)</button>
    </div>
+   {previous&&<section className="b2-card b2-section">
+    <h2>Baixas sugeridas pelo fechamento · apenas sem Zig</h2>
+    <p className="b2-op-help">Consumo estimado = saldo teórico consultado no fechamento − quantidade física informada. Entradas e transferências não registradas devem ser investigadas antes de uma baixa oficial. Estes números NÃO foram movimentados no estoque.</p>
+    {daily.filter(row=>previous.quantidades[row.item_id]!==undefined&&
+     Math.abs((previous.saldosNoFechamento[row.item_id]??row.saldo)-previous.quantidades[row.item_id])>0.0001)
+     .map(row=>{
+      const diff=(previous.saldosNoFechamento[row.item_id]??row.saldo)-previous.quantidades[row.item_id];
+      return <div className="b2-row" key={row.item_id}><div><strong>{row.item.nome}</strong>
+       <small>Sistema no fechamento: {fmt3(previous.saldosNoFechamento[row.item_id]??row.saldo)} · físico: {fmt3(previous.quantidades[row.item_id])} {row.item.unidade_medida||''}</small></div>
+       <span className={'b2-pill '+(diff<0?'red':'')}>{diff>=0?'Consumo sugerido: '+fmt3(diff):'Excesso físico: '+fmt3(-diff)}</span>
+      </div>;
+     })}
+    <div className="b2-hint">Nenhuma venda Zig será baixada novamente nesta etapa. No backend definitivo, cada fechamento terá chave de idempotência própria.</div>
+   </section>}
    <div className="b2-close-actions"><button type="button" className="b2-btn alt" onClick={()=>go('reposicao')}>Consultar sugestão de reposição <ArrowRight size={14}/></button></div>
   </>}
 
