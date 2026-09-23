@@ -55,6 +55,7 @@ const[error,setError]=useState('');
 const[received,setReceived]=useState(false);
 const[receipts,setReceipts]=useState<NotePreview[]>([]);
 const[emergencyRequests,setEmergencyRequests]=useState<EmergencyPreview[]>([]);
+const[nightRequests,setNightRequests]=useState<EmergencyPreview[]>([]);
 const[sectors,setSectors]=useState<Sector[]>(()=>clone(sectionsSeed));
 const[sectorId,setSectorId]=useState('drinks');
 const[kitDone,setKitDone]=useState(false);
@@ -63,10 +64,6 @@ const[handoffDone,setHandoffDone]=useState(false);
 const[count,setCount]=useState<Record<string,number>>({});
 const[countSent,setCountSent]=useState(false);
 const[countApproved,setCountApproved]=useState(false);
-const[night,setNight]=useState<{produto:string;quantidade:number;motivo:string}[]>([]);
-const[nightProduct,setNightProduct]=useState('Stella Pure Gold 600 ml');
-const[nightQty,setNightQty]=useState(2);
-const[nightReason,setNightReason]=useState('Reposição emergencial');
 
 const sector=sectors.find(s=>s.id===sectorId)||sectors[0];
 const differences=products.filter(p=>(count[p.id]??p.central)!==p.central);
@@ -75,9 +72,7 @@ const go=(v:View)=>{
   const section=sectionOf(v);
   if(section)setOpenSections(prev=>({...prev,[section]:true}));
 };
-const reset=()=>{setProducts(clone(productsSeed));setSectors(clone(sectionsSeed));setCount({});setCountSent(false);setCountApproved(false);setReceived(false);setReceipts([]);setEmergencyRequests([]);setKitDone(false);setNightReviewed(false);setHandoffDone(false);setNight([]);setView('inicio');setOpenSections({operacao:true,cadastros:false,gestao:false});setError('');setNotice('Demonstração reiniciada.');};
-const field=(label:string,value:string|number,onChange:(v:string)=>void,choices?:string[])=>
-<label className="b2-field"><span>{label}</span>{choices?<select value={String(value)} onChange={e=>onChange(e.target.value)}>{choices.map(v=><option key={v}>{v}</option>)}</select>:<input value={value} onChange={e=>onChange(e.target.value)}/>}</label>;
+const reset=()=>{setProducts(clone(productsSeed));setSectors(clone(sectionsSeed));setCount({});setCountSent(false);setCountApproved(false);setReceived(false);setReceipts([]);setEmergencyRequests([]);setNightRequests([]);setKitDone(false);setNightReviewed(false);setHandoffDone(false);setView('inicio');setOpenSections({operacao:true,cadastros:false,gestao:false});setError('');setNotice('Demonstração reiniciada.');};
 const beta2MenuCSS = `
 .b2-root .b2-side{display:flex;flex-direction:column;gap:0}
 .b2-root .b2-menu{display:flex;flex-direction:column;gap:7px}
@@ -221,8 +216,13 @@ return <div className="b2-root -m-5 lg:-m-7">
 </span></div>
 {view==='inicio'&&<RotinaEstoquistaBeta2
  go={v=>go(v)} nightReviewed={nightReviewed}
- onNightReviewed={()=>{setNightReviewed(true);setNotice('Retiradas noturnas revisadas apenas nesta simulação.');}}
- nightCount={night.length} received={received} countSent={countSent}
+ onNightReviewed={()=>{
+  setNightRequests(prev=>prev.map(req=>req.status==='pendente'
+   ?{...req,status:'entregue',reconciledAt:new Date().toLocaleString('pt-BR')}:req));
+  setNightReviewed(true);
+  setNotice('Retiradas noturnas conferidas apenas nesta simulação. Nenhuma segunda baixa foi feita.');
+ }}
+ nightCount={nightRequests.length} received={received} countSent={countSent}
  countApproved={countApproved} differenceCount={differences.length}
  sectorsDone={sectors.filter(x=>x.status==='concluido').length}
  sectorsTotal={sectors.length}
@@ -243,7 +243,21 @@ return <div className="b2-root -m-5 lg:-m-7">
 />}
 {view==='abastecimento'&&<><p className="b2-eyebrow">Operação diária</p><h1>Abastecimento</h1><p className="b2-lead">Confira o setor, separe a diferença e confirme a entrega.</p><div className="b2-chips">{sectors.map(s=><button key={s.id} className="b2-chip" aria-pressed={s.id===sectorId} onClick={()=>setSectorId(s.id)}>{s.nome}</button>)}</div><div className="b2-card"><div className="b2-topline"><h2>{sector.nome}</h2><span className="b2-pill">{sector.status}</span></div><p className="b2-muted">{sector.encarregado}</p><div className="b2-table-scroll"><table><thead><tr><th>Item</th><th>Referência</th><th>Tem</th><th>Repor</th></tr></thead><tbody>{sector.itens.map((i,idx)=><tr key={i.nome}><td>{i.nome}<small style={{display:'block'}}>{i.unidade}</small></td><td>{i.alvo}</td><td><input type="number" min="0" disabled={sector.status==='concluido'} value={i.atual} onChange={e=>setSectors(s=>s.map(sec=>sec.id===sectorId?{...sec,itens:sec.itens.map((it,j)=>j===idx?{...it,atual:Number(e.target.value)}:it)}:sec))}/></td><td>{num(Math.max(0,i.alvo-i.atual))}</td></tr>)}</tbody></table></div>{sector.status!=='concluido'&&<button className="b2-btn" style={{marginTop:18}} onClick={()=>setSectors(s=>s.map(sec=>sec.id===sectorId?{...sec,status:sec.status==='pendente'?'separado':'concluido',itens:sec.status==='separado'?sec.itens.map(i=>({...i,atual:i.alvo})):sec.itens}:sec))}>{sector.status==='pendente'?'Marcar separado →':'Confirmar recebimento →'}</button>}</div></>}
 {view==='kits'&&<><p className="b2-eyebrow">Consumo interno</p><h1>Kit compartilhado da limpeza</h1><p className="b2-lead">Armário único para equipe diurna e noturna; produtos químicos separados dos itens de contato alimentar.</p><div className="b2-card"><h2>Reposição ilustrativa</h2>{['Perflex · 10 unidades','Papel toalha · 8 pacotes','Detergente · 4 frascos','Saco de lixo · 20 unidades'].map(x=><div className="b2-row" key={x}><strong>{x}</strong><span className="b2-pill">Referência</span></div>)}<button className="b2-btn" style={{marginTop:18}} disabled={kitDone} onClick={()=>{setKitDone(true);setNotice('Kit reposto na simulação.')}}>{kitDone?'✓ Reposição concluída':'Confirmar kit reposto'}</button></div></>}
-{view==='noite'&&<><p className="b2-eyebrow">Sem estoquista noturno</p><h1>Retirada excepcional</h1><p className="b2-lead">Registre responsável, motivo e quantidade para conciliação no dia seguinte.</p><div className="b2-split"><div className="b2-card"><h2>Nova retirada</h2><div style={{display:'grid',gap:12}}>{field('Produto',nightProduct,setNightProduct,['Stella Pure Gold 600 ml','Original 600 ml','Gelo ensacado','Bolinho pronto','Barril de chopp 50 L'])}{field('Quantidade',nightQty,v=>setNightQty(Number(v)))}{field('Motivo',nightReason,setNightReason,['Reposição emergencial','Troca de barril','Demanda inesperada','Produção'])}<button className="b2-btn" onClick={()=>{if(nightQty<=0){setError('Quantidade precisa ser positiva.');return}setNight(n=>[{produto:nightProduct,quantidade:nightQty,motivo:nightReason},...n]);setNotice('Ocorrência registrada na simulação.')}}>Registrar ocorrência</button></div></div><div className="b2-card"><h2>Ocorrências</h2>{night.length?night.map((n,i)=><div className="b2-row" key={i}><div><strong>{n.produto} · {n.quantidade}</strong><small>{n.motivo}</small></div><span className="b2-pill">A conciliar</span></div>):<p className="b2-muted">Nenhuma retirada na simulação.</p>}</div></div></>}
+{view==='noite'&&<EmergenciasBeta2
+ kind="noturna"
+ requests={nightRequests}
+ onSave={request=>{
+  setNightRequests(prev=>[request,...prev]);
+  setNightReviewed(false);
+  setNotice('Retirada registrada somente na simulação, a conciliar no próximo turno.');
+ }}
+ onReconcile={id=>{
+  setNightRequests(prev=>prev.map(req=>req.id===id
+   ?{...req,status:'entregue',reconciledAt:new Date().toLocaleString('pt-BR')}:req));
+  if(nightRequests.every(req=>req.id===id||req.status==='entregue'))setNightReviewed(true);
+  setNotice('Retirada conferida na prévia. Não foi feita nova movimentação.');
+ }}
+/>}
 {view==='gestao'&&<><p className="b2-eyebrow">Gestor · Cristiano</p><h1>Aprovação de divergências</h1><p className="b2-lead">Contagem não deve ajustar saldos sem aprovação do gestor.</p><div className="b2-card"><h2>Fila de aprovação</h2>{!countSent?<p className="b2-hint">Envie uma contagem em Inventário para testar.</p>:countApproved?<p className="b2-success">Aprovação simulada concluída, sem ajuste real.</p>:differences.length?<>{differences.map(p=><div className="b2-row" key={p.id}><div><strong>{p.nome}</strong><small>Teórico {p.central} · físico {count[p.id]??p.central}</small></div><span className="b2-pill red">{num((count[p.id]??p.central)-p.central)}</span></div>)}<button className="b2-btn" style={{marginTop:16}} onClick={()=>{setCountApproved(true);setNotice('Aprovado somente na simulação.')}}>Aprovar na simulação</button></>:<p className="b2-success">Contagem sem diferenças.</p>}</div></>}
 {error&&<p className="b2-error">{error}</p>}{notice&&<p className="b2-success">✓ {notice}</p>}
 <div className="b2-section b2-muted" style={{borderTop:'1px solid #4d3849',paddingTop:15,fontSize:12,display:'flex',justifyContent:'space-between',gap:12,flexWrap:'wrap'}}><span>Estoque Beta 2 · Cadastros originais compartilhados · Operações em simulação, sem alterar saldos reais.</span><button className="b2-btn alt small" onClick={reset}><RotateCcw size={13} style={{display:'inline',marginRight:5}}/>Reiniciar testes operacionais</button></div>
