@@ -1,0 +1,41 @@
+
+/* Editor Beta 2 de ficha técnica. Escopo isolado para não alterar a tela original. */
+.b2-root .b2-ficha-editor{margin-top:22px;border:1px solid #986078;background:linear-gradient(145deg,#2e2031,#1c1723);border-radius:19px;padding:clamp(16px,2.6vw,28px);color:#f9f0f6}
+.b2-root .b2-ficha-editor h2,.b2-root .b2-ficha-editor h3{color:#fff8fc!important}
+.b2-root .b2-ficha-editor p,.b2-root .b2-ficha-editor small{color:#e5cedb!important}
+.b2-root .b2-ficha-titlebar{display:flex;gap:14px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap}
+.b2-root .b2-ficha-titlebar h2{font-size:clamp(22px,2.5vw,29px)}
+.b2-root .b2-ficha-badge{display:inline-block;font-size:11px;letter-spacing:.1em;background:#453147;color:#ffdfa8!important;padding:6px 10px;border:1px solid #ac7f74;border-radius:100px;font-weight:850;margin-bottom:11px}
+.b2-root .b2-ficha-section{border:1px solid #574052;border-radius:15px;padding:clamp(14px,2vw,21px);background:#251b29;margin-top:16px}
+.b2-root .b2-ficha-section-title{display:flex;justify-content:space-between;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+.b2-root .b2-ficha-section-title h3{margin:0;font-size:18px}
+.b2-root .b2-ficha-section-title p{font-size:12px;margin:4px 0 0}
+.b2-root .b2-ficha-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
+.b2-root .b2-ficha-wide{grid-column:1/-1}
+.b2-root .b2-ficha-section .b2-field span{color:#f5e5ed!important}
+.b2-root .b2-ficha-section .b2-field small{font-size:11px;color:#d9c4d1!important}
+.b2-root .b2-ficha-section textarea{width:100%;border-radius:10px;padding:11px;min-height:95px;resize:vertical;background:#241a2a!important;color:#fff!important;-webkit-text-fill-color:#fff!important;border:1px solid #92748e!important}
+.b2-root .b2-ficha-radios{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.b2-root .b2-ficha-radio{display:flex;align-items:flex-start;gap:11px;border:1px solid #745466;border-radius:12px;padding:14px;background:#302338;color:#fff!important;cursor:pointer}
+.b2-root .b2-ficha-radio.active{border-color:#f3c38e;background:#4d2b42}
+.b2-root .b2-ficha-radio input{width:17px;margin-top:3px;accent-color:#e4af79}
+.b2-root .b2-ficha-radio strong{display:block;color:#fff!important;margin-bottom:4px;font-size:13px}
+.b2-root .b2-ficha-radio small{display:block;line-height:1.5;font-size:12px}
+.b2-root .b2-ficha-ingredient{border:1px solid #6b4b61;background:#2f2131;border-radius:13px;padding:14px;margin-top:10px}
+.b2-root .b2-ficha-ingredient-head{display:flex;gap:8px;justify-content:space-between;align-items:center;flex-wrap:wrap;margin-bottom:13px}
+.b2-root .b2-ficha-ingredient-head strong{color:#fff!important}
+.b2-root .b2-ficha-ingredient-grid{display:grid;grid-template-columns:minmax(120px,.65fr) minmax(200px,2fr) minmax(108px,.6fr);gap:12px}
+.b2-root .b2-ficha-costrow{margin-top:12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:11px;color:#ffe6bc!important;font-size:12px}
+.b2-root .b2-ficha-costrow strong{font-size:16px;color:#ffe4af!important}
+.b2-root .b2-ficha-check{display:flex;align-items:center;gap:9px;cursor:pointer;background:#44314a;border-radius:10px;padding:9px 11px;color:#fceef5!important;font-size:12px}
+.b2-root .b2-ficha-check input{width:17px;height:17px;accent-color:#c5546a}
+.b2-root .b2-ficha-totals{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.b2-root .b2-ficha-total{border-radius:12px;padding:17px;background:#3b293c;border:1px solid #906979}
+.b2-root .b2-ficha-total small{display:block;font-size:12px}
+.b2-root .b2-ficha-total strong{display:block;margin-top:7px;color:#ffdcaa!important;font-size:25px}
+.b2-root .b2-ficha-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end;margin-top:20px}
+.b2-root .b2-ficha-actions .b2-btn{display:inline-flex;gap:7px;align-items:center;justify-content:center;min-height:44px}
+.b2-root .b2-ficha-editor .b2-btn{color:#fff!important}
+.b2-root .b2-ficha-help{background:#3b2a36;border-left:3px solid #ecc08e;padding:10px 12px;font-size:12px;color:#ffe9c9!important;border-radius:8px;margin-top:9px}
+@media(max-width:900px){.b2-root .b2-ficha-ingredient-grid{grid-template-columns:1fr 1fr}.b2-root .b2-ficha-ingredient-grid .b2-ficha-picker{grid-column:1/-1}}
+@media(max-width:580px){.b2-root .b2-ficha-grid,.b2-root .b2-ficha-radios,.b2-root .b2-ficha-totals,.b2-root .b2-ficha-ingredient-grid{grid-template-columns:1fr}.b2-root .b2-ficha-ingredient-grid .b2-ficha-picker{grid-column:auto}.b2-root .b2-ficha-totals strong{font-size:20px}}
