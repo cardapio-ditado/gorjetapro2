@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { Home, Package, Users, ClipboardCheck, Truck, Store, FileBox, Clock3, BarChart3, Plus, Check, RotateCcw } from 'lucide-react';
+import { Home, Package, Users, ClipboardCheck, Truck, Store, FileBox, Clock3, BarChart3, Plus, Check, RotateCcw, Warehouse } from 'lucide-react';
 
 /** Preview diretamente no React. Sem iframe: o Preview do Bolt já roda embutido. Nenhum acesso ao Supabase. */
-type View = 'inicio' | 'itens' | 'fornecedores' | 'inventario' | 'recebimento' | 'abastecimento' | 'kits' | 'noite' | 'gestao';
+type View = 'inicio' | 'itens' | 'fornecedores' | 'estoques' | 'inventario' | 'recebimento' | 'abastecimento' | 'kits' | 'noite' | 'gestao';
 type Product = { id:string; nome:string; codigo:string; categoria:string; tipo:string; unidade:string; embalagem:string; fator:number; fornecedorId:string; endereco:string; minimo:number; ponto:number; controle:string; classe:string; cmv:boolean; central:number };
 type Supplier = { id:string; nome:string; cnpj:string; telefone:string; email:string; responsavel:string; modalidade:string; ciclo:string; dias:string; observacoes:string };
+type Stock = { id:string; nome:string; descricao:string; localizacao:string; tipo:'central'|'producao'|'secundario'|'geral'; status:boolean };
 type Line = { id:string; produto:string; pedido:number; recebido:number; custo:number };
 type Sector = { id:string; nome:string; encarregado:string; status:string; itens:{ nome:string; alvo:number; atual:number; unidade:string }[] };
 const productsSeed:Product[]=[
@@ -29,6 +30,15 @@ const linesSeed:Line[]=[
 {id:'r2',produto:'Original 600 ml',pedido:60,recebido:58,custo:8.96},
 {id:'r3',produto:'Gin — garrafa',pedido:6,recebido:6,custo:73.90}
 ];
+// Os quatro nomes e tipos abaixo espelham o cadastro atual, consultado apenas para
+// orientar a prévia. Alterações aqui NÃO escrevem na tabela public.estoques.
+const stocksSeed:Stock[]=[
+{id:'central',nome:'Estoque Central',descricao:'',localizacao:'',tipo:'central',status:true},
+{id:'producao',nome:'Estoque PRODUCAO',descricao:'',localizacao:'',tipo:'producao',status:true},
+{id:'bar',nome:'Bar',descricao:'Área de bebidas e drinks',localizacao:'',tipo:'geral',status:true},
+{id:'cozinha',nome:'Cozinha',descricao:'',localizacao:'',tipo:'secundario',status:true}
+];
+const emptyStock:Stock={id:'',nome:'',descricao:'',localizacao:'',tipo:'geral',status:true};
 const emptyProduct:Product={id:'',nome:'',codigo:'',categoria:'',tipo:'insumo',unidade:'unidade',embalagem:'',fator:1,fornecedorId:'',endereco:'',minimo:0,ponto:0,controle:'conta',classe:'pedido',cmv:true,central:0};
 const emptySupplier:Supplier={id:'',nome:'',cnpj:'',telefone:'',email:'',responsavel:'',modalidade:'entrega',ciclo:'',dias:'',observacoes:''};
 const clone=<T,>(v:T):T=>JSON.parse(JSON.stringify(v)) as T;
@@ -36,7 +46,7 @@ const uid=()=> 'demo-'+Date.now().toString(36)+'-'+Math.random().toString(36).sl
 const num=(n:number)=>n.toLocaleString('pt-BR',{maximumFractionDigits:2});
 const money=(n:number)=>n.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
 const menu:{v:View;n:string;icon:React.ElementType}[]=[
-{v:'inicio',n:'Visão geral',icon:Home},{v:'itens',n:'Cadastro de itens',icon:Package},{v:'fornecedores',n:'Fornecedores',icon:Users},
+{v:'inicio',n:'Visão geral',icon:Home},{v:'itens',n:'Cadastro de itens',icon:Package},{v:'fornecedores',n:'Fornecedores',icon:Users},{v:'estoques',n:'Cadastro de estoques',icon:Warehouse},
 {v:'inventario',n:'Inventário',icon:ClipboardCheck},{v:'recebimento',n:'Recebimento',icon:Truck},
 {v:'abastecimento',n:'Abastecimento',icon:Store},{v:'kits',n:'Kits de limpeza',icon:FileBox},
 {v:'noite',n:'Retiradas noturnas',icon:Clock3},{v:'gestao',n:'Gestão',icon:BarChart3}
@@ -45,10 +55,15 @@ const EstoqueBeta2:React.FC=()=>{
 const[view,setView]=useState<View>('inicio');
 const[products,setProducts]=useState<Product[]>(()=>clone(productsSeed));
 const[suppliers,setSuppliers]=useState<Supplier[]>(()=>clone(suppliersSeed));
+const[stocks,setStocks]=useState<Stock[]>(()=>clone(stocksSeed));
 const[productId,setProductId]=useState('stella');
 const[supplierId,setSupplierId]=useState('dist');
 const[productDraft,setProductDraft]=useState<Product|null>(null);
 const[supplierDraft,setSupplierDraft]=useState<Supplier|null>(null);
+const[stockId,setStockId]=useState('central');
+const[stockDraft,setStockDraft]=useState<Stock|null>(null);
+const[stockTerm,setStockTerm]=useState('');
+const[stockStatusFilter,setStockStatusFilter]=useState('todos');
 const[returnToItem,setReturnToItem]=useState(false);
 const[term,setTerm]=useState('');
 const[supplierTerm,setSupplierTerm]=useState('');
@@ -69,10 +84,11 @@ const[nightReason,setNightReason]=useState('Reposição emergencial');
 
 const picked=products.find(p=>p.id===productId)||products[0];
 const supplier=suppliers.find(s=>s.id===supplierId)||suppliers[0];
+const stock=stocks.find(e=>e.id===stockId)||stocks[0];
 const sector=sectors.find(s=>s.id===sectorId)||sectors[0];
 const differences=products.filter(p=>(count[p.id]??p.central)!==p.central);
 const go=(v:View)=>{setView(v);setNotice('');setError('');};
-const reset=()=>{setProducts(clone(productsSeed));setSuppliers(clone(suppliersSeed));setLines(clone(linesSeed));setSectors(clone(sectionsSeed));setCount({});setCountSent(false);setCountApproved(false);setReceived(false);setKitDone(false);setNight([]);setProductDraft(null);setSupplierDraft(null);setReturnToItem(false);setView('inicio');setError('');setNotice('Demonstração reiniciada.');};
+const reset=()=>{setProducts(clone(productsSeed));setSuppliers(clone(suppliersSeed));setStocks(clone(stocksSeed));setStockId('central');setStockDraft(null);setStockTerm('');setStockStatusFilter('todos');setLines(clone(linesSeed));setSectors(clone(sectionsSeed));setCount({});setCountSent(false);setCountApproved(false);setReceived(false);setKitDone(false);setNight([]);setProductDraft(null);setSupplierDraft(null);setReturnToItem(false);setView('inicio');setError('');setNotice('Demonstração reiniciada.');};
 const supplierName=(id:string)=>suppliers.find(s=>s.id===id)?.nome||'Sem fornecedor padrão';
 const saveProduct=(e:React.FormEvent<HTMLFormElement>)=>{
 e.preventDefault();const d=productDraft;if(!d)return;
@@ -90,6 +106,18 @@ if(suppliers.some(s=>s.id!==d.id&&(s.nome.toLowerCase()===nome.toLowerCase()||!!
 const next={...d,id:d.id||uid(),nome,cnpj};setSuppliers(s=>s.some(i=>i.id===next.id)?s.map(i=>i.id===next.id?next:i):[next,...s]);
 setSupplierId(next.id);setSupplierDraft(null);setError('');setNotice('Fornecedor salvo na simulação. A versão real utilizará o cadastro do Financeiro.');
 if(returnToItem){setProductDraft(p=>p?{...p,fornecedorId:next.id}:null);setReturnToItem(false);setView('itens');}
+};
+const saveStock=(ev:React.FormEvent<HTMLFormElement>)=>{
+ev.preventDefault();const d=stockDraft;if(!d)return;
+const nome=d.nome.trim();
+if(!nome){setError('Informe o nome do estoque.');return;}
+if(stocks.some(e=>e.id!==d.id&&e.nome.trim().toLocaleLowerCase('pt-BR')===nome.toLocaleLowerCase('pt-BR'))){
+setError('Já existe um estoque com este nome. Abra a ficha para editar.');return;
+}
+const next:Stock={...d,id:d.id||uid(),nome,descricao:d.descricao.trim(),localizacao:d.localizacao.trim()};
+setStocks(prev=>prev.some(e=>e.id===next.id)?prev.map(e=>e.id===next.id?next:e):[...prev,next]);
+setStockId(next.id);setStockDraft(null);setError('');
+setNotice('Cadastro de estoque atualizado APENAS nesta prévia. Nenhum saldo ou estoque real foi alterado.');
 };
 const field=(label:string,value:string|number,onChange:(v:string)=>void,choices?:string[])=>
 <label className="b2-field"><span>{label}</span>{choices?<select value={String(value)} onChange={e=>onChange(e.target.value)}>{choices.map(v=><option key={v}>{v}</option>)}</select>:<input value={value} onChange={e=>onChange(e.target.value)}/>}</label>;
@@ -152,6 +180,7 @@ return <div className="b2-root -m-5 lg:-m-7">
 <section className="b2-section"><h2>Acesso rápido</h2><div className="b2-actions">
 {btn('itens',Package,'Cadastro de itens','Fichas, embalagens e fornecedores')}
 {btn('fornecedores',Users,'Cadastrar fornecedor','Cadastro único com o Financeiro')}
+{btn('estoques',Warehouse,'Cadastro de estoques','Central, produção, Bar e Cozinha')}
 {btn('inventario',ClipboardCheck,'Inventário','Contagem e diferenças')}
 {btn('recebimento',Truck,'Receber mercadoria','Pedido versus recebido')}
 {btn('abastecimento',Store,'Montar setores','Drinks, cervejas e cozinha')}
@@ -202,6 +231,51 @@ return <div className="b2-root -m-5 lg:-m-7">
 {field('Ciclo de compra (dias)',supplierDraft.ciclo,v=>setSupplierDraft(s=>s&&({...s,ciclo:v})))}
 {field('Dias de compra',supplierDraft.dias,v=>setSupplierDraft(s=>s&&({...s,dias:v})))}
 {field('Observações',supplierDraft.observacoes,v=>setSupplierDraft(s=>s&&({...s,observacoes:v})))}</div>{error&&<div className="b2-error">{error}</div>}<button type="submit" className="b2-btn" style={{marginTop:17}}>Salvar fornecedor (simulação)</button></form></section>}</>}
+
+{view==='estoques'&&<>
+<p className="b2-eyebrow">Cadastros · Estrutura do estoque</p>
+<h1>Cadastro de estoques</h1>
+<p className="b2-lead">Defina os estoques onde há saldo e transferência de mercadorias. Central, produção, Bar e Cozinha já existem no Gorjeta Pro. Nesta tela, a edição é somente uma simulação.</p>
+<div className="b2-grid">
+<div className="b2-card"><div className="b2-eyebrow">Estoques de referência</div><div className="b2-stat">{stocks.length}</div><div className="b2-muted">Nesta prévia</div></div>
+<div className="b2-card"><div className="b2-eyebrow">Ativos</div><div className="b2-stat">{stocks.filter(x=>x.status).length}</div><div className="b2-muted">Locais com operações habilitadas</div></div>
+<div className="b2-card"><div className="b2-eyebrow">Inativos</div><div className="b2-stat">{stocks.filter(x=>!x.status).length}</div><div className="b2-muted">Histórico permanece preservado</div></div>
+</div>
+<div className="b2-hint"><strong>Estoque ≠ endereço físico.</strong> Bar pode ser um único estoque de saldo, embora tenha balcão de drinks e balcão de cervejas. Câmara fria, prateleira, freezer e armário podem ser endereços dentro de um estoque — sem duplicar a quantidade.</div>
+<div className="b2-split">
+<div className="b2-card">
+<div className="b2-topline"><h2>Estoques</h2><button className="b2-btn" onClick={()=>{setStockDraft(clone(emptyStock));setError('');setNotice('');}}>+ Novo estoque</button></div>
+<div style={{marginTop:16}}>{field('Buscar por nome, tipo ou localização',stockTerm,setStockTerm)}</div>
+<div className="b2-chips">{['todos','ativos','inativos'].map(f=><button key={f} className="b2-chip" aria-pressed={stockStatusFilter===f} onClick={()=>setStockStatusFilter(f)}>{f==='todos'?'Todos':f==='ativos'?'Ativos':'Inativos'}</button>)}</div>
+{stocks.filter(e=>(e.nome+' '+e.tipo+' '+e.localizacao).toLocaleLowerCase('pt-BR').includes(stockTerm.toLocaleLowerCase('pt-BR'))&&(stockStatusFilter==='todos'||(stockStatusFilter==='ativos'?e.status:!e.status))).map(e=>
+<div className="b2-row" key={e.id}><div><strong>{e.nome}</strong><small>{e.tipo} · {e.status?'Ativo':'Inativo'}{e.localizacao?' · '+e.localizacao:''}</small></div><button className="b2-btn alt small" onClick={()=>{setStockId(e.id);setStockDraft(null);setError('');}}>Abrir ficha →</button></div>)}
+</div>
+<div className="b2-card">
+<p className="b2-eyebrow">Ficha do estoque</p><h2>{stock.nome}</h2>
+<div className="b2-row"><div><strong>Tipo</strong><small>{stock.tipo==='central'?'Estoque Central':stock.tipo==='producao'?'Produção':stock.tipo==='secundario'?'Secundário':'Geral'}</small></div></div>
+<div className="b2-row"><div><strong>Localização / referência física</strong><small>{stock.localizacao||'A definir'}</small></div></div>
+<div className="b2-row"><div><strong>Descrição</strong><small>{stock.descricao||'Sem descrição'}</small></div></div>
+<div className="b2-row"><div><strong>Status</strong><small>{stock.status?'Disponível para uso':'Inativo — histórico mantido'}</small></div><span className={'b2-pill '+(stock.status?'green':'red')}>{stock.status?'Ativo':'Inativo'}</span></div>
+<div className="b2-hint">Cadastrar ou renomear um estoque não transfere produtos, não cria saldo inicial e não altera o inventário. Essas operações terão fluxos próprios.</div>
+<button className="b2-btn" onClick={()=>{setStockDraft(clone(stock));setError('');setNotice('');}}>Editar estoque →</button>
+</div>
+</div>
+{stockDraft&&<section className="b2-section b2-card" style={{borderColor:'#ac7575'}}>
+<div className="b2-topline"><h2>{stockDraft.id?'Editar estoque':'Novo estoque'}</h2><button className="b2-btn alt small" onClick={()=>{setStockDraft(null);setError('');}}>Cancelar</button></div>
+<div className="b2-hint">Campos compatíveis com o cadastro antigo: nome, descrição, localização, tipo e status. O formulário abaixo funciona apenas nesta simulação.</div>
+<form onSubmit={saveStock}><div className="b2-form">
+{field('Nome do estoque *',stockDraft.nome,v=>setStockDraft(e=>e&&({...e,nome:v})))}
+<label className="b2-field"><span>Tipo</span><select value={stockDraft.tipo} onChange={e=>setStockDraft(v=>v&&({...v,tipo:e.target.value as Stock['tipo']}))}>
+<option value="central">Central</option><option value="producao">Produção</option><option value="secundario">Secundário</option><option value="geral">Geral</option>
+</select></label>
+{field('Localização física',stockDraft.localizacao,v=>setStockDraft(e=>e&&({...e,localizacao:v})))}
+{field('Descrição / finalidade',stockDraft.descricao,v=>setStockDraft(e=>e&&({...e,descricao:v})))}
+<label className="b2-field"><span>Status</span><select value={stockDraft.status?'ativo':'inativo'} onChange={e=>setStockDraft(v=>v&&({...v,status:e.target.value==='ativo'}))}><option value="ativo">Ativo</option><option value="inativo">Inativo</option></select></label>
+</div>
+{error&&<div className="b2-error">{error}</div>}
+<button type="submit" className="b2-btn" style={{marginTop:18}}>Salvar estoque (simulação)</button>
+</form></section>}
+</>}
 {view==='inventario'&&<><p className="b2-eyebrow">Posição e contagem</p><h1>Inventário</h1><p className="b2-lead">Contagem do Central com avaliação de divergências por Cristiano.</p><div className="b2-card"><div className="b2-topline"><h2>Contagem por endereço</h2><span className="b2-pill">{countApproved?'Aprovado':countSent?'Aguardando Cristiano':'Em andamento'}</span></div><div className="b2-table-scroll"><table><thead><tr><th>Item</th><th>Local</th><th>Teórico</th><th>Físico</th><th>Diferença</th></tr></thead><tbody>{products.map(p=>{const fisico=count[p.id]??p.central,diff=fisico-p.central;return <tr key={p.id}><td>{p.nome}</td><td>{p.endereco}</td><td>{num(p.central)}</td><td><input type="number" min="0" value={fisico} disabled={countSent} onChange={e=>setCount(c=>({...c,[p.id]:Number(e.target.value)}))}/></td><td><span className={'b2-pill '+(diff?'red':'green')}>{num(diff)}</span></td></tr>})}</tbody></table></div><div style={{marginTop:18}}>{countSent?<button className="b2-btn alt" onClick={()=>go('gestao')}>Ver fila do Cristiano →</button>:<button className="b2-btn" onClick={()=>{setCountSent(true);setNotice('Contagem enviada apenas nesta simulação.')}}>Enviar contagem →</button>}</div></div></>}
 {view==='recebimento'&&<><p className="b2-eyebrow">Compras e entradas</p><h1>Recebimento de mercadoria</h1><p className="b2-lead">Pedido versus recebido, nota, fornecedor, custo e divergências.</p><div className="b2-grid"><div className="b2-card"><div className="b2-eyebrow">Itens na nota</div><div className="b2-stat">{lines.length}</div></div><div className="b2-card"><div className="b2-eyebrow">Divergências</div><div className="b2-stat">{lines.filter(l=>l.pedido!==l.recebido).length}</div></div><div className="b2-card"><div className="b2-eyebrow">Valor recebido</div><div className="b2-stat" style={{fontSize:24}}>{money(lines.reduce((a,l)=>a+l.recebido*l.custo,0))}</div></div></div><section className="b2-section b2-card"><h2>1 · Nota e fornecedor</h2><div className="b2-form"><label className="b2-field">Fornecedor<select>{suppliers.map(s=><option key={s.id}>{s.nome}</option>)}</select></label><label className="b2-field">Número da nota<input defaultValue="NF-DEMO-001"/></label><label className="b2-field">Destino<select><option>Estoque Central</option><option>Bar</option><option>Cozinha</option></select></label><label className="b2-field">Data<input type="date" defaultValue="2026-09-22"/></label></div></section><section className="b2-section b2-card"><h2>2 · Conferir linha por linha</h2><div className="b2-table-scroll"><table><thead><tr><th>Produto</th><th>Pedido</th><th>Recebido</th><th>Preço</th><th>Validade</th><th>Status</th></tr></thead><tbody>{lines.map(l=><tr key={l.id}><td>{l.produto}</td><td>{l.pedido}</td><td><input type="number" min="0" disabled={received} value={l.recebido} onChange={e=>setLines(a=>a.map(x=>x.id===l.id?{...x,recebido:Number(e.target.value)}:x))}/></td><td>{money(l.custo)}</td><td><input type="date" disabled={received}/></td><td><span className={'b2-pill '+(l.pedido===l.recebido?'green':'red')}>{l.pedido===l.recebido?'Conforme':'Divergência'}</span></td></tr>)}</tbody></table></div><button className="b2-btn green" style={{marginTop:18}} disabled={received} onClick={()=>{setReceived(true);setNotice('Recebimento confirmado apenas na simulação.')}}>{received?'✓ Recebimento concluído':'Confirmar recebimento simulado'}</button></section></>}
 {view==='abastecimento'&&<><p className="b2-eyebrow">Operação diária</p><h1>Abastecimento</h1><p className="b2-lead">Confira o setor, separe a diferença e confirme a entrega.</p><div className="b2-chips">{sectors.map(s=><button key={s.id} className="b2-chip" aria-pressed={s.id===sectorId} onClick={()=>setSectorId(s.id)}>{s.nome}</button>)}</div><div className="b2-card"><div className="b2-topline"><h2>{sector.nome}</h2><span className="b2-pill">{sector.status}</span></div><p className="b2-muted">{sector.encarregado}</p><div className="b2-table-scroll"><table><thead><tr><th>Item</th><th>Referência</th><th>Tem</th><th>Repor</th></tr></thead><tbody>{sector.itens.map((i,idx)=><tr key={i.nome}><td>{i.nome}<small style={{display:'block'}}>{i.unidade}</small></td><td>{i.alvo}</td><td><input type="number" min="0" disabled={sector.status==='concluido'} value={i.atual} onChange={e=>setSectors(s=>s.map(sec=>sec.id===sectorId?{...sec,itens:sec.itens.map((it,j)=>j===idx?{...it,atual:Number(e.target.value)}:it)}:sec))}/></td><td>{num(Math.max(0,i.alvo-i.atual))}</td></tr>)}</tbody></table></div>{sector.status!=='concluido'&&<button className="b2-btn" style={{marginTop:18}} onClick={()=>setSectors(s=>s.map(sec=>sec.id===sectorId?{...sec,status:sec.status==='pendente'?'separado':'concluido',itens:sec.status==='separado'?sec.itens.map(i=>({...i,atual:i.alvo})):sec.itens}:sec))}>{sector.status==='pendente'?'Marcar separado →':'Confirmar recebimento →'}</button>}</div></>}
