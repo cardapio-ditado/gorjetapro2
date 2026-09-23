@@ -4,14 +4,14 @@ import { supabase } from '../../lib/supabase';
 import './OperacoesBeta2.css';
 
 type Row = {id:string;nome:string;[key:string]:any};
-type NoteItem = {key:string;itemId:string;quantity:string;ordered:string;unitCost:string;expiry:string};
+type NoteItem = {key:string;itemId:string;quantity:string;ordered:string;unitCost:string;expiry:string;batch:string};
 export interface NotePreview {
-  id:string;invoice:string;supplier:string;stock:string;date:string;
-  order:string;items:{item:string;quantity:number;ordered:number|null;price:number;expiry:string}[];
+  id:string;invoice:string;supplierId:string;supplier:string;stock:string;date:string;observations:string;
+  order:string;items:{item:string;quantity:number;ordered:number|null;price:number;expiry:string;batch:string}[];
   total:number;
 }
 interface Props{receipts:NotePreview[];onSave:(note:NotePreview)=>void}
-const mkLine=():NoteItem=>({key:Math.random().toString(36).slice(2),itemId:'',quantity:'',ordered:'',unitCost:'',expiry:''});
+const mkLine=():NoteItem=>({key:Math.random().toString(36).slice(2),itemId:'',quantity:'',ordered:'',unitCost:'',expiry:'',batch:''});
 const numeric=(n:unknown)=>Number(String(n??0).replace(',','.'))||0;
 const price=(n:number)=>n.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
 const today=()=>new Date(Date.now()-new Date().getTimezoneOffset()*60000).toISOString().slice(0,10);
@@ -95,7 +95,7 @@ const RecebimentoBeta2:React.FC<Props>=({receipts,onSave})=>{
     ordered:String(row.quantidade_pedida??row.quantidade??''),
     quantity:String(row.quantidade_recebida??row.quantidade_pedida??row.quantidade??''),
     unitCost:String(row.custo_unitario??0),
-    expiry:String(row.data_validade||'')
+    expiry:String(row.data_validade||''),batch:''
    }));
    setLines(mapped.length?mapped:[mkLine()]);
   }catch(ex){setError(ex instanceof Error?ex.message:'Não foi possível abrir o pedido.');}
@@ -106,6 +106,9 @@ const RecebimentoBeta2:React.FC<Props>=({receipts,onSave})=>{
   if(loading||orderLoading)return;
   if(!stockId||!supplierId||!invoice.trim()){setError('Informe fornecedor, estoque de destino e número da nota.');return;}
   if(mode==='pedido'&&!orderId){setError('Selecione um pedido existente ou use o recebimento sem pedido.');return;}
+  if(receipts.some(r=>r.supplierId===supplierId&&r.invoice.trim().toLocaleLowerCase('pt-BR')===invoice.trim().toLocaleLowerCase('pt-BR'))){
+   setError('Esta nota deste fornecedor já foi conferida nesta prévia. Abra a nota existente em vez de lançar novamente.');return;
+  }
   if(!lines.length){setError('Inclua ao menos um produto na nota.');return;}
   for(let idx=0;idx<lines.length;idx++){
    const l=lines[idx],q=numeric(l.quantity),p=numeric(l.unitCost);
@@ -117,12 +120,12 @@ const RecebimentoBeta2:React.FC<Props>=({receipts,onSave})=>{
   const stock=stocks.find(x=>x.id===stockId);
   onSave({
    id:Math.random().toString(36).slice(2),
-   invoice:invoice.trim(),supplier:supplier?.nome||'Fornecedor selecionado',
-   stock:stock?.nome||'Estoque selecionado',date,order:mode==='pedido'?orderId:'',
+   invoice:invoice.trim(),supplierId,supplier:supplier?.nome||'Fornecedor selecionado',
+   stock:stock?.nome||'Estoque selecionado',date,observations:notes.trim(),order:mode==='pedido'?orderId:'',
    items:lines.map(l=>({
     item:itemById.get(l.itemId)?.nome||'Item',quantity:numeric(l.quantity),
     ordered:mode==='pedido'?numeric(l.ordered):null,
-    price:numeric(l.unitCost),expiry:l.expiry
+    price:numeric(l.unitCost),expiry:l.expiry,batch:l.batch
    })),total
   });
   setSuccess('Nota com '+lines.length+' linha(s) conferida SOMENTE nesta prévia. O saldo oficial não foi alterado.');
@@ -175,8 +178,9 @@ const RecebimentoBeta2:React.FC<Props>=({receipts,onSave})=>{
         <label className="b2-field"><span>Item *</span><select value={l.itemId} onChange={e=>changeLine(l.key,'itemId',e.target.value)}><option value="">Selecione...</option>{options.map(i=><option key={i.id} value={i.id}>{i.codigo?i.codigo+' — ':''}{i.nome}</option>)}</select></label>
         <label className="b2-field"><span>Recebido * {selected?.unidade_medida||''}</span><input type="number" min="0.001" step="0.001" value={l.quantity} onChange={e=>changeLine(l.key,'quantity',e.target.value)}/></label>
         <label className="b2-field"><span>Custo unitário R$</span><input type="number" min="0" step="0.01" value={l.unitCost} onChange={e=>changeLine(l.key,'unitCost',e.target.value)}/></label>
-        <label className="b2-field"><span>Validade / lote</span><input type="date" value={l.expiry} onChange={e=>changeLine(l.key,'expiry',e.target.value)}/></label>
+        <label className="b2-field"><span>Validade</span><input type="date" value={l.expiry} onChange={e=>changeLine(l.key,'expiry',e.target.value)}/></label>
        </div>
+       <label className="b2-field" style={{marginTop:10}}><span>Lote (opcional)</span><input value={l.batch} onChange={e=>changeLine(l.key,'batch',e.target.value)} placeholder="Ex.: lote 2026-09-A"/></label>
        {mode==='pedido'&&<p className="b2-op-help">Pedido: {l.ordered||'—'} · recebido: {l.quantity||'—'} · diferença: <strong className={diff!==0?'b2-pill red':'b2-op-good'}>{diff>0?'+':''}{diff.toLocaleString('pt-BR',{maximumFractionDigits:3})}</strong></p>}
        <p className="b2-op-help">Subtotal: <strong style={{color:'#ffe5b9'}}>{price(numeric(l.quantity)*numeric(l.unitCost))}</strong></p>
       </div>;
