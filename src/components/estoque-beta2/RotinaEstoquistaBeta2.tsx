@@ -9,16 +9,16 @@ interface Props{
  received:boolean;
  fechamentoTotal:number;fechamentoRecebidos:number;zigReady:boolean;
  auditoriaPrevista:boolean;auditoriaRecebida:boolean;
- restockViewed:boolean;kitDone:boolean;handoffDone:boolean;
+ restockViewed:boolean;niveisCompletos:boolean;kitDone:boolean;handoffDone:boolean;
  onHandoff:()=>void;
 }
 const RotinaEstoquistaBeta2:React.FC<Props>=({
  go,nightReviewed,nightCount,nightAwaitingReceiptCount,received,
  fechamentoTotal,fechamentoRecebidos,zigReady,auditoriaPrevista,auditoriaRecebida,
- restockViewed,kitDone,handoffDone,onHandoff
+ restockViewed,niveisCompletos,kitDone,handoffDone,onHandoff
 })=>{
  const closesReady=fechamentoRecebidos===fechamentoTotal;
- const restockReady=closesReady&&zigReady;
+ const restockReady=closesReady&&zigReady&&niveisCompletos;
  const steps=[
   {number:'01',key:'noite',title:'Consultar retiradas fora do expediente',
    desc:'Ver o que saiu, quem retirou e se o setor de destino confirmou o recebimento. Não há segunda baixa.',
@@ -57,7 +57,7 @@ const RotinaEstoquistaBeta2:React.FC<Props>=({
   <div className="b2-grid b2-day-metrics">
    <div className="b2-card"><p className="b2-eyebrow">Fechamento dos setores</p><div className="b2-stat">{fechamentoRecebidos}/{fechamentoTotal}</div><p>Contagens dos itens sem Zig</p></div>
    <div className="b2-card"><p className="b2-eyebrow">Vendas Zig · 6h</p><div className="b2-stat">{zigReady?'OK':'Pendente'}</div><p>{zigReady?'Processamento validado':'Verificar execução e mapeamento'}</p></div>
-   <div className="b2-card"><p className="b2-eyebrow">Lista do estoquista</p><div className="b2-stat">{restockReady?'Pronta':'Aguardando'}</div><p>Prévia após Zig + fechamento</p></div>
+   <div className="b2-card"><p className="b2-eyebrow">Lista do estoquista</p><div className="b2-stat">{restockReady?'Pronta':'Aguardando'}</div><p>{niveisCompletos?'Prévia após Zig + fechamento':'Há itens sem nível de reposição configurado'}</p></div>
   </div>
   <section className="b2-section" aria-label="Passo a passo da rotina">
    <div className="b2-topline"><div><p className="b2-eyebrow">Seu passo a passo</p><h2>O que fazer hoje</h2></div><span className="b2-pill">Não contar os setores todo dia</span></div>
