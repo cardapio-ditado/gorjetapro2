@@ -4,7 +4,7 @@ import { supabase } from '../../lib/supabase';
 import type { EmergencyPreview } from './EmergenciasBeta2';
 import './OperacoesBeta2.css';
 
-type Mode = 'pendentes'|'historico';
+type Mode = 'pendentes'|'historico'|'monitoramento';
 type Request = {
  id:string;numero_requisicao:string|null;data_requisicao:string;
  funcionario_nome:string;setor:string;estoque_origem_id:string;
@@ -16,16 +16,27 @@ type Item = {
  quantidade_entregue:number|null;quantidade_aprovada:number|null;
  observacao:string|null;itens_estoque:{nome:string;unidade_medida:string}|null;
 };
-interface Props {mode:Mode;preview:EmergencyPreview[];openId?:string;initialNightFilter?:boolean;onReconcile?:(id:string)=>void;}
+interface Props {
+ mode:Mode;preview:EmergencyPreview[];openId?:string;initialNightFilter?:boolean;
+ readOnly?:boolean;
+ onDispatch?:(id:string,employeeName:string)=>void;
+ onConfirmReceipt?:(id:string,employeeName:string)=>void;
+}
 const fmt=(n:number)=>Number(n||0).toLocaleString('pt-BR',{maximumFractionDigits:3});
 const when=(v:string|null|undefined)=>v?new Date(v).toLocaleString('pt-BR'):'—';
 const label=(status:string)=>({
  pendente:'A entregar',aprovado:'A entregar',concluido:'Concluído',
  rejeitado:'Rejeitado',entregue:'Entrega simulada'
 } as Record<string,string>)[status]||status;
-const HistoricoPedidosBeta2:React.FC<Props>=({mode,preview,openId,initialNightFilter=false,onReconcile})=>{
+const HistoricoPedidosBeta2:React.FC<Props>=({
+ mode,preview,openId,initialNightFilter=false,readOnly=false,onDispatch,onConfirmReceipt
+})=>{
  const [records,setRecords]=useState<Request[]>([]);
  const [stocks,setStocks]=useState<Record<string,string>>({});
+ const [employees,setEmployees]=useState<{id:string;nome_completo:string}[]>([]);
+ const [receivingEmployee,setReceivingEmployee]=useState('');
+ const [dispatchingEmployee,setDispatchingEmployee]=useState('');
+ const [formError,setFormError]=useState('');
  const [busy,setBusy]=useState(false);
  const [error,setError]=useState('');
  const [term,setTerm]=useState('');
@@ -38,22 +49,25 @@ const HistoricoPedidosBeta2:React.FC<Props>=({mode,preview,openId,initialNightFi
  const reload=useCallback(async()=>{
   setBusy(true);setError('');
   try{
-   const statuses=mode==='pendentes'?['pendente','aprovado']:['concluido','rejeitado'];
-   const [req,loc]=await Promise.all([
+   const statuses=mode==='pendentes'?['pendente','aprovado']:mode==='historico'?['concluido','rejeitado']:['pendente','aprovado','concluido','rejeitado'];
+   const [req,loc,people]=await Promise.all([
     supabase.from('requisicoes_internas')
       .select('id,numero_requisicao,data_requisicao,funcionario_nome,setor,estoque_origem_id,estoque_destino_id,status,observacoes,data_conclusao,data_aprovacao')
       .in('status',statuses).order('data_requisicao',{ascending:mode==='pendentes'}).limit(200),
-    supabase.from('estoques').select('id,nome')
+    supabase.from('estoques').select('id,nome'),
+    supabase.from('colaboradores').select('id,nome_completo,status').eq('status','ativo').order('nome_completo')
    ]);
    if(req.error)throw req.error;
    if(loc.error)throw loc.error;
+   if(people.error&&!readOnly)throw people.error;
    setRecords((req.data||[]) as Request[]);
    setStocks(Object.fromEntries((loc.data||[]).map(s=>[s.id,s.nome])));
+   setEmployees((people.data||[]).map(person=>({id:person.id,nome_completo:person.nome_completo})));
   }catch(e){setError(e instanceof Error?e.message:'Não foi possível consultar pedidos existentes.');setRecords([]);}
   finally{setBusy(false);}
- },[mode]);
+ },[mode,readOnly]);
  useEffect(()=>{void reload();},[reload,refreshKey]);
- useEffect(()=>{setTerm('');setSelected(null);setDetail([]);setDetailError('');},[mode]);
+ useEffect(()=>{setTerm('');setSelected(null);setDetail([]);setDetailError('');setReceivingEmployee('');setDispatchingEmployee('');setFormError('');},[mode]);
  useEffect(()=>{
   if(!openId)return;
   if(preview.some(p=>p.id===openId))setSelected({kind:'demo',id:openId});
@@ -76,13 +90,38 @@ const HistoricoPedidosBeta2:React.FC<Props>=({mode,preview,openId,initialNightFi
  const match=(text:string)=>text.toLocaleLowerCase('pt-BR').includes(term.toLocaleLowerCase('pt-BR').trim());
  const realShown=useMemo(()=>typeFilter==='noturna'?[]:records.filter(r=>match([r.numero_requisicao,r.funcionario_nome,r.setor,stocks[r.estoque_origem_id],stocks[r.estoque_destino_id]].join(' '))),
  [records,stocks,term,typeFilter]);
- const demoShown=useMemo(()=>preview.filter(r=>(mode==='pendentes'?r.status==='pendente':r.status==='entregue')
+ const demoShown=useMemo(()=>preview.filter(r=>(mode==='monitoramento'
+   ||(mode==='pendentes'?!r.receiptConfirmedAt:r.status==='entregue'&&Boolean(r.receiptConfirmedAt)))
   &&(typeFilter==='todos'||(r.kind||'emergencial')===typeFilter)
   &&match([r.id,r.requester,r.withdrawnBy,r.sector,r.from,r.to,r.reason,...r.lines.map(x=>x.item)].join(' '))),
  [preview,mode,term,typeFilter]);
  const selectedReal=selected?.kind==='real'?records.find(r=>r.id===selected.id):undefined;
  const selectedDemo=selected?.kind==='demo'?preview.find(r=>r.id===selected.id):undefined;
  const realStatus=selectedReal?.status||'';
+ const movementStatus=(req:EmergencyPreview)=>{
+  if(req.status==='pendente')return 'Aguardando saída';
+  return req.receiptConfirmedAt?'Recebimento confirmado':'Saída registrada · aguardando destino';
+ };
+ const dispatch=()=>{
+  setFormError('');
+  if(!selectedDemo||selectedDemo.status!=='pendente'||!onDispatch)return;
+  const person=employees.find(e=>e.id===dispatchingEmployee);
+  if(!person){setFormError('Informe quem está entregando ou retirando a mercadoria na origem.');return;}
+  onDispatch(selectedDemo.id,person.nome_completo);
+  setDispatchingEmployee('');
+ };
+ const confirmReceipt=()=>{
+  setFormError('');
+  if(!selectedDemo||selectedDemo.status!=='entregue'||selectedDemo.receiptConfirmedAt||!onConfirmReceipt)return;
+  const person=employees.find(e=>e.id===receivingEmployee);
+  if(!person){setFormError('Informe o funcionário que recebeu a mercadoria no destino.');return;}
+  if(person.nome_completo===selectedDemo.withdrawnBy){
+   setFormError('Quem retirou na origem não pode confirmar o próprio recebimento no destino. Selecione o responsável que recebeu no setor.');
+   return;
+  }
+  onConfirmReceipt(selectedDemo.id,person.nome_completo);
+  setReceivingEmployee('');
+ };
  return <div className="b2-history">
   <div className="b2-op-section-title"><div>
    <p className="b2-eyebrow">Solicitações e retiradas · consulta unificada</p>
