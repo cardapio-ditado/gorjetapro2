@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import CadastrosBeta2, { type Cadastro } from '../components/estoque-beta2/CadastrosBeta2';
+import RotinaEstoquistaBeta2 from '../components/estoque-beta2/RotinaEstoquistaBeta2';
 import { Home, Package, Users, ClipboardCheck, Truck, Store, FileBox, Clock3, BarChart3, RotateCcw, Warehouse, BookOpen } from 'lucide-react';
 
 /** Beta 2 no React, sem iframe. Cadastros oficiais são compartilhados; fluxos operacionais usam dados simulados. */
@@ -34,7 +35,7 @@ const clone=<T,>(v:T):T=>JSON.parse(JSON.stringify(v)) as T;
 const num=(n:number)=>n.toLocaleString('pt-BR',{maximumFractionDigits:2});
 const money=(n:number)=>n.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
 const menu:{v:View;n:string;icon:React.ElementType}[]=[
-{v:'inicio',n:'Visão geral',icon:Home},{v:'itens',n:'Cadastro de itens',icon:Package},{v:'fichas',n:'Fichas técnicas',icon:BookOpen},{v:'fornecedores',n:'Fornecedores',icon:Users},{v:'estoques',n:'Cadastro de estoques',icon:Warehouse},
+{v:'inicio',n:'Rotina do dia',icon:Home},{v:'itens',n:'Cadastro de itens',icon:Package},{v:'fichas',n:'Fichas técnicas',icon:BookOpen},{v:'fornecedores',n:'Fornecedores',icon:Users},{v:'estoques',n:'Cadastro de estoques',icon:Warehouse},
 {v:'inventario',n:'Inventário',icon:ClipboardCheck},{v:'recebimento',n:'Recebimento',icon:Truck},
 {v:'abastecimento',n:'Abastecimento',icon:Store},{v:'kits',n:'Kits de limpeza',icon:FileBox},
 {v:'noite',n:'Retiradas noturnas',icon:Clock3},{v:'gestao',n:'Gestão',icon:BarChart3}
@@ -50,6 +51,8 @@ const[received,setReceived]=useState(false);
 const[sectors,setSectors]=useState<Sector[]>(()=>clone(sectionsSeed));
 const[sectorId,setSectorId]=useState('drinks');
 const[kitDone,setKitDone]=useState(false);
+const[nightReviewed,setNightReviewed]=useState(false);
+const[handoffDone,setHandoffDone]=useState(false);
 const[count,setCount]=useState<Record<string,number>>({});
 const[countSent,setCountSent]=useState(false);
 const[countApproved,setCountApproved]=useState(false);
@@ -61,10 +64,9 @@ const[nightReason,setNightReason]=useState('Reposição emergencial');
 const sector=sectors.find(s=>s.id===sectorId)||sectors[0];
 const differences=products.filter(p=>(count[p.id]??p.central)!==p.central);
 const go=(v:View)=>{setView(v);setNotice('');setError('');};
-const reset=()=>{setProducts(clone(productsSeed));setSuppliers(clone(suppliersSeed));setLines(clone(linesSeed));setSectors(clone(sectionsSeed));setCount({});setCountSent(false);setCountApproved(false);setReceived(false);setKitDone(false);setNight([]);setView('inicio');setError('');setNotice('Demonstração reiniciada.');};
+const reset=()=>{setProducts(clone(productsSeed));setSuppliers(clone(suppliersSeed));setLines(clone(linesSeed));setSectors(clone(sectionsSeed));setCount({});setCountSent(false);setCountApproved(false);setReceived(false);setKitDone(false);setNightReviewed(false);setHandoffDone(false);setNight([]);setView('inicio');setError('');setNotice('Demonstração reiniciada.');};
 const field=(label:string,value:string|number,onChange:(v:string)=>void,choices?:string[])=>
 <label className="b2-field"><span>{label}</span>{choices?<select value={String(value)} onChange={e=>onChange(e.target.value)}>{choices.map(v=><option key={v}>{v}</option>)}</select>:<input value={value} onChange={e=>onChange(e.target.value)}/>}</label>;
-const btn=(v:View,icon:React.ElementType,label:string,sub:string)=>{const Icon=icon;return <button key={v} className="b2-action" onClick={()=>go(v)}><Icon size={30} color="#edc487"/><span><strong>{label}</strong><small>{sub}</small></span></button>;};
 const beta2CadastroCSS = `/* Beta 2: identidade do protótipo também nos cadastros reais */
 .b2-root .b2-catalog-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .b2-root .b2-catalog-notice{display:flex;align-items:flex-start;gap:12px;padding:15px 17px;background:#213c33;border:1px solid #438367;border-radius:13px;margin:0 0 20px;color:#d4ffe9}
@@ -151,20 +153,17 @@ return <div className="b2-root -m-5 lg:-m-7">
   ? 'CADASTRO OFICIAL · GRAVA NO SISTEMA REAL'
   : 'OPERAÇÃO DEMONSTRATIVA · DADOS SIMULADOS'}
 </span></div>
-{view==='inicio'&&<><p className="b2-eyebrow">Painel do estoquista</p><h1>O que fazer hoje</h1><p className="b2-lead">Rotina para preparar os setores, conferir o estoque e registrar as exceções.</p><div className="b2-grid">
-<div className="b2-card"><div className="b2-eyebrow">Abastecimentos concluídos</div><div className="b2-stat">{sectors.filter(s=>s.status==='concluido').length} / 3</div><div className="b2-muted">Bares e cozinha</div></div>
-<div className="b2-card"><div className="b2-eyebrow">Itens de exemplo</div><div className="b2-stat">{products.length}</div><div className="b2-muted">Cadastros da simulação</div></div>
-<div className="b2-card"><div className="b2-eyebrow">Diferenças em análise</div><div className="b2-stat">{countSent&&!countApproved?differences.length:0}</div><div className="b2-muted">Aguardando o gestor</div></div></div>
-<section className="b2-section"><h2>Acesso rápido</h2><div className="b2-actions">
-{btn('itens',Package,'Cadastro de itens','Abrir cadastro original e ficha do produto')}
-{btn('fornecedores',Users,'Fornecedores','Abrir cadastro único do Financeiro')}
-{btn('fichas',BookOpen,'Fichas técnicas','Abrir as receitas originais')}
-{btn('estoques',Warehouse,'Cadastro de estoques','Abrir o cadastro original dos locais')}
-{btn('inventario',ClipboardCheck,'Inventário','Contagem e diferenças')}
-{btn('recebimento',Truck,'Receber mercadoria','Pedido versus recebido')}
-{btn('abastecimento',Store,'Montar setores','Drinks, cervejas e cozinha')}
-{btn('kits',FileBox,'Kit de limpeza','Reposição programada')}
-</div></section></>}
+{view==='inicio'&&<RotinaEstoquistaBeta2
+ go={v=>go(v)} nightReviewed={nightReviewed}
+ onNightReviewed={()=>{setNightReviewed(true);setNotice('Retiradas noturnas revisadas apenas nesta simulação.');}}
+ nightCount={night.length} received={received} countSent={countSent}
+ countApproved={countApproved} differenceCount={differences.length}
+ sectorsDone={sectors.filter(x=>x.status==='concluido').length}
+ sectorsTotal={sectors.length}
+ sectorsStarted={sectors.some(x=>x.status!=='pendente')}
+ kitDone={kitDone} handoffDone={handoffDone}
+ onHandoff={()=>{setHandoffDone(true);setNotice('Rotina concluída somente na simulação, sem alterar o estoque oficial.');}}
+/>}
 
 {(['itens','fichas','estoques','fornecedores'] as View[]).includes(view) && <CadastrosBeta2 view={view as Cadastro} onNavigate={v=>go(v)}/>}
 {view==='inventario'&&<><p className="b2-eyebrow">Posição e contagem</p><h1>Inventário</h1><p className="b2-lead">Contagem do Central com avaliação de divergências por Cristiano.</p><div className="b2-card"><div className="b2-topline"><h2>Contagem por endereço</h2><span className="b2-pill">{countApproved?'Aprovado':countSent?'Aguardando Cristiano':'Em andamento'}</span></div><div className="b2-table-scroll"><table><thead><tr><th>Item</th><th>Local</th><th>Teórico</th><th>Físico</th><th>Diferença</th></tr></thead><tbody>{products.map(p=>{const fisico=count[p.id]??p.central,diff=fisico-p.central;return <tr key={p.id}><td>{p.nome}</td><td>{p.endereco}</td><td>{num(p.central)}</td><td><input type="number" min="0" value={fisico} disabled={countSent} onChange={e=>setCount(c=>({...c,[p.id]:Number(e.target.value)}))}/></td><td><span className={'b2-pill '+(diff?'red':'green')}>{num(diff)}</span></td></tr>})}</tbody></table></div><div style={{marginTop:18}}>{countSent?<button className="b2-btn alt" onClick={()=>go('gestao')}>Ver fila do Cristiano →</button>:<button className="b2-btn" onClick={()=>{setCountSent(true);setNotice('Contagem enviada apenas nesta simulação.')}}>Enviar contagem →</button>}</div></div></>}
