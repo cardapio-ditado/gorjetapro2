@@ -103,8 +103,11 @@ const EmergenciasBeta2:React.FC<Props>=({requests,onSave,startOnNightReview=fals
   const staff=employees.find(x=>x.id===employee);
   const source=stockList.find(x=>x.id===from),destination=stockList.find(x=>x.id===to);
   if(!staff||!department.trim()){setError('Escolha o funcionário solicitante e informe o setor.');return;}
-  if(isNight&&(!employees.some(e=>e.id===withdrawer)||!occurredAt||!Number.isFinite(new Date(occurredAt).getTime()))){
-   setError('Informe quem retirou a mercadoria e a data/hora da retirada.');return;
+  if((isNight||status==='entregue')&&!employees.some(e=>e.id===withdrawer)){
+   setError('Selecione quem retirou ou entregou a mercadoria na origem.');return;
+  }
+  if(isNight&&(!occurredAt||!Number.isFinite(new Date(occurredAt).getTime()))){
+   setError('Informe a data e hora da retirada já realizada.');return;
   }
   if(isNight&&new Date(occurredAt).getTime()>Date.now()+60_000){
    setError('A data/hora da retirada não pode ser futura, pois a mercadoria já saiu.');return;
@@ -131,7 +134,7 @@ const EmergenciasBeta2:React.FC<Props>=({requests,onSave,startOnNightReview=fals
     occurredAt:new Date(occurredAt).toISOString(),
     dispatchedAt:new Date(occurredAt).toISOString()
    }:status==='entregue'?{
-    withdrawnBy:String(staff.nome_completo),dispatchedAt:new Date().toISOString()
+    withdrawnBy:String(employees.find(e=>e.id===withdrawer)?.nome_completo||''),dispatchedAt:new Date().toISOString()
    }:{}),
    sector:department.trim(),from:source.nome,to:destination.nome,reason:reason.trim(),
    status:isNight?'entregue':status,created:new Date().toLocaleString('pt-BR'),
@@ -184,10 +187,10 @@ const EmergenciasBeta2:React.FC<Props>=({requests,onSave,startOnNightReview=fals
     <div className="b2-op-fields">
      <label className="b2-field"><span>Nome do funcionário solicitante *</span><select value={employee} onChange={e=>setEmployee(e.target.value)}><option value="">Escolha o colaborador...</option>{employees.map(e=><option key={e.id} value={e.id}>{e.nome_completo}{e.funcao_personalizada?' · '+e.funcao_personalizada:''}</option>)}</select></label>
      <label className="b2-field"><span>Setor solicitante *</span><input value={department} onChange={e=>setDepartment(e.target.value)} placeholder="Ex.: Bar de drinks, cozinha, bar de cervejas"/></label>
-     {isNight&&<>
-      <label className="b2-field"><span>Funcionário que retirou *</span><select value={withdrawer} onChange={e=>setWithdrawer(e.target.value)}><option value="">Escolha o responsável...</option>{employees.map(e=><option key={e.id} value={e.id}>{e.nome_completo}{e.funcao_personalizada?' · '+e.funcao_personalizada:''}</option>)}</select></label>
-      <label className="b2-field"><span>Data e hora da retirada *</span><input type="datetime-local" value={occurredAt} onChange={e=>setOccurredAt(e.target.value)}/></label>
-     </>}
+     <label className="b2-field"><span>{isNight?'Funcionário que retirou *':'Quem entregou na origem (obrigatório para saída imediata)'}</span>
+      <select value={withdrawer} onChange={e=>setWithdrawer(e.target.value)}><option value="">Escolha o responsável...</option>{employees.map(e=><option key={e.id} value={e.id}>{e.nome_completo}{e.funcao_personalizada?' · '+e.funcao_personalizada:''}</option>)}</select>
+     </label>
+     {isNight&&<label className="b2-field"><span>Data e hora da retirada *</span><input type="datetime-local" value={occurredAt} onChange={e=>setOccurredAt(e.target.value)}/></label>}
      <label className="b2-field b2-op-wide"><span>{isNight?'Motivo da retirada *':'Motivo da emergência *'}</span><input value={reason} onChange={e=>setReason(e.target.value)} placeholder={isNight?'Ex.: troca de barril às 23h':'Ex.: acabou o gelo na abertura'}/></label>
     </div>
    </section>
