@@ -53,7 +53,7 @@ const EmergenciasBeta2:React.FC<Props>=({requests,onSave,startOnNightReview=fals
  const[balanceLoading,setBalanceLoading]=useState(false);
  const[error,setError]=useState('');
  const[notice,setNotice]=useState('');
- const[tab,setTab]=useState<'novo'|'pendentes'|'historico'>(startOnNightReview?'pendentes':'novo');
+ const[tab,setTab]=useState<'novo'|'pendentes'|'historico'|'monitoramento'>(startOnNightReview?'monitoramento':'novo');
  const[openPreviewId,setOpenPreviewId]=useState('');
  const[initialNightFilter,setInitialNightFilter]=useState(startOnNightReview);
  useEffect(()=>{
@@ -159,6 +159,8 @@ const EmergenciasBeta2:React.FC<Props>=({requests,onSave,startOnNightReview=fals
     <History size={15}/>Pendentes</button>
    <button type="button" role="tab" className="b2-op-tab" aria-selected={tab==='historico'} aria-pressed={tab==='historico'} onClick={()=>{setTab('historico');setOpenPreviewId('');setInitialNightFilter(false);}}>
     <History size={15}/>Histórico</button>
+   {startOnNightReview&&<button type="button" role="tab" className="b2-op-tab" aria-selected={tab==='monitoramento'} aria-pressed={tab==='monitoramento'} onClick={()=>{setTab('monitoramento');setOpenPreviewId('');setInitialNightFilter(true);}}>
+    <History size={15}/>Visão do estoquista</button>}
   </div>
   {notice&&<div className="b2-op-summary" role="status"><CheckCircle2 size={19}/><strong>{notice}</strong></div>}
   {tab==='novo'&&<>
@@ -230,7 +232,7 @@ const EmergenciasBeta2:React.FC<Props>=({requests,onSave,startOnNightReview=fals
   {tab!=='novo'&&<HistoricoPedidosBeta2
  mode={tab} preview={requests} openId={openPreviewId}
  onDispatch={onDispatch} onConfirmReceipt={onConfirmReceipt}
- initialNightFilter={initialNightFilter} readOnly={startOnNightReview}
+ initialNightFilter={tab==='monitoramento'||initialNightFilter} readOnly={startOnNightReview}
 />}
 
 
