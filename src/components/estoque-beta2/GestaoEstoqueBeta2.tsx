@@ -119,7 +119,6 @@ const GestaoEstoqueBeta2:React.FC<Props>=({dados,go})=>{
   [draft?.ficha_tecnica_id,dados.ingredientes]);
  const linksToOriginal=dados.mapeamentos.filter(m=>!m.ignorar_estoque&&
   m.estoque_id===draft?.estoque_id&&m.item_estoque_id===draft?.item_estoque_id&&Boolean(m.item_estoque_id));
- const mappedCount=dados.mapeamentos.filter(m=>!m.ignorar_estoque&&(m.item_estoque_id||m.ficha_tecnica_id)&&m.estoque_id).length;
  const incomplete=dados.mapeamentos.filter(m=>!m.ignorar_estoque&&(!m.estoque_id||(!m.item_estoque_id&&!m.ficha_tecnica_id))).length;
  const zigList=useMemo(()=>dados.mapeamentos.filter(m=>{
   if(zigFilter==='pendentes'&&(m.ignorar_estoque||(m.estoque_id&&(m.item_estoque_id||m.ficha_tecnica_id))))return false;
