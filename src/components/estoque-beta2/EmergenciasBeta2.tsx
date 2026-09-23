@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { CheckCircle2, Plus, Trash2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import './OperacoesBeta2.css';
+import PesquisaItemBeta2 from './PesquisaItemBeta2';
 
 type Row = {id:string;nome:string;[key:string]:any};
 type EmergencyLine = {key:string;itemId:string;quantity:string};
@@ -34,7 +35,6 @@ const EmergenciasBeta2:React.FC<Props>=({requests,onSave})=>{
  const[to,setTo]=useState('');
  const[reason,setReason]=useState('Reposição emergencial');
  const[lines,setLines]=useState<EmergencyLine[]>([line()]);
- const[search,setSearch]=useState<Record<string,string>>({});
  const[balances,setBalances]=useState<Record<string,number>>({});
  const[loading,setLoading]=useState(true);
  const[balanceLoading,setBalanceLoading]=useState(false);
@@ -110,7 +110,7 @@ const EmergenciasBeta2:React.FC<Props>=({requests,onSave})=>{
   setNotice(status==='pendente'
    ?'Solicitação emergencial registrada SOMENTE nesta prévia; nenhum saldo movimentado.'
    :'Entrega imediata SIMULADA. Nenhum saldo oficial foi movimentado.');
-  setLines([line()]);setSearch({});setReason('Reposição emergencial');
+  setLines([line()]);setReason('Reposição emergencial');
  };
  return <div>
   <p className="b2-eyebrow">Operação · solicitação fora da rotina</p><h1>Pedido emergencial</h1>
@@ -139,18 +139,13 @@ const EmergenciasBeta2:React.FC<Props>=({requests,onSave})=>{
     <div className="b2-op-section-title"><h2>3 · Produtos solicitados</h2><span className="b2-pill">{lines.length} linha(s)</span></div>
     <p className="b2-op-help">Adicione quantos itens forem necessários ao mesmo pedido. O solicitante, a origem e o destino valem para todos eles.</p>
     <div className="b2-op-lines">{lines.map((l,index)=>{
-     const needle=(search[l.key]||'').toLocaleLowerCase('pt-BR').trim();
-     const suggestions=items.filter(i=>i.status==='ativo'||i.id===l.itemId)
-       .filter(i=>!needle||i.id===l.itemId||(i.nome+' '+(i.codigo||'')).toLocaleLowerCase('pt-BR').includes(needle))
-       .sort((a,b)=>Number(b.id===l.itemId)-Number(a.id===l.itemId)).slice(0,100);
      const selected=itemById.get(l.itemId);
      const bal=balances[l.itemId]??0;
      const insufficient=l.itemId&&!balanceLoading&&q(l.quantity)>bal;
      return <div className="b2-op-line b2-op-line-compact" key={l.key}>
       <div className="b2-op-line-head"><strong>Item {index+1}</strong><button className="b2-btn alt small" type="button" disabled={lines.length===1} onClick={()=>setLines(p=>p.filter(x=>x.key!==l.key))}><Trash2 size={13} style={{display:'inline',marginRight:5}}/>Remover</button></div>
-      <label className="b2-field b2-op-search"><span>Localizar produto</span><input type="search" value={search[l.key]||''} onChange={e=>setSearch(p=>({...p,[l.key]:e.target.value}))} placeholder="Nome ou código do produto"/></label>
       <div className="b2-op-line-fields transfer" style={{marginTop:7}}>
-       <label className="b2-field"><span>Produto *</span><select value={l.itemId} onChange={e=>setLine(l.key,'itemId',e.target.value)}><option value="">Selecione...</option>{suggestions.map(x=><option value={x.id} key={x.id}>{x.codigo?x.codigo+' — ':''}{x.nome}</option>)}</select></label>
+       <PesquisaItemBeta2 items={items} selectedId={l.itemId} onSelect={id=>setLine(l.key,'itemId',id)} label="Produto *"/>
        <label className="b2-field"><span>Quantidade *</span><input type="number" min="0.001" step="0.001" value={l.quantity} onChange={e=>setLine(l.key,'quantity',e.target.value)}/><small>{selected?.unidade_medida||'Unidade do item'}</small></label>
       </div>
       {selected&&<div className="b2-op-line-summary"><span>Saldo na origem: <strong className={insufficient?'b2-pill red':'b2-op-good'}>{balanceLoading?'Consultando...':fmt(bal)+' '+(selected.unidade_medida||'')}</strong>{insufficient?' · entrega imediata sem saldo suficiente':''}</span></div>}
