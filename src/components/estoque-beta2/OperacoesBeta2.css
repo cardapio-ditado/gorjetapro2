@@ -124,3 +124,15 @@
  .b2-root .b2-history-meta{grid-template-columns:1fr 1fr;gap:7px}
  .b2-root .b2-history-meta>div{padding:8px}
 }
+
+/* Um único tipo de movimentação: o operador escolhe o que aconteceu no formulário. */
+.b2-root .b2-op-kind-card{margin-bottom:16px;border-color:#8f6173}
+.b2-root .b2-op-kind-card h2{font-size:18px;margin-bottom:4px}
+.b2-root .b2-op-kind-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:12px}
+.b2-root .b2-op-kind-choice{width:100%;min-width:0;display:flex;flex-direction:column;gap:5px;text-align:left;border:1px solid #755469;border-radius:13px;background:#2d2133;padding:15px 16px;color:#f3e6ed!important}
+.b2-root .b2-op-kind-choice[aria-pressed=true]{background:#573048;border-color:#f1bf8d;box-shadow:inset 0 0 0 1px #bb9275}
+.b2-root .b2-op-kind-choice:hover{background:#503047}
+.b2-root .b2-op-kind-choice strong{color:#fff6fa!important;font-size:14px}
+.b2-root .b2-op-kind-choice small{color:#e0cad8!important;font-size:12px;line-height:1.4}
+.b2-root .b2-op-kind-choice:focus-visible{outline:2px solid #f2c68c;outline-offset:2px}
+@media(max-width:610px){.b2-root .b2-op-kind-options{grid-template-columns:1fr}}
