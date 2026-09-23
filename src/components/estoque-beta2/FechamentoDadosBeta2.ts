@@ -138,7 +138,7 @@ export function useControleZigBeta2(){
  },[items,niveis,saldos,overrides,zigPorEstoque]);
  return {
   loading,error,items,niveis,estoques,setores,linhas,saldos,embalagens,logs,colaboradores,overrides,
-  mapeamentos,refresh:()=>setReload(v=>v+1),
+  mapeamentos,refresh:()=>setReload(v=>v+1),resetFrequencias:()=>setOverrides({}),
   setFrequencia:(estoqueId:string,itemId:string,value:FrequenciaManual)=>{
    const k=keyOf(estoqueId,itemId);
    if(zigPorEstoque.has(k))return;
