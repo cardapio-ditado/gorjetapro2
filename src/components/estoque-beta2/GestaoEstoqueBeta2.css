@@ -171,3 +171,6 @@
  .b2-root .b2-simple-modal-footer{justify-content:stretch}
  .b2-root .b2-simple-modal-footer span{width:100%}
 }
+
+.b2-root .b2-simple-actions .b2-simple-remove{width:auto;min-width:37px;gap:6px;padding:0 9px;font-size:11px;font-weight:800}
+.b2-root .b2-simple-footer-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
