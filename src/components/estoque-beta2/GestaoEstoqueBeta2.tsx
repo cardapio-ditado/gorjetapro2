@@ -178,104 +178,135 @@ const GestaoEstoqueBeta2:React.FC<Props>=({dados,go})=>{
  return <div className="b2-manage">
   <p className="b2-eyebrow">GESTÃO · ESTOQUE BETA 2</p>
   <h1>Gestão do Estoque</h1>
-  <p className="b2-lead">Defina o que pertence a cada estoque e como cada produto da Zig deve baixar. O mesmo item pode ter saldo no Central e no Bar; a origem da venda é definida separadamente.</p>
-  <div className="b2-hint"><strong>Prévia conectada aos cadastros existentes:</strong> consulta os itens, níveis e vínculos reais. As mudanças feitas abaixo valem para as telas de fechamento e reposição nesta sessão, mas <strong>não são gravadas na base oficial</strong> e não mudam a Zig das 6h.</div>
-  <div className="b2-manage-stats">
-   <div className="b2-card"><small>Produtos Zig</small><strong>{dados.mapeamentos.length}</strong><span>Mapeamentos existentes</span></div>
-   <div className="b2-card"><small>Vínculos completos</small><strong>{mappedCount}</strong><span>Direto ou por ficha + origem</span></div>
-   <div className="b2-card"><small>Precisam de vínculo</small><strong>{incomplete}</strong><span>Falta item/ficha ou estoque</span></div>
-   <div className="b2-card"><small>Rascunhos no Beta 2</small><strong>{Object.keys(dados.rascunhosZig).length+Object.keys(dados.niveisRascunho).length}</strong><span>Sem gravar no banco</span></div>
-  </div>
+  <p className="b2-lead">Organize a lista de produtos de cada setor e defina de onde cada venda Zig desconta a mercadoria.</p>
+  <div className="b2-hint"><strong>Prévia para validar a rotina:</strong> os produtos e os vínculos exibidos vêm do cadastro antigo. Inclusões, exclusões, níveis e vínculos alterados aqui valem apenas nesta sessão e são refletidos no fechamento e na sugestão de reposição do Beta 2. A Zig real das 6h não foi alterada.</div>
   <div className="b2-op-tabs" role="tablist" aria-label="Gestão do Estoque">
-   <button className="b2-op-tab" type="button" role="tab" aria-selected={tab==='itens'} aria-pressed={tab==='itens'} onClick={()=>{setTab('itens');setNotice('');setError('')}}><Warehouse size={15}/> Itens por estoque</button>
-   <button className="b2-op-tab" type="button" role="tab" aria-selected={tab==='zig'} aria-pressed={tab==='zig'} onClick={()=>{setTab('zig');setNotice('');setError('')}}><Link2 size={15}/> Vínculos de venda Zig</button>
+   <button className="b2-op-tab" type="button" role="tab" aria-selected={tab==='itens'} aria-pressed={tab==='itens'} onClick={()=>{setTab('itens');setNotice('');setError('')}}><Warehouse size={15}/> Listas dos setores</button>
+   <button className="b2-op-tab" type="button" role="tab" aria-selected={tab==='zig'} aria-pressed={tab==='zig'} onClick={()=>{setTab('zig');setNotice('');setError('')}}><Link2 size={15}/> Vendas Zig {incomplete>0&&<span className="b2-pill red">{incomplete} pendentes</span>}</button>
   </div>
-
   {tab==='itens'&&<>
-   {notice&&<div className="b2-success" role="status"><CheckCircle2 size={16}/> {notice}</div>}
-   {error&&<div className="b2-error" role="alert">{error}</div>}
-   <div className="b2-manage-section">
-    <div className="b2-op-section-title"><h2>1 · Onde o produto fica?</h2><span className="b2-pill">{sector?.nome||'Escolha o estoque'}</span></div>
-    <p className="b2-op-help">A lista vem de <strong>itens_estoque_niveis</strong> e dos produtos com saldo no setor. Adicionar um item a um setor não movimenta mercadoria; isso é feito por transferência.</p>
-    <div className="b2-manage-toolbar">
-     <label className="b2-field"><span>Estoque / setor</span>
-      <select value={sectorId} onChange={e=>{setSectorId(e.target.value);setNotice('');setError('')}}>
-       {dados.setores.map(e=><option key={e.id} value={e.id}>{e.nome}</option>)}
-      </select>
-     </label>
-     <label className="b2-history-search"><Search size={15}/><input value={buscaItem} onChange={e=>setBuscaItem(e.target.value)} placeholder="Buscar produto por nome, código ou categoria"/></label>
-     <label className="b2-manage-toggle"><input type="checkbox" checked={apenasSetor} onChange={e=>setApenasSetor(e.target.checked)}/> Só itens deste setor</label>
-    </div>
-    <div className="b2-manage-layout">
-     <section className="b2-card b2-manage-list">
-      <div className="b2-manage-list-head"><strong>{list.length} itens</strong><small>Selecione para configurar</small></div>
-      {list.slice(0,220).map(i=>{
-       const curr=rowById.get(i.id);
-       const configured=inLevels.has(i.id);
-       return <button type="button" key={i.id} aria-pressed={itemId===i.id}
-        className={'b2-manage-item'+(itemId===i.id?' active':'')} onClick={()=>{setItemId(i.id);setNotice('');setError('')}}>
-        <span className="b2-manage-item-info"><strong>{i.nome}</strong><small>{[i.codigo,i.unidade_medida].filter(Boolean).join(' · ')}</small></span>
-        <span className="b2-manage-tags">{curr?.mapeadoZig&&<span className="b2-pill green">Zig</span>}
-         {!configured&&curr?.semNivel&&<span className="b2-pill red">Sem nível</span>}
-         {!curr&&<span className="b2-pill">Adicionar</span>}</span>
-       </button>;
-      })}
-      {list.length>220&&<p className="b2-op-small">Exibindo 220 resultados. Refine a pesquisa para localizar outros itens.</p>}
-      {!list.length&&<div className="b2-hint">Nenhum item corresponde aos filtros. Desmarque “Só itens deste setor” para adicionar outro produto.</div>}
-     </section>
-     <section className="b2-card b2-manage-detail">
-      {selected?<><div className="b2-op-section-title"><div><p className="b2-eyebrow">Cadastro oficial · {selected.codigo||'sem código'}</p><h2>{selected.nome}</h2>
-       <small>{selected.categoria||'Sem categoria'} · {selected.unidade_medida||'unidade'}</small></div><Package size={24}/></div>
-       <h3>Saldo por estoque</h3>
-       <div className="b2-manage-stock-grid">{dados.estoques.filter(e=>e.status).map(e=>
-        <div key={e.id} className={'b2-manage-stock'+(e.id===sectorId?' selected':'')}>
-         <small>{e.nome}</small><strong>{fmt3(dados.saldos[keyOf(e.id,itemId)]||0)} {selected.unidade_medida||''}</strong>
-         {e.tipo==='central'&&<em>Central</em>}
-        </div>)}</div>
-       <p className="b2-op-help">O mesmo item tem saldos independentes. Uma venda Zig só desconta do estoque indicado no vínculo daquela venda.</p>
-       <div className="b2-manage-setting">
-        <h3>Configuração no {sector?.nome}</h3>
-        <label className="b2-manage-toggle">
-         <input type="checkbox" checked={membership}
-          disabled={membership&&(Math.abs(saldoLocal)>0.0001||possuiZig)}
-          onChange={e=>editNivel({enabled:e.target.checked,nivel_reposicao:e.target.checked?currentLevel?.nivel_reposicao??null:null})}/>
-         Produto pertence a este setor
-        </label>
-        {!membership&&(Math.abs(saldoLocal)>0.0001||possuiZig)&&
-         <p className="b2-op-warn">Há saldo ou vínculo Zig neste estoque. Configure o nível aqui; para retirar o produto do setor, transfira o saldo e corrija primeiro a origem da venda.</p>}
-        {membership&&<>
-         <label className="b2-field"><span>Nível desejado para reposição ({selected.unidade_medida||'un.'})</span>
-          <input type="number" min="0" step="any"
-           value={currentLevel?.nivel_reposicao??''}
-           placeholder="Defina a quantidade-alvo" onChange={e=>{
-            const v=e.target.value;
-            if(v!==''&&(!Number.isFinite(Number(v))||Number(v)<0))return;
-            editNivel({enabled:true,nivel_reposicao:v===''?null:Number(v)});
-           }}/>
-         </label>
-         {currentLevel?.nivel_reposicao===null&&<span className="b2-pill red">Precisa definir o nível</span>}
-         <div className="b2-manage-rule"><span>Como sai deste estoque?</span>
-          <strong className={'b2-pill '+(possuiZig?'green':'')}>{possuiZig?'Baixa automática por vendas Zig':currentRow?.controleEfetivo==='periodico'?'Consumo registrado na retirada · auditoria periódica':'Consumo apurado pela contagem diária'}</strong></div>
-         {possuiZig?<p className="b2-op-help">Vínculos Zig encontrados para este item neste estoque. A contagem geral só apura divergência; não deve dar outra baixa.</p>
-          :<label className="b2-field"><span>Itens sem baixa Zig · como apurar o consumo</span>
-           <select value={currentRow?.controleEfetivo==='periodico'?'periodico':'diario'}
-            onChange={e=>dados.setFrequencia(sectorId,itemId,e.target.value as FrequenciaManual)}>
-            <option value="diario">Contagem no fechamento · consumo pela diferença</option>
-            <option value="periodico">Consumo por retirada registrada · só auditoria periódica</option>
-           </select></label>}
-         {currentLevel?.controle&&<p className="b2-op-small">Configuração antiga deste setor: {currentLevel.controle==='venda'?'Vende':'Conta'}. A classificação efetiva é cruzada com os vínculos Zig acima.</p>}
-        </>}
-       </div>
-       <div className="b2-manage-links"><h3>Vendas Zig que consomem este item no {sector?.nome}</h3>
-        {externalMaps.length?externalMaps.slice(0,25).map(m=><button key={m.id} className="b2-manage-zig-link" type="button" onClick={()=>jumpMap(m.id)}>
-         <span><strong>{m.nome_externo}</strong><small>{m.ficha_tecnica_id?'Por ficha: '+(fichaById.get(m.ficha_tecnica_id)?.nome||'Ficha'):'Baixa direta deste item'} · origem {sector?.nome}</small></span><ArrowRight size={16}/></button>)
-         :<p className="b2-op-help">Nenhuma venda da Zig consome este item a partir deste estoque na configuração atual.</p>}
-        {externalMaps.length>25&&<p className="b2-op-small">Exibindo 25 vínculos. Consulte todos na aba Vínculos de venda Zig.</p>}
-       </div>
-      </>:<p>Selecione um item da lista.</p>}
-     </section>
-    </div>
+   <div className="b2-simple-sectors" role="group" aria-label="Selecionar setor">
+    {dados.setores.map(st=><button type="button" key={st.id} className="b2-simple-sector"
+     aria-pressed={sectorId===st.id} onClick={()=>{setSectorId(st.id);setItemId('');setBuscaItem('');setNotice('');setError('')}}>
+     <Warehouse size={18}/><span>{st.nome}</span>
+     <small>{dados.niveis.filter(n=>n.estoque_id===st.id).length} itens</small>
+    </button>)}
    </div>
+   {error&&<div className="b2-error" role="alert">{error}</div>}
+   {notice&&<div className="b2-success" role="status"><CheckCircle2 size={16}/> {notice}</div>}
+   <section className="b2-simple-catalog">
+    <div className="b2-simple-title">
+     <div><p className="b2-eyebrow">LISTA DO SETOR</p><h2>{sector?.nome||'Selecione um setor'}</h2>
+      <p>{catalogo.length} produtos na lista · {catalogo.filter(r=>r.nivel_reposicao===null).length} sem nível de reposição</p></div>
+     <button type="button" className="b2-btn b2-simple-add" onClick={abrirInclusao} disabled={!sectorId}><Plus size={17}/> Adicionar produtos</button>
+    </div>
+    <label className="b2-history-search b2-simple-search"><Search size={16}/>
+     <input value={buscaItem} onChange={e=>setBuscaItem(e.target.value)} placeholder={'Buscar na lista do '+(sector?.nome||'setor')+'...'}/></label>
+    {pendentesDeInclusao.length>0&&<div className="b2-op-warn">
+     <strong>{pendentesDeInclusao.length} produto(s) têm saldo neste setor, mas ainda não estão na lista configurada.</strong>
+     <button className="b2-btn alt small" type="button" onClick={abrirInclusao}>Selecionar para adicionar</button>
+    </div>}
+    <div className="b2-simple-list">
+     <div className="b2-simple-table-head"><span>Produto</span><span>Nível desejado</span><span>Como é baixado</span><span>Ações</span></div>
+     {visiveis.map(row=>{
+      const id=row.item_id;
+      const opened=itemId===id;
+      const key=keyOf(sectorId,id);
+      const linked=opened?mapForItem(id,sectorId):[];
+      const current=dados.niveis.find(n=>n.estoque_id===sectorId&&n.item_id===id);
+      return <article key={id} className={'b2-simple-item'+(opened?' expanded':'')}>
+       <div className="b2-simple-item-main">
+        <div className="b2-simple-name"><strong>{row.item.nome}</strong>
+         <small>{[row.item.codigo,row.item.unidade_medida,row.item.categoria].filter(Boolean).join(' · ')}</small>
+         {dados.niveisRascunho[key]&&<span className="b2-pill">Alterado na prévia</span>}
+        </div>
+        <label className="b2-field b2-simple-level"><span>Nível desejado</span>
+         <input type="text" inputMode="decimal" aria-label={'Nível desejado de '+row.item.nome}
+          placeholder="Definir" value={niveisDigitados[key]??(row.nivel_reposicao===null?'':String(row.nivel_reposicao))}
+          onChange={e=>setNiveisDigitados(prev=>({...prev,[key]:e.target.value}))}
+          onBlur={e=>{if(Object.prototype.hasOwnProperty.call(niveisDigitados,key))applyNivel(row,e.target.value)}}
+          onKeyDown={e=>{if(e.key==='Enter')e.currentTarget.blur();}}/>
+         <small>{row.item.unidade_medida||'un.'}</small>
+        </label>
+        <div className="b2-simple-mode"><span className={'b2-pill '+(row.mapeadoZig?'green':row.controleEfetivo==='periodico'?'':'red')}>
+         {row.mapeadoZig?'Baixa Zig':row.controleEfetivo==='periodico'?'Por retirada':'Contagem diária'}</span>
+        </div>
+        <div className="b2-simple-actions">
+         <button type="button" className="b2-btn alt small" aria-expanded={opened} onClick={()=>setItemId(opened?'':id)}>
+          {opened?'Fechar':'Configurar'} <ChevronDown size={14} className={opened?'b2-simple-chevron open':'b2-simple-chevron'}/>
+         </button>
+         <button type="button" className="b2-simple-remove" title={'Remover '+row.item.nome+' da lista do '+sector?.nome}
+          aria-label={'Remover '+row.item.nome+' da lista do '+sector?.nome} onClick={()=>removerItem(row)}><Trash2 size={16}/></button>
+        </div>
+       </div>
+       {opened&&<div className="b2-simple-detail">
+        <div className="b2-simple-detail-heading"><h3>{row.item.nome}</h3><span className="b2-pill">{sector?.nome}</span></div>
+        <div className="b2-simple-balances">
+         {dados.estoques.filter(st=>st.status).map(st=><div className={'b2-simple-balance'+(st.id===sectorId?' selected':'')} key={st.id}>
+          <small>{st.nome}</small><strong>{fmt3(dados.saldos[keyOf(st.id,id)]||0)} {row.item.unidade_medida||''}</strong>
+         </div>)}
+        </div>
+        <div className="b2-simple-config">
+         <div><h4>Controle deste produto no {sector?.nome}</h4>
+          <p>{row.mapeadoZig?'As vendas Zig ligadas a este item já baixam automaticamente deste estoque. Não descontar novamente na contagem.':'Sem baixa automática Zig neste setor.'}</p></div>
+         {!row.mapeadoZig&&<label className="b2-field"><span>Como apurar o consumo</span>
+          <select value={row.controleEfetivo==='periodico'?'periodico':'diario'}
+           onChange={e=>{dados.setFrequencia(sectorId,id,e.target.value as 'diario'|'periodico');setNotice('Controle de '+row.item.nome+' atualizado na prévia.')}}>
+           <option value="diario">Contagem toda noite</option>
+           <option value="periodico">Retirada registrada · auditoria periódica</option>
+          </select></label>}
+        </div>
+        <div className="b2-simple-zig-links">
+         <h4>Vendas Zig que consomem este produto neste estoque</h4>
+         {linked.length?linked.slice(0,10).map(m=><button className="b2-manage-zig-link" type="button" key={m.id} onClick={()=>jumpMap(m.id)}>
+          <span><strong>{m.nome_externo}</strong><small>{m.ficha_tecnica_id?'Por ficha: '+(fichaById.get(m.ficha_tecnica_id)?.nome||'Ficha técnica'):'Baixa direta'} · origem {sector?.nome}</small></span><ArrowRight size={15}/></button>)
+          :<p className="b2-op-help">Nenhuma venda Zig vinculada a este produto no {sector?.nome}.</p>}
+         {linked.length>10&&<p className="b2-op-small">Existem mais {linked.length-10} vendas vinculadas. Use a aba Vendas Zig para localizá-las.</p>}
+         <button type="button" className="b2-btn alt small" onClick={()=>{setTab('zig');setBuscaZig('');setZigFilter('todos');setNotice('');setError('')}}>
+          <Link2 size={14}/> Abrir Vendas Zig</button>
+        </div>
+        {current?.controle&&<small className="b2-op-small">Regra do módulo antigo: {current.controle==='venda'?'Vende':'Conta'}.</small>}
+       </div>}
+      </article>;
+     })}
+     {!visiveis.length&&<div className="b2-simple-empty">
+      <p>{catalogo.length?'Nenhum produto corresponde à busca.':'Esta lista está vazia.'}</p>
+      {!catalogo.length&&<button type="button" className="b2-btn" onClick={abrirInclusao}><Plus size={16}/> Adicionar o primeiro produto</button>}
+     </div>}
+    </div>
+    <div className="b2-simple-footer"><span>O nível indica quanto o setor deve ter após a reposição.</span>
+     <button type="button" className="b2-btn alt" onClick={()=>go('fechamento')}>Testar fechamento <ArrowRight size={14}/></button></div>
+   </section>
+   {adicionarAberto&&<div className="b2-simple-overlay" role="presentation">
+    <div className="b2-simple-modal" role="dialog" aria-modal="true" aria-label={'Adicionar produtos à lista do '+sector?.nome}
+     onKeyDown={e=>{if(e.key==='Escape')setAdicionarAberto(false)}}>
+     <div className="b2-simple-modal-head"><div><p className="b2-eyebrow">ADICIONAR À LISTA</p><h2>Produtos do {sector?.nome}</h2>
+      <p>Pesquise no cadastro geral e selecione vários itens de uma vez.</p></div>
+      <button type="button" className="b2-simple-close" aria-label="Fechar seleção" onClick={()=>setAdicionarAberto(false)}><X size={20}/></button>
+     </div>
+     <label className="b2-history-search"><Search size={16}/><input autoFocus value={buscaAdicionar}
+      onChange={e=>setBuscaAdicionar(e.target.value)} placeholder="Buscar nome, código ou categoria..."/></label>
+     <div className="b2-simple-modal-list">
+      {disponiveis.slice(0,120).map(i=>{
+       const checked=selecionados.includes(i.id);
+       const balance=dados.saldos[keyOf(sectorId,i.id)]||0;
+       return <label className={'b2-simple-option'+(checked?' checked':'')} key={i.id}>
+        <input type="checkbox" checked={checked}
+         onChange={e=>setSelecionados(p=>e.target.checked?[...p,i.id]:p.filter(id=>id!==i.id))}/>
+        <span><strong>{i.nome}</strong><small>{[i.codigo,i.unidade_medida,i.categoria].filter(Boolean).join(' · ')}</small>
+         {Math.abs(balance)>0.0001&&<small className="b2-simple-existing">Já há {fmt3(balance)} {i.unidade_medida||'un.'} no {sector?.nome}</small>}</span>
+       </label>;
+      })}
+      {!disponiveis.length&&<div className="b2-hint">Nenhum item disponível. Pode ser que todos já estejam na lista.</div>}
+      {disponiveis.length>120&&<p className="b2-op-small">Mostrando 120 resultados. Digite mais letras para localizar os demais.</p>}
+     </div>
+     <div className="b2-simple-modal-footer"><span>{selecionados.length} selecionado(s)</span>
+      <button type="button" className="b2-btn alt" onClick={()=>setAdicionarAberto(false)}>Cancelar</button>
+      <button type="button" className="b2-btn" disabled={!selecionados.length} onClick={incluirSelecionados}>
+       <Plus size={16}/> Adicionar selecionados</button>
+     </div>
+    </div>
+   </div>}
   </>}
 
   {tab==='zig'&&<>
