@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { ArrowRight, CheckCircle2, Link2, Package, RefreshCw, Search, Warehouse } from 'lucide-react';
+import { ArrowRight, CheckCircle2, ChevronDown, Link2, Plus, RefreshCw, Search, Trash2, Warehouse, X } from 'lucide-react';
 import PesquisaItemBeta2 from './PesquisaItemBeta2';
 import {
- type MapZig,type NivelRascunho,type FrequenciaManual,
+ type ItemDoSetor,type MapZig,
  useControleZigBeta2,keyOf,fmt3
 } from './FechamentoDadosBeta2';
 import './OperacoesBeta2.css';
@@ -23,7 +23,10 @@ const GestaoEstoqueBeta2:React.FC<Props>=({dados,go})=>{
  const[sectorId,setSectorId]=useState('');
  const[itemId,setItemId]=useState('');
  const[buscaItem,setBuscaItem]=useState('');
- const[apenasSetor,setApenasSetor]=useState(true);
+ const[adicionarAberto,setAdicionarAberto]=useState(false);
+ const[buscaAdicionar,setBuscaAdicionar]=useState('');
+ const[selecionados,setSelecionados]=useState<string[]>([]);
+ const[niveisDigitados,setNiveisDigitados]=useState<Record<string,string>>({});
  const[buscaZig,setBuscaZig]=useState('');
  const[zigFilter,setZigFilter]=useState<'todos'|'pendentes'|'alterados'>('todos');
  const[mapId,setMapId]=useState('');
@@ -39,37 +42,73 @@ const GestaoEstoqueBeta2:React.FC<Props>=({dados,go})=>{
   }
  },[dados.setores,sectorId]);
  useEffect(()=>{
-  if(!dados.items.length||itemId)return;
-  setItemId(dados.items.find(i=>normalize(i.nome).includes('original 600'))?.id||
-   dados.items.find(i=>i.status==='ativo')?.id||'');
- },[dados.items,itemId]);
- useEffect(()=>{
   if(!dados.mapeamentos.length||mapId)return;
   setMapId(dados.mapeamentos.find(m=>normalize(m.nome_externo)==='original 600ml')?.id||dados.mapeamentos[0].id);
  },[dados.mapeamentos,mapId]);
 
- const selected=dados.items.find(i=>i.id===itemId);
+
  const sector=dados.setores.find(s=>s.id===sectorId);
  const rows=useMemo(()=>dados.linhas.filter(r=>r.estoque_id===sectorId),[dados.linhas,sectorId]);
- const rowById=useMemo(()=>new Map(rows.map(r=>[r.item_id,r])),[rows]);
- const inLevels=useMemo(()=>new Set(dados.niveis.filter(n=>n.estoque_id===sectorId).map(n=>n.item_id)),[dados.niveis,sectorId]);
  const activeItems=useMemo(()=>dados.items.filter(i=>i.status==='ativo'),[dados.items]);
- const currentLevel=dados.niveis.find(n=>n.estoque_id===sectorId&&n.item_id===itemId);
- const currentRow=rowById.get(itemId);
- const saldoLocal=dados.saldos[keyOf(sectorId,itemId)]||0;
- const possuiZig=Boolean(currentRow?.mapeadoZig);
- const membership=Boolean(currentLevel);
- const externalMaps=useMemo(()=>{
-  const fichaIds=new Set(dados.ingredientes.filter(x=>x.item_estoque_id===itemId&&x.baixa_estoque).map(x=>x.ficha_id));
-  return dados.mapeamentos.filter(m=>!m.ignorar_estoque&&m.estoque_id===sectorId
-   &&(m.ficha_tecnica_id?fichaIds.has(m.ficha_tecnica_id):m.item_estoque_id===itemId));
- },[dados.mapeamentos,dados.ingredientes,sectorId,itemId]);
- const list=useMemo(()=>activeItems.filter(item=>{
-  if(apenasSetor&&!rowById.has(item.id))return false;
-  if(!buscaItem.trim())return true;
-  return normalize([item.nome,item.codigo,item.categoria].join(' ')).includes(normalize(buscaItem));
- }).sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR')),[activeItems,rowById,buscaItem,apenasSetor]);
-
+ const inLevels=useMemo(()=>new Set(dados.niveis.filter(n=>n.estoque_id===sectorId).map(n=>n.item_id)),[dados.niveis,sectorId]);
+ const catalogo=useMemo(()=>rows.filter(r=>inLevels.has(r.item_id)),[rows,inLevels]);
+ const pendentesDeInclusao=useMemo(()=>rows.filter(r=>r.semNivel&&!inLevels.has(r.item_id)),[rows,inLevels]);
+ const visiveis=useMemo(()=>catalogo.filter(r=>!buscaItem.trim()||
+  normalize([r.item.nome,r.item.codigo,r.item.categoria].join(' ')).includes(normalize(buscaItem))),
+  [catalogo,buscaItem]);
+ const disponiveis=useMemo(()=>activeItems.filter(i=>!inLevels.has(i.id)
+  &&(!buscaAdicionar.trim()||normalize([i.nome,i.codigo,i.categoria].join(' ')).includes(normalize(buscaAdicionar))))
+  .sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR')),
+  [activeItems,inLevels,buscaAdicionar]);
+ const mapForItem=(itemIdToFind:string,origin:string)=>{
+  const fichaIds=new Set(dados.ingredientes.filter(x=>x.item_estoque_id===itemIdToFind&&x.baixa_estoque).map(x=>x.ficha_id));
+  return dados.mapeamentos.filter(m=>!m.ignorar_estoque&&m.estoque_id===origin
+    &&(m.ficha_tecnica_id?fichaIds.has(m.ficha_tecnica_id):m.item_estoque_id===itemIdToFind));
+ };
+ const applyNivel=(item:ItemDoSetor,raw:string)=>{
+  const normalized=raw.trim().replace(',','.');
+  if(normalized&&(!Number.isFinite(Number(normalized))||Number(normalized)<0)){
+   setError('Informe um nível válido para '+item.item.nome+'.');return;
+  }
+  const k=keyOf(sectorId,item.item_id);
+  dados.setNivelPreview(sectorId,item.item_id,{
+   enabled:true,nivel_reposicao:normalized===''?null:Number(normalized),
+   controle:item.controle==='venda'||item.mapeadoZig?'venda':'contagem'
+  });
+  setNiveisDigitados(prev=>{const next={...prev};delete next[k];return next;});
+  setError('');setNotice('Nível do '+sector?.nome+' atualizado na prévia.');
+ };
+ const abrirInclusao=()=>{setAdicionarAberto(true);setBuscaAdicionar('');setSelecionados([]);setError('');};
+ const incluirSelecionados=()=>{
+  if(!selecionados.length)return;
+  for(const id of selecionados){
+   const row=rows.find(x=>x.item_id===id);
+   dados.setNivelPreview(sectorId,id,{
+    enabled:true,nivel_reposicao:null,controle:row?.mapeadoZig?'venda':'contagem'
+   });
+  }
+  const total=selecionados.length;
+  setSelecionados([]);setAdicionarAberto(false);setBuscaAdicionar('');
+  setNotice(total+' item(ns) adicionado(s) à lista do '+sector?.nome+' nesta prévia. Defina seus níveis de reposição.');
+  setError('');
+ };
+ const removerItem=(item:ItemDoSetor)=>{
+  const saldo=dados.saldos[keyOf(sectorId,item.item_id)]||0;
+  if(Math.abs(saldo)>0.0001||item.mapeadoZig){
+   setError('Não é possível remover '+item.item.nome+' da lista do '+sector?.nome+
+    (Math.abs(saldo)>0.0001?' porque ainda tem saldo ('+fmt3(saldo)+').':'')+
+    (item.mapeadoZig?' Existem vendas Zig baixando deste estoque.':'')+
+    ' Regularize saldo e vínculo Zig antes da remoção.');
+   setItemId(item.item_id);
+   return;
+  }
+  if(!window.confirm('Remover '+item.item.nome+' da lista do '+sector?.nome+'? O item continuará no cadastro geral.'))return;
+  dados.setNivelPreview(sectorId,item.item_id,{
+   enabled:false,nivel_reposicao:null,controle:item.controle==='venda'?'venda':'contagem'
+  });
+  setItemId(prev=>prev===item.item_id?'':prev);
+  setError('');setNotice(item.item.nome+' removido da lista do '+sector?.nome+' apenas na prévia.');
+ };
  const selectedMap=dados.mapeamentos.find(m=>m.id===mapId);
  useEffect(()=>{setDraft(selectedMap?{...selectedMap}:null);setDraftType(selectedMap?tipo(selectedMap):'pendente');setError('');},[selectedMap]);
  const itemById=useMemo(()=>new Map(dados.items.map(x=>[x.id,x])),[dados.items]);
@@ -92,20 +131,6 @@ const GestaoEstoqueBeta2:React.FC<Props>=({dados,go})=>{
  }).sort((a,b)=>a.nome_externo.localeCompare(b.nome_externo,'pt-BR')),
  [dados.mapeamentos,dados.rascunhosZig,zigFilter,buscaZig,stockById,itemById,fichaById]);
 
- const editNivel=(edit:Partial<NivelRascunho>)=>{
-  if(!selected||!sector)return;
-  const current=dados.niveis.find(n=>n.estoque_id===sectorId&&n.item_id===itemId);
-  const next:NivelRascunho={
-   enabled:current!==undefined,
-   nivel_reposicao:current?.nivel_reposicao??null,
-   controle:current?.controle==='venda'?'venda':'contagem',
-   ...edit
-  };
-  // A presença do produto e a origem Zig são informações distintas.
-  if(!next.enabled&&(Math.abs(saldoLocal)>0.0001||possuiZig))return;
-  dados.setNivelPreview(sectorId,itemId,next);
-  setNotice('Alteração do setor aplicada nesta prévia. Nada foi gravado no estoque oficial.');
- };
  const chooseKind=(v:TipoVinculo)=>{
   if(!draft)return;
   setDraftType(v);
