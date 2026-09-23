@@ -9,6 +9,7 @@ import {
 
 const ESTOQUE_SUBMODS_ADMIN = [
   { name: '★ Estoque Beta',        path: '/estoque-beta' },
+  { name: '★ Estoque Beta 2',      path: '/estoque-beta2' },
   { name: 'Reposição de balcão',   path: '/advanced-inventory?area=operacao&tela=reposicao' },
   { name: 'Receber mercadoria',    path: '/advanced-inventory?area=operacao&tela=receber' },
   { name: 'Transferências',        path: '/advanced-inventory?area=operacao&tela=transferir' },
@@ -31,6 +32,7 @@ const ESTOQUE_SUBMODS_ADMIN = [
 
 const ESTOQUE_SUBMODS_USER = [
   { name: '★ Estoque Beta', path: '/estoque-beta' },
+  { name: '★ Estoque Beta 2', path: '/estoque-beta2' },
   { name: 'Operação', path: '/advanced-inventory?area=operacao&tela=home' },
   { name: 'Reposição de balcão', path: '/advanced-inventory?area=operacao&tela=reposicao' },
 ];
