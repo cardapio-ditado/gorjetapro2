@@ -1,8 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { CheckCircle2, Plus, Trash2 } from 'lucide-react';
+import { CheckCircle2, History, Plus, Trash2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import './OperacoesBeta2.css';
 import PesquisaItemBeta2 from './PesquisaItemBeta2';
+import HistoricoComprasBeta2 from './HistoricoComprasBeta2';
 
 type Row = {id:string;nome:string;[key:string]:any};
 type NoteItem = {key:string;itemId:string;documentQty:string;quantity:string;ordered:string;unitCost:string};
@@ -27,6 +28,8 @@ async function loadList(table:string){
 }
 const RecebimentoBeta2:React.FC<Props>=({receipts,onSave})=>{
  const[mode,setMode]=useState<'direto'|'pedido'>('direto');
+ const[screen,setScreen]=useState<'nova'|'pendentes'|'historico'>('nova');
+ const[openPreviewId,setOpenPreviewId]=useState('');
  const[items,setItems]=useState<Row[]>([]);
  const[suppliers,setSuppliers]=useState<Row[]>([]);
  const[stocks,setStocks]=useState<Row[]>([]);
@@ -43,7 +46,6 @@ const RecebimentoBeta2:React.FC<Props>=({receipts,onSave})=>{
  const[orderLoading,setOrderLoading]=useState(false);
  const[error,setError]=useState('');
  const[success,setSuccess]=useState('');
- const[expanded,setExpanded]=useState(false);
  useEffect(()=>{
   let live=true;
   const load=async()=>{
@@ -122,8 +124,9 @@ const RecebimentoBeta2:React.FC<Props>=({receipts,onSave})=>{
   }
   const supplier=suppliers.find(x=>x.id===supplierId);
   const stock=stocks.find(x=>x.id===stockId);
+  const demoId=Math.random().toString(36).slice(2);
   onSave({
-   id:Math.random().toString(36).slice(2),
+   id:demoId,
    invoice:invoice.trim(),supplierId,supplier:supplier?.nome||'Fornecedor selecionado',
    stock:stock?.nome||'Estoque selecionado',date,observations:notes.trim(),order:mode==='pedido'?orderId:'',
    items:lines.map(l=>({
@@ -133,17 +136,24 @@ const RecebimentoBeta2:React.FC<Props>=({receipts,onSave})=>{
    })),total
   });
   setSuccess('Nota com '+lines.length+' linha(s) conferida SOMENTE nesta prévia. O saldo oficial não foi alterado.');
+  setOpenPreviewId(demoId);setScreen('historico');
  };
  return <div>
   <p className="b2-eyebrow">Compras · entrada de mercadorias</p><h1>Recebimento de mercadoria</h1>
   <p className="b2-lead">Uma nota, vários produtos. Pedido prévio é opcional: a equipe pode registrar a chegada diretamente e conferir tudo de uma vez.</p>
   <div className="b2-hint">DEMONSTRAÇÃO: consulta itens, fornecedores, estoques e pedidos originais, mas não salva notas nem movimenta saldo no Supabase.</div>
+  <div className="b2-op-tabs" role="tablist" aria-label="Recebimento e pedidos de compra">
+   <button type="button" role="tab" className="b2-op-tab" aria-selected={screen==='nova'} aria-pressed={screen==='nova'} onClick={()=>setScreen('nova')}><Plus size={15}/>Nova nota</button>
+   <button type="button" role="tab" className="b2-op-tab" aria-selected={screen==='pendentes'} aria-pressed={screen==='pendentes'} onClick={()=>{setScreen('pendentes');setOpenPreviewId('');}}><History size={15}/>Pedidos pendentes</button>
+   <button type="button" role="tab" className="b2-op-tab" aria-selected={screen==='historico'} aria-pressed={screen==='historico'} onClick={()=>{setScreen('historico');setOpenPreviewId('');}}><History size={15}/>Histórico de pedidos e notas</button>
+  </div>
+  {success&&<div className="b2-op-summary" role="status"><CheckCircle2 size={21}/><strong>{success}</strong></div>}
+  {screen==='nova'&&<>
   <div className="b2-op-tabs">
-   <button className="b2-op-tab" aria-pressed={mode==='direto'} onClick={()=>pickMode('direto')}>Receber sem pedido prévio</button>
-   <button className="b2-op-tab" aria-pressed={mode==='pedido'} onClick={()=>pickMode('pedido')}>Vincular a pedido existente</button>
+   <button type="button" className="b2-op-tab" aria-pressed={mode==='direto'} onClick={()=>pickMode('direto')}>Receber sem pedido prévio</button>
+   <button type="button" className="b2-op-tab" aria-pressed={mode==='pedido'} onClick={()=>pickMode('pedido')}>Vincular a pedido existente</button>
   </div>
   {error&&<div className="b2-error" role="alert">{error}</div>}
-  {success&&<div className="b2-op-summary"><CheckCircle2 size={21}/><strong>{success}</strong></div>}
   {loading?<div className="b2-card">Carregando cadastros reais...</div>:<form onSubmit={save}>
     {mode==='pedido'&&<div className="b2-op-box">
       <h3>Pedido enviado anteriormente</h3>
@@ -191,11 +201,8 @@ const RecebimentoBeta2:React.FC<Props>=({receipts,onSave})=>{
      <div className="b2-op-actions"><button className="b2-btn" type="submit" disabled={orderLoading}>Concluir conferência nesta prévia</button><button className="b2-btn alt" type="button" onClick={reset}>Nova nota</button></div>
     </section>
    </form>}
-  {receipts.length>0&&<section className="b2-section b2-card">
-   <h2>Notas conferidas nesta demonstração</h2>
-   {(expanded?receipts:receipts.slice(0,5)).map(r=><div className="b2-row" key={r.id}><div><strong>Nota {r.invoice} · {r.supplier}</strong><small>{r.items.length} linha(s) · destino: {r.stock} · {r.date}{r.order?' · vinculada a pedido':''}</small></div><span className="b2-pill green">{price(r.total)}</span></div>)}
-   {receipts.length>5&&<button className="b2-btn alt small" onClick={()=>setExpanded(p=>!p)}>{expanded?'Mostrar menos':'Ver todas as notas simuladas'}</button>}
-  </section>}
+  </>}
+  {screen!=='nova'&&<HistoricoComprasBeta2 mode={screen} preview={receipts} openId={openPreviewId}/>}
  </div>;
 };
 export default RecebimentoBeta2;
