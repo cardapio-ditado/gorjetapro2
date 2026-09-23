@@ -1,0 +1,38 @@
+
+/* Operações do Estoque Beta 2: só apresentação, nenhum estilo global da aplicação antiga. */
+.b2-root .b2-op-tabs{display:flex;flex-wrap:wrap;gap:9px;margin:15px 0 21px}
+.b2-root .b2-op-tab{border:1px solid #775268;background:#322338;color:#ebd7e4!important;padding:11px 15px;border-radius:12px;font-size:13px;font-weight:800}
+.b2-root .b2-op-tab[aria-pressed=true]{background:#74344e;border-color:#e2aa94;color:#fff!important}
+.b2-root .b2-op-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.b2-root .b2-op-wide{grid-column:1/-1}
+.b2-root .b2-op-box{padding:17px;border:1px solid #68485b;border-radius:15px;background:#251b2a;margin:13px 0}
+.b2-root .b2-op-box h3{font-size:16px;font-weight:850;color:#fff!important;margin-bottom:12px}
+.b2-root .b2-op-lines{display:grid;gap:11px}
+.b2-root .b2-op-line{border:1px solid #795469;border-radius:13px;background:#342439;padding:15px}
+.b2-root .b2-op-line-head{display:flex;gap:12px;align-items:center;justify-content:space-between;margin-bottom:12px}
+.b2-root .b2-op-line-head strong{color:#fff!important}
+.b2-root .b2-op-line-fields{display:grid;grid-template-columns:minmax(175px,2fr) minmax(96px,.7fr) minmax(96px,.75fr) minmax(96px,.7fr);gap:12px}
+.b2-root .b2-op-line-fields.transfer{grid-template-columns:minmax(175px,2fr) minmax(120px,1fr)}
+.b2-root .b2-op-line-fields .b2-field{min-width:0}
+.b2-root .b2-op-line-fields input,.b2-root .b2-op-line-fields select{width:100%}
+.b2-root .b2-op-help{font-size:12px;color:#e4cddd!important;line-height:1.5;margin:10px 0}
+.b2-root .b2-op-totals{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;border:1px solid #946b73;padding:17px;background:#422b3d;border-radius:14px;margin-top:15px}
+.b2-root .b2-op-totals strong{font-size:23px;color:#ffe5b9!important}
+.b2-root .b2-op-summary{border:1px solid #44866a;border-radius:14px;background:#20382f;padding:16px;margin:16px 0;color:#d7ffe9!important}
+.b2-root .b2-op-summary strong,.b2-root .b2-op-summary small,.b2-root .b2-op-summary p{color:#d7ffe9!important}
+.b2-root .b2-op-summary h3{font-size:18px;margin-bottom:8px;color:#fff!important}
+.b2-root .b2-op-actions{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:16px}
+.b2-root .b2-op-actions button{min-height:43px}
+.b2-root .b2-op-bad{border:1px solid #a95a61;background:#422b37;padding:12px;border-radius:11px;color:#ffd5db!important}
+.b2-root .b2-op-good{color:#b9f3d7!important}
+.b2-root .b2-op-steps{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 20px}
+.b2-root .b2-op-step{font-size:12px;border-radius:30px;border:1px solid #734e63;color:#ead4e1!important;padding:8px 12px}
+.b2-root .b2-op-step.current{background:#67334b;border-color:#d29b8f;color:#fff!important}
+.b2-root .b2-op-warn{padding:14px;border-radius:12px;border:1px solid #987249;background:#3d3028;color:#ffe0b2!important;margin:10px 0;font-size:13px}
+.b2-root .b2-op-section-title{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:9px;margin:12px 0}
+.b2-root .b2-op-section-title h2{margin:0}
+.b2-root .b2-op-inline{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.b2-root .b2-op-inline strong{color:#fff!important}
+.b2-root .b2-op-small{font-size:12px;color:#d7c1d0!important}
+@media(max-width:1150px){.b2-root .b2-op-line-fields{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:620px){.b2-root .b2-op-fields,.b2-root .b2-op-line-fields,.b2-root .b2-op-line-fields.transfer{grid-template-columns:1fr}.b2-root .b2-op-wide{grid-column:auto}.b2-root .b2-op-totals strong{font-size:19px}}
