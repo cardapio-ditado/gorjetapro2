@@ -64,3 +64,23 @@
  .b2-root .b2-op-line-compact .b2-op-line-fields .b2-field:first-child{grid-column:1/-1}
  .b2-root .b2-op-line-compact{padding:10px}
 }
+
+/* Pesquisa e seleção em um único campo, com resultados por similaridade. */
+.b2-root .b2-op-line:focus-within{position:relative;z-index:15}
+.b2-root .b2-item-lookup{position:relative;min-width:0;display:grid;gap:4px}
+.b2-root .b2-item-lookup>label{color:#f5e4ee!important;font-size:11px;font-weight:850}
+.b2-root .b2-item-input-wrap{position:relative;display:flex;align-items:center;min-width:0}
+.b2-root .b2-item-input-wrap>svg{position:absolute;left:10px;color:#e7bd8c;pointer-events:none;z-index:1}
+.b2-root .b2-op-line-compact .b2-item-input-wrap input{padding-left:33px;padding-right:30px;background:#211725!important;color:#fff7fa!important;-webkit-text-fill-color:#fff7fa!important;border:1px solid #92748e!important;min-width:0}
+.b2-root .b2-op-line-compact .b2-item-input-wrap input:focus{border-color:#edc08b!important;outline:2px solid #edc08b!important;outline-offset:1px}
+.b2-root .b2-item-input-wrap .b2-item-reset{position:absolute;right:6px;top:50%;transform:translateY(-50%);display:flex;align-items:center;justify-content:center;width:25px;height:25px;background:#4a3042;border:1px solid #906783;border-radius:7px;color:#fff!important}
+.b2-root .b2-item-reset:hover{background:#744257}
+.b2-root .b2-item-selected{display:flex;align-items:center;gap:5px;color:#b9f3d7!important;font-size:10px;line-height:1.3}
+.b2-root .b2-item-options{position:absolute;top:calc(100% + 4px);left:0;right:0;z-index:100;max-height:275px;overflow-y:auto;border:1px solid #b47e89;border-radius:11px;background:#241b2a;box-shadow:0 15px 35px #08060bdf}
+.b2-root .b2-item-option{display:flex;align-items:center;justify-content:space-between;gap:9px;text-align:left;width:100%;border-bottom:1px solid #49364b;padding:10px 12px;background:#241b2a;color:#fff!important}
+.b2-root .b2-item-option:hover,.b2-root .b2-item-option.active{background:#634052}
+.b2-root .b2-item-option strong{display:block;color:#fff7fb!important;font-size:12px;overflow-wrap:anywhere;line-height:1.35}
+.b2-root .b2-item-option small{display:block;color:#eed2dd!important;font-size:10px;margin-top:3px}
+.b2-root .b2-item-option>svg{color:#b9f3d7;flex-shrink:0}
+.b2-root .b2-item-empty,.b2-root .b2-item-tip{padding:10px 12px;color:#e5cbd9!important;font-size:11px}
+.b2-root .b2-item-tip{border-top:1px solid #513b50;color:#f1c58f!important;font-size:10px}
