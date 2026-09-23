@@ -136,7 +136,7 @@ const EmergenciasBeta2:React.FC<Props>=({requests,onSave})=>{
     </div>
    </section>
    <section className="b2-section b2-card">
-    <div className="b2-op-section-title"><h2>3 · Produtos solicitados</h2><button className="b2-btn" type="button" onClick={()=>setLines(p=>[...p,line()])}><Plus size={15} style={{display:'inline',marginRight:5}}/>Adicionar item</button></div>
+    <div className="b2-op-section-title"><h2>3 · Produtos solicitados</h2><span className="b2-pill">{lines.length} linha(s)</span></div>
     <p className="b2-op-help">Adicione quantos itens forem necessários ao mesmo pedido. O solicitante, a origem e o destino valem para todos eles.</p>
     <div className="b2-op-lines">{lines.map((l,index)=>{
      const needle=(search[l.key]||'').toLocaleLowerCase('pt-BR').trim();
@@ -146,16 +146,17 @@ const EmergenciasBeta2:React.FC<Props>=({requests,onSave})=>{
      const selected=itemById.get(l.itemId);
      const bal=balances[l.itemId]??0;
      const insufficient=l.itemId&&!balanceLoading&&q(l.quantity)>bal;
-     return <div className="b2-op-line" key={l.key}>
+     return <div className="b2-op-line b2-op-line-compact" key={l.key}>
       <div className="b2-op-line-head"><strong>Item {index+1}</strong><button className="b2-btn alt small" type="button" disabled={lines.length===1} onClick={()=>setLines(p=>p.filter(x=>x.key!==l.key))}><Trash2 size={13} style={{display:'inline',marginRight:5}}/>Remover</button></div>
-      <label className="b2-field"><span>Buscar no cadastro de itens</span><input type="search" value={search[l.key]||''} onChange={e=>setSearch(p=>({...p,[l.key]:e.target.value}))} placeholder="Nome ou código do produto"/></label>
-      <div className="b2-op-line-fields transfer" style={{marginTop:10}}>
+      <label className="b2-field b2-op-search"><span>Localizar produto</span><input type="search" value={search[l.key]||''} onChange={e=>setSearch(p=>({...p,[l.key]:e.target.value}))} placeholder="Nome ou código do produto"/></label>
+      <div className="b2-op-line-fields transfer" style={{marginTop:7}}>
        <label className="b2-field"><span>Produto *</span><select value={l.itemId} onChange={e=>setLine(l.key,'itemId',e.target.value)}><option value="">Selecione...</option>{suggestions.map(x=><option value={x.id} key={x.id}>{x.codigo?x.codigo+' — ':''}{x.nome}</option>)}</select></label>
        <label className="b2-field"><span>Quantidade *</span><input type="number" min="0.001" step="0.001" value={l.quantity} onChange={e=>setLine(l.key,'quantity',e.target.value)}/><small>{selected?.unidade_medida||'Unidade do item'}</small></label>
       </div>
-      {selected&&<p className="b2-op-help">Saldo consultado na origem: <strong className={insufficient?'b2-pill red':'b2-op-good'}>{balanceLoading?'Consultando...':fmt(bal)+' '+(selected.unidade_medida||'')}</strong>{insufficient?' · entrega imediata sem saldo suficiente':''}</p>}
+      {selected&&<div className="b2-op-line-summary"><span>Saldo na origem: <strong className={insufficient?'b2-pill red':'b2-op-good'}>{balanceLoading?'Consultando...':fmt(bal)+' '+(selected.unidade_medida||'')}</strong>{insufficient?' · entrega imediata sem saldo suficiente':''}</span></div>}
      </div>;
     })}</div>
+    <button className="b2-op-add-line" type="button" onClick={()=>setLines(p=>[...p,line()])}><Plus size={17}/> Adicionar outro item</button>
     <div className="b2-op-totals"><span>Um único pedido emergencial</span><strong>{lines.length} linha(s) de produtos</strong></div>
    </section>
    <section className="b2-section b2-card">
