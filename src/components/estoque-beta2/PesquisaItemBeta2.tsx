@@ -15,6 +15,7 @@ interface Props {
  onSelect:(id:string)=>void;
  label?:string;
  placeholder?:string;
+ focusOnMount?:boolean;
 }
 
 // Pesquisa tolerante a acentos, palavras fora de ordem e pequenos erros de digitação.
@@ -49,7 +50,7 @@ function relevance(item:ItemPesquisaBeta2,term:string):number{
 
 /** Campo único: pesquisa + seleção real do item, sem exigir uma segunda linha de select. */
 const PesquisaItemBeta2:React.FC<Props>=({
- items,selectedId,onSelect,label='Item *',placeholder='Digite nome ou código do produto...'
+ items,selectedId,onSelect,label='Item *',placeholder='Digite nome ou código do produto...',focusOnMount=false
 })=>{
  const controlId=useId();
  const[selectedText,setSelectedText]=useState('');
@@ -80,7 +81,7 @@ const PesquisaItemBeta2:React.FC<Props>=({
    <input id={controlId} role="combobox" aria-autocomplete="list" aria-expanded={open}
     aria-controls={controlId+'-lista'}
     aria-activedescendant={open&&options[active]?controlId+'-opcao-'+active:undefined}
-    autoComplete="off" value={query}
+    autoComplete="off" autoFocus={focusOnMount} value={query}
     onFocus={()=>{setOpen(true);setActive(0)}}
     onBlur={()=>setOpen(false)}
     onChange={e=>{setQuery(e.target.value);setSelectedText('');setActive(0);if(selectedId)onSelect('');setOpen(true)}}
