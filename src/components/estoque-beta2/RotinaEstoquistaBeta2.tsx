@@ -6,8 +6,8 @@ type Destination = 'inicio' | 'itens' | 'fichas' | 'fornecedores' | 'estoques' |
 interface Props {
   go:(screen:Destination)=>void;
   nightReviewed:boolean;
-  onNightReviewed:()=>void;
   nightCount:number;
+  nightAwaitingReceiptCount:number;
   received:boolean;
   countSent:boolean;
   countApproved:boolean;
@@ -21,12 +21,12 @@ interface Props {
 }
 /** Passo a passo demonstrativo, sem gravar status de tarefas no banco oficial. */
 const RotinaEstoquistaBeta2:React.FC<Props>=({
- go,nightReviewed,onNightReviewed,nightCount,received,countSent,countApproved,
+ go,nightReviewed,nightCount,nightAwaitingReceiptCount,received,countSent,countApproved,
  differenceCount,sectorsDone,sectorsTotal,sectorsStarted,kitDone,handoffDone,onHandoff,
 })=>{
  const inventoryDone=countSent&&(differenceCount===0||countApproved);
  const steps=[
-  {number:'01',key:'noite',title:'Conferir as retiradas da noite',desc:'Ver o que saiu fora do expediente do estoquista e deixar as pendências anotadas.',screen:'emergencias' as Destination,button:'Ver retiradas a conciliar',done:nightReviewed,partial:false},
+  {number:'01',key:'noite',title:'Revisar movimentações fora do expediente',desc:'Consultar quem retirou, quais produtos saíram e se houve confirmação de recebimento no destino. Sem autorizar ou dar nova baixa.',screen:'emergencias' as Destination,button:'Ver saídas e recebimentos',done:nightReviewed,partial:false},
   {number:'02',key:'recebimento',title:'Conferir mercadorias recebidas',desc:'Comparar pedido, nota e mercadoria física. Conferir quantidades, preços e diferenças.',screen:'recebimento' as Destination,button:'Conferir recebimentos',done:received,partial:false},
   {number:'03',key:'inventario',title:'Conferir saldos e divergências',desc:'Contar os itens previstos e encaminhar ao gestor o que precisar de aprovação.',screen:'inventario' as Destination,button:'Abrir contagem',done:inventoryDone,partial:countSent&&!inventoryDone},
   {number:'04',key:'abastecimento',title:'Abastecer drinks, cervejas e cozinha',desc:'Ver quanto cada setor tem, separar a diferença e confirmar o recebimento.',screen:'abastecimento' as Destination,button:'Montar setores',done:sectorsTotal>0&&sectorsDone===sectorsTotal,partial:sectorsStarted},
@@ -53,16 +53,15 @@ const RotinaEstoquistaBeta2:React.FC<Props>=({
     <div className="b2-topline"><div><p className="b2-eyebrow">Seu passo a passo</p><h2>O que fazer hoje</h2></div><span className="b2-pill">Siga a ordem da operação</span></div>
     <div className="b2-day-steps">{steps.map(step=><div key={step.key} className={'b2-day-step'+(step.done?' done':step.partial?' partial':'')}>
      <div className="b2-day-number">{step.done?<CheckCircle2 size={22}/>:step.number}</div>
-     <div className="b2-day-body"><div className="b2-day-step-head"><h3>{step.title}</h3><span className={'b2-pill '+(step.done?'green':step.partial?'':'red')}>{step.done?'Concluída':step.partial?'Em andamento':'A fazer'}</span></div>
+     <div className="b2-day-body"><div className="b2-day-step-head"><h3>{step.title}</h3><span className={'b2-pill '+(step.done?'green':step.partial?'':'red')}>{step.done?(step.key==='noite'?'Consulta feita':'Concluída'):step.partial?'Em andamento':'A fazer'}</span></div>
       <p>{step.desc}</p>
-      {step.key==='noite'&&<small>{nightCount} retirada(s) aguardando conferência na simulação</small>}
+      {step.key==='noite'&&<small>{nightCount} retirada(s) registrada(s) · {nightAwaitingReceiptCount} sem confirmação do destino (prévia)</small>}
       {step.key==='abastecimento'&&<small>{sectorsDone} de {sectorsTotal} setores confirmados</small>}
       {step.key==='inventario'&&countSent&&!inventoryDone&&<small>Aguardando análise das diferenças pelo gestor.</small>}
       <div className="b2-day-actions">
        {step.key==='fechamento'
         ?<button className="b2-btn" disabled={!canClose||handoffDone} onClick={onHandoff}>{handoffDone?'✓ Rotina encerrada':'Confirmar conclusão da rotina'} <ArrowRight size={14}/></button>
         :<button className="b2-btn" onClick={()=>go(step.screen)}>{step.button} <ArrowRight size={14}/></button>}
-       {step.key==='noite'&&<button className="b2-btn alt" disabled={nightReviewed} onClick={onNightReviewed}>{nightReviewed?'✓ Revisado':'Marcar como conferido'}</button>}
        {step.key==='inventario'&&countSent&&!inventoryDone&&<button className="b2-btn alt" onClick={()=>go('gestao')}>Ver análise do gestor →</button>}
       </div>
       {step.key==='fechamento'&&!canClose&&!handoffDone&&<small>Disponível após as cinco etapas anteriores.</small>}
