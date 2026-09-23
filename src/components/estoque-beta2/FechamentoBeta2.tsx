@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { AlertTriangle, ArrowRight, CheckCircle2, ClipboardCheck, RefreshCw, Search } from 'lucide-react';
+import { AlertTriangle, ArrowRight, CheckCircle2, RefreshCw, Search } from 'lucide-react';
 import {
  type FechamentoPreview,type ItemDoSetor,type FrequenciaManual,
  useControleZigBeta2,fmt3,dataBR,diaOperacional,diaAuditoria,dataSeguinte,dataAnterior,cuiabaDate,keyOf
@@ -138,7 +138,7 @@ const FechamentoBeta2:React.FC<Props>=({mode,dados,fechamentos,onSave,go})=>{
    <label className="b2-field"><span>Setor cadastrado</span><select value={stockId} onChange={e=>setStockId(e.target.value)}>
     {dados.setores.map(e=><option key={e.id} value={e.id}>{e.nome}</option>)}
    </select></label>
-   <label className="b2-field"><span>Dia da operação (Cuiabá)</span><input type="date" value={date} max={diaOperacional()} onChange={e=>setDate(e.target.value)}/></label>
+   <label className="b2-field"><span>Dia da operação (Cuiabá)</span><input type="date" value={date} max={diaOperacional()} onChange={e=>{if(e.target.value)setDate(e.target.value);}}/></label>
    <button type="button" className="b2-btn alt" onClick={dados.refresh}><RefreshCw size={14}/> Atualizar Zig e saldos</button>
   </div>
   {estoque?.nome==='Bar'&&<p className="b2-op-small">O cadastro atual tem um único estoque “Bar”; Drinks e Cerveja/Chopp só poderão ser contados separadamente após vincular os itens aos respectivos blocos físicos. Não distribuí saldos por balcão artificialmente.</p>}
