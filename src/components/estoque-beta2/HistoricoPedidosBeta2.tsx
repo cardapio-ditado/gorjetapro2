@@ -16,26 +16,26 @@ type Item = {
  quantidade_entregue:number|null;quantidade_aprovada:number|null;
  observacao:string|null;itens_estoque:{nome:string;unidade_medida:string}|null;
 };
-interface Props {mode:Mode;preview:EmergencyPreview[];openId?:string;onlyPreview?:boolean;night?:boolean;onReconcile?:(id:string)=>void;}
+interface Props {mode:Mode;preview:EmergencyPreview[];openId?:string;initialNightFilter?:boolean;onReconcile?:(id:string)=>void;}
 const fmt=(n:number)=>Number(n||0).toLocaleString('pt-BR',{maximumFractionDigits:3});
 const when=(v:string|null|undefined)=>v?new Date(v).toLocaleString('pt-BR'):'—';
 const label=(status:string)=>({
  pendente:'A entregar',aprovado:'A entregar',concluido:'Concluído',
  rejeitado:'Rejeitado',entregue:'Entrega simulada'
 } as Record<string,string>)[status]||status;
-const HistoricoPedidosBeta2:React.FC<Props>=({mode,preview,openId,onlyPreview=false,night=false,onReconcile})=>{
+const HistoricoPedidosBeta2:React.FC<Props>=({mode,preview,openId,initialNightFilter=false,onReconcile})=>{
  const [records,setRecords]=useState<Request[]>([]);
  const [stocks,setStocks]=useState<Record<string,string>>({});
  const [busy,setBusy]=useState(false);
  const [error,setError]=useState('');
  const [term,setTerm]=useState('');
+ const[typeFilter,setTypeFilter]=useState<'todos'|'emergencial'|'noturna'>(initialNightFilter?'noturna':'todos');
  const [selected,setSelected]=useState<{kind:'real'|'demo';id:string}|null>(null);
  const [detail,setDetail]=useState<Item[]>([]);
  const [detailBusy,setDetailBusy]=useState(false);
  const [detailError,setDetailError]=useState('');
  const [refreshKey,setRefreshKey]=useState(0);
  const reload=useCallback(async()=>{
-  if(onlyPreview){setRecords([]);setStocks({});setBusy(false);setError('');return;}
   setBusy(true);setError('');
   try{
    const statuses=mode==='pendentes'?['pendente','aprovado']:['concluido','rejeitado'];
@@ -51,7 +51,7 @@ const HistoricoPedidosBeta2:React.FC<Props>=({mode,preview,openId,onlyPreview=fa
    setStocks(Object.fromEntries((loc.data||[]).map(s=>[s.id,s.nome])));
   }catch(e){setError(e instanceof Error?e.message:'Não foi possível consultar pedidos existentes.');setRecords([]);}
   finally{setBusy(false);}
- },[mode,onlyPreview]);
+ },[mode]);
  useEffect(()=>{void reload();},[reload,refreshKey]);
  useEffect(()=>{setTerm('');setSelected(null);setDetail([]);setDetailError('');},[mode]);
  useEffect(()=>{
@@ -74,40 +74,47 @@ const HistoricoPedidosBeta2:React.FC<Props>=({mode,preview,openId,onlyPreview=fa
   return()=>{alive=false;};
  },[selected?.id,selected?.kind]);
  const match=(text:string)=>text.toLocaleLowerCase('pt-BR').includes(term.toLocaleLowerCase('pt-BR').trim());
- const realShown=useMemo(()=>records.filter(r=>match([r.numero_requisicao,r.funcionario_nome,r.setor,stocks[r.estoque_origem_id],stocks[r.estoque_destino_id]].join(' '))),
- [records,stocks,term]);
+ const realShown=useMemo(()=>typeFilter==='noturna'?[]:records.filter(r=>match([r.numero_requisicao,r.funcionario_nome,r.setor,stocks[r.estoque_origem_id],stocks[r.estoque_destino_id]].join(' '))),
+ [records,stocks,term,typeFilter]);
  const demoShown=useMemo(()=>preview.filter(r=>(mode==='pendentes'?r.status==='pendente':r.status==='entregue')
+  &&(typeFilter==='todos'||(r.kind||'emergencial')===typeFilter)
   &&match([r.id,r.requester,r.withdrawnBy,r.sector,r.from,r.to,r.reason,...r.lines.map(x=>x.item)].join(' '))),
- [preview,mode,term]);
+ [preview,mode,term,typeFilter]);
  const selectedReal=selected?.kind==='real'?records.find(r=>r.id===selected.id):undefined;
  const selectedDemo=selected?.kind==='demo'?preview.find(r=>r.id===selected.id):undefined;
  const realStatus=selectedReal?.status||'';
  return <div className="b2-history">
   <div className="b2-op-section-title"><div>
-   <p className="b2-eyebrow">{night?'Ocorrências fora do expediente':mode==='pendentes'?'Solicitações aguardando entrega':'Transferências e solicitações anteriores'}</p>
-   <h2>{night?(mode==='pendentes'?'Retiradas a conciliar':'Histórico de retiradas'):mode==='pendentes'?'Pedidos a entregar':'Histórico de pedidos'}</h2>
+   <p className="b2-eyebrow">Solicitações e retiradas · consulta unificada</p>
+   <h2>{mode==='pendentes'?'Pendentes de entrega ou conferência':'Histórico de movimentações'}</h2>
   </div><button type="button" className="b2-btn alt small" onClick={()=>setRefreshKey(k=>k+1)} disabled={busy}>
    <RefreshCw size={14}/>Atualizar</button></div>
-  <p className="b2-lead">{night
-   ?mode==='pendentes'?'Retiradas já realizadas que ainda precisam ser conferidas no próximo turno.':'Retiradas noturnas conferidas nesta demonstração.'
-   :mode==='pendentes'?'Solicitações em aberto do módulo original e pedidos simulados nesta prévia.':'Pedidos concluídos ou rejeitados do Gorjeta Pro e entregas simuladas durante os testes.'}</p>
-  <div className="b2-hint">{night
-   ?'Retiradas noturnas desta prévia são apenas simulações. Elas não estão classificadas no histórico oficial e não causam baixa no estoque.'
-   :<>Histórico oficial em <strong>somente leitura</strong>. Os registros marcados “TESTE” pertencem apenas ao Beta 2 e não existem no banco real.</>}</div>
+  <p className="b2-lead">{mode==='pendentes'
+    ?'Pedidos aguardando entrega e retiradas já realizadas que ainda precisam ser conferidas.'
+    :'Entregas, retiradas conferidas e solicitações anteriores em um único histórico.'}</p>
+  <div className="b2-hint">Registros OFICIAIS do módulo antigo: somente leitura. Registros TESTE do Beta 2: simulados, sem baixa nem gravação no estoque.</div>
+  <div className="b2-chips" role="group" aria-label="Filtrar tipo de movimentação">
+   {([
+    ['todos','Todos'],
+    ['emergencial','Pedidos emergenciais'],
+    ['noturna','Retiradas já feitas']
+   ] as const).map(([v,name])=><button type="button" className="b2-chip" aria-pressed={typeFilter===v} key={v}
+    onClick={()=>{setTypeFilter(v);setSelected(null);}}>{name}</button>)}
+  </div>
   <label className="b2-history-search"><Search size={17}/><input value={term} onChange={e=>setTerm(e.target.value)}
     placeholder="Buscar por número, funcionário, setor ou estoque..." aria-label="Pesquisar pedidos"/></label>
   {error&&<div className="b2-error" role="alert">{error}</div>}
   {busy&&<div className="b2-hint">Carregando pedidos originais...</div>}
   <div className="b2-history-layout">
    <section className="b2-card b2-history-list" aria-label="Lista de pedidos">
-    <div className="b2-topline"><h2>Pedidos</h2><span className="b2-pill">{realShown.length+demoShown.length}{busy?' · atualizando':''}</span></div>
+    <div className="b2-topline"><h2>Registros</h2><span className="b2-pill">{realShown.length+demoShown.length}{busy?' · atualizando':''}</span></div>
     {!busy&&realShown.length===0&&demoShown.length===0&&<div className="b2-hint">Nenhum pedido encontrado para este filtro.</div>}
     {demoShown.map(r=><button type="button" key={'demo-'+r.id}
       className={'b2-history-row'+(selected?.kind==='demo'&&selected.id===r.id?' selected':'')}
       onClick={()=>setSelected({kind:'demo',id:r.id})}>
-      <span className="b2-history-main"><strong>{r.requester} · {r.sector}</strong><small>{r.from} → {r.to}</small>
+      <span className="b2-history-main"><strong>{r.kind==='noturna'?'Retirada já feita':'Pedido emergencial'} · {r.requester} · {r.sector}</strong><small>{r.from} → {r.to}</small>
       <small>{r.occurredAt?when(r.occurredAt):r.created} · {r.lines.length} item(ns)</small></span>
-      <span className="b2-history-tags"><span className="b2-pill">TESTE</span><span className={'b2-pill '+(r.status==='entregue'?'green':'')}>{night?(r.status==='entregue'?'Conciliada':'A conciliar'):label(r.status)}</span></span>
+      <span className="b2-history-tags"><span className="b2-pill">TESTE</span><span className={'b2-pill '+(r.status==='entregue'?'green':'')}>{r.kind==='noturna'?(r.status==='entregue'?'Conferida':'A conciliar'):label(r.status)}</span></span>
       <Eye size={16} className="b2-history-eye"/>
     </button>)}
     {realShown.map(r=><button type="button" key={r.id}
@@ -151,24 +158,24 @@ const HistoricoPedidosBeta2:React.FC<Props>=({mode,preview,openId,onlyPreview=fa
        </table></div>}
      <p className="b2-op-small">Os dados exibidos são do pedido real. Esta consulta não aprova, entrega nem altera quantidades.</p>
     </>:selectedDemo?<><div className="b2-topline"><div><p className="b2-eyebrow">Pedido de teste · não salvo no banco</p>
-      <h2>{night?'Retirada noturna simulada':'Solicitação simulada'}</h2></div><button className="b2-btn alt small" type="button" onClick={()=>setSelected(null)}><X size={15}/>Fechar</button></div>
-     <span className="b2-pill">TESTE · {night?(selectedDemo.status==='entregue'?'Conciliada':'A conciliar'):label(selectedDemo.status)}</span>
+      <h2>{selectedDemo.kind==='noturna'?'Retirada já realizada':'Pedido emergencial'}</h2></div><button className="b2-btn alt small" type="button" onClick={()=>setSelected(null)}><X size={15}/>Fechar</button></div>
+     <span className="b2-pill">TESTE · {selectedDemo.kind==='noturna'?(selectedDemo.status==='entregue'?'Conferida':'A conciliar'):label(selectedDemo.status)}</span>
      <div className="b2-history-meta">
       {[['Solicitante',selectedDemo.requester],
-       ...(night?[['Quem retirou',selectedDemo.withdrawnBy||'—'],['Data/hora da retirada',when(selectedDemo.occurredAt)]]:[]),
+       ...(selectedDemo.kind==='noturna'?[['Quem retirou',selectedDemo.withdrawnBy||'—'],['Data/hora da retirada',when(selectedDemo.occurredAt)]]:[]),
        ['Setor',selectedDemo.sector],['Criado em',selectedDemo.created],
        ['Estoque de origem',selectedDemo.from],['Estoque de destino',selectedDemo.to],
-       ['Motivo',selectedDemo.reason],...(night&&selectedDemo.reconciledAt?[['Conciliado em',selectedDemo.reconciledAt]]:[])]
+       ['Motivo',selectedDemo.reason],...(selectedDemo.kind==='noturna'&&selectedDemo.reconciledAt?[['Conferido em',selectedDemo.reconciledAt]]:[])]
        .map(([k,v])=><div key={k}><small>{k}</small><strong>{v||'—'}</strong></div>)}
      </div>
-     <h3 className="b2-history-items-title">{night?'Produtos retirados':'Produtos solicitados'}</h3>
-     <div className="b2-table-scroll"><table className="b2-history-table"><thead><tr><th>Produto</th><th>{night?'Retirado':'Solicitado'}</th><th>Status</th></tr></thead>
+     <h3 className="b2-history-items-title">{selectedDemo.kind==='noturna'?'Produtos retirados':'Produtos solicitados'}</h3>
+     <div className="b2-table-scroll"><table className="b2-history-table"><thead><tr><th>Produto</th><th>{selectedDemo.kind==='noturna'?'Retirado':'Solicitado'}</th><th>Status</th></tr></thead>
       <tbody>{selectedDemo.lines.map((l,i)=><tr key={i}><td><strong>{l.item}</strong></td><td>{fmt(l.quantity)} {l.unit}</td>
-       <td>{night?(selectedDemo.status==='entregue'?'Conferida':'A conciliar'):(selectedDemo.status==='entregue'?'Entrega simulada':'A entregar')}</td></tr>)}</tbody>
+       <td>{selectedDemo.kind==='noturna'?(selectedDemo.status==='entregue'?'Conferida':'A conciliar'):(selectedDemo.status==='entregue'?'Entrega simulada':'A entregar')}</td></tr>)}</tbody>
      </table></div>
-     {night&&selectedDemo.status==='pendente'&&onReconcile&&
+     {selectedDemo.kind==='noturna'&&selectedDemo.status==='pendente'&&onReconcile&&
        <button type="button" className="b2-btn" onClick={()=>onReconcile(selectedDemo.id)}>✓ Marcar retirada como conferida</button>}
-     <div className="b2-hint">{night?'Conferir esta retirada não gera uma segunda baixa. ':'Este registro desaparece ao reiniciar os testes do Beta 2. '}{night&&'Este registro também desaparece ao reiniciar os testes.'}</div>
+     <div className="b2-hint">{selectedDemo.kind==='noturna'?'Conferir esta retirada não gera uma segunda baixa. ':''}Este registro desaparece ao reiniciar os testes do Beta 2.</div>
     </>:<div className="b2-history-placeholder"><History size={32}/><h2>Abra um pedido</h2>
      <p>Selecione um pedido na lista para ver solicitante, origem, destino, data, status e todos os itens.</p>
      <ArrowRight size={18}/></div>}
