@@ -1,8 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { CheckCircle2, Plus, Trash2 } from 'lucide-react';
+import { CheckCircle2, History, Plus, Trash2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import './OperacoesBeta2.css';
 import PesquisaItemBeta2 from './PesquisaItemBeta2';
+import HistoricoPedidosBeta2 from './HistoricoPedidosBeta2';
 
 type Row = {id:string;nome:string;[key:string]:any};
 type EmergencyLine = {key:string;itemId:string;quantity:string};
@@ -41,6 +42,8 @@ const EmergenciasBeta2:React.FC<Props>=({requests,onSave})=>{
  const[balanceLoading,setBalanceLoading]=useState(false);
  const[error,setError]=useState('');
  const[notice,setNotice]=useState('');
+ const[tab,setTab]=useState<'novo'|'pendentes'|'historico'>('novo');
+ const[openPreviewId,setOpenPreviewId]=useState('');
  useEffect(()=>{
   let active=true;
   const load=async()=>{
@@ -102,8 +105,9 @@ const EmergenciasBeta2:React.FC<Props>=({requests,onSave})=>{
     setError('O saldo na origem é insuficiente para entregar imediatamente o item da linha '+(i+1)+'. Registre uma solicitação pendente ou ajuste a quantidade.');return;
    }
   }
+  const demoId=Math.random().toString(36).slice(2);
   onSave({
-   id:Math.random().toString(36).slice(2),requester:String(staff.nome_completo),
+   id:demoId,requester:String(staff.nome_completo),
    sector:department.trim(),from:source.nome,to:destination.nome,reason:reason.trim(),
    status,created:new Date().toLocaleString('pt-BR'),
    lines:lines.map(x=>({item:itemById.get(x.itemId)?.nome||'Item',quantity:q(x.quantity),unit:String(itemById.get(x.itemId)?.unidade_medida||'un')}))
@@ -111,16 +115,27 @@ const EmergenciasBeta2:React.FC<Props>=({requests,onSave})=>{
   setNotice(status==='pendente'
    ?'Solicitação emergencial registrada SOMENTE nesta prévia; nenhum saldo movimentado.'
    :'Entrega imediata SIMULADA. Nenhum saldo oficial foi movimentado.');
+  setOpenPreviewId(demoId);
+  setTab(status==='pendente'?'pendentes':'historico');
   setLines([line()]);setReason('Reposição emergencial');
  };
  return <div>
   <p className="b2-eyebrow">Operação · solicitação fora da rotina</p><h1>Pedido emergencial</h1>
   <p className="b2-lead">Um único pedido pode levar vários produtos. Identifique quem solicitou e registre de qual estoque cada item sai e para onde vai.</p>
   <div className="b2-hint">Este formulário usa os cadastros originais de colaboradores, itens e estoques para consulta. Registrar ou simular entrega não grava requisição nem movimentação no estoque oficial.</div>
-  <div className="b2-op-steps"><span className="b2-op-step current">01 · Solicitante</span><span className="b2-op-step current">02 · Origem e destino</span><span className="b2-op-step current">03 · Vários itens</span><span className="b2-op-step current">04 · Confirmar</span></div>
+  <div className="b2-op-tabs" role="tablist" aria-label="Pedidos emergenciais">
+   <button type="button" role="tab" className="b2-op-tab" aria-selected={tab==='novo'} aria-pressed={tab==='novo'} onClick={()=>setTab('novo')}>
+    <Plus size={15}/>Novo pedido</button>
+   <button type="button" role="tab" className="b2-op-tab" aria-selected={tab==='pendentes'} aria-pressed={tab==='pendentes'} onClick={()=>{setTab('pendentes');setOpenPreviewId('');}}>
+    <History size={15}/>A entregar</button>
+   <button type="button" role="tab" className="b2-op-tab" aria-selected={tab==='historico'} aria-pressed={tab==='historico'} onClick={()=>{setTab('historico');setOpenPreviewId('');}}>
+    <History size={15}/>Histórico de pedidos</button>
+  </div>
+  {notice&&<div className="b2-op-summary" role="status"><CheckCircle2 size={19}/><strong>{notice}</strong></div>}
+  {tab==='novo'&&<>
+   <div className="b2-op-steps"><span className="b2-op-step current">01 · Solicitante</span><span className="b2-op-step current">02 · Origem e destino</span><span className="b2-op-step current">03 · Vários itens</span><span className="b2-op-step current">04 · Confirmar</span></div>
   {loading?<div className="b2-card">Carregando funcionários, estoques e itens reais...</div>:<>
    {error&&<div className="b2-error" role="alert">{error}</div>}
-   {notice&&<div className="b2-op-summary"><CheckCircle2 size={19}/><strong>{notice}</strong></div>}
    <section className="b2-card">
     <h2>1 · Quem está solicitando?</h2>
     <div className="b2-op-fields">
@@ -173,6 +188,8 @@ const EmergenciasBeta2:React.FC<Props>=({requests,onSave})=>{
     </div>)}
    </section>}
   </>}
+  </>}
+  {tab!=='novo'&&<HistoricoPedidosBeta2 mode={tab} preview={requests} openId={openPreviewId}/>}
  </div>;
 };
 export default EmergenciasBeta2;
