@@ -35,6 +35,7 @@ const EmergenciasBeta2:React.FC<Props>=({requests,onSave})=>{
  const[to,setTo]=useState('');
  const[reason,setReason]=useState('Reposição emergencial');
  const[lines,setLines]=useState<EmergencyLine[]>([line()]);
+ const[focusLine,setFocusLine]=useState('');
  const[balances,setBalances]=useState<Record<string,number>>({});
  const[loading,setLoading]=useState(true);
  const[balanceLoading,setBalanceLoading]=useState(false);
@@ -145,13 +146,13 @@ const EmergenciasBeta2:React.FC<Props>=({requests,onSave})=>{
      return <div className="b2-op-line b2-op-line-compact" key={l.key}>
       <div className="b2-op-line-head"><strong>Item {index+1}</strong><button className="b2-btn alt small" type="button" disabled={lines.length===1} onClick={()=>setLines(p=>p.filter(x=>x.key!==l.key))}><Trash2 size={13} style={{display:'inline',marginRight:5}}/>Remover</button></div>
       <div className="b2-op-line-fields transfer" style={{marginTop:7}}>
-       <PesquisaItemBeta2 items={items} selectedId={l.itemId} onSelect={id=>setLine(l.key,'itemId',id)} label="Produto *"/>
+       <PesquisaItemBeta2 items={items} selectedId={l.itemId} onSelect={id=>setLine(l.key,'itemId',id)} label="Produto *" focusOnMount={focusLine===l.key}/>
        <label className="b2-field"><span>Quantidade *</span><input type="number" min="0.001" step="0.001" value={l.quantity} onChange={e=>setLine(l.key,'quantity',e.target.value)}/><small>{selected?.unidade_medida||'Unidade do item'}</small></label>
       </div>
       {selected&&<div className="b2-op-line-summary"><span>Saldo na origem: <strong className={insufficient?'b2-pill red':'b2-op-good'}>{balanceLoading?'Consultando...':fmt(bal)+' '+(selected.unidade_medida||'')}</strong>{insufficient?' · entrega imediata sem saldo suficiente':''}</span></div>}
      </div>;
     })}</div>
-    <button className="b2-op-add-line" type="button" onClick={()=>setLines(p=>[...p,line()])}><Plus size={17}/> Adicionar outro item</button>
+    <button className="b2-op-add-line" type="button" onClick={()=>{const next=line();setFocusLine(next.key);setLines(p=>[...p,next]);}}><Plus size={17}/> Adicionar outro item</button>
     <div className="b2-op-totals"><span>Um único pedido emergencial</span><strong>{lines.length} linha(s) de produtos</strong></div>
    </section>
    <section className="b2-section b2-card">
