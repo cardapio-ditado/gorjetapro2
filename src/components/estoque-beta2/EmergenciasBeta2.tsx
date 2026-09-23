@@ -75,7 +75,7 @@ const EmergenciasBeta2:React.FC<Props>=({requests,onSave,kind='emergencial',onRe
   let mounted=true;
   const ids=[...new Set(lines.map(x=>x.itemId).filter(Boolean))];
   setBalances({});
-  if(!from||!ids.length)return;
+  if(isNight||!from||!ids.length){setBalanceLoading(false);return;}
   setBalanceLoading(true);
   void (async()=>{
    try{
@@ -87,7 +87,7 @@ const EmergenciasBeta2:React.FC<Props>=({requests,onSave,kind='emergencial',onRe
    finally{if(mounted)setBalanceLoading(false);}
   })();
   return()=>{mounted=false;};
- },[from,productIds]);
+ },[from,productIds,isNight]);
  const setLine=(key:string,field:keyof EmergencyLine,value:string)=>
   setLines(prev=>prev.map(x=>x.key===key?{...x,[field]:value}:x));
  const save=(status:'pendente'|'entregue')=>{
@@ -97,6 +97,9 @@ const EmergenciasBeta2:React.FC<Props>=({requests,onSave,kind='emergencial',onRe
   if(!staff||!department.trim()){setError('Escolha o funcionário solicitante e informe o setor.');return;}
   if(isNight&&(!employees.some(e=>e.id===withdrawer)||!occurredAt||!Number.isFinite(new Date(occurredAt).getTime()))){
    setError('Informe quem retirou a mercadoria e a data/hora da retirada noturna.');return;
+  }
+  if(isNight&&new Date(occurredAt).getTime()>Date.now()+60_000){
+   setError('A data/hora da retirada não pode ser futura, pois a mercadoria já saiu.');return;
   }
   if(!source||!destination||source.id===destination.id){setError('Selecione estoques de origem e destino diferentes.');return;}
   if(!reason.trim()){setError(isNight?'Descreva o motivo da retirada noturna.':'Descreva o motivo da solicitação emergencial.');return;}
@@ -183,7 +186,7 @@ const EmergenciasBeta2:React.FC<Props>=({requests,onSave,kind='emergencial',onRe
        <PesquisaItemBeta2 items={items} selectedId={l.itemId} onSelect={id=>setLine(l.key,'itemId',id)} label="Produto *" focusOnMount={focusLine===l.key}/>
        <label className="b2-field"><span>Quantidade *</span><input type="number" min="0.001" step="0.001" value={l.quantity} onChange={e=>setLine(l.key,'quantity',e.target.value)}/><small>{selected?.unidade_medida||'Unidade do item'}</small></label>
       </div>
-      {selected&&<div className="b2-op-line-summary"><span>Saldo na origem: <strong className={insufficient?'b2-pill red':'b2-op-good'}>{balanceLoading?'Consultando...':fmt(bal)+' '+(selected.unidade_medida||'')}</strong>{insufficient?' · entrega imediata sem saldo suficiente':''}</span></div>}
+      {selected&&!isNight&&<div className="b2-op-line-summary"><span>Saldo na origem: <strong className={insufficient?'b2-pill red':'b2-op-good'}>{balanceLoading?'Consultando...':fmt(bal)+' '+(selected.unidade_medida||'')}</strong>{insufficient?' · entrega imediata sem saldo suficiente':''}</span></div>}
      </div>;
     })}</div>
     <button className="b2-op-add-line" type="button" onClick={()=>{const next=line();setFocusLine(next.key);setLines(p=>[...p,next]);}}><Plus size={17}/> Adicionar outro item</button>
