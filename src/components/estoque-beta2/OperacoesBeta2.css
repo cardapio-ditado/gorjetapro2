@@ -11,7 +11,7 @@
 .b2-root .b2-op-line{border:1px solid #795469;border-radius:13px;background:#342439;padding:15px}
 .b2-root .b2-op-line-head{display:flex;gap:12px;align-items:center;justify-content:space-between;margin-bottom:12px}
 .b2-root .b2-op-line-head strong{color:#fff!important}
-.b2-root .b2-op-line-fields{display:grid;grid-template-columns:minmax(175px,2fr) minmax(96px,.7fr) minmax(96px,.75fr) minmax(96px,.7fr);gap:12px}
+.b2-root .b2-op-line-fields{display:grid;grid-template-columns:minmax(175px,2fr) repeat(4,minmax(90px,.72fr));gap:12px}
 .b2-root .b2-op-line-fields.transfer{grid-template-columns:minmax(175px,2fr) minmax(120px,1fr)}
 .b2-root .b2-op-line-fields .b2-field{min-width:0}
 .b2-root .b2-op-line-fields input,.b2-root .b2-op-line-fields select{width:100%}
