@@ -125,13 +125,17 @@ const HistoricoPedidosBeta2:React.FC<Props>=({
  return <div className="b2-history">
   <div className="b2-op-section-title"><div>
    <p className="b2-eyebrow">Solicitações e retiradas · consulta unificada</p>
-   <h2>{mode==='pendentes'?'Pendentes de entrega ou conferência':'Histórico de movimentações'}</h2>
+   <h2>{mode==='monitoramento'?'Movimentações fora do expediente':mode==='pendentes'?'Pendentes de saída ou recebimento':'Histórico de movimentações'}</h2>
   </div><button type="button" className="b2-btn alt small" onClick={()=>setRefreshKey(k=>k+1)} disabled={busy}>
    <RefreshCw size={14}/>Atualizar</button></div>
-  <p className="b2-lead">{mode==='pendentes'
-    ?'Pedidos aguardando entrega e retiradas já realizadas que ainda precisam ser conferidas.'
-    :'Entregas, retiradas conferidas e solicitações anteriores em um único histórico.'}</p>
-  <div className="b2-hint">Registros OFICIAIS do módulo antigo: somente leitura. Registros TESTE do Beta 2: simulados, sem baixa nem gravação no estoque.</div>
+  <p className="b2-lead">{mode==='monitoramento'
+    ?'Visão do estoquista: veja quem retirou, o que saiu e se o responsável pelo destino confirmou o recebimento. Nenhuma aprovação ou segunda baixa aqui.'
+    :mode==='pendentes'
+     ?'Pedidos aguardando saída e mercadorias que já saíram, mas ainda não tiveram o recebimento confirmado pelo destino.'
+     :'Saídas com recebimento confirmado e solicitações anteriores em um único histórico.'}</p>
+  <div className="b2-hint">{readOnly
+    ?'VISUALIZAÇÃO DO ESTOQUISTA · somente consulta. Confirmar recebimento é responsabilidade de quem recebeu no setor, não do estoque central.'
+    :'Registros OFICIAIS do módulo antigo: somente leitura. TESTES do Beta 2: saída e confirmação simuladas, sem gravar saldo nem movimentação oficial.'}</div>
   <div className="b2-chips" role="group" aria-label="Filtrar tipo de movimentação">
    {([
     ['todos','Todos'],
@@ -153,7 +157,7 @@ const HistoricoPedidosBeta2:React.FC<Props>=({
       onClick={()=>setSelected({kind:'demo',id:r.id})}>
       <span className="b2-history-main"><strong>{r.kind==='noturna'?'Retirada já feita':'Pedido emergencial'} · {r.requester} · {r.sector}</strong><small>{r.from} → {r.to}</small>
       <small>{r.occurredAt?when(r.occurredAt):r.created} · {r.lines.length} item(ns)</small></span>
-      <span className="b2-history-tags"><span className="b2-pill">TESTE</span><span className={'b2-pill '+(r.status==='entregue'?'green':'')}>{r.kind==='noturna'?(r.status==='entregue'?'Conferida':'A conciliar'):label(r.status)}</span></span>
+      <span className="b2-history-tags"><span className="b2-pill">TESTE</span><span className={'b2-pill '+(r.receiptConfirmedAt?'green':r.status==='entregue'?'red':'')}>{movementStatus(r)}</span></span>
       <Eye size={16} className="b2-history-eye"/>
     </button>)}
     {realShown.map(r=><button type="button" key={r.id}
@@ -195,10 +199,10 @@ const HistoricoPedidosBeta2:React.FC<Props>=({
          <td>{fmt(i.quantidade_solicitada)} {i.itens_estoque?.unidade_medida||''}</td>
          <td>{i.quantidade_entregue==null?'—':fmt(i.quantidade_entregue)+' '+(i.itens_estoque?.unidade_medida||'')}</td></tr>)}</tbody>
        </table></div>}
-     <p className="b2-op-small">Os dados exibidos são do pedido real. Esta consulta não aprova, entrega nem altera quantidades.</p>
+     <p className="b2-op-small">Dados do módulo original. O status “concluído” não comprova, por si só, confirmação independente pelo funcionário do destino. Esta tela não aprova, entrega nem altera quantidades.</p>
     </>:selectedDemo?<><div className="b2-topline"><div><p className="b2-eyebrow">Pedido de teste · não salvo no banco</p>
       <h2>{selectedDemo.kind==='noturna'?'Retirada já realizada':'Pedido emergencial'}</h2></div><button className="b2-btn alt small" type="button" onClick={()=>setSelected(null)}><X size={15}/>Fechar</button></div>
-     <span className="b2-pill">TESTE · {selectedDemo.kind==='noturna'?(selectedDemo.status==='entregue'?'Conferida':'A conciliar'):label(selectedDemo.status)}</span>
+     <span className={'b2-pill '+(selectedDemo.receiptConfirmedAt?'green':'')}>TESTE · {movementStatus(selectedDemo)}</span>
      <div className="b2-history-meta">
       {[['Solicitante',selectedDemo.requester],
        ...(selectedDemo.kind==='noturna'?[['Quem retirou',selectedDemo.withdrawnBy||'—'],['Data/hora da retirada',when(selectedDemo.occurredAt)]]:[]),
@@ -210,7 +214,7 @@ const HistoricoPedidosBeta2:React.FC<Props>=({
      <h3 className="b2-history-items-title">{selectedDemo.kind==='noturna'?'Produtos retirados':'Produtos solicitados'}</h3>
      <div className="b2-table-scroll"><table className="b2-history-table"><thead><tr><th>Produto</th><th>{selectedDemo.kind==='noturna'?'Retirado':'Solicitado'}</th><th>Status</th></tr></thead>
       <tbody>{selectedDemo.lines.map((l,i)=><tr key={i}><td><strong>{l.item}</strong></td><td>{fmt(l.quantity)} {l.unit}</td>
-       <td>{selectedDemo.kind==='noturna'?(selectedDemo.status==='entregue'?'Conferida':'A conciliar'):(selectedDemo.status==='entregue'?'Entrega simulada':'A entregar')}</td></tr>)}</tbody>
+       <td>{movementStatus(selectedDemo)}</td></tr>)}</tbody>
      </table></div>
      {selectedDemo.kind==='noturna'&&selectedDemo.status==='pendente'&&onReconcile&&
        <button type="button" className="b2-btn" onClick={()=>onReconcile(selectedDemo.id)}>✓ Marcar retirada como conferida</button>}
