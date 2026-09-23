@@ -31,11 +31,11 @@ const FechamentoBeta2:React.FC<Props>=({mode,dados,fechamentos,onSave,go})=>{
  const[notice,setNotice]=useState('');
  const[error,setError]=useState('');
  useEffect(()=>{
-  if(!stockId&&dados.setores.length)setStockId(dados.setores[0].id);
-  if(stockId&&!dados.setores.some(s=>s.id===stockId))setStockId(dados.setores[0]?.id||'');
- },[dados.setores,stockId]);
+  if(!stockId&&dados.setores.length)setStockId(mode==='reposicao'?'todos':dados.setores[0].id);
+  if(stockId!=='todos'&&stockId&&!dados.setores.some(s=>s.id===stockId))setStockId(dados.setores[0]?.id||'');
+ },[dados.setores,stockId,mode]);
  const estoque=dados.setores.find(s=>s.id===stockId);
- const rows=useMemo(()=>dados.linhas.filter(x=>x.estoque_id===stockId),[dados.linhas,stockId]);
+ const rows=useMemo(()=>dados.linhas.filter(x=>mode==='reposicao'&&stockId==='todos'||x.estoque_id===stockId),[dados.linhas,stockId,mode]);
  const daily=useMemo(()=>rows.filter(x=>x.controleEfetivo==='diario'),[rows]);
  const automatic=useMemo(()=>rows.filter(x=>x.controleEfetivo==='zig'),[rows]);
  const periodic=useMemo(()=>rows.filter(x=>x.controleEfetivo==='periodico'),[rows]);
@@ -136,6 +136,7 @@ const FechamentoBeta2:React.FC<Props>=({mode,dados,fechamentos,onSave,go})=>{
   <div className="b2-hint"><strong>PRÉVIA OPERACIONAL.</strong> Lê o cadastro e os saldos reais, mas o fechamento, a política revisada e a reposição desta tela ficam somente nesta sessão. Não processa Zig, não cria consumo, não ajusta saldo e não transfere estoque.</div>
   <div className="b2-close-selector">
    <label className="b2-field"><span>Setor cadastrado</span><select value={stockId} onChange={e=>setStockId(e.target.value)}>
+    {mode==='reposicao'&&<option value="todos">Todos os setores · lista consolidada</option>}
     {dados.setores.map(e=><option key={e.id} value={e.id}>{e.nome}</option>)}
    </select></label>
    <label className="b2-field"><span>Dia da operação (Cuiabá)</span><input type="date" value={date} max={diaOperacional()} onChange={e=>{if(e.target.value)setDate(e.target.value);}}/></label>
@@ -216,20 +217,24 @@ const FechamentoBeta2:React.FC<Props>=({mode,dados,fechamentos,onSave,go})=>{
      return <span key={st.id} className={'b2-pill '+(!hasDaily||f?'green':'red')}>{st.nome}: {f?'fechamento recebido':hasDaily?'falta fechamento':'sem contagem diária'}</span>;
     })}
    </div>
-   {estoque&&daily.length>0&&!previous&&<div className="b2-error">O gerente ainda não enviou a contagem diária de {estoque.nome} para {formatDate(date)}. Esta lista NÃO está pronta.</div>}
+   {dados.setores.filter(st=>(stockId==='todos'||stockId===st.id)
+    &&dados.linhas.some(l=>l.estoque_id===st.id&&l.controleEfetivo==='diario')
+    &&!period.some(f=>f.estoqueId===st.id)).map(st=>
+    <div className="b2-error" key={st.id}>Falta o fechamento de {st.nome} para {formatDate(date)}. Esta lista NÃO está pronta.</div>)}
    {audit&&!previous?.auditoria&&<div className="b2-hint">Há contagem geral programada para este dia; a auditoria ainda não foi enviada nesta prévia.</div>}
-   <div className="b2-op-section-title"><h2>Sugestão de separação · {estoque?.nome}</h2>
+   <div className="b2-op-section-title"><h2>Sugestão de separação · {estoque?.nome||'Todos os setores'}</h2>
     <span className="b2-pill">{rows.length} itens configurados</span></div>
-   <div className="b2-table-scroll"><table className="b2-close-table"><thead><tr><th>Produto</th><th>Como baixa</th><th>Saldo para cálculo</th><th>Nível alvo</th><th>Separar</th><th>Central</th></tr></thead>
+   <div className="b2-table-scroll"><table className="b2-close-table"><thead><tr><th>Setor</th><th>Produto</th><th>Como baixa</th><th>Saldo para cálculo</th><th>Nível alvo</th><th>Separar</th><th>Central</th></tr></thead>
     <tbody>{rows.map(row=>{
-     const closed=previous?.quantidades[row.item_id];
+     const closure=period.find(f=>f.estoqueId===row.estoque_id);
+     const closed=closure?.quantidades[row.item_id];
      const physical=row.controleEfetivo==='diario'&&closed!==undefined;
      const stock=physical?closed:row.saldo;
      const target=row.nivel_reposicao;
      const qty=target===null?null:Math.max(0,target-stock);
      const central=dados.estoques.find(e=>e.tipo==='central');
      const inCentral=central?dados.saldos[keyOf(central.id,row.item_id)]||0:0;
-     return <tr key={row.item_id}><td><strong>{row.item.nome}</strong><small>{row.item.unidade_medida||'un.'}</small></td>
+     return <tr key={keyOf(row.estoque_id,row.item_id)}><td>{dados.setores.find(st=>st.id===row.estoque_id)?.nome||'Setor'}</td><td><strong>{row.item.nome}</strong><small>{row.item.unidade_medida||'un.'}</small></td>
       <td><span className={'b2-pill '+tone[row.controleEfetivo]}>{labels[row.controleEfetivo]}</span></td>
       <td>{!physical&&row.controleEfetivo==='diario'?'Pendente':fmt3(stock)}</td>
       <td>{target===null?'Configurar':fmt3(target)}</td>
