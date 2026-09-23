@@ -112,7 +112,6 @@ const EmergenciasBeta2:React.FC<Props>=({requests,onSave})=>{
    :'Entrega imediata SIMULADA. Nenhum saldo oficial foi movimentado.');
   setLines([line()]);setSearch({});setReason('Reposição emergencial');
  };
- const totalItems=lines.reduce((sum,l)=>sum+(Number.isFinite(q(l.quantity))?q(l.quantity):0),0);
  return <div>
   <p className="b2-eyebrow">Operação · solicitação fora da rotina</p><h1>Pedido emergencial</h1>
   <p className="b2-lead">Um único pedido pode levar vários produtos. Identifique quem solicitou e registre de qual estoque cada item sai e para onde vai.</p>
@@ -157,7 +156,7 @@ const EmergenciasBeta2:React.FC<Props>=({requests,onSave})=>{
       {selected&&<p className="b2-op-help">Saldo consultado na origem: <strong className={insufficient?'b2-pill red':'b2-op-good'}>{balanceLoading?'Consultando...':fmt(bal)+' '+(selected.unidade_medida||'')}</strong>{insufficient?' · entrega imediata sem saldo suficiente':''}</p>}
      </div>;
     })}</div>
-    <div className="b2-op-totals"><span>{lines.length} produto(s) no mesmo pedido</span><strong>{fmt(totalItems)} unidades de controle (soma ilustrativa)</strong></div>
+    <div className="b2-op-totals"><span>Um único pedido emergencial</span><strong>{lines.length} linha(s) de produtos</strong></div>
    </section>
    <section className="b2-section b2-card">
     <h2>4 · Conferência e confirmação</h2>
