@@ -2,7 +2,7 @@ import React from 'react';
 import { ArrowRight, BookOpen, CheckCircle2, Package, Users, Warehouse } from 'lucide-react';
 import './RotinaEstoquistaBeta2.css';
 
-type Destination = 'inicio' | 'itens' | 'fichas' | 'fornecedores' | 'estoques' | 'noite' | 'recebimento' | 'inventario' | 'abastecimento' | 'kits' | 'gestao';
+type Destination = 'inicio' | 'itens' | 'fichas' | 'fornecedores' | 'estoques' | 'emergencias' | 'recebimento' | 'inventario' | 'abastecimento' | 'kits' | 'gestao';
 interface Props {
   go:(screen:Destination)=>void;
   nightReviewed:boolean;
@@ -26,7 +26,7 @@ const RotinaEstoquistaBeta2:React.FC<Props>=({
 })=>{
  const inventoryDone=countSent&&(differenceCount===0||countApproved);
  const steps=[
-  {number:'01',key:'noite',title:'Conferir as retiradas da noite',desc:'Ver o que saiu fora do expediente do estoquista e deixar as pendências anotadas.',screen:'noite' as Destination,button:'Abrir retiradas noturnas',done:nightReviewed,partial:false},
+  {number:'01',key:'noite',title:'Conferir as retiradas da noite',desc:'Ver o que saiu fora do expediente do estoquista e deixar as pendências anotadas.',screen:'emergencias' as Destination,button:'Ver retiradas a conciliar',done:nightReviewed,partial:false},
   {number:'02',key:'recebimento',title:'Conferir mercadorias recebidas',desc:'Comparar pedido, nota e mercadoria física. Conferir quantidades, preços e diferenças.',screen:'recebimento' as Destination,button:'Conferir recebimentos',done:received,partial:false},
   {number:'03',key:'inventario',title:'Conferir saldos e divergências',desc:'Contar os itens previstos e encaminhar ao gestor o que precisar de aprovação.',screen:'inventario' as Destination,button:'Abrir contagem',done:inventoryDone,partial:countSent&&!inventoryDone},
   {number:'04',key:'abastecimento',title:'Abastecer drinks, cervejas e cozinha',desc:'Ver quanto cada setor tem, separar a diferença e confirmar o recebimento.',screen:'abastecimento' as Destination,button:'Montar setores',done:sectorsTotal>0&&sectorsDone===sectorsTotal,partial:sectorsStarted},
@@ -55,7 +55,7 @@ const RotinaEstoquistaBeta2:React.FC<Props>=({
      <div className="b2-day-number">{step.done?<CheckCircle2 size={22}/>:step.number}</div>
      <div className="b2-day-body"><div className="b2-day-step-head"><h3>{step.title}</h3><span className={'b2-pill '+(step.done?'green':step.partial?'':'red')}>{step.done?'Concluída':step.partial?'Em andamento':'A fazer'}</span></div>
       <p>{step.desc}</p>
-      {step.key==='noite'&&<small>{nightCount} retirada(s) registrada(s) nesta simulação</small>}
+      {step.key==='noite'&&<small>{nightCount} retirada(s) aguardando conferência na simulação</small>}
       {step.key==='abastecimento'&&<small>{sectorsDone} de {sectorsTotal} setores confirmados</small>}
       {step.key==='inventario'&&countSent&&!inventoryDone&&<small>Aguardando análise das diferenças pelo gestor.</small>}
       <div className="b2-day-actions">
