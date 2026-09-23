@@ -86,7 +86,7 @@ const go=(v:View)=>{
   const section=sectionOf(v);
   if(section)setOpenSections(prev=>({...prev,[section]:true}));
 };
-const reset=()=>{setProducts(clone(productsSeed));setFechamentos([]);setRestockViewed(false);setCount({});setCountSent(false);setCountApproved(false);setReceived(false);setReceipts([]);setRequests([]);setFocusNightReview(false);setKitDone(false);setNightReviewed(false);setHandoffDone(false);setView('inicio');setOpenSections({operacao:true,cadastros:false,gestao:false});setError('');setNotice('Demonstração reiniciada.');};
+const reset=()=>{dadosFechamento.resetFrequencias();setProducts(clone(productsSeed));setFechamentos([]);setRestockViewed(false);setCount({});setCountSent(false);setCountApproved(false);setReceived(false);setReceipts([]);setRequests([]);setFocusNightReview(false);setKitDone(false);setNightReviewed(false);setHandoffDone(false);setView('inicio');setOpenSections({operacao:true,cadastros:false,gestao:false});setError('');setNotice('Demonstração reiniciada.');};
 const beta2MenuCSS = `
 .b2-root .b2-side{display:flex;flex-direction:column;gap:0}
 .b2-root .b2-menu{display:flex;flex-direction:column;gap:7px}
