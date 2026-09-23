@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { CheckCircle2, Plus, Trash2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import './OperacoesBeta2.css';
+import PesquisaItemBeta2 from './PesquisaItemBeta2';
 
 type Row = {id:string;nome:string;[key:string]:any};
 type NoteItem = {key:string;itemId:string;documentQty:string;quantity:string;ordered:string;unitCost:string};
@@ -31,7 +32,6 @@ const RecebimentoBeta2:React.FC<Props>=({receipts,onSave})=>{
  const[stocks,setStocks]=useState<Row[]>([]);
  const[orders,setOrders]=useState<Row[]>([]);
  const[lines,setLines]=useState<NoteItem[]>([mkLine()]);
- const[search,setSearch]=useState<Record<string,string>>({});
  const[invoice,setInvoice]=useState('');
  const[supplierId,setSupplierId]=useState('');
  const[stockId,setStockId]=useState('');
@@ -77,11 +77,11 @@ const RecebimentoBeta2:React.FC<Props>=({receipts,onSave})=>{
       :{...l,[field]:value}
    :l));
  const reset=()=>{
-  setLines([mkLine()]);setInvoice('');setOrderId('');setNotes('');setSearch({});
+  setLines([mkLine()]);setInvoice('');setOrderId('');setNotes('');
   setSupplierId('');setError('');setSuccess('');setMode('direto');setDate(today());
  };
  const pickMode=(next:'direto'|'pedido')=>{
-  setMode(next);setOrderId('');setLines([mkLine()]);setSearch({});setError('');setSuccess('');
+  setMode(next);setOrderId('');setLines([mkLine()]);setError('');setSuccess('');
  };
  const linkOrder=async(id:string)=>{
   setOrderId(id);setError('');setSuccess('');setLines([mkLine()]);
@@ -168,17 +168,12 @@ const RecebimentoBeta2:React.FC<Props>=({receipts,onSave})=>{
      <div className="b2-op-section-title"><h2>2 · Produtos desta nota</h2><span className="b2-pill">{lines.length} linha(s)</span></div>
      <p className="b2-op-help">Informe a quantidade da nota; a quantidade física começa igual, mas pode ser corrigida. Lance todos os itens da mesma nota aqui.</p>
      <div className="b2-op-lines">{lines.map((l,index)=>{
-      const term=(search[l.key]||'').toLocaleLowerCase('pt-BR').trim();
-      const options=items.filter(i=>i.status==='ativo'||i.id===l.itemId)
-       .filter(i=>!term||i.id===l.itemId||(i.nome+' '+(i.codigo||'')).toLocaleLowerCase('pt-BR').includes(term))
-       .sort((a,b)=>Number(b.id===l.itemId)-Number(a.id===l.itemId)).slice(0,90);
       const selected=itemById.get(l.itemId);
       const diff=mode==='pedido'?numeric(l.quantity)-numeric(l.ordered):0;
       return <div className="b2-op-line b2-op-line-compact" key={l.key}>
        <div className="b2-op-line-head"><strong>Produto {index+1}</strong><button className="b2-btn alt small" type="button" disabled={lines.length===1} onClick={()=>setLines(prev=>prev.filter(x=>x.key!==l.key))}><Trash2 size={13} style={{display:'inline',marginRight:4}}/>Remover</button></div>
-       <label className="b2-field b2-op-search"><span>Localizar produto</span><input type="search" placeholder="Digite parte do nome ou código..." value={search[l.key]||''} onChange={e=>setSearch(prev=>({...prev,[l.key]:e.target.value}))}/></label>
        <div className="b2-op-line-fields" style={{marginTop:7}}>
-        <label className="b2-field"><span>Item *</span><select value={l.itemId} onChange={e=>changeLine(l.key,'itemId',e.target.value)}><option value="">Selecione...</option>{options.map(i=><option key={i.id} value={i.id}>{i.codigo?i.codigo+' — ':''}{i.nome}</option>)}</select></label>
+        <PesquisaItemBeta2 items={items} selectedId={l.itemId} onSelect={id=>changeLine(l.key,'itemId',id)} label="Item *"/>
         <label className="b2-field"><span>Qtd. na nota * {selected?.unidade_medida||''}</span><input type="number" min="0" step="0.001" value={l.documentQty} onChange={e=>changeLine(l.key,'documentQty',e.target.value)}/></label>
         <label className="b2-field"><span>Qtd. física * {selected?.unidade_medida||''}</span><input type="number" min="0" step="0.001" value={l.quantity} onChange={e=>changeLine(l.key,'quantity',e.target.value)}/></label>
         <label className="b2-field"><span>Custo unitário R$</span><input type="number" min="0" step="0.01" value={l.unitCost} onChange={e=>changeLine(l.key,'unitCost',e.target.value)}/></label>
