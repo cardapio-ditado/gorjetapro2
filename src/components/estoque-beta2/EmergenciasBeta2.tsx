@@ -98,13 +98,13 @@ const EmergenciasBeta2:React.FC<Props>=({requests,onSave,startOnNightReview=fals
   const source=stockList.find(x=>x.id===from),destination=stockList.find(x=>x.id===to);
   if(!staff||!department.trim()){setError('Escolha o funcionário solicitante e informe o setor.');return;}
   if(isNight&&(!employees.some(e=>e.id===withdrawer)||!occurredAt||!Number.isFinite(new Date(occurredAt).getTime()))){
-   setError('Informe quem retirou a mercadoria e a data/hora da retirada noturna.');return;
+   setError('Informe quem retirou a mercadoria e a data/hora da retirada.');return;
   }
   if(isNight&&new Date(occurredAt).getTime()>Date.now()+60_000){
    setError('A data/hora da retirada não pode ser futura, pois a mercadoria já saiu.');return;
   }
   if(!source||!destination||source.id===destination.id){setError('Selecione estoques de origem e destino diferentes.');return;}
-  if(!reason.trim()){setError(isNight?'Descreva o motivo da retirada noturna.':'Descreva o motivo da solicitação emergencial.');return;}
+  if(!reason.trim()){setError(isNight?'Descreva o motivo da retirada.':'Descreva o motivo da solicitação emergencial.');return;}
   if(!lines.length){setError('Adicione pelo menos um produto.');return;}
   const ids=lines.map(x=>x.itemId);
   if(new Set(ids).size!==ids.length){setError('O mesmo produto foi incluído duas vezes. Some a quantidade em uma única linha.');return;}
@@ -126,7 +126,7 @@ const EmergenciasBeta2:React.FC<Props>=({requests,onSave,startOnNightReview=fals
    lines:lines.map(x=>({item:itemById.get(x.itemId)?.nome||'Item',quantity:q(x.quantity),unit:String(itemById.get(x.itemId)?.unidade_medida||'un')}))
   });
   setNotice(isNight
-   ?'Retirada noturna registrada apenas nesta simulação para conferência no próximo turno. Nenhuma baixa oficial foi efetuada.'
+   ?'Retirada registrada apenas nesta simulação para conferência no próximo turno. Nenhuma baixa oficial foi efetuada.'
    :status==='pendente'
      ?'Solicitação emergencial registrada SOMENTE nesta prévia; nenhum saldo movimentado.'
      :'Entrega imediata SIMULADA. Nenhum saldo oficial foi movimentado.');
@@ -201,13 +201,13 @@ const EmergenciasBeta2:React.FC<Props>=({requests,onSave,startOnNightReview=fals
      </div>;
     })}</div>
     <button className="b2-op-add-line" type="button" onClick={()=>{const next=line();setFocusLine(next.key);setLines(p=>[...p,next]);}}><Plus size={17}/> Adicionar outro item</button>
-    <div className="b2-op-totals"><span>{isNight?'Uma única retirada noturna':'Um único pedido emergencial'}</span><strong>{lines.length} linha(s) de produtos</strong></div>
+    <div className="b2-op-totals"><span>{isNight?'Uma única retirada registrada':'Um único pedido emergencial'}</span><strong>{lines.length} linha(s) de produtos</strong></div>
    </section>
    <section className="b2-section b2-card">
     <h2>4 · Conferência e confirmação</h2>
     <p className="b2-op-help">{isNight?'O registro ficará aguardando conferência. Não aplique uma segunda baixa ao conciliar uma mercadoria já retirada.':'No sistema definitivo, a solicitação pendente não dá baixa. A movimentação acontecerá somente na entrega real, conforme a transferência original já funciona.'}</p>
     <div className="b2-op-actions">
-     <button className="b2-btn" type="button" onClick={()=>save('pendente')}>{isNight?'Registrar retirada noturna (prévia)':'Registrar pedido emergencial (prévia)'}</button>
+     <button className="b2-btn" type="button" onClick={()=>save('pendente')}>{isNight?'Registrar retirada já feita (prévia)':'Registrar pedido emergencial (prévia)'}</button>
      {!isNight&&<button className="b2-btn alt" type="button" disabled={balanceLoading} onClick={()=>save('entregue')}>Simular entrega imediata</button>}
     </div>
    </section>
