@@ -1,0 +1,78 @@
+/* Gestão do Estoque Beta 2: setores e vínculos Zig, sem duplicar o cadastro oficial. */
+.b2-root .b2-manage .b2-lead{max-width:1020px}
+.b2-root .b2-manage-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:11px;margin:18px 0}
+.b2-root .b2-manage-stats .b2-card{padding:15px}
+.b2-root .b2-manage-stats small,.b2-root .b2-manage-stats span{display:block;font-size:11px;color:#ebd1df!important}
+.b2-root .b2-manage-stats strong{display:block;font-size:29px;font-weight:900;color:#ffe7c4!important;line-height:1.25;margin:3px 0}
+.b2-root .b2-manage-section{margin-top:14px}
+.b2-root .b2-manage-toolbar{display:grid;grid-template-columns:minmax(185px,.83fr) minmax(225px,1.55fr) auto;gap:12px;align-items:end;margin:18px 0}
+.b2-root .b2-manage-toolbar>.b2-history-search{margin:0;min-height:44px;align-self:end}
+.b2-root .b2-manage-toolbar>.b2-history-search input{width:100%;min-width:0}
+.b2-root .b2-manage-toolbar>.b2-btn{min-height:43px}
+.b2-root .b2-manage-toggle{display:flex;gap:8px;align-items:center;font-size:12px;line-height:1.4;color:#f2e3ec!important;cursor:pointer}
+.b2-root .b2-manage-toggle input{accent-color:#c65e7a;width:17px;height:17px;flex-shrink:0}
+.b2-root .b2-manage-layout{display:grid;grid-template-columns:minmax(240px,.78fr) minmax(0,1.45fr);gap:14px;align-items:start}
+.b2-root .b2-manage-list{max-height:790px;overflow-y:auto;padding:11px;scrollbar-color:#9b5e79 #291d2a}
+.b2-root .b2-manage-list-head{display:flex;flex-wrap:wrap;gap:9px;justify-content:space-between;align-items:center;padding:7px 8px 12px;border-bottom:1px solid #684c60}
+.b2-root .b2-manage-list-head strong{color:#fff!important}
+.b2-root .b2-manage-list-head small{font-size:11px;color:#dbc5d5!important}
+.b2-root .b2-manage-item{display:flex;align-items:center;gap:7px;text-align:left;width:100%;padding:13px 8px;border-bottom:1px solid #553e50;border-left:3px solid transparent;color:#fff!important}
+.b2-root .b2-manage-item:hover,.b2-root .b2-manage-item.active{background:#4c2c44;border-left-color:#f2c589}
+.b2-root .b2-manage-item-info{min-width:0;flex:1}
+.b2-root .b2-manage-item-info strong{display:block;color:#fff7fc!important;font-size:13px;overflow-wrap:anywhere}
+.b2-root .b2-manage-item-info small{display:block;color:#e0c8d8!important;font-size:11px;line-height:1.4;margin-top:4px;overflow-wrap:anywhere}
+.b2-root .b2-manage-tags{display:flex;gap:4px;flex-wrap:wrap;justify-content:end}
+.b2-root .b2-manage-tags .b2-pill{font-size:10px}
+.b2-root .b2-manage-detail{padding:20px;min-width:0}
+.b2-root .b2-manage-detail h3{font-size:15px;font-weight:850;color:#fff7fa!important;margin:18px 0 9px}
+.b2-root .b2-manage-detail>p{color:#e1cddd!important}
+.b2-root .b2-manage-detail .b2-op-section-title{align-items:start}
+.b2-root .b2-manage-detail .b2-op-section-title h2{font-size:21px;overflow-wrap:anywhere}
+.b2-root .b2-manage-detail .b2-op-section-title small{color:#e0c9d9!important}
+.b2-root .b2-manage-stock-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin:14px 0}
+.b2-root .b2-manage-stock{display:flex;flex-direction:column;gap:4px;border-radius:12px;background:#302438;border:1px solid #79566f;padding:13px;min-width:0}
+.b2-root .b2-manage-stock.selected{border-color:#efbd8b;background:#52314a}
+.b2-root .b2-manage-stock small{font-size:11px;color:#decadd!important}
+.b2-root .b2-manage-stock strong{font-size:15px;color:#fff5f7!important;overflow-wrap:anywhere}
+.b2-root .b2-manage-stock em{font-style:normal;font-size:10px;color:#ffe2a5!important}
+.b2-root .b2-manage-setting{padding:16px;border:1px solid #775669;background:#2b2131;border-radius:13px;margin:18px 0}
+.b2-root .b2-manage-setting .b2-field{margin:13px 0}
+.b2-root .b2-manage-setting h3:first-child{margin-top:2px}
+.b2-root .b2-manage-rule{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:14px 0}
+.b2-root .b2-manage-rule>span{font-size:12px;color:#e7d3df!important}
+.b2-root .b2-manage-links{margin-top:19px}
+.b2-root .b2-manage-zig-link{display:flex;align-items:center;justify-content:space-between;gap:10px;text-align:left;width:100%;border:1px solid #735068;border-radius:10px;background:#3b2940;padding:12px;margin:7px 0;color:#fff!important}
+.b2-root .b2-manage-zig-link:hover{border-color:#f1c18e}
+.b2-root .b2-manage-zig-link strong{display:block;font-size:12px;color:#fff!important}
+.b2-root .b2-manage-zig-link small{display:block;margin-top:3px;font-size:11px;color:#e8cbda!important}
+.b2-root .b2-manage-zig-link svg{flex-shrink:0}
+.b2-root .b2-manage-choice{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:12px 0}
+.b2-root .b2-manage-choice button{min-height:47px;padding:9px 6px;border:1px solid #8b677f;border-radius:10px;font-weight:800;font-size:12px;background:#332637;color:#e8d3df!important}
+.b2-root .b2-manage-choice button[aria-pressed=true]{background:#703651;border-color:#f3c18b;color:#fff!important}
+.b2-root .b2-manage-origin{display:flex;gap:10px;border:1px solid #3f866a;background:#203a32;border-radius:12px;padding:13px;margin:13px 0;color:#d5ffeb!important}
+.b2-root .b2-manage-origin svg{flex-shrink:0;color:#b4ffda}
+.b2-root .b2-manage-origin strong{display:block;color:#e0ffed!important;font-size:13px}
+.b2-root .b2-manage-origin small{display:block;color:#c4ead7!important;font-size:11px;margin-top:4px;line-height:1.5}
+.b2-root .b2-manage-ingredients{border:1px solid #755467;padding:13px;border-radius:12px;background:#241b2d;margin-top:13px}
+.b2-root .b2-manage-ingredients .b2-row{padding:9px 0}
+.b2-root .b2-manage-ingredients .b2-row strong{font-size:12px}
+.b2-root .b2-manage-actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:18px 0}
+.b2-root .b2-manage .b2-item-lookup{margin:13px 0;z-index:12;position:relative}
+.b2-root .b2-manage .b2-item-options{z-index:60}
+@media(max-width:1150px){
+ .b2-root .b2-manage-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .b2-root .b2-manage-layout{grid-template-columns:minmax(210px,.9fr) minmax(0,1.2fr)}
+ .b2-root .b2-manage-toolbar{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:780px){
+ .b2-root .b2-manage-layout,.b2-root .b2-manage-toolbar{grid-template-columns:1fr}
+ .b2-root .b2-manage-list{max-height:330px}
+ .b2-root .b2-manage-toolbar>.b2-history-search{margin:0}
+}
+@media(max-width:500px){
+ .b2-root .b2-manage-stats .b2-card{padding:10px}
+ .b2-root .b2-manage-stats strong{font-size:23px}
+ .b2-root .b2-manage-detail{padding:13px}
+ .b2-root .b2-manage-stock-grid{grid-template-columns:1fr}
+ .b2-root .b2-manage-choice{grid-template-columns:1fr}
+}
