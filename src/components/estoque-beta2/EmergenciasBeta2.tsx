@@ -10,9 +10,15 @@ type EmergencyLine = {key:string;itemId:string;quantity:string};
 export interface EmergencyPreview {
  id:string;requester:string;sector:string;from:string;to:string;reason:string;
  lines:{item:string;quantity:number;unit:string}[];status:'pendente'|'entregue';created:string;
- kind?:'emergencial'|'noturna';withdrawnBy?:string;occurredAt?:string;reconciledAt?:string;
+ kind?:'emergencial'|'noturna';withdrawnBy?:string;occurredAt?:string;
+ dispatchedAt?:string;receiptConfirmedAt?:string;receiptConfirmedBy?:string;
 }
-interface Props{requests:EmergencyPreview[];onSave:(req:EmergencyPreview)=>void;startOnNightReview?:boolean;onReconcile?:(id:string)=>void}
+interface Props{
+ requests:EmergencyPreview[];onSave:(req:EmergencyPreview)=>void;
+ startOnNightReview?:boolean;
+ onDispatch?:(id:string,employeeName:string)=>void;
+ onConfirmReceipt?:(id:string,employeeName:string)=>void;
+}
 const line=():EmergencyLine=>({key:Math.random().toString(36).slice(2),itemId:'',quantity:''});
 const q=(raw:string)=>Number(raw.replace(',','.'));
 const fmt=(raw:number)=>raw.toLocaleString('pt-BR',{maximumFractionDigits:3});
@@ -27,7 +33,7 @@ async function read(table:string,cols:string){
  }
  return data;
 }
-const EmergenciasBeta2:React.FC<Props>=({requests,onSave,startOnNightReview=false,onReconcile})=>{
+const EmergenciasBeta2:React.FC<Props>=({requests,onSave,startOnNightReview=false,onDispatch,onConfirmReceipt})=>{
  const[kind,setKind]=useState<'emergencial'|'noturna'>('emergencial');
  const isNight=kind==='noturna';
  const[stockList,setStockList]=useState<Row[]>([]);
@@ -120,19 +126,25 @@ const EmergenciasBeta2:React.FC<Props>=({requests,onSave,startOnNightReview=fals
   const demoId=Math.random().toString(36).slice(2);
   onSave({
    id:demoId,kind,requester:String(staff.nome_completo),
-   ...(isNight?{withdrawnBy:String(employees.find(e=>e.id===withdrawer)?.nome_completo||''),occurredAt:new Date(occurredAt).toISOString()}:{}),
+   ...(isNight?{
+    withdrawnBy:String(employees.find(e=>e.id===withdrawer)?.nome_completo||''),
+    occurredAt:new Date(occurredAt).toISOString(),
+    dispatchedAt:new Date(occurredAt).toISOString()
+   }:status==='entregue'?{
+    withdrawnBy:String(staff.nome_completo),dispatchedAt:new Date().toISOString()
+   }:{}),
    sector:department.trim(),from:source.nome,to:destination.nome,reason:reason.trim(),
-   status,created:new Date().toLocaleString('pt-BR'),
+   status:isNight?'entregue':status,created:new Date().toLocaleString('pt-BR'),
    lines:lines.map(x=>({item:itemById.get(x.itemId)?.nome||'Item',quantity:q(x.quantity),unit:String(itemById.get(x.itemId)?.unidade_medida||'un')}))
   });
   setNotice(isNight
-   ?'Retirada registrada apenas nesta simulação para conferência no próximo turno. Nenhuma baixa oficial foi efetuada.'
+   ?'Saída registrada na prévia no horário informado. Aguardando recebimento do destino; nenhum saldo oficial foi alterado.'
    :status==='pendente'
-     ?'Solicitação emergencial registrada SOMENTE nesta prévia; nenhum saldo movimentado.'
-     :'Entrega imediata SIMULADA. Nenhum saldo oficial foi movimentado.');
+     ?'Pedido criado na prévia. A saída deve ser registrada quando a mercadoria for entregue; nenhum saldo oficial foi alterado.'
+     :'Saída imediata registrada na prévia. Aguardando confirmação do destino; nenhum saldo oficial foi alterado.');
   setOpenPreviewId(demoId);
   setInitialNightFilter(false);
-  setTab(status==='pendente'?'pendentes':'historico');
+  setTab('pendentes');
   setLines([line()]);setReason('Reposição emergencial');
  };
  return <div>
@@ -158,7 +170,7 @@ const EmergenciasBeta2:React.FC<Props>=({requests,onSave,startOnNightReview=fals
       <strong>Solicitar mercadoria</strong><small>Preciso de itens para um setor; ainda pode aguardar entrega.</small>
      </button>
      <button type="button" className="b2-op-kind-choice" aria-pressed={isNight} onClick={()=>{setKind('noturna');setError('');}}>
-      <strong>Registrar retirada já feita</strong><small>A mercadoria saiu sem o estoquista; precisa de conferência.</small>
+      <strong>Registrar retirada já feita</strong><small>A mercadoria já saiu: registra a saída imediatamente e aguarda confirmação do destino.</small>
      </button>
     </div>
    </section>
@@ -205,15 +217,21 @@ const EmergenciasBeta2:React.FC<Props>=({requests,onSave,startOnNightReview=fals
    </section>
    <section className="b2-section b2-card">
     <h2>4 · Conferência e confirmação</h2>
-    <p className="b2-op-help">{isNight?'O registro ficará aguardando conferência. Não aplique uma segunda baixa ao conciliar uma mercadoria já retirada.':'No sistema definitivo, a solicitação pendente não dá baixa. A movimentação acontecerá somente na entrega real, conforme a transferência original já funciona.'}</p>
+    <p className="b2-op-help">{isNight
+     ?'A saída fica registrada uma única vez no horário informado. Quem recebeu no destino deve confirmar; o estoquista somente consulta.'
+     :'O pedido pendente não dá baixa. Quando ocorrer a saída, ela será registrada uma vez; o destino confirma o recebimento separadamente.'}</p>
     <div className="b2-op-actions">
      <button className="b2-btn" type="button" onClick={()=>save('pendente')}>{isNight?'Registrar retirada já feita (prévia)':'Registrar pedido emergencial (prévia)'}</button>
-     {!isNight&&<button className="b2-btn alt" type="button" disabled={balanceLoading} onClick={()=>save('entregue')}>Simular entrega imediata</button>}
+     {!isNight&&<button className="b2-btn alt" type="button" disabled={balanceLoading} onClick={()=>save('entregue')}>Registrar saída imediata (prévia)</button>}
     </div>
    </section>
   </>}
   </>}
-  {tab!=='novo'&&<HistoricoPedidosBeta2 mode={tab} preview={requests} openId={openPreviewId} onReconcile={onReconcile} initialNightFilter={initialNightFilter}/>}
+  {tab!=='novo'&&<HistoricoPedidosBeta2
+ mode={tab} preview={requests} openId={openPreviewId}
+ onDispatch={onDispatch} onConfirmReceipt={onConfirmReceipt}
+ initialNightFilter={initialNightFilter} readOnly={startOnNightReview}
+/>}
 
 
  </div>;
