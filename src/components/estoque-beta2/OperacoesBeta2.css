@@ -36,3 +36,31 @@
 .b2-root .b2-op-small{font-size:12px;color:#d7c1d0!important}
 @media(max-width:1150px){.b2-root .b2-op-line-fields{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:620px){.b2-root .b2-op-fields,.b2-root .b2-op-line-fields,.b2-root .b2-op-line-fields.transfer{grid-template-columns:1fr}.b2-root .b2-op-wide{grid-column:auto}.b2-root .b2-op-totals strong{font-size:19px}}
+
+/* Linhas compactas: adicionar o próximo item no fim da lista, sem voltar ao topo. */
+.b2-root .b2-op-line-compact{padding:10px 12px;border-radius:11px}
+.b2-root .b2-op-line-compact .b2-op-line-head{margin-bottom:6px}
+.b2-root .b2-op-line-compact .b2-op-line-head strong{font-size:12px}
+.b2-root .b2-op-line-compact .b2-op-line-head .b2-btn{padding:5px 9px;font-size:11px;min-height:28px}
+.b2-root .b2-op-line-compact .b2-field{gap:3px}
+.b2-root .b2-op-line-compact .b2-field>span{font-size:11px;color:#efdeea!important}
+.b2-root .b2-op-line-compact input,.b2-root .b2-op-line-compact select{height:37px;min-height:37px;padding:6px 9px;font-size:12px;border-radius:9px}
+.b2-root .b2-op-line-compact .b2-op-search input{height:34px;min-height:34px}
+.b2-root .b2-op-line-compact .b2-op-line-fields{grid-template-columns:minmax(190px,2fr) repeat(3,minmax(82px,.68fr));gap:8px}
+.b2-root .b2-op-line-compact .b2-op-line-fields.transfer{grid-template-columns:minmax(190px,2fr) minmax(108px,.62fr)}
+.b2-root .b2-op-line-compact .b2-op-line-fields .b2-field>small{font-size:10px;color:#e4cddd!important}
+.b2-root .b2-op-line-summary{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:7px 18px;margin-top:8px;color:#decad8!important;font-size:11px}
+.b2-root .b2-op-line-summary strong{color:#b9f3d7!important}
+.b2-root .b2-op-line-summary .b2-op-subtotal{color:#ffe0a9!important;font-size:13px}
+.b2-root .b2-op-add-line{width:100%;display:flex;align-items:center;justify-content:center;gap:9px;border:1px dashed #d6a985;border-radius:11px;background:#3b293c;color:#ffe4bb!important;padding:12px;margin-top:12px;font-weight:800;font-size:13px;min-height:43px}
+.b2-root .b2-op-add-line:hover{background:#553347;border-color:#f7d7aa;color:#fff1dc!important}
+.b2-root .b2-op-add-line:focus-visible{outline:2px solid #f3c68b;outline-offset:2px}
+@media(max-width:1150px){
+ .b2-root .b2-op-line-compact .b2-op-line-fields{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .b2-root .b2-op-line-compact .b2-op-line-fields .b2-field:first-child{grid-column:1/-1}
+}
+@media(max-width:620px){
+ .b2-root .b2-op-line-compact .b2-op-line-fields,.b2-root .b2-op-line-compact .b2-op-line-fields.transfer{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .b2-root .b2-op-line-compact .b2-op-line-fields .b2-field:first-child{grid-column:1/-1}
+ .b2-root .b2-op-line-compact{padding:10px}
+}
