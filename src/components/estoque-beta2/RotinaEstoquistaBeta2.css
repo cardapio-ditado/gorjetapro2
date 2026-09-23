@@ -1,0 +1,27 @@
+
+/* Escopo exclusivo da rotina no Estoque Beta 2; preserva o visual do protótipo. */
+.b2-root .b2-day .b2-day-hero{padding:clamp(20px,3vw,34px);background:linear-gradient(115deg,#552a43,#271c2a 80%);border:1px solid #9c5c74;border-radius:20px;margin-bottom:17px}
+.b2-root .b2-day-hero p{color:#edd6e4!important;line-height:1.6;max-width:710px}
+.b2-root .b2-day-caption{display:flex;gap:9px;flex-wrap:wrap;justify-content:space-between;align-items:center;margin-top:22px;font-size:12px;font-weight:800;color:#f9e8f2!important}
+.b2-root .b2-day-progress{height:10px;background:#180f1c;border:1px solid #805264;border-radius:99px;overflow:hidden;margin-top:11px}
+.b2-root .b2-day-progress span{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#d8546b,#f2c487);transition:width .2s}
+.b2-root .b2-day-metrics{margin-bottom:18px}.b2-root .b2-day-metrics .b2-stat{font-size:27px}
+.b2-root .b2-day-metrics p{font-size:12px;color:#dac7d5!important}
+.b2-root .b2-day-steps{display:grid;gap:12px;margin-top:16px}
+.b2-root .b2-day-step{display:grid;grid-template-columns:47px minmax(0,1fr);gap:14px;align-items:start;background:#241925;border:1px solid #674657;border-radius:16px;padding:18px}
+.b2-root .b2-day-step.done{background:#1f342f;border-color:#478368}
+.b2-root .b2-day-step.partial{border-color:#c89967}
+.b2-root .b2-day-number{height:44px;width:44px;border-radius:12px;background:#553248;display:flex;align-items:center;justify-content:center;color:#f8d6af!important;font-size:17px;font-weight:900}
+.b2-root .b2-day-step.done .b2-day-number{background:#285442;color:#b4f5d1!important}
+.b2-root .b2-day-body h3{margin:0;color:#fff7fb!important;font-size:17px;font-weight:850}
+.b2-root .b2-day-body p{font-size:13px;line-height:1.55;margin:8px 0;color:#e3d2df!important}
+.b2-root .b2-day-body small{display:block;color:#f7d6a9!important;margin:6px 0}
+.b2-root .b2-day-step-head{display:flex;gap:9px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.b2-root .b2-day-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:14px}
+.b2-root .b2-day-actions button{display:inline-flex;align-items:center;gap:7px;justify-content:center}
+.b2-root .b2-day-links{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.b2-root .b2-day-link{display:flex;align-items:center;text-align:left;gap:12px;border:1px solid #6c4d60;border-radius:12px;padding:13px;background:#342538;color:#f8e8f0!important;font-size:13px;font-weight:800}
+.b2-root .b2-day-link svg:first-child{color:#f1c88f;flex-shrink:0}
+.b2-root .b2-day-link svg:last-child{margin-left:auto;flex-shrink:0}
+.b2-root .b2-day-link:hover{background:#523147;border-color:#ddb789}
+@media(max-width:650px){.b2-root .b2-day-step{grid-template-columns:37px minmax(0,1fr);gap:10px;padding:13px}.b2-root .b2-day-number{width:36px;height:36px}.b2-root .b2-day-links{grid-template-columns:1fr}}
