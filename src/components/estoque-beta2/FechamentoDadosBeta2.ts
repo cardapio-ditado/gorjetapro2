@@ -40,6 +40,10 @@ export const dataSeguinte=(date:string)=>{
  const d=new Date(date+'T12:00:00Z');d.setUTCDate(d.getUTCDate()+1);
  return d.toISOString().slice(0,10);
 };
+export const dataAnterior=(date:string)=>{
+ const d=new Date(date+'T12:00:00Z');d.setUTCDate(d.getUTCDate()-1);
+ return d.toISOString().slice(0,10);
+};
 export const diaAuditoria=(date:string)=>[0,1,4].includes(new Date(date+'T12:00:00Z').getUTCDay());
 export const dataBR=(date:string)=>date?date.split('-').reverse().join('/'):'—';
 const n=(v:unknown)=>Number(v??0)||0;
