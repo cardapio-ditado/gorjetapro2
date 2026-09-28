@@ -149,9 +149,8 @@ export function useControleZigBeta2(){
   return cobertos;
  },[mapeamentos,ingredientes]);
  const setores=useMemo(()=>{
-  const configured=new Set(niveisEfetivos.map(n=>n.estoque_id));
-  return estoques.filter(e=>e.status&&configured.has(e.id)&&e.tipo!=='central').sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR'));
- },[estoques,niveisEfetivos]);
+  return estoques.filter(e=>e.status&&e.tipo!=='central').sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR'));
+ },[estoques]);
  const linhas=useMemo(()=>{
   const active=items.filter(i=>i.status==='ativo');
   const byId=new Map(active.map(i=>[i.id,i]));
@@ -162,7 +161,7 @@ export function useControleZigBeta2(){
    const k=keyOf(level.estoque_id,item.id);
    registered.add(k);
    const mapeado=zigPorEstoque.has(k);
-   const controleEfetivo:ControleEfetivo=mapeado?'zig':overrides[k]||'diario';
+   const controleEfetivo:ControleEfetivo=level.controle==='venda'?'zig':overrides[k]||'diario';
    out.push({...level,item,controleEfetivo,mapeadoZig:mapeado,saldo:saldos[k]||0,semNivel:false});
   }
   // Produto com saldo no Bar/Cozinha não pode desaparecer da contagem por falta de nível cadastrado.
@@ -170,7 +169,7 @@ export function useControleZigBeta2(){
    const k=keyOf(sector.id,item.id);
    if(registered.has(k)||!saldos[k]||niveisRascunho[k]?.enabled===false)continue;
    const mapeado=zigPorEstoque.has(k);
-   const controleEfetivo:ControleEfetivo=mapeado?'zig':overrides[k]||'diario';
+   const controleEfetivo:ControleEfetivo=overrides[k]||'diario';
    out.push({
     item_id:item.id,estoque_id:sector.id,nivel_reposicao:null,controle:null,
     item,controleEfetivo,mapeadoZig:mapeado,saldo:saldos[k],semNivel:true
