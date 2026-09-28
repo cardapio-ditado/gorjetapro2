@@ -43,9 +43,15 @@ export async function limparAgenda(estoqueId: string, aPartir: string): Promise<
 // ─── Contagem por blocos ─────────────────────────────────────────────────────
 const num = (v: unknown) => (v === null || v === undefined || v === '' ? 0 : Number(v));
 
+/** O erro do Supabase é um objeto simples; vira Error para a tela mostrar a mensagem, não "[object Object]". */
+function falhar(error: { message?: string; details?: string; hint?: string }): never {
+  const partes = [error.message, error.details, error.hint].filter(Boolean);
+  throw new Error(partes.length ? partes.join(' — ') : 'Erro desconhecido');
+}
+
 export async function loadBlocos(estoqueId: string): Promise<PainelBlocos> {
   const { data, error } = await supabase.rpc('fn_contagem_blocos', { p_estoque_id: estoqueId });
-  if (error) throw error;
+  if (error) falhar(error);
   const d = (data || {}) as Record<string, unknown>;
   const e = (d.estoque || {}) as Record<string, unknown>;
   const r = (d.resumo || {}) as Record<string, unknown>;
@@ -68,7 +74,7 @@ export async function loadBlocos(estoqueId: string): Promise<PainelBlocos> {
 /** Abre (ou continua) a contagem de um bloco. Devolve o id da contagem. */
 export async function abrirBloco(estoqueId: string, bloco: string, responsavel?: string): Promise<{ id: string; criada: boolean; nome: string }> {
   const { data, error } = await supabase.rpc('fn_contagem_bloco_abrir', { p_estoque_id: estoqueId, p_bloco: bloco, p_responsavel: responsavel || null });
-  if (error) throw error;
+  if (error) falhar(error);
   const d = (data || {}) as Record<string, unknown>;
   return { id: String(d.id), criada: Boolean(d.criada), nome: String(d.nome ?? bloco) };
 }
@@ -76,7 +82,7 @@ export async function abrirBloco(estoqueId: string, bloco: string, responsavel?:
 /** Concluir bloco = finalizar + processar num passo. */
 export async function concluirBloco(contagemId: string, usuarioId?: string): Promise<{ success: boolean; error?: string; total_ajustes?: number; total_sem_diff?: number }> {
   const { data, error } = await supabase.rpc('fn_contagem_bloco_concluir', { p_contagem_id: contagemId, p_usuario_id: usuarioId || null });
-  if (error) throw error;
+  if (error) falhar(error);
   const d = (data || {}) as Record<string, unknown>;
   return { success: d.success !== false, error: d.error ? String(d.error) : undefined, total_ajustes: num(d.total_ajustes), total_sem_diff: num(d.total_sem_diff) };
 }
@@ -161,7 +167,7 @@ export async function loadItensContagem(contagemId: string): Promise<ContagemIte
     .select('*, itens_estoque(nome, codigo, unidade_medida, grupo_contagem, ignorar_contagem)')
     .eq('contagem_id', contagemId)
     .order('item_estoque_id');
-  if (error) throw error;
+  if (error) falhar(error);
 
   return (data || []).map((item: any) => ({
     id:                        item.id,
@@ -247,7 +253,7 @@ export async function loadContagemCompleta(contagemId: string): Promise<{
     .select('*, estoques(nome)')
     .eq('id', contagemId)
     .single();
-  if (error) throw error;
+  if (error) falhar(error);
   const itens = await loadItensContagem(contagemId);
   return {
     contagem: { ...contagem, estoque_nome: contagem?.estoques?.nome || '' },
