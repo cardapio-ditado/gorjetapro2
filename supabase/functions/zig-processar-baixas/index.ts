@@ -110,6 +110,7 @@ const cors = {
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: cors });
+  controleSetorCache.clear();
 
   const supabase = createClient(
     Deno.env.get('SUPABASE_URL')!,
