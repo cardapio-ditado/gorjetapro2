@@ -9,7 +9,7 @@ import { useControleZigBeta2, type FechamentoPreview, cuiabaDate, dataAnterior, 
 import { Home, Package, Users, ClipboardCheck, Truck, Store, FileBox, Clock3, BarChart3, RotateCcw, Warehouse, BookOpen, ChevronDown } from 'lucide-react';
 
 /** Beta 2 no React, sem iframe. Cadastros oficiais são compartilhados; fluxos operacionais usam dados simulados. */
-type View = 'inicio' | 'itens' | 'fichas' | 'fornecedores' | 'estoques' | 'inventario' | 'recebimento' | 'reposicao' | 'fechamento' | 'politica' | 'kits' | 'emergencias' | 'gestao';
+type View = 'inicio' | 'itens' | 'fichas' | 'fornecedores' | 'estoques' | 'inventario' | 'recebimento' | 'reposicao' | 'fechamento' | 'politica' | 'setores' | 'kits' | 'emergencias' | 'gestao';
 type Product = { id:string; nome:string; codigo:string; categoria:string; tipo:string; unidade:string; embalagem:string; fator:number; fornecedorId:string; endereco:string; minimo:number; ponto:number; controle:string; classe:string; cmv:boolean; central:number };
 const productsSeed:Product[]=[
 {id:'stella',nome:'Stella Pure Gold 600 ml',codigo:'BEV-001',categoria:'Bebidas',tipo:'insumo',unidade:'unidade',embalagem:'Caixa com 12',fator:12,fornecedorId:'dist',endereco:'Central seco / Bebidas',minimo:60,ponto:72,controle:'vende',classe:'pedido',cmv:true,central:120},
@@ -38,7 +38,7 @@ const menuSections:{id:MenuSection;title:string;hint:string;icon:React.ElementTy
   {v:'fornecedores',n:'Fornecedores',icon:Users}
  ]},
  {id:'gestao',title:'Gestão',hint:'Aprovações',icon:BarChart3,items:[
-  {v:'politica',n:'Gestão do Estoque',icon:BarChart3},
+  {v:'setores',n:'Configurar setores',icon:Warehouse},
   {v:'gestao',n:'Divergências e aprovação',icon:ClipboardCheck}
  ]}
 ];
@@ -276,7 +276,7 @@ return <div className="b2-root -m-5 lg:-m-7">
   setNotice('Recebimento confirmado somente na prévia, sem nova saída ou entrada nos saldos oficiais.');
  }}
 />}
-{view==='politica'&&<GestaoEstoqueBeta2 dados={dadosFechamento} go={v=>go(v)}/>}
+{(['setores','politica'] as View[]).includes(view)&&<GestaoEstoqueBeta2 key={view} dados={dadosFechamento} go={v=>go(v)}/>}
 {(['fechamento','reposicao'] as View[]).includes(view)&&<FechamentoBeta2
  mode={view as 'fechamento'|'reposicao'}
  dados={dadosFechamento}
