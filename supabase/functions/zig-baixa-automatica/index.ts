@@ -6,8 +6,9 @@ import { createClient } from 'npm:@supabase/supabase-js@2';
 //
 // Roda pelo pg_cron todo dia às 6h de Cuiabá (10h UTC) e processa o dia
 // anterior. Reaproveita a função zig-buscar-vendas (que expande produtos
-// compostos e aplica o mapeamento salvo), dá baixa só no que está mapeado e
-// avisa os gestores pelo Telegram o que ficou sem mapeamento.
+// compostos e aplica o mapeamento salvo). Antes de cada baixa, respeita o controle
+// do item no setor: 'contagem' bloqueia a Zig; 'venda' permite. Sem configuração
+// de setor, mantém o comportamento legado. Também avisa o que ficou sem mapeamento.
 //
 // Corpo opcional: { dtinicio, dtfim, dry_run, avisar }.
 //   - sem corpo: ontem (fuso de Cuiabá).
@@ -52,6 +53,21 @@ type ProdutoZig = {
   expandido_de: string | null;
   mapeamento: { item_estoque_id: string | null; ficha_tecnica_id: string | null; estoque_id: string | null } | null;
 };
+
+const controleSetorCache = new Map<string, boolean>();
+async function permiteBaixaZig(supabase: any, itemId: string, estoqueId: string): Promise<boolean> {
+  const key = estoqueId + ':' + itemId;
+  if (controleSetorCache.has(key)) return controleSetorCache.get(key)!;
+  const { data, error } = await supabase
+    .from('itens_estoque_niveis').select('controle')
+    .eq('estoque_id', estoqueId).eq('item_id', itemId).maybeSingle();
+  if (error) throw new Error('Erro ao consultar controle do setor: ' + error.message);
+  // Sem configuração explícita mantém o comportamento legado.
+  // controle='contagem' impede a Zig; controle='venda' permite.
+  const permitido = !data || data.controle !== 'contagem';
+  controleSetorCache.set(key, permitido);
+  return permitido;
+}
 
 async function baixarItem(
   supabase: any, itemId: string, estoqueId: string, quantidade: number,
@@ -120,6 +136,7 @@ async function enviarTelegram(supabase: any, texto: string): Promise<string[]> {
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: cors });
+  controleSetorCache.clear();
 
   const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
   const SERVICE_ROLE = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -236,21 +253,32 @@ Deno.serve(async (req) => {
 
       try {
         const movIds: string[] = [];
+        let ignoradosPorControle = 0;
         if (m.ficha_tecnica_id) {
           const { data: ingredientes } = await supabase
             .from('ficha_ingredientes').select('item_estoque_id, quantidade')
             .eq('ficha_id', m.ficha_tecnica_id).eq('baixa_estoque', true);
           for (const ing of ingredientes || []) {
             if (!ing.item_estoque_id) continue;
+            if (!(await permiteBaixaZig(supabase, ing.item_estoque_id, m.estoque_id!))) {
+              ignoradosPorControle++;
+              continue;
+            }
             movIds.push(await baixarItem(supabase, ing.item_estoque_id, m.estoque_id!,
               Number(ing.quantidade) * delta, dataVenda, p.productName, p.productId, jaBaixado));
           }
         } else if (m.item_estoque_id) {
-          movIds.push(await baixarItem(supabase, m.item_estoque_id, m.estoque_id!,
-            delta, dataVenda, p.productName, p.productId, jaBaixado));
+          if (await permiteBaixaZig(supabase, m.item_estoque_id, m.estoque_id!)) {
+            movIds.push(await baixarItem(supabase, m.item_estoque_id, m.estoque_id!,
+              delta, dataVenda, p.productName, p.productId, jaBaixado));
+          } else {
+            ignoradosPorControle++;
+          }
         }
 
-        if (movIds.length > 0) {
+        // Uma venda também é considerada processada quando todos os itens dela
+        // foram propositalmente deixados para a contagem diária do setor.
+        if (movIds.length > 0 || ignoradosPorControle > 0) {
           totalMov += movIds.length;
           if (jaSync) {
             await supabase.from('zig_vendas_sync_ids')
@@ -258,7 +286,7 @@ Deno.serve(async (req) => {
           } else {
             await supabase.from('zig_vendas_sync_ids').insert({
               zig_product_id: p.productId, zig_product_name: p.productName,
-              data_venda: dataVenda, movimentacao_id: movIds[0], quantidade: Number(p.count),
+              data_venda: dataVenda, movimentacao_id: movIds[0] || null, quantidade: Number(p.count),
             });
           }
           await supabase.rpc('fn_registrar_uso_mapeamento_zig', { p_nome_externo: p.productName })

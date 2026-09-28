@@ -1,6 +1,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 // Processa as baixas de venda ZIG escolhidas na tela Estoque › ZIG Vendas.
+// O cadastro do setor é a trava final: controle='contagem' impede a Zig naquele item/estoque.
 //
 // Correção de 08/09/2026: a versão anterior, depois de inserir a movimentação,
 // ainda subtraía a quantidade em saldos_estoque à mão. Como o trigger do banco
@@ -12,6 +13,19 @@ function normalizar(nome: string): string {
   return nome.toLowerCase()
     .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
     .replace(/\s+/g, ' ').trim();
+}
+
+const controleSetorCache = new Map<string, boolean>();
+async function permiteBaixaZig(supabase: any, itemId: string, estoqueId: string): Promise<boolean> {
+  const key = estoqueId + ':' + itemId;
+  if (controleSetorCache.has(key)) return controleSetorCache.get(key)!;
+  const { data, error } = await supabase
+    .from('itens_estoque_niveis').select('controle')
+    .eq('estoque_id', estoqueId).eq('item_id', itemId).maybeSingle();
+  if (error) throw new Error('Erro ao consultar controle do setor: ' + error.message);
+  const permitido = !data || data.controle !== 'contagem';
+  controleSetorCache.set(key, permitido);
+  return permitido;
 }
 
 async function baixarItemEstoque(
@@ -63,7 +77,7 @@ async function baixarPorFicha(
   quantidadeVendida: number,
   dataVenda: string,
   nomeOriginal: string
-): Promise<string[]> {
+): Promise<{ movIds: string[]; ignoradosPorControle: number }> {
   // Só ingredientes com baixa_estoque = true descontam do estoque.
   const { data: ingredientes } = await supabase
     .from('ficha_ingredientes')
@@ -71,17 +85,22 @@ async function baixarPorFicha(
     .eq('ficha_id', fichaTecnicaId)
     .eq('baixa_estoque', true);
 
-  if (!ingredientes?.length) return [];
+  if (!ingredientes?.length) return { movIds: [], ignoradosPorControle: 0 };
   const movIds: string[] = [];
+  let ignoradosPorControle = 0;
   for (const ing of ingredientes) {
     if (!ing.item_estoque_id) continue;
+    if (!(await permiteBaixaZig(supabase, ing.item_estoque_id, estoqueId))) {
+      ignoradosPorControle++;
+      continue;
+    }
     const movId = await baixarItemEstoque(
       supabase, ing.item_estoque_id, estoqueId,
       Number(ing.quantidade) * quantidadeVendida, dataVenda, nomeOriginal
     );
     if (movId) movIds.push(movId);
   }
-  return movIds;
+  return { movIds, ignoradosPorControle };
 }
 
 const cors = {
@@ -91,6 +110,7 @@ const cors = {
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: cors });
+  controleSetorCache.clear();
 
   const supabase = createClient(
     Deno.env.get('SUPABASE_URL')!,
@@ -164,23 +184,34 @@ Deno.serve(async (req) => {
 
     try {
       let movIds: string[] = [];
+      let ignoradosPorControle = 0;
 
       if (temFicha) {
-        movIds = await baixarPorFicha(supabase, fichaTecnicaId, estoqueId, Number(count), dataVenda, productName);
+        const result = await baixarPorFicha(supabase, fichaTecnicaId, estoqueId, Number(count), dataVenda, productName);
+        movIds = result.movIds;
+        ignoradosPorControle = result.ignoradosPorControle;
       } else if (temItem) {
-        const movId = await baixarItemEstoque(supabase, itemEstoqueId, estoqueId, Number(count), dataVenda, productName);
-        if (movId) movIds = [movId];
+        if (await permiteBaixaZig(supabase, itemEstoqueId, estoqueId)) {
+          const movId = await baixarItemEstoque(supabase, itemEstoqueId, estoqueId, Number(count), dataVenda, productName);
+          if (movId) movIds = [movId];
+        } else {
+          ignoradosPorControle = 1;
+        }
       }
 
-      if (movIds.length > 0) {
+      if (movIds.length > 0 || ignoradosPorControle > 0) {
         totalMovimentacoes += movIds.length;
         await supabase.from('zig_vendas_sync_ids').insert({
           zig_product_id:   productId,
           zig_product_name: productName,
           data_venda:       dataVenda,
-          movimentacao_id:  movIds[0],
+          movimentacao_id:  movIds[0] || null,
         });
-        itensProcessados.push({ nome: productName, quantidade: count, data_venda: dataVenda, movimentacoes: movIds.length, expandido_de: expandido_de || null });
+        itensProcessados.push({
+          nome: productName, quantidade: count, data_venda: dataVenda,
+          movimentacoes: movIds.length, ignorados_por_contagem: ignoradosPorControle,
+          expandido_de: expandido_de || null
+        });
       }
 
       const nomeNorm = normalizar(productName);

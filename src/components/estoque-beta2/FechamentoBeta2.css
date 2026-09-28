@@ -1,0 +1,50 @@
+/* Fechamento e reposição — identidade vinho do Estoque Beta 2 */
+.b2-root .b2-close-selector{display:grid;grid-template-columns:1.1fr 1fr auto;gap:12px;align-items:end;margin:18px 0}
+.b2-root .b2-close-selector .b2-btn{min-height:43px}
+.b2-root .b2-close-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:11px;margin-bottom:20px}
+.b2-root .b2-close-metrics .b2-card{padding:14px}
+.b2-root .b2-close-metrics small,.b2-root .b2-close-metrics span{display:block;font-size:11px;color:#ead6e5!important}
+.b2-root .b2-close-metrics strong{display:block;margin:3px 0;font-size:29px;font-weight:900;color:#ffe6b8!important}
+.b2-root .b2-close-check{display:flex;align-items:center;gap:8px;color:#f2e1ee!important;font-size:13px;margin:15px 0}
+.b2-root .b2-close-check input{accent-color:#b84b66}
+.b2-root .b2-close-policy{display:flex;flex-direction:column;gap:9px;margin-top:15px}
+.b2-root .b2-close-policy-row{display:grid;grid-template-columns:minmax(0,1.2fr) auto minmax(0,.95fr);align-items:center;gap:11px;padding:12px 14px;border:1px solid #6b495e;border-radius:12px;background:#2c2031;min-width:0}
+.b2-root .b2-close-policy-row>div{min-width:0}
+.b2-root .b2-close-policy-row strong{display:block;color:#fff8fc!important;font-size:13px;overflow-wrap:anywhere}
+.b2-root .b2-close-policy-row small{display:block;color:#e0c6d8!important;font-size:11px;margin-top:4px}
+.b2-root .b2-close-policy-row .b2-pill{font-size:10px}
+.b2-root .b2-close-policy-row .b2-field{min-width:0}
+.b2-root .b2-close-policy-row .b2-field select{min-height:37px;padding:6px;font-size:12px}
+.b2-root .b2-close-locked{background:#213b33;border:1px solid #3f6f5a;border-radius:9px;padding:9px}
+.b2-root .b2-close-status{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:11px 0 17px}
+.b2-root .b2-close-list{display:flex;flex-direction:column;gap:9px;margin-top:13px}
+.b2-root .b2-close-row{display:grid;grid-template-columns:minmax(175px,1.1fr) minmax(0,1fr);gap:18px;align-items:center;background:#2d2032;border:1px solid #745267;border-radius:13px;padding:14px 16px}
+.b2-root .b2-close-name strong{display:block;color:#fff8fd!important;font-size:14px}
+.b2-root .b2-close-name small{display:block;color:#dfc8d6!important;font-size:11px;margin-top:4px}
+.b2-root .b2-close-name .b2-pill{font-size:10px;margin-top:6px}
+.b2-root .b2-close-name .b2-close-tip{color:#f5c990!important}
+.b2-root .b2-close-count{display:flex;align-items:end;gap:9px;flex-wrap:wrap}
+.b2-root .b2-close-count .b2-field{flex:1;min-width:115px}
+.b2-root .b2-close-count .b2-field input{min-height:43px}
+.b2-root .b2-close-count .b2-pill{margin-bottom:8px}
+.b2-root .b2-close-footer{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;padding:16px 0;margin-top:12px;border-top:1px solid #684b5d;color:#efd6e3!important;font-size:12px}
+.b2-root .b2-close-actions{margin-top:15px;display:flex;justify-content:flex-end;gap:10px}
+.b2-root .b2-close-received{display:flex;gap:7px;flex-wrap:wrap;margin:16px 0}
+.b2-root .b2-close-table{min-width:760px}
+.b2-root .b2-close-table strong{color:#fff7fa!important}
+.b2-root .b2-close-table td small{display:block;font-size:10px;color:#dec5d7!important;margin-top:4px}
+.b2-root .b2-close-table .b2-close-warning{color:#ffbeaf!important}
+.b2-root .b2-close .b2-btn svg{display:inline;vertical-align:middle}
+@media(max-width:1150px){
+ .b2-root .b2-close-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .b2-root .b2-close-policy-row{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+ .b2-root .b2-close-policy-row>div{grid-column:1/-1}
+}
+@media(max-width:670px){
+ .b2-root .b2-close-selector{grid-template-columns:1fr}
+ .b2-root .b2-close-row{grid-template-columns:1fr;gap:12px}
+ .b2-root .b2-close-policy-row{grid-template-columns:1fr}
+ .b2-root .b2-close-policy-row>div{grid-column:auto}
+ .b2-root .b2-close-metrics .b2-card{padding:11px}
+ .b2-root .b2-close-metrics strong{font-size:24px}
+}
