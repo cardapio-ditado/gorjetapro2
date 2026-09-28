@@ -87,7 +87,7 @@ const GestaoEstoqueBeta2:React.FC<Props>=({dados,go})=>{
     return normalizar([item?.nome,item?.codigo,item?.categoria].join(' ')).includes(normalizar(search));
   });
 
-  const availableItems=dados.items.filter(i=>i.status==='ativo'&&!draftItems[i.id] && (
+  const availableItems=dados.items.filter(i=>i.status==='ativo'&&(!draftItems[i.id]||draftItems[i.id].removido) && (
     !addSearch.trim() || normalizar([i.nome,i.codigo,i.categoria].join(' ')).includes(normalizar(addSearch))
   )).sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR'));
 
