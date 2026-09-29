@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { Shield, Lock, AlertTriangle } from 'lucide-react';
+import { Shield, Lock } from 'lucide-react';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;

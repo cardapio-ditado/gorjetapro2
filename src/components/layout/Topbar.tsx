@@ -1,8 +1,10 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Search, Bell, Settings, LogOut, ChevronDown, Command, ChevronRight, Menu, X, Home, DollarSign, Warehouse, Users, Music, CalendarDays, BookOpen, Target, TrendingUp, Star, Sun, Moon } from 'lucide-react';
+import { Search, Bell, Settings, LogOut, ChevronDown, Command, ChevronRight, Menu, X, Sun, Moon, LayoutTemplate } from 'lucide-react';
 import { Usuario } from '../../contexts/AuthContext';
 import { alternarTema, lerTema, Tema } from '../../lib/tema';
+import { definirLayout } from '../../lib/layout';
+import { ROTAS_BUSCA, type RotaBusca } from '../../lib/rotasBusca';
 
 interface TopbarProps {
   toggleSidebar: () => void;
@@ -10,76 +12,9 @@ interface TopbarProps {
   onLogout: () => void;
 }
 
-interface SearchResult {
-  label: string;
-  sublabel?: string;
-  path: string;
-  icon?: React.ElementType;
-}
+type SearchResult = RotaBusca;
 
-const ALL_ROUTES: SearchResult[] = [
-  { label: 'Dashboard',               path: '/',                                                    icon: Home },
-  { label: 'Agenda do Dia',           path: '/agenda-diaria',                                       icon: CalendarDays },
-  // RH
-  { label: 'RH — Colaboradores',      path: '/staff?tab=0',                                         icon: Users },
-  { label: 'RH — Escalas',            path: '/staff?tab=1',                                         icon: Users },
-  { label: 'RH — Férias',             path: '/staff?tab=2',                                         icon: Users },
-  { label: 'RH — Ocorrências',        path: '/staff?tab=3',                                         icon: Users },
-  { label: 'RH — Extras',             path: '/staff?tab=4',                                         icon: Users },
-  { label: 'RH — Funções',            path: '/staff?tab=5',                                         icon: Users },
-  { label: 'RH — Configurações',      path: '/staff?tab=6',                                         icon: Users },
-  { label: 'RH — Relatórios',         path: '/staff?tab=7',                                         icon: Users },
-  { label: 'RH — Gorjetas',           path: '/staff?tab=8',                                         icon: Users },
-  { label: 'Recrutamento',            path: '/recruitment',                                          icon: Users },
-  // Músicos & Eventos
-  { label: 'Músicos',                 path: '/musicians',                                            icon: Music },
-  { label: 'Eventos',                 path: '/events',                                               icon: CalendarDays },
-  // Financeiro
-  { label: 'Financeiro — Fluxo de Caixa',        path: '/finance?tab=fluxo',             icon: DollarSign },
-  { label: 'Financeiro — Fechamento de Sócios',  path: '/finance?tab=fechamento',        icon: DollarSign },
-  { label: 'Financeiro — Faturamento (ZIG)',     path: '/finance?tab=faturamento',       icon: DollarSign },
-  { label: 'Financeiro — Extrato Diário',        path: '/finance?tab=extrato',           icon: DollarSign },
-  { label: 'Financeiro — Contas a Pagar',        path: '/finance?tab=pagar',             icon: DollarSign },
-  { label: 'Financeiro — Contas a Receber',      path: '/finance?tab=receber',           icon: DollarSign },
-  { label: 'Financeiro — Histórico / Estornos',  path: '/finance?tab=historico',         icon: DollarSign },
-  { label: 'Financeiro — Categorizar',           path: '/finance?tab=categorizar',       icon: DollarSign },
-  { label: 'Financeiro — Ficha Fornecedor',      path: '/finance?tab=ficha-fornecedor',  icon: DollarSign },
-  { label: 'Financeiro — Kardex Fornecedor',     path: '/finance?tab=kardex-fornecedor', icon: DollarSign },
-  { label: 'Financeiro — Kardex Completo',       path: '/finance?tab=kardex-completo',   icon: DollarSign },
-  { label: 'Financeiro — Relatórios',            path: '/finance?tab=relatorios',        icon: DollarSign },
-  { label: 'Financeiro — Cadastros',             path: '/finance?tab=cadastros',         icon: DollarSign },
-  { label: 'Dashboard Financeiro',               path: '/financeiro',       icon: DollarSign },
-  { label: 'ZIG Recebimentos',                   path: '/zig-recebimentos', icon: DollarSign },
-  { label: 'DRE Simplificado',                   path: '/dre-simplificado', icon: DollarSign },
-  // Estoque
-  { label: 'Estoque — Receber Mercadoria',  path: '/advanced-inventory?area=operacao&tela=receber',     icon: Warehouse },
-  { label: 'Estoque — Transferir',          path: '/advanced-inventory?area=operacao&tela=transferir',  icon: Warehouse },
-  { label: 'Estoque — Produzir',            path: '/advanced-inventory?area=operacao&tela=produzir',    icon: Warehouse },
-  { label: 'Estoque — Contagem',            path: '/advanced-inventory?area=operacao&tela=contar',      icon: Warehouse },
-  { label: 'Estoque — Requisições',         path: '/advanced-inventory?area=operacao&tela=requisicoes', icon: Warehouse },
-  { label: 'Estoque — Dashboard',           path: '/advanced-inventory?area=analise&tela=dashboard',    icon: Warehouse },
-  { label: 'Estoque — Extrato do Item',     path: '/advanced-inventory?area=analise&tela=kardex',       icon: Warehouse },
-  { label: 'Estoque — Posição do Estoque',  path: '/advanced-inventory?area=analise&tela=inventario',   icon: Warehouse },
-  { label: 'Estoque — Relatórios',          path: '/advanced-inventory?area=analise&tela=relatorios',   icon: Warehouse },
-  { label: 'Estoque — ZIG Vendas',          path: '/advanced-inventory?area=analise&tela=zig',          icon: Warehouse },
-  { label: 'Estoque — Lista de Compras',    path: '/advanced-inventory?area=compras&tela=lista-compras',icon: Warehouse },
-  { label: 'Estoque — Itens',               path: '/advanced-inventory?area=cadastros&tela=itens',      icon: Warehouse },
-  { label: 'Estoque — Fichas Técnicas',     path: '/advanced-inventory?area=cadastros&tela=fichas',     icon: Warehouse },
-  { label: 'Estoque — Estoques',            path: '/advanced-inventory?area=cadastros&tela=estoques',   icon: Warehouse },
-  { label: 'Controle De Ville',             path: '/controle-deville',                                  icon: Warehouse },
-  // Estratégico & Fidelidade
-  { label: 'OKRs Estratégicos',             path: '/gestao-estrategica',                                icon: TrendingUp },
-  { label: 'Fidelidade — Sincronização',    path: '/fidelidade',                                        icon: Star },
-  { label: 'Fidelidade — Buscar Cliente',   path: '/fidelidade?tab=busca',                              icon: Star },
-  { label: 'Fidelidade — Aniversariantes',  path: '/fidelidade?tab=aniversario',                        icon: Star },
-  { label: 'Fidelidade — Rankings',         path: '/fidelidade?tab=rankings',                           icon: Star },
-  { label: 'Fidelidade — Gatilhos de Prêmio', path: '/fidelidade?tab=gatilhos',                         icon: Star },
-  { label: 'Fidelidade — Programa de Pontos', path: '/fidelidade?tab=pontos',                           icon: Star },
-  // Sistema
-  { label: 'Metas & Tarefas',  path: '/metas-tarefas',  icon: Target },
-  { label: 'Manual',           path: '/manual',          icon: BookOpen },
-  { label: 'Configurações',    path: '/settings',        icon: Settings },
-];
+const ALL_ROUTES: SearchResult[] = ROTAS_BUSCA;
 
 const Topbar: React.FC<TopbarProps> = ({ toggleSidebar, user, onLogout }) => {
   const location  = useLocation();
@@ -386,6 +321,15 @@ const Topbar: React.FC<TopbarProps> = ({ toggleSidebar, user, onLogout }) => {
                 {tema === 'claro' ? <Moon size={16} /> : <Sun size={16} />}
                 <span className="flex-1 text-left">{tema === 'claro' ? 'Usar tema escuro' : 'Usar tema claro'}</span>
                 <span className="t-caption text-white/40">{tema === 'claro' ? 'claro' : 'escuro'}</span>
+              </button>
+              <button
+                onClick={() => definirLayout('novo')}
+                className="flex items-center w-full gap-3 px-3 py-2.5 rounded-lg text-sm font-sans text-white/50 hover:text-white/80 hover:bg-white/5 transition-all"
+                title="Trilho de áreas, coluna da área e busca no topo. Só para você; dá para voltar."
+              >
+                <LayoutTemplate size={16} />
+                <span className="flex-1 text-left">Experimentar layout novo</span>
+                <span className="t-caption text-white/40">beta</span>
               </button>
               <button className="flex items-center w-full gap-3 px-3 py-2.5 rounded-lg text-sm font-sans text-white/50 hover:text-white/80 hover:bg-white/5 transition-all">
                 <Settings size={16} />

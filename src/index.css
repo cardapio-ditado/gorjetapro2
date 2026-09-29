@@ -14,17 +14,19 @@
   --gold-light:  #E5C158;
   --gold-muted:  rgba(212, 175, 55, 0.14);
 
-  /* Dark palette — deep blue-black for a modern SaaS feel */
-  --bg-base:     #080c14;
-  --bg-dark:     #0c1018;
-  --bg-card:     #101520;
-  --bg-elevated: #141a28;
-  --bg-surface:  #1a2235;
+  /* Superfícies: TRÊS degraus, e só. Fundo da página, cartão, elevado
+   * (menu, popover, linha destacada). A lateral e o topo usam --bg-dark, um
+   * meio-tom entre fundo e cartão. Qualquer outra cor de fundo é erro. */
+  --bg-base:     #0b0e14;
+  --bg-dark:     #0f131b;
+  --bg-card:     #12161f;
+  --bg-elevated: #181d29;
+  --bg-surface:  #181d29;
   --bg-hover:    rgba(255,255,255,0.04);
   --bg-active:   rgba(255,255,255,0.07);
 
-  /* Borders */
-  --border:        rgba(255,255,255,0.07);
+  /* Borders: UMA borda, branca a 8%. --border-strong só em campo de formulário. */
+  --border:        rgba(255,255,255,0.08);
   --border-subtle: rgba(255,255,255,0.04);
   --border-strong: rgba(255,255,255,0.12);
 
@@ -32,7 +34,7 @@
    *
    * REGRA DE USO (medida em WCAG 2.2 AA, contra os fundos reais do app):
    *   --text-primary    16,23:1 em --bg-dark · qualquer texto, qualquer fundo.
-   *   --text-secondary   5,50:1 em --bg-dark · pior caso 4,59:1 em --bg-surface.
+   *   --text-secondary   6,3:1 em --bg-card · pior caso 5,4:1 em --bg-elevated.
    *                      É o nível MAIS BAIXO legível: todo texto que a pessoa
    *                      precisa ler para de descer daqui (rótulo, valor, data,
    *                      status, placeholder, estado vazio).
@@ -46,7 +48,7 @@
    * tamanho, não uma cor mais escura.
    */
   --text-primary:   #e8edf8;
-  --text-secondary: #7a8ba6;
+  --text-secondary: #8b9bb4;
   --text-muted:     #3a4560;
   --text-disabled:  #252e3f;
 
@@ -176,107 +178,122 @@
 /* ─── Components ─────────────────────────────────────────────────────────── */
 @layer components {
 
-  /* ── Cards ── */
+  /* ── Cards ────────────────────────────────────────────────────────────────
+     Chapado: fundo, uma borda, canto de cartão. Sem sombra, sem brilho, sem
+     levantar no hover. O cartão é a unidade de todo bloco de conteúdo.     */
   .card {
     background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: 14px;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
-  }
-  .card:hover {
-    border-color: var(--border-strong);
-    box-shadow: 0 8px 32px rgba(0,0,0,0.35);
+    border-radius: var(--r-card);
   }
   .card-elevated {
     background: var(--bg-elevated);
-    border: 1px solid var(--border-subtle);
-    border-radius: 16px;
+    border: 1px solid var(--border);
+    border-radius: var(--r-card);
   }
 
-  /* ── KPI card ── */
+  /* ── KPI card: rótulo 12, número 26, detalhe 12 ── */
   .kpi-card {
     background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 20px;
-    transition: all 0.2s ease;
+    border-radius: var(--r-card);
+    padding: 16px;
     position: relative;
-    overflow: hidden;
-  }
-  .kpi-card::after {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.07), transparent);
-  }
-  .kpi-card:hover {
-    border-color: var(--border-strong);
-    transform: translateY(-1px);
-    box-shadow: 0 12px 40px rgba(0,0,0,0.45);
   }
 
-  /* ── Buttons ── */
-  .btn-primary {
-    background: linear-gradient(135deg, var(--wine), var(--wine-light));
-    color: #fff;
+  /* ── Botões: quatro, e só ──────────────────────────────────────────────────
+     primário (vinho, UM por tela), secundário (borda), discreto (só texto),
+     perigo (vermelho, pede confirmação). Altura 36 no computador; .btn-touch
+     leva a 56 no celular da operação; .btn-sm cabe em linha de tabela.
+     Chapados: sem degradê, sem sombra, sem deslocar no hover.              */
+  .btn-primary,
+  .btn-secondary,
+  .btn-ghost,
+  .btn-danger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 36px;
+    padding: 0 14px;
+    border-radius: var(--r-control);
+    font-size: 14px;
     font-weight: 600;
-    font-size: 13px;
-    padding: 9px 18px;
-    border-radius: 10px;
-    border: none;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1);
+    line-height: 1;
     letter-spacing: -0.01em;
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-  }
-  .btn-primary:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 16px rgba(125,31,44,0.45), inset 0 1px 0 rgba(255,255,255,0.1);
-  }
-  .btn-primary:active { transform: translateY(0); }
-  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-
-  .btn-secondary {
-    background: rgba(255,255,255,0.05);
-    color: var(--text-primary);
-    font-weight: 500;
-    font-size: 13px;
-    padding: 9px 18px;
-    border-radius: 10px;
-    border: 1px solid var(--border-strong);
+    white-space: nowrap;
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition: background var(--dur-fast) var(--ease-standard),
+                border-color var(--dur-fast) var(--ease-standard),
+                color var(--dur-fast) var(--ease-standard);
+  }
+  .btn-sm    { height: 32px; padding: 0 12px; font-size: 13px; }
+  .btn-touch { height: 56px; padding: 0 20px; font-size: 18px; font-weight: 700; border-radius: var(--r-touch); gap: 10px; }
+
+  .btn-primary { background: var(--wine); color: #ffffff; border: 1px solid var(--wine); }
+  .btn-primary:hover  { background: var(--wine-light); border-color: var(--wine-light); }
+  .btn-primary:active { background: var(--wine-deep); }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; background: var(--wine); }
+
+  .btn-secondary { background: transparent; color: var(--text-primary); border: 1px solid var(--border-strong); }
+  .btn-secondary:hover { background: var(--bg-hover); border-color: rgba(255,255,255,0.22); }
+
+  .btn-ghost { background: transparent; color: var(--text-secondary); border: 1px solid transparent; padding: 0 10px; }
+  .btn-ghost:hover { background: var(--bg-hover); color: var(--text-primary); }
+
+  .btn-danger { background: rgba(239,68,68,0.12); color: #fca5a5; border: 1px solid rgba(239,68,68,0.5); }
+  .btn-danger:hover  { background: rgba(239,68,68,0.2); }
+  .btn-danger:active { background: rgba(239,68,68,0.28); }
+  .btn-danger:disabled { opacity: 0.45; cursor: not-allowed; }
+
+  /* ── Chip de filtro: liga e desliga, pílula ── */
+  .chip {
     display: inline-flex;
     align-items: center;
-    gap: 7px;
-  }
-  .btn-secondary:hover {
-    background: rgba(255,255,255,0.08);
-    border-color: rgba(255,255,255,0.18);
-  }
-
-  .btn-ghost {
+    gap: 6px;
+    height: 32px;
+    padding: 0 12px;
+    border-radius: var(--r-pill);
+    border: 1px solid var(--border-strong);
     background: transparent;
     color: var(--text-secondary);
-    font-weight: 500;
     font-size: 13px;
-    padding: 9px 18px;
-    border-radius: 10px;
-    border: none;
+    font-weight: 600;
+    white-space: nowrap;
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition: background var(--dur-fast) var(--ease-standard), color var(--dur-fast) var(--ease-standard);
+  }
+  .chip:hover { color: var(--text-primary); background: var(--bg-hover); }
+  .chip-on          { background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.3); color: var(--text-primary); }
+  .chip-on.chip-perigo  { background: rgba(239,68,68,0.12);  border-color: rgba(248,113,113,0.5); color: #fca5a5; }
+  .chip-on.chip-atencao { background: rgba(245,158,11,0.12); border-color: rgba(251,191,36,0.5);  color: #fcd34d; }
+  .chip-on.chip-certo   { background: rgba(16,185,129,0.12); border-color: rgba(52,211,153,0.5);  color: #6ee7b7; }
+  .chip-on.chip-ouro    { background: rgba(212,175,55,0.14); border-color: rgba(212,175,55,0.5);  color: var(--gold-light); }
+
+  /* ── Segmentado: uma escolha entre poucas (Toda a casa | Central | Bar) ── */
+  .segmented {
     display: inline-flex;
-    align-items: center;
-    gap: 7px;
+    padding: 3px;
+    border-radius: var(--r-control);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    gap: 2px;
   }
-  .btn-ghost:hover {
-    background: var(--bg-hover);
-    color: var(--text-primary);
+  .segmented-btn {
+    height: 30px;
+    padding: 0 12px;
+    border-radius: 6px;
+    border: 0;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 13px;
+    font-weight: 500;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background var(--dur-fast) var(--ease-standard), color var(--dur-fast) var(--ease-standard);
   }
+  .segmented-btn:hover { color: var(--text-primary); }
+  .segmented-on { background: rgba(255,255,255,0.10); color: var(--text-primary); font-weight: 600; }
 
   /* ── Estados que faltavam ─────────────────────────────────────────────────
      Todo clicavel precisa de cinco estados. Foco de teclado e o mais
@@ -287,7 +304,10 @@
   .btn-primary:focus-visible,
   .btn-secondary:focus-visible,
   .btn-ghost:focus-visible,
-  .btn-icon:focus-visible {
+  .btn-danger:focus-visible,
+  .btn-icon:focus-visible,
+  .chip:focus-visible,
+  .segmented-btn:focus-visible {
     outline: none;
     box-shadow: var(--shadow-focus);
   }
@@ -332,16 +352,18 @@
   .btn-icon-accent:hover  { background: rgba(96,165,250,0.14); color: #93c5fd; border-color: rgba(96,165,250,0.35); }
 
   /* ── Badges ── */
+  /* Etiqueta: pílula de 24px, fundo a 14% da cor, texto na versão clara da cor. */
   .badge {
     display: inline-flex;
     align-items: center;
     gap: 5px;
-    padding: 3px 9px;
-    border-radius: 6px;
-    font-size: 11px;
+    height: 24px;
+    padding: 0 10px;
+    border-radius: var(--r-pill);
+    font-size: 12px;
     font-weight: 600;
-    letter-spacing: 0.02em;
-    line-height: 1.6;
+    letter-spacing: 0.01em;
+    line-height: 1;
     white-space: nowrap;
   }
   .badge-success {
@@ -381,22 +403,26 @@
   }
 
   /* ── Input dark ── */
+  /* Campo: 36px, fundo da página, borda forte, canto de controle. */
   .input-dark {
-    background: rgba(255,255,255,0.04);
+    background: var(--bg-base);
     border: 1px solid var(--border-strong);
     color: var(--text-primary);
-    border-radius: 10px;
-    padding: 9px 14px;
-    font-size: 13px;
+    border-radius: var(--r-control);
+    min-height: 36px;
+    padding: 7px 12px;
+    font-size: 14px;
     width: 100%;
-    transition: all 0.15s ease;
+    transition: border-color var(--dur-fast) var(--ease-standard), box-shadow var(--dur-fast) var(--ease-standard);
   }
+  textarea.input-dark { min-height: 88px; line-height: 1.5; }
   .input-dark::placeholder { color: var(--text-secondary); }
   .input-dark:focus {
     border-color: rgba(125,31,44,0.8) !important;
     box-shadow: 0 0 0 3px rgba(125,31,44,0.15) !important;
-    background: rgba(255,255,255,0.06);
   }
+  .input-dark[aria-invalid="true"] { border-color: var(--danger) !important; }
+  .input-dark:disabled { opacity: 0.5; cursor: not-allowed; }
 
   /* ── Glass ── */
   .glass {
@@ -745,11 +771,12 @@
   /* -- Raio: um por tipo de elemento ---------------------------------------
      Substitui os 7 raios em uso (lg 1374, xl 812, full 456, md 320, 2xl 166,
      3xl 8, sm 2), que hoje variam sem criterio.                             */
-  --r-badge:   6px;    /* badge, chip, tag              */
-  --r-control: 10px;   /* botao, campo, select          */
-  --r-card:    14px;   /* card, painel, linha destacada */
-  --r-modal:   18px;   /* modal, drawer, popover        */
-  --r-pill:    999px;  /* avatar, pilula, ponto         */
+  --r-badge:   6px;    /* tag quadrada, célula destacada */
+  --r-control: 8px;    /* botao, campo, select           */
+  --r-card:    10px;   /* card, painel, linha destacada  */
+  --r-touch:   12px;   /* cartao e botao no celular      */
+  --r-modal:   12px;   /* modal, drawer, popover         */
+  --r-pill:    999px;  /* etiqueta, chip, avatar, ponto  */
 
   /* -- Sombra: tres niveis, cada um com um significado ----------------------
      O nivel comunica ALTURA. Nao use um nivel alto so para chamar atencao.  */

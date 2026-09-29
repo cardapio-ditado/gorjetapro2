@@ -1,29 +1,27 @@
 import React from 'react';
 
+export type BadgeVariante = 'success' | 'warning' | 'danger' | 'info' | 'neutral' | 'gold' | 'wine' | 'default';
+
 interface BadgeProps {
   children: React.ReactNode;
-  variant?: 'success' | 'warning' | 'danger' | 'info' | 'default';
+  variant?: BadgeVariante;
   className?: string;
 }
 
-export const Badge: React.FC<BadgeProps> = ({
-  children,
-  variant = 'default',
-  className = ''
-}) => {
-  const variantClasses = {
-    success: 'badge-success',
-    warning: 'badge-warning',
-    danger: 'badge-danger',
-    info: 'badge-info',
-    default: 'bg-gray-100 text-text-secondary border border-gray-200'
-  };
-
-  return (
-    <span className={`badge ${variantClasses[variant]} ${className}`}>
-      {children}
-    </span>
-  );
+const CLASSE: Record<BadgeVariante, string> = {
+  success: 'badge-success',
+  warning: 'badge-warning',
+  danger: 'badge-danger',
+  info: 'badge-info',
+  neutral: 'badge-neutral',
+  gold: 'badge-gold',
+  wine: 'badge-wine',
+  default: 'badge-neutral',
 };
+
+/** Etiqueta de estado: pago, vence hoje, atrasado, rascunho. Pílula de 24px. */
+export const Badge: React.FC<BadgeProps> = ({ children, variant = 'neutral', className = '' }) => (
+  <span className={`badge ${CLASSE[variant]} ${className}`.trim()}>{children}</span>
+);
 
 export default Badge;

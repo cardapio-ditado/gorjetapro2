@@ -5,6 +5,8 @@ import SidebarModern from './components/layout/SidebarModern';
 import ProtectedRoute from './components/layout/ProtectedRoute';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Topbar from './components/layout/Topbar';
+import AppShell from './components/layout/AppShell';
+import { aoMudarLayout, lerLayout, type Layout } from './lib/layout';
 import Login from './pages/Login';
 import AuthRecoveryGate from './components/AuthRecoveryGate';
 import { testConnection } from './lib/supabase';
@@ -42,6 +44,7 @@ const FidelidadeModule    = lazy(() => import('./pages/FidelidadeModule'));
 const RedefinirSenha      = lazy(() => import('./pages/RedefinirSenha'));
 const PortalGerente       = lazy(() => import('./pages/PortalGerente'));
 const Saguao              = lazy(() => import('./pages/Saguao'));
+const KitDesign           = lazy(() => import('./pages/KitDesign'));
 
 const PageLoader = () => (
   <div className="flex flex-col items-center justify-center h-full min-h-[300px] gap-4">
@@ -55,6 +58,9 @@ const PageLoader = () => (
 
 function AppContent() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  // Casca clássica ou nova: preferência de quem usa (menu do usuário › layout).
+  const [layout, setLayout] = useState<Layout>(() => lerLayout());
+  useEffect(() => aoMudarLayout(setLayout), []);
   const { usuario, logout } = useAuth();
   const location = useLocation();
 
@@ -93,6 +99,46 @@ function AppContent() {
     );
   }
 
+  // As telas de dentro do sistema, uma lista só, para as duas cascas.
+  const rotas = (
+    <Suspense fallback={<PageLoader />}>
+      <Routes>
+        <Route path="/dashboard"           element={<ProtectedRoute moduloSlug="dashboard">     <PainelInicial />       </ProtectedRoute>} />
+        <Route path="/portal-gerente"      element={<ProtectedRoute moduloSlug="dashboard">     <PortalGerente />       </ProtectedRoute>} />
+        <Route path="/agenda-diaria"       element={<ProtectedRoute moduloSlug="dashboard">     <AgendaDiaria />        </ProtectedRoute>} />
+        <Route path="/finance"             element={<ProtectedRoute moduloSlug="financeiro">    <Finance />             </ProtectedRoute>} />
+        <Route path="/financeiro"          element={<ProtectedRoute moduloSlug="financeiro">    <DashboardFinanceiro /> </ProtectedRoute>} />
+        <Route path="/advanced-inventory"  element={<ProtectedRoute moduloSlug="estoque">       <AdvancedInventory />   </ProtectedRoute>} />
+        <Route path="/staff"               element={<ProtectedRoute moduloSlug="rh">            <Staff />               </ProtectedRoute>} />
+        <Route path="/recruitment"         element={<ProtectedRoute moduloSlug="rh">            <Recruitment />         </ProtectedRoute>} />
+        <Route path="/musicians"           element={<ProtectedRoute moduloSlug="musicos">       <Musicians />           </ProtectedRoute>} />
+        <Route path="/events"              element={<ProtectedRoute moduloSlug="eventos">       <Events />              </ProtectedRoute>} />
+        <Route path="/metas-tarefas"       element={<ProtectedRoute moduloSlug="solicitacoes">  <MetasTarefas />        </ProtectedRoute>} />
+        <Route path="/gestao-estrategica"  element={<ProtectedRoute moduloSlug="financeiro">    <GestaoEstrategica />   </ProtectedRoute>} />
+        <Route path="/zig-vendas"          element={<ProtectedRoute moduloSlug="estoque">       <ZigVendasSync />       </ProtectedRoute>} />
+        <Route path="/zig-recebimentos"    element={<ProtectedRoute moduloSlug="financeiro">    <ZigRecebimentos />     </ProtectedRoute>} />
+        <Route path="/lista-compras"       element={<ProtectedRoute moduloSlug="estoque">       <ListaCompras />        </ProtectedRoute>} />
+        <Route path="/dre-simplificado"    element={<ProtectedRoute moduloSlug="financeiro">    <DRESimplificado />     </ProtectedRoute>} />
+        <Route path="/controle-deville"    element={<ProtectedRoute moduloSlug="estoque">       <ControleDeville />     </ProtectedRoute>} />
+        <Route path="/estoque-beta2"       element={<ProtectedRoute moduloSlug="estoque">       <EstoqueBeta2 />        </ProtectedRoute>} />
+        <Route path="/fidelidade"          element={<ProtectedRoute moduloSlug="dashboard">     <FidelidadeModule />    </ProtectedRoute>} />
+        <Route path="/manual"              element={<ManualUsuario />} />
+        <Route path="/settings"            element={<ProtectedRoute moduloSlug="configuracoes"> <Settings />            </ProtectedRoute>} />
+        <Route path="/kit"                 element={<ProtectedRoute moduloSlug="configuracoes"> <KitDesign />           </ProtectedRoute>} />
+        <Route path="*" element={
+          <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
+            <p className="text-8xl font-black leading-none mb-4"
+              style={{ background: 'linear-gradient(135deg,var(--wine),var(--gold))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+              404
+            </p>
+            <h3 className="text-lg font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>Página não encontrada</h3>
+            <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>A URL acessada não existe neste sistema.</p>
+          </div>
+        } />
+      </Routes>
+    </Suspense>
+  );
+
   // O saguão toma a tela inteira, sem lateral nem topbar: é a entrada do
   // sistema, não uma página dentro dele. A lateral só existe DENTRO de um
   // módulo — e lá mostra apenas as telas daquele módulo.
@@ -102,6 +148,10 @@ function AppContent() {
         <Saguao />
       </Suspense>
     );
+  }
+
+  if (layout === 'novo') {
+    return <AppShell>{rotas}</AppShell>;
   }
 
   // Dentro de um módulo o layout é de sistema: fundo chapado, lateral e topo
@@ -146,41 +196,7 @@ function AppContent() {
             transition={{ duration: 0.32, ease: [0.2, 0, 0, 1] }}
             className="p-5 lg:p-7 min-h-full"
           >
-            <Suspense fallback={<PageLoader />}>
-              <Routes>
-                <Route path="/dashboard"           element={<ProtectedRoute moduloSlug="dashboard">     <PainelInicial />       </ProtectedRoute>} />
-                <Route path="/portal-gerente"      element={<ProtectedRoute moduloSlug="dashboard">     <PortalGerente />       </ProtectedRoute>} />
-                <Route path="/agenda-diaria"       element={<ProtectedRoute moduloSlug="dashboard">     <AgendaDiaria />        </ProtectedRoute>} />
-                <Route path="/finance"             element={<ProtectedRoute moduloSlug="financeiro">    <Finance />             </ProtectedRoute>} />
-                <Route path="/financeiro"          element={<ProtectedRoute moduloSlug="financeiro">    <DashboardFinanceiro /> </ProtectedRoute>} />
-                <Route path="/advanced-inventory"  element={<ProtectedRoute moduloSlug="estoque">       <AdvancedInventory />   </ProtectedRoute>} />
-                <Route path="/staff"               element={<ProtectedRoute moduloSlug="rh">            <Staff />               </ProtectedRoute>} />
-                <Route path="/recruitment"         element={<ProtectedRoute moduloSlug="rh">            <Recruitment />         </ProtectedRoute>} />
-                <Route path="/musicians"           element={<ProtectedRoute moduloSlug="musicos">       <Musicians />           </ProtectedRoute>} />
-                <Route path="/events"              element={<ProtectedRoute moduloSlug="eventos">       <Events />              </ProtectedRoute>} />
-                <Route path="/metas-tarefas"       element={<ProtectedRoute moduloSlug="solicitacoes">  <MetasTarefas />        </ProtectedRoute>} />
-                <Route path="/gestao-estrategica"  element={<ProtectedRoute moduloSlug="financeiro">    <GestaoEstrategica />   </ProtectedRoute>} />
-                <Route path="/zig-vendas"          element={<ProtectedRoute moduloSlug="estoque">       <ZigVendasSync />       </ProtectedRoute>} />
-                <Route path="/zig-recebimentos"    element={<ProtectedRoute moduloSlug="financeiro">    <ZigRecebimentos />     </ProtectedRoute>} />
-                <Route path="/lista-compras"       element={<ProtectedRoute moduloSlug="estoque">       <ListaCompras />        </ProtectedRoute>} />
-                <Route path="/dre-simplificado"    element={<ProtectedRoute moduloSlug="financeiro">    <DRESimplificado />     </ProtectedRoute>} />
-                <Route path="/controle-deville"    element={<ProtectedRoute moduloSlug="estoque">       <ControleDeville />     </ProtectedRoute>} />
-                <Route path="/estoque-beta2"       element={<ProtectedRoute moduloSlug="estoque">       <EstoqueBeta2 />        </ProtectedRoute>} />
-                <Route path="/fidelidade"          element={<ProtectedRoute moduloSlug="dashboard">     <FidelidadeModule />    </ProtectedRoute>} />
-                <Route path="/manual"              element={<ManualUsuario />} />
-                <Route path="/settings"            element={<ProtectedRoute moduloSlug="configuracoes"> <Settings />            </ProtectedRoute>} />
-                <Route path="*" element={
-                  <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
-                    <p className="text-8xl font-black leading-none mb-4"
-                      style={{ background: 'linear-gradient(135deg,var(--wine),var(--gold))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-                      404
-                    </p>
-                    <h3 className="text-lg font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>Página não encontrada</h3>
-                    <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>A URL acessada não existe neste sistema.</p>
-                  </div>
-                } />
-              </Routes>
-            </Suspense>
+            {rotas}
           </motion.div>
         </main>
       </div>

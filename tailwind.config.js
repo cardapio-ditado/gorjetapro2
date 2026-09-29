@@ -32,19 +32,21 @@ export default {
           light:   '#E5C158',
           muted:   'rgba(212, 175, 55, 0.14)',
         },
+        // Três superfícies (fundo, cartão, elevado) mais a lateral. Espelha
+        // o bloco :root de src/index.css.
         dark: {
-          base:     '#080c14',
-          DEFAULT:  '#0c1018',
-          card:     '#101520',
-          elevated: '#141a28',
-          surface:  '#1a2235',
+          base:     '#0b0e14',
+          DEFAULT:  '#0f131b',
+          card:     '#12161f',
+          elevated: '#181d29',
+          surface:  '#181d29',
         },
         // Regra de uso e razoes de contraste medidas: ver bloco Text em src/index.css.
         // Resumo: muted (1,99:1) e disabled (1,40:1) REPROVAM como texto — use-os so em
         // icone decorativo, divisoria e estado desabilitado. Texto legivel para em secondary.
         text: {
           primary:   '#e8edf8',
-          secondary: '#7a8ba6',
+          secondary: '#8b9bb4',
           muted:     '#3a4560',
           disabled:  '#252e3f',
         },
@@ -81,11 +83,14 @@ export default {
         lg:  '0 8px 32px rgba(0,0,0,0.45)',
         xl:  '0 16px 48px rgba(0,0,0,0.55)',
       },
+      // Cantos: 8 em controle (lg), 10 em cartão (xl), 12 no celular (2xl).
+      // Um ajuste aqui alinha as 3.400 ocorrências de rounded-* de uma vez.
       borderRadius: {
-        lg:    '12px',
-        xl:    '14px',
-        '2xl': '18px',
-        '3xl': '24px',
+        md:    '6px',
+        lg:    '8px',
+        xl:    '10px',
+        '2xl': '12px',
+        '3xl': '16px',
       },
       spacing: {
         '13': '3.25rem',

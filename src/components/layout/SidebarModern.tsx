@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import {
   Home, DollarSign, Warehouse, Users, Music, CalendarDays,
-  Settings, BookOpen, Target, ClipboardList,
+  Settings, BookOpen, Target, ClipboardList, Palette,
   TrendingUp, ChevronDown, LogOut, Star, X, LayoutDashboard, Hexagon,
 } from 'lucide-react';
 
@@ -116,7 +116,17 @@ export const MODULES: Module[] = [
   { name: 'Metas & Tarefas', path: '/metas-tarefas',    icon: Target,        slug: 'solicitacoes',    group: 'gestao' },
   { name: 'Manual',         path: '/manual',             icon: BookOpen,      slug: 'manual',          group: 'gestao' },
   { name: 'Configurações',  path: '/settings',           icon: Settings,      slug: 'configuracoes',   group: 'gestao' },
+  { name: 'Kit de padrões', path: '/kit',                icon: Palette,       slug: 'configuracoes',   group: 'gestao' },
 ];
+
+/**
+ * Os módulos com as telas de Estoque que cabem a quem está logado: o gestor
+ * vê tudo, o resto vê só a operação. Usado pela lateral clássica e pela
+ * coluna da casca nova, para as duas lerem a mesma lista.
+ */
+export function modulosDaCasa(gestor: boolean): Module[] {
+  return MODULES.map(m => (m.slug === 'estoque' ? { ...m, subModules: gestor ? ESTOQUE_SUBMODS_ADMIN : ESTOQUE_SUBMODS_USER } : m));
+}
 
 interface Props { onNavigate?: () => void; onCloseMobile?: () => void; }
 
@@ -125,12 +135,7 @@ const SidebarModern: React.FC<Props> = ({ onNavigate, onCloseMobile }) => {
   const { temAcessoModulo, usuario, logout, isAdmin } = useAuth();
   const isAdminOrMaster = isAdmin();
 
-  const modulesWithDynamic: Module[] = MODULES.map(m => {
-    if (m.slug === 'estoque') {
-      return { ...m, subModules: isAdminOrMaster ? ESTOQUE_SUBMODS_ADMIN : ESTOQUE_SUBMODS_USER };
-    }
-    return m;
-  });
+  const modulesWithDynamic: Module[] = modulosDaCasa(isAdminOrMaster);
 
   const [expanded, setExpanded] = useState<string | null>(() => {
     const cur = modulesWithDynamic.find(m =>

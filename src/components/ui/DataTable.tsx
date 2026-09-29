@@ -60,11 +60,11 @@ export const DataTable = <T extends Record<string, any>>({
     <div className={`overflow-x-auto ${className}`}>
       <table className="w-full">
         <thead>
-          <tr style={{ background: 'transparent' }} className="bg-white/5 border-b border-white/10">
+          <tr style={{ borderBottom: '1px solid var(--border)' }}>
             {columns.map((column) => (
               <th
                 key={column.key}
-                className={`px-4 py-3 text-white font-sans text-caption font-semibold uppercase tracking-wider ${getAlignment(column.align)}`}
+                className={`px-4 py-2.5 ${getAlignment(column.align)}`}
                 style={{ width: column.width }}
               >
                 {column.label}
@@ -77,7 +77,8 @@ export const DataTable = <T extends Record<string, any>>({
             <tr>
               <td
                 colSpan={columns.length}
-                className="px-4 py-8 text-center text-white/50 font-sans text-sm"
+                className="px-4 py-8 text-center text-sm"
+                style={{ color: 'var(--text-secondary)' }}
               >
                 {emptyMessage}
               </td>
@@ -88,10 +89,11 @@ export const DataTable = <T extends Record<string, any>>({
                 key={rowIndex}
                 onClick={() => onRowClick?.(row, rowIndex)}
                 className={`
-                  border-b border-gray-100 transition-colors
-                  ${zebra && rowIndex % 2 === 1 ? 'bg-wine/[0.03]' : 'bg-white'}
-                  ${onRowClick ? 'cursor-pointer hover:bg-wine/[0.06]' : ''}
+                  transition-colors
+                  ${zebra && rowIndex % 2 === 1 ? 'bg-white/[0.02]' : ''}
+                  ${onRowClick ? 'cursor-pointer hover:bg-white/[0.04]' : ''}
                 `}
+                style={{ borderBottom: '1px solid var(--border-subtle)' }}
               >
                 {columns.map((column) => (
                   <td
@@ -99,8 +101,9 @@ export const DataTable = <T extends Record<string, any>>({
                     className={`
                       px-4 py-3 text-sm
                       ${getAlignment(column.align)}
-                      ${column.isCurrency || column.isNumeric ? 'font-mono font-medium text-white' : 'font-sans text-white/60'}
+                      ${column.isCurrency || column.isNumeric ? 'num font-medium' : ''}
                     `}
+                    style={{ color: column.isCurrency || column.isNumeric ? 'var(--text-primary)' : 'var(--text-primary)' }}
                   >
                     {getCellValue(row, column, rowIndex)}
                   </td>
