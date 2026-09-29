@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { ChevronDown, LayoutTemplate, LogOut, Menu, Moon, Search, Sun } from 'lucide-react';
-import type { Usuario } from '../../contexts/AuthContext';
+import { Link } from 'react-router-dom';
+import { ChevronDown, LayoutTemplate, LogOut, Menu, Moon, Search, Settings, Sun } from 'lucide-react';
+import { useAuth, type Usuario } from '../../contexts/AuthContext';
 import { alternarTema, lerTema, type Tema } from '../../lib/tema';
 import { definirLayout } from '../../lib/layout';
 
@@ -17,6 +18,8 @@ const Topo: React.FC<Props> = ({ caminho, usuario, onLogout, onAbrirMenu, onAbri
   const [menuAberto, setMenuAberto] = useState(false);
   const [tema, setTema] = useState<Tema>(() => lerTema());
   const menuRef = useRef<HTMLDivElement>(null);
+  const { temAcessoModulo } = useAuth();
+  const temAcessoConfiguracoes = temAcessoModulo('configuracoes');
 
   useEffect(() => {
     const h = (e: MouseEvent) => { if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuAberto(false); };
@@ -86,6 +89,12 @@ const Topo: React.FC<Props> = ({ caminho, usuario, onLogout, onAbrirMenu, onAbri
               <LayoutTemplate size={16} aria-hidden="true" />
               Voltar ao layout clássico
             </button>
+            {temAcessoConfiguracoes && (
+              <Link to="/settings" role="menuitem" onClick={() => setMenuAberto(false)} className="w-full flex items-center gap-3 px-3 h-10 rounded-lg t-body hover:bg-white/[0.05]" style={{ color: 'var(--text-primary)' }}>
+                <Settings size={16} aria-hidden="true" />
+                Configurações
+              </Link>
+            )}
             <div className="my-1" style={{ height: 1, background: 'var(--border)' }} />
             <button type="button" role="menuitem" onClick={onLogout} className="w-full flex items-center gap-3 px-3 h-10 rounded-lg t-body hover:bg-red-500/10" style={{ color: '#fca5a5' }}>
               <LogOut size={16} aria-hidden="true" />

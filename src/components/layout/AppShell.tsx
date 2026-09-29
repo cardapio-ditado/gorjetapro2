@@ -1,9 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { X } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { AREAS, modulosDaCasa, type Area, type Module } from './SidebarModern';
-import Trilho from './Trilho';
 import ColunaArea from './ColunaArea';
 import Topo from './Topo';
 import Paleta from './Paleta';
@@ -17,14 +16,14 @@ function caminhoBase(path: string): string {
 }
 
 /**
- * A casca nova: trilho de áreas (72px), coluna da área (232px), topo com
- * busca (56px) e o conteúdo. No celular, trilho e coluna viram uma gaveta.
+ * A casca nova: coluna da área (232px), topo com caminho e busca (56px) e o
+ * conteúdo. A troca de área continua sendo no saguão, como sempre foi; a
+ * coluna mostra só as telas da área aberta. No celular a coluna vira gaveta.
  * Liga-se por pessoa (menu do usuário › layout), sem mexer em nenhuma tela.
  */
 const AppShell: React.FC<Props> = ({ children }) => {
   const { usuario, logout, isAdmin, temAcessoModulo } = useAuth();
   const location = useLocation();
-  const navigate = useNavigate();
   const [gavetaAberta, setGavetaAberta] = useState(false);
   const [buscaAberta, setBuscaAberta] = useState(false);
 
@@ -47,12 +46,6 @@ const AppShell: React.FC<Props> = ({ children }) => {
   const subAtual = moduloAtual?.subModules?.find(s => s.path === atual) ?? moduloAtual?.subModules?.find(s => caminhoBase(s.path) === location.pathname && !s.path.includes('?'));
   const caminho = [area?.nome, moduloAtual?.name, subAtual && subAtual.name !== moduloAtual?.name ? subAtual.name.replace(/^[★─]\s*/, '') : undefined].filter((x): x is string => !!x);
 
-  const escolherArea = (id: Area) => {
-    const primeiro = modulos.find(m => m.group === id);
-    if (primeiro) navigate(primeiro.subModules?.[0]?.path ?? primeiro.path);
-    setGavetaAberta(false);
-  };
-
   useEffect(() => { setGavetaAberta(false); }, [atual]);
 
   useEffect(() => {
@@ -63,35 +56,15 @@ const AppShell: React.FC<Props> = ({ children }) => {
     return () => document.removeEventListener('keydown', h);
   }, []);
 
-  const iniciais = usuario?.nome_completo?.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() || 'U';
-
   return (
     <div className="app-shell flex h-screen overflow-hidden" style={{ background: 'var(--bg-base)' }}>
-      <Trilho
-        className="hidden lg:flex"
-        modulos={modulos}
-        areaAtual={areaAtual}
-        onEscolherArea={escolherArea}
-        podeConfigurar={temAcessoModulo('configuracoes')}
-        iniciais={iniciais}
-        nome={usuario?.nome_completo || ''}
-      />
       <ColunaArea className="hidden lg:flex" modulos={modulos} areaAtual={areaAtual} />
 
-      {/* Gaveta do celular: trilho e coluna juntos */}
+      {/* Gaveta do celular */}
       {gavetaAberta && (
         <div className="fixed inset-0 z-50 flex lg:hidden" role="dialog" aria-modal="true" aria-label="Menu">
           <button type="button" aria-label="Fechar menu" onClick={() => setGavetaAberta(false)} className="absolute inset-0 w-full h-full cursor-default" style={{ background: 'rgba(0,0,0,0.55)' }} />
           <div className="relative flex h-full" style={{ boxShadow: 'var(--shadow-overlay)' }}>
-            <Trilho
-              className="flex"
-              modulos={modulos}
-              areaAtual={areaAtual}
-              onEscolherArea={escolherArea}
-              podeConfigurar={temAcessoModulo('configuracoes')}
-              iniciais={iniciais}
-              nome={usuario?.nome_completo || ''}
-            />
             <ColunaArea className="flex" modulos={modulos} areaAtual={areaAtual} onNavegar={() => setGavetaAberta(false)} />
             <button type="button" onClick={() => setGavetaAberta(false)} className="absolute top-3 right-3 btn-icon" aria-label="Fechar menu">
               <X size={16} />

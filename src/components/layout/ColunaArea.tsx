@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { Hexagon } from 'lucide-react';
 import { AREAS, type Area, type Module } from './SidebarModern';
 
 interface Props {
@@ -21,6 +22,7 @@ const ColunaArea: React.FC<Props> = ({ modulos, areaAtual, onNavegar, className 
   const ativo = (path: string) => atual === path || (location.pathname === path && !path.includes('?'));
 
   const area = AREAS.find(a => a.id === areaAtual) ?? null;
+  // Fora de qualquer área (rota desconhecida) a lista completa é o plano B.
   const daArea = area ? modulos.filter(m => m.group === area.id) : modulos;
 
   const estiloLink = (on: boolean): React.CSSProperties => ({
@@ -56,9 +58,38 @@ const ColunaArea: React.FC<Props> = ({ modulos, areaAtual, onNavegar, className 
       className={`flex-col w-[232px] flex-shrink-0 overflow-y-auto scrollbar-hide ${className}`.trim()}
       style={{ background: 'var(--bg-dark)', borderRight: '1px solid var(--border)' }}
     >
-      <div className="px-4 pt-5 pb-2">
+      {/* A marca e o caminho de volta ao saguão, onde se troca de área. */}
+      <div className="flex items-center gap-3 h-14 px-4 flex-shrink-0" style={{ borderBottom: '1px solid var(--border)' }}>
+        <Link
+          to="/"
+          onClick={onNavegar}
+          className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 font-display font-bold text-base text-white focus-ring"
+          style={{ background: 'var(--wine)' }}
+          aria-label="Saguão"
+        >
+          D
+        </Link>
+        <div className="min-w-0 flex-1">
+          <p className="t-label truncate" style={{ color: 'var(--text-primary)', margin: 0 }}>Ditado Popular</p>
+          <p className="t-caption truncate" style={{ margin: 0 }}>Gestão</p>
+        </div>
+      </div>
+
+      <div className="px-2 pt-3">
+        <Link
+          to="/"
+          onClick={onNavegar}
+          className="flex items-center gap-2.5 h-9 px-3 rounded-lg text-sm font-semibold focus-ring"
+          style={{ color: 'var(--gold)', background: 'rgba(212,175,55,0.08)', border: '1px solid rgba(212,175,55,0.16)' }}
+        >
+          <Hexagon size={15} aria-hidden="true" />
+          Saguão
+        </Link>
+      </div>
+
+      <div className="px-4 pt-4 pb-1">
         <p className="t-section" style={{ color: 'var(--text-primary)', fontSize: 20, fontWeight: 600, margin: 0 }}>
-          {area ? area.nome : 'Ditado Popular'}
+          {area ? area.nome : 'Todas as áreas'}
         </p>
         {area && <p className="t-caption" style={{ margin: '2px 0 0' }}>{area.descricao}</p>}
       </div>
