@@ -45,6 +45,7 @@ const RedefinirSenha      = lazy(() => import('./pages/RedefinirSenha'));
 const PortalGerente       = lazy(() => import('./pages/PortalGerente'));
 const Saguao              = lazy(() => import('./pages/Saguao'));
 const KitDesign           = lazy(() => import('./pages/KitDesign'));
+const ConfigurarSetores   = lazy(() => import('./pages/ConfigurarSetores'));
 
 const PageLoader = () => (
   <div className="flex flex-col items-center justify-center h-full min-h-[300px] gap-4">
@@ -125,6 +126,7 @@ function AppContent() {
         <Route path="/manual"              element={<ManualUsuario />} />
         <Route path="/settings"            element={<ProtectedRoute moduloSlug="configuracoes"> <Settings />            </ProtectedRoute>} />
         <Route path="/kit"                 element={<ProtectedRoute moduloSlug="configuracoes"> <KitDesign />           </ProtectedRoute>} />
+        <Route path="/setores"             element={<ProtectedRoute moduloSlug="estoque">       <ConfigurarSetores />   </ProtectedRoute>} />
         <Route path="*" element={
           <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
             <p className="text-8xl font-black leading-none mb-4"

@@ -428,7 +428,8 @@ export default function PedidoSetor() {
           <h1 className="text-2xl font-bold text-white/85 mb-2">Setor não encontrado</h1>
           <p className="text-white/60 mb-6">{erroCarga || 'Use um dos links abaixo.'}</p>
           <div className="flex flex-col gap-3">
-            <Link to="/pedido/bar" className="bg-wine text-white py-4 rounded-xl font-semibold text-lg">Pedido do Bar</Link>
+            <Link to="/pedido/cerveja" className="bg-wine text-white py-4 rounded-xl font-semibold text-lg">Pedido do Bar de Cerveja</Link>
+            <Link to="/pedido/drinks" className="bg-wine text-white py-4 rounded-xl font-semibold text-lg">Pedido do Bar de Drinks</Link>
             <Link to="/pedido/cozinha" className="bg-wine text-white py-4 rounded-xl font-semibold text-lg">Pedido da Cozinha</Link>
           </div>
         </div>

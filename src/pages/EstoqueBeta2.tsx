@@ -4,7 +4,6 @@ import RotinaEstoquistaBeta2 from '../components/estoque-beta2/RotinaEstoquistaB
 import RecebimentoBeta2, { type NotePreview } from '../components/estoque-beta2/RecebimentoBeta2';
 import EmergenciasBeta2, { type EmergencyPreview } from '../components/estoque-beta2/EmergenciasBeta2';
 import FechamentoBeta2 from '../components/estoque-beta2/FechamentoBeta2';
-import GestaoEstoqueBeta2 from '../components/estoque-beta2/GestaoEstoqueBeta2';
 import { useControleZigBeta2, type FechamentoPreview, cuiabaDate, dataAnterior, diaAuditoria } from '../components/estoque-beta2/FechamentoDadosBeta2';
 import { Home, Package, Users, ClipboardCheck, Truck, Store, FileBox, Clock3, BarChart3, RotateCcw, Warehouse, BookOpen, ChevronDown } from 'lucide-react';
 
@@ -38,7 +37,6 @@ const menuSections:{id:MenuSection;title:string;hint:string;icon:React.ElementTy
   {v:'fornecedores',n:'Fornecedores',icon:Users}
  ]},
  {id:'gestao',title:'Gestão',hint:'Aprovações',icon:BarChart3,items:[
-  {v:'setores',n:'Configurar setores',icon:Warehouse},
   {v:'gestao',n:'Divergências e aprovação',icon:ClipboardCheck}
  ]}
 ];
@@ -276,7 +274,6 @@ return <div className="b2-root -m-5 lg:-m-7">
   setNotice('Recebimento confirmado somente na prévia, sem nova saída ou entrada nos saldos oficiais.');
  }}
 />}
-{(['setores','politica'] as View[]).includes(view)&&<GestaoEstoqueBeta2 key={view} dados={dadosFechamento} go={v=>go(v)}/>}
 {(['fechamento','reposicao'] as View[]).includes(view)&&<FechamentoBeta2
  mode={view as 'fechamento'|'reposicao'}
  dados={dadosFechamento}

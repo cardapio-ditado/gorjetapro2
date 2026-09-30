@@ -9,6 +9,7 @@ import {
 
 const ESTOQUE_SUBMODS_ADMIN = [
   { name: '★ Estoque Beta 2',      path: '/estoque-beta2' },
+  { name: 'Configurar setores',    path: '/setores' },
   { name: 'Reposição de balcão',   path: '/advanced-inventory?area=operacao&tela=reposicao' },
   { name: 'Receber mercadoria',    path: '/advanced-inventory?area=operacao&tela=receber' },
   { name: 'Transferências',        path: '/advanced-inventory?area=operacao&tela=transferir' },

@@ -52,6 +52,7 @@ export const ROTAS_BUSCA: RotaBusca[] = [
   { label: 'ZIG Recebimentos',                   path: '/zig-recebimentos', icon: DollarSign },
   { label: 'DRE Simplificado',                   path: '/dre-simplificado', icon: DollarSign, apelidos: 'resultado lucro' },
   // Estoque
+  { label: 'Estoque — Configurar setores',  path: '/setores',                                           icon: Warehouse, apelidos: 'bar cozinha nível zig contagem balcão' },
   { label: 'Estoque — Receber Mercadoria',  path: '/advanced-inventory?area=operacao&tela=receber',     icon: Warehouse, apelidos: 'nota entrada' },
   { label: 'Estoque — Transferir',          path: '/advanced-inventory?area=operacao&tela=transferir',  icon: Warehouse },
   { label: 'Estoque — Produzir',            path: '/advanced-inventory?area=operacao&tela=produzir',    icon: Warehouse },
