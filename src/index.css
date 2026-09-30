@@ -75,6 +75,12 @@
   --warning: #f59e0b;
   --danger:  #ef4444;
   --info:    #3b82f6;
+  /* Estado como texto e como superfície: o texto lê sobre o card e sobre a
+     própria superfície, nos dois temas. Nunca usar #34d399/#fcd34d soltos. */
+  --ok-text:      #34d399;  --ok-bg:      rgba(16,185,129,0.12);  --ok-border:      rgba(16,185,129,0.28);
+  --warn-text:    #fbbf24;  --warn-bg:    rgba(245,158,11,0.12);  --warn-border:    rgba(245,158,11,0.30);
+  --danger-text:  #f87171;  --danger-bg:  rgba(239,68,68,0.12);   --danger-border:  rgba(239,68,68,0.30);
+  --info-text:    #93c5fd;  --info-bg:    rgba(59,130,246,0.12);  --info-border:    rgba(59,130,246,0.28);
 }
 
 /* ─── Base ───────────────────────────────────────────────────────────────── */
@@ -366,26 +372,29 @@
     line-height: 1;
     white-space: nowrap;
   }
-  .badge-success {
-    background: rgba(16,185,129,0.12);
-    color: #34d399;
-    border: 1px solid rgba(16,185,129,0.2);
+  .badge-success { background: var(--ok-bg);     color: var(--ok-text);     border: 1px solid var(--ok-border); }
+  .badge-warning { background: var(--warn-bg);   color: var(--warn-text);   border: 1px solid var(--warn-border); }
+  .badge-danger  { background: var(--danger-bg); color: var(--danger-text); border: 1px solid var(--danger-border); }
+  .badge-info    { background: var(--info-bg);   color: var(--info-text);   border: 1px solid var(--info-border); }
+
+  /* ── Aviso: uma linha de texto sobre superfície de estado ── */
+  .aviso {
+    padding: 10px 14px;
+    border-radius: var(--r-card);
+    font-size: var(--fs-body);
+    line-height: var(--lh-body);
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
   }
-  .badge-warning {
-    background: rgba(245,158,11,0.12);
-    color: #fbbf24;
-    border: 1px solid rgba(245,158,11,0.2);
-  }
-  .badge-danger {
-    background: rgba(239,68,68,0.12);
-    color: #f87171;
-    border: 1px solid rgba(239,68,68,0.2);
-  }
-  .badge-info {
-    background: rgba(59,130,246,0.12);
-    color: #93c5fd;
-    border: 1px solid rgba(59,130,246,0.2);
-  }
+  .aviso strong { color: var(--text-primary); font-weight: 600; }
+  .aviso-certo   { background: var(--ok-bg);     border-color: var(--ok-border);     color: var(--ok-text); }
+  .aviso-atencao { background: var(--warn-bg);   border-color: var(--warn-border);   color: var(--warn-text); }
+  .aviso-perigo  { background: var(--danger-bg); border-color: var(--danger-border); color: var(--danger-text); }
+  .aviso-certo strong, .aviso-atencao strong, .aviso-perigo strong { color: inherit; }
+  .texto-certo   { color: var(--ok-text); }
+  .texto-atencao { color: var(--warn-text); }
+  .texto-perigo  { color: var(--danger-text); }
   .badge-wine {
     background: rgba(125,31,44,0.2);
     color: #f08080;
@@ -397,7 +406,7 @@
     border: 1px solid rgba(212,175,55,0.22);
   }
   .badge-neutral {
-    background: rgba(255,255,255,0.06);
+    background: var(--bg-hover);
     color: var(--text-secondary);
     border: 1px solid var(--border);
   }
@@ -510,6 +519,7 @@
    * Os tokens trocam aqui, escopados: Login e Saguão (fora do .app-shell)
    * continuam escuros sobre a foto. Os utilitários fixos (text-white,
    * bg-white/5, bg-[#12141f]...) são remapeados em src/tema-claro.css. */
+  .app-shell { color: var(--text-primary); }
   [data-theme="light"] .app-shell {
     --bg-base:     #f3f1ec;
     --bg-dark:     #faf9f6;
@@ -527,6 +537,10 @@
     --text-disabled:  #cfc9c3;
     --gold:        #a3841c;   /* dourado que ainda lê sobre branco (4,1:1) */
     --gold-light:  #b8961f;
+    --ok-text:     #047857;  --ok-bg:     rgba(16,185,129,0.10);  --ok-border:     rgba(4,120,87,0.30);
+    --warn-text:   #b45309;  --warn-bg:   rgba(245,158,11,0.12);  --warn-border:   rgba(180,83,9,0.32);
+    --danger-text: #b91c1c;  --danger-bg: rgba(239,68,68,0.09);   --danger-border: rgba(185,28,28,0.30);
+    --info-text:   #1d4ed8;  --info-bg:   rgba(59,130,246,0.10);  --info-border:   rgba(29,78,216,0.30);
     --shadow-rest:    0 1px 2px rgba(31,27,26,0.08);
     --shadow-raised:  0 4px 14px rgba(31,27,26,0.12);
     --shadow-overlay: 0 12px 36px rgba(31,27,26,0.22);

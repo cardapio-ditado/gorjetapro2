@@ -19,13 +19,13 @@ interface CampoProps extends CampoBase {
 export const Campo: React.FC<CampoProps> = ({ id, rotulo, dica, erro, className = '', children }) => (
   <div className={`flex flex-col gap-1 ${className}`.trim()}>
     {rotulo && (
-      <label htmlFor={id} className="t-label" style={{ color: erro ? '#fca5a5' : 'var(--text-secondary)' }}>
+      <label htmlFor={id} className="t-label" style={{ color: erro ? 'var(--danger-text)' : 'var(--text-secondary)' }}>
         {rotulo}
       </label>
     )}
     {children}
     {(erro || dica) && (
-      <p id={`${id}-ajuda`} className="t-caption" style={{ color: erro ? '#fca5a5' : 'var(--text-secondary)', margin: 0 }}>
+      <p id={`${id}-ajuda`} className="t-caption" style={{ color: erro ? 'var(--danger-text)' : 'var(--text-secondary)', margin: 0 }}>
         {erro || dica}
       </p>
     )}

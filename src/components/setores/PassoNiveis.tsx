@@ -68,7 +68,7 @@ const PassoNiveis: React.FC<Props> = ({ dados, onRecarregar, onAvancar }) => {
         <Button icone={<Wand2 size={16} />} onClick={usarSugestaoNosVazios} disabled={vazios === 0}>Usar sugestão nos {vazios} sem nível</Button>
       </div>
 
-      {erro && <div className="rounded-lg px-4 py-3 t-body" style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.4)', color: '#fca5a5' }}>{erro}</div>}
+      {erro && <div className="aviso aviso-perigo" role="alert">{erro}</div>}
 
       {presentes.length === 0 && <EmptyState icon={Search} title="Nenhum produto neste setor" description="Volte ao passo 1 e marque o que fica aqui." compact />}
 
@@ -88,7 +88,7 @@ const PassoNiveis: React.FC<Props> = ({ dados, onRecarregar, onAvancar }) => {
                   <p className="t-caption truncate" style={{ margin: 0 }}>
                     {i.categoria} · gasta {fmt(i.consumo_dia)} {i.rotulo}/dia
                     {i.consumo_dia > 0 && <> · sugestão <strong style={{ color: 'var(--text-primary)' }}>{fmt(sug)}</strong></>}
-                    {pendente && <span style={{ color: '#fcd34d' }}> · sem nível</span>}
+                    {pendente && <span className="texto-atencao"> · sem nível</span>}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -107,7 +107,7 @@ const PassoNiveis: React.FC<Props> = ({ dados, onRecarregar, onAvancar }) => {
                     onChange={e => setValores(p => ({ ...p, [i.item_id]: e.target.value }))}
                     placeholder="0"
                     className="input-dark text-right font-semibold"
-                    style={{ width: 110, borderColor: pendente ? 'rgba(245,158,11,0.6)' : undefined }}
+                    style={{ width: 110, borderColor: pendente ? 'var(--warn-border)' : undefined }}
                   />
                   <span className="t-caption w-14 truncate">{i.rotulo}</span>
                 </div>

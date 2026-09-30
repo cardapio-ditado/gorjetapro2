@@ -90,12 +90,12 @@ const LigarVenda: React.FC<Props> = ({ estoqueId, estoqueNome, item, onFechar, o
       travado={ocupado}
       rodape={<Button variante="primario" onClick={fechar} disabled={ocupado}>Concluir</Button>}
     >
-      {erro && <div className="rounded-lg px-4 py-3 t-body" style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.4)', color: '#fca5a5' }}>{erro}</div>}
+      {erro && <div className="aviso aviso-perigo" role="alert">{erro}</div>}
 
       <div className="flex flex-col gap-2">
         <span className="t-label" style={{ color: 'var(--text-secondary)' }}>Ligadas hoje</span>
         {!dados && <p className="t-caption" style={{ margin: 0 }}>Carregando…</p>}
-        {dados && dados.vinculadas.length === 0 && <p className="t-body" style={{ margin: 0, color: '#fcd34d' }}>Nenhuma venda baixa este item aqui. Ligue uma abaixo.</p>}
+        {dados && dados.vinculadas.length === 0 && <p className="t-body texto-atencao" style={{ margin: 0 }}>Nenhuma venda baixa este item aqui. Ligue uma abaixo.</p>}
         {dados?.vinculadas.map(v => (
           <div key={v.id} className="flex items-center gap-3 px-3 py-2 rounded-lg" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
             <div className="flex-1 min-w-0">
@@ -139,7 +139,7 @@ const LigarVenda: React.FC<Props> = ({ estoqueId, estoqueNome, item, onFechar, o
                 {dados?.fichas.map(f => <option key={f.id} value={f.id}>{f.nome}</option>)}
               </Select>
             )}
-            {modo === 'ficha' && !temFichas && <p className="t-caption" style={{ margin: 0, color: '#fcd34d' }}>Nenhuma ficha técnica ativa usa este item com baixa de estoque. Cadastre a ficha antes ou ligue direto.</p>}
+            {modo === 'ficha' && !temFichas && <p className="t-caption texto-atencao" style={{ margin: 0 }}>Nenhuma ficha técnica ativa usa este item com baixa de estoque. Cadastre a ficha antes ou ligue direto.</p>}
             <Button variante="primario" icone={<Link2 size={16} />} onClick={ligar} carregando={ocupado} disabled={modo === 'ficha' && !temFichas} className="self-start">Ligar venda</Button>
           </div>
         )}

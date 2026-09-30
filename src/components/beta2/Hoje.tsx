@@ -61,7 +61,7 @@ const Hoje: React.FC<Props> = ({ onIr }) => {
         subtitle={data ? data.charAt(0).toUpperCase() + data.slice(1) : ' '}
         actions={<IconButton aria-label="Atualizar" onClick={carregar} disabled={carregando}><RefreshCw size={16} className={carregando ? 'animate-spin' : ''} /></IconButton>}
       />
-      {erro && <p className="t-body mb-4" style={{ color: '#fca5a5' }}>{erro}</p>}
+      {erro && <div className="aviso aviso-perigo mb-4" role="alert">{erro}</div>}
       {!dados && !erro && <p className="t-body" style={{ color: 'var(--text-secondary)' }}>Carregando…</p>}
 
       {dados && (

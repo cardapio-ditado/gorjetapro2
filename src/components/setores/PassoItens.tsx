@@ -81,8 +81,8 @@ const PassoItens: React.FC<Props> = ({ dados, onRecarregar, onAvancar }) => {
         <Segmented rotulo="Mostrar" valor={soMarcados ? 'marcados' : 'todos'} onMudar={v => setSoMarcados(v === 'marcados')} opcoes={[{ valor: 'todos', rotulo: 'Todos os produtos' }, { valor: 'marcados', rotulo: `Só os daqui (${marcados.size})` }]} />
       </div>
 
-      {erro && <div className="rounded-lg px-4 py-3 t-body" style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.4)', color: '#fca5a5' }}>{erro}</div>}
-      {aviso && <div className="rounded-lg px-4 py-3 t-body" style={{ background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.4)', color: '#fcd34d' }}>{aviso}</div>}
+      {erro && <div className="aviso aviso-perigo" role="alert">{erro}</div>}
+      {aviso && <div className="aviso aviso-atencao">{aviso}</div>}
 
       {grupos.length === 0 && <EmptyState icon={Search} title="Nada com esse nome" variant="filtered" compact />}
 
@@ -111,7 +111,7 @@ const PassoItens: React.FC<Props> = ({ dados, onRecarregar, onAvancar }) => {
                   <button type="button" onClick={() => alternar(i.item_id)} className="flex-1 min-w-0 text-left py-2">
                     <p className="t-body truncate" style={{ margin: 0, color: on ? 'var(--text-primary)' : 'var(--text-secondary)', fontWeight: on ? 600 : 400 }}>{i.nome}</p>
                     <p className="t-caption truncate" style={{ margin: 0 }}>
-                      {i.presente && i.saldo !== 0 && <span style={{ color: i.saldo < 0 ? '#f87171' : undefined }}>saldo {fmt(i.saldo)} {i.rotulo}</span>}
+                      {i.presente && i.saldo !== 0 && <span style={{ color: i.saldo < 0 ? 'var(--danger-text)' : undefined }}>saldo {fmt(i.saldo)} {i.rotulo}</span>}
                       {i.presente && i.saldo !== 0 && (i.vendas_direto + i.vendas_ficha > 0) && ' · '}
                       {i.presente && (i.vendas_direto + i.vendas_ficha > 0) && `${i.vendas_direto + i.vendas_ficha} venda(s) Zig`}
                     </p>

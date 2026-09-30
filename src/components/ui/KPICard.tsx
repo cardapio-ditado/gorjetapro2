@@ -29,9 +29,9 @@ interface KPICardProps {
 const COR: Record<KPITom, string> = {
   normal: 'var(--text-primary)',
   destaque: 'var(--gold)',
-  alerta: '#f87171',
-  atencao: '#fbbf24',
-  certo: '#34d399',
+  alerta: 'var(--danger-text)',
+  atencao: 'var(--warn-text)',
+  certo: 'var(--ok-text)',
 };
 
 function formatar(val: string | number, format: KPICardProps['format']): string {
@@ -55,7 +55,7 @@ export const KPICard: React.FC<KPICardProps> = ({
 }) => {
   const titulo = rotulo ?? label ?? '';
   const numero = valor ?? value ?? '—';
-  const corVariacao = trend === 'neutral' ? 'var(--text-secondary)' : (variation ?? 0) >= 0 ? '#34d399' : '#f87171';
+  const corVariacao = trend === 'neutral' ? 'var(--text-secondary)' : (variation ?? 0) >= 0 ? 'var(--ok-text)' : 'var(--danger-text)';
   const IconeVariacao = (variation ?? 0) >= 0 ? TrendingUp : TrendingDown;
 
   const conteudo = (

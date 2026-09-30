@@ -67,7 +67,7 @@ const ConfigurarSetores: React.FC = () => {
     return (
       <div className="max-w-5xl">
         <PageHeader caminho={['Estoque', 'Configurar setores']} title="Configurar setores" subtitle="Cada balcão tem sua lista: o que fica, quanto deve ter e como sai." />
-        {erro && <p className="t-body mb-4" style={{ color: '#fca5a5' }}>{erro}</p>}
+        {erro && <p className="t-body mb-4" style={{ color: 'var(--danger-text)' }}>{erro}</p>}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           {resumo === null && <p className="t-body" style={{ color: 'var(--text-secondary)' }}>Carregando…</p>}
           {resumo?.map(s => {
@@ -112,7 +112,7 @@ const ConfigurarSetores: React.FC = () => {
               type="button"
               onClick={() => ir(setorId, p.id)}
               className="text-left px-4 py-3 rounded-lg focus-ring"
-              style={{ background: on ? 'rgba(212,175,55,0.14)' : 'var(--bg-card)', border: `1px solid ${on ? 'rgba(212,175,55,0.5)' : 'var(--border)'}` }}
+              style={{ background: on ? 'var(--gold-muted)' : 'var(--bg-card)', border: `1px solid ${on ? 'var(--gold)' : 'var(--border)'}` }}
             >
               <span className="t-caption block" style={{ color: on ? 'var(--gold)' : undefined }}>Passo {p.id}</span>
               <span className="t-body block truncate" style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{p.nome}</span>
@@ -121,7 +121,7 @@ const ConfigurarSetores: React.FC = () => {
         })}
       </div>
 
-      {erro && <p className="t-body mb-4" style={{ color: '#fca5a5' }}>{erro}</p>}
+      {erro && <p className="t-body mb-4" style={{ color: 'var(--danger-text)' }}>{erro}</p>}
       {!dados && !erro && <p className="t-body" style={{ color: 'var(--text-secondary)' }}>Carregando…</p>}
 
       {dados && passo === '1' && <PassoItens key={`1-${dados.estoque.id}`} dados={dados} onRecarregar={carregarSetor} onAvancar={() => ir(setorId, '2')} />}

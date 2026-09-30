@@ -10,6 +10,7 @@ import { useControleZigBeta2, type FechamentoPreview, cuiabaDate, dataAnterior, 
 import { ArrowLeft, ArrowRight, Package, Users, ClipboardCheck, Truck, Store, Clock3, BarChart3, RotateCcw, Warehouse, BookOpen, Settings2, SprayCan, ShoppingCart, FileText, ArrowLeftRight, Handshake, ShieldCheck, Sliders, History, Sparkles } from 'lucide-react';
 import { Badge, Button, SectionCard } from '../components/ui';
 import ConfigurarSetores from './ConfigurarSetores';
+import '../components/estoque-beta2/pele-beta2.css';
 import Hoje, { type DestinoHoje } from '../components/beta2/Hoje';
 import Kits from '../components/beta2/Kits';
 import Compras from '../components/inventory/Compras';
@@ -247,7 +248,7 @@ if(view==='compras'||view==='relatorios'||view==='kardex'||view==='movimentacoes
 // ── Entrada: Hoje + os 7 grupos ──
 if(view==='menu')return <div className="max-w-5xl">
   <Hoje onIr={irDeHoje}/>
-  {notice&&<div className="rounded-lg px-4 py-3 t-body my-4" style={{background:'rgba(16,185,129,0.12)',border:'1px solid rgba(16,185,129,0.4)',color:'#6ee7b7'}}>{notice}</div>}
+  {notice&&<div className="aviso aviso-certo my-4">{notice}</div>}
   <div className="flex items-center justify-between gap-3 mt-8 mb-3">
     <h2 className="t-subsec" style={{margin:0}}>Tudo do estoque</h2>
     <div className="flex items-center gap-3">

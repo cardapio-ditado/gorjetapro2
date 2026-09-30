@@ -442,7 +442,7 @@ const AgendaDiaria: React.FC = () => {
                             <div className="flex-1 min-w-0">
                               <p className="t-body truncate" style={{ color: 'var(--text-primary)', margin: 0, fontWeight: 500 }}>{c.descricao}</p>
                               {c.fornecedores?.nome && <p className="t-caption truncate" style={{ margin: 0 }}>{c.fornecedores.nome}</p>}
-                              {jaAuth && <p className="t-caption" style={{ margin: 0, color: '#34d399' }}>Autorizado</p>}
+                              {jaAuth && <p className="t-caption" style={{ margin: 0, color: 'var(--ok-text)' }}>Autorizado</p>}
                             </div>
                             <span className="t-body num flex-shrink-0" style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{fmtR(Number(c.saldo_restante))}</span>
                             <Button
@@ -488,13 +488,13 @@ const AgendaDiaria: React.FC = () => {
                 : receitas.map(r => {
                     const t = tipoInfo(r.tipo);
                     return (
-                      <div key={r.id} className="flex items-center gap-3 px-3 h-12 rounded-lg" style={{ background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.2)' }}>
-                        <span style={{ color: '#34d399' }}>{t.icon}</span>
+                      <div key={r.id} className="flex items-center gap-3 px-3 h-12 rounded-lg" style={{ background: 'var(--ok-bg)', border: '1px solid var(--ok-border)' }}>
+                        <span style={{ color: 'var(--ok-text)' }}>{t.icon}</span>
                         <div className="flex-1 min-w-0">
                           <p className="t-body truncate" style={{ color: 'var(--text-primary)', margin: 0, fontWeight: 500 }}>{r.descricao}</p>
                           <p className="t-caption" style={{ margin: 0 }}>{t.label}</p>
                         </div>
-                        <span className="t-body num flex-shrink-0" style={{ color: '#34d399', fontWeight: 600 }}>{fmtR(Number(r.valor))}</span>
+                        <span className="t-body num flex-shrink-0" style={{ color: 'var(--ok-text)', fontWeight: 600 }}>{fmtR(Number(r.valor))}</span>
                         {!somenteLeitura && (
                           <IconButton aria-label={`Remover ${r.descricao}`} tom="perigo" onClick={() => removerReceita(r.id)}><X size={14} /></IconButton>
                         )}
@@ -506,7 +506,7 @@ const AgendaDiaria: React.FC = () => {
             {receitas.length > 0 && (
               <div className="px-5 py-3 flex justify-between items-center" style={{ borderTop: '1px solid var(--border)' }}>
                 <span className="t-caption">{receitas.length} {receitas.length === 1 ? 'entrada' : 'entradas'}</span>
-                <span className="t-body num" style={{ color: '#34d399', fontWeight: 700 }}>{fmtR(totalEntrou)}</span>
+                <span className="t-body num" style={{ color: 'var(--ok-text)', fontWeight: 700 }}>{fmtR(totalEntrou)}</span>
               </div>
             )}
           </SectionCard>

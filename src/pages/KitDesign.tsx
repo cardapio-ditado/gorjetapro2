@@ -162,6 +162,16 @@ const KitDesign: React.FC = () => {
           </div>
         </SectionCard>
 
+        <SectionCard title="Avisos" descricao="Texto de estado nunca solto: sempre em .aviso ou .texto-*, que lêem nos dois temas.">
+          <div className="flex flex-col gap-2">
+            <div className="aviso">Explicação neutra: <strong>Zig baixa</strong> desconta o item sozinho às 6h.</div>
+            <div className="aviso aviso-certo">3 itens repostos.</div>
+            <div className="aviso aviso-atencao">2 itens sem nível definido.</div>
+            <div className="aviso aviso-perigo" role="alert">Sem permissão para mover este item.</div>
+            <p className="t-body" style={{ margin: 0 }}>Na linha: saldo <span className="texto-perigo">−4</span> · <span className="texto-atencao">sem nível</span> · <span className="texto-certo">em dia</span></p>
+          </div>
+        </SectionCard>
+
         <SectionCard title="Estado vazio">
           <EmptyState icon={Inbox} title="Nenhuma conta vence hoje" description="A próxima é sexta, Ambev, R$ 1.240." action={{ label: 'Ver a semana', onClick: () => undefined }} compact />
         </SectionCard>

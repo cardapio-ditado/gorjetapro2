@@ -42,7 +42,7 @@ const Regras: React.FC = () => {
 
   return (
     <SectionCard title="Regras da casa" descricao="Valem para todos os setores." action={<Button variante="primario" tamanho="sm" icone={<Save size={14} />} onClick={salvar} disabled={!mudou || salvando} carregando={salvando}>{salvo ? 'Salvo' : 'Salvar'}</Button>}>
-      {erro && <p className="t-body" style={{ margin: '0 0 12px', color: '#fca5a5' }}>{erro}</p>}
+      {erro && <p className="t-body" style={{ margin: '0 0 12px', color: 'var(--danger-text)' }}>{erro}</p>}
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-2">
           <span className="t-label" style={{ color: 'var(--text-secondary)' }}>Contagem geral de todos os itens</span>

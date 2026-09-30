@@ -44,7 +44,7 @@ const PassoSaida: React.FC<Props> = ({ dados, onRecarregar, onConcluir }) => {
   if (ehKit) {
     return (
       <div className="flex flex-col gap-4 pb-28">
-        <div className="rounded-lg px-4 py-3 t-body" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', color: 'var(--text-secondary)' }}>
+        <div className="aviso">
           Kit não vende nada: tudo aqui sai por <strong style={{ color: 'var(--text-primary)' }}>contagem</strong>. O que falta até o nível é reposto do Central na tela Kits de limpeza. Nada a configurar neste passo.
         </div>
         <div className="fixed bottom-0 left-0 right-0 z-30 px-4 py-3 lg:pl-[calc(232px+28px)]" style={{ background: 'var(--bg-dark)', borderTop: '1px solid var(--border)' }}>
@@ -58,7 +58,7 @@ const PassoSaida: React.FC<Props> = ({ dados, onRecarregar, onConcluir }) => {
 
   return (
     <div className="flex flex-col gap-4 pb-28">
-      <div className="rounded-lg px-4 py-3 t-body" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', color: 'var(--text-secondary)' }}>
+      <div className="aviso">
         <strong style={{ color: 'var(--text-primary)' }}>Zig baixa:</strong> a venda desconta o item deste setor sozinha, às 6h. Precisa de pelo menos uma venda ligada.{' '}
         <strong style={{ color: 'var(--text-primary)' }}>Conta todo dia:</strong> a Zig ignora o item aqui e o gerente informa o físico no fechamento.
       </div>
@@ -68,7 +68,7 @@ const PassoSaida: React.FC<Props> = ({ dados, onRecarregar, onConcluir }) => {
         <Chip ligado={soPendencias} onMudar={setSoPendencias} tom="atencao">Só pendências ({pendencias})</Chip>
       </div>
 
-      {erro && <div className="rounded-lg px-4 py-3 t-body" style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.4)', color: '#fca5a5' }}>{erro}</div>}
+      {erro && <div className="aviso aviso-perigo" role="alert">{erro}</div>}
 
       {presentes.length === 0 && <EmptyState icon={Search} title="Nenhum produto neste setor" description="Volte ao passo 1 e marque o que fica aqui." compact />}
       {presentes.length > 0 && visiveis.length === 0 && <EmptyState icon={Search} title={soPendencias ? 'Sem pendências' : 'Nada com esse nome'} variant="filtered" compact />}
@@ -114,7 +114,7 @@ const PassoSaida: React.FC<Props> = ({ dados, onRecarregar, onConcluir }) => {
         <div className="max-w-5xl flex items-center justify-between gap-3">
           <span className="t-body" style={{ color: 'var(--text-secondary)' }}>
             {presentes.filter(i => i.controle === 'venda').length} pela Zig · {presentes.filter(i => i.controle !== 'venda').length} por contagem
-            {pendencias > 0 && <span style={{ color: '#fcd34d' }}> · {pendencias} Zig sem venda ligada</span>}
+            {pendencias > 0 && <span className="texto-atencao"> · {pendencias} Zig sem venda ligada</span>}
           </span>
           <Button variante="primario" icone={<Check size={16} />} onClick={onConcluir}>Concluir setor</Button>
         </div>

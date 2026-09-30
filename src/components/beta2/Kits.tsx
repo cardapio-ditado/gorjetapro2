@@ -67,8 +67,8 @@ const Kits: React.FC<Props> = ({ responsavel, onConfigurar }) => {
           subtitle={kit.ultima_reposicao ? `Última reposição ${new Date(kit.ultima_reposicao).toLocaleDateString('pt-BR')}.` : 'Ainda não foi reposto pelo sistema.'}
           actions={<Button tamanho="sm" icone={<Settings2 size={14} />} onClick={() => onConfigurar(kit.id)}>Configurar lista</Button>}
         />
-        {erro && <p className="t-body mb-3" style={{ color: '#fca5a5' }}>{erro}</p>}
-        {aviso && <div className="rounded-lg px-4 py-3 t-body mb-3" style={{ background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.4)', color: '#6ee7b7' }}>{aviso}</div>}
+        {erro && <div className="aviso aviso-perigo mb-3" role="alert">{erro}</div>}
+        {aviso && <div className="aviso aviso-certo mb-3">{aviso}</div>}
 
         {kit.itens.length === 0 && (
           <EmptyState icon={SprayCan} title="Este kit ainda não tem lista" description="Configure o que ele deve ter: itens e quantidade." action={{ label: 'Configurar lista', onClick: () => onConfigurar(kit.id) }} />
@@ -84,7 +84,7 @@ const Kits: React.FC<Props> = ({ responsavel, onConfigurar }) => {
                 <div className="min-w-0">
                   <p className="t-body truncate" style={{ margin: 0, fontWeight: 500 }}>{i.nome}</p>
                   <p className="t-caption" style={{ margin: 0 }}>
-                    deve ter {fmt(i.nivel)} · tem <span style={{ color: i.falta > 0 ? '#fcd34d' : undefined }}>{fmt(i.saldo)}</span> · Central tem {fmt(i.central_tem)} {i.rotulo}
+                    deve ter {fmt(i.nivel)} · tem <span className={i.falta > 0 ? 'texto-atencao' : undefined}>{fmt(i.saldo)}</span> · Central tem {fmt(i.central_tem)} {i.rotulo}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -120,7 +120,7 @@ const Kits: React.FC<Props> = ({ responsavel, onConfigurar }) => {
   return (
     <div className="max-w-5xl">
       <PageHeader caminho={['Estoque', 'Kits de limpeza']} title="Kits de limpeza" subtitle="Cada kit tem sua lista. Repor é mandar do Central o que falta." />
-      {erro && <p className="t-body mb-3" style={{ color: '#fca5a5' }}>{erro}</p>}
+      {erro && <div className="aviso aviso-perigo mb-3" role="alert">{erro}</div>}
       {!kits && !erro && <p className="t-body" style={{ color: 'var(--text-secondary)' }}>Carregando…</p>}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {kits?.map(k => (

@@ -43,7 +43,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
         width: compact ? 36 : 56,
         height: compact ? 36 : 56,
         borderRadius: 'var(--r-pill)',
-        background: 'rgba(255,255,255,0.04)',
+        background: 'var(--bg-hover)',
         border: '1px solid var(--border)',
         marginBottom: compact ? 'var(--sp-3)' : 'var(--sp-4)',
       }}
@@ -77,7 +77,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
           marginTop: 'var(--sp-5)',
           padding: '9px 18px',
           borderRadius: 'var(--r-control)',
-          background: variant === 'filtered' ? 'rgba(255,255,255,0.06)' : 'var(--wine)',
+          background: variant === 'filtered' ? 'var(--bg-active)' : 'var(--wine)',
           border: variant === 'filtered' ? '1px solid var(--border-strong)' : '1px solid var(--wine-light)',
           color: 'var(--text-primary)',
           cursor: 'pointer',
