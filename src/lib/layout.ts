@@ -9,11 +9,12 @@ export type Layout = 'classico' | 'novo';
 const CHAVE = 'dp-layout';
 const EVENTO = 'dp-layout-mudou';
 
+/** O novo é o padrão; quem preferir o clássico escolhe no menu do usuário. */
 export function lerLayout(): Layout {
   try {
-    return localStorage.getItem(CHAVE) === 'novo' ? 'novo' : 'classico';
+    return localStorage.getItem(CHAVE) === 'classico' ? 'classico' : 'novo';
   } catch {
-    return 'classico';
+    return 'novo';
   }
 }
 

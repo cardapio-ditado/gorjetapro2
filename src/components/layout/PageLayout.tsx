@@ -16,11 +16,12 @@ interface PageLayoutProps {
   variant?: 'wine' | 'gold' | 'blue' | 'green';
 }
 
+// Chapado, sem degradê: o kit não usa brilho nem gradiente.
 const GRADIENTS = {
-  wine: 'linear-gradient(135deg, #7D1F2C 0%, #5a1520 60%, #3d0f16 100%)',
-  gold: 'linear-gradient(135deg, #D4AF37 0%, #b8941f 60%, #8a6f15 100%)',
-  blue: 'linear-gradient(135deg, #1e40af 0%, #1e3a8a 60%, #172554 100%)',
-  green: 'linear-gradient(135deg, #059669 0%, #047857 60%, #065f46 100%)',
+  wine: 'var(--wine)',
+  gold: '#8a6f15',
+  blue: '#1e3a8a',
+  green: '#047857',
 };
 
 export const PageLayout: React.FC<PageLayoutProps> = ({
@@ -43,22 +44,7 @@ export const PageLayout: React.FC<PageLayoutProps> = ({
         className="relative overflow-hidden fundo-saturado"
         style={{ background: GRADIENTS[variant] }}
       >
-        {/* Ruído decorativo */}
-        <div
-          className="absolute inset-0 opacity-[0.03]"
-          style={{
-            backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)',
-            backgroundSize: '24px 24px',
-          }}
-        />
-
-        {/* Glow dourado */}
-        <div
-          className="absolute -top-20 -right-20 w-80 h-80 rounded-full opacity-10"
-          style={{ background: 'radial-gradient(circle, #D4AF37, transparent 70%)' }}
-        />
-
-        <div className="relative px-6 lg:px-8 pt-7 pb-8">
+        <div className="relative px-6 lg:px-8 pt-6 pb-6">
           {/* Breadcrumb */}
           {breadcrumb.length > 0 && (
             <div className="flex items-center gap-1.5 mb-4">
