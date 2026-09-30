@@ -1,16 +1,26 @@
 import React, { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import CadastrosBeta2, { type Cadastro } from '../components/estoque-beta2/CadastrosBeta2';
 import RotinaEstoquistaBeta2 from '../components/estoque-beta2/RotinaEstoquistaBeta2';
 import RecebimentoBeta2, { type NotePreview } from '../components/estoque-beta2/RecebimentoBeta2';
 import EmergenciasBeta2, { type EmergencyPreview } from '../components/estoque-beta2/EmergenciasBeta2';
 import FechamentoBeta2 from '../components/estoque-beta2/FechamentoBeta2';
 import { useControleZigBeta2, type FechamentoPreview, cuiabaDate, dataAnterior, diaAuditoria } from '../components/estoque-beta2/FechamentoDadosBeta2';
-import { ArrowLeft, ArrowRight, Package, Users, ClipboardCheck, Truck, Store, FileBox, Clock3, BarChart3, RotateCcw, Warehouse, BookOpen, Home, Settings2 } from 'lucide-react';
-import { Badge, Button, PageHeader, SectionCard } from '../components/ui';
+import { ArrowLeft, ArrowRight, Package, Users, ClipboardCheck, Truck, Store, Clock3, BarChart3, RotateCcw, Warehouse, BookOpen, Settings2, SprayCan, ShoppingCart, FileText, ArrowLeftRight, Handshake, ShieldCheck, Sliders, History, Sparkles } from 'lucide-react';
+import { Badge, Button, SectionCard } from '../components/ui';
 import ConfigurarSetores from './ConfigurarSetores';
+import Hoje, { type DestinoHoje } from '../components/beta2/Hoje';
+import Kits from '../components/beta2/Kits';
+import Compras from '../components/inventory/Compras';
+import RelatoriosEstoque from '../components/inventory/RelatoriosEstoque';
+import KardexProduto from '../components/inventory/KardexProduto';
+import MovimentacoesEstoque from '../components/inventory/MovimentacoesEstoque';
+import ContagemEstoque from '../components/inventory/contagem/ContagemEstoque';
 
 /** Beta 2 no React, sem iframe. Cadastros oficiais são compartilhados; fluxos operacionais usam dados simulados. */
-type View = 'menu' | 'inicio' | 'itens' | 'fichas' | 'fornecedores' | 'estoques' | 'inventario' | 'recebimento' | 'reposicao' | 'fechamento' | 'politica' | 'setores' | 'kits' | 'emergencias' | 'gestao';
+type View = 'menu' | 'inicio' | 'itens' | 'fichas' | 'fornecedores' | 'estoques' | 'inventario' | 'recebimento' | 'reposicao' | 'fechamento' | 'politica' | 'setores' | 'kits' | 'emergencias' | 'gestao' | 'compras' | 'relatorios' | 'kardex' | 'movimentacoes' | 'contagem_central';
+const VIEWS: View[] = ['menu','inicio','itens','fichas','fornecedores','estoques','inventario','recebimento','reposicao','fechamento','politica','setores','kits','emergencias','gestao','compras','relatorios','kardex','movimentacoes','contagem_central'];
 type Product = { id:string; nome:string; codigo:string; categoria:string; tipo:string; unidade:string; embalagem:string; fator:number; fornecedorId:string; endereco:string; minimo:number; ponto:number; controle:string; classe:string; cmv:boolean; central:number };
 const productsSeed:Product[]=[
 {id:'stella',nome:'Stella Pure Gold 600 ml',codigo:'BEV-001',categoria:'Bebidas',tipo:'insumo',unidade:'unidade',embalagem:'Caixa com 12',fator:12,fornecedorId:'dist',endereco:'Central seco / Bebidas',minimo:60,ponto:72,controle:'vende',classe:'pedido',cmv:true,central:120},
@@ -21,31 +31,60 @@ const productsSeed:Product[]=[
 ];
 const clone=<T,>(v:T):T=>JSON.parse(JSON.stringify(v)) as T;
 const num=(n:number)=>n.toLocaleString('pt-BR',{maximumFractionDigits:2});
-type MenuSection = 'operacao' | 'cadastros' | 'gestao';
-const TITULOS:Record<View,string>={menu:'Estoque Beta 2',inicio:'Rotina do dia',itens:'Itens do estoque',fichas:'Fichas técnicas',fornecedores:'Fornecedores',estoques:'Estoques',inventario:'Inventário (central)',recebimento:'Recebimento',reposicao:'Lista de reposição · Zig',fechamento:'Fechamento dos setores',politica:'Política de controle',setores:'Configurar setores',kits:'Kits de limpeza',emergencias:'Solicitações e retiradas',gestao:'Divergências e aprovação'};
-type MenuItem = {v:View;n:string;icon:React.ElementType};
-const menuSections:{id:MenuSection;title:string;hint:string;icon:React.ElementType;items:MenuItem[]}[]=[
- {id:'operacao',title:'Operação',hint:'Gerentes e estoquista',icon:Store,items:[
-  {v:'emergencias',n:'Solicitações e retiradas',icon:Clock3},
-  {v:'recebimento',n:'Recebimento',icon:Truck},
-  {v:'fechamento',n:'Fechamento dos setores',icon:ClipboardCheck},
-  {v:'reposicao',n:'Lista de reposição · Zig',icon:Store},
-  {v:'inventario',n:'Inventário (central)',icon:ClipboardCheck},
-  {v:'kits',n:'Kits de limpeza',icon:FileBox}
+const TITULOS:Record<View,string>={menu:'Estoque Beta 2',inicio:'Rotina do dia (demonstração)',itens:'Itens do estoque',fichas:'Fichas técnicas',fornecedores:'Fornecedores',estoques:'Estoques',inventario:'Inventário do Central (demonstração)',recebimento:'Receber compras',reposicao:'Repor os setores',fechamento:'Fechamento dos setores',politica:'Política de controle',setores:'Configurar setores',kits:'Kits de limpeza',emergencias:'Retiradas e pedidos',gestao:'Aprovar diferenças',compras:'Compras',relatorios:'Relatórios',kardex:'Kardex por produto',movimentacoes:'Movimentações',contagem_central:'Contagem do Central'};
+/** grava = mexe em dado real · demo = só na tela · breve = ainda não existe */
+type Estado='grava'|'demo'|'breve';
+type MenuItem={v?:View;n:string;icon:React.ElementType;estado:Estado;dica?:string};
+type MenuGrupo={id:string;title:string;hint:string;items:MenuItem[]};
+const GRUPOS:MenuGrupo[]=[
+ {id:'cadastros',title:'1 · Cadastros',hint:'Itens, estoques, fichas e fornecedores',items:[
+  {v:'itens',n:'Itens do estoque',icon:Package,estado:'grava'},
+  {v:'estoques',n:'Estoques',icon:Warehouse,estado:'grava'},
+  {v:'fichas',n:'Fichas técnicas',icon:BookOpen,estado:'grava'},
+  {v:'fornecedores',n:'Fornecedores',icon:Users,estado:'grava'}
  ]},
- {id:'cadastros',title:'Cadastros',hint:'Base compartilhada',icon:Package,items:[
-  {v:'itens',n:'Itens do estoque',icon:Package},
-  {v:'fichas',n:'Fichas técnicas',icon:BookOpen},
-  {v:'estoques',n:'Estoques',icon:Warehouse},
-  {v:'fornecedores',n:'Fornecedores',icon:Users}
+ {id:'configuracao',title:'2 · Configuração',hint:'O que fica onde, quanto deve ter, como sai',items:[
+  {v:'setores',n:'Configurar setores e kits',icon:Settings2,estado:'grava',dica:'itens, nível e saída por setor'},
+  {n:'Configurar Central',icon:Sliders,estado:'breve',dica:'ponto de pedido calculado'}
  ]},
- {id:'gestao',title:'Gestão',hint:'Aprovações',icon:BarChart3,items:[
-  {v:'gestao',n:'Divergências e aprovação',icon:ClipboardCheck}
+ {id:'movimentacoes',title:'3 · Movimentações',hint:'Entradas, reposição, retiradas, empréstimos',items:[
+  {v:'recebimento',n:'Receber compras',icon:Truck,estado:'demo'},
+  {v:'reposicao',n:'Repor os setores',icon:Store,estado:'demo',dica:'sugestão diária pela baixa'},
+  {v:'emergencias',n:'Retiradas e pedidos',icon:Clock3,estado:'demo',dica:'noturnas, com confirmação'},
+  {n:'Empréstimo com vizinhos',icon:Handshake,estado:'breve'},
+  {v:'movimentacoes',n:'Movimentações (histórico)',icon:ArrowLeftRight,estado:'grava'}
+ ]},
+ {id:'contagem',title:'4 · Contagem',hint:'Central por zonas, setores todo dia, auditoria',items:[
+  {v:'contagem_central',n:'Contagem do Central',icon:ClipboardCheck,estado:'grava',dica:'por zonas, no ciclo'},
+  {v:'fechamento',n:'Fechamento dos setores',icon:ClipboardCheck,estado:'demo'},
+  {n:'Auditoria seg · qui · sáb',icon:ShieldCheck,estado:'breve'},
+  {v:'gestao',n:'Aprovar diferenças',icon:ShieldCheck,estado:'demo',dica:'Cristiano ou Kadu'}
+ ]},
+ {id:'compras',title:'5 · Compras',hint:'Pelo ponto de pedido do Central',items:[
+  {v:'compras',n:'Compras',icon:ShoppingCart,estado:'grava'}
+ ]},
+ {id:'relatorios',title:'6 · Relatórios',hint:'Inventário, kardex, contagens, CMV',items:[
+  {v:'relatorios',n:'Relatórios',icon:BarChart3,estado:'grava'},
+  {v:'kardex',n:'Kardex por produto',icon:History,estado:'grava'},
+  {n:'Kardex por fornecedor · CMV',icon:FileText,estado:'breve'}
+ ]},
+ {id:'kits',title:'7 · Kits de limpeza',hint:'Garçons, cozinha, bar e serviços gerais',items:[
+  {v:'kits',n:'Kits de limpeza',icon:SprayCan,estado:'grava',dica:'repor do Central num toque'}
  ]}
 ];
+const REAIS:View[]=['itens','fichas','estoques','fornecedores','setores','kits','compras','relatorios','kardex','movimentacoes','contagem_central'];
 const EstoqueBeta2:React.FC=()=>{
 // Abre direto em Configurar setores quando a URL traz ?setor=…
-const[view,setView]=useState<View>(()=>new URLSearchParams(window.location.search).has('setor')?'setores':'menu');
+const[params,setParams]=useSearchParams();
+const{usuario}=useAuth();
+const telaParam=params.get('tela');
+const view:View=params.has('setor')&&!telaParam?'setores':(VIEWS.includes(telaParam as View)?telaParam as View:'menu');
+const setView=(v:View,extra?:Record<string,string>)=>{
+  const q=new URLSearchParams();
+  if(v!=='menu')q.set('tela',v);
+  if(extra)Object.entries(extra).forEach(([k,val])=>q.set(k,val));
+  setParams(q);
+};
 const[products,setProducts]=useState<Product[]>(()=>clone(productsSeed));
 const[notice,setNotice]=useState('');
 const[error,setError]=useState('');
@@ -56,7 +95,6 @@ const[focusNightReview,setFocusNightReview]=useState(false);
 const[fechamentos,setFechamentos]=useState<FechamentoPreview[]>([]);
 const[restockViewed,setRestockViewed]=useState(false);
 const dadosFechamento=useControleZigBeta2();
-const[kitDone,setKitDone]=useState(false);
 const[nightReviewed,setNightReviewed]=useState(false);
 const[handoffDone,setHandoffDone]=useState(false);
 const[count,setCount]=useState<Record<string,number>>({});
@@ -79,12 +117,13 @@ const zigPronta=logDaReposicao?.status==='sucesso'&&Number(logDaReposicao.total_
 const auditoriaPrevista=diaAuditoria(diaReposicao);
 const auditoriaRecebida=!auditoriaPrevista||dadosFechamento.setores.every(e=>
  fechamentos.some(f=>f.estoqueId===e.id&&f.dataOperacional===diaReposicao&&f.auditoria));
-const go=(v:View)=>{
-  setView(v);setNotice('');setError('');
+const go=(v:View,extra?:Record<string,string>)=>{
+  setView(v,extra);setNotice('');setError('');
   if(v==='reposicao')setRestockViewed(true);
   if(v==='emergencias')setFocusNightReview(false);
 };
-const reset=()=>{dadosFechamento.resetFrequencias();setProducts(clone(productsSeed));setFechamentos([]);setRestockViewed(false);setCount({});setCountSent(false);setCountApproved(false);setReceived(false);setReceipts([]);setRequests([]);setFocusNightReview(false);setKitDone(false);setNightReviewed(false);setHandoffDone(false);setView('menu');setError('');setNotice('Demonstração reiniciada.');};
+const reset=()=>{dadosFechamento.resetFrequencias();setProducts(clone(productsSeed));setFechamentos([]);setRestockViewed(false);setCount({});setCountSent(false);setCountApproved(false);setReceived(false);setReceipts([]);setRequests([]);setFocusNightReview(false);setNightReviewed(false);setHandoffDone(false);setView('menu');setError('');setNotice('Demonstração reiniciada.');};
+const irDeHoje=(d:DestinoHoje)=>go(d);
 const beta2MenuCSS = `
 .b2-root .b2-side{display:flex;flex-direction:column;gap:0}
 .b2-root .b2-menu{display:flex;flex-direction:column;gap:7px}
@@ -188,55 +227,55 @@ const beta2ContrastCSS = `
 `;
 const beta2BaseCSS = '.b2-root{color:#f6edf0;background:radial-gradient(ellipse at 92% 0,#432638,#140f19 44%);min-height:calc(100dvh - 70px);font-family:Inter,system-ui,sans-serif}.b2-root *{box-sizing:border-box}.b2-root .b2-shell{display:grid;grid-template-columns:205px minmax(0,1fr);min-height:calc(100dvh - 70px)}.b2-root .b2-side{padding:20px 11px;background:#1a1320;border-right:1px solid #4d374b}.b2-root .b2-logo{padding:0 11px 18px;font-weight:900;letter-spacing:.04em}.b2-root .b2-logo small{display:block;color:#edc487;font-size:11px;letter-spacing:.12em}.b2-root .b2-nav{display:flex;align-items:center;gap:9px;border-radius:11px;width:100%;padding:10px;border:1px solid transparent;color:#d4bfce;text-align:left;font-size:12px;font-weight:750;margin-bottom:4px}.b2-root .b2-nav:hover,.b2-root .b2-nav[aria-current=page]{background:#49273a;color:white;border-color:#9b5368}.b2-root .b2-main{padding:24px clamp(16px,3vw,40px) 44px;min-width:0}.b2-root .b2-head{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:25px}.b2-root .b2-tag{border:1px solid #a86d75;background:#59293e;color:#f9dccc;border-radius:99px;font-size:11px;font-weight:900;letter-spacing:.08em;padding:7px 12px}.b2-root .b2-eyebrow{color:#edc487;font-size:11px;font-weight:900;letter-spacing:.15em;text-transform:uppercase;margin-bottom:5px}.b2-root h1{font-weight:900;letter-spacing:-.04em;font-size:clamp(28px,3vw,43px);line-height:1.1;margin:0 0 9px}.b2-root h2{font-weight:850;font-size:21px;margin:0 0 13px}.b2-root .b2-lead,.b2-root .b2-muted{color:#bcaabb}.b2-root .b2-lead{max-width:790px;margin-bottom:25px}.b2-root .b2-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px}.b2-root .b2-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}.b2-root .b2-split{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}.b2-root .b2-card{background:linear-gradient(145deg,#281c2c,#1d1823);border:1px solid #4d3849;border-radius:18px;padding:19px;min-width:0}.b2-root .b2-stat{font-size:30px;letter-spacing:-.05em;font-weight:900;color:#f5dfc6}.b2-root .b2-section{margin-top:28px}.b2-root .b2-action{display:flex;align-items:center;gap:14px;text-align:left;border:1px solid #674352;background:linear-gradient(130deg,#492539,#261d2a);padding:17px;border-radius:17px;min-height:98px}.b2-root .b2-action:hover{border-color:#edc487}.b2-root .b2-action strong{display:block;font-size:16px;font-weight:850}.b2-root .b2-action small{display:block;color:#d5becb;margin-top:2px}.b2-root .b2-row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:14px 0;border-bottom:1px solid #493547}.b2-root .b2-row:last-child{border:0}.b2-root .b2-row strong{display:block}.b2-root .b2-row small{color:#baa8b8;display:block;font-size:12px;margin-top:3px}.b2-root .b2-btn{background:linear-gradient(130deg,#b54660,#842d46);border:1px solid transparent;color:white;padding:10px 14px;border-radius:11px;font-weight:850;font-size:13px}.b2-root .b2-btn:hover{filter:brightness(1.1)}.b2-root .b2-btn:disabled{opacity:.5;cursor:default}.b2-root .b2-btn.alt{background:#3c3041;border-color:#70546c}.b2-root .b2-btn.green{background:#207b5c}.b2-root .b2-btn.small{padding:7px 10px;font-size:12px}.b2-root .b2-pill{background:#513549;color:#f3dded;border:1px solid #695061;border-radius:99px;font-size:11px;font-weight:800;padding:5px 9px;display:inline-block}.b2-root .b2-pill.green{color:#a6efd0;background:#1c453a;border-color:#2d6b53}.b2-root .b2-pill.red{color:#ffb1bb;background:#542b3b;border-color:#9b4b5b}.b2-root .b2-hint{background:#382a2a;color:#efce9a;border:1px solid #755843;border-radius:11px;padding:11px 13px;font-size:12px;margin:14px 0}.b2-root .b2-success{background:#173c30;color:#b5efd0;border:1px solid #367957;border-radius:11px;padding:12px 14px;font-size:13px;margin:15px 0}.b2-root .b2-error{background:#522737;color:#ffd2d4;border:1px solid #a44b60;border-radius:11px;padding:12px 14px;font-size:13px;margin:15px 0}.b2-root .b2-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.b2-root .b2-field{display:grid;gap:7px;color:#e8d5e1;font-size:12px;font-weight:800}.b2-root input,.b2-root select{width:100%;border-radius:10px;padding:10px 11px;border:1px solid #6b516b;background:#17111d;color:white;min-width:0}.b2-root input[type=checkbox]{width:auto}.b2-root select option{background:#201824;color:white}.b2-root .b2-table-scroll{overflow-x:auto}.b2-root table{width:100%;border-collapse:collapse;min-width:540px}.b2-root th{color:#bba5b8;text-align:left;text-transform:uppercase;letter-spacing:.08em;font-size:11px;padding:12px 9px;border-bottom:1px solid #4d3849}.b2-root td{padding:12px 9px;border-bottom:1px solid #453444;font-size:13px}.b2-root td input{max-width:100px}.b2-root .b2-topline{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}.b2-root .b2-chips{display:flex;flex-wrap:wrap;gap:8px;margin:15px 0}.b2-root .b2-chip{border:1px solid #65465a;padding:8px 11px;border-radius:11px;font-size:12px;font-weight:800;background:#352537}.b2-root .b2-chip[aria-pressed=true]{background:#7d3049;color:white}@media(max-width:1000px){.b2-root .b2-shell{display:block}.b2-root .b2-side{padding:12px;border-right:0;border-bottom:1px solid #4d374b}.b2-root .b2-logo{padding-bottom:8px}.b2-root .b2-menu{display:flex;gap:4px;overflow-x:auto}.b2-root .b2-nav{width:auto;white-space:nowrap;padding:9px}.b2-root .b2-main{padding:17px}.b2-root .b2-split{grid-template-columns:1fr}}@media(max-width:600px){.b2-root .b2-grid,.b2-root .b2-actions,.b2-root .b2-form{grid-template-columns:1fr}.b2-root .b2-card{padding:15px}}';
 
-const cadastro=(['itens','fichas','fornecedores','estoques'] as View[]).includes(view);
+const real=REAIS.includes(view);
+const voltar=<Button variante="discreto" tamanho="sm" icone={<ArrowLeft size={14}/>} onClick={()=>go('menu')} className="mb-2 -ml-2">Estoque Beta 2</Button>;
 
-// ── Configurar setores: a tela nova, no padrão do kit, dentro do Beta 2 ──
-if(view==='setores')return <div>
-  <Button variante="discreto" tamanho="sm" icone={<ArrowLeft size={14}/>} onClick={()=>go('menu')} className="mb-2 -ml-2">Estoque Beta 2</Button>
-  <ConfigurarSetores/>
+// ── Telas novas, no padrão do kit, gravando de verdade ──
+if(view==='setores')return <div>{voltar}<ConfigurarSetores/></div>;
+if(view==='kits')return <div>{voltar}<Kits responsavel={usuario?.nome_completo??null} onConfigurar={id=>go('setores',{setor:id,passo:'1'})}/></div>;
+
+// ── Telas reais do módulo atual, embutidas no Beta 2 ──
+if(view==='compras'||view==='relatorios'||view==='kardex'||view==='movimentacoes'||view==='contagem_central')return <div>
+  <div className="flex items-center gap-3 flex-wrap mb-3">{voltar}<span className="t-subsec">{TITULOS[view]}</span><Badge variant="success">grava</Badge></div>
+  {view==='compras'&&<Compras/>}
+  {view==='relatorios'&&<RelatoriosEstoque/>}
+  {view==='kardex'&&<KardexProduto/>}
+  {view==='movimentacoes'&&<MovimentacoesEstoque/>}
+  {view==='contagem_central'&&<ContagemEstoque/>}
 </div>;
 
-// ── Menu do Beta 2, no padrão do kit ──
+// ── Entrada: Hoje + os 7 grupos ──
 if(view==='menu')return <div className="max-w-5xl">
-  <PageHeader caminho={['Estoque','Estoque Beta 2']} title="Estoque Beta 2" subtitle="Configurar setores já grava de verdade. O resto ainda é demonstração e não mexe em saldo."
-    actions={<Button tamanho="sm" icone={<RotateCcw size={14}/>} onClick={reset}>Reiniciar testes</Button>}/>
-  {notice&&<div className="rounded-lg px-4 py-3 t-body mb-4" style={{background:'rgba(16,185,129,0.12)',border:'1px solid rgba(16,185,129,0.4)',color:'#6ee7b7'}}>{notice}</div>}
-  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-    <button type="button" onClick={()=>go('setores')} className="text-left rounded-xl p-5 flex items-center gap-4 focus-ring" style={{background:'var(--wine)',color:'#fff'}}>
-      <Settings2 size={28} aria-hidden="true"/>
-      <span className="flex-1 min-w-0">
-        <span className="block t-caps" style={{fontSize:11,color:'rgba(255,255,255,0.75)'}}>Comece por aqui</span>
-        <span className="block" style={{fontSize:20,fontWeight:700,lineHeight:1.2}}>Configurar setores</span>
-        <span className="block t-body" style={{color:'rgba(255,255,255,0.85)'}}>O que fica em cada balcão, quanto deve ter e como sai.</span>
-      </span>
-      <ArrowRight size={22} aria-hidden="true"/>
-    </button>
-    <button type="button" onClick={()=>go('inicio')} className="text-left rounded-xl p-5 flex items-center gap-4 focus-ring" style={{background:'var(--bg-card)',border:'1px solid var(--border)',color:'var(--text-primary)'}}>
-      <Home size={28} aria-hidden="true" style={{color:'var(--gold)'}}/>
-      <span className="flex-1 min-w-0">
-        <span className="block t-caps" style={{fontSize:11,color:'var(--text-secondary)'}}>Demonstração</span>
-        <span className="block" style={{fontSize:20,fontWeight:700,lineHeight:1.2}}>Rotina do dia</span>
-        <span className="block t-body" style={{color:'var(--text-secondary)'}}>O roteiro do estoquista, passo a passo.</span>
-      </span>
-      <ArrowRight size={22} aria-hidden="true" style={{color:'var(--text-secondary)'}}/>
-    </button>
+  <Hoje onIr={irDeHoje}/>
+  {notice&&<div className="rounded-lg px-4 py-3 t-body my-4" style={{background:'rgba(16,185,129,0.12)',border:'1px solid rgba(16,185,129,0.4)',color:'#6ee7b7'}}>{notice}</div>}
+  <div className="flex items-center justify-between gap-3 mt-8 mb-3">
+    <h2 className="t-subsec" style={{margin:0}}>Tudo do estoque</h2>
+    <div className="flex items-center gap-3">
+      <span className="t-caption hidden md:inline">grava = mexe no saldo real · demonstração = só na tela · em breve = ainda não existe</span>
+      <Button tamanho="sm" variante="discreto" icone={<RotateCcw size={14}/>} onClick={reset}>Reiniciar demonstração</Button>
+    </div>
   </div>
-  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-    {menuSections.map(section=><SectionCard key={section.id} title={section.title} descricao={section.id==='cadastros'?'Grava no cadastro real.':section.id==='gestao'?'Aprovações e regras.':'Ainda em demonstração.'} noPadding>
+  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+    {GRUPOS.map(g=><SectionCard key={g.id} title={g.title} descricao={g.hint} noPadding>
       <div className="flex flex-col">
-        {section.id==='gestao'&&<button type="button" onClick={()=>go('setores')} className="flex items-center gap-3 px-5 h-12 text-left hover:bg-white/[0.04] focus-ring" style={{borderBottom:'1px solid var(--border-subtle)'}}>
-          <Settings2 size={16} aria-hidden="true" style={{color:'var(--gold)'}}/>
-          <span className="flex-1 t-body" style={{fontWeight:600}}>Configurar setores</span>
-          <Badge variant="success">grava</Badge>
-        </button>}
-        {section.items.map(item=><button key={item.v} type="button" onClick={()=>go(item.v)} className="flex items-center gap-3 px-5 h-12 text-left hover:bg-white/[0.04] focus-ring" style={{borderBottom:'1px solid var(--border-subtle)'}}>
-          <item.icon size={16} aria-hidden="true" style={{color:'var(--text-secondary)'}}/>
-          <span className="flex-1 t-body">{item.n}</span>
-          <ArrowRight size={14} aria-hidden="true" style={{color:'var(--text-secondary)'}}/>
-        </button>)}
+        {g.items.map(item=>{
+          const breve=item.estado==='breve';
+          return <button key={item.n} type="button" disabled={breve} onClick={()=>item.v&&go(item.v)} className="flex items-center gap-3 px-5 min-h-12 py-2 text-left hover:bg-white/[0.04] focus-ring disabled:opacity-50 disabled:cursor-not-allowed" style={{borderBottom:'1px solid var(--border-subtle)'}}>
+            <item.icon size={16} aria-hidden="true" style={{color:item.estado==='grava'?'var(--gold)':'var(--text-secondary)'}}/>
+            <span className="flex-1 min-w-0">
+              <span className="block t-body" style={{fontWeight:item.estado==='grava'?600:400}}>{item.n}</span>
+              {item.dica&&<span className="block t-caption">{item.dica}</span>}
+            </span>
+            {item.estado==='grava'&&<Badge variant="success">grava</Badge>}
+            {item.estado==='demo'&&<Badge variant="warning">demonstração</Badge>}
+            {breve&&<Badge variant="neutral">em breve</Badge>}
+            {!breve&&<ArrowRight size={14} aria-hidden="true" style={{color:'var(--text-secondary)'}}/>}
+          </button>;
+        })}
       </div>
     </SectionCard>)}
   </div>
+  <button type="button" onClick={()=>go('inicio')} className="mt-4 flex items-center gap-2 t-caption focus-ring" style={{color:'var(--text-secondary)'}}><Sparkles size={12} aria-hidden="true"/> Ver a rotina do dia do protótipo (demonstração)</button>
 </div>;
 
 // ── Telas herdadas do protótipo: continuam com a pele própria, dentro do padrão ──
@@ -244,7 +283,7 @@ return <div>
 <div className="flex items-center gap-3 flex-wrap mb-3">
   <Button variante="discreto" tamanho="sm" icone={<ArrowLeft size={14}/>} onClick={()=>go('menu')} className="-ml-2">Estoque Beta 2</Button>
   <span className="t-subsec">{TITULOS[view]}</span>
-  <Badge variant={cadastro?'success':'warning'}>{cadastro?'grava no cadastro real':'demonstração, não mexe em saldo'}</Badge>
+  <Badge variant={real?'success':'warning'}>{real?'grava no cadastro real':'demonstração, não mexe em saldo'}</Badge>
 </div>
 <div className="b2-root b2-embutido">
 <style>{beta2BaseCSS}{beta2ContrastCSS}{beta2CadastroCSS}{beta2MenuCSS}{'.b2-root.b2-embutido{background:transparent;min-height:0;font-family:inherit;border-radius:10px}.b2-root.b2-embutido .b2-main{padding:0;min-width:0}'}</style>
@@ -265,7 +304,7 @@ return <div>
   dadosFechamento.setores.some(e=>e.id===l.estoque_id)
   &&(l.nivel_reposicao===null||(l.controle==='venda'&&!l.mapeadoZig))
  )}
- kitDone={kitDone} handoffDone={handoffDone}
+ kitDone={true} handoffDone={handoffDone}
  onHandoff={()=>{setHandoffDone(true);setNotice('Roteiro encerrado apenas na simulação.');}}
 />}
 
@@ -303,7 +342,6 @@ return <div>
  onSave={f=>{setFechamentos(prev=>[...prev.filter(x=>!(x.estoqueId===f.estoqueId&&x.dataOperacional===f.dataOperacional)),f]);setNotice('Fechamento guardado apenas nesta prévia.');}}
  go={v=>go(v)}
 />}
-{view==='kits'&&<><p className="b2-eyebrow">Consumo interno</p><h1>Kit compartilhado da limpeza</h1><p className="b2-lead">Armário único para equipe diurna e noturna; produtos químicos separados dos itens de contato alimentar.</p><div className="b2-card"><h2>Reposição ilustrativa</h2>{['Perflex · 10 unidades','Papel toalha · 8 pacotes','Detergente · 4 frascos','Saco de lixo · 20 unidades'].map(x=><div className="b2-row" key={x}><strong>{x}</strong><span className="b2-pill">Referência</span></div>)}<button className="b2-btn" style={{marginTop:18}} disabled={kitDone} onClick={()=>{setKitDone(true);setNotice('Kit reposto na simulação.')}}>{kitDone?'✓ Reposição concluída':'Confirmar kit reposto'}</button></div></>}
 
 {view==='gestao'&&<><p className="b2-eyebrow">Gestor · Cristiano</p><h1>Aprovação de divergências</h1><p className="b2-lead">Contagem não deve ajustar saldos sem aprovação do gestor.</p><div className="b2-card"><h2>Fila de aprovação</h2>{!countSent?<p className="b2-hint">Envie uma contagem em Inventário para testar.</p>:countApproved?<p className="b2-success">Aprovação simulada concluída, sem ajuste real.</p>:differences.length?<>{differences.map(p=><div className="b2-row" key={p.id}><div><strong>{p.nome}</strong><small>Teórico {p.central} · físico {count[p.id]??p.central}</small></div><span className="b2-pill red">{num((count[p.id]??p.central)-p.central)}</span></div>)}<button className="b2-btn" style={{marginTop:16}} onClick={()=>{setCountApproved(true);setNotice('Aprovado somente na simulação.')}}>Aprovar na simulação</button></>:<p className="b2-success">Contagem sem diferenças.</p>}</div></>}
 {error&&<p className="b2-error">{error}</p>}{notice&&<p className="b2-success">✓ {notice}</p>}

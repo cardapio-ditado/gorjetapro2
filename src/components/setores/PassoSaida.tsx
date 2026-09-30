@@ -13,6 +13,7 @@ interface Props {
 /** Passo 3: como o item sai daqui. Zig baixa, ou conta todo dia. Grava na hora. */
 const PassoSaida: React.FC<Props> = ({ dados, onRecarregar, onConcluir }) => {
   const presentes = useMemo(() => dados.itens.filter(i => i.presente), [dados]);
+  const ehKit = dados.estoque.tipo === 'kit';
   const [busca, setBusca] = useState('');
   const [soPendencias, setSoPendencias] = useState(false);
   const [ocupado, setOcupado] = useState<string | null>(null);
@@ -39,6 +40,21 @@ const PassoSaida: React.FC<Props> = ({ dados, onRecarregar, onConcluir }) => {
       setOcupado(null);
     }
   };
+
+  if (ehKit) {
+    return (
+      <div className="flex flex-col gap-4 pb-28">
+        <div className="rounded-lg px-4 py-3 t-body" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', color: 'var(--text-secondary)' }}>
+          Kit não vende nada: tudo aqui sai por <strong style={{ color: 'var(--text-primary)' }}>contagem</strong>. O que falta até o nível é reposto do Central na tela Kits de limpeza. Nada a configurar neste passo.
+        </div>
+        <div className="fixed bottom-0 left-0 right-0 z-30 px-4 py-3 lg:pl-[calc(232px+28px)]" style={{ background: 'var(--bg-dark)', borderTop: '1px solid var(--border)' }}>
+          <div className="max-w-5xl flex items-center justify-end">
+            <Button variante="primario" icone={<Check size={16} />} onClick={onConcluir}>Concluir kit</Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-4 pb-28">
