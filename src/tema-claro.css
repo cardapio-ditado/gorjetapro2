@@ -1,7 +1,7 @@
 /* GERADO por scripts/gerar-tema-claro.mjs — não edite à mão.
  * A pele clara do sistema: cada utilitário de tema escuro em uso no código
  * ganha aqui o equivalente claro, escopado ao shell dos módulos.
- * 480 regras. */
+ * 471 regras. */
 [data-theme="light"] .app-shell .bg-amber-900\/10{background-color:rgba(245,158,11,0.040)}
 [data-theme="light"] .app-shell .bg-amber-900\/15{background-color:rgba(245,158,11,0.060)}
 [data-theme="light"] .app-shell .bg-amber-900\/20{background-color:rgba(245,158,11,0.080)}
@@ -14,9 +14,6 @@
 [data-theme="light"] .app-shell .bg-blue-950\/20{background-color:rgba(59,130,246,0.080)}
 [data-theme="light"] .app-shell .bg-dark{background-color:#faf9f6}
 [data-theme="light"] .app-shell .bg-dark-card{background-color:#ffffff}
-[data-theme="light"] .app-shell .bg-emerald-700{background-color:rgba(16,185,129,0.120)}
-[data-theme="light"] .app-shell .bg-emerald-700\/40{background-color:rgba(16,185,129,0.160)}
-[data-theme="light"] .app-shell .bg-emerald-700\/60{background-color:rgba(16,185,129,0.220)}
 [data-theme="light"] .app-shell .bg-emerald-900\/20{background-color:rgba(16,185,129,0.080)}
 [data-theme="light"] .app-shell .bg-emerald-900\/90{background-color:rgba(16,185,129,0.220)}
 [data-theme="light"] .app-shell .bg-emerald-950\/10{background-color:rgba(16,185,129,0.040)}
@@ -144,7 +141,6 @@
 [data-theme="light"] .app-shell .hover\:bg-purple-700:hover{background-color:rgba(168,85,247,0.120)}
 [data-theme="light"] .app-shell .hover\:bg-red-700:hover{background-color:rgba(239,68,68,0.120)}
 [data-theme="light"] .app-shell .hover\:bg-white\/10:hover{background-color:rgba(31,27,26,0.085)}
-[data-theme="light"] .app-shell .hover\:bg-white\/12:hover{background-color:rgba(31,27,26,0.102)}
 [data-theme="light"] .app-shell .hover\:bg-white\/15:hover{background-color:rgba(31,27,26,0.128)}
 [data-theme="light"] .app-shell .hover\:bg-white\/20:hover{background-color:rgba(31,27,26,0.170)}
 [data-theme="light"] .app-shell .hover\:bg-white\/3:hover{background-color:rgba(31,27,26,0.025)}
@@ -241,11 +237,7 @@
 [data-theme="light"] .app-shell .text-emerald-200{color:#065f46}
 [data-theme="light"] .app-shell .text-emerald-300{color:#047857}
 [data-theme="light"] .app-shell .text-emerald-400{color:#047857}
-[data-theme="light"] .app-shell .text-emerald-400\/50{color:#047857}
-[data-theme="light"] .app-shell .text-emerald-400\/60{color:#047857}
-[data-theme="light"] .app-shell .text-emerald-400\/70{color:#047857}
 [data-theme="light"] .app-shell .text-emerald-500{color:#059669}
-[data-theme="light"] .app-shell .text-emerald-500\/40{color:#059669}
 [data-theme="light"] .app-shell .text-gold{color:#7a5f0f}
 [data-theme="light"] .app-shell .text-gold\/70{color:rgba(122,95,15,0.77)}
 [data-theme="light"] .app-shell .text-gold\/80{color:rgba(122,95,15,0.84)}
@@ -331,7 +323,6 @@
 [data-theme="light"] .app-shell .text-yellow-300\/70{color:#a16207}
 [data-theme="light"] .app-shell .text-yellow-400{color:#a16207}
 [data-theme="light"] .app-shell .text-yellow-400\/60{color:#a16207}
-[data-theme="light"] .app-shell .text-yellow-400\/70{color:#a16207}
 [data-theme="light"] .app-shell .text-yellow-400\/80{color:#a16207}
 [data-theme="light"] .app-shell .text-yellow-500{color:#ca8a04}
 [data-theme="light"] .app-shell .to-amber-700{background-image:none;background-color:rgba(245,158,11,0.120)}

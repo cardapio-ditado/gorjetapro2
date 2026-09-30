@@ -1,20 +1,22 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   ClipboardList, ArrowRight, X, ChevronLeft, ChevronRight,
-  Plus, AlertTriangle, CheckCircle, Printer,
-  RefreshCw, TrendingUp, Banknote, Wallet,
+  Plus, CheckCircle, Printer, RefreshCw, TrendingUp, Banknote, Wallet, Inbox,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import {
+  Badge, Button, EmptyState, IconButton, Input, KPICard, Modal, PageHeader, SectionCard, Segmented, Select,
+  type BadgeVariante,
+} from '../components/ui';
 
 // ─── Constantes ──────────────────────────────────────────────────────────────
 const FORNECEDOR_AVULSO_ID = '7456e7b4-f4cb-4835-b85c-8f1625b04e84';
 const GERENTES = ['Cristiano', 'Kadu', 'Beth'];
 
-
 const TIPOS_RECEITA = [
-  { id: 'pix',      label: 'PIX',      icon: <TrendingUp className="w-3.5 h-3.5" />, cor: 'text-emerald-400' },
-  { id: 'dinheiro', label: 'Dinheiro', icon: <Banknote className="w-3.5 h-3.5" />,   cor: 'text-blue-400' },
-  { id: 'outro',    label: 'Outro',    icon: <Wallet className="w-3.5 h-3.5" />,      cor: 'text-white/60' },
+  { id: 'pix',      label: 'PIX',      icon: <TrendingUp size={14} aria-hidden="true" /> },
+  { id: 'dinheiro', label: 'Dinheiro', icon: <Banknote size={14} aria-hidden="true" /> },
+  { id: 'outro',    label: 'Outro',    icon: <Wallet size={14} aria-hidden="true" /> },
 ];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -30,12 +32,13 @@ const offsetDate = (base: string, days: number) => {
   return d.toISOString().split('T')[0];
 };
 
-const vencBadge = (dataVenc: string) => {
+/** Quanto falta (ou passou) do vencimento, como etiqueta do kit. */
+const vencBadge = (dataVenc: string): { label: string; variant: BadgeVariante } => {
   const diff = Math.floor((new Date(dataVenc + 'T12:00').getTime() - Date.now()) / 86400000);
-  if (diff < 0)  return { label: `${Math.abs(diff)}d atraso`, cls: 'bg-red-500/20 text-red-400' };
-  if (diff === 0) return { label: 'hoje',                      cls: 'bg-orange-500/20 text-orange-400' };
-  if (diff <= 7)  return { label: `${diff}d`,                  cls: 'bg-yellow-500/15 text-yellow-400' };
-  return               { label: fmtData(dataVenc),             cls: 'bg-white/8 text-white/40' };
+  if (diff < 0)   return { label: `${Math.abs(diff)}d atraso`, variant: 'danger' };
+  if (diff === 0) return { label: 'hoje',                      variant: 'warning' };
+  if (diff <= 7)  return { label: `${diff}d`,                  variant: 'warning' };
+  return               { label: fmtData(dataVenc),             variant: 'neutral' };
 };
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
@@ -60,14 +63,15 @@ interface Receita {
 interface ContaPagar {
   id: string; descricao: string; saldo_restante: number;
   data_vencimento: string; valor_total: number; status: string;
-  categorias_financeiras: { id: string; nome: string };
+  categorias_financeiras: { id: string; nome: string } | null;
   fornecedores: { nome: string } | null;
 }
 interface Categoria { id: string; nome: string; }
 
+type Filtro = 'vencidas' | '7dias' | 'todas';
+
 // ─── Componente Principal ────────────────────────────────────────────────────
 const AgendaDiaria: React.FC = () => {
-  const [aba, setAba]               = useState<'pagamentos'>('pagamentos');
   const [dataAtual, setDataAtual]   = useState(new Date().toISOString().split('T')[0]);
   const [sessao, setSessao]         = useState<Sessao | null>(null);
   const [pagamentos, setPagamentos] = useState<Pagamento[]>([]);
@@ -75,7 +79,7 @@ const AgendaDiaria: React.FC = () => {
   const [contas, setContas]         = useState<ContaPagar[]>([]);
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [loading, setLoading]       = useState(true);
-  const [filtro, setFiltro]         = useState<'vencidas' | '7dias' | 'todas'>('todas');
+  const [filtro, setFiltro]         = useState<Filtro>('todas');
   const [busca, setBusca]           = useState('');
   const [accordion, setAccordion]   = useState<Set<string>>(new Set());
   const [salvando, setSalvando]     = useState(false);
@@ -103,7 +107,6 @@ const AgendaDiaria: React.FC = () => {
   const [modalLancar, setModalLancar] = useState<Pagamento | null>(null);
   const [lVenc, setLVenc] = useState(new Date().toISOString().split('T')[0]);
   const [lObs, setLObs]   = useState('');
-
 
   const [showRelatorio, setShowRelatorio] = useState(false);
 
@@ -178,7 +181,7 @@ const AgendaDiaria: React.FC = () => {
   });
 
   const grupos = contasFiltradas.reduce((acc, c) => {
-    const cat = (c.categorias_financeiras as any)?.nome ?? 'Sem categoria';
+    const cat = c.categorias_financeiras?.nome ?? 'Sem categoria';
     if (!acc[cat]) acc[cat] = [];
     acc[cat].push(c);
     return acc;
@@ -213,8 +216,8 @@ const AgendaDiaria: React.FC = () => {
         origem: 'contas_pagar',
         conta_pagar_ref_id: modalAuth.id,
         descricao: modalAuth.descricao,
-        categoria_id: (modalAuth.categorias_financeiras as any)?.id ?? null,
-        categoria_nome: (modalAuth.categorias_financeiras as any)?.nome ?? null,
+        categoria_id: modalAuth.categorias_financeiras?.id ?? null,
+        categoria_nome: modalAuth.categorias_financeiras?.nome ?? null,
         valor: parseFloat(aValor) || Number(modalAuth.saldo_restante),
         solicitado_por: aGerente,
         observacao: aObs || null,
@@ -302,17 +305,16 @@ const AgendaDiaria: React.FC = () => {
         observacoes: lObs || `Via Agenda Diária — ${modalLancar.solicitado_por}`,
         origem_modulo: 'agenda_diaria',
       }).select().single();
-      const cid = (conta as any)?.id;
+      const cid = (conta as { id?: string } | null)?.id;
       await supabase.from('agenda_pagamentos').update({
         lancado_contas_pagar: true, lancado_em: new Date().toISOString(),
         lancado_por: 'financeiro', conta_pagar_criada_id: cid, conta_pagar_ref_id: cid,
       }).eq('id', modalLancar.id);
       setPagamentos(p => p.map(x => x.id === modalLancar.id
-        ? { ...x, lancado_contas_pagar: true, conta_pagar_criada_id: cid, conta_pagar_ref_id: cid } : x));
+        ? { ...x, lancado_contas_pagar: true, conta_pagar_criada_id: cid ?? null, conta_pagar_ref_id: cid ?? null } : x));
       setModalLancar(null); setLVenc(hoje); setLObs('');
     } finally { setSalvando(false); }
   };
-
 
   const finalizarDia = async () => {
     if (!sessao) return;
@@ -323,16 +325,10 @@ const AgendaDiaria: React.FC = () => {
   };
 
   // ── Helpers render ────────────────────────────────────────────────────────
-  const itensSistema    = pagamentos.filter(p => p.origem === 'contas_pagar');
-  const itensManualOk   = pagamentos.filter(p => p.origem === 'manual' && p.lancado_contas_pagar);
-  const itensManualPend = pagamentos.filter(p => p.origem === 'manual' && !p.lancado_contas_pagar);
-
   const badgeItem = (p: Pagamento) => {
-    if (p.origem === 'contas_pagar')
-      return <span className="text-caption font-black px-1.5 py-0.5 rounded-md shrink-0 bg-blue-500/20 text-blue-300">SIS</span>;
-    if (p.lancado_contas_pagar)
-      return <span className="text-caption font-black px-1.5 py-0.5 rounded-md shrink-0 bg-emerald-500/20 text-emerald-300">MAN✓</span>;
-    return <span className="text-caption font-black px-1.5 py-0.5 rounded-md shrink-0 bg-yellow-500/20 text-yellow-400">MAN!</span>;
+    if (p.origem === 'contas_pagar') return <Badge variant="info">sistema</Badge>;
+    if (p.lancado_contas_pagar) return <Badge variant="success">manual lançado</Badge>;
+    return <Badge variant="warning">sem lançamento</Badge>;
   };
 
   const tipoInfo = (tipo: string) => TIPOS_RECEITA.find(t => t.id === tipo) ?? TIPOS_RECEITA[2];
@@ -340,570 +336,354 @@ const AgendaDiaria: React.FC = () => {
   const labelData = new Date(dataAtual + 'T12:00').toLocaleDateString('pt-BR', {
     weekday: 'long', day: '2-digit', month: 'long', year: 'numeric',
   });
+  const labelDataCapitalizada = labelData.charAt(0).toUpperCase() + labelData.slice(1);
+
+  const escolherGerente = (valor: string, onMudar: (g: string) => void) => (
+    <Segmented
+      rotulo="Autorizado por"
+      valor={valor}
+      onMudar={onMudar}
+      opcoes={GERENTES.map(g => ({ valor: g, rotulo: g }))}
+    />
+  );
 
   if (loading) return (
-    <div className="flex items-center justify-center min-h-96">
-      <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-wine" />
+    <div className="flex items-center justify-center min-h-96" aria-busy="true">
+      <div className="animate-spin rounded-full h-10 w-10 border-b-2" style={{ borderColor: 'var(--wine)' }} />
     </div>
   );
 
   return (
-    <div className="space-y-4 pb-16">
+    <div className="pb-16">
 
-      {/* ── HEADER ──────────────────────────────────────────────────────────── */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#1a1f35] via-[#12172a] to-[#0d1020] border border-white/10 p-5">
-        <div className="absolute inset-0 opacity-[0.025]"
-          style={{ backgroundImage: 'repeating-linear-gradient(45deg,#fff 0,#fff 1px,transparent 0,transparent 50%)', backgroundSize: '20px 20px' }} />
-
-        <div className="relative flex flex-wrap items-center justify-between gap-4">
-          {/* Navegação data */}
-          <div className="flex items-center gap-3">
-            <button onClick={() => irParaDia(-1)}
-              className="p-2 rounded-xl bg-white/8 hover:bg-white/15 border border-white/10 transition-all">
-              <ChevronLeft className="w-4 h-4 text-white/60" />
-            </button>
-            <div className="text-center min-w-[200px]">
-              <p className="text-base font-black text-white capitalize">{labelData}</p>
-              {!isHoje
-                ? <button onClick={() => setDataAtual(hoje)} className="text-caption text-gold font-bold hover:underline mt-0.5">voltar para hoje</button>
-                : <p className="text-caption text-gold/70 font-semibold mt-0.5">Hoje</p>
-              }
+      {/* ── Cabeçalho: caminho, dia, ações ────────────────────────────────── */}
+      <PageHeader
+        caminho={['Operação', 'Agenda do dia']}
+        title="Agenda do dia"
+        subtitle={labelDataCapitalizada}
+        actions={
+          <>
+            <div className="flex items-center gap-1">
+              <IconButton aria-label="Dia anterior" onClick={() => irParaDia(-1)}><ChevronLeft size={16} /></IconButton>
+              {isHoje
+                ? <Badge variant="gold">Hoje</Badge>
+                : <Button variante="discreto" tamanho="sm" onClick={() => setDataAtual(hoje)}>Voltar para hoje</Button>}
+              <IconButton aria-label="Dia seguinte" onClick={() => irParaDia(+1)} disabled={isHoje}><ChevronRight size={16} /></IconButton>
             </div>
-            <button onClick={() => irParaDia(+1)} disabled={isHoje}
-              className="p-2 rounded-xl bg-white/8 hover:bg-white/15 border border-white/10 transition-all disabled:opacity-30">
-              <ChevronRight className="w-4 h-4 text-white/60" />
-            </button>
-          </div>
-
-          {/* Botões ação */}
-          <div className="flex items-center gap-2 flex-wrap">
             {sessao && (
-              <span className={`text-caption font-bold px-2.5 py-1 rounded-lg border ${
-                sessao.status === 'finalizada'
-                  ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
-                  : 'bg-white/8 text-white/50 border-white/15'
-              }`}>
+              <Badge variant={sessao.status === 'finalizada' ? 'success' : 'neutral'}>
                 {sessao.status === 'finalizada' ? 'Finalizada' : 'Em aberto'}
-              </span>
+              </Badge>
             )}
-            <button onClick={() => carregar(dataAtual)}
-              className="p-2 rounded-xl bg-white/8 hover:bg-white/15 border border-white/10 transition-all">
-              <RefreshCw className="w-4 h-4 text-white/50" />
-            </button>
+            <IconButton aria-label="Atualizar" onClick={() => carregar(dataAtual)}><RefreshCw size={16} /></IconButton>
             {isHoje && sessao && sessao.status !== 'finalizada' && (
-              <button onClick={finalizarDia}
-                className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-600/30 transition-all">
-                <CheckCircle className="w-3.5 h-3.5" /> Finalizar Dia
-              </button>
+              <Button variante="primario" icone={<CheckCircle size={16} />} onClick={finalizarDia}>Finalizar dia</Button>
             )}
-          </div>
-        </div>
+          </>
+        }
+      />
 
-        {/* KPIs do dia */}
-        <div className="relative mt-4 pt-4 border-t border-white/8">
-          <div className="grid grid-cols-3 gap-3">
-            <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3">
-              <p className="text-caption text-emerald-400/70 uppercase font-bold tracking-wide">Receitas</p>
-              <p className="text-lg font-black text-emerald-400 mt-0.5">{fmtR(totalEntrou)}</p>
-              <p className="text-caption text-emerald-400/50 mt-0.5">{receitas.length} entr.</p>
-            </div>
-            <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-3">
-              <p className="text-caption text-red-400/70 uppercase font-bold tracking-wide">Pagamentos</p>
-              <p className="text-lg font-black text-red-400 mt-0.5">{fmtR(totalPago)}</p>
-              <p className="text-caption text-red-400/50 mt-0.5">{pagamentos.length} itens</p>
-            </div>
-            <div className={`border rounded-xl p-3 ${saldoLivre >= 0 ? 'bg-white/5 border-white/15' : 'bg-red-500/10 border-red-500/20'}`}>
-              <p className="text-caption text-white/50 uppercase font-bold tracking-wide">Saldo Disponível</p>
-              <p className={`text-lg font-black mt-0.5 ${saldoLivre >= 0 ? 'text-white' : 'text-red-400'}`}>{fmtR(saldoLivre)}</p>
-              <p className="text-caption text-white/60 mt-0.5">receitas − pagamentos</p>
-            </div>
-          </div>
-        </div>
+      {/* ── Números do dia ─────────────────────────────────────────────────── */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
+        <KPICard rotulo="Receitas" valor={fmtR(totalEntrou)} tom="certo" detalhe={`${receitas.length} ${receitas.length === 1 ? 'entrada' : 'entradas'}`} />
+        <KPICard rotulo="Pagamentos" valor={fmtR(totalPago)} detalhe={`${pagamentos.length} ${pagamentos.length === 1 ? 'item' : 'itens'}`} />
+        <KPICard rotulo="Saldo disponível" valor={fmtR(saldoLivre)} tom={saldoLivre >= 0 ? 'destaque' : 'alerta'} detalhe="receitas menos pagamentos" />
       </div>
 
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
 
-      {/* ── PAGAMENTOS ─────────────────────────────────────────────────── */}
-      {(
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+        {/* ── Contas em aberto ──────────────────────────────────────────────── */}
+        <SectionCard title="Contas em aberto" descricao="O que o sistema tem para pagar. Abra a categoria e autorize." noPadding>
+          <div className="px-5 py-3 flex flex-wrap items-center gap-3" style={{ borderBottom: '1px solid var(--border)' }}>
+            <Segmented<Filtro>
+              rotulo="Vencimento"
+              valor={filtro}
+              onMudar={setFiltro}
+              opcoes={[
+                { valor: 'vencidas', rotulo: 'Vencidas' },
+                { valor: '7dias', rotulo: 'Próximos 7 dias' },
+                { valor: 'todas', rotulo: 'Todas' },
+              ]}
+            />
+            <Input type="search" placeholder="Buscar conta ou fornecedor" aria-label="Buscar conta" value={busca} onChange={e => setBusca(e.target.value)} className="flex-1 min-w-[180px]" />
+          </div>
 
-          {/* ESQUERDO — contas em aberto */}
-          <div className="bg-[#12141f] border border-white/10 rounded-2xl overflow-hidden flex flex-col">
-            <div className="px-4 py-3 border-b border-white/10">
-              <p className="text-sm font-bold text-white mb-3">Contas em Aberto</p>
-              <div className="flex gap-1.5 mb-2.5">
-                {(['vencidas', '7dias', 'todas'] as const).map(f => (
-                  <button key={f} onClick={() => setFiltro(f)}
-                    className={`px-2.5 py-1 rounded-lg text-caption font-bold transition-all ${
-                      filtro === f ? 'bg-wine text-white' : 'bg-white/8 text-white/40 hover:bg-white/12'
-                    }`}>
-                    {f === 'vencidas' ? 'Vencidas' : f === '7dias' ? 'Próx. 7d' : 'Todas'}
-                  </button>
-                ))}
-              </div>
-              <input type="text" placeholder="Buscar..." value={busca}
-                onChange={e => setBusca(e.target.value)}
-                className="w-full bg-white/5 border border-white/15 text-white placeholder-white/25 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-white/30" />
-            </div>
+          <div className="overflow-y-auto max-h-[560px]">
+            {Object.entries(grupos).length === 0
+              ? <EmptyState icon={Inbox} title="Nenhuma conta" description={busca || filtro !== 'todas' ? 'Nada bate com o filtro.' : 'Não há contas em aberto.'} variant={busca || filtro !== 'todas' ? 'filtered' : 'empty'} compact />
+              : Object.entries(grupos).sort(([a], [b]) => a.localeCompare(b)).map(([cat, items]) => {
+                  const aberto = accordion.has(cat);
+                  const tot = items.reduce((a, b) => a + Number(b.saldo_restante), 0);
+                  return (
+                    <div key={cat}>
+                      <button
+                        type="button"
+                        aria-expanded={aberto}
+                        onClick={() => setAccordion(prev => { const n = new Set(prev); if (n.has(cat)) n.delete(cat); else n.add(cat); return n; })}
+                        className="w-full flex items-center justify-between gap-3 px-5 h-11 hover:bg-white/[0.04] transition-colors focus-ring"
+                      >
+                        <span className="flex items-center gap-2 min-w-0">
+                          <ChevronRight size={14} className={`flex-shrink-0 transition-transform ${aberto ? 'rotate-90' : ''}`} style={{ color: 'var(--text-secondary)' }} aria-hidden="true" />
+                          <span className="t-label truncate" style={{ color: 'var(--text-primary)' }}>{cat}</span>
+                          <span className="t-caption">{items.length}</span>
+                        </span>
+                        <span className="t-label num" style={{ color: 'var(--text-secondary)' }}>{fmtR(tot)}</span>
+                      </button>
 
-            <div className="flex-1 overflow-y-auto max-h-[560px]">
-              {Object.entries(grupos).length === 0
-                ? <div className="py-12 text-center"><p className="text-xs text-white/60">Nenhuma conta</p></div>
-                : Object.entries(grupos).sort(([a], [b]) => a.localeCompare(b)).map(([cat, items]) => {
-                    const aberto = accordion.has(cat);
-                    const tot = items.reduce((a, b) => a + Number(b.saldo_restante), 0);
-                    return (
-                      <div key={cat}>
-                        <button
-                          onClick={() => setAccordion(prev => { const n = new Set(prev); n.has(cat) ? n.delete(cat) : n.add(cat); return n; })}
-                          className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-white/5 transition-colors">
-                          <div className="flex items-center gap-2">
-                            <ChevronRight className={`w-3.5 h-3.5 text-white/30 transition-transform ${aberto ? 'rotate-90' : ''}`} />
-                            <span className="text-caption font-bold text-white/60 uppercase tracking-wide">{cat}</span>
-                            <span className="text-caption text-white/60 bg-white/8 px-1.5 py-0.5 rounded-md">{items.length}</span>
-                          </div>
-                          <span className="text-xs font-bold text-white/50">{fmtR(tot)}</span>
-                        </button>
-
-                        {aberto && items.map(c => {
-                          const jaAuth = idsAuth.has(c.id);
-                          const badge  = vencBadge(c.data_vencimento);
-                          return (
-                            <div key={c.id}
-                              className="flex items-center gap-3 px-4 py-3 border-t border-white/5 hover:bg-white/5 transition-colors">
-                              {/* Data de vencimento */}
-                              <div className="w-12 shrink-0 text-center">
-                                <p className={`text-caption font-black ${badge.cls.includes('red') ? 'text-red-400' : badge.cls.includes('orange') ? 'text-orange-400' : badge.cls.includes('yellow') ? 'text-yellow-400' : 'text-white/60'}`}>
-                                  {fmtData(c.data_vencimento)}
-                                </p>
-                                <span className={`text-caption font-bold px-1 py-0.5 rounded ${badge.cls}`}>{badge.label}</span>
-                              </div>
-
-                              <div className="flex-1 min-w-0">
-                                <p className="text-xs font-semibold text-white truncate">{c.descricao}</p>
-                                {c.fornecedores?.nome && (
-                                  <p className="text-caption text-white/60 truncate">{c.fornecedores.nome}</p>
-                                )}
-                                {jaAuth && <span className="text-caption text-emerald-400 font-bold">✓ autorizado</span>}
-                              </div>
-
-                              <p className="text-sm font-bold text-white shrink-0">{fmtR(Number(c.saldo_restante))}</p>
-
-                              <button
-                                onClick={() => { if (!somenteLeitura && !jaAuth) abrirAuth(c); }}
-                                disabled={jaAuth || somenteLeitura}
-                                title={jaAuth ? 'Já autorizado' : 'Autorizar pagamento'}
-                                className={`p-2 rounded-xl transition-all shrink-0 ${
-                                  jaAuth
-                                    ? 'bg-emerald-500/10 text-emerald-500/40 cursor-not-allowed'
-                                    : somenteLeitura
-                                    ? 'bg-white/5 text-white/20 cursor-not-allowed'
-                                    : 'bg-wine text-white hover:bg-wine-light active:scale-95 cursor-pointer shadow-lg'
-                                }`}>
-                                <ArrowRight className="w-4 h-4" />
-                              </button>
+                      {aberto && items.map(c => {
+                        const jaAuth = idsAuth.has(c.id);
+                        const badge  = vencBadge(c.data_vencimento);
+                        return (
+                          <div key={c.id} className="flex items-center gap-3 px-5 py-3 hover:bg-white/[0.03] transition-colors" style={{ borderTop: '1px solid var(--border-subtle)' }}>
+                            <div className="w-16 flex-shrink-0 flex flex-col items-start gap-1">
+                              <span className="t-caption" style={{ color: 'var(--text-primary)' }}>{fmtData(c.data_vencimento)}</span>
+                              <Badge variant={badge.variant}>{badge.label}</Badge>
                             </div>
-                          );
-                        })}
+                            <div className="flex-1 min-w-0">
+                              <p className="t-body truncate" style={{ color: 'var(--text-primary)', margin: 0, fontWeight: 500 }}>{c.descricao}</p>
+                              {c.fornecedores?.nome && <p className="t-caption truncate" style={{ margin: 0 }}>{c.fornecedores.nome}</p>}
+                              {jaAuth && <p className="t-caption" style={{ margin: 0, color: '#34d399' }}>Autorizado</p>}
+                            </div>
+                            <span className="t-body num flex-shrink-0" style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{fmtR(Number(c.saldo_restante))}</span>
+                            <Button
+                              variante={jaAuth || somenteLeitura ? 'secundario' : 'primario'}
+                              tamanho="sm"
+                              aria-label={jaAuth ? 'Já autorizado' : `Autorizar ${c.descricao}`}
+                              title={jaAuth ? 'Já autorizado' : 'Autorizar pagamento'}
+                              onClick={() => { if (!somenteLeitura && !jaAuth) abrirAuth(c); }}
+                              disabled={jaAuth || somenteLeitura}
+                              className="w-8 px-0 flex-shrink-0"
+                            >
+                              <ArrowRight size={16} />
+                            </Button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })
+            }
+          </div>
+
+          <div className="px-5 py-3 flex justify-between items-center" style={{ borderTop: '1px solid var(--border)' }}>
+            <span className="t-caption">{contasFiltradas.length} {contasFiltradas.length === 1 ? 'conta' : 'contas'}</span>
+            <span className="t-body num" style={{ color: 'var(--text-primary)', fontWeight: 700 }}>
+              {fmtR(contasFiltradas.reduce((a, b) => a + Number(b.saldo_restante), 0))}
+            </span>
+          </div>
+        </SectionCard>
+
+        {/* ── Receitas + autorizados ────────────────────────────────────────── */}
+        <div className="flex flex-col gap-5">
+
+          <SectionCard
+            title="Receitas do dia"
+            descricao="Entradas de caixa: PIX, dinheiro e outros."
+            action={!somenteLeitura && <Button tamanho="sm" icone={<Plus size={14} />} onClick={() => setModalReceita(true)}>Adicionar</Button>}
+            noPadding
+          >
+            <div className="px-5 py-3 flex flex-col gap-2 min-h-[80px]">
+              {receitas.length === 0
+                ? <EmptyState icon={Inbox} title="Nenhuma receita registrada" description={somenteLeitura ? undefined : 'Toque em Adicionar para registrar uma entrada.'} compact />
+                : receitas.map(r => {
+                    const t = tipoInfo(r.tipo);
+                    return (
+                      <div key={r.id} className="flex items-center gap-3 px-3 h-12 rounded-lg" style={{ background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.2)' }}>
+                        <span style={{ color: '#34d399' }}>{t.icon}</span>
+                        <div className="flex-1 min-w-0">
+                          <p className="t-body truncate" style={{ color: 'var(--text-primary)', margin: 0, fontWeight: 500 }}>{r.descricao}</p>
+                          <p className="t-caption" style={{ margin: 0 }}>{t.label}</p>
+                        </div>
+                        <span className="t-body num flex-shrink-0" style={{ color: '#34d399', fontWeight: 600 }}>{fmtR(Number(r.valor))}</span>
+                        {!somenteLeitura && (
+                          <IconButton aria-label={`Remover ${r.descricao}`} tom="perigo" onClick={() => removerReceita(r.id)}><X size={14} /></IconButton>
+                        )}
                       </div>
                     );
                   })
               }
             </div>
-
-            <div className="px-4 py-3 border-t border-white/10 flex justify-between items-center">
-              <span className="text-xs text-white/60">{contasFiltradas.length} contas</span>
-              <span className="text-sm font-black text-white">
-                {fmtR(contasFiltradas.reduce((a, b) => a + Number(b.saldo_restante), 0))}
-              </span>
-            </div>
-          </div>
-
-          {/* DIREITO — receitas + pagamentos autorizados */}
-          <div className="flex flex-col gap-4">
-
-            {/* Receitas do dia */}
-            <div className="bg-[#12141f] border border-emerald-500/20 rounded-2xl overflow-hidden flex flex-col">
-              <div className="px-4 py-3 border-b border-emerald-500/15 flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-bold text-emerald-400">Receitas do Dia</p>
-                  <p className="text-caption text-emerald-400/50 mt-0.5">entradas de caixa (PIX, dinheiro, etc.)</p>
-                </div>
-                {!somenteLeitura && (
-                  <button onClick={() => setModalReceita(true)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-white bg-emerald-700/60 hover:bg-emerald-600/70 border border-emerald-500/30 transition-all">
-                    <Plus className="w-3.5 h-3.5" /> Adicionar
-                  </button>
-                )}
+            {receitas.length > 0 && (
+              <div className="px-5 py-3 flex justify-between items-center" style={{ borderTop: '1px solid var(--border)' }}>
+                <span className="t-caption">{receitas.length} {receitas.length === 1 ? 'entrada' : 'entradas'}</span>
+                <span className="t-body num" style={{ color: '#34d399', fontWeight: 700 }}>{fmtR(totalEntrou)}</span>
               </div>
+            )}
+          </SectionCard>
 
-              <div className="px-4 py-3 flex flex-col gap-1.5 min-h-[80px]">
-                {receitas.length === 0
-                  ? <div className="py-4 text-center">
-                      <p className="text-xs text-white/60">Nenhuma receita registrada</p>
-                      {!somenteLeitura && <p className="text-caption text-white/60 mt-0.5">Clique em Adicionar para registrar uma entrada</p>}
-                    </div>
-                  : receitas.map(r => {
-                      const t = tipoInfo(r.tipo);
-                      return (
-                        <div key={r.id} className="flex items-center gap-2.5 px-3 py-2 bg-emerald-500/5 border border-emerald-500/15 rounded-xl group">
-                          <span className={t.cor}>{t.icon}</span>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-xs font-medium text-white truncate">{r.descricao}</p>
-                            <span className={`text-caption font-bold ${t.cor}`}>{t.label}</span>
-                          </div>
-                          <p className="text-sm font-bold text-emerald-400 shrink-0">{fmtR(Number(r.valor))}</p>
-                          {!somenteLeitura && (
-                            <button onClick={() => removerReceita(r.id)}
-                              className="opacity-0 group-hover:opacity-100 p-1 rounded-lg text-white/30 hover:text-red-400 hover:bg-red-500/10 transition-all">
-                              <X className="w-3.5 h-3.5" />
-                            </button>
-                          )}
+          <SectionCard
+            title="Autorizado para hoje"
+            descricao="Por gerente. Sistema vem das contas a pagar; manual é fora dele."
+            action={
+              <>
+                {pagamentos.length > 0 && <Button tamanho="sm" icone={<Printer size={14} />} onClick={() => setShowRelatorio(true)}>Relatório</Button>}
+                {!somenteLeitura && <Button tamanho="sm" icone={<Plus size={14} />} onClick={() => setModalManual(true)}>Manual</Button>}
+              </>
+            }
+            noPadding
+          >
+            <div className="overflow-y-auto max-h-[340px] px-5 py-3">
+              {pagamentos.length === 0
+                ? <EmptyState icon={ClipboardList} title="Nenhum item autorizado" description="Abra uma categoria à esquerda e toque na seta para autorizar." compact />
+                : <div className="flex flex-col gap-4">
+                    {gerentesOrd.map(g => (
+                      <div key={g}>
+                        <div className="flex items-center justify-between mb-2">
+                          <p className="t-caps" style={{ color: 'var(--text-secondary)', fontSize: 11, margin: 0 }}>{g}</p>
+                          <p className="t-label num" style={{ color: 'var(--text-secondary)', margin: 0 }}>{fmtR(porGerente[g].reduce((a, b) => a + b.valor, 0))}</p>
                         </div>
-                      );
-                    })
-                }
-              </div>
-
-              {receitas.length > 0 && (
-                <div className="px-4 py-2.5 border-t border-emerald-500/15 flex justify-between items-center">
-                  <span className="text-xs text-emerald-400/60">{receitas.length} entr.</span>
-                  <span className="text-sm font-black text-emerald-400">{fmtR(totalEntrou)}</span>
-                </div>
-              )}
-            </div>
-
-            {/* Autorizado para Hoje */}
-            <div className="bg-[#12141f] border border-white/10 rounded-2xl overflow-hidden flex flex-col">
-              <div className="px-4 py-3 border-b border-white/10">
-                <div className="flex items-center justify-between mb-3">
-                  <p className="text-sm font-bold text-white">Autorizado para Hoje</p>
-                  <div className="flex gap-2">
-                    {pagamentos.length > 0 && (
-                      <button onClick={() => setShowRelatorio(true)}
-                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-caption font-bold text-white/60 bg-white/8 hover:bg-white/12 border border-white/10 transition-all">
-                        <Printer className="w-3 h-3" /> Relatório
-                      </button>
-                    )}
-                    {!somenteLeitura && (
-                      <button onClick={() => setModalManual(true)}
-                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-caption font-bold text-white bg-wine hover:bg-wine-light transition-all">
-                        <Plus className="w-3 h-3" /> Manual
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex-1 overflow-y-auto max-h-[340px] px-4 py-3">
-                {pagamentos.length === 0
-                  ? <div className="py-10 text-center">
-                      <ClipboardList className="w-8 h-8 text-white/15 mx-auto mb-2" />
-                      <p className="text-xs text-white/60">Nenhum item autorizado</p>
-                      <p className="text-caption text-white/60 mt-1">Abra uma categoria e clique → para autorizar</p>
-                    </div>
-                  : <div className="space-y-4">
-                      {gerentesOrd.map(g => (
-                        <div key={g}>
-                          <div className="flex items-center justify-between mb-2 px-1">
-                            <p className="text-caption font-black text-white/50 uppercase tracking-wider">{g}</p>
-                            <p className="text-caption font-bold text-white/60">
-                              {fmtR(porGerente[g].reduce((a, b) => a + b.valor, 0))}
-                            </p>
-                          </div>
-                          <div className="space-y-1.5">
-                            {porGerente[g].map(item => (
-                              <div key={item.id}
-                                className="flex items-center gap-2.5 px-3 py-2.5 bg-white/5 rounded-xl group border border-white/8 hover:border-white/12 transition-all">
-                                {badgeItem(item)}
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-xs font-medium text-white truncate">{item.descricao}</p>
-                                  <p className="text-caption text-white/60">{item.categoria_nome ?? '—'}</p>
+                        <div className="flex flex-col gap-1.5">
+                          {porGerente[g].map(item => (
+                            <div key={item.id} className="flex items-center gap-3 px-3 py-2.5 rounded-lg" style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}>
+                              <div className="flex-1 min-w-0">
+                                <p className="t-body truncate" style={{ color: 'var(--text-primary)', margin: 0, fontWeight: 500 }}>{item.descricao}</p>
+                                <div className="flex items-center gap-2 mt-0.5">
+                                  {badgeItem(item)}
+                                  <span className="t-caption truncate">{item.categoria_nome ?? '—'}</span>
                                 </div>
-                                <p className="text-sm font-bold text-white shrink-0">{fmtR(item.valor)}</p>
-                                {!somenteLeitura && (
-                                  <button onClick={() => removerItem(item.id)}
-                                    className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg text-white/30 hover:text-red-400 hover:bg-red-500/10 transition-all">
-                                    <X className="w-3.5 h-3.5" />
-                                  </button>
-                                )}
                               </div>
-                            ))}
-                          </div>
+                              <span className="t-body num flex-shrink-0" style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{fmtR(item.valor)}</span>
+                              {!somenteLeitura && (
+                                <IconButton aria-label={`Remover ${item.descricao}`} tom="perigo" onClick={() => removerItem(item.id)}><X size={14} /></IconButton>
+                              )}
+                            </div>
+                          ))}
                         </div>
-                      ))}
-                    </div>
-                }
-              </div>
-
-              <div className="px-4 py-3 border-t border-white/10 space-y-1.5">
-                <div className="flex items-center gap-3 flex-wrap">
-                  {[
-                    { b: 'SIS',   cls: 'bg-blue-500/20 text-blue-300',      t: 'sistema' },
-                    { b: 'MAN✓', cls: 'bg-emerald-500/20 text-emerald-300', t: 'manual lançado' },
-                    { b: 'MAN!', cls: 'bg-yellow-500/20 text-yellow-400',   t: 'sem lançamento' },
-                  ].map(l => (
-                    <div key={l.b} className="flex items-center gap-1">
-                      <span className={`text-caption font-black px-1.5 py-0.5 rounded-md ${l.cls}`}>{l.b}</span>
-                      <span className="text-caption text-white/60">{l.t}</span>
-                    </div>
-                  ))}
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-xs text-white/60">{pagamentos.length} itens</span>
-                  <span className="text-sm font-black text-red-400">{fmtR(totalPago)}</span>
-                </div>
-              </div>
+                      </div>
+                    ))}
+                  </div>
+              }
             </div>
-          </div>
+            <div className="px-5 py-3 flex justify-between items-center" style={{ borderTop: '1px solid var(--border)' }}>
+              <span className="t-caption">{pagamentos.length} {pagamentos.length === 1 ? 'item' : 'itens'}</span>
+              <span className="t-body num" style={{ color: 'var(--text-primary)', fontWeight: 700 }}>{fmtR(totalPago)}</span>
+            </div>
+          </SectionCard>
         </div>
-      )}
+      </div>
 
-
-      {/* ── MODAL AUTORIZAR ─────────────────────────────────────────────────── */}
-      {modalAuth && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setModalAuth(null)}>
-          <div className="bg-[#0f1020] border border-white/15 rounded-2xl w-full max-w-sm shadow-2xl" onClick={e => e.stopPropagation()}>
-            <div className="px-5 py-4 border-b border-white/10 flex justify-between items-center">
-              <h3 className="font-bold text-white text-sm">Autorizar Pagamento</h3>
-              <button onClick={() => setModalAuth(null)} className="p-1.5 hover:bg-white/10 rounded-xl transition-all">
-                <X className="w-4 h-4 text-white/40" />
-              </button>
+      {/* ── Modal: autorizar ─────────────────────────────────────────────────── */}
+      <Modal
+        aberto={!!modalAuth}
+        onFechar={() => setModalAuth(null)}
+        titulo="Autorizar pagamento"
+        travado={salvando}
+        rodape={
+          <>
+            <Button variante="discreto" onClick={() => setModalAuth(null)} disabled={salvando}>Cancelar</Button>
+            <Button variante="primario" onClick={confirmarAuth} carregando={salvando} disabled={!aGerente || !aValor}>Autorizar</Button>
+          </>
+        }
+      >
+        {modalAuth && (
+          <>
+            <div className="p-3 rounded-lg" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
+              <p className="t-body" style={{ color: 'var(--text-primary)', margin: 0, fontWeight: 600 }}>{modalAuth.descricao}</p>
+              <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                <span className="t-caption">{modalAuth.categorias_financeiras?.nome}</span>
+                <Badge variant={vencBadge(modalAuth.data_vencimento).variant}>{fmtData(modalAuth.data_vencimento)} · {vencBadge(modalAuth.data_vencimento).label}</Badge>
+              </div>
+              {modalAuth.fornecedores?.nome && <p className="t-caption" style={{ margin: '4px 0 0' }}>{modalAuth.fornecedores.nome}</p>}
             </div>
 
-            <div className="px-5 py-4 space-y-4">
-              <div className="bg-white/5 rounded-xl p-3 border border-white/10">
-                <p className="text-sm font-bold text-white leading-snug">{modalAuth.descricao}</p>
-                <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                  <span className="text-caption text-white/50">{(modalAuth.categorias_financeiras as any)?.nome}</span>
-                  <span className="text-caption text-white/60">·</span>
-                  <span className={`text-caption font-bold px-1.5 py-0.5 rounded-md ${vencBadge(modalAuth.data_vencimento).cls}`}>
-                    {fmtData(modalAuth.data_vencimento)} · {vencBadge(modalAuth.data_vencimento).label}
-                  </span>
-                </div>
-                {modalAuth.fornecedores?.nome && (
-                  <p className="text-caption text-white/60 mt-1">{modalAuth.fornecedores.nome}</p>
-                )}
-              </div>
-
-              <div>
-                <label className="text-caption font-bold text-white/50 uppercase tracking-wide block mb-2">Autorizado por</label>
-                <div className="grid grid-cols-3 gap-2">
-                  {GERENTES.map(g => (
-                    <button key={g} type="button" onClick={() => setAGerente(g)}
-                      className={`py-2.5 rounded-xl text-sm font-bold transition-all ${
-                        aGerente === g
-                          ? 'bg-wine text-white ring-2 ring-wine-light/50'
-                          : 'bg-white/8 text-white/50 hover:bg-white/12 hover:text-white/80'
-                      }`}>
-                      {g}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <label className="text-caption font-bold text-white/50 uppercase tracking-wide block mb-1.5">Valor</label>
-                <div className="flex items-center gap-2 bg-white/5 border border-white/20 rounded-xl px-3 py-2.5">
-                  <span className="text-white/60 text-sm font-bold">R$</span>
-                  <input type="number" value={aValor} onChange={e => setAValor(e.target.value)}
-                    className="flex-1 bg-transparent text-white text-base font-black focus:outline-none [appearance:textfield]" />
-                  <button type="button" onClick={() => setAValor(Number(modalAuth.saldo_restante).toFixed(2))}
-                    className="text-caption text-white/30 hover:text-white/60 transition-all px-1">
-                    máx
-                  </button>
-                </div>
-                <p className="text-caption text-white/60 mt-1">Saldo disponível: {fmtR(Number(modalAuth.saldo_restante))}</p>
-              </div>
-
-              <div>
-                <label className="text-caption font-bold text-white/50 uppercase tracking-wide block mb-1.5">Obs. (opcional)</label>
-                <input type="text" value={aObs} onChange={e => setAObs(e.target.value)}
-                  placeholder="Ex: pagar no Bradesco"
-                  className="w-full bg-white/5 border border-white/15 text-white placeholder-white/20 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-white/35" />
-              </div>
+            <div className="flex flex-col gap-1">
+              <span className="t-label" style={{ color: 'var(--text-secondary)' }}>Autorizado por</span>
+              {escolherGerente(aGerente, setAGerente)}
             </div>
 
-            <div className="px-5 py-4 border-t border-white/10 flex gap-3">
-              <button onClick={() => setModalAuth(null)}
-                className="flex-1 py-2.5 rounded-xl text-sm font-bold border border-white/20 text-white/60 hover:bg-white/5 transition-all">
-                Cancelar
-              </button>
-              <button onClick={confirmarAuth} disabled={salvando || !aGerente || !aValor}
-                className="flex-1 py-2.5 rounded-xl text-sm font-bold bg-wine text-white hover:bg-wine-light transition-all disabled:opacity-40 active:scale-95">
-                {salvando ? 'Salvando...' : 'Autorizar'}
-              </button>
-            </div>
-          </div>
+            <Input
+              rotulo="Valor"
+              type="number"
+              inputMode="decimal"
+              value={aValor}
+              onChange={e => setAValor(e.target.value)}
+              dica={`Saldo disponível: ${fmtR(Number(modalAuth.saldo_restante))}`}
+            />
+            <Button variante="discreto" tamanho="sm" onClick={() => setAValor(Number(modalAuth.saldo_restante).toFixed(2))} className="self-start -mt-2">Usar o saldo todo</Button>
+
+            <Input rotulo="Observação (opcional)" type="text" value={aObs} onChange={e => setAObs(e.target.value)} placeholder="Ex: pagar no Bradesco" />
+          </>
+        )}
+      </Modal>
+
+      {/* ── Modal: receita ───────────────────────────────────────────────────── */}
+      <Modal
+        aberto={modalReceita}
+        onFechar={() => setModalReceita(false)}
+        titulo="Adicionar receita"
+        descricao="Entrada de caixa do dia."
+        travado={salvando}
+        rodape={
+          <>
+            <Button variante="discreto" onClick={() => setModalReceita(false)} disabled={salvando}>Cancelar</Button>
+            <Button variante="primario" onClick={confirmarReceita} carregando={salvando} disabled={!rDesc || !rValor}>Adicionar</Button>
+          </>
+        }
+      >
+        <div className="flex flex-col gap-1">
+          <span className="t-label" style={{ color: 'var(--text-secondary)' }}>Tipo</span>
+          <Segmented rotulo="Tipo de receita" valor={rTipo} onMudar={setRTipo} opcoes={TIPOS_RECEITA.map(t => ({ valor: t.id, rotulo: t.label }))} />
         </div>
-      )}
+        <Input rotulo="Descrição" type="text" value={rDesc} onChange={e => setRDesc(e.target.value)} placeholder="Ex: PIX evento sábado" autoFocus />
+        <Input rotulo="Valor" type="number" inputMode="decimal" value={rValor} onChange={e => setRValor(e.target.value)} placeholder="0,00" />
+      </Modal>
 
-      {/* ── MODAL RECEITA ────────────────────────────────────────────────────── */}
-      {modalReceita && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setModalReceita(false)}>
-          <div className="bg-[#0f1020] border border-emerald-500/20 rounded-2xl w-full max-w-sm shadow-2xl" onClick={e => e.stopPropagation()}>
-            <div className="px-5 py-4 border-b border-emerald-500/15 flex justify-between items-center">
-              <div>
-                <h3 className="font-bold text-white text-sm">Adicionar Receita</h3>
-                <p className="text-caption text-emerald-400/70 mt-0.5">entrada de caixa do dia</p>
-              </div>
-              <button onClick={() => setModalReceita(false)} className="p-1.5 hover:bg-white/10 rounded-xl">
-                <X className="w-4 h-4 text-white/40" />
-              </button>
-            </div>
-
-            <div className="px-5 py-4 space-y-3">
-              {/* Tipo */}
-              <div className="grid grid-cols-3 gap-2">
-                {TIPOS_RECEITA.map(t => (
-                  <button key={t.id} type="button" onClick={() => setRTipo(t.id)}
-                    className={`flex flex-col items-center gap-1.5 py-3 rounded-xl text-xs font-bold transition-all ${
-                      rTipo === t.id
-                        ? 'bg-emerald-700/40 text-emerald-300 ring-2 ring-emerald-500/30 border border-emerald-500/30'
-                        : 'bg-white/5 text-white/40 hover:bg-white/10 border border-white/10'
-                    }`}>
-                    <span className={rTipo === t.id ? 'text-emerald-400' : 'text-white/60'}>{t.icon}</span>
-                    {t.label}
-                  </button>
-                ))}
-              </div>
-
-              {/* Descrição */}
-              <input type="text" value={rDesc} onChange={e => setRDesc(e.target.value)}
-                placeholder="Descrição (ex: PIX evento sábado)"
-                autoFocus
-                className="w-full bg-white/5 border border-white/20 text-white placeholder-white/25 rounded-xl px-3 py-3 text-sm focus:outline-none focus:border-emerald-500/50" />
-
-              {/* Valor */}
-              <div className="flex items-center gap-2 bg-white/5 border border-white/20 rounded-xl px-3 py-2.5 focus-within:border-emerald-500/50 transition-colors">
-                <span className="text-emerald-400/60 text-sm font-bold">R$</span>
-                <input type="number" value={rValor} onChange={e => setRValor(e.target.value)}
-                  placeholder="0,00"
-                  className="flex-1 bg-transparent text-emerald-400 text-base font-black placeholder-white/25 focus:outline-none [appearance:textfield]" />
-              </div>
-            </div>
-
-            <div className="px-5 py-4 border-t border-emerald-500/15 flex gap-3">
-              <button onClick={() => setModalReceita(false)}
-                className="flex-1 py-2.5 rounded-xl text-sm font-bold border border-white/20 text-white/60 hover:bg-white/5 transition-all">
-                Cancelar
-              </button>
-              <button onClick={confirmarReceita} disabled={salvando || !rDesc || !rValor}
-                className="flex-1 py-2.5 rounded-xl text-sm font-bold bg-emerald-700 text-white hover:bg-emerald-600 transition-all disabled:opacity-40 active:scale-95">
-                {salvando ? 'Salvando...' : 'Adicionar'}
-              </button>
-            </div>
-          </div>
+      {/* ── Modal: manual ────────────────────────────────────────────────────── */}
+      <Modal
+        aberto={modalManual}
+        onFechar={() => setModalManual(false)}
+        titulo="Lançamento manual"
+        descricao="Pagamento fora do sistema. Depois pode ser lançado no contas a pagar pelo relatório."
+        travado={salvando}
+        rodape={
+          <>
+            <Button variante="discreto" onClick={() => setModalManual(false)} disabled={salvando}>Cancelar</Button>
+            <Button variante="primario" onClick={confirmarManual} carregando={salvando} disabled={!mDesc || !mValor}>Adicionar</Button>
+          </>
+        }
+      >
+        <Input rotulo="Descrição" type="text" value={mDesc} onChange={e => setMDesc(e.target.value)} placeholder="Ex: Açougue, Gás" autoFocus />
+        <Input rotulo="Valor" type="number" inputMode="decimal" value={mValor} onChange={e => setMValor(e.target.value)} placeholder="0,00" />
+        <Select rotulo="Categoria (opcional)" value={mCatId} onChange={e => setMCatId(e.target.value)}>
+          <option value="">Sem categoria</option>
+          {categorias.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
+        </Select>
+        <div className="flex flex-col gap-1">
+          <span className="t-label" style={{ color: 'var(--text-secondary)' }}>Autorizado por</span>
+          {escolherGerente(mGerente, setMGerente)}
         </div>
-      )}
+      </Modal>
 
-      {/* ── MODAL MANUAL RÁPIDO ──────────────────────────────────────────────── */}
-      {modalManual && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setModalManual(false)}>
-          <div className="bg-[#0f1020] border border-white/15 rounded-2xl w-full max-w-sm shadow-2xl" onClick={e => e.stopPropagation()}>
-            <div className="px-5 py-4 border-b border-white/10 flex justify-between items-center">
-              <div>
-                <h3 className="font-bold text-white text-sm">Lançamento Manual</h3>
-                <p className="text-caption text-yellow-400/70 mt-0.5 flex items-center gap-1">
-                  <AlertTriangle className="w-3 h-3" /> fora do sistema
-                </p>
+      {/* ── Modal: lançar no contas a pagar ──────────────────────────────────── */}
+      <Modal
+        aberto={!!modalLancar}
+        onFechar={() => setModalLancar(null)}
+        titulo="Lançar no contas a pagar"
+        travado={salvando}
+        rodape={
+          <>
+            <Button variante="discreto" onClick={() => setModalLancar(null)} disabled={salvando}>Cancelar</Button>
+            <Button variante="primario" onClick={confirmarLancar} carregando={salvando}>Criar conta</Button>
+          </>
+        }
+      >
+        {modalLancar && (
+          <>
+            <div className="p-3 rounded-lg flex justify-between gap-3" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
+              <div className="min-w-0">
+                <p className="t-body truncate" style={{ color: 'var(--text-primary)', margin: 0, fontWeight: 600 }}>{modalLancar.descricao}</p>
+                <p className="t-caption" style={{ margin: '2px 0 0' }}>{modalLancar.categoria_nome ?? 'Sem categoria'}</p>
               </div>
-              <button onClick={() => setModalManual(false)} className="p-1.5 hover:bg-white/10 rounded-xl">
-                <X className="w-4 h-4 text-white/40" />
-              </button>
+              <span className="t-body num" style={{ color: 'var(--text-primary)', fontWeight: 700 }}>{fmtR(modalLancar.valor)}</span>
             </div>
+            <Input rotulo="Vencimento" type="date" value={lVenc} onChange={e => setLVenc(e.target.value)} />
+            <Input rotulo="Observação (opcional)" type="text" value={lObs} onChange={e => setLObs(e.target.value)} />
+          </>
+        )}
+      </Modal>
 
-            <div className="px-5 py-4 space-y-3">
-              <input type="text" value={mDesc} onChange={e => setMDesc(e.target.value)}
-                placeholder="Descrição (ex: Açougue, Gás...)"
-                autoFocus
-                className="w-full bg-white/5 border border-white/20 text-white placeholder-white/25 rounded-xl px-3 py-3 text-sm focus:outline-none focus:border-white/40" />
-
-              <div className="flex items-center gap-2 bg-white/5 border border-white/20 rounded-xl px-3 py-2.5">
-                <span className="text-white/60 text-sm font-bold">R$</span>
-                <input type="number" value={mValor} onChange={e => setMValor(e.target.value)}
-                  placeholder="0,00"
-                  className="flex-1 bg-transparent text-white text-base font-black placeholder-white/25 focus:outline-none [appearance:textfield]" />
-              </div>
-
-              <select value={mCatId} onChange={e => setMCatId(e.target.value)}
-                className="w-full bg-[#12141f] border border-white/20 text-white rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-white/40">
-                <option value="">Categoria (opcional)</option>
-                {categorias.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
-              </select>
-
-              <div className="grid grid-cols-3 gap-2">
-                {GERENTES.map(g => (
-                  <button key={g} type="button" onClick={() => setMGerente(g)}
-                    className={`py-2.5 rounded-xl text-sm font-bold transition-all ${
-                      mGerente === g
-                        ? 'bg-wine text-white'
-                        : 'bg-white/8 text-white/50 hover:bg-white/12 hover:text-white/80'
-                    }`}>
-                    {g}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="px-5 py-4 border-t border-white/10 flex gap-3">
-              <button onClick={() => setModalManual(false)}
-                className="flex-1 py-2.5 rounded-xl text-sm font-bold border border-white/20 text-white/60 hover:bg-white/5 transition-all">
-                Cancelar
-              </button>
-              <button onClick={confirmarManual} disabled={salvando || !mDesc || !mValor}
-                className="flex-1 py-2.5 rounded-xl text-sm font-bold bg-wine text-white hover:bg-wine-light transition-all disabled:opacity-40">
-                {salvando ? 'Salvando...' : 'Adicionar'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ── MODAL LANÇAR NO SISTEMA ──────────────────────────────────────────── */}
-      {modalLancar && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setModalLancar(null)}>
-          <div className="bg-[#0f1020] border border-white/15 rounded-2xl w-full max-w-sm shadow-2xl" onClick={e => e.stopPropagation()}>
-            <div className="px-5 py-4 border-b border-white/10 flex justify-between items-center">
-              <h3 className="font-bold text-white text-sm">Lançar no Contas a Pagar</h3>
-              <button onClick={() => setModalLancar(null)} className="p-1.5 hover:bg-white/10 rounded-xl">
-                <X className="w-4 h-4 text-white/40" />
-              </button>
-            </div>
-            <div className="px-5 py-4 space-y-3">
-              <div className="bg-white/5 border border-white/10 rounded-xl p-3 flex justify-between">
-                <div>
-                  <p className="text-sm font-bold text-white">{modalLancar.descricao}</p>
-                  <p className="text-caption text-white/60 mt-0.5">{modalLancar.categoria_nome}</p>
-                </div>
-                <p className="text-sm font-black text-white">{fmtR(modalLancar.valor)}</p>
-              </div>
-              <div>
-                <label className="text-caption font-bold text-white/50 uppercase tracking-wide block mb-1.5">Vencimento</label>
-                <input type="date" value={lVenc} onChange={e => setLVenc(e.target.value)}
-                  className="w-full bg-white/5 border border-white/20 text-white rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-white/40" />
-              </div>
-              <input type="text" value={lObs} onChange={e => setLObs(e.target.value)}
-                placeholder="Observação (opcional)"
-                className="w-full bg-white/5 border border-white/15 text-white placeholder-white/20 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-white/35" />
-            </div>
-            <div className="px-5 py-4 border-t border-white/10 flex gap-3">
-              <button onClick={() => setModalLancar(null)}
-                className="flex-1 py-2.5 rounded-xl text-sm font-bold border border-white/20 text-white/60 hover:bg-white/5 transition-all">
-                Cancelar
-              </button>
-              <button onClick={confirmarLancar} disabled={salvando}
-                className="flex-1 py-2.5 rounded-xl text-sm font-bold bg-emerald-700 text-white hover:bg-emerald-600 transition-all disabled:opacity-40">
-                {salvando ? 'Criando...' : 'Criar conta'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-
-      {/* ── MODAL RELATÓRIO ──────────────────────────────────────────────────── */}
+      {/* ── Relatório para impressão (folha branca, fora do tema) ───────────── */}
       {showRelatorio && (() => {
-        // Despesas agrupadas por categoria
         const porCategoria = pagamentos.reduce((acc, p) => {
           const cat = p.categoria_nome ?? 'Sem categoria';
           if (!acc[cat]) acc[cat] = [];
@@ -913,17 +693,11 @@ const AgendaDiaria: React.FC = () => {
         const catsOrd = Object.keys(porCategoria).sort((a, b) => a.localeCompare(b));
 
         return (
-          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            {/* Toolbar (não imprime) */}
+          <div className="fixed inset-0 flex items-center justify-center z-50 p-4" style={{ background: 'rgba(0,0,0,0.7)' }}>
+            {/* Barra (não imprime) */}
             <div className="print:hidden fixed top-4 right-4 z-[60] flex gap-2">
-              <button onClick={() => window.print()}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold bg-wine text-white hover:bg-wine-light shadow-xl transition-all">
-                <Printer className="w-4 h-4" /> Imprimir
-              </button>
-              <button onClick={() => setShowRelatorio(false)}
-                className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-all">
-                <X className="w-5 h-5" />
-              </button>
+              <Button variante="primario" icone={<Printer size={16} />} onClick={() => window.print()}>Imprimir</Button>
+              <IconButton aria-label="Fechar relatório" onClick={() => setShowRelatorio(false)}><X size={18} /></IconButton>
             </div>
 
             {/* Folha do relatório — fundo branco, tudo preto */}
@@ -932,7 +706,6 @@ const AgendaDiaria: React.FC = () => {
               className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl print:shadow-none print:rounded-none print:max-h-none print:overflow-visible"
               style={{ fontFamily: 'Arial, sans-serif', color: '#111' }}
             >
-              {/* Cabeçalho */}
               <div className="px-8 pt-8 pb-5 border-b-2 border-gray-800">
                 <div className="flex items-start justify-between">
                   <div>
@@ -948,7 +721,6 @@ const AgendaDiaria: React.FC = () => {
                   </div>
                 </div>
 
-                {/* KPIs no cabeçalho */}
                 <div className="grid grid-cols-3 gap-3 mt-5">
                   <div className="border border-gray-200 rounded-lg px-4 py-2.5 text-center">
                     <p className="text-caption font-bold uppercase text-gray-500 tracking-wide">Receitas</p>
@@ -967,7 +739,6 @@ const AgendaDiaria: React.FC = () => {
 
               <div className="px-8 py-6 space-y-7">
 
-                {/* ── RECEITAS ── */}
                 {receitas.length > 0 && (
                   <section>
                     <h2 className="text-caption font-black uppercase tracking-widest text-gray-500 mb-2 flex items-center gap-2">
@@ -1007,7 +778,6 @@ const AgendaDiaria: React.FC = () => {
                   </section>
                 )}
 
-                {/* ── DESPESAS POR CATEGORIA — uma única tabela com linhas de categoria ── */}
                 <section>
                   <h2 className="text-caption font-black uppercase tracking-widest text-gray-500 mb-2 flex items-center gap-2">
                     <span className="flex-1 h-px bg-gray-200" />
@@ -1041,7 +811,6 @@ const AgendaDiaria: React.FC = () => {
                             const subtotal = itens.reduce((a, b) => a + b.valor, 0);
                             return (
                               <React.Fragment key={cat}>
-                                {/* Linha separadora de categoria */}
                                 <tr style={{ background: '#1f2937' }}>
                                   <td colSpan={4} className="py-1.5 px-2 text-xs font-black uppercase tracking-wide" style={{ color: '#f9fafb' }}>{cat}</td>
                                   <td className="py-1.5 px-2 text-xs font-black text-right tabular-nums" style={{ color: '#f9fafb' }}>{fmtR(subtotal)}</td>
@@ -1086,7 +855,6 @@ const AgendaDiaria: React.FC = () => {
                   }
                 </section>
 
-                {/* ── RESUMO POR GERENTE ── */}
                 {gerentesOrd.length > 0 && (
                   <section>
                     <h2 className="text-caption font-black uppercase tracking-widest text-gray-500 mb-2 flex items-center gap-2">
@@ -1120,7 +888,6 @@ const AgendaDiaria: React.FC = () => {
                   </section>
                 )}
 
-                {/* ── SALDO FINAL ── */}
                 <section className="border-2 border-gray-800 rounded-lg px-6 py-4">
                   <div className="flex justify-between items-center">
                     <div>
@@ -1131,7 +898,6 @@ const AgendaDiaria: React.FC = () => {
                   </div>
                 </section>
 
-                {/* ── ASSINATURA ── */}
                 <section className="grid grid-cols-2 gap-10 pt-2">
                   <div>
                     <p className="text-caption font-bold text-gray-500 uppercase tracking-wide mb-6">Visto Financeiro</p>

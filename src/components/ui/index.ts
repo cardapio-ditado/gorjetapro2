@@ -21,3 +21,4 @@ export type { ChipTom } from './Chip';
 export { Segmented } from './Segmented';
 export type { OpcaoSegmentada } from './Segmented';
 export { Toolbar } from './Toolbar';
+export { Modal } from './Modal';
