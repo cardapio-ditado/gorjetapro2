@@ -3,7 +3,7 @@ import { ArrowRight, RefreshCw } from 'lucide-react';
 import { Button, IconButton, KPICard, PageHeader, type KPITom } from '../ui';
 import { beta2Api, type Hoje as HojeDados } from './api';
 
-export type DestinoHoje = 'emergencias' | 'recebimento' | 'contagem_central' | 'setores' | 'compras' | 'kits' | 'reposicao' | 'contagem' | 'aprovacoes';
+export type DestinoHoje = 'emergencias' | 'recebimento' | 'contagem_central' | 'setores' | 'compras' | 'kits' | 'reposicao' | 'contagem' | 'aprovacoes' | 'vizinhos';
 
 interface Props {
   onIr: (destino: DestinoHoje) => void;
@@ -49,6 +49,7 @@ const Hoje: React.FC<Props> = ({ onIr }) => {
     { chave: 'contagem', rotulo: dados.auditoria_hoje ? 'Auditoria geral hoje' : 'Contagem dos setores', valor: String(dados.contagem_setores_falta), detalhe: dados.contagem_setores_falta ? 'setores sem contagem hoje' : 'todos contaram', tom: dados.contagem_setores_falta ? 'atencao' : 'certo', destino: 'contagem' },
     { chave: 'aprovacoes', rotulo: 'Diferenças a aprovar', valor: String(dados.aprovacoes_pendentes), detalhe: dados.aprovacoes_pendentes ? 'auditorias esperando' : 'nenhuma', tom: dados.aprovacoes_pendentes ? 'atencao' : 'certo', destino: 'aprovacoes', gestor: true },
     { chave: 'zonas', rotulo: 'Contagem do Central', valor: `${dados.zonas_central.vencidas} de ${dados.zonas_central.total}`, detalhe: dados.zonas_central.vencidas ? 'zonas para contar hoje' : 'tudo em dia', tom: dados.zonas_central.vencidas ? 'atencao' : 'certo', destino: 'contagem_central' },
+    { chave: 'vizinhos', rotulo: 'Empréstimos com vizinhos', valor: String(dados.emprestimos_abertos), detalhe: dados.emprestimos_antigos ? `${dados.emprestimos_antigos} há mais de 7 dias` : dados.emprestimos_abertos ? 'em aberto' : 'nada em aberto', tom: dados.emprestimos_antigos ? 'atencao' : 'normal', destino: 'vizinhos' },
     { chave: 'kits', rotulo: 'Kits de limpeza', valor: String(dados.kits_faltando), detalhe: dados.kits_faltando ? 'kits com item faltando' : 'todos completos', tom: dados.kits_faltando ? 'atencao' : 'certo', destino: 'kits' },
     { chave: 'zig', rotulo: 'Vendas da Zig', valor: dados.zig ? (zigOk ? 'OK' : dados.zig.nao_mapeados ? `${dados.zig.nao_mapeados} sem vínculo` : dados.zig.status) : 'sem registro', detalhe: zigHora ? `última às ${zigHora}` : 'nenhuma execução', tom: zigOk ? 'certo' : 'alerta', destino: 'setores' },
     { chave: 'negativos', rotulo: 'Saldos negativos', valor: String(dados.negativos), detalhe: dados.negativos ? 'precisam de contagem aprovada' : 'nenhum', tom: dados.negativos ? 'alerta' : 'certo', destino: 'contagem' },

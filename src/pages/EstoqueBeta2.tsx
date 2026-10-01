@@ -19,6 +19,7 @@ import Contagem from '../components/beta2/Contagem';
 import Aprovacoes from '../components/beta2/Aprovacoes';
 import Compras from '../components/beta2/compras/Compras';
 import Relatorios from '../components/beta2/relatorios/Relatorios';
+import Vizinhos from '../components/beta2/Vizinhos';
 import ContagemEstoque from '../components/inventory/contagem/ContagemEstoque';
 
 /**
@@ -28,12 +29,12 @@ import ContagemEstoque from '../components/inventory/contagem/ContagemEstoque';
  */
 type View = 'menu' | 'itens' | 'fichas' | 'estoques' | 'fornecedores' | 'setores' | 'central' | 'kits'
   | 'recebimento' | 'reposicao' | 'emergencias' | 'movimentacoes'
-  | 'contagem' | 'contagem_central' | 'aprovacoes' | 'compras' | 'relatorios' | 'kardex' | 'kardex_fornecedor';
-const VIEWS: View[] = ['menu', 'itens', 'fichas', 'estoques', 'fornecedores', 'setores', 'central', 'kits', 'recebimento', 'reposicao', 'emergencias', 'movimentacoes', 'contagem', 'contagem_central', 'aprovacoes', 'compras', 'relatorios', 'kardex', 'kardex_fornecedor'];
+  | 'contagem' | 'contagem_central' | 'aprovacoes' | 'compras' | 'relatorios' | 'kardex' | 'kardex_fornecedor' | 'vizinhos';
+const VIEWS: View[] = ['menu', 'itens', 'fichas', 'estoques', 'fornecedores', 'setores', 'central', 'kits', 'recebimento', 'reposicao', 'emergencias', 'movimentacoes', 'contagem', 'contagem_central', 'aprovacoes', 'compras', 'relatorios', 'kardex', 'kardex_fornecedor', 'vizinhos'];
 const TITULOS: Record<View, string> = {
   menu: 'Estoque Beta 2', itens: 'Itens do estoque', fichas: 'Fichas técnicas', estoques: 'Estoques', fornecedores: 'Fornecedores', setores: 'Configurar setores', central: 'Configurar Central', kits: 'Kits de limpeza',
   recebimento: 'Receber compras', reposicao: 'Repor os setores', emergencias: 'Retiradas e pedidos', movimentacoes: 'Movimentações',
-  contagem: 'Contagem dos setores', contagem_central: 'Contagem do Central', aprovacoes: 'Aprovar diferenças', compras: 'Compras', relatorios: 'Relatórios', kardex: 'Kardex por produto', kardex_fornecedor: 'Kardex por fornecedor',
+  contagem: 'Contagem dos setores', contagem_central: 'Contagem do Central', aprovacoes: 'Aprovar diferenças', compras: 'Compras', relatorios: 'Relatórios', kardex: 'Kardex por produto', kardex_fornecedor: 'Kardex por fornecedor', vizinhos: 'Empréstimo com vizinhos',
 };
 /** grava = mexe em dado real · breve = ainda não existe */
 type Estado = 'grava' | 'breve';
@@ -54,7 +55,7 @@ const GRUPOS: MenuGrupo[] = [
     { v: 'recebimento', n: 'Receber compras', icon: Truck, estado: 'grava', dica: 'nota com foto, confere e dá entrada' },
     { v: 'reposicao', n: 'Repor os setores', icon: Store, estado: 'grava', dica: 'o que falta até o nível, sai do Central num toque' },
     { v: 'emergencias', n: 'Retiradas e pedidos', icon: Clock3, estado: 'grava', dica: 'pedido do setor; retirada fora de hora com conferência' },
-    { n: 'Empréstimo com vizinhos', icon: Handshake, estado: 'breve' },
+    { v: 'vizinhos', n: 'Empréstimo com vizinhos', icon: Handshake, estado: 'grava', dica: 'pegamos ou emprestamos; devolve quando puder' },
     { v: 'movimentacoes', n: 'Movimentações (histórico)', icon: ArrowLeftRight, estado: 'grava', dica: 'tudo que entrou, saiu e andou' },
   ] },
   { id: 'contagem', title: '4 · Contagem', hint: 'Setores todo dia, auditoria seg · qui · sáb, Central por zonas', items: [
@@ -104,6 +105,7 @@ const EstoqueBeta2: React.FC = () => {
   if (view === 'contagem') return <Contagem responsavel={nome} onVoltar={() => go('menu')} onAprovacoes={() => go('aprovacoes')} />;
   if (view === 'aprovacoes') return <Aprovacoes onVoltar={() => go('menu')} />;
   if (view === 'compras') return <Compras onVoltar={() => go('menu')} />;
+  if (view === 'vizinhos') return <Vizinhos responsavel={nome} onVoltar={() => go('menu')} />;
   if (view === 'relatorios' || view === 'kardex' || view === 'kardex_fornecedor') {
     // ?tela=relatorios&rel=<tipo> abre um relatório; os atalhos do menu só mudam o rel.
     const rel = view === 'kardex' ? 'kardex_produto' : view === 'kardex_fornecedor' ? 'kardex_fornecedor' : params.get('rel');

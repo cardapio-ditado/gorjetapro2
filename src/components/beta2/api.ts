@@ -20,6 +20,8 @@ export interface Hoje {
   kits_faltando: number;
   setores_pendencias: number;
   setores_vazios: string[];
+  emprestimos_abertos: number;
+  emprestimos_antigos: number;
 }
 
 export interface KitItem {
@@ -66,6 +68,39 @@ export const beta2Api = {
 };
 
 export const fmt = (n: number) => Number(n || 0).toLocaleString('pt-BR', { maximumFractionDigits: 2 });
+
+// ── Empréstimo com vizinhos ──────────────────────────────────────────────────
+export type SentidoEmprestimo = 'pegamos' | 'emprestamos';
+export interface Vizinho { id: string; nome: string; telefone: string | null; observacoes: string | null; ativo: boolean; abertos: number; historico: number }
+export interface EmprestimoAberto { id: string; vizinho_id: string; vizinho: string; telefone: string | null; item_id: string; item: string; um: string; sentido: SentidoEmprestimo; quantidade: number; devolvido: number; falta: number; custo: number; valor: number; data: string; dias: number; responsavel: string | null; observacoes: string | null }
+export interface EmprestimoRecente { id: string; vizinho: string; item: string; um: string; sentido: SentidoEmprestimo; quantidade: number; status: 'quitado' | 'cancelado'; data: string; quitado_em: string; responsavel: string | null; motivo: string | null }
+export interface VizinhosTela { vizinhos: Vizinho[]; abertos: EmprestimoAberto[]; recentes: EmprestimoRecente[]; totais: { devemos_itens: number; devemos_valor: number; nos_devem_itens: number; nos_devem_valor: number; mais_antigo_dias: number; antigos: number } }
+export const vizinhosApi = {
+  async tela(): Promise<VizinhosTela> {
+    const { data, error } = await supabase.rpc('fn_vizinhos_tela');
+    lancar(error);
+    return data as VizinhosTela;
+  },
+  async salvar(p: { id?: string | null; nome: string; telefone: string | null; observacoes: string | null; ativo?: boolean }): Promise<string> {
+    const { data, error } = await supabase.rpc('fn_vizinho_salvar', { p });
+    lancar(error);
+    return data as string;
+  },
+  async registrar(p: { vizinho_id: string; sentido: SentidoEmprestimo; itens: Array<{ item_id: string; quantidade: number }>; responsavel: string | null; observacoes: string | null }) {
+    const { data, error } = await supabase.rpc('fn_emprestimo_registrar', { p });
+    lancar(error);
+    return data as { n: number; ids: string[]; ficou_negativo: string[] };
+  },
+  async devolver(id: string, quantidade: number | null, responsavel: string | null) {
+    const { data, error } = await supabase.rpc('fn_emprestimo_devolver', { p_id: id, p_quantidade: quantidade, p_responsavel: responsavel });
+    lancar(error);
+    return data as { id: string; devolvido: number; falta: number; status: 'aberto' | 'quitado' };
+  },
+  async cancelar(id: string, motivo: string | null) {
+    const { error } = await supabase.rpc('fn_emprestimo_cancelar', { p_id: id, p_motivo: motivo });
+    lancar(error);
+  },
+};
 
 // ── Configurar Central ───────────────────────────────────────────────────────
 export interface CentralRegras { seguranca_dias: number; cobertura_padrao_dias: number; historico_dias: number }
