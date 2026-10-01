@@ -258,6 +258,67 @@ export interface ContagemItem { linha_id: string; item_id: string; nome: string;
 export interface ContagemFolha { id: string; estoque: { id: string; nome: string }; modo: 'diaria' | 'auditoria'; status: string; responsavel: string; contados: number; total: number; itens: ContagemItem[] }
 export interface AprovacaoItem { linha_id: string; item_id: string; nome: string; um: string; sistema: number; contada: number; diferenca: number; valor: number }
 export interface AprovacoesTela { posso_aprovar: boolean; aprovadores: string[]; pendentes: Array<{ id: string; estoque: string; responsavel: string; finalizado_em: string; contados: number; itens: AprovacaoItem[] }> }
+// ── Contagem do Central (zonas) ──────────────────────────────────────────────
+export type SituacaoZona = 'em_andamento' | 'atrasado' | 'vence_hoje' | 'nunca' | 'em_dia' | 'concluido_hoje' | 'sem_agenda';
+export interface Zona { bloco: string; especial: boolean; itens: number; ciclo_dias: number; ultima_contagem: string | null; vence_em: string | null; situacao: SituacaoZona; contagem_hoje_id: string | null; contagem_hoje_status: string | null; contados_hoje: number; total_hoje: number }
+export interface AgendaItem { id: string; bloco: string; dia: string; contagem_id: string | null; contagem_status: string | null; situacao: 'feita' | 'em_andamento' | 'perdida' | 'hoje' | 'agendada' }
+export interface CentralUltima { id: string; bloco: string; data: string; processado_em: string; responsavel: string | null; contados: number; diferencas: number; valor: number }
+export interface CentralTela { hoje: string; estoque: { id: string; nome: string }; tem_agenda: boolean; zonas: Zona[]; resumo: { blocos: number; devidos_hoje: number; concluidos_hoje: number; em_andamento: number; faltam_itens: number }; agenda: AgendaItem[]; ultimas: CentralUltima[] }
+export interface ZonaItem { linha_id: string; item_id: string; nome: string; categoria: string; um: string; sistema: number; contada: number | null; valor_unitario: number | null }
+export interface ZonaFolha { id: string; estoque: { id: string; nome: string }; bloco: string; nome: string; status: string; responsavel: string | null; contados: number; total: number; itens: ZonaItem[] }
+export const centralContagemApi = {
+  async tela(): Promise<CentralTela> {
+    const { data, error } = await supabase.rpc('fn_contagem_central_tela');
+    lancar(error);
+    const d = data as Omit<CentralTela, 'zonas'> & { blocos: Zona[] };
+    return { ...d, zonas: d.blocos || [], agenda: d.agenda || [], ultimas: d.ultimas || [] };
+  },
+  async abrir(estoqueId: string, bloco: string, responsavel: string | null): Promise<ZonaFolha> {
+    const { data, error } = await supabase.rpc('fn_contagem_bloco_abrir', { p_estoque_id: estoqueId, p_bloco: bloco, p_responsavel: responsavel });
+    lancar(error);
+    return centralContagemApi.folha(String((data as { id: string }).id));
+  },
+  async folha(id: string): Promise<ZonaFolha> {
+    const { data, error } = await supabase.rpc('fn_contagem_central_itens', { p_id: id });
+    lancar(error);
+    if (!data) throw new Error('Contagem não encontrada');
+    return data as ZonaFolha;
+  },
+  async anotar(id: string, itens: Array<{ linha_id: string; contada: number | null }>) {
+    const { data, error } = await supabase.rpc('fn_contagem_setor_anotar', { p_id: id, p_itens: itens });
+    lancar(error);
+    return data as { id: string; contados: number; total: number };
+  },
+  async concluir(id: string, usuarioId: string | null) {
+    const { data, error } = await supabase.rpc('fn_contagem_bloco_concluir', { p_contagem_id: id, p_usuario_id: usuarioId });
+    lancar(error);
+    const r = data as { success?: boolean; error?: string; total_ajustes?: number; total_sem_diff?: number };
+    if (r.success === false) throw new Error(r.error || 'Não foi possível concluir');
+    return { ajustes: Number(r.total_ajustes || 0), iguais: Number(r.total_sem_diff || 0) };
+  },
+  async ciclo(categoria: string, dias: number) {
+    const { error } = await supabase.rpc('fn_contagem_ciclo_definir', { p_categoria: categoria, p_ciclo_dias: dias });
+    lancar(error);
+  },
+  async agendar(estoqueId: string, bloco: string, dia: string) {
+    const { error } = await supabase.rpc('fn_contagem_agenda_definir', { p_estoque_id: estoqueId, p_bloco: bloco, p_dia: dia });
+    lancar(error);
+  },
+  async desagendar(id: string) {
+    const { error } = await supabase.rpc('fn_contagem_agenda_remover', { p_id: id });
+    lancar(error);
+  },
+  async mover(id: string, dia: string) {
+    const { error } = await supabase.rpc('fn_contagem_agenda_mover', { p_id: id, p_dia: dia });
+    lancar(error);
+  },
+  async repetirSemana(estoqueId: string, inicio: string, semanas: number) {
+    const { data, error } = await supabase.rpc('fn_contagem_agenda_replicar', { p_estoque_id: estoqueId, p_inicio: inicio, p_semanas: semanas });
+    lancar(error);
+    return Number((data as { criados?: number })?.criados || 0);
+  },
+};
+
 export const contagemApi = {
   async tela(): Promise<ContagemTela> {
     const { data, error } = await supabase.rpc('fn_contagem_setor_tela');

@@ -20,7 +20,7 @@ import Aprovacoes from '../components/beta2/Aprovacoes';
 import Compras from '../components/beta2/compras/Compras';
 import Relatorios from '../components/beta2/relatorios/Relatorios';
 import Vizinhos from '../components/beta2/Vizinhos';
-import ContagemEstoque from '../components/inventory/contagem/ContagemEstoque';
+import ContagemCentral from '../components/beta2/ContagemCentral';
 
 /**
  * Estoque Beta 2: a porta única do estoque. Entrada "Hoje" por pessoa e os
@@ -31,11 +31,6 @@ type View = 'menu' | 'itens' | 'fichas' | 'estoques' | 'fornecedores' | 'setores
   | 'recebimento' | 'reposicao' | 'emergencias' | 'movimentacoes'
   | 'contagem' | 'contagem_central' | 'aprovacoes' | 'compras' | 'relatorios' | 'kardex' | 'kardex_fornecedor' | 'vizinhos';
 const VIEWS: View[] = ['menu', 'itens', 'fichas', 'estoques', 'fornecedores', 'setores', 'central', 'kits', 'recebimento', 'reposicao', 'emergencias', 'movimentacoes', 'contagem', 'contagem_central', 'aprovacoes', 'compras', 'relatorios', 'kardex', 'kardex_fornecedor', 'vizinhos'];
-const TITULOS: Record<View, string> = {
-  menu: 'Estoque Beta 2', itens: 'Itens do estoque', fichas: 'Fichas técnicas', estoques: 'Estoques', fornecedores: 'Fornecedores', setores: 'Configurar setores', central: 'Configurar Central', kits: 'Kits de limpeza',
-  recebimento: 'Receber compras', reposicao: 'Repor os setores', emergencias: 'Retiradas e pedidos', movimentacoes: 'Movimentações',
-  contagem: 'Contagem dos setores', contagem_central: 'Contagem do Central', aprovacoes: 'Aprovar diferenças', compras: 'Compras', relatorios: 'Relatórios', kardex: 'Kardex por produto', kardex_fornecedor: 'Kardex por fornecedor', vizinhos: 'Empréstimo com vizinhos',
-};
 /** grava = mexe em dado real · breve = ainda não existe */
 type Estado = 'grava' | 'breve';
 type MenuItem = { v?: View; n: string; icon: React.ElementType; estado: Estado; dica?: string };
@@ -112,10 +107,7 @@ const EstoqueBeta2: React.FC = () => {
     return <Relatorios tipo={rel} itemId={params.get('item')} onVoltar={() => go('menu')} onAbrir={t => go('relatorios', t ? { rel: t } : undefined)} />;
   }
 
-  if (view === 'contagem_central') return <div>
-    <div className="flex items-center gap-3 flex-wrap mb-3">{voltar}<span className="t-subsec">{TITULOS[view]}</span><Badge variant="success">grava</Badge></div>
-    <ContagemEstoque />
-  </div>;
+  if (view === 'contagem_central') return <ContagemCentral responsavel={nome} usuarioId={usuario?.id ?? null} onVoltar={() => go('menu')} onHistorico={() => go('relatorios', { rel: 'contagens' })} />;
 
   return <div className="max-w-5xl">
     <Hoje onIr={irDeHoje} />

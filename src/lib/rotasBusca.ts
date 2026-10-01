@@ -55,6 +55,7 @@ export const ROTAS_BUSCA: RotaBusca[] = [
   { label: 'Estoque — Configurar setores',  path: '/setores',                                           icon: Warehouse, apelidos: 'bar cozinha nível zig contagem balcão' },
   { label: 'Estoque — Configurar Central',  path: '/estoque-beta2?tela=central',                         icon: Warehouse, apelidos: 'ponto de pedido mínimo compras automático' },
   { label: 'Estoque — Kits de limpeza',     path: '/estoque-beta2?tela=kits',                            icon: Warehouse, apelidos: 'garçons cozinha bar serviços gerais' },
+  { label: 'Estoque — Contagem do Central',  path: '/estoque-beta2?tela=contagem_central',                icon: Warehouse, apelidos: 'zonas blocos ciclo agenda contar central' },
   { label: 'Estoque — Empréstimo com vizinhos', path: '/estoque-beta2?tela=vizinhos',                     icon: Warehouse, apelidos: 'emprestar pegar emprestado devolver bar vizinho' },
   { label: 'Estoque — Relatórios (Beta 2)', path: '/estoque-beta2?tela=relatorios',                      icon: Warehouse, apelidos: 'inventário cmv curva abc perdas parados contagens compras' },
   { label: 'Estoque — Kardex por produto',  path: '/estoque-beta2?tela=kardex',                          icon: Warehouse, apelidos: 'extrato saldo item' },
