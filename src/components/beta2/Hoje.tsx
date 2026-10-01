@@ -43,6 +43,7 @@ const Hoje: React.FC<Props> = ({ onIr }) => {
   const zigHora = dados?.zig?.finalizado_em ? new Date(dados.zig.finalizado_em).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : null;
 
   const cartoes: Cartao[] = dados ? [
+    { chave: 'repor', rotulo: 'Repor os setores', valor: String(dados.repor_setores), detalhe: dados.repor_setores ? 'setores com item abaixo do nível' : 'setores no nível', tom: dados.repor_setores ? 'atencao' : 'certo', destino: 'reposicao' },
     { chave: 'pedidos', rotulo: 'Pedidos dos setores', valor: String(dados.pedidos_a_entregar), detalhe: dados.pedidos_a_entregar ? 'aguardando entrega' : 'nenhum aguardando', tom: dados.pedidos_a_entregar ? 'atencao' : 'normal', destino: 'emergencias' },
     { chave: 'notas', rotulo: 'Notas para receber', valor: String(dados.notas_pendentes), detalhe: dados.notas_pendentes ? 'compras chegando' : 'nada pendente', tom: dados.notas_pendentes ? 'atencao' : 'normal', destino: 'recebimento' },
     { chave: 'zonas', rotulo: 'Contagem do Central', valor: `${dados.zonas_central.vencidas} de ${dados.zonas_central.total}`, detalhe: dados.zonas_central.vencidas ? 'zonas para contar hoje' : 'tudo em dia', tom: dados.zonas_central.vencidas ? 'atencao' : 'certo', destino: 'contagem_central' },

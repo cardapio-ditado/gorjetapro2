@@ -17,6 +17,7 @@ import Fornecedores from '../components/beta2/cadastros/Fornecedores';
 import Fichas from '../components/beta2/cadastros/Fichas';
 import ConfigurarCentral from '../components/beta2/ConfigurarCentral';
 import Recebimento from '../components/beta2/Recebimento';
+import Reposicao from '../components/beta2/Reposicao';
 import Compras from '../components/inventory/Compras';
 import RelatoriosEstoque from '../components/inventory/RelatoriosEstoque';
 import KardexProduto from '../components/inventory/KardexProduto';
@@ -54,7 +55,7 @@ const GRUPOS:MenuGrupo[]=[
  ]},
  {id:'movimentacoes',title:'3 · Movimentações',hint:'Entradas, reposição, retiradas, empréstimos',items:[
   {v:'recebimento',n:'Receber compras',icon:Truck,estado:'grava',dica:'nota com foto, confere e dá entrada'},
-  {v:'reposicao',n:'Repor os setores',icon:Store,estado:'demo',dica:'sugestão diária pela baixa'},
+  {v:'reposicao',n:'Repor os setores',icon:Store,estado:'grava',dica:'o que falta até o nível, sai do Central num toque'},
   {v:'emergencias',n:'Retiradas e pedidos',icon:Clock3,estado:'demo',dica:'noturnas, com confirmação'},
   {n:'Empréstimo com vizinhos',icon:Handshake,estado:'breve'},
   {v:'movimentacoes',n:'Movimentações (histórico)',icon:ArrowLeftRight,estado:'grava'}
@@ -77,7 +78,7 @@ const GRUPOS:MenuGrupo[]=[
   {v:'kits',n:'Kits de limpeza',icon:SprayCan,estado:'grava',dica:'repor do Central num toque'}
  ]}
 ];
-const REAIS:View[]=['itens','fichas','estoques','fornecedores','setores','kits','central','recebimento','compras','relatorios','kardex','movimentacoes','contagem_central','central'];
+const REAIS:View[]=['itens','fichas','estoques','fornecedores','setores','kits','central','recebimento','reposicao','compras','relatorios','kardex','movimentacoes','contagem_central','central'];
 const EstoqueBeta2:React.FC=()=>{
 // Abre direto em Configurar setores quando a URL traz ?setor=…
 const[params,setParams]=useSearchParams();
@@ -243,6 +244,7 @@ if(view==='fornecedores')return <div>{voltar}<Fornecedores/></div>;
 if(view==='fichas')return <div>{voltar}<Fichas/></div>;
 if(view==='central')return <div>{voltar}<ConfigurarCentral/></div>;
 if(view==='recebimento')return <Recebimento onVoltar={()=>go('menu')}/>;
+if(view==='reposicao')return <Reposicao responsavel={usuario?.nome_completo??null} onVoltar={()=>go('menu')}/>;
 
 // ── Telas reais do módulo atual, embutidas no Beta 2 ──
 if(view==='compras'||view==='relatorios'||view==='kardex'||view==='movimentacoes'||view==='contagem_central')return <div>
@@ -340,8 +342,8 @@ return <div>
   setNotice('Recebimento confirmado somente na prévia, sem nova saída ou entrada nos saldos oficiais.');
  }}
 />}
-{(['fechamento','reposicao'] as View[]).includes(view)&&<FechamentoBeta2
- mode={view as 'fechamento'|'reposicao'}
+{view==='fechamento'&&<FechamentoBeta2
+ mode="fechamento"
  dados={dadosFechamento}
  fechamentos={fechamentos}
  onSave={f=>{setFechamentos(prev=>[...prev.filter(x=>!(x.estoqueId===f.estoqueId&&x.dataOperacional===f.dataOperacional)),f]);setNotice('Fechamento guardado apenas nesta prévia.');}}

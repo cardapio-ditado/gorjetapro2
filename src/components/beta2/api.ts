@@ -7,6 +7,7 @@ export interface Hoje {
   gestor: boolean;
   aprovador: boolean;
   pedidos_a_entregar: number;
+  repor_setores: number;
   notas_pendentes: number;
   zonas_central: { vencidas: number; em_andamento: number; total: number };
   negativos: number;
@@ -145,5 +146,22 @@ export const pedidoApi = {
     const { data, error } = await supabase.rpc('fn_pedido_salvar', { p });
     lancar(error);
     return data as { entrada_id: string; itens: number; valor_total: number };
+  },
+};
+
+// ── Repor os setores ─────────────────────────────────────────────────────────
+export interface ReporItem { item_id: string; nome: string; categoria: string | null; um: string; nivel: number; saldo: number; central: number; sugestao: number; por_contagem: boolean; contado_em: string | null }
+export interface ReporSetor { id: string; nome: string; itens: ReporItem[]; configurados: number; ultima_entrega: { quando: string; itens: number } | null }
+export interface ReporTela { hoje: string; zig: { status: string; finalizado_em: string | null; nao_mapeados: number; de_hoje: boolean } | null; setores: ReporSetor[] }
+export const reposicaoApi = {
+  async tela(): Promise<ReporTela> {
+    const { data, error } = await supabase.rpc('fn_repor_tela');
+    lancar(error);
+    return data as ReporTela;
+  },
+  async mandar(estoqueId: string, itens: Array<{ item_id: string; quantidade: number }>, responsavel: string | null) {
+    const { data, error } = await supabase.rpc('fn_repor_setor', { p_estoque: estoqueId, p_itens: itens, p_responsavel: responsavel });
+    lancar(error);
+    return data as { requisicao_id: string; setor: string; itens: number; faltou: string[]; antigas_encerradas: number; movimentacoes: number };
   },
 };
