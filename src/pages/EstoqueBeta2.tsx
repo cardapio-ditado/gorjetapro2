@@ -17,7 +17,7 @@ import Movimentos from '../components/beta2/Movimentos';
 import Movimentacoes from '../components/beta2/Movimentacoes';
 import Contagem from '../components/beta2/Contagem';
 import Aprovacoes from '../components/beta2/Aprovacoes';
-import Compras from '../components/inventory/Compras';
+import Compras from '../components/beta2/compras/Compras';
 import RelatoriosEstoque from '../components/inventory/RelatoriosEstoque';
 import KardexProduto from '../components/inventory/KardexProduto';
 import ContagemEstoque from '../components/inventory/contagem/ContagemEstoque';
@@ -104,10 +104,10 @@ const EstoqueBeta2: React.FC = () => {
   if (view === 'movimentacoes') return <Movimentacoes onVoltar={() => go('menu')} />;
   if (view === 'contagem') return <Contagem responsavel={nome} onVoltar={() => go('menu')} onAprovacoes={() => go('aprovacoes')} />;
   if (view === 'aprovacoes') return <Aprovacoes onVoltar={() => go('menu')} />;
+  if (view === 'compras') return <Compras onVoltar={() => go('menu')} />;
 
-  if (view === 'compras' || view === 'relatorios' || view === 'kardex' || view === 'contagem_central') return <div>
+  if (view === 'relatorios' || view === 'kardex' || view === 'contagem_central') return <div>
     <div className="flex items-center gap-3 flex-wrap mb-3">{voltar}<span className="t-subsec">{TITULOS[view]}</span><Badge variant="success">grava</Badge></div>
-    {view === 'compras' && <Compras />}
     {view === 'relatorios' && <RelatoriosEstoque />}
     {view === 'kardex' && <KardexProduto />}
     {view === 'contagem_central' && <ContagemEstoque />}
