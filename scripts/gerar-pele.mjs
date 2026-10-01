@@ -18,7 +18,7 @@ const RAIZ = new URL('../src/', import.meta.url).pathname;
 function arquivos(dir) {
   return readdirSync(dir).flatMap(n => {
     const p = join(dir, n);
-    if (statSync(p).isDirectory()) return n === 'estoque-beta2' ? [] : arquivos(p);
+    if (statSync(p).isDirectory()) return arquivos(p);
     return /\.(tsx|ts|jsx|js)$/.test(n) ? [p] : [];
   });
 }

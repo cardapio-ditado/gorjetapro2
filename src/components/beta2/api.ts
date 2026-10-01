@@ -9,6 +9,9 @@ export interface Hoje {
   pedidos_a_entregar: number;
   retiradas_sem_confirmacao: number;
   repor_setores: number;
+  contagem_setores_falta: number;
+  auditoria_hoje: boolean;
+  aprovacoes_pendentes: number;
   notas_pendentes: number;
   zonas_central: { vencidas: number; em_andamento: number; total: number };
   negativos: number;
@@ -209,5 +212,46 @@ export const movimentacoesApi = {
     const { data, error } = await supabase.rpc('fn_movimentacoes_lista', { p });
     lancar(error);
     return data as MovLista;
+  },
+};
+
+// ── Contagem dos setores e aprovações ────────────────────────────────────────
+export interface ContagemHoje { id: string; status: string; contados: number; total: number }
+export interface ContagemSetor { id: string; nome: string; tipo: string; itens_contagem: number; itens_total: number; diaria: ContagemHoje | null; auditoria: ContagemHoje | null; ultima_diaria: string | null; ultima_auditoria: string | null; aguardando_aprovacao: number }
+export interface ContagemTela { hoje: string; auditoria_hoje: boolean; dias_auditoria: number[]; aprovacoes_pendentes: number; setores: ContagemSetor[] }
+export interface ContagemItem { linha_id: string; item_id: string; nome: string; categoria: string; um: string; sistema: number; contada: number | null; nivel: number | null; valor_unitario: number | null }
+export interface ContagemFolha { id: string; estoque: { id: string; nome: string }; modo: 'diaria' | 'auditoria'; status: string; responsavel: string; contados: number; total: number; itens: ContagemItem[] }
+export interface AprovacaoItem { linha_id: string; item_id: string; nome: string; um: string; sistema: number; contada: number; diferenca: number; valor: number }
+export interface AprovacoesTela { posso_aprovar: boolean; aprovadores: string[]; pendentes: Array<{ id: string; estoque: string; responsavel: string; finalizado_em: string; contados: number; itens: AprovacaoItem[] }> }
+export const contagemApi = {
+  async tela(): Promise<ContagemTela> {
+    const { data, error } = await supabase.rpc('fn_contagem_setor_tela');
+    lancar(error);
+    return data as ContagemTela;
+  },
+  async abrir(estoqueId: string, modo: 'diaria' | 'auditoria', responsavel: string | null): Promise<ContagemFolha> {
+    const { data, error } = await supabase.rpc('fn_contagem_setor_abrir', { p_estoque: estoqueId, p_modo: modo, p_responsavel: responsavel });
+    lancar(error);
+    return data as ContagemFolha;
+  },
+  async anotar(id: string, itens: Array<{ linha_id: string; contada: number | null }>) {
+    const { data, error } = await supabase.rpc('fn_contagem_setor_anotar', { p_id: id, p_itens: itens });
+    lancar(error);
+    return data as { id: string; contados: number; total: number };
+  },
+  async concluir(id: string) {
+    const { data, error } = await supabase.rpc('fn_contagem_setor_concluir', { p_id: id });
+    lancar(error);
+    return data as { id: string; modo: string; aprovacao: boolean; contados: number; acertos?: number; diferencas?: number; valor: number };
+  },
+  async aprovacoes(): Promise<AprovacoesTela> {
+    const { data, error } = await supabase.rpc('fn_aprovacoes_tela');
+    lancar(error);
+    return data as AprovacoesTela;
+  },
+  async decidir(id: string, acao: 'aprovar' | 'rejeitar', manter: string[], motivo: string | null) {
+    const { data, error } = await supabase.rpc('fn_aprovacao_decidir', { p_id: id, p_acao: acao, p_manter: manter, p_motivo: motivo });
+    lancar(error);
+    return data as { id: string; acao: string; acertos?: number; mantidos?: number };
   },
 };
