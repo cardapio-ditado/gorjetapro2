@@ -109,3 +109,55 @@ GRANT EXECUTE ON FUNCTION fn_recebimento_tela(), fn_recebimento_confirmar(jsonb)
 -- Foto da nota: quem está logado sobe e lê; o bucket é privado, a tela usa URL assinada.
 CREATE POLICY notas_fiscais_upload ON storage.objects FOR INSERT TO authenticated WITH CHECK (bucket_id = 'notas-fiscais');
 CREATE POLICY notas_fiscais_ler ON storage.objects FOR SELECT TO authenticated USING (bucket_id = 'notas-fiscais');
+
+-- ── Pedido ao fornecedor feito aqui mesmo, e a nota recebida aberta ─────────
+CREATE OR REPLACE FUNCTION fn_recebimento_nota(p_id uuid)
+RETURNS jsonb LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
+  SELECT jsonb_build_object(
+    'id', e.id, 'status', e.status, 'fornecedor_id', e.fornecedor_id, 'fornecedor', coalesce(f.nome, 'Sem fornecedor'), 'numero_documento', e.numero_documento,
+    'data_compra', e.data_compra, 'data_pedido', e.data_pedido, 'data_entrega_prevista', e.data_entrega_prevista, 'valor', e.valor_total, 'condicao_pagamento', e.condicao_pagamento,
+    'observacoes', e.observacoes, 'arquivo', e.origem_arquivo_url, 'criado_em', e.criado_em,
+    'criado_por', (SELECT nome_completo FROM usuarios_sistema u WHERE u.id = e.criado_por),
+    'itens', (SELECT coalesce(jsonb_agg(jsonb_build_object(
+        'linha_id', ic.id, 'item_id', ic.item_id, 'nome', trim(i.nome), 'um', i.unidade_medida,
+        'quantidade_pedida', coalesce(ic.quantidade_pedida, ic.quantidade), 'quantidade_recebida', ic.quantidade_recebida,
+        'custo_unitario', coalesce(ic.custo_unitario_final, ic.custo_unitario), 'custo_total', ic.custo_total, 'data_validade', ic.data_validade
+      ) ORDER BY trim(i.nome)), '[]'::jsonb) FROM itens_entrada_compra ic JOIN itens_estoque i ON i.id = ic.item_id WHERE ic.entrada_compra_id = e.id)
+  ) FROM entradas_compras e LEFT JOIN fornecedores f ON f.id = e.fornecedor_id WHERE e.id = p_id;
+$$;
+
+CREATE OR REPLACE FUNCTION fn_pedido_salvar(p jsonb)
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE v_central uuid; v_id uuid := nullif(p->>'entrada_id', '')::uuid; v_forn uuid := nullif(p->>'fornecedor_id', '')::uuid; r jsonb; v_total numeric := 0; n int := 0; v_linha uuid;
+BEGIN
+  SELECT id INTO v_central FROM estoques WHERE tipo = 'central' AND status LIMIT 1;
+  IF v_forn IS NULL THEN RAISE EXCEPTION 'Escolha o fornecedor do pedido.'; END IF;
+  IF jsonb_array_length(coalesce(p->'itens', '[]'::jsonb)) = 0 THEN RAISE EXCEPTION 'O pedido precisa de pelo menos um item.'; END IF;
+  IF v_id IS NULL THEN
+    INSERT INTO entradas_compras (fornecedor_id, estoque_destino_id, data_compra, data_pedido, data_entrega_prevista, status, valor_total, valor_produtos, observacoes, condicao_pagamento, criado_por)
+    VALUES (v_forn, v_central, current_date, current_date, nullif(p->>'data_entrega_prevista', '')::date, 'pendente', 0, 0, nullif(p->>'observacoes', ''), coalesce(nullif(p->>'condicao_pagamento', ''), 'a_vista'), fn_usuario_sistema_id())
+    RETURNING id INTO v_id;
+  ELSE
+    IF NOT EXISTS (SELECT 1 FROM entradas_compras WHERE id = v_id AND status = 'pendente') THEN RAISE EXCEPTION 'Só pedidos pendentes podem ser editados.'; END IF;
+    UPDATE entradas_compras SET fornecedor_id = v_forn, data_entrega_prevista = nullif(p->>'data_entrega_prevista', '')::date, observacoes = nullif(p->>'observacoes', ''),
+           condicao_pagamento = coalesce(nullif(p->>'condicao_pagamento', ''), condicao_pagamento) WHERE id = v_id;
+    DELETE FROM itens_entrada_compra WHERE entrada_compra_id = v_id AND id::text NOT IN (SELECT coalesce(x->>'linha_id', '') FROM jsonb_array_elements(p->'itens') x);
+  END IF;
+  FOR r IN SELECT x FROM jsonb_array_elements(p->'itens') x LOOP
+    n := n + 1;
+    IF coalesce((r->>'quantidade')::numeric, 0) <= 0 THEN RAISE EXCEPTION 'Quantidade inválida na linha %.', n; END IF;
+    v_linha := nullif(r->>'linha_id', '')::uuid;
+    IF v_linha IS NOT NULL THEN
+      UPDATE itens_entrada_compra SET quantidade = (r->>'quantidade')::numeric, quantidade_pedida = (r->>'quantidade')::numeric, custo_unitario = coalesce((r->>'custo_unitario')::numeric, 0),
+             custo_total = round((r->>'quantidade')::numeric * coalesce((r->>'custo_unitario')::numeric, 0), 2) WHERE id = v_linha AND entrada_compra_id = v_id;
+    ELSE
+      INSERT INTO itens_entrada_compra (entrada_compra_id, item_id, quantidade, quantidade_pedida, custo_unitario, custo_total)
+      VALUES (v_id, (r->>'item_id')::uuid, (r->>'quantidade')::numeric, (r->>'quantidade')::numeric, coalesce((r->>'custo_unitario')::numeric, 0), round((r->>'quantidade')::numeric * coalesce((r->>'custo_unitario')::numeric, 0), 2));
+    END IF;
+    v_total := v_total + round((r->>'quantidade')::numeric * coalesce((r->>'custo_unitario')::numeric, 0), 2);
+  END LOOP;
+  UPDATE entradas_compras SET valor_total = v_total, valor_produtos = v_total WHERE id = v_id;
+  RETURN jsonb_build_object('entrada_id', v_id, 'itens', n, 'valor_total', v_total);
+END; $$;
+
+GRANT EXECUTE ON FUNCTION fn_recebimento_nota(uuid), fn_pedido_salvar(jsonb) TO authenticated;

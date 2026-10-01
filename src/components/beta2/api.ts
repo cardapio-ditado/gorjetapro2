@@ -133,3 +133,17 @@ export const recebimentoApi = {
     return data!.signedUrl;
   },
 };
+export interface NotaItem { linha_id: string; item_id: string; nome: string; um: string; quantidade_pedida: number; quantidade_recebida: number | null; custo_unitario: number; custo_total: number; data_validade: string | null }
+export interface NotaDetalhe { id: string; status: string; fornecedor_id: string | null; fornecedor: string; numero_documento: string | null; data_compra: string; data_pedido: string | null; data_entrega_prevista: string | null; valor: number; condicao_pagamento: string | null; observacoes: string | null; arquivo: string | null; criado_em: string; criado_por: string | null; itens: NotaItem[] }
+export const pedidoApi = {
+  async nota(id: string): Promise<NotaDetalhe> {
+    const { data, error } = await supabase.rpc('fn_recebimento_nota', { p_id: id });
+    lancar(error);
+    return data as NotaDetalhe;
+  },
+  async salvar(p: { entrada_id: string | null; fornecedor_id: string; data_entrega_prevista: string | null; condicao_pagamento: string; observacoes: string | null; itens: Array<{ linha_id: string | null; item_id: string; quantidade: number; custo_unitario: number }> }) {
+    const { data, error } = await supabase.rpc('fn_pedido_salvar', { p });
+    lancar(error);
+    return data as { entrada_id: string; itens: number; valor_total: number };
+  },
+};

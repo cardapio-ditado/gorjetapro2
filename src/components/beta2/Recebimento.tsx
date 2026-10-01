@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { ArrowLeft, Camera, Check, FileText, Plus, Truck, X } from 'lucide-react';
-import { Badge, Button, EmptyState, Input, PageHeader, SectionCard, Select } from '../ui';
+import { ArrowLeft, Camera, Check, ClipboardList, FileText, Pencil, Plus, Truck, X } from 'lucide-react';
+import { Badge, Button, EmptyState, Input, Modal, PageHeader, SectionCard, Select } from '../ui';
 import BuscaItem from './BuscaItem';
-import { fmt, recebimentoApi, type LinhaRecebida, type PedidoPendente, type RecebimentoTela } from './api';
+import { fmt, pedidoApi, recebimentoApi, type LinhaRecebida, type NotaDetalhe, type PedidoPendente, type RecebimentoTela } from './api';
 import { brl, cadastrosApi, type Fornecedor, type ItemBasico } from './cadastros/api';
 
 interface Props { onVoltar: () => void }
@@ -22,6 +22,8 @@ const Recebimento: React.FC<Props> = ({ onVoltar }) => {
   const [aviso, setAviso] = useState<string | null>(null);
   const [aberto, setAberto] = useState<PedidoPendente | 'nova' | null>(null);
   const [ocupado, setOcupado] = useState<string | null>(null);
+  const [pedidoEdit, setPedidoEdit] = useState<PedidoPendente | 'novo' | null>(null);
+  const [notaAberta, setNotaAberta] = useState<string | null>(null);
 
   const carregar = async () => {
     setErro(null);
@@ -41,6 +43,9 @@ const Recebimento: React.FC<Props> = ({ onVoltar }) => {
     finally { setOcupado(null); }
   };
 
+  if (pedidoEdit) {
+    return <Pedido pedido={pedidoEdit === 'novo' ? null : pedidoEdit} onVoltar={() => setPedidoEdit(null)} onFeito={async m => { setPedidoEdit(null); setAviso(m); await carregar(); }} />;
+  }
   if (aberto) {
     return <Nota pedido={aberto === 'nova' ? null : aberto} onVoltar={() => setAberto(null)} onFeito={async m => { setAberto(null); setAviso(m); await carregar(); }} />;
   }
@@ -49,7 +54,7 @@ const Recebimento: React.FC<Props> = ({ onVoltar }) => {
     <div className="max-w-5xl">
       <button type="button" onClick={onVoltar} className="flex items-center gap-1 t-label mb-2 focus-ring" style={{ color: 'var(--text-secondary)' }}><ArrowLeft size={14} /> Estoque Beta 2</button>
       <PageHeader caminho={['Estoque', 'Movimentações']} title="Receber compras" subtitle="Confira o que chegou, tire a foto da nota e dê entrada no Central."
-        actions={<Button variante="primario" icone={<Plus size={16} />} onClick={() => setAberto('nova')}>Nota sem pedido</Button>} />
+        actions={<div className="flex gap-2"><Button icone={<ClipboardList size={16} />} onClick={() => setPedidoEdit('novo')}>Novo pedido</Button><Button variante="primario" icone={<Plus size={16} />} onClick={() => setAberto('nova')}>Nota sem pedido</Button></div>} />
       {erro && <div className="aviso aviso-perigo mb-3" role="alert">{erro}</div>}
       {aviso && <div className="aviso aviso-certo mb-3">{aviso}</div>}
       {!tela && !erro && <p className="t-body" style={{ color: 'var(--text-secondary)' }}>Carregando…</p>}
@@ -65,6 +70,7 @@ const Recebimento: React.FC<Props> = ({ onVoltar }) => {
                   <p className="t-caption" style={{ margin: 0 }}>pedido em {dataBR(p.data_pedido)} · {p.itens.length} item{p.itens.length !== 1 ? 's' : ''} · {brl(p.valor)}</p>
                 </div>
                 <Button variante="discreto" tamanho="sm" onClick={() => cancelar(p)}>Cancelar</Button>
+                <Button variante="discreto" tamanho="sm" icone={<Pencil size={14} />} onClick={() => setPedidoEdit(p)}>Editar</Button>
                 <Button variante="primario" tamanho="sm" icone={<Check size={14} />} onClick={() => setAberto(p)}>Receber</Button>
               </div>
             ))}
@@ -74,10 +80,10 @@ const Recebimento: React.FC<Props> = ({ onVoltar }) => {
             {tela.recentes.length === 0 && <p className="t-body px-5 py-4" style={{ margin: 0, color: 'var(--text-secondary)' }}>Nenhuma ainda.</p>}
             {tela.recentes.map(n => (
               <div key={n.id} className="flex flex-wrap items-center gap-3 px-5 py-2" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-                <div className="flex-1 min-w-[200px]">
+                <button type="button" onClick={() => setNotaAberta(n.id)} className="flex-1 min-w-[200px] text-left focus-ring rounded-md">
                   <p className="t-body" style={{ margin: 0, fontWeight: 500 }}>{n.fornecedor}</p>
-                  <p className="t-caption" style={{ margin: 0 }}>{dataBR(n.data_compra)} · {n.itens} item{n.itens !== 1 ? 's' : ''}{n.numero_documento ? ` · nota ${n.numero_documento}` : ''}</p>
-                </div>
+                  <p className="t-caption" style={{ margin: 0 }}>{dataBR(n.data_compra)} · {n.itens} item{n.itens !== 1 ? 's' : ''}{n.numero_documento ? ` · nota ${n.numero_documento}` : ''} · toque para ver</p>
+                </button>
                 <span className="t-body num">{brl(n.valor)}</span>
                 {n.arquivo ? <Button tamanho="sm" variante="discreto" icone={<FileText size={14} />} onClick={() => verFoto(n.arquivo!)}>Foto</Button> : <Badge variant="neutral">sem foto</Badge>}
               </div>
@@ -85,11 +91,150 @@ const Recebimento: React.FC<Props> = ({ onVoltar }) => {
           </SectionCard>
         </div>
       )}
+      <NotaDetalheModal id={notaAberta} onFechar={() => setNotaAberta(null)} onVerFoto={verFoto} />
     </div>
   );
 };
 
 export default Recebimento;
+
+// ── Nota recebida, aberta ───────────────────────────────────────────────────
+const NotaDetalheModal: React.FC<{ id: string | null; onFechar: () => void; onVerFoto: (c: string) => void }> = ({ id, onFechar, onVerFoto }) => {
+  const [nota, setNota] = useState<NotaDetalhe | null>(null);
+  const [erro, setErro] = useState<string | null>(null);
+  useEffect(() => {
+    if (!id) return;
+    setNota(null); setErro(null);
+    pedidoApi.nota(id).then(setNota).catch(e => setErro(e instanceof Error ? e.message : 'Erro'));
+  }, [id]);
+  return (
+    <Modal aberto={!!id} onFechar={onFechar} titulo={nota ? nota.fornecedor : 'Nota'} largura="lg"
+      descricao={nota ? `${dataBR(nota.data_compra)}${nota.numero_documento ? ` · nota ${nota.numero_documento}` : ''}${nota.criado_por ? ` · recebida por ${nota.criado_por}` : ''}` : undefined}
+      rodape={<>{nota?.arquivo && <Button icone={<FileText size={14} />} onClick={() => onVerFoto(nota.arquivo!)} className="mr-auto">Ver foto da nota</Button>}<Button onClick={onFechar}>Fechar</Button></>}>
+      {erro && <div className="aviso aviso-perigo" role="alert">{erro}</div>}
+      {!nota && !erro && <p className="t-body" style={{ margin: 0, color: 'var(--text-secondary)' }}>Carregando…</p>}
+      {nota && (
+        <div className="flex flex-col gap-2">
+          <div className="hidden md:grid t-caps px-2" style={{ gridTemplateColumns: '1fr 80px 80px 100px 100px', gap: 8, fontSize: 11, color: 'var(--text-secondary)' }}>
+            <span>Item</span><span className="text-right">Pedido</span><span className="text-right">Recebido</span><span className="text-right">Custo</span><span className="text-right">Total</span>
+          </div>
+          {nota.itens.map(i => {
+            const rec = i.quantidade_recebida ?? i.quantidade_pedida;
+            const diff = i.quantidade_recebida !== null && Number(i.quantidade_recebida) !== Number(i.quantidade_pedida);
+            return (
+              <div key={i.linha_id} className="grid items-center px-2 py-2 gap-2" style={{ gridTemplateColumns: '1fr 80px 80px 100px 100px', borderBottom: '1px solid var(--border-subtle)' }}>
+                <span className="t-body min-w-0 truncate">{i.nome} <span className="t-caption">{i.um}{i.data_validade ? ` · val. ${dataBR(i.data_validade)}` : ''}</span></span>
+                <span className="t-body num text-right" style={{ color: 'var(--text-secondary)' }}>{fmt(i.quantidade_pedida)}</span>
+                <span className={`t-body num text-right ${diff ? 'texto-atencao' : ''}`}>{fmt(rec)}</span>
+                <span className="t-body num text-right">{brl(i.custo_unitario)}</span>
+                <span className="t-body num text-right">{brl(i.custo_total)}</span>
+              </div>
+            );
+          })}
+          <div className="flex items-center justify-between px-2 pt-1">
+            <span className="t-caption">{CONDICOES.find(c => c.v === nota.condicao_pagamento)?.r || ''}{nota.observacoes ? ` · ${nota.observacoes}` : ''}</span>
+            <span className="t-subsec" style={{ margin: 0 }}>{brl(nota.valor)}</span>
+          </div>
+        </div>
+      )}
+    </Modal>
+  );
+};
+
+// ── Pedido ao fornecedor ────────────────────────────────────────────────────
+interface LinhaPedido { chave: number; linha_id: string | null; item_id: string; nome: string; um: string; quantidade: string; custo: string }
+const Pedido: React.FC<{ pedido: PedidoPendente | null; onVoltar: () => void; onFeito: (m: string) => Promise<void> }> = ({ pedido, onVoltar, onFeito }) => {
+  const [itens, setItens] = useState<ItemBasico[]>([]);
+  const [fornecedores, setFornecedores] = useState<Fornecedor[]>([]);
+  const [carregando, setCarregando] = useState(true);
+  const [erro, setErro] = useState<string | null>(null);
+  const [salvando, setSalvando] = useState(false);
+  const [fornecedorId, setFornecedorId] = useState(pedido?.fornecedor_id || '');
+  const [previsao, setPrevisao] = useState('');
+  const [condicao, setCondicao] = useState('a_vista');
+  const [obs, setObs] = useState(pedido?.observacoes || '');
+  const [linhas, setLinhas] = useState<LinhaPedido[]>(() => (pedido?.itens || []).map((i, k) => ({ chave: k + 1, linha_id: i.linha_id, item_id: i.item_id, nome: i.nome, um: i.um, quantidade: String(i.quantidade_pedida), custo: String(i.custo_unitario) })));
+  const [seq, setSeq] = useState((pedido?.itens.length || 0) + 1);
+
+  useEffect(() => {
+    let vivo = true;
+    (async () => {
+      try {
+        const [i, f] = await Promise.all([cadastrosApi.itensBasicos(), cadastrosApi.fornecedores()]);
+        if (!vivo) return;
+        setItens(i.filter(x => x.status !== 'inativo')); setFornecedores(f.filter(x => x.status !== 'inativo'));
+        if (pedido) { try { const n = await pedidoApi.nota(pedido.id); if (vivo) { setPrevisao(n.data_entrega_prevista || ''); setCondicao(n.condicao_pagamento || 'a_vista'); } } catch { /* opcional */ } }
+      } catch (e) { if (vivo) setErro(e instanceof Error ? e.message : 'Erro ao carregar'); }
+      finally { if (vivo) setCarregando(false); }
+    })();
+    return () => { vivo = false; };
+  }, [pedido]);
+
+  const itemPorId = useMemo(() => new Map(itens.map(i => [i.id, i])), [itens]);
+  const num = (s: string) => Number((s || '').replace(',', '.')) || 0;
+  const total = linhas.reduce((s, l) => s + num(l.quantidade) * num(l.custo), 0);
+  const mudar = (chave: number, patch: Partial<LinhaPedido>) => setLinhas(p => p.map(l => (l.chave === chave ? { ...l, ...patch } : l)));
+  const adicionar = () => { setLinhas(p => [...p, { chave: seq, linha_id: null, item_id: '', nome: '', um: '', quantidade: '', custo: '' }]); setSeq(s => s + 1); };
+  const escolherItem = (chave: number, id: string) => { const i = itemPorId.get(id); if (i) mudar(chave, { item_id: id, nome: i.nome.trim(), um: i.unidade_medida, custo: i.custo_medio ? String(i.custo_medio) : '' }); };
+  const nomeForn = fornecedores.find(f => f.id === fornecedorId)?.nome || '';
+
+  const salvar = async () => {
+    if (!fornecedorId) { setErro('Escolha o fornecedor.'); return; }
+    const validas = linhas.filter(l => l.item_id);
+    if (validas.length === 0) { setErro('Adicione pelo menos um item.'); return; }
+    if (validas.some(l => num(l.quantidade) <= 0)) { setErro('Toda linha precisa de quantidade.'); return; }
+    setSalvando(true); setErro(null);
+    try {
+      const r = await pedidoApi.salvar({ entrada_id: pedido?.id || null, fornecedor_id: fornecedorId, data_entrega_prevista: previsao || null, condicao_pagamento: condicao, observacoes: obs.trim() || null,
+        itens: validas.map(l => ({ linha_id: l.linha_id, item_id: l.item_id, quantidade: num(l.quantidade), custo_unitario: num(l.custo) })) });
+      await onFeito(`Pedido para ${nomeForn}: ${r.itens} item(ns), ${brl(r.valor_total)}. Fica em "Esperando chegar" até a nota.`);
+    } catch (e) { setErro(e instanceof Error ? e.message : 'Erro ao salvar'); }
+    finally { setSalvando(false); }
+  };
+
+  return (
+    <div className="max-w-4xl pb-28">
+      <button type="button" onClick={onVoltar} className="flex items-center gap-1 t-label mb-2 focus-ring" style={{ color: 'var(--text-secondary)' }}><ArrowLeft size={14} /> Receber compras</button>
+      <PageHeader caminho={['Estoque', 'Movimentações', 'Receber compras']} title={pedido ? `Editar pedido de ${pedido.fornecedor}` : 'Novo pedido'} subtitle="O que você pediu ao fornecedor. Quando a nota chegar, é só conferir e dar entrada." />
+      {erro && <div className="aviso aviso-perigo mb-3" role="alert">{erro}</div>}
+      <section className="card p-4 mb-4 grid grid-cols-1 md:grid-cols-2 gap-3">
+        <BuscaItem rotulo="Fornecedor" valor={nomeForn} opcoes={fornecedores.map(f => ({ id: f.id, nome: f.nome.trim(), sub: f.grupo || undefined }))} onEscolher={setFornecedorId} autoFocus={!pedido} />
+        <Input rotulo="Previsão de entrega" type="date" value={previsao} onChange={e => setPrevisao(e.target.value)} dica="Opcional" />
+        <Select rotulo="Pagamento" value={condicao} onChange={e => setCondicao(e.target.value)}>{CONDICOES.map(c => <option key={c.v} value={c.v}>{c.r}</option>)}</Select>
+        <Input rotulo="Observações" value={obs} onChange={e => setObs(e.target.value)} />
+      </section>
+      <section className="card">
+        <div className="px-4 py-3 flex items-center justify-between gap-3" style={{ borderBottom: '1px solid var(--border)' }}>
+          <h2 className="t-subsec" style={{ margin: 0 }}>Itens do pedido</h2>
+          <Button tamanho="sm" icone={<Plus size={14} />} onClick={adicionar} disabled={carregando}>Adicionar item</Button>
+        </div>
+        {linhas.length === 0 && <p className="t-body px-4 py-4" style={{ margin: 0, color: 'var(--text-secondary)' }}>Nenhum item ainda.</p>}
+        {linhas.map((l, i) => (
+          <div key={l.chave} className="px-4 py-3 grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_100px_110px_auto] gap-2 items-end" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+            {l.item_id
+              ? <div className="min-w-0 pb-1"><p className="t-body truncate" style={{ margin: 0, fontWeight: 500 }}>{l.nome}</p><p className="t-caption" style={{ margin: 0 }}>{l.um}</p></div>
+              : <BuscaItem rotulo={i === 0 ? 'Item' : undefined} valor="" opcoes={itens.map(x => ({ id: x.id, nome: x.nome.trim(), sub: `${x.categoria} · ${x.unidade_medida}` }))} onEscolher={id => escolherItem(l.chave, id)} autoFocus />}
+            <Input rotulo={i === 0 ? 'Quantidade' : undefined} aria-label="Quantidade" type="number" min={0} step="any" inputMode="decimal" value={l.quantidade} onChange={e => mudar(l.chave, { quantidade: e.target.value })} />
+            <Input rotulo={i === 0 ? 'Custo unit.' : undefined} aria-label="Custo unitário" type="number" min={0} step="any" inputMode="decimal" value={l.custo} onChange={e => mudar(l.chave, { custo: e.target.value })} dica={i === 0 ? 'estimado' : undefined} />
+            <div className="flex items-center gap-2 pb-1 justify-end">
+              <span className="t-body num" style={{ minWidth: 80, textAlign: 'right' }}>{brl(num(l.quantidade) * num(l.custo))}</span>
+              <button type="button" className="btn-icon btn-icon-danger" aria-label="Tirar linha" onClick={() => setLinhas(p => p.filter(x => x.chave !== l.chave))}><X size={14} /></button>
+            </div>
+          </div>
+        ))}
+      </section>
+      <div className="fixed bottom-0 left-0 right-0 z-30 px-4 py-3 lg:pl-[calc(232px+28px)]" style={{ background: 'var(--bg-dark)', borderTop: '1px solid var(--border)' }}>
+        <div className="max-w-4xl flex items-center justify-between gap-3">
+          <span className="t-body" style={{ color: 'var(--text-secondary)' }}>{linhas.filter(l => l.item_id).length} item(ns) · <strong style={{ color: 'var(--text-primary)' }}>{brl(total)}</strong></span>
+          <div className="flex gap-2">
+            <Button onClick={onVoltar} disabled={salvando}>Cancelar</Button>
+            <Button variante="primario" icone={<Check size={16} />} onClick={salvar} carregando={salvando} disabled={carregando}>Salvar pedido</Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 // ── Uma nota ────────────────────────────────────────────────────────────────
 interface Linha { chave: number; linha_id: string | null; item_id: string; nome: string; um: string; pedida: number | null; recebida: string; custo: string; validade: string }
