@@ -16,6 +16,7 @@ import Itens from '../components/beta2/cadastros/Itens';
 import Estoques from '../components/beta2/cadastros/Estoques';
 import Fornecedores from '../components/beta2/cadastros/Fornecedores';
 import Fichas from '../components/beta2/cadastros/Fichas';
+import ConfigurarCentral from '../components/beta2/ConfigurarCentral';
 import Compras from '../components/inventory/Compras';
 import RelatoriosEstoque from '../components/inventory/RelatoriosEstoque';
 import KardexProduto from '../components/inventory/KardexProduto';
@@ -23,8 +24,8 @@ import MovimentacoesEstoque from '../components/inventory/MovimentacoesEstoque';
 import ContagemEstoque from '../components/inventory/contagem/ContagemEstoque';
 
 /** Beta 2 no React, sem iframe. Cadastros oficiais são compartilhados; fluxos operacionais usam dados simulados. */
-type View = 'menu' | 'inicio' | 'itens' | 'fichas' | 'fornecedores' | 'estoques' | 'inventario' | 'recebimento' | 'reposicao' | 'fechamento' | 'politica' | 'setores' | 'kits' | 'emergencias' | 'gestao' | 'compras' | 'relatorios' | 'kardex' | 'movimentacoes' | 'contagem_central';
-const VIEWS: View[] = ['menu','inicio','itens','fichas','fornecedores','estoques','inventario','recebimento','reposicao','fechamento','politica','setores','kits','emergencias','gestao','compras','relatorios','kardex','movimentacoes','contagem_central'];
+type View = 'menu' | 'inicio' | 'itens' | 'fichas' | 'fornecedores' | 'estoques' | 'inventario' | 'recebimento' | 'reposicao' | 'fechamento' | 'politica' | 'setores' | 'kits' | 'emergencias' | 'gestao' | 'compras' | 'relatorios' | 'kardex' | 'movimentacoes' | 'contagem_central' | 'central';
+const VIEWS: View[] = ['menu','inicio','itens','fichas','fornecedores','estoques','inventario','recebimento','reposicao','fechamento','politica','setores','kits','emergencias','gestao','compras','relatorios','kardex','movimentacoes','contagem_central','central'];
 type Product = { id:string; nome:string; codigo:string; categoria:string; tipo:string; unidade:string; embalagem:string; fator:number; fornecedorId:string; endereco:string; minimo:number; ponto:number; controle:string; classe:string; cmv:boolean; central:number };
 const productsSeed:Product[]=[
 {id:'stella',nome:'Stella Pure Gold 600 ml',codigo:'BEV-001',categoria:'Bebidas',tipo:'insumo',unidade:'unidade',embalagem:'Caixa com 12',fator:12,fornecedorId:'dist',endereco:'Central seco / Bebidas',minimo:60,ponto:72,controle:'vende',classe:'pedido',cmv:true,central:120},
@@ -35,7 +36,7 @@ const productsSeed:Product[]=[
 ];
 const clone=<T,>(v:T):T=>JSON.parse(JSON.stringify(v)) as T;
 const num=(n:number)=>n.toLocaleString('pt-BR',{maximumFractionDigits:2});
-const TITULOS:Record<View,string>={menu:'Estoque Beta 2',inicio:'Rotina do dia (demonstração)',itens:'Itens do estoque',fichas:'Fichas técnicas',fornecedores:'Fornecedores',estoques:'Estoques',inventario:'Inventário do Central (demonstração)',recebimento:'Receber compras',reposicao:'Repor os setores',fechamento:'Fechamento dos setores',politica:'Política de controle',setores:'Configurar setores',kits:'Kits de limpeza',emergencias:'Retiradas e pedidos',gestao:'Aprovar diferenças',compras:'Compras',relatorios:'Relatórios',kardex:'Kardex por produto',movimentacoes:'Movimentações',contagem_central:'Contagem do Central'};
+const TITULOS:Record<View,string>={menu:'Estoque Beta 2',inicio:'Rotina do dia (demonstração)',itens:'Itens do estoque',fichas:'Fichas técnicas',fornecedores:'Fornecedores',estoques:'Estoques',inventario:'Inventário do Central (demonstração)',recebimento:'Receber compras',reposicao:'Repor os setores',fechamento:'Fechamento dos setores',politica:'Política de controle',setores:'Configurar setores',kits:'Kits de limpeza',emergencias:'Retiradas e pedidos',gestao:'Aprovar diferenças',compras:'Compras',relatorios:'Relatórios',kardex:'Kardex por produto',movimentacoes:'Movimentações',contagem_central:'Contagem do Central',central:'Configurar Central'};
 /** grava = mexe em dado real · demo = só na tela · breve = ainda não existe */
 type Estado='grava'|'demo'|'breve';
 type MenuItem={v?:View;n:string;icon:React.ElementType;estado:Estado;dica?:string};
@@ -49,7 +50,7 @@ const GRUPOS:MenuGrupo[]=[
  ]},
  {id:'configuracao',title:'2 · Configuração',hint:'O que fica onde, quanto deve ter, como sai',items:[
   {v:'setores',n:'Configurar setores e kits',icon:Settings2,estado:'grava',dica:'itens, nível e saída por setor'},
-  {n:'Configurar Central',icon:Sliders,estado:'breve',dica:'ponto de pedido calculado'}
+  {v:'central',n:'Configurar Central',icon:Sliders,estado:'grava',dica:'ponto de pedido: seu número ou calculado'}
  ]},
  {id:'movimentacoes',title:'3 · Movimentações',hint:'Entradas, reposição, retiradas, empréstimos',items:[
   {v:'recebimento',n:'Receber compras',icon:Truck,estado:'demo'},
@@ -76,7 +77,7 @@ const GRUPOS:MenuGrupo[]=[
   {v:'kits',n:'Kits de limpeza',icon:SprayCan,estado:'grava',dica:'repor do Central num toque'}
  ]}
 ];
-const REAIS:View[]=['itens','fichas','estoques','fornecedores','setores','kits','compras','relatorios','kardex','movimentacoes','contagem_central'];
+const REAIS:View[]=['itens','fichas','estoques','fornecedores','setores','kits','central','compras','relatorios','kardex','movimentacoes','contagem_central','central'];
 const EstoqueBeta2:React.FC=()=>{
 // Abre direto em Configurar setores quando a URL traz ?setor=…
 const[params,setParams]=useSearchParams();
@@ -241,6 +242,7 @@ if(view==='itens')return <div>{voltar}<Itens/></div>;
 if(view==='estoques')return <div>{voltar}<Estoques/></div>;
 if(view==='fornecedores')return <div>{voltar}<Fornecedores/></div>;
 if(view==='fichas')return <div>{voltar}<Fichas/></div>;
+if(view==='central')return <div>{voltar}<ConfigurarCentral/></div>;
 
 // ── Telas reais do módulo atual, embutidas no Beta 2 ──
 if(view==='compras'||view==='relatorios'||view==='kardex'||view==='movimentacoes'||view==='contagem_central')return <div>
