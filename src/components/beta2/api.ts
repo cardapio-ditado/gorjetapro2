@@ -199,3 +199,15 @@ export const movimentosApi = {
     return data as { requisicao_id: string; confirmado_por: string };
   },
 };
+
+// ── Movimentações (histórico) ────────────────────────────────────────────────
+export interface MovFiltro { de: string; ate: string; tipo: string | null; origem: string | null; estoque_id: string | null; busca: string | null; limite?: number; pular?: number }
+export interface MovLinhaHist { id: string; data: string; criado_em: string; tipo: string; origem: string; item: string; um: string | null; categoria: string | null; item_id: string | null; quantidade: number; custo_unitario: number | null; custo_total: number | null; de_nome: string | null; para_nome: string | null; motivo: string | null; observacoes: string | null; quem: string | null }
+export interface MovLista { total: number; totais: { entradas: number; valor_entradas: number; saidas: number; valor_saidas: number; transferencias: number; ajustes: number }; linhas: MovLinhaHist[] }
+export const movimentacoesApi = {
+  async lista(p: MovFiltro): Promise<MovLista> {
+    const { data, error } = await supabase.rpc('fn_movimentacoes_lista', { p });
+    lancar(error);
+    return data as MovLista;
+  },
+};

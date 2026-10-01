@@ -18,10 +18,10 @@ import ConfigurarCentral from '../components/beta2/ConfigurarCentral';
 import Recebimento from '../components/beta2/Recebimento';
 import Reposicao from '../components/beta2/Reposicao';
 import Movimentos from '../components/beta2/Movimentos';
+import Movimentacoes from '../components/beta2/Movimentacoes';
 import Compras from '../components/inventory/Compras';
 import RelatoriosEstoque from '../components/inventory/RelatoriosEstoque';
 import KardexProduto from '../components/inventory/KardexProduto';
-import MovimentacoesEstoque from '../components/inventory/MovimentacoesEstoque';
 import ContagemEstoque from '../components/inventory/contagem/ContagemEstoque';
 
 /** Beta 2 no React, sem iframe. Cadastros oficiais são compartilhados; fluxos operacionais usam dados simulados. */
@@ -58,7 +58,7 @@ const GRUPOS:MenuGrupo[]=[
   {v:'reposicao',n:'Repor os setores',icon:Store,estado:'grava',dica:'o que falta até o nível, sai do Central num toque'},
   {v:'emergencias',n:'Retiradas e pedidos',icon:Clock3,estado:'grava',dica:'pedido do setor; retirada fora de hora com conferência'},
   {n:'Empréstimo com vizinhos',icon:Handshake,estado:'breve'},
-  {v:'movimentacoes',n:'Movimentações (histórico)',icon:ArrowLeftRight,estado:'grava'}
+  {v:'movimentacoes',n:'Movimentações (histórico)',icon:ArrowLeftRight,estado:'grava',dica:'tudo que entrou, saiu e andou'}
  ]},
  {id:'contagem',title:'4 · Contagem',hint:'Central por zonas, setores todo dia, auditoria',items:[
   {v:'contagem_central',n:'Contagem do Central',icon:ClipboardCheck,estado:'grava',dica:'por zonas, no ciclo'},
@@ -248,12 +248,12 @@ if(view==='reposicao')return <Reposicao responsavel={usuario?.nome_completo??nul
 if(view==='emergencias')return <Movimentos responsavel={usuario?.nome_completo??null} onVoltar={()=>go('menu')}/>;
 
 // ── Telas reais do módulo atual, embutidas no Beta 2 ──
-if(view==='compras'||view==='relatorios'||view==='kardex'||view==='movimentacoes'||view==='contagem_central')return <div>
+if(view==='movimentacoes')return <Movimentacoes onVoltar={()=>go('menu')}/>;
+if(view==='compras'||view==='relatorios'||view==='kardex'||view==='contagem_central')return <div>
   <div className="flex items-center gap-3 flex-wrap mb-3">{voltar}<span className="t-subsec">{TITULOS[view]}</span><Badge variant="success">grava</Badge></div>
   {view==='compras'&&<Compras/>}
   {view==='relatorios'&&<RelatoriosEstoque/>}
   {view==='kardex'&&<KardexProduto/>}
-  {view==='movimentacoes'&&<MovimentacoesEstoque/>}
   {view==='contagem_central'&&<ContagemEstoque/>}
 </div>;
 
