@@ -18,8 +18,7 @@ import Movimentacoes from '../components/beta2/Movimentacoes';
 import Contagem from '../components/beta2/Contagem';
 import Aprovacoes from '../components/beta2/Aprovacoes';
 import Compras from '../components/beta2/compras/Compras';
-import RelatoriosEstoque from '../components/inventory/RelatoriosEstoque';
-import KardexProduto from '../components/inventory/KardexProduto';
+import Relatorios from '../components/beta2/relatorios/Relatorios';
 import ContagemEstoque from '../components/inventory/contagem/ContagemEstoque';
 
 /**
@@ -29,12 +28,12 @@ import ContagemEstoque from '../components/inventory/contagem/ContagemEstoque';
  */
 type View = 'menu' | 'itens' | 'fichas' | 'estoques' | 'fornecedores' | 'setores' | 'central' | 'kits'
   | 'recebimento' | 'reposicao' | 'emergencias' | 'movimentacoes'
-  | 'contagem' | 'contagem_central' | 'aprovacoes' | 'compras' | 'relatorios' | 'kardex';
-const VIEWS: View[] = ['menu', 'itens', 'fichas', 'estoques', 'fornecedores', 'setores', 'central', 'kits', 'recebimento', 'reposicao', 'emergencias', 'movimentacoes', 'contagem', 'contagem_central', 'aprovacoes', 'compras', 'relatorios', 'kardex'];
+  | 'contagem' | 'contagem_central' | 'aprovacoes' | 'compras' | 'relatorios' | 'kardex' | 'kardex_fornecedor';
+const VIEWS: View[] = ['menu', 'itens', 'fichas', 'estoques', 'fornecedores', 'setores', 'central', 'kits', 'recebimento', 'reposicao', 'emergencias', 'movimentacoes', 'contagem', 'contagem_central', 'aprovacoes', 'compras', 'relatorios', 'kardex', 'kardex_fornecedor'];
 const TITULOS: Record<View, string> = {
   menu: 'Estoque Beta 2', itens: 'Itens do estoque', fichas: 'Fichas técnicas', estoques: 'Estoques', fornecedores: 'Fornecedores', setores: 'Configurar setores', central: 'Configurar Central', kits: 'Kits de limpeza',
   recebimento: 'Receber compras', reposicao: 'Repor os setores', emergencias: 'Retiradas e pedidos', movimentacoes: 'Movimentações',
-  contagem: 'Contagem dos setores', contagem_central: 'Contagem do Central', aprovacoes: 'Aprovar diferenças', compras: 'Compras', relatorios: 'Relatórios', kardex: 'Kardex por produto',
+  contagem: 'Contagem dos setores', contagem_central: 'Contagem do Central', aprovacoes: 'Aprovar diferenças', compras: 'Compras', relatorios: 'Relatórios', kardex: 'Kardex por produto', kardex_fornecedor: 'Kardex por fornecedor',
 };
 /** grava = mexe em dado real · breve = ainda não existe */
 type Estado = 'grava' | 'breve';
@@ -67,9 +66,9 @@ const GRUPOS: MenuGrupo[] = [
     { v: 'compras', n: 'Compras', icon: ShoppingCart, estado: 'grava' },
   ] },
   { id: 'relatorios', title: '6 · Relatórios', hint: 'Inventário, kardex, contagens, CMV', items: [
-    { v: 'relatorios', n: 'Relatórios', icon: BarChart3, estado: 'grava' },
-    { v: 'kardex', n: 'Kardex por produto', icon: History, estado: 'grava' },
-    { n: 'Kardex por fornecedor · CMV', icon: FileText, estado: 'breve' },
+    { v: 'relatorios', n: 'Relatórios', icon: BarChart3, estado: 'grava', dica: 'treze relatórios, só leitura, exportam para o Excel' },
+    { v: 'kardex', n: 'Kardex por produto', icon: History, estado: 'grava', dica: 'extrato de um item com saldo linha a linha' },
+    { v: 'kardex_fornecedor', n: 'Kardex por fornecedor · CMV', icon: FileText, estado: 'grava', dica: 'preços por fornecedor e custo da mercadoria vendida' },
   ] },
   { id: 'kits', title: '7 · Kits de limpeza', hint: 'Garçons, cozinha, bar e serviços gerais', items: [
     { v: 'kits', n: 'Kits de limpeza', icon: SprayCan, estado: 'grava', dica: 'repor do Central num toque' },
@@ -105,12 +104,15 @@ const EstoqueBeta2: React.FC = () => {
   if (view === 'contagem') return <Contagem responsavel={nome} onVoltar={() => go('menu')} onAprovacoes={() => go('aprovacoes')} />;
   if (view === 'aprovacoes') return <Aprovacoes onVoltar={() => go('menu')} />;
   if (view === 'compras') return <Compras onVoltar={() => go('menu')} />;
+  if (view === 'relatorios' || view === 'kardex' || view === 'kardex_fornecedor') {
+    // ?tela=relatorios&rel=<tipo> abre um relatório; os atalhos do menu só mudam o rel.
+    const rel = view === 'kardex' ? 'kardex_produto' : view === 'kardex_fornecedor' ? 'kardex_fornecedor' : params.get('rel');
+    return <Relatorios tipo={rel} itemId={params.get('item')} onVoltar={() => go('menu')} onAbrir={t => go('relatorios', t ? { rel: t } : undefined)} />;
+  }
 
-  if (view === 'relatorios' || view === 'kardex' || view === 'contagem_central') return <div>
+  if (view === 'contagem_central') return <div>
     <div className="flex items-center gap-3 flex-wrap mb-3">{voltar}<span className="t-subsec">{TITULOS[view]}</span><Badge variant="success">grava</Badge></div>
-    {view === 'relatorios' && <RelatoriosEstoque />}
-    {view === 'kardex' && <KardexProduto />}
-    {view === 'contagem_central' && <ContagemEstoque />}
+    <ContagemEstoque />
   </div>;
 
   return <div className="max-w-5xl">
