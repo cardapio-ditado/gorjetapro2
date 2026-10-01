@@ -20,3 +20,7 @@
   aprovacoes_pendentes.
   (Corpos aplicados via SQL nesta mesma data; a referência é o banco.)
 */
+
+-- Correção (02/10): a auditoria conta só o portfólio do setor (itens_estoque_niveis);
+-- a diária só o que sai por contagem. fn_contagem_setor_abrir e fn_contagem_setor_itens
+-- filtram pelo portfólio, inclusive em contagens abertas antes da correção.
