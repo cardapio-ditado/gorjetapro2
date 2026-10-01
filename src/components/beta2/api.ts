@@ -95,3 +95,41 @@ export const centralApi = {
     return data as { ligados: number; aplicado: { atualizados: number } };
   },
 };
+
+// ── Receber compras ──────────────────────────────────────────────────────────
+export interface PedidoItem { linha_id: string; item_id: string; nome: string; um: string; quantidade_pedida: number; custo_unitario: number }
+export interface PedidoPendente { id: string; fornecedor_id: string | null; fornecedor: string; data_pedido: string; valor: number; observacoes: string | null; itens: PedidoItem[] }
+export interface NotaRecente { id: string; fornecedor: string; data_compra: string; valor: number; numero_documento: string | null; arquivo: string | null; criado_em: string; itens: number }
+export interface RecebimentoTela { pendentes: PedidoPendente[]; recentes: NotaRecente[] }
+export interface LinhaRecebida { linha_id: string | null; item_id: string; quantidade_recebida: number; custo_unitario: number; data_validade: string | null }
+export const BUCKET_NOTAS = 'notas-fiscais';
+export const recebimentoApi = {
+  async tela(): Promise<RecebimentoTela> {
+    const { data, error } = await supabase.rpc('fn_recebimento_tela');
+    lancar(error);
+    return data as RecebimentoTela;
+  },
+  async confirmar(p: { entrada_id: string | null; fornecedor_id: string | null; numero_documento: string; data_compra: string; condicao_pagamento: string; observacoes: string | null; arquivo: string | null; itens: LinhaRecebida[] }) {
+    const { data, error } = await supabase.rpc('fn_recebimento_confirmar', { p });
+    lancar(error);
+    return data as { entrada_id: string; valor_total: number; itens: number; movimentacoes: number };
+  },
+  async cancelar(entradaId: string, motivo: string | null) {
+    const { data, error } = await supabase.rpc('fn_recebimento_cancelar', { p_entrada: entradaId, p_motivo: motivo });
+    lancar(error);
+    return data as { entrada_id: string; status: string };
+  },
+  async subirFoto(arquivo: File): Promise<string> {
+    const ext = (arquivo.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg';
+    const hoje = new Date();
+    const caminho = `recebimentos/${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}/${crypto.randomUUID()}.${ext}`;
+    const { error } = await supabase.storage.from(BUCKET_NOTAS).upload(caminho, arquivo, { cacheControl: '3600', upsert: false, contentType: arquivo.type || undefined });
+    lancar(error as { message: string } | null);
+    return caminho;
+  },
+  async urlFoto(caminho: string): Promise<string> {
+    const { data, error } = await supabase.storage.from(BUCKET_NOTAS).createSignedUrl(caminho, 600);
+    lancar(error as { message: string } | null);
+    return data!.signedUrl;
+  },
+};
