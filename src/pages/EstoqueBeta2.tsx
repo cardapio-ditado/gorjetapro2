@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import RotinaEstoquistaBeta2 from '../components/estoque-beta2/RotinaEstoquistaBeta2';
-import EmergenciasBeta2, { type EmergencyPreview } from '../components/estoque-beta2/EmergenciasBeta2';
 import FechamentoBeta2 from '../components/estoque-beta2/FechamentoBeta2';
 import { useControleZigBeta2, type FechamentoPreview, cuiabaDate, dataAnterior, diaAuditoria } from '../components/estoque-beta2/FechamentoDadosBeta2';
 import { ArrowLeft, ArrowRight, Package, Users, ClipboardCheck, Truck, Store, Clock3, BarChart3, RotateCcw, Warehouse, BookOpen, Settings2, SprayCan, ShoppingCart, FileText, ArrowLeftRight, Handshake, ShieldCheck, Sliders, History, Sparkles } from 'lucide-react';
@@ -18,6 +17,7 @@ import Fichas from '../components/beta2/cadastros/Fichas';
 import ConfigurarCentral from '../components/beta2/ConfigurarCentral';
 import Recebimento from '../components/beta2/Recebimento';
 import Reposicao from '../components/beta2/Reposicao';
+import Movimentos from '../components/beta2/Movimentos';
 import Compras from '../components/inventory/Compras';
 import RelatoriosEstoque from '../components/inventory/RelatoriosEstoque';
 import KardexProduto from '../components/inventory/KardexProduto';
@@ -56,7 +56,7 @@ const GRUPOS:MenuGrupo[]=[
  {id:'movimentacoes',title:'3 · Movimentações',hint:'Entradas, reposição, retiradas, empréstimos',items:[
   {v:'recebimento',n:'Receber compras',icon:Truck,estado:'grava',dica:'nota com foto, confere e dá entrada'},
   {v:'reposicao',n:'Repor os setores',icon:Store,estado:'grava',dica:'o que falta até o nível, sai do Central num toque'},
-  {v:'emergencias',n:'Retiradas e pedidos',icon:Clock3,estado:'demo',dica:'noturnas, com confirmação'},
+  {v:'emergencias',n:'Retiradas e pedidos',icon:Clock3,estado:'grava',dica:'pedido do setor; retirada fora de hora com conferência'},
   {n:'Empréstimo com vizinhos',icon:Handshake,estado:'breve'},
   {v:'movimentacoes',n:'Movimentações (histórico)',icon:ArrowLeftRight,estado:'grava'}
  ]},
@@ -78,7 +78,7 @@ const GRUPOS:MenuGrupo[]=[
   {v:'kits',n:'Kits de limpeza',icon:SprayCan,estado:'grava',dica:'repor do Central num toque'}
  ]}
 ];
-const REAIS:View[]=['itens','fichas','estoques','fornecedores','setores','kits','central','recebimento','reposicao','compras','relatorios','kardex','movimentacoes','contagem_central','central'];
+const REAIS:View[]=['itens','fichas','estoques','fornecedores','setores','kits','central','recebimento','reposicao','emergencias','compras','relatorios','kardex','movimentacoes','contagem_central','central'];
 const EstoqueBeta2:React.FC=()=>{
 // Abre direto em Configurar setores quando a URL traz ?setor=…
 const[params,setParams]=useSearchParams();
@@ -95,8 +95,8 @@ const[products,setProducts]=useState<Product[]>(()=>clone(productsSeed));
 const[notice,setNotice]=useState('');
 const[error,setError]=useState('');
 const[received,setReceived]=useState(false);
-const[requests,setRequests]=useState<EmergencyPreview[]>([]);
-const[focusNightReview,setFocusNightReview]=useState(false);
+const[requests,setRequests]=useState<Array<{kind:string;receiptConfirmedAt?:string}>>([]);
+const[,setFocusNightReview]=useState(false);
 const[fechamentos,setFechamentos]=useState<FechamentoPreview[]>([]);
 const[restockViewed,setRestockViewed]=useState(false);
 const dadosFechamento=useControleZigBeta2();
@@ -245,6 +245,7 @@ if(view==='fichas')return <div>{voltar}<Fichas/></div>;
 if(view==='central')return <div>{voltar}<ConfigurarCentral/></div>;
 if(view==='recebimento')return <Recebimento onVoltar={()=>go('menu')}/>;
 if(view==='reposicao')return <Reposicao responsavel={usuario?.nome_completo??null} onVoltar={()=>go('menu')}/>;
+if(view==='emergencias')return <Movimentos responsavel={usuario?.nome_completo??null} onVoltar={()=>go('menu')}/>;
 
 // ── Telas reais do módulo atual, embutidas no Beta 2 ──
 if(view==='compras'||view==='relatorios'||view==='kardex'||view==='movimentacoes'||view==='contagem_central')return <div>
@@ -321,27 +322,6 @@ return <div>
 />}
 
 {view==='inventario'&&<><p className="b2-eyebrow">Posição e contagem</p><h1>Inventário</h1><p className="b2-lead">Contagem do Central com avaliação de divergências por Cristiano.</p><div className="b2-card"><div className="b2-topline"><h2>Contagem por endereço</h2><span className="b2-pill">{countApproved?'Aprovado':countSent?'Aguardando Cristiano':'Em andamento'}</span></div><div className="b2-table-scroll"><table><thead><tr><th>Item</th><th>Local</th><th>Teórico</th><th>Físico</th><th>Diferença</th></tr></thead><tbody>{products.map(p=>{const fisico=count[p.id]??p.central,diff=fisico-p.central;return <tr key={p.id}><td>{p.nome}</td><td>{p.endereco}</td><td>{num(p.central)}</td><td><input type="number" min="0" value={fisico} disabled={countSent} onChange={e=>setCount(c=>({...c,[p.id]:Number(e.target.value)}))}/></td><td><span className={'b2-pill '+(diff?'red':'green')}>{num(diff)}</span></td></tr>})}</tbody></table></div><div style={{marginTop:18}}>{countSent?<button className="b2-btn alt" onClick={()=>go('gestao')}>Ver fila do Cristiano →</button>:<button className="b2-btn" onClick={()=>{setCountSent(true);setNotice('Contagem enviada apenas nesta simulação.')}}>Enviar contagem →</button>}</div></div></>}
-{view==='emergencias'&&<EmergenciasBeta2
- requests={requests}
- startOnNightReview={focusNightReview}
- onSave={request=>{
-  setRequests(prev=>[request,...prev]);
-  if(request.kind==='noturna')setNightReviewed(false);
-  setNotice('Solicitação ou retirada registrada somente na demonstração.');
- }}
- onDispatch={(id,employeeName)=>{
-  setRequests(prev=>prev.map(req=>req.id===id&&req.status==='pendente'
-   ?{...req,status:'entregue',withdrawnBy:employeeName,dispatchedAt:new Date().toISOString()}
-   :req));
-  setNotice('Saída registrada somente na prévia. O recebimento ainda precisa ser confirmado pelo setor de destino.');
- }}
- onConfirmReceipt={(id,employeeName)=>{
-  setRequests(prev=>prev.map(req=>req.id===id&&req.status==='entregue'&&!req.receiptConfirmedAt&&req.withdrawnBy!==employeeName
-   ?{...req,receiptConfirmedBy:employeeName,receiptConfirmedAt:new Date().toISOString()}
-   :req));
-  setNotice('Recebimento confirmado somente na prévia, sem nova saída ou entrada nos saldos oficiais.');
- }}
-/>}
 {view==='fechamento'&&<FechamentoBeta2
  mode="fechamento"
  dados={dadosFechamento}

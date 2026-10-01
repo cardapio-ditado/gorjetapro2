@@ -7,6 +7,7 @@ export interface Hoje {
   gestor: boolean;
   aprovador: boolean;
   pedidos_a_entregar: number;
+  retiradas_sem_confirmacao: number;
   repor_setores: number;
   notas_pendentes: number;
   zonas_central: { vencidas: number; em_andamento: number; total: number };
@@ -163,5 +164,38 @@ export const reposicaoApi = {
     const { data, error } = await supabase.rpc('fn_repor_setor', { p_estoque: estoqueId, p_itens: itens, p_responsavel: responsavel });
     lancar(error);
     return data as { requisicao_id: string; setor: string; itens: number; faltou: string[]; antigas_encerradas: number; movimentacoes: number };
+  },
+};
+
+// ── Retiradas e pedidos ──────────────────────────────────────────────────────
+export interface MovLinha { item_id: string; quantidade: number }
+export interface MovItem { item_id: string; nome: string; um: string; solicitada: number; entregue: number | null; central: number; observacao: string | null }
+export interface MovRequisicao { id: string; numero: string; tipo: 'pedido' | 'retirada'; status: string; quem: string; setor: string | null; estoque_destino_id: string; destino: string; quando: string; data_conclusao: string | null; observacoes: string | null; confirmado_nome: string | null; confirmado_em: string | null; itens: MovItem[]; entregue_por: string | null }
+export interface MovTela { setores: Array<{ id: string; nome: string }>; pedidos_abertos: MovRequisicao[]; retiradas_sem_confirmacao: MovRequisicao[]; recentes: MovRequisicao[] }
+export const movimentosApi = {
+  async tela(): Promise<MovTela> {
+    const { data, error } = await supabase.rpc('fn_movimentos_tela');
+    lancar(error);
+    return data as MovTela;
+  },
+  async pedidoCriar(p: { estoque_id: string; quem: string; observacoes: string | null; itens: MovLinha[] }) {
+    const { data, error } = await supabase.rpc('fn_pedido_interno_criar', { p });
+    lancar(error);
+    return data as { requisicao_id: string; setor: string; itens: number };
+  },
+  async pedidoEntregar(id: string, itens: MovLinha[], responsavel: string | null) {
+    const { data, error } = await supabase.rpc('fn_pedido_interno_entregar', { p_id: id, p_itens: itens, p_responsavel: responsavel });
+    lancar(error);
+    return data as { requisicao_id: string; itens: number; faltou: string[]; movimentacoes: number };
+  },
+  async retiradaRegistrar(p: { estoque_id: string; quem: string; observacoes: string | null; itens: MovLinha[] }) {
+    const { data, error } = await supabase.rpc('fn_retirada_registrar', { p });
+    lancar(error);
+    return data as { requisicao_id: string; setor: string; itens: number; ficou_negativo: string[] };
+  },
+  async retiradaConfirmar(id: string, quem: string) {
+    const { data, error } = await supabase.rpc('fn_retirada_confirmar', { p_id: id, p_quem: quem });
+    lancar(error);
+    return data as { requisicao_id: string; confirmado_por: string };
   },
 };
