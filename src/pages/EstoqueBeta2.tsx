@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import CadastrosBeta2, { type Cadastro } from '../components/estoque-beta2/CadastrosBeta2';
 import RotinaEstoquistaBeta2 from '../components/estoque-beta2/RotinaEstoquistaBeta2';
 import RecebimentoBeta2, { type NotePreview } from '../components/estoque-beta2/RecebimentoBeta2';
 import EmergenciasBeta2, { type EmergencyPreview } from '../components/estoque-beta2/EmergenciasBeta2';
@@ -13,6 +12,10 @@ import ConfigurarSetores from './ConfigurarSetores';
 import '../components/estoque-beta2/pele-beta2.css';
 import Hoje, { type DestinoHoje } from '../components/beta2/Hoje';
 import Kits from '../components/beta2/Kits';
+import Itens from '../components/beta2/cadastros/Itens';
+import Estoques from '../components/beta2/cadastros/Estoques';
+import Fornecedores from '../components/beta2/cadastros/Fornecedores';
+import Fichas from '../components/beta2/cadastros/Fichas';
 import Compras from '../components/inventory/Compras';
 import RelatoriosEstoque from '../components/inventory/RelatoriosEstoque';
 import KardexProduto from '../components/inventory/KardexProduto';
@@ -234,6 +237,10 @@ const voltar=<Button variante="discreto" tamanho="sm" icone={<ArrowLeft size={14
 // ── Telas novas, no padrão do kit, gravando de verdade ──
 if(view==='setores')return <div>{voltar}<ConfigurarSetores/></div>;
 if(view==='kits')return <div>{voltar}<Kits responsavel={usuario?.nome_completo??null} onConfigurar={id=>go('setores',{setor:id,passo:'1'})}/></div>;
+if(view==='itens')return <div>{voltar}<Itens/></div>;
+if(view==='estoques')return <div>{voltar}<Estoques/></div>;
+if(view==='fornecedores')return <div>{voltar}<Fornecedores/></div>;
+if(view==='fichas')return <div>{voltar}<Fichas/></div>;
 
 // ── Telas reais do módulo atual, embutidas no Beta 2 ──
 if(view==='compras'||view==='relatorios'||view==='kardex'||view==='movimentacoes'||view==='contagem_central')return <div>
@@ -309,7 +316,6 @@ return <div>
  onHandoff={()=>{setHandoffDone(true);setNotice('Roteiro encerrado apenas na simulação.');}}
 />}
 
-{(['itens','fichas','estoques','fornecedores'] as View[]).includes(view) && <CadastrosBeta2 view={view as Cadastro} onNavigate={v=>go(v)}/>}
 {view==='inventario'&&<><p className="b2-eyebrow">Posição e contagem</p><h1>Inventário</h1><p className="b2-lead">Contagem do Central com avaliação de divergências por Cristiano.</p><div className="b2-card"><div className="b2-topline"><h2>Contagem por endereço</h2><span className="b2-pill">{countApproved?'Aprovado':countSent?'Aguardando Cristiano':'Em andamento'}</span></div><div className="b2-table-scroll"><table><thead><tr><th>Item</th><th>Local</th><th>Teórico</th><th>Físico</th><th>Diferença</th></tr></thead><tbody>{products.map(p=>{const fisico=count[p.id]??p.central,diff=fisico-p.central;return <tr key={p.id}><td>{p.nome}</td><td>{p.endereco}</td><td>{num(p.central)}</td><td><input type="number" min="0" value={fisico} disabled={countSent} onChange={e=>setCount(c=>({...c,[p.id]:Number(e.target.value)}))}/></td><td><span className={'b2-pill '+(diff?'red':'green')}>{num(diff)}</span></td></tr>})}</tbody></table></div><div style={{marginTop:18}}>{countSent?<button className="b2-btn alt" onClick={()=>go('gestao')}>Ver fila do Cristiano →</button>:<button className="b2-btn" onClick={()=>{setCountSent(true);setNotice('Contagem enviada apenas nesta simulação.')}}>Enviar contagem →</button>}</div></div></>}
 {view==='recebimento'&&<RecebimentoBeta2
  receipts={receipts}

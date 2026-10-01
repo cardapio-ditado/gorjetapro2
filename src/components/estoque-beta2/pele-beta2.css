@@ -3,29 +3,6 @@
 
 
 /* Cor a cor, derivado do CSS do protótipo */
-.b2-root.b2-embutido .b2-ficha-editor h2{color:var(--text-primary)!important}
-.b2-root.b2-embutido .b2-ficha-editor h3{color:var(--text-primary)!important}
-.b2-root.b2-embutido .b2-ficha-editor p{color:var(--text-secondary)!important}
-.b2-root.b2-embutido .b2-ficha-editor small{color:var(--text-secondary)!important}
-.b2-root.b2-embutido .b2-ficha-badge{background:var(--danger-bg)!important;color:var(--danger-text)!important;border:1px solid var(--danger-border)!important;font-weight:700!important}
-.b2-root.b2-embutido .b2-ficha-section{border:1px solid var(--border)!important;border-radius:var(--r-card)!important;background:var(--bg-card)!important}
-.b2-root.b2-embutido .b2-ficha-section .b2-field span{color:var(--text-primary)!important}
-.b2-root.b2-embutido .b2-ficha-section .b2-field small{color:var(--text-secondary)!important}
-.b2-root.b2-embutido .b2-ficha-section textarea{border-radius:var(--r-control)!important;background:var(--bg-base)!important;color:var(--text-primary)!important;-webkit-text-fill-color:var(--text-primary)!important;border:1px solid var(--border-strong)!important}
-.b2-root.b2-embutido .b2-ficha-radio{border:1px solid var(--border)!important;border-radius:var(--r-control)!important;background:var(--bg-elevated)!important;color:var(--text-primary)!important}
-.b2-root.b2-embutido .b2-ficha-radio.active{border-color:var(--gold)!important;background:var(--bg-active)!important}
-.b2-root.b2-embutido .b2-ficha-radio input{accent-color:var(--wine)!important}
-.b2-root.b2-embutido .b2-ficha-radio strong{color:var(--text-primary)!important}
-.b2-root.b2-embutido .b2-ficha-ingredient{border:1px solid var(--danger-border)!important;background:var(--danger-bg)!important;border-radius:var(--r-card)!important}
-.b2-root.b2-embutido .b2-ficha-ingredient-head strong{color:var(--danger-text)!important}
-.b2-root.b2-embutido .b2-ficha-costrow{color:var(--gold)!important}
-.b2-root.b2-embutido .b2-ficha-costrow strong{color:var(--gold)!important}
-.b2-root.b2-embutido .b2-ficha-check{background:var(--bg-active)!important;border-radius:var(--r-control)!important;color:var(--text-primary)!important}
-.b2-root.b2-embutido .b2-ficha-check input{accent-color:var(--wine)!important}
-.b2-root.b2-embutido .b2-ficha-total{border-radius:var(--r-control)!important;background:var(--bg-elevated)!important;border:1px solid var(--border)!important}
-.b2-root.b2-embutido .b2-ficha-total strong{color:var(--gold)!important}
-.b2-root.b2-embutido .b2-ficha-editor .b2-btn{color:#fff!important;-webkit-text-fill-color:#fff!important}
-.b2-root.b2-embutido .b2-ficha-help{background:var(--bg-elevated)!important;border-left:3px solid var(--border)!important;color:var(--gold)!important;border-radius:var(--r-badge)!important}
 .b2-root.b2-embutido .b2-close-metrics small{color:var(--text-primary)!important}
 .b2-root.b2-embutido .b2-close-metrics span{color:var(--text-primary)!important}
 .b2-root.b2-embutido .b2-close-metrics strong{font-weight:700!important;color:var(--gold)!important}
