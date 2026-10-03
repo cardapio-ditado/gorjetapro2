@@ -1,7 +1,7 @@
 /* GERADO por scripts/gerar-pele.mjs — não edite à mão.
  * A pele padrão: cada cor, sombra, degradê e vidro cravados no código das
  * telas ganham aqui o equivalente do kit, escopado ao shell dos módulos.
- * 146 regras. */
+ * 145 regras. */
 .app-shell .bg-\[\#0a0c14\]{background-color:var(--bg-base)}
 .app-shell .bg-\[\#0c0e1a\]{background-color:var(--bg-dark)}
 .app-shell .bg-\[\#0c1018\]{background-color:var(--bg-dark)}
@@ -15,7 +15,6 @@
 .app-shell .bg-\[\#1a1d2e\]{background-color:var(--bg-base)}
 .app-shell .bg-\[\#6a1a25\]{background-color:var(--wine-deep)}
 .app-shell .bg-\[\#D4AF37\]{background-color:var(--gold)}
-.app-shell .border-\[\#0d0f1a\]{border-color:var(--border)}
 .app-shell .border-\[\#6a1a25\]{border-color:var(--wine-deep)}
 .app-shell .focus\:bg-\[\#12141f\]:focus{background-color:var(--bg-card)}
 .app-shell .from-\[\#12141f\]{background-image:none;background-color:var(--bg-card)}

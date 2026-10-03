@@ -1,10 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import {
-  Music, Calendar, AlertTriangle, X, RefreshCw,
-  UserCheck, UserX, Gift, Briefcase, MessageSquare, Package, Inbox,
-} from 'lucide-react';
-import { EmptyState } from '../components/ui/EmptyState';
-import { CardSkeleton } from '../components/ui/Skeleton';
+import { AlertTriangle, Briefcase, Calendar, Inbox, MessageSquare, Music, Package, RefreshCw } from 'lucide-react';
+import { Badge, Button, EmptyState, IconButton, KPICard, Modal, PageHeader, SectionCard, CardSkeleton } from '../components/ui';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import ChatFinanceiroIA from '../components/financeiro/ChatFinanceiroIA';
@@ -25,9 +21,9 @@ const diasAtraso = (d: string | null | undefined) => {
   if (!d) return 0;
   const dt = new Date(d + (d.includes('T') ? '' : 'T12:00'));
   if (isNaN(dt.getTime())) return 0;
-  const diff = Date.now() - dt.getTime();
-  return Math.max(0, Math.floor(diff / 86400000));
+  return Math.max(0, Math.floor((Date.now() - dt.getTime()) / 86400000));
 };
+const vencido = (d: string | null | undefined) => !!d && new Date(d + (d.includes('T') ? '' : 'T12:00')) < new Date();
 
 const saudacao = () => {
   const h = new Date().getHours();
@@ -71,112 +67,92 @@ interface PainelDono {
   diario: { pendencias: number; criticas: number; lista: { titulo: string; setor: string; gravidade: string; dias: number }[] };
   eventos: { nome: string; data: string; pessoas: number | null; valor: number | null; pagamento: string | null }[];
 }
+interface ItemAtencao { nome: string; estoque_nome: string; categoria: string | null; ultima_mov: string | null; saldo_real: number; unidade_medida: string; estoque_minimo: number; status_alerta: 'negativo' | 'zerado' | 'critico' }
 
-// ─── RadarRow — linha de alerta do painel lateral ────────────────────────────
-function RadarRow({
-  icon: Icon, label, valor, sub, sev, onClick,
-}: {
-  icon: React.ElementType; label: string; valor: string;
-  sub?: string; sev: 'red' | 'amber' | 'ok'; onClick?: () => void;
-}) {
-  const cor = sev === 'red' ? 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.7)]'
-    : sev === 'amber' ? 'bg-yellow-400 shadow-[0_0_8px_rgba(250,204,21,0.5)]'
-    : 'bg-emerald-500';
+// ─── Peças da tela ────────────────────────────────────────────────────────────
+type Sev = 'red' | 'amber' | 'ok';
+const SEV: Record<Sev, string> = { red: 'var(--danger-text)', amber: 'var(--warn-text)', ok: 'var(--ok-text)' };
+
+/** Uma linha do radar: ponto de cor, rótulo, valor. Clicável quando leva a uma lista. */
+function RadarRow({ icon: Icon, label, valor, sub, sev, onClick }: { icon: React.ElementType; label: string; valor: string; sub?: string; sev: Sev; onClick?: () => void }) {
   return (
-    <button onClick={onClick}
-      className="w-full flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-white/[0.06] transition-colors text-left">
-      <span className={`w-2 h-2 rounded-full shrink-0 ${cor}`} />
-      <Icon className="w-4 h-4 text-white/35 shrink-0" />
-      <span className="flex-1 min-w-0 text-label font-semibold text-white/80 truncate">{label}</span>
+    <button type="button" onClick={onClick} className="w-full flex items-center gap-3 px-5 py-2.5 text-left hover:bg-white/[0.04] focus-ring" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+      <span aria-hidden="true" style={{ width: 8, height: 8, borderRadius: 999, background: SEV[sev], flexShrink: 0 }} />
+      <Icon size={16} aria-hidden="true" style={{ color: 'var(--text-secondary)', flexShrink: 0 }} />
+      <span className="flex-1 min-w-0 t-body truncate" style={{ fontWeight: 500 }}>{label}</span>
       <span className="text-right shrink-0">
-        <span className={`block text-sm font-black ${sev === 'red' ? 'text-red-400' : 'text-white'}`}>{valor}</span>
-        {sub && <span className="block text-caption text-white/60">{sub}</span>}
+        <span className="block t-body num" style={{ fontWeight: 600, color: sev === 'red' ? 'var(--danger-text)' : 'var(--text-primary)' }}>{valor}</span>
+        {sub && <span className="block t-caption">{sub}</span>}
       </span>
     </button>
   );
 }
 
-// ─── ListaScroll ──────────────────────────────────────────────────────────────
-function ListaScroll({
-  titulo, items, emptyMsg, renderItem, maxH = 'max-h-72',
-}: {
-  titulo: string; items: any[]; emptyMsg: string;
-  renderItem: (item: any, i: number) => React.ReactNode; maxH?: string;
-}) {
+/** Lista curta dentro de um cartão: cabeçalho com contagem, linhas, rodapé com o total. */
+function Lista<T>({ titulo, items, vazio, total, render, refEl }: { titulo: string; items: T[]; vazio: string; total?: { rotulo: string; valor: string; tom?: 'alerta' | 'normal' }; render: (item: T, i: number) => React.ReactNode; refEl?: React.RefObject<HTMLDivElement> }) {
   const lista = items ?? [];
   return (
-    <div className="glass-card rounded-2xl overflow-hidden">
-      <div className="px-4 py-3 border-b border-white/10 flex justify-between items-center">
-        <p className="text-sm font-bold text-white">{titulo}</p>
-        <span className="text-xs text-white/50 font-medium">{lista.length} item{lista.length !== 1 ? 's' : ''}</span>
-      </div>
-      {lista.length === 0 ? (
-        <EmptyState icon={Inbox} title={emptyMsg} compact />
-      ) : (
-        <div className={`${maxH} overflow-y-auto divide-y divide-white/5`}>
-          {lista.map(renderItem)}
-        </div>
-      )}
+    <div ref={refEl}>
+      <SectionCard title={titulo} action={<span className="t-caption">{lista.length} {lista.length === 1 ? 'item' : 'itens'}</span>} noPadding>
+        {lista.length === 0 ? <div className="p-4"><EmptyState icon={Inbox} title={vazio} compact /></div> : (
+          <>
+            <div className="overflow-y-auto" style={{ maxHeight: 300 }}>{lista.map(render)}</div>
+            {total && <div className="px-5 py-2.5 flex items-center justify-between" style={{ borderTop: '1px solid var(--border)' }}><span className="t-caption">{total.rotulo}</span><span className="t-body num" style={{ fontWeight: 700, color: total.tom === 'alerta' ? 'var(--danger-text)' : 'var(--text-primary)' }}>{total.valor}</span></div>}
+          </>
+        )}
+      </SectionCard>
     </div>
   );
 }
 
-// ─── ModalRH ──────────────────────────────────────────────────────────────────
-function ModalRH({ contas, onClose }: { contas: PainelDono['equipe']['rh_contas']['lista']; onClose: () => void }) {
+/** Linha padrão das listas: data à esquerda, texto e detalhe no meio, valor à direita. */
+function Linha({ data, atraso, titulo, detalhe, valor, tomValor }: { data?: string; atraso?: number; titulo: string; detalhe?: React.ReactNode; valor: string; tomValor?: 'alerta' | 'normal' }) {
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="glass-modal rounded-2xl w-full max-w-lg max-h-[80vh] flex flex-col">
-        <div className="px-5 py-4 border-b border-white/10 flex justify-between items-center">
-          <h3 className="font-bold text-white">Custo RH — Contas em Aberto</h3>
-          <button onClick={onClose} className="p-1.5 hover:bg-white/10 rounded-xl">
-            <X className="w-4 h-4 text-white/40" />
-          </button>
+    <div className="flex items-center gap-3 px-5 py-2.5" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+      {data !== undefined && <div className="shrink-0 text-center" style={{ width: 44 }}><p className="t-caption" style={{ margin: 0, fontWeight: 600, color: atraso ? 'var(--danger-text)' : 'var(--text-secondary)' }}>{data}</p>{!!atraso && <p className="t-caption texto-perigo" style={{ margin: 0 }}>{atraso}d</p>}</div>}
+      <div className="flex-1 min-w-0"><p className="t-body truncate" style={{ margin: 0, fontWeight: 500 }}>{titulo}</p>{detalhe && <p className="t-caption truncate" style={{ margin: 0 }}>{detalhe}</p>}</div>
+      <p className="t-body num shrink-0" style={{ margin: 0, fontWeight: 600, color: tomValor === 'alerta' ? 'var(--danger-text)' : 'var(--text-primary)' }}>{valor}</p>
+    </div>
+  );
+}
+
+/** Barras simples dos últimos 14 dias, nas cores do kit. */
+function Barras({ serie, max, destaqueUltima }: { serie: Array<{ chave: string; titulo: string; valores: number[] }>; max: number; destaqueUltima?: boolean }) {
+  const cores = ['var(--ok-text)', 'var(--danger-text)'];
+  return (
+    <div className="flex items-end gap-1" style={{ height: 56 }} aria-hidden="true">
+      {serie.map((d, i) => (
+        <div key={d.chave} className="flex-1 h-full flex items-end justify-center gap-px" title={d.titulo}>
+          {d.valores.map((v, j) => (
+            <div key={j} className="flex-1" style={{ height: `${Math.max(3, (v / max) * 100)}%`, borderRadius: '3px 3px 0 0', background: d.valores.length > 1 ? cores[j] : (destaqueUltima && i === serie.length - 1 ? 'var(--gold)' : 'rgba(255,255,255,0.2)'), opacity: d.valores.length > 1 ? 0.7 : 1 }} />
+          ))}
         </div>
-        <div className="flex-1 overflow-y-auto divide-y divide-white/5">
-          {(contas ?? []).map((c, i) => {
-            const vencido = new Date(c.vencimento) < new Date();
-            return (
-              <div key={i} className={`px-5 py-3.5 flex items-center gap-3 ${vencido ? 'bg-red-500/5' : ''}`}>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-white truncate">{c.descricao}</p>
-                  <p className="text-caption text-white/50 mt-0.5">
-                    {c.categoria} · vence {fmtData(c.vencimento)}
-                    {vencido && <span className="text-red-400 ml-1">· {diasAtraso(c.vencimento)}d atraso</span>}
-                  </p>
-                </div>
-                <p className={`text-sm font-bold shrink-0 ${vencido ? 'text-red-400' : 'text-white'}`}>
-                  {fmtR(Number(c.valor))}
-                </p>
-              </div>
-            );
-          })}
-        </div>
-      </div>
+      ))}
     </div>
   );
 }
 
 // ─── Dashboard (Painel do Dono) ───────────────────────────────────────────────
-// Layout bento: manchete de vendas gigante + radar lateral + blocos de gestão.
 // Todos os KPIs vêm da RPC canônica fn_dashboard_dono — não duplicar cálculos aqui.
 const Dashboard: React.FC = () => {
   const { usuario } = useAuth();
   const primeiroNome = usuario?.nome_completo?.split(' ')[0] || '';
-  const [loading, setLoading]         = useState(true);
-  const [refreshing, setRefreshing]   = useState(false);
-  const [showChatIA, setShowChatIA]   = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [showChatIA, setShowChatIA] = useState(false);
   const [showModalRH, setShowModalRH] = useState(false);
   const [showEstoqueDetalhe, setShowEstoqueDetalhe] = useState(false);
-
-  const [painel, setPainel]           = useState<PainelDono | null>(null);
-  const [itensAtencao, setItensAtencao] = useState<any[]>([]);
+  const [erro, setErro] = useState<string | null>(null);
+  const [painel, setPainel] = useState<PainelDono | null>(null);
+  const [itensAtencao, setItensAtencao] = useState<ItemAtencao[]>([]);
 
   const refVencidas = React.useRef<HTMLDivElement>(null);
-  const refSemana   = React.useRef<HTMLDivElement>(null);
-  const refMusicos  = React.useRef<HTMLDivElement>(null);
-  const refExtras   = React.useRef<HTMLDivElement>(null);
+  const refSemana = React.useRef<HTMLDivElement>(null);
+  const refMusicos = React.useRef<HTMLDivElement>(null);
+  const refExtras = React.useRef<HTMLDivElement>(null);
 
   const load = useCallback(async () => {
+    setErro(null);
     try {
       const [{ data: painelData, error }, { data: itensAtencaoData }] = await Promise.all([
         supabase.rpc('fn_dashboard_dono'),
@@ -184,488 +160,163 @@ const Dashboard: React.FC = () => {
       ]);
       if (error) throw error;
       setPainel(painelData as PainelDono);
-      setItensAtencao(itensAtencaoData ?? []);
+      setItensAtencao((itensAtencaoData ?? []) as ItemAtencao[]);
     } catch (e) {
-      console.error('Erro ao carregar painel do dono:', e);
+      setErro(e instanceof Error ? e.message : 'Erro ao carregar o painel');
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
   }, []);
-
   useEffect(() => { load(); }, [load]);
   const refresh = () => { setRefreshing(true); load(); };
 
+  const dataLonga = new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' });
+  const cabecalho = (
+    <PageHeader caminho={['Início']} title={`${saudacao()}, ${primeiroNome}`} subtitle={dataLonga.charAt(0).toUpperCase() + dataLonga.slice(1)}
+      actions={<div className="flex items-center gap-2">
+        <Button tamanho="sm" icone={<MessageSquare size={14} />} onClick={() => setShowChatIA(true)}>Perguntar à IA</Button>
+        <IconButton aria-label="Atualizar" onClick={refresh} disabled={refreshing}><RefreshCw size={16} className={refreshing ? 'animate-spin' : ''} /></IconButton>
+      </div>} />
+  );
+
   if (loading || !painel) return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-12 gap-4">
-        <div className="col-span-12 lg:col-span-8 skeleton" style={{ height: 280, borderRadius: 'var(--r-card)' }} />
-        <div className="col-span-12 lg:col-span-4 skeleton" style={{ height: 280, borderRadius: 'var(--r-card)' }} />
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <CardSkeleton count={3} />
-      </div>
+    <div className="max-w-6xl">
+      {cabecalho}
+      {erro && <div className="aviso aviso-perigo mb-4" role="alert">{erro}</div>}
+      {!erro && <div className="grid grid-cols-2 lg:grid-cols-4 gap-3"><CardSkeleton count={4} /></div>}
     </div>
   );
 
   // Blindagem contra payload parcial
-  const caixa   = painel.caixa   ?? { hoje: { entradas: 0, saidas: 0 }, mes: { entradas: 0, saidas: 0 }, serie_14d: [] };
-  const vendas  = painel.vendas  ?? null;
-  const cmv     = painel.cmv     ?? { success: false, cmv: 0, cmv_percentual: null, compras: 0, avisos: [] };
-  const contas  = painel.contas  ?? { vencidas: { qtd: 0, valor: 0 }, semana: { qtd: 0, valor: 0 }, lista_vencidas: [], lista_semana: [] };
-  const equipe  = painel.equipe  ?? {
-    colaboradores: { ativos: 0, ferias: 0, afastados: 0 },
-    caches: { qtd: 0, valor: 0, lista: [] },
-    extras: { qtd: 0, valor: 0, lista: [] },
-    rh_contas: { qtd: 0, valor: 0, lista: [] },
-  };
+  const caixa = painel.caixa ?? { hoje: { entradas: 0, saidas: 0 }, mes: { entradas: 0, saidas: 0 }, serie_14d: [] };
+  const vendas = painel.vendas ?? null;
+  const cmv = painel.cmv ?? { success: false, cmv: 0, cmv_percentual: null, compras: 0, avisos: [] };
+  const contas = painel.contas ?? { vencidas: { qtd: 0, valor: 0 }, semana: { qtd: 0, valor: 0 }, lista_vencidas: [], lista_semana: [] };
+  const equipe = painel.equipe ?? { colaboradores: { ativos: 0, ferias: 0, afastados: 0 }, caches: { qtd: 0, valor: 0, lista: [] }, extras: { qtd: 0, valor: 0, lista: [] }, rh_contas: { qtd: 0, valor: 0, lista: [] } };
   const estoque = painel.estoque ?? { valor_total: 0, negativos: 0, abaixo_minimo: 0 };
   const eventos = painel.eventos ?? [];
 
   const resultadoMes = Number(caixa.mes.entradas) - Number(caixa.mes.saidas);
-  const dataLonga = new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' });
-
-  const variacaoVendas = vendas?.anterior && Number(vendas.anterior.total) > 0
-    ? ((Number(vendas.total) - Number(vendas.anterior.total)) / Number(vendas.anterior.total)) * 100
-    : null;
-
+  const variacaoVendas = vendas?.anterior && Number(vendas.anterior.total) > 0 ? ((Number(vendas.total) - Number(vendas.anterior.total)) / Number(vendas.anterior.total)) * 100 : null;
   const serieVendas = vendas?.serie_14d ?? [];
-  const maxVendas   = Math.max(1, ...serieVendas.map(d => Number(d.total)));
-  const serieCaixa  = caixa.serie_14d ?? [];
-  const maxCaixa    = Math.max(1, ...serieCaixa.map(d => Math.max(Number(d.entradas), Number(d.saidas))));
-
+  const maxVendas = Math.max(1, ...serieVendas.map(d => Number(d.total)));
+  const serieCaixa = caixa.serie_14d ?? [];
+  const maxCaixa = Math.max(1, ...serieCaixa.map(d => Math.max(Number(d.entradas), Number(d.saidas))));
   const estoqueAlertas = Number(estoque.negativos) + Number(estoque.abaixo_minimo);
-  const scrollTo = (ref: React.RefObject<HTMLDivElement>) =>
-    ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  const pct = cmv.cmv_percentual === null ? null : Number(cmv.cmv_percentual);
+  const scrollTo = (ref: React.RefObject<HTMLDivElement>) => ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  const plural = (n: number, um: string, varios: string) => `${n} ${n === 1 ? um : varios}`;
 
   return (
-    <div className="space-y-5 pb-16">
+    <div className="max-w-6xl pb-10">
+      {cabecalho}
+      {erro && <div className="aviso aviso-perigo mb-4" role="alert">{erro}</div>}
 
-      {/* ── SAUDAÇÃO SLIM ─────────────────────────────────────────────── */}
-      <div className="flex items-end justify-between flex-wrap gap-3">
-        <div>
-          <p className="text-gold text-caption font-black uppercase tracking-[0.3em] mb-1">Ditado Popular</p>
-          <h1 className="text-2xl font-black text-white leading-none">{saudacao()}, {primeiroNome}</h1>
-          <p className="text-white/60 text-xs mt-1 capitalize">{dataLonga}</p>
-        </div>
-        <button onClick={refresh} disabled={refreshing}
-          className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold text-white/60 glass-soft hover:bg-white/10 transition-colors">
-          <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`} />
-          Atualizar
-        </button>
+      {/* Os quatro números do dia */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+        <KPICard rotulo={vendas ? `vendas da noite · ${fmtData(vendas.data)}` : 'vendas da noite'} valor={vendas ? fmtR(Number(vendas.total)) : 'sem Zig'} tom="destaque"
+          detalhe={vendas ? (variacaoVendas !== null ? `${variacaoVendas >= 0 ? '+' : ''}${variacaoVendas.toFixed(0)}% vs ${fmtData(vendas.anterior!.data)} · ${fmtR(Number(vendas.mes))} no mês` : `${fmtR(Number(vendas.mes))} no mês`) : 'nenhuma venda sincronizada'} />
+        <KPICard rotulo="resultado do mês" valor={fmtR(resultadoMes)} tom={resultadoMes >= 0 ? 'certo' : 'alerta'} detalhe={`entrou ${fmtR(Number(caixa.mes.entradas))} · saiu ${fmtR(Number(caixa.mes.saidas))}`} />
+        <KPICard rotulo="CMV do mês" valor={pct === null ? fmtR(Number(cmv.cmv)) : `${pct.toFixed(1)}%`} tom={pct === null ? 'normal' : pct > 35 ? 'alerta' : pct > 30 ? 'atencao' : 'certo'}
+          detalhe={pct === null ? '% indisponível: importar vendas Zig' : `${fmtR(Number(cmv.cmv))} · compras ${fmtR(Number(cmv.compras))}`} />
+        <KPICard rotulo="contas atrasadas" valor={fmtR(Number(contas.vencidas.valor))} tom={contas.vencidas.qtd > 0 ? 'alerta' : 'certo'} detalhe={contas.vencidas.qtd > 0 ? plural(contas.vencidas.qtd, 'conta vencida', 'contas vencidas') : 'nenhuma'} onClick={() => scrollTo(refVencidas)} />
       </div>
 
-      {/* ── BENTO GRID ────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-12 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
+        <SectionCard title="Vendas · 14 noites" descricao={vendas ? `Bebidas ${fmtR(Number(vendas.bebidas))} · alimentos ${fmtR(Number(vendas.alimentos))} · ${vendas.transacoes} comandas` : 'Sem vendas Zig sincronizadas'} className="lg:col-span-2">
+          {serieVendas.length > 0 ? <Barras serie={serieVendas.map(d => ({ chave: d.data, titulo: `${fmtData(d.data)} · ${fmtR(Number(d.total))}`, valores: [Number(d.total)] }))} max={maxVendas} destaqueUltima /> : <EmptyState icon={Inbox} title="Nada para mostrar" compact />}
+        </SectionCard>
+        <SectionCard title="Radar do dia" noPadding>
+          <RadarRow icon={AlertTriangle} label="Contas atrasadas" valor={fmtR(Number(contas.vencidas.valor))} sub={plural(contas.vencidas.qtd, 'conta', 'contas')} sev={contas.vencidas.qtd > 0 ? 'red' : 'ok'} onClick={() => scrollTo(refVencidas)} />
+          <RadarRow icon={Calendar} label="Vence em 7 dias" valor={fmtR(Number(contas.semana.valor))} sub={plural(contas.semana.qtd, 'conta', 'contas')} sev={contas.semana.qtd > 0 ? 'amber' : 'ok'} onClick={() => scrollTo(refSemana)} />
+          <RadarRow icon={Package} label="Estoque em alerta" valor={String(estoqueAlertas)} sub={`${estoque.negativos} negativos · ${estoque.abaixo_minimo} abaixo do mínimo`} sev={Number(estoque.negativos) > 0 ? 'red' : estoqueAlertas > 0 ? 'amber' : 'ok'} onClick={() => setShowEstoqueDetalhe(true)} />
+          <RadarRow icon={Music} label="Cachês em aberto" valor={fmtR(Number(equipe.caches.valor))} sub={plural(equipe.caches.qtd, 'músico', 'músicos')} sev={(equipe.caches.lista ?? []).some(m => vencido(m.data)) ? 'red' : equipe.caches.qtd > 0 ? 'amber' : 'ok'} onClick={() => scrollTo(refMusicos)} />
+          <RadarRow icon={Briefcase} label="Extras em aberto" valor={fmtR(Number(equipe.extras.valor))} sub={plural(equipe.extras.qtd, 'extra', 'extras')} sev={(equipe.extras.lista ?? []).some(e => vencido(e.data)) ? 'red' : equipe.extras.qtd > 0 ? 'amber' : 'ok'} onClick={() => scrollTo(refExtras)} />
+        </SectionCard>
+      </div>
 
-        {/* MANCHETE: vendas da noite */}
-        <div className="col-span-12 lg:col-span-8 relative overflow-hidden rounded-3xl bg-gradient-to-br from-wine via-wine-light to-wine-deepest border border-gold/25 shadow-[0_24px_80px_rgba(125,31,44,0.45)] p-6 lg:p-8 flex flex-col justify-between min-h-[280px]">
-          <div className="absolute inset-0 opacity-[0.06]"
-            style={{ backgroundImage: 'repeating-linear-gradient(45deg,#D4AF37 0,#D4AF37 1px,transparent 0,transparent 50%),repeating-linear-gradient(-45deg,#D4AF37 0,#D4AF37 1px,transparent 0,transparent 50%)', backgroundSize: '28px 28px' }} />
-          <div className="absolute top-0 right-0 w-72 h-72 rounded-full bg-gold opacity-10 -translate-y-1/2 translate-x-1/3 blur-2xl" />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+        <SectionCard title="Caixa do mês" descricao="Últimos 14 dias, sem transferências">
+          <div className="flex flex-col gap-1 mb-3">
+            <div className="flex justify-between"><span className="t-caption">Entradas</span><span className="t-body num texto-certo" style={{ fontWeight: 600 }}>{fmtR(Number(caixa.mes.entradas))}</span></div>
+            <div className="flex justify-between"><span className="t-caption">Saídas</span><span className="t-body num texto-perigo" style={{ fontWeight: 600 }}>{fmtR(Number(caixa.mes.saidas))}</span></div>
+            <div className="flex justify-between pt-1" style={{ borderTop: '1px solid var(--border-subtle)' }}><span className="t-caption">Resultado</span><span className="t-body num" style={{ fontWeight: 700, color: resultadoMes >= 0 ? 'var(--gold)' : 'var(--danger-text)' }}>{fmtR(resultadoMes)}</span></div>
+          </div>
+          {serieCaixa.length > 0 && <Barras serie={serieCaixa.map(d => ({ chave: d.data, titulo: `${fmtData(d.data)} · +${fmtR(Number(d.entradas))} / -${fmtR(Number(d.saidas))}`, valores: [Number(d.entradas), Number(d.saidas)] }))} max={maxCaixa} />}
+        </SectionCard>
+        <SectionCard title="Estoque" descricao="Valor a custo médio e compras do mês">
+          <div className="flex flex-col gap-1">
+            <div className="flex justify-between"><span className="t-caption">Valor em estoque</span><span className="t-body num" style={{ fontWeight: 600 }}>{fmtR(Number(estoque.valor_total))}</span></div>
+            <div className="flex justify-between"><span className="t-caption">Compras no mês</span><span className="t-body num" style={{ fontWeight: 600 }}>{fmtR(Number(cmv.compras))}</span></div>
+            <div className="flex justify-between"><span className="t-caption">Negativos</span><span className={`t-body num ${estoque.negativos ? 'texto-perigo' : ''}`} style={{ fontWeight: 600 }}>{estoque.negativos}</span></div>
+            <div className="flex justify-between"><span className="t-caption">Abaixo do mínimo</span><span className={`t-body num ${estoque.abaixo_minimo ? 'texto-atencao' : ''}`} style={{ fontWeight: 600 }}>{estoque.abaixo_minimo}</span></div>
+          </div>
+          {(cmv.avisos ?? []).length > 0 && <p className="t-caption mt-3" style={{ margin: 0 }}>{(cmv.avisos ?? []).join(' · ')}</p>}
+        </SectionCard>
+        <SectionCard title="Equipe" descricao={`${equipe.colaboradores.ativos} ativos · ${equipe.colaboradores.ferias} de férias · ${equipe.colaboradores.afastados} afastados`}>
+          <div className="flex flex-wrap gap-1.5 mb-3">
+            <Badge variant="success">{equipe.colaboradores.ativos} ativos</Badge>
+            <Badge variant="info">{equipe.colaboradores.ferias} férias</Badge>
+            <Badge variant={equipe.colaboradores.afastados ? 'danger' : 'neutral'}>{equipe.colaboradores.afastados} afastados</Badge>
+          </div>
+          <KPICard rotulo="custo RH em aberto" valor={fmtR(Number(equipe.rh_contas.valor))} detalhe={plural(equipe.rh_contas.qtd, 'conta', 'contas')} tom={equipe.rh_contas.qtd ? 'atencao' : 'normal'} onClick={() => setShowModalRH(true)} />
+        </SectionCard>
+      </div>
 
-          {vendas ? (
-            <>
-              <div className="relative flex items-start justify-between flex-wrap gap-2">
-                <p className="text-white/75 text-caption font-bold uppercase tracking-[0.2em]">
-                  Vendas da noite · {fmtData(vendas.data)}
-                </p>
-                {variacaoVendas !== null && (
-                  <span className={`text-caption font-black px-2.5 py-1 rounded-lg ${
-                    variacaoVendas >= 0 ? 'bg-emerald-500/25 text-emerald-300' : 'bg-red-500/25 text-red-300'
-                  }`}>
-                    {variacaoVendas >= 0 ? '▲ +' : '▼ '}{variacaoVendas.toFixed(0)}% vs {fmtData(vendas.anterior!.data)}
-                  </span>
-                )}
-              </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <Lista refEl={refVencidas} titulo="Contas atrasadas" items={contas.lista_vencidas} vazio="Nenhuma conta atrasada" total={{ rotulo: 'Total atrasado', valor: fmtR(Number(contas.vencidas.valor)), tom: 'alerta' }}
+          render={(c, i) => <Linha key={i} data={fmtData(c.vencimento)} atraso={diasAtraso(c.vencimento)} titulo={c.descricao} detalhe={c.categoria} valor={fmtR(Number(c.valor))} tomValor="alerta" />} />
+        <Lista refEl={refSemana} titulo="Vence em 7 dias" items={contas.lista_semana} vazio="Nada vence nos próximos 7 dias" total={{ rotulo: 'Total da semana', valor: fmtR(Number(contas.semana.valor)) }}
+          render={(c, i) => <Linha key={i} data={fmtData(c.vencimento)} titulo={c.descricao} detalhe={c.categoria} valor={fmtR(Number(c.valor))} />} />
+        <Lista refEl={refMusicos} titulo="Cachês em aberto" items={equipe.caches.lista} vazio="Nenhum cachê pendente" total={{ rotulo: 'Total em aberto', valor: fmtR(Number(equipe.caches.valor)) }}
+          render={(m, i) => <Linha key={i} data={fmtData(m.data)} atraso={vencido(m.data) ? diasAtraso(m.data) : 0} titulo={m.nome} detalhe={`total ${fmtR(Number(m.total))}${Number(m.pago) > 0 ? ` · pago ${fmtR(Number(m.pago))}` : ''}`} valor={fmtR(Number(m.saldo))} tomValor={vencido(m.data) ? 'alerta' : 'normal'} />} />
+        <Lista refEl={refExtras} titulo="Extras em aberto" items={equipe.extras.lista} vazio="Nenhum extra pendente" total={{ rotulo: 'Total em aberto', valor: fmtR(Number(equipe.extras.valor)) }}
+          render={(e, i) => <Linha key={i} data={fmtData(e.data)} atraso={vencido(e.data) ? diasAtraso(e.data) : 0} titulo={e.nome} detalhe={`${e.funcao ?? ''}${e.setor ? ` · ${e.setor}` : ''}`} valor={fmtR(Number(e.valor))} tomValor={vencido(e.data) ? 'alerta' : 'normal'} />} />
+      </div>
 
-              <div className="relative mt-2">
-                <p className="text-5xl lg:text-7xl font-black tracking-tight text-gold-gradient leading-none">
-                  {fmtR(Number(vendas.total))}
-                </p>
-              </div>
+      <Lista titulo="Eventos · próximos 14 dias" items={eventos} vazio="Nenhum evento fechado no período"
+        render={(ev, i) => <Linha key={i} data={fmtData(ev.data)} titulo={ev.nome} detalhe={<>{ev.pessoas ? `${ev.pessoas} pessoas` : 'público não informado'}{ev.pagamento && ev.pagamento !== 'pago' && <span className="texto-atencao"> · pagamento {ev.pagamento}</span>}</>} valor={ev.valor ? fmtR(Number(ev.valor)) : '—'} />} />
 
-              {/* série 14 noites */}
-              {serieVendas.length > 0 && (
-                <div className="relative flex items-end gap-1.5 h-16 mt-5">
-                  {serieVendas.map((d, i) => (
-                    <div key={d.data} className="flex-1 h-full flex items-end" title={`${fmtData(d.data)} · ${fmtR(Number(d.total))}`}>
-                      <div className={`w-full rounded-t ${i === serieVendas.length - 1 ? 'bg-gold' : 'bg-white/25'}`}
-                        style={{ height: `${Math.max(3, (Number(d.total) / maxVendas) * 100)}%` }} />
-                    </div>
-                  ))}
+      {/* Janelas */}
+      <Modal aberto={showEstoqueDetalhe} onFechar={() => setShowEstoqueDetalhe(false)} titulo="Itens para reposição" descricao="Negativos, zerados e críticos movimentados nos últimos 3 dias" largura="md"
+        rodape={<Button onClick={() => setShowEstoqueDetalhe(false)}>Fechar</Button>}>
+        <div className="flex flex-wrap gap-1.5 mb-3">
+          <Badge variant="danger">{itensAtencao.filter(i => i.status_alerta === 'negativo').length} negativos</Badge>
+          <Badge variant="neutral">{itensAtencao.filter(i => i.status_alerta === 'zerado').length} zerados</Badge>
+          <Badge variant="warning">{itensAtencao.filter(i => i.status_alerta === 'critico').length} críticos</Badge>
+        </div>
+        {itensAtencao.length === 0 ? <EmptyState icon={Package} title="Nada em alerta" compact /> : (
+          <div className="overflow-y-auto" style={{ maxHeight: '55vh' }}>
+            {itensAtencao.map((item, i) => (
+              <div key={i} className="py-2 flex items-start gap-3" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+                <div className="flex-1 min-w-0">
+                  <p className="t-body truncate" style={{ margin: 0, fontWeight: 500 }}>{item.nome}</p>
+                  <p className="t-caption truncate" style={{ margin: 0 }}>{item.estoque_nome}{item.categoria && ` · ${item.categoria}`}{item.ultima_mov && ` · mov. ${new Date(item.ultima_mov + 'T12:00').toLocaleDateString('pt-BR')}`}</p>
                 </div>
-              )}
-
-              <div className="relative grid grid-cols-3 gap-3 mt-5">
-                {[
-                  { label: 'Bebidas',   valor: fmtR(Number(vendas.bebidas)) },
-                  { label: 'Alimentos', valor: fmtR(Number(vendas.alimentos)) },
-                  { label: 'No mês',    valor: fmtR(Number(vendas.mes)) },
-                ].map(k => (
-                  <div key={k.label} className="bg-black/25 border border-white/10 rounded-xl px-3 py-2.5">
-                    <p className="text-white/75 text-caption font-bold uppercase tracking-wider">{k.label}</p>
-                    <p className="text-white font-black text-base mt-0.5">{k.valor}</p>
-                  </div>
-                ))}
-              </div>
-            </>
-          ) : (
-            <div className="relative flex-1 flex items-center justify-center">
-              <p className="text-white/75 text-sm">Sem vendas ZIG sincronizadas ainda</p>
-            </div>
-          )}
-        </div>
-
-        {/* RADAR DO DIA */}
-        <div className="col-span-12 lg:col-span-4 glass-card rounded-3xl p-4 flex flex-col">
-          <p className="text-sm font-bold text-white px-3 pt-2 pb-3">Radar do dia</p>
-          <div className="flex-1 flex flex-col justify-start divide-y divide-white/5">
-            <RadarRow icon={AlertTriangle} label="Contas atrasadas"
-              valor={fmtR(Number(contas.vencidas.valor))} sub={`${contas.vencidas.qtd} conta${contas.vencidas.qtd !== 1 ? 's' : ''}`}
-              sev={contas.vencidas.qtd > 0 ? 'red' : 'ok'} onClick={() => scrollTo(refVencidas)} />
-            <RadarRow icon={Calendar} label="Vence em 7 dias"
-              valor={fmtR(Number(contas.semana.valor))} sub={`${contas.semana.qtd} conta${contas.semana.qtd !== 1 ? 's' : ''}`}
-              sev={contas.semana.qtd > 0 ? 'amber' : 'ok'} onClick={() => scrollTo(refSemana)} />
-            <RadarRow icon={Package} label="Estoque em alerta"
-              valor={String(estoqueAlertas)} sub={`${estoque.negativos} neg · ${estoque.abaixo_minimo} baixo`}
-              sev={Number(estoque.negativos) > 0 ? 'red' : estoqueAlertas > 0 ? 'amber' : 'ok'}
-              onClick={() => setShowEstoqueDetalhe(true)} />
-            <RadarRow icon={Music} label="Cachês em aberto"
-              valor={fmtR(Number(equipe.caches.valor))} sub={`${equipe.caches.qtd} músico${equipe.caches.qtd !== 1 ? 's' : ''}`}
-              sev={(equipe.caches.lista ?? []).some(m => new Date(m.data) < new Date()) ? 'red' : equipe.caches.qtd > 0 ? 'amber' : 'ok'}
-              onClick={() => scrollTo(refMusicos)} />
-            <RadarRow icon={Briefcase} label="Extras em aberto"
-              valor={fmtR(Number(equipe.extras.valor))} sub={`${equipe.extras.qtd} extra${equipe.extras.qtd !== 1 ? 's' : ''}`}
-              sev={(equipe.extras.lista ?? []).some(e => new Date(e.data) < new Date()) ? 'red' : equipe.extras.qtd > 0 ? 'amber' : 'ok'}
-              onClick={() => scrollTo(refExtras)} />
-          </div>
-        </div>
-
-        {/* CAIXA DO MÊS */}
-        <div className="col-span-12 sm:col-span-6 lg:col-span-4 glass-card rounded-3xl p-5">
-          <p className="text-caption font-bold text-white/55 uppercase tracking-widest mb-3">Caixa do mês</p>
-          <div className="space-y-1.5">
-            <div className="flex justify-between items-baseline">
-              <span className="text-xs text-white/50">Entradas</span>
-              <span className="text-base font-black text-emerald-400">{fmtR(Number(caixa.mes.entradas))}</span>
-            </div>
-            <div className="flex justify-between items-baseline">
-              <span className="text-xs text-white/50">Saídas</span>
-              <span className="text-base font-black text-red-400">{fmtR(Number(caixa.mes.saidas))}</span>
-            </div>
-            <div className="flex justify-between items-baseline border-t border-white/10 pt-1.5">
-              <span className="text-xs font-bold text-white/70">Resultado</span>
-              <span className={`text-lg font-black ${resultadoMes >= 0 ? 'text-gold-gradient' : 'text-red-400'}`}>{fmtR(resultadoMes)}</span>
-            </div>
-          </div>
-          <div className="flex items-end gap-1 h-12 mt-4">
-            {serieCaixa.map(d => (
-              <div key={d.data} className="flex-1 h-full flex items-end justify-center gap-px" title={`${fmtData(d.data)} · +${fmtR(Number(d.entradas))} / -${fmtR(Number(d.saidas))}`}>
-                <div className="flex-1 bg-emerald-500/60 rounded-t-sm min-h-[2px]" style={{ height: `${Math.max(2, (Number(d.entradas) / maxCaixa) * 100)}%` }} />
-                <div className="flex-1 bg-red-500/60 rounded-t-sm min-h-[2px]" style={{ height: `${Math.max(2, (Number(d.saidas) / maxCaixa) * 100)}%` }} />
+                <div className="text-right shrink-0">
+                  <p className={`t-body num ${Number(item.saldo_real) < 0 ? 'texto-perigo' : Number(item.saldo_real) === 0 ? '' : 'texto-atencao'}`} style={{ margin: 0, fontWeight: 600 }}>{Number(item.saldo_real ?? 0).toLocaleString('pt-BR', { maximumFractionDigits: 3 })} {item.unidade_medida}</p>
+                  {item.estoque_minimo > 0 && <p className="t-caption" style={{ margin: 0 }}>mín. {item.estoque_minimo}</p>}
+                </div>
               </div>
             ))}
           </div>
-          <p className="text-caption text-white/35 mt-1">últimos 14 dias · sem transferências</p>
-        </div>
+        )}
+      </Modal>
 
-        {/* CMV + ESTOQUE */}
-        <div className="col-span-12 sm:col-span-6 lg:col-span-4 glass-card rounded-3xl p-5">
-          <p className="text-caption font-bold text-white/55 uppercase tracking-widest mb-3">CMV do mês</p>
-          <p className="text-3xl font-black text-white leading-none">{fmtR(Number(cmv.cmv))}</p>
-          {cmv.cmv_percentual !== null ? (
-            <p className={`text-xs mt-2 font-semibold ${Number(cmv.cmv_percentual) > 35 ? 'text-yellow-400' : 'text-emerald-400'}`}>
-              {Number(cmv.cmv_percentual).toFixed(1)}% do faturamento
-            </p>
-          ) : (
-            <p className="text-xs mt-2 text-yellow-400/80" title={(cmv.avisos ?? []).join(' · ')}>
-              % indisponível — importar vendas ZIG
-            </p>
-          )}
-          <div className="border-t border-white/10 mt-4 pt-3 space-y-1.5">
-            <div className="flex justify-between items-baseline">
-              <span className="text-xs text-white/50">Compras no mês</span>
-              <span className="text-sm font-bold text-white">{fmtR(Number(cmv.compras))}</span>
-            </div>
-            <div className="flex justify-between items-baseline">
-              <span className="text-xs text-white/50">Valor em estoque</span>
-              <span className="text-sm font-bold text-white">{fmtR(Number(estoque.valor_total))}</span>
-            </div>
+      <Modal aberto={showModalRH} onFechar={() => setShowModalRH(false)} titulo="Custo RH em aberto" descricao={`${plural(equipe.rh_contas.qtd, 'conta', 'contas')} · ${fmtR(Number(equipe.rh_contas.valor))}`} largura="md"
+        rodape={<Button onClick={() => setShowModalRH(false)}>Fechar</Button>}>
+        {(equipe.rh_contas.lista ?? []).length === 0 ? <EmptyState icon={Inbox} title="Nenhuma conta de RH em aberto" compact /> : (
+          <div className="overflow-y-auto" style={{ maxHeight: '55vh' }}>
+            {(equipe.rh_contas.lista ?? []).map((c, i) => <Linha key={i} data={fmtData(c.vencimento)} atraso={vencido(c.vencimento) ? diasAtraso(c.vencimento) : 0} titulo={c.descricao} detalhe={c.categoria} valor={fmtR(Number(c.valor))} tomValor={vencido(c.vencimento) ? 'alerta' : 'normal'} />)}
           </div>
-        </div>
+        )}
+      </Modal>
 
-        {/* EQUIPE */}
-        <div className="col-span-12 lg:col-span-4 glass-card rounded-3xl p-5 flex flex-col">
-          <p className="text-caption font-bold text-white/55 uppercase tracking-widest mb-3">Equipe</p>
-          <div className="flex flex-wrap gap-2">
-            {[
-              { icon: UserCheck, label: 'Ativos',    value: equipe.colaboradores.ativos,    color: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30' },
-              { icon: Gift,      label: 'Férias',    value: equipe.colaboradores.ferias,    color: 'bg-blue-500/15 text-blue-300 border-blue-500/30' },
-              { icon: UserX,     label: 'Afastados', value: equipe.colaboradores.afastados, color: 'bg-red-500/15 text-red-300 border-red-500/30' },
-            ].map(p => (
-              <div key={p.label} className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border ${p.color}`}>
-                <p.icon className="w-3.5 h-3.5" />
-                {p.value} {p.label}
-              </div>
-            ))}
-          </div>
-          <button onClick={() => setShowModalRH(true)}
-            className="mt-auto pt-4 flex items-center justify-between text-left group">
-            <div>
-              <p className="text-caption font-bold text-white/45 uppercase tracking-wider">Custo RH em aberto</p>
-              <p className="text-xl font-black text-white mt-0.5">{fmtR(Number(equipe.rh_contas.valor))}</p>
-            </div>
-            <span className="text-caption font-bold text-teal-400 group-hover:text-teal-300 transition-colors">
-              {equipe.rh_contas.qtd} conta{equipe.rh_contas.qtd !== 1 ? 's' : ''} →
-            </span>
-          </button>
-        </div>
-      </div>
-
-      {/* ── DETALHES: CONTAS ──────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div ref={refVencidas}>
-          <ListaScroll
-            titulo="Contas Atrasadas"
-            items={contas.lista_vencidas}
-            emptyMsg="Nenhuma conta atrasada"
-            renderItem={(c, i) => (
-              <div key={i} className="flex items-center gap-3 px-4 py-3 hover:bg-red-500/5 transition-colors">
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold text-white truncate">{c.descricao}</p>
-                  <p className="text-caption text-white/50 mt-0.5">
-                    {c.categoria}
-                    <span className="text-red-400 ml-1">· {diasAtraso(c.vencimento)}d atraso</span>
-                  </p>
-                </div>
-                <p className="text-sm font-bold text-red-400 shrink-0">{fmtR(Number(c.valor))}</p>
-              </div>
-            )}
-          />
-          {(contas.lista_vencidas ?? []).length > 0 && (
-            <div className="mt-1 px-4 py-2 glass-soft rounded-xl flex justify-between">
-              <p className="text-caption text-white/50">Total atrasado</p>
-              <p className="text-xs font-black text-red-400">{fmtR(Number(contas.vencidas.valor))}</p>
-            </div>
-          )}
-        </div>
-
-        <div ref={refSemana}>
-          <ListaScroll
-            titulo="Vence em 7 dias"
-            items={contas.lista_semana}
-            emptyMsg="Nada vence nos próximos 7 dias"
-            renderItem={(c, i) => (
-              <div key={i} className="flex items-center gap-3 px-4 py-3 hover:bg-blue-500/5 transition-colors">
-                <div className="w-10 shrink-0 text-center">
-                  <p className="text-caption font-black text-blue-400">{fmtData(c.vencimento)}</p>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold text-white truncate">{c.descricao}</p>
-                  <p className="text-caption text-white/50">{c.categoria}</p>
-                </div>
-                <p className="text-sm font-bold text-white shrink-0">{fmtR(Number(c.valor))}</p>
-              </div>
-            )}
-          />
-          {(contas.lista_semana ?? []).length > 0 && (
-            <div className="mt-1 px-4 py-2 glass-soft rounded-xl flex justify-between">
-              <p className="text-caption text-white/50">Total da semana</p>
-              <p className="text-xs font-black text-blue-400">{fmtR(Number(contas.semana.valor))}</p>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* ── DETALHES: MÚSICOS + EXTRAS ────────────────────────────────── */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div ref={refMusicos}>
-          <ListaScroll
-            titulo="Músicos em Aberto"
-            items={equipe.caches.lista}
-            emptyMsg="Nenhum cachê pendente"
-            renderItem={(m, i) => {
-              const vencido = new Date(m.data) < new Date();
-              return (
-                <div key={i} className={`flex items-center gap-3 px-4 py-3 hover:bg-pink-500/5 transition-colors ${vencido ? 'bg-red-500/5' : ''}`}>
-                  <div className="w-10 shrink-0 text-center">
-                    <p className={`text-caption font-black ${vencido ? 'text-red-400' : 'text-pink-400'}`}>
-                      {fmtData(m.data)}
-                    </p>
-                    {vencido && <p className="text-caption text-red-400">{diasAtraso(m.data)}d</p>}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-semibold text-white truncate">{m.nome}</p>
-                    <p className="text-caption text-white/50">
-                      Total: {fmtR(Number(m.total))}
-                      {Number(m.pago) > 0 && ` · Pago: ${fmtR(Number(m.pago))}`}
-                    </p>
-                  </div>
-                  <p className={`text-sm font-bold shrink-0 ${vencido ? 'text-red-400' : 'text-pink-400'}`}>
-                    {fmtR(Number(m.saldo))}
-                  </p>
-                </div>
-              );
-            }}
-          />
-          {(equipe.caches.lista ?? []).length > 0 && (
-            <div className="mt-1 px-4 py-2 glass-soft rounded-xl flex justify-between">
-              <p className="text-caption text-white/50">Total em aberto</p>
-              <p className="text-xs font-black text-pink-400">{fmtR(Number(equipe.caches.valor))}</p>
-            </div>
-          )}
-        </div>
-
-        <div ref={refExtras}>
-          <ListaScroll
-            titulo="Extras em Aberto"
-            items={equipe.extras.lista}
-            emptyMsg="Nenhum extra pendente"
-            renderItem={(e, i) => {
-              const vencido = new Date(e.data) < new Date();
-              return (
-                <div key={i} className={`flex items-center gap-3 px-4 py-3 hover:bg-orange-500/5 transition-colors ${vencido ? 'bg-red-500/5' : ''}`}>
-                  <div className="w-10 shrink-0 text-center">
-                    <p className={`text-caption font-black ${vencido ? 'text-red-400' : 'text-orange-400'}`}>
-                      {fmtData(e.data)}
-                    </p>
-                    {vencido && <p className="text-caption text-red-400">{diasAtraso(e.data)}d</p>}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-semibold text-white truncate">{e.nome}</p>
-                    <p className="text-caption text-white/50">
-                      {e.funcao}{e.setor ? ` · ${e.setor}` : ''}
-                    </p>
-                  </div>
-                  <p className={`text-sm font-bold shrink-0 ${vencido ? 'text-red-400' : 'text-orange-400'}`}>
-                    {fmtR(Number(e.valor))}
-                  </p>
-                </div>
-              );
-            }}
-          />
-          {(equipe.extras.lista ?? []).length > 0 && (
-            <div className="mt-1 px-4 py-2 glass-soft rounded-xl flex justify-between">
-              <p className="text-caption text-white/50">Total em aberto</p>
-              <p className="text-xs font-black text-orange-400">{fmtR(Number(equipe.extras.valor))}</p>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* ── PRÓXIMOS EVENTOS ───────────────────────────────────────────── */}
-      <div>
-        <ListaScroll
-          titulo="Eventos — próximos 14 dias"
-          items={eventos}
-          emptyMsg="Nenhum evento fechado no período"
-          renderItem={(ev, i) => (
-            <div key={i} className="flex items-center gap-3 px-4 py-3 hover:bg-purple-500/5 transition-colors">
-              <div className="w-10 shrink-0 text-center">
-                <p className="text-caption font-black text-purple-400">{fmtData(ev.data)}</p>
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-semibold text-white truncate">{ev.nome}</p>
-                <p className="text-caption text-white/50">
-                  {ev.pessoas ? `${ev.pessoas} pessoas` : ''}
-                  {ev.pagamento && ev.pagamento !== 'pago' && <span className="text-yellow-400 ml-1">· pgto {ev.pagamento}</span>}
-                </p>
-              </div>
-              <p className="text-sm font-bold text-purple-300 shrink-0">{ev.valor ? fmtR(Number(ev.valor)) : '—'}</p>
-            </div>
-          )}
-        />
-
-      </div>
-
-      {/* ── MODAL DETALHE ESTOQUE ─────────────────────────────────────── */}
-      {showEstoqueDetalhe && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="glass-modal rounded-2xl w-full max-w-lg max-h-[80vh] flex flex-col">
-            <div className="px-5 py-4 border-b border-white/10 flex justify-between items-center">
-              <div>
-                <h3 className="font-bold text-white">Itens para Reposição</h3>
-                <p className="text-xs text-white/50 mt-0.5">Movimentados nos últimos 3 dias</p>
-              </div>
-              <button onClick={() => setShowEstoqueDetalhe(false)} className="p-1.5 hover:bg-white/10 rounded-xl">
-                <X className="w-4 h-4 text-white/40" />
-              </button>
-            </div>
-            <div className="flex-1 overflow-y-auto divide-y divide-white/5">
-              {(itensAtencao ?? []).map((item: any, i: number) => (
-                <div key={i} className={`px-5 py-3.5 flex items-start gap-3 ${item.status_alerta === 'negativo' ? 'bg-red-500/5' : ''}`}>
-                  <div className={`mt-1.5 w-2 h-2 rounded-full shrink-0 ${
-                    item.status_alerta === 'negativo' ? 'bg-red-500'
-                    : item.status_alerta === 'zerado' ? 'bg-white/30'
-                    : 'bg-yellow-500'
-                  }`} />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-white">{item.nome}</p>
-                    <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                      <span className="text-caption text-white/50">{item.estoque_nome}</span>
-                      <span className="text-caption text-white/60">·</span>
-                      <span className="text-caption text-white/50">{item.categoria}</span>
-                      {item.ultima_mov && (
-                        <>
-                          <span className="text-caption text-white/60">·</span>
-                          <span className="text-caption text-white/50">
-                            mov: {new Date(item.ultima_mov + 'T12:00').toLocaleDateString('pt-BR')}
-                          </span>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                  <div className="text-right shrink-0">
-                    <p className={`text-sm font-black ${
-                      Number(item.saldo_real) < 0 ? 'text-red-400'
-                      : Number(item.saldo_real) === 0 ? 'text-white/60'
-                      : 'text-yellow-400'
-                    }`}>
-                      {parseFloat(Number(item.saldo_real ?? 0).toFixed(3)).toLocaleString('pt-BR', { maximumFractionDigits: 3 })} {item.unidade_medida}
-                    </p>
-                    {item.estoque_minimo > 0 && (
-                      <p className="text-caption text-white/60 mt-0.5">min: {item.estoque_minimo}</p>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="px-5 py-3 border-t border-white/10 grid grid-cols-3 gap-3 text-center">
-              {[
-                { label: 'Negativos', count: (itensAtencao ?? []).filter((i: any) => i.status_alerta === 'negativo').length, color: 'text-red-400' },
-                { label: 'Zerados',   count: (itensAtencao ?? []).filter((i: any) => i.status_alerta === 'zerado').length,   color: 'text-white/40' },
-                { label: 'Criticos',  count: (itensAtencao ?? []).filter((i: any) => i.status_alerta === 'critico').length,  color: 'text-yellow-400' },
-              ].map(s => (
-                <div key={s.label}>
-                  <p className={`text-lg font-black ${s.color}`}>{s.count}</p>
-                  <p className="text-caption text-white/50">{s.label}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ── MODAL RH ─────────────────────────────────────────────────── */}
-      {showModalRH && <ModalRH contas={equipe.rh_contas.lista} onClose={() => setShowModalRH(false)} />}
-
-      {/* ── CHAT IA ───────────────────────────────────────────────────── */}
-      {!showChatIA && (
-        <button
-          onClick={() => setShowChatIA(true)}
-          className="fixed bottom-6 right-6 w-14 h-14 bg-gradient-to-br from-blue-600 to-cyan-600 text-white rounded-full shadow-2xl hover:scale-110 transition-all flex items-center justify-center z-40"
-        >
-          <MessageSquare className="w-6 h-6" />
-          <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-[#0d0f1a] animate-pulse" />
-        </button>
-      )}
-
+      {/* O chat tem moldura própria (cabeçalho e fechar); aqui só o véu. */}
       {showChatIA && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="w-full max-w-3xl">
-            <ChatFinanceiroIA onClose={() => setShowChatIA(false)} />
-          </div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.6)' }} onClick={() => setShowChatIA(false)}>
+          <div className="w-full max-w-3xl" onClick={e => e.stopPropagation()}><ChatFinanceiroIA onClose={() => setShowChatIA(false)} /></div>
         </div>
       )}
     </div>

@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, Inbox } from 'lucide-react';
+import { EmptyState, PageHeader, SectionCard } from '../components/ui';
 import { useAuth } from '../contexts/AuthContext';
 import { MODULES } from '../components/layout/SidebarModern';
 
@@ -35,41 +36,18 @@ const MeuPainel: React.FC = () => {
   });
 
   return (
-    <div className="space-y-6 pb-16">
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-wine via-wine-light to-wine-deepest border border-gold/25 shadow-[0_24px_80px_rgba(125,31,44,0.45)] p-6 lg:p-8">
-        <div className="absolute inset-0 opacity-[0.06]"
-          style={{ backgroundImage: 'repeating-linear-gradient(45deg,var(--gold) 0,var(--gold) 1px,transparent 0,transparent 50%),repeating-linear-gradient(-45deg,var(--gold) 0,var(--gold) 1px,transparent 0,transparent 50%)', backgroundSize: '28px 28px' }} />
-        <div className="relative">
-          <p className="text-gold t-caption font-black uppercase tracking-[0.3em] mb-1">Ditado Popular</p>
-          <h1 className="font-display text-3xl font-bold text-white leading-tight">{saudacao()}, {primeiroNome}</h1>
-          <p className="text-white/70 text-xs mt-1 capitalize">{dataLonga}</p>
-        </div>
-      </div>
-
-      <div>
-        <h2 className="font-display text-lg font-bold mb-3 px-1" style={{ color: 'var(--text-primary)' }}>Seus módulos</h2>
-        {modulosDisponiveis.length === 0 ? (
-          <div className="glass-card rounded-2xl p-6 text-center text-white/70 text-sm">
-            Nenhum módulo liberado ainda. Fale com o administrador.
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {modulosDisponiveis.map(m => (
-              <button
-                key={m.path}
-                onClick={() => navigate(m.path)}
-                className="glass-card rounded-2xl p-4 flex items-center gap-3 text-left hover:border-gold/35 transition-colors group"
-              >
-                <div className="p-2.5 rounded-xl bg-white/5 group-hover:bg-wine/20 transition-colors">
-                  <m.icon className="w-5 h-5 text-gold" />
-                </div>
-                <span className="flex-1 text-sm font-semibold text-white">{m.name}</span>
-                <ChevronRight className="w-4 h-4 text-white/25 group-hover:text-white/50 transition-colors" />
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
+    <div className="max-w-5xl">
+      <PageHeader caminho={['Início']} title={`${saudacao()}, ${primeiroNome}`} subtitle={dataLonga.charAt(0).toUpperCase() + dataLonga.slice(1)} />
+      <SectionCard title="Seus módulos" descricao="O que você usa no dia a dia." noPadding>
+        {modulosDisponiveis.length === 0 ? <div className="p-4"><EmptyState icon={Inbox} title="Nenhum módulo liberado ainda" description="Fale com o administrador." compact /></div>
+          : modulosDisponiveis.map(m => (
+            <button key={m.path} type="button" onClick={() => navigate(m.path)} className="w-full flex items-center gap-3 px-5 min-h-12 py-2 text-left hover:bg-white/[0.04] focus-ring" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+              <m.icon size={16} aria-hidden="true" style={{ color: 'var(--gold)' }} />
+              <span className="flex-1 t-body" style={{ fontWeight: 600 }}>{m.name}</span>
+              <ChevronRight size={16} aria-hidden="true" style={{ color: 'var(--text-secondary)' }} />
+            </button>
+          ))}
+      </SectionCard>
     </div>
   );
 };
