@@ -1,5 +1,5 @@
 import React from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { ArrowLeft, ArrowRight, Package, Users, ClipboardCheck, Truck, Store, Clock3, BarChart3, Warehouse, BookOpen, Settings2, SprayCan, ShoppingCart, FileText, ArrowLeftRight, Handshake, ShieldCheck, Sliders, History } from 'lucide-react';
 import { Badge, Button, SectionCard } from '../components/ui';
@@ -33,7 +33,7 @@ type View = 'menu' | 'itens' | 'fichas' | 'estoques' | 'fornecedores' | 'setores
 const VIEWS: View[] = ['menu', 'itens', 'fichas', 'estoques', 'fornecedores', 'setores', 'central', 'kits', 'recebimento', 'reposicao', 'emergencias', 'movimentacoes', 'contagem', 'contagem_central', 'aprovacoes', 'compras', 'relatorios', 'kardex', 'kardex_fornecedor', 'vizinhos'];
 /** grava = mexe em dado real · breve = ainda não existe */
 type Estado = 'grava' | 'breve';
-type MenuItem = { v?: View; n: string; icon: React.ElementType; estado: Estado; dica?: string };
+type MenuItem = { v?: View; href?: string; n: string; icon: React.ElementType; estado: Estado; dica?: string };
 type MenuGrupo = { id: string; title: string; hint: string; items: MenuItem[] };
 const GRUPOS: MenuGrupo[] = [
   { id: 'cadastros', title: '1 · Cadastros', hint: 'Itens, estoques, fichas e fornecedores', items: [
@@ -45,6 +45,7 @@ const GRUPOS: MenuGrupo[] = [
   { id: 'configuracao', title: '2 · Configuração', hint: 'O que fica onde, quanto deve ter, como sai', items: [
     { v: 'setores', n: 'Configurar setores e kits', icon: Settings2, estado: 'grava', dica: 'itens, nível e saída por setor' },
     { v: 'central', n: 'Configurar Central', icon: Sliders, estado: 'grava', dica: 'ponto de pedido: seu número ou calculado' },
+    { href: '/zig-vendas', n: 'Vendas da Zig · vínculos', icon: ArrowLeftRight, estado: 'grava', dica: 'produtos da Zig sem item vinculado' },
   ] },
   { id: 'movimentacoes', title: '3 · Movimentações', hint: 'Entradas, reposição, retiradas, empréstimos', items: [
     { v: 'recebimento', n: 'Receber compras', icon: Truck, estado: 'grava', dica: 'nota com foto, confere e dá entrada' },
@@ -73,6 +74,7 @@ const GRUPOS: MenuGrupo[] = [
 
 const EstoqueBeta2: React.FC = () => {
   const [params, setParams] = useSearchParams();
+  const navigate = useNavigate();
   const { usuario } = useAuth();
   const telaParam = params.get('tela');
   const view: View = params.has('setor') && !telaParam ? 'setores' : (VIEWS.includes(telaParam as View) ? (telaParam as View) : 'menu');
@@ -84,7 +86,7 @@ const EstoqueBeta2: React.FC = () => {
   };
   const nome = usuario?.nome_completo ?? null;
   const voltar = <Button variante="discreto" tamanho="sm" icone={<ArrowLeft size={14} />} onClick={() => go('menu')} className="mb-2 -ml-2">Estoque Beta 2</Button>;
-  const irDeHoje = (d: DestinoHoje) => go(d);
+  const irDeHoje = (d: DestinoHoje) => (d === 'zig' ? navigate('/zig-vendas') : go(d));
 
   if (view === 'setores') return <div>{voltar}<ConfigurarSetores /></div>;
   if (view === 'kits') return <div>{voltar}<Kits responsavel={nome} onConfigurar={id => go('setores', { setor: id, passo: '1' })} /></div>;
@@ -120,7 +122,7 @@ const EstoqueBeta2: React.FC = () => {
         <div className="flex flex-col">
           {g.items.map(item => {
             const breve = item.estado === 'breve';
-            return <button key={item.n} type="button" disabled={breve} onClick={() => item.v && go(item.v)} className="flex items-center gap-3 px-5 min-h-12 py-2 text-left hover:bg-white/[0.04] focus-ring disabled:opacity-50 disabled:cursor-not-allowed" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+            return <button key={item.n} type="button" disabled={breve} onClick={() => (item.href ? navigate(item.href) : item.v && go(item.v))} className="flex items-center gap-3 px-5 min-h-12 py-2 text-left hover:bg-white/[0.04] focus-ring disabled:opacity-50 disabled:cursor-not-allowed" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
               <item.icon size={16} aria-hidden="true" style={{ color: breve ? 'var(--text-secondary)' : 'var(--gold)' }} />
               <span className="flex-1 min-w-0">
                 <span className="block t-body" style={{ fontWeight: breve ? 400 : 600 }}>{item.n}</span>

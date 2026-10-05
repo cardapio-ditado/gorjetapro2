@@ -7,29 +7,9 @@ import {
   TrendingUp, ChevronDown, LogOut, Star, X, LayoutDashboard, Hexagon,
 } from 'lucide-react';
 
-// Desde 05/10/2026 o estoque vive no Beta 2. O módulo antigo fica como legado, só para consulta.
-const ESTOQUE_SUBMODS_ADMIN = [
-  { name: 'Hoje',                  path: '/estoque-beta2' },
-  { name: 'Repor os setores',      path: '/estoque-beta2?tela=reposicao' },
-  { name: 'Receber compras',       path: '/estoque-beta2?tela=recebimento' },
-  { name: 'Retiradas e pedidos',   path: '/estoque-beta2?tela=emergencias' },
-  { name: 'Contagem dos setores',  path: '/estoque-beta2?tela=contagem' },
-  { name: 'Contagem do Central',   path: '/estoque-beta2?tela=contagem_central' },
-  { name: 'Compras',               path: '/estoque-beta2?tela=compras' },
-  { name: 'Relatórios',            path: '/estoque-beta2?tela=relatorios' },
-  { name: 'Configurar setores',    path: '/setores' },
-  { name: 'ZIG → Estoque',         path: '/zig-vendas' },
-  { name: 'Controle De Ville',     path: '/controle-deville' },
-  { name: '─ Legado',              path: '/advanced-inventory?area=analise&tela=dashboard' },
-  { name: 'Estoque antigo (até 04/10)', path: '/advanced-inventory?area=analise&tela=dashboard' },
-];
-
-const ESTOQUE_SUBMODS_USER = [
-  { name: 'Hoje',                  path: '/estoque-beta2' },
-  { name: 'Repor os setores',      path: '/estoque-beta2?tela=reposicao' },
-  { name: 'Retiradas e pedidos',   path: '/estoque-beta2?tela=emergencias' },
-  { name: 'Contagem dos setores',  path: '/estoque-beta2?tela=contagem' },
-];
+// Desde 05/10/2026 o estoque vive no Beta 2, que tem o próprio menu dentro da
+// tela. Por isso o módulo não tem submenu na lateral. O módulo antigo fica
+// como "Estoque antigo (legado)", só para o gestor, também sem submenu.
 
 export interface SubModule { name: string; path: string; }
 
@@ -41,6 +21,8 @@ export interface Module {
   icon: React.ElementType; slug: string;
   subModules?: SubModule[];
   group?: Area;
+  /** Só o gestor vê (admin/master). */
+  soGestor?: boolean;
 }
 
 /**
@@ -98,6 +80,8 @@ export const MODULES: Module[] = [
     ],
   },
   { name: 'Estoque',        path: '/estoque-beta2',      icon: Warehouse,     slug: 'estoque',         group: 'estoque' },
+  { name: 'Controle De Ville', path: '/controle-deville', icon: Warehouse,     slug: 'estoque',         group: 'estoque' },
+  { name: 'Estoque antigo (legado)', path: '/advanced-inventory', icon: Warehouse, slug: 'estoque',     group: 'estoque', soGestor: true },
   { name: 'OKRs',           path: '/gestao-estrategica', icon: TrendingUp,    slug: 'financeiro',      group: 'gestao' },
   { name: 'Fidelidade',     path: '/fidelidade',         icon: Star,          slug: 'dashboard',       group: 'gestao',
     subModules: [
@@ -116,12 +100,11 @@ export const MODULES: Module[] = [
 ];
 
 /**
- * Os módulos com as telas de Estoque que cabem a quem está logado: o gestor
- * vê tudo, o resto vê só a operação. Usado pela lateral clássica e pela
- * coluna da casca nova, para as duas lerem a mesma lista.
+ * Os módulos que cabem a quem está logado: o legado do estoque só aparece
+ * para o gestor. Usado pela lateral clássica e pela coluna da casca nova.
  */
 export function modulosDaCasa(gestor: boolean): Module[] {
-  return MODULES.map(m => (m.slug === 'estoque' ? { ...m, subModules: gestor ? ESTOQUE_SUBMODS_ADMIN : ESTOQUE_SUBMODS_USER } : m));
+  return MODULES.filter(m => gestor || !m.soGestor);
 }
 
 interface Props { onNavigate?: () => void; onCloseMobile?: () => void; }
