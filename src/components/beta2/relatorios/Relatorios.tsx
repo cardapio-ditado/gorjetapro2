@@ -118,7 +118,7 @@ const Relatorios: React.FC<Props> = ({ tipo, itemId, onAbrir, onVoltar }) => {
 
   useEffect(() => {
     if (!def || !params) { setRel(null); return; }
-    if (def.filtros.includes('item') && !params.item_id) { setRel(null); return; }
+    if (def.filtros.includes('item') && !params.item_id && def.tipo !== 'legado_movimentacoes') { setRel(null); return; }
     let vivo = true;
     const t = setTimeout(async () => {
       setCarregando(true); setErro(null);
@@ -198,7 +198,7 @@ const Relatorios: React.FC<Props> = ({ tipo, itemId, onAbrir, onVoltar }) => {
       </div>
 
       {erro && <div className="aviso aviso-perigo mb-3" role="alert">{erro}</div>}
-      {f.includes('item') && !item && <EmptyState icon={Search} title="Escolha um item" description="Digite duas letras do nome e toque no item." compact />}
+      {f.includes('item') && !item && def.tipo !== 'legado_movimentacoes' && <EmptyState icon={Search} title="Escolha um item" description="Digite duas letras do nome e toque no item." compact />}
       {carregando && !rel && <p className="t-body" style={{ color: 'var(--text-secondary)' }}>Gerando…</p>}
 
       {rel && (

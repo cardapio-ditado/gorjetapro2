@@ -278,7 +278,7 @@ const AdvancedInventory: React.FC = () => {
               </div>
               <div>
                 <h1 className="text-white text-2xl font-bold leading-none tracking-tight">Estoque antigo (legado)</h1>
-                <p className="text-white/60 text-sm mt-1">Desde 05/10/2026 o estoque vive no <a href="/estoque-beta2" className="underline">Estoque Beta 2</a>. Estas telas ficam só para consulta; o histórico anterior está guardado à parte.</p>
+                <p className="text-white/60 text-sm mt-1">Desde 05/10/2026 o estoque vive no <a href="/estoque-beta2" className="underline">Estoque Beta 2</a>. Estas telas começaram do zero nesse dia. O histórico anterior está em Estoque › Relatórios › Histórico até 04/10.</p>
               </div>
             </div>
           </div>

@@ -15,7 +15,7 @@ export interface Relatorio { titulo: string; subtitulo: string; kpis: Kpi[]; col
 export interface Parametros { de?: string; ate?: string; estoque_id?: string | null; item_id?: string | null; fornecedor_id?: string | null; dias?: number }
 
 export type Filtro = 'periodo' | 'estoque' | 'fornecedor' | 'item' | 'dias';
-export interface Definicao { tipo: string; nome: string; descricao: string; icon: LucideIcon; filtros: Filtro[]; grupo: 'posicao' | 'movimento' | 'compras' | 'cadastro' }
+export interface Definicao { tipo: string; nome: string; descricao: string; icon: LucideIcon; filtros: Filtro[]; grupo: 'posicao' | 'movimento' | 'compras' | 'cadastro' | 'legado' }
 
 /** O catálogo da tela. Ordem = ordem dos cartões. */
 export const RELATORIOS: Definicao[] = [
@@ -32,12 +32,18 @@ export const RELATORIOS: Definicao[] = [
   { tipo: 'kardex_fornecedor', nome: 'Kardex por fornecedor', descricao: 'O que cada fornecedor vendeu e como o preço andou', icon: Truck, filtros: ['periodo', 'fornecedor'], grupo: 'compras' },
   { tipo: 'itens', nome: 'Lista de itens', descricao: 'Cadastro ativo com classe, ponto e custo', icon: FileText, filtros: [], grupo: 'cadastro' },
   { tipo: 'fichas', nome: 'Fichas técnicas', descricao: 'Custo de cada ficha, por tipo', icon: BookOpen, filtros: [], grupo: 'cadastro' },
+  // Antes do marco zero de 05/10/2026 (esquema legado, só leitura)
+  { tipo: 'legado_saldos', nome: 'Saldos em 04/10', descricao: 'Como o estoque estava antes do marco zero', icon: Package, filtros: ['estoque'], grupo: 'legado' },
+  { tipo: 'legado_movimentacoes', nome: 'Movimentações antigas', descricao: 'Entradas, saídas e transferências até 04/10', icon: ArrowLeftRight, filtros: ['periodo', 'estoque', 'item'], grupo: 'legado' },
+  { tipo: 'legado_kardex', nome: 'Kardex antigo', descricao: 'Extrato de um item até 04/10', icon: History, filtros: ['item', 'estoque', 'periodo'], grupo: 'legado' },
+  { tipo: 'legado_contagens', nome: 'Contagens antigas', descricao: 'Contagens e diferenças até 04/10', icon: ClipboardCheck, filtros: ['periodo', 'estoque'], grupo: 'legado' },
 ];
 export const GRUPOS_REL: Array<{ id: Definicao['grupo']; titulo: string; icon: LucideIcon }> = [
   { id: 'posicao', titulo: 'Posição e custo', icon: BarChart3 },
   { id: 'movimento', titulo: 'Movimento', icon: ArrowLeftRight },
   { id: 'compras', titulo: 'Compras', icon: ShoppingCart },
   { id: 'cadastro', titulo: 'Cadastro', icon: FileText },
+  { id: 'legado', titulo: 'Histórico até 04/10 (legado)', icon: History },
 ];
 
 export const relatoriosApi = {
