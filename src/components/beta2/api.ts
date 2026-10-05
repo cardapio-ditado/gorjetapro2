@@ -258,6 +258,29 @@ export interface ContagemItem { linha_id: string; item_id: string; nome: string;
 export interface ContagemFolha { id: string; estoque: { id: string; nome: string }; modo: 'diaria' | 'auditoria'; status: string; responsavel: string; contados: number; total: number; itens: ContagemItem[] }
 export interface AprovacaoItem { linha_id: string; item_id: string; nome: string; um: string; sistema: number; contada: number; diferenca: number; valor: number }
 export interface AprovacoesTela { posso_aprovar: boolean; aprovadores: string[]; pendentes: Array<{ id: string; estoque: string; responsavel: string; finalizado_em: string; contados: number; itens: AprovacaoItem[] }> }
+// ── Vínculos da Zig ──────────────────────────────────────────────────────────
+export type SituacaoZig = 'sem_vinculo' | 'incompleto' | 'item' | 'ficha' | 'ignorar';
+export interface ProdutoZig { id: string; nome: string; categoria: string; situacao: SituacaoZig; item_id: string | null; item_nome: string | null; item_um: string | null; ficha_id: string | null; ficha_nome: string | null; estoque_id: string | null; estoque_nome: string | null; expandir: boolean; vendido_30d: number; ultima_venda: string | null; pendencias: number; usado_vezes: number; atualizado_em: string | null }
+export interface ZigTela {
+  produtos: ProdutoZig[];
+  totais: { sem_vinculo: number; incompletos: number; ignorados: number; vinculados: number; sem_vinculo_vendendo: number; vendas_paradas_30d: number };
+  ultimo_sync: { iniciado_em: string; status: string; periodo: string; baixados: number; pendentes: number; ignorados: number; movimentacoes: number; erro: string | null } | null;
+  estoques: Array<{ id: string; nome: string; tipo: string }>;
+  fichas: Array<{ id: string; nome: string; tipo: string }>;
+}
+export const zigApi = {
+  async tela(): Promise<ZigTela> {
+    const { data, error } = await supabase.rpc('fn_zig_vinculos_tela');
+    lancar(error);
+    return data as ZigTela;
+  },
+  async salvar(p: { nome: string; modo: 'item' | 'ficha' | 'ignorar' | 'limpar'; item_id?: string | null; ficha_id?: string | null; estoque_id?: string | null; expandir?: boolean }) {
+    const { data, error } = await supabase.rpc('fn_zig_vinculo_salvar', { p });
+    lancar(error);
+    return data as { id: string; nome: string; modo: string };
+  },
+};
+
 // ── Contagem do Central (zonas) ──────────────────────────────────────────────
 export type SituacaoZona = 'em_andamento' | 'atrasado' | 'vence_hoje' | 'nunca' | 'em_dia' | 'concluido_hoje' | 'sem_agenda';
 export interface Zona { bloco: string; especial: boolean; itens: number; ciclo_dias: number; ultima_contagem: string | null; vence_em: string | null; situacao: SituacaoZona; contagem_hoje_id: string | null; contagem_hoje_status: string | null; contados_hoje: number; total_hoje: number }
