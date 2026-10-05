@@ -2,7 +2,8 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, CalendarDays, Check, ClipboardCheck, History, Plus, RefreshCw, X } from 'lucide-react';
 import { Badge, Button, EmptyState, IconButton, Input, KPICard, Modal, PageHeader, SectionCard, Select } from '../ui';
 import { centralContagemApi, fmt, type AgendaItem, type CentralTela, type SituacaoZona, type Zona, type ZonaFolha } from './api';
-import { brl } from './cadastros/api';
+import { brl, semAcento } from './cadastros/api';
+import { BarraBusca } from './Contagem';
 
 interface Props { responsavel: string | null; usuarioId: string | null; onVoltar: () => void; onHistorico: () => void }
 
@@ -221,8 +222,8 @@ const Folha: React.FC<{ inicial: ZonaFolha; usuarioId: string | null; onVoltar: 
   const timer = useRef<number | null>(null);
   const num = (s: string) => { const n = Number((s || '').replace(',', '.')); return s.trim() === '' || !Number.isFinite(n) ? null : n; };
   const contados = folha.itens.filter(i => (valores[i.linha_id] ?? '').trim() !== '').length;
-  const b = busca.trim().toLocaleLowerCase('pt-BR');
-  const visiveis = b ? folha.itens.filter(i => i.nome.toLocaleLowerCase('pt-BR').includes(b)) : folha.itens;
+  const b = semAcento(busca.trim());
+  const visiveis = b ? folha.itens.filter(i => semAcento(i.nome).includes(b)) : folha.itens;
 
   const agendar = (linhaId: string, v: string) => {
     pendentes.current.set(linhaId, v);
@@ -254,9 +255,9 @@ const Folha: React.FC<{ inicial: ZonaFolha; usuarioId: string | null; onVoltar: 
   return (
     <div className="max-w-3xl pb-28">
       <button type="button" onClick={onVoltar} className="flex items-center gap-1 t-label mb-2 focus-ring" style={{ color: 'var(--text-secondary)' }}><ArrowLeft size={14} /> Contagem do Central</button>
-      <PageHeader caminho={['Estoque', 'Contagem', 'Central']} title={folha.nome} subtitle="Conte o que tem na prateleira. Ao concluir, a diferença acerta o saldo do Central na hora."
-        actions={<Input type="search" placeholder="Buscar item" aria-label="Buscar item" value={busca} onChange={e => setBusca(e.target.value)} className="w-56" />} />
+      <PageHeader caminho={['Estoque', 'Contagem', 'Central']} title={folha.nome} subtitle="Conte o que tem na prateleira. Ao concluir, a diferença acerta o saldo do Central na hora." />
       {erro && <div className="aviso aviso-perigo mb-3" role="alert">{erro}</div>}
+      <BarraBusca valor={busca} onMudar={setBusca} />
       <section className="card">
         {visiveis.length === 0 && <div className="p-4"><EmptyState icon={ClipboardCheck} title="Nada com esse nome" variant="filtered" compact /></div>}
         {visiveis.map(i => {

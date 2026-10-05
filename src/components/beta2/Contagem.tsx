@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, Check, ClipboardCheck, RefreshCw, ShieldCheck } from 'lucide-react';
-import { Badge, Button, IconButton, PageHeader, SectionCard } from '../ui';
+import { ArrowLeft, Check, ClipboardCheck, RefreshCw, Search, ShieldCheck, X } from 'lucide-react';
+import { Badge, Button, EmptyState, IconButton, PageHeader, SectionCard } from '../ui';
 import { contagemApi, fmt, type ContagemFolha, type ContagemTela } from './api';
+import { semAcento } from './cadastros/api';
 
 interface Props { responsavel: string | null; onVoltar: () => void; onAprovacoes: () => void }
 const dataBR = (s: string | null) => (s ? new Date(`${s}T12:00:00`).toLocaleDateString('pt-BR') : 'nunca');
@@ -86,10 +87,23 @@ const Contagem: React.FC<Props> = ({ responsavel, onVoltar, onAprovacoes }) => {
 
 export default Contagem;
 
+/** Lupa fixa no topo: acha o item sem rolar a folha inteira. */
+export const BarraBusca: React.FC<{ valor: string; onMudar: (v: string) => void }> = ({ valor, onMudar }) => (
+  <div className="sticky top-0 z-20 -mx-1 px-1 py-2 mb-2" style={{ background: 'var(--bg-dark)' }}>
+    <div className="relative">
+      <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-secondary)', pointerEvents: 'none' }} />
+      <input type="search" enterKeyHint="search" placeholder="Buscar item pelo nome…" aria-label="Buscar item" value={valor} onChange={e => onMudar(e.target.value)}
+        className="input-dark w-full" style={{ paddingLeft: 38, paddingRight: valor ? 38 : undefined, height: 44 }} />
+      {valor && <button type="button" className="btn-icon absolute right-1 top-1/2 -translate-y-1/2" aria-label="Limpar busca" onClick={() => onMudar('')}><X size={14} /></button>}
+    </div>
+  </div>
+);
+
 // ── A folha de contagem ─────────────────────────────────────────────────────
 const Folha: React.FC<{ inicial: ContagemFolha; onVoltar: () => void; onFeito: (m: string) => Promise<void> }> = ({ inicial, onVoltar, onFeito }) => {
   const [folha, setFolha] = useState(inicial);
   const [valores, setValores] = useState<Record<string, string>>(() => Object.fromEntries(inicial.itens.map(i => [i.linha_id, i.contada === null ? '' : String(i.contada)])));
+  const [busca, setBusca] = useState('');
   const [erro, setErro] = useState<string | null>(null);
   const [salvando, setSalvando] = useState(false);
   const [concluindo, setConcluindo] = useState(false);
@@ -129,11 +143,13 @@ const Folha: React.FC<{ inicial: ContagemFolha; onVoltar: () => void; onFeito: (
     finally { setConcluindo(false); }
   };
 
+  // A lupa filtra por nome sem ligar para acento ou maiúscula; os grupos vazios somem.
   const grupos = useMemo(() => {
+    const b = semAcento(busca.trim());
     const m = new Map<string, ContagemFolha['itens']>();
-    for (const i of folha.itens) { if (!m.has(i.categoria)) m.set(i.categoria, []); m.get(i.categoria)!.push(i); }
+    for (const i of folha.itens) { if (b && !semAcento(i.nome).includes(b)) continue; if (!m.has(i.categoria)) m.set(i.categoria, []); m.get(i.categoria)!.push(i); }
     return [...m.entries()];
-  }, [folha]);
+  }, [folha, busca]);
   useEffect(() => { setFolha(inicial); }, [inicial]);
 
   const brl = (n: number) => Number(n || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -144,7 +160,9 @@ const Folha: React.FC<{ inicial: ContagemFolha; onVoltar: () => void; onFeito: (
       <PageHeader caminho={['Estoque', 'Contagem', folha.estoque.nome]} title={folha.modo === 'diaria' ? `Contagem de ${folha.estoque.nome}` : `Auditoria de ${folha.estoque.nome}`}
         subtitle={folha.modo === 'diaria' ? 'Conte o que tem. O contado vira o saldo ao concluir.' : 'Conte tudo. As diferenças vão para aprovação antes de mexer no saldo.'} />
       {erro && <div className="aviso aviso-perigo mb-3" role="alert">{erro}</div>}
+      <BarraBusca valor={busca} onMudar={setBusca} />
       <div className="flex flex-col gap-3">
+        {grupos.length === 0 && <div className="card p-4"><EmptyState icon={ClipboardCheck} title="Nada com esse nome" description="Tente outra parte do nome. Se o item não está no setor, inclua em Configurar setores." variant="filtered" compact /></div>}
         {grupos.map(([cat, itens]) => (
           <section key={cat} className="card">
             <div className="px-4 py-3 flex items-center justify-between" style={{ borderBottom: '1px solid var(--border)' }}>
