@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { ArrowLeft, ArrowRight, Package, Users, ClipboardCheck, Truck, Store, Clock3, BarChart3, Warehouse, BookOpen, Settings2, SprayCan, ShoppingCart, FileText, ArrowLeftRight, Handshake, ShieldCheck, Sliders, History } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Package, Users, ClipboardCheck, Truck, Store, Clock3, BarChart3, Warehouse, BookOpen, Settings2, SprayCan, ShoppingCart, FileText, ArrowLeftRight, Handshake, ShieldCheck, Sliders, History, ChefHat } from 'lucide-react';
 import { Badge, Button, SectionCard } from '../components/ui';
 import ConfigurarSetores from './ConfigurarSetores';
 import Hoje, { type DestinoHoje } from '../components/beta2/Hoje';
@@ -21,6 +21,7 @@ import Compras from '../components/beta2/compras/Compras';
 import Relatorios from '../components/beta2/relatorios/Relatorios';
 import Vizinhos from '../components/beta2/Vizinhos';
 import ZigVinculos from '../components/beta2/ZigVinculos';
+import Producao from '../components/beta2/Producao';
 import ContagemCentral from '../components/beta2/ContagemCentral';
 
 /**
@@ -30,8 +31,8 @@ import ContagemCentral from '../components/beta2/ContagemCentral';
  */
 type View = 'menu' | 'itens' | 'fichas' | 'estoques' | 'fornecedores' | 'setores' | 'central' | 'kits'
   | 'recebimento' | 'reposicao' | 'emergencias' | 'movimentacoes'
-  | 'contagem' | 'contagem_central' | 'aprovacoes' | 'compras' | 'relatorios' | 'kardex' | 'kardex_fornecedor' | 'vizinhos' | 'zig';
-const VIEWS: View[] = ['menu', 'itens', 'fichas', 'estoques', 'fornecedores', 'setores', 'central', 'kits', 'recebimento', 'reposicao', 'emergencias', 'movimentacoes', 'contagem', 'contagem_central', 'aprovacoes', 'compras', 'relatorios', 'kardex', 'kardex_fornecedor', 'vizinhos', 'zig'];
+  | 'contagem' | 'contagem_central' | 'aprovacoes' | 'compras' | 'relatorios' | 'kardex' | 'kardex_fornecedor' | 'vizinhos' | 'zig' | 'producao';
+const VIEWS: View[] = ['menu', 'itens', 'fichas', 'estoques', 'fornecedores', 'setores', 'central', 'kits', 'recebimento', 'reposicao', 'emergencias', 'movimentacoes', 'contagem', 'contagem_central', 'aprovacoes', 'compras', 'relatorios', 'kardex', 'kardex_fornecedor', 'vizinhos', 'zig', 'producao'];
 /** grava = mexe em dado real · breve = ainda não existe */
 type Estado = 'grava' | 'breve';
 type MenuItem = { v?: View; href?: string; n: string; icon: React.ElementType; estado: Estado; dica?: string };
@@ -48,10 +49,11 @@ const GRUPOS: MenuGrupo[] = [
     { v: 'central', n: 'Configurar Central', icon: Sliders, estado: 'grava', dica: 'ponto de pedido: seu número ou calculado' },
     { v: 'zig', n: 'Vínculos da Zig', icon: ArrowLeftRight, estado: 'grava', dica: 'cada venda da Zig desconta de qual item ou ficha' },
   ] },
-  { id: 'movimentacoes', title: '3 · Movimentações', hint: 'Entradas, reposição, retiradas, empréstimos', items: [
+  { id: 'movimentacoes', title: '3 · Movimentações', hint: 'Entradas, reposição, retiradas, produção, empréstimos', items: [
     { v: 'recebimento', n: 'Receber compras', icon: Truck, estado: 'grava', dica: 'nota com foto, confere e dá entrada' },
     { v: 'reposicao', n: 'Repor os setores', icon: Store, estado: 'grava', dica: 'o que falta até o nível, sai do Central num toque' },
     { v: 'emergencias', n: 'Retiradas e pedidos', icon: Clock3, estado: 'grava', dica: 'pedido do setor; retirada fora de hora com conferência' },
+    { v: 'producao', n: 'Produção', icon: ChefHat, estado: 'grava', dica: 'insumo sai do Central, a ficha é feita e o produto volta' },
     { v: 'vizinhos', n: 'Empréstimo com vizinhos', icon: Handshake, estado: 'grava', dica: 'pegamos ou emprestamos; devolve quando puder' },
     { v: 'movimentacoes', n: 'Movimentações (histórico)', icon: ArrowLeftRight, estado: 'grava', dica: 'tudo que entrou, saiu e andou' },
   ] },
@@ -105,6 +107,7 @@ const EstoqueBeta2: React.FC = () => {
   if (view === 'compras') return <Compras onVoltar={() => go('menu')} />;
   if (view === 'vizinhos') return <Vizinhos responsavel={nome} onVoltar={() => go('menu')} />;
   if (view === 'zig') return <ZigVinculos onVoltar={() => go('menu')} />;
+  if (view === 'producao') return <Producao responsavel={nome} onVoltar={() => go('menu')} />;
   if (view === 'relatorios' || view === 'kardex' || view === 'kardex_fornecedor') {
     // ?tela=relatorios&rel=<tipo> abre um relatório; os atalhos do menu só mudam o rel.
     const rel = view === 'kardex' ? 'kardex_produto' : view === 'kardex_fornecedor' ? 'kardex_fornecedor' : params.get('rel');

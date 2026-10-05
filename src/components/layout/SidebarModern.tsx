@@ -8,8 +8,9 @@ import {
 } from 'lucide-react';
 
 // Desde 05/10/2026 o estoque vive no Beta 2, que tem o próprio menu dentro da
-// tela. Por isso o módulo não tem submenu na lateral. O módulo antigo fica
-// como "Estoque antigo (legado)", só para o gestor, também sem submenu.
+// tela. Por isso o módulo não tem submenu na lateral. O módulo antigo saiu do
+// menu; a rota /advanced-inventory continua existindo só por link direto, e o
+// histórico de antes do marco zero está em Estoque › Relatórios.
 
 export interface SubModule { name: string; path: string; }
 
@@ -81,7 +82,6 @@ export const MODULES: Module[] = [
   },
   { name: 'Estoque',        path: '/estoque-beta2',      icon: Warehouse,     slug: 'estoque',         group: 'estoque' },
   { name: 'Controle De Ville', path: '/controle-deville', icon: Warehouse,     slug: 'estoque',         group: 'estoque' },
-  { name: 'Estoque antigo (legado)', path: '/advanced-inventory', icon: Warehouse, slug: 'estoque',     group: 'estoque', soGestor: true },
   { name: 'OKRs',           path: '/gestao-estrategica', icon: TrendingUp,    slug: 'financeiro',      group: 'gestao' },
   { name: 'Fidelidade',     path: '/fidelidade',         icon: Star,          slug: 'dashboard',       group: 'gestao',
     subModules: [

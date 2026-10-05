@@ -8,7 +8,7 @@ interface Props { onVoltar: () => void }
 type Periodo = 'hoje' | '7' | '30' | 'outro';
 const ORIGENS: Array<{ v: string; r: string }> = [
   { v: '', r: 'Todas as origens' }, { v: 'compra', r: 'Compra' }, { v: 'zig', r: 'Venda Zig' }, { v: 'contagem', r: 'Contagem' }, { v: 'requisicao', r: 'Pedido / reposição' },
-  { v: 'setores', r: 'Mover entre setores' }, { v: 'kit', r: 'Kit de limpeza' }, { v: 'vizinho', r: 'Empréstimo com vizinho' }, { v: 'zeragem', r: 'Zeragem' }, { v: 'normalizacao', r: 'Normalização' }, { v: 'manual', r: 'Manual' },
+  { v: 'setores', r: 'Mover entre setores' }, { v: 'kit', r: 'Kit de limpeza' }, { v: 'vizinho', r: 'Empréstimo com vizinho' }, { v: 'producao', r: 'Produção' }, { v: 'zeragem', r: 'Zeragem' }, { v: 'normalizacao', r: 'Normalização' }, { v: 'manual', r: 'Manual' },
 ];
 const TIPO: Record<string, { r: string; v: 'success' | 'danger' | 'info' | 'warning' }> = { entrada: { r: 'entrada', v: 'success' }, saida: { r: 'saída', v: 'danger' }, transferencia: { r: 'transferência', v: 'info' }, ajuste: { r: 'ajuste', v: 'warning' } };
 const hojeISO = () => new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);

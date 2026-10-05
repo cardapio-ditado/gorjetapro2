@@ -374,3 +374,38 @@ export const contagemApi = {
     return data as { id: string; acao: string; acertos?: number; mantidos?: number };
   },
 };
+
+// ── Produção ────────────────────────────────────────────────────────────────
+export interface IngredienteProducao { item_id: string; nome: string; um: string; quantidade: number; custo: number; em_producao: number; em_central: number }
+export interface FichaProducao {
+  id: string; nome: string; rendimento: number; um_rend: string; custo_ficha: number;
+  produz: { item_id: string; nome: string; um: string; central: number; custo: number };
+  ingredientes: IngredienteProducao[]; lotes_possiveis: number; ultima: string | null;
+}
+export interface InsumoProducao { item_id: string; nome: string; categoria: string; um: string; saldo: number; custo: number; valor: number; ultima: string | null }
+export interface ProducaoFeita { id: string; lote: string | null; ficha: string; lotes: number; produzido: number; um: string; custo: number; responsavel: string | null; data: string; criado_em: string; observacoes: string | null }
+export interface ProducaoTela {
+  central: { id: string; nome: string }; producao: { id: string; nome: string };
+  fichas: FichaProducao[]; insumos: InsumoProducao[]; ultimas: ProducaoFeita[];
+  totais: { producoes_7d: number; valor_insumos: number; insumos: number; fichas: number };
+}
+export interface ResultadoProduzir { producao_id: string; lote: string | null; ficha: string; lotes: number; produto: string; produzido: number; um: string; custo_total: number; custo_unitario: number; puxados: string[]; negativos: string[] }
+
+export const producaoApi = {
+  async tela(): Promise<ProducaoTela> {
+    const { data, error } = await supabase.rpc('fn_producao_tela');
+    lancar(error);
+    return data as ProducaoTela;
+  },
+  /** mandar = Central → Produção; devolver = Produção → Central. Limita ao saldo da origem. */
+  async mover(sentido: 'mandar' | 'devolver', itens: Array<{ item_id: string; quantidade: number }>, responsavel: string | null) {
+    const { data, error } = await supabase.rpc('fn_producao_mover', { p_sentido: sentido, p_itens: itens, p_responsavel: responsavel });
+    lancar(error);
+    return data as { itens: number; faltou: string[] };
+  },
+  async produzir(p: { ficha_id: string; lotes: number; puxar_central: boolean; responsavel: string | null; observacoes: string | null }): Promise<ResultadoProduzir> {
+    const { data, error } = await supabase.rpc('fn_producao_produzir', { p });
+    lancar(error);
+    return data as ResultadoProduzir;
+  },
+};
