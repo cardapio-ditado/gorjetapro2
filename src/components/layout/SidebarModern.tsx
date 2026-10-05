@@ -7,33 +7,28 @@ import {
   TrendingUp, ChevronDown, LogOut, Star, X, LayoutDashboard, Hexagon,
 } from 'lucide-react';
 
+// Desde 05/10/2026 o estoque vive no Beta 2. O módulo antigo fica como legado, só para consulta.
 const ESTOQUE_SUBMODS_ADMIN = [
-  { name: '★ Estoque Beta 2',      path: '/estoque-beta2' },
+  { name: 'Hoje',                  path: '/estoque-beta2' },
+  { name: 'Repor os setores',      path: '/estoque-beta2?tela=reposicao' },
+  { name: 'Receber compras',       path: '/estoque-beta2?tela=recebimento' },
+  { name: 'Retiradas e pedidos',   path: '/estoque-beta2?tela=emergencias' },
+  { name: 'Contagem dos setores',  path: '/estoque-beta2?tela=contagem' },
+  { name: 'Contagem do Central',   path: '/estoque-beta2?tela=contagem_central' },
+  { name: 'Compras',               path: '/estoque-beta2?tela=compras' },
+  { name: 'Relatórios',            path: '/estoque-beta2?tela=relatorios' },
   { name: 'Configurar setores',    path: '/setores' },
-  { name: 'Reposição de balcão',   path: '/advanced-inventory?area=operacao&tela=reposicao' },
-  { name: 'Receber mercadoria',    path: '/advanced-inventory?area=operacao&tela=receber' },
-  { name: 'Transferências',        path: '/advanced-inventory?area=operacao&tela=transferir' },
-  { name: 'Produzir',              path: '/advanced-inventory?area=operacao&tela=produzir' },
-  { name: 'Contagem',              path: '/advanced-inventory?area=operacao&tela=contar' },
-  { name: '─ Compras',             path: '/advanced-inventory?area=compras&tela=dia' },
-  { name: 'Compras',               path: '/advanced-inventory?area=compras&tela=dia' },
-  { name: '─ Análise',             path: '/advanced-inventory?area=analise&tela=dashboard' },
-  { name: 'Dashboard',             path: '/advanced-inventory?area=analise&tela=dashboard' },
-  { name: 'Extrato do Item',       path: '/advanced-inventory?area=analise&tela=kardex' },
-  { name: 'Posição do Estoque',    path: '/advanced-inventory?area=analise&tela=inventario' },
-  { name: 'Relatórios',            path: '/advanced-inventory?area=analise&tela=relatorios' },
-  { name: 'ZIG Vendas',            path: '/advanced-inventory?area=analise&tela=zig' },
-  { name: '─ Cadastros',           path: '/advanced-inventory?area=cadastros&tela=itens' },
-  { name: 'Itens',                 path: '/advanced-inventory?area=cadastros&tela=itens' },
-  { name: 'Fichas Técnicas',       path: '/advanced-inventory?area=cadastros&tela=fichas' },
-  { name: 'Estoques',              path: '/advanced-inventory?area=cadastros&tela=estoques' },
+  { name: 'ZIG → Estoque',         path: '/zig-vendas' },
   { name: 'Controle De Ville',     path: '/controle-deville' },
+  { name: '─ Legado',              path: '/advanced-inventory?area=analise&tela=dashboard' },
+  { name: 'Estoque antigo (até 04/10)', path: '/advanced-inventory?area=analise&tela=dashboard' },
 ];
 
 const ESTOQUE_SUBMODS_USER = [
-  { name: '★ Estoque Beta 2', path: '/estoque-beta2' },
-  { name: 'Operação', path: '/advanced-inventory?area=operacao&tela=home' },
-  { name: 'Reposição de balcão', path: '/advanced-inventory?area=operacao&tela=reposicao' },
+  { name: 'Hoje',                  path: '/estoque-beta2' },
+  { name: 'Repor os setores',      path: '/estoque-beta2?tela=reposicao' },
+  { name: 'Retiradas e pedidos',   path: '/estoque-beta2?tela=emergencias' },
+  { name: 'Contagem dos setores',  path: '/estoque-beta2?tela=contagem' },
 ];
 
 export interface SubModule { name: string; path: string; }
@@ -102,7 +97,7 @@ export const MODULES: Module[] = [
       { name: 'DRE Simplificado',         path: '/dre-simplificado' },
     ],
   },
-  { name: 'Estoque',        path: '/advanced-inventory', icon: Warehouse,     slug: 'estoque',         group: 'estoque' },
+  { name: 'Estoque',        path: '/estoque-beta2',      icon: Warehouse,     slug: 'estoque',         group: 'estoque' },
   { name: 'OKRs',           path: '/gestao-estrategica', icon: TrendingUp,    slug: 'financeiro',      group: 'gestao' },
   { name: 'Fidelidade',     path: '/fidelidade',         icon: Star,          slug: 'dashboard',       group: 'gestao',
     subModules: [

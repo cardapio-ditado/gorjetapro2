@@ -277,8 +277,8 @@ const AdvancedInventory: React.FC = () => {
                 <Warehouse className="text-white/80" style={{ width: '18px', height: '18px' }} />
               </div>
               <div>
-                <h1 className="text-white text-2xl font-bold leading-none tracking-tight">Gestão de Estoque</h1>
-                <p className="text-white/60 text-sm mt-1">Controle completo do estoque e movimentações</p>
+                <h1 className="text-white text-2xl font-bold leading-none tracking-tight">Estoque antigo (legado)</h1>
+                <p className="text-white/60 text-sm mt-1">Desde 05/10/2026 o estoque vive no <a href="/estoque-beta2" className="underline">Estoque Beta 2</a>. Estas telas ficam só para consulta; o histórico anterior está guardado à parte.</p>
               </div>
             </div>
           </div>
