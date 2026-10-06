@@ -73,8 +73,14 @@ const Contagem: React.FC<Props> = ({ responsavel, onVoltar, onAprovacoes }) => {
                       {s.aguardando_aprovacao > 0 && a?.status !== 'finalizada' && ` · ${s.aguardando_aprovacao} aguardando aprovação`}
                     </p>
                   </div>
-                  {a?.status === 'processada' ? <Badge variant="success">feita</Badge> : a?.status === 'finalizada' ? <Badge variant="warning">aguarda aprovação</Badge>
-                    : <Button variante={tela.auditoria_hoje ? 'primario' : 'secundario'} tamanho="sm" icone={<ShieldCheck size={14} />} onClick={() => abrir(s.id, 'auditoria')} disabled={!s.itens_total}>{a?.status === 'em_andamento' ? 'Continuar' : tela.auditoria_hoje ? 'Auditar hoje' : 'Auditoria'}</Button>}
+                  {/* Pode haver mais de uma auditoria no dia: a feita vira selo e o botão abre outra (só com o que faltou, por exemplo). */}
+                  <div className="flex items-center gap-2">
+                    {a?.status === 'processada' && <Badge variant="success">feita</Badge>}
+                    {a?.status === 'finalizada' && <Badge variant="warning">aguarda aprovação</Badge>}
+                    {a?.status === 'em_andamento'
+                      ? <Button variante="primario" tamanho="sm" icone={<ShieldCheck size={14} />} onClick={() => abrir(s.id, 'auditoria')}>Continuar</Button>
+                      : <Button variante={tela.auditoria_hoje && !a ? 'primario' : 'secundario'} tamanho="sm" icone={<ShieldCheck size={14} />} onClick={() => abrir(s.id, 'auditoria')} disabled={!s.itens_total}>{a ? 'Nova auditoria' : tela.auditoria_hoje ? 'Auditar hoje' : 'Auditoria'}</Button>}
+                  </div>
                 </div>
               </div>
             </SectionCard>
