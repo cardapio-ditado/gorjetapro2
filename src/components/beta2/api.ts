@@ -409,3 +409,26 @@ export const producaoApi = {
     return data as ResultadoProduzir;
   },
 };
+
+// ── Mover entre estoques ─────────────────────────────────────────────────────
+export interface MoverTela {
+  estoques: Array<{ id: string; nome: string; tipo: string }>;
+  ultimas: Array<{ id: string; quando: string; item: string; um: string; quantidade: number; de: string | null; para: string | null; quem: string | null; motivo: string | null }>;
+}
+export const moverApi = {
+  async tela(): Promise<MoverTela> {
+    const { data, error } = await supabase.rpc('fn_mover_tela');
+    lancar(error);
+    return data as MoverTela;
+  },
+  async saldos(estoqueId: string): Promise<Record<string, number>> {
+    const { data, error } = await supabase.rpc('fn_mover_saldos', { p_estoque: estoqueId });
+    lancar(error);
+    return Object.fromEntries(Object.entries((data || {}) as Record<string, string | number>).map(([k, v]) => [k, Number(v)]));
+  },
+  async mover(p: { de: string; para: string; itens: Array<{ item_id: string; quantidade: number }>; responsavel: string | null; motivo: string | null }) {
+    const { data, error } = await supabase.rpc('fn_mover_estoques', { p });
+    lancar(error);
+    return data as { itens: number; de: string; para: string; faltou: string[] };
+  },
+};

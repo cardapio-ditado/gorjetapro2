@@ -58,6 +58,7 @@ export const ROTAS_BUSCA: RotaBusca[] = [
   { label: 'Estoque — Vínculos da Zig',      path: '/estoque-beta2?tela=zig',                             icon: Warehouse, apelidos: 'mapeamento zig produto item ficha baixa' },
   { label: 'Estoque — Contagem do Central',  path: '/estoque-beta2?tela=contagem_central',                icon: Warehouse, apelidos: 'zonas blocos ciclo agenda contar central' },
   { label: 'Estoque — Produção',           path: '/estoque-beta2?tela=producao',                        icon: Warehouse, apelidos: 'produzir ficha lote insumo central produção' },
+  { label: 'Estoque — Mover entre estoques',  path: '/estoque-beta2?tela=mover',                           icon: Warehouse, apelidos: 'transferir transferência devolver central setor' },
   { label: 'Estoque — Empréstimo com vizinhos', path: '/estoque-beta2?tela=vizinhos',                     icon: Warehouse, apelidos: 'emprestar pegar emprestado devolver bar vizinho' },
   { label: 'Estoque — Relatórios', path: '/estoque-beta2?tela=relatorios',                      icon: Warehouse, apelidos: 'inventário cmv curva abc perdas parados contagens compras' },
   { label: 'Estoque — Kardex por produto',  path: '/estoque-beta2?tela=kardex',                          icon: Warehouse, apelidos: 'extrato saldo item' },

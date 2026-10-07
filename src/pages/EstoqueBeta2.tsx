@@ -22,6 +22,7 @@ import Relatorios from '../components/beta2/relatorios/Relatorios';
 import Vizinhos from '../components/beta2/Vizinhos';
 import ZigVinculos from '../components/beta2/ZigVinculos';
 import Producao from '../components/beta2/Producao';
+import Mover from '../components/beta2/Mover';
 import ContagemCentral from '../components/beta2/ContagemCentral';
 
 /**
@@ -31,8 +32,8 @@ import ContagemCentral from '../components/beta2/ContagemCentral';
  */
 type View = 'menu' | 'itens' | 'fichas' | 'estoques' | 'fornecedores' | 'setores' | 'central' | 'kits'
   | 'recebimento' | 'reposicao' | 'emergencias' | 'movimentacoes'
-  | 'contagem' | 'contagem_central' | 'aprovacoes' | 'compras' | 'relatorios' | 'kardex' | 'kardex_fornecedor' | 'vizinhos' | 'zig' | 'producao';
-const VIEWS: View[] = ['menu', 'itens', 'fichas', 'estoques', 'fornecedores', 'setores', 'central', 'kits', 'recebimento', 'reposicao', 'emergencias', 'movimentacoes', 'contagem', 'contagem_central', 'aprovacoes', 'compras', 'relatorios', 'kardex', 'kardex_fornecedor', 'vizinhos', 'zig', 'producao'];
+  | 'contagem' | 'contagem_central' | 'aprovacoes' | 'compras' | 'relatorios' | 'kardex' | 'kardex_fornecedor' | 'vizinhos' | 'zig' | 'producao' | 'mover';
+const VIEWS: View[] = ['menu', 'itens', 'fichas', 'estoques', 'fornecedores', 'setores', 'central', 'kits', 'recebimento', 'reposicao', 'emergencias', 'movimentacoes', 'contagem', 'contagem_central', 'aprovacoes', 'compras', 'relatorios', 'kardex', 'kardex_fornecedor', 'vizinhos', 'zig', 'producao', 'mover'];
 /** grava = mexe em dado real · breve = ainda não existe */
 type Estado = 'grava' | 'breve';
 type MenuItem = { v?: View; href?: string; n: string; icon: React.ElementType; estado: Estado; dica?: string };
@@ -54,6 +55,7 @@ const GRUPOS: MenuGrupo[] = [
     { v: 'reposicao', n: 'Repor os setores', icon: Store, estado: 'grava', dica: 'o que falta até o nível, sai do Central num toque' },
     { v: 'emergencias', n: 'Retiradas e pedidos', icon: Clock3, estado: 'grava', dica: 'pedido do setor; retirada fora de hora com conferência' },
     { v: 'producao', n: 'Produção', icon: ChefHat, estado: 'grava', dica: 'insumo sai do Central, a ficha é feita e o produto volta' },
+    { v: 'mover', n: 'Mover entre estoques', icon: ArrowLeftRight, estado: 'grava', dica: 'de qualquer estoque para qualquer outro, sem pedido' },
     { v: 'vizinhos', n: 'Empréstimo com vizinhos', icon: Handshake, estado: 'grava', dica: 'pegamos ou emprestamos; devolve quando puder' },
     { v: 'movimentacoes', n: 'Movimentações (histórico)', icon: ArrowLeftRight, estado: 'grava', dica: 'tudo que entrou, saiu e andou' },
   ] },
@@ -108,6 +110,7 @@ const EstoqueBeta2: React.FC = () => {
   if (view === 'vizinhos') return <Vizinhos responsavel={nome} onVoltar={() => go('menu')} />;
   if (view === 'zig') return <ZigVinculos onVoltar={() => go('menu')} />;
   if (view === 'producao') return <Producao responsavel={nome} onVoltar={() => go('menu')} />;
+  if (view === 'mover') return <Mover responsavel={nome} onVoltar={() => go('menu')} />;
   if (view === 'relatorios' || view === 'kardex' || view === 'kardex_fornecedor') {
     // ?tela=relatorios&rel=<tipo> abre um relatório; os atalhos do menu só mudam o rel.
     const rel = view === 'kardex' ? 'kardex_produto' : view === 'kardex_fornecedor' ? 'kardex_fornecedor' : params.get('rel');
