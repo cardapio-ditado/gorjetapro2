@@ -16,7 +16,10 @@ import { createClient } from 'npm:@supabase/supabase-js@2';
 //   - avisar: false silencia o Telegram numa rodada real (reprocessamento).
 // Produto ZIG sem mapeamento entra em mapeamento_itens_vendas como "sem
 // vínculo", para aparecer na aba Mapeamento assistido.
-// A ZIG limita 5 dias por chamada, então períodos maiores são fatiados.
+// O período é buscado um dia por chamada (a ZIG aceita até 5).
+// Produto composto (pai com complementos expandidos) não baixa, a não ser que o
+// mapeamento tenha baixar_pai_com_additions: aí baixa a ficha do pai e também os
+// complementos.
 //
 // Regra importante: aqui só se insere a movimentação. Quem atualiza o saldo é
 // o trigger do banco (trg_atualizar_saldos). Mexer em saldos_estoque à mão
@@ -31,6 +34,10 @@ const cors = {
 const fmt = (d: Date) => d.toISOString().split('T')[0];
 const normalizar = (s: string) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ').trim();
 const brDate = (iso: string) => iso.split('-').reverse().join('/');
+// Mesma normalização de zig-buscar-vendas, para casar o nome do pai com o mapeamento.
+const normalizarZig = (s: string) => (s || '').replace(/\t/g, ' ').trim().toLowerCase()
+  .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  .replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
 
 function fatiar(dtinicio: string, dtfim: string, tamanho = 5): Array<{ ini: string; fim: string }> {
   const blocos: Array<{ ini: string; fim: string }> = [];
@@ -165,8 +172,21 @@ Deno.serve(async (req) => {
   let totalProdutosZig = 0;
 
   try {
-    // 1. Busca e classifica, bloco a bloco (limite da ZIG: 5 dias por chamada)
-    for (const b of fatiar(dtinicio, dtfim)) {
+    // Produtos que abrem os complementos e ainda baixam a própria ficha (drinks
+    // de gin: o complemento só diz qual gin foi usado). zig-buscar-vendas manda
+    // esse pai como composto e sem mapeamento, então o vínculo vem daqui.
+    const { data: paisComFicha, error: errPais } = await supabase
+      .from('mapeamento_itens_vendas')
+      .select('nome_externo, item_estoque_id, ficha_tecnica_id, estoque_id')
+      .eq('baixar_pai_com_additions', true);
+    if (errPais) throw new Error('Erro ao ler mapeamento dos produtos com complemento: ' + errPais.message);
+    const paiPorNome = new Map<string, any>();
+    for (const m of paisComFicha || []) paiPorNome.set(normalizarZig(m.nome_externo), m);
+
+    // 1. Busca e classifica, um dia por chamada. zig-buscar-vendas soma o
+    //    produto pai de vários dias numa linha só, com a data do primeiro, o
+    //    que quebraria a baixa por dia dos pais acima.
+    for (const b of fatiar(dtinicio, dtfim, 1)) {
       const r = await fetch(`${SUPABASE_URL}/functions/v1/zig-buscar-vendas`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${SERVICE_ROLE}` },
@@ -177,6 +197,16 @@ Deno.serve(async (req) => {
 
       for (const p of (json.produtos || []) as ProdutoZig[]) {
         totalProdutosZig++;
+        if (p.eh_produto_composto) {
+          const pai = paiPorNome.get(normalizarZig(p.productName));
+          if (pai && pai.estoque_id && (pai.item_estoque_id || pai.ficha_tecnica_id)) {
+            prontos.push({ ...p, mapeamento: {
+              item_estoque_id: pai.ficha_tecnica_id ? null : pai.item_estoque_id,
+              ficha_tecnica_id: pai.ficha_tecnica_id, estoque_id: pai.estoque_id,
+            } });
+            continue;
+          }
+        }
         if (p.ignorar_estoque || p.eh_produto_composto) {
           ignorados.push({ nome: p.productName, motivo: p.eh_produto_composto ? 'Produto composto (baixa pelos subitens)' : 'Marcado como ignorar' });
           continue;

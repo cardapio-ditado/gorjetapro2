@@ -801,7 +801,20 @@ export default function ZigVendasSync() {
       const json = await res.json();
       if (!json.ok) { setErroBusca(json.error||'Erro ao buscar'); return; }
       setEstoques(json.estoques||[]); setItens(json.itensEstoque||[]); setFichas(json.fichas||[]);
-      const editaveis: ProdutoEditavel[] = (json.produtos||[]).map((p: ProdutoZig) => ({
+      // Pai com complementos que ainda baixa a própria ficha (drinks de gin):
+      // a busca o devolve como composto e sem mapeamento, então o vínculo vem daqui.
+      const resPais = await fetch(`${SUPABASE_URL}/rest/v1/mapeamento_itens_vendas?select=nome_externo,item_estoque_id,ficha_tecnica_id,estoque_id&baixar_pai_com_additions=eq.true`,
+        { headers: { apikey:SUPABASE_ANON, Authorization:`Bearer ${SUPABASE_ANON}` } });
+      const pais = await resPais.json().catch(()=>[]);
+      const paiPorNome = new Map<string, any>((Array.isArray(pais)?pais:[]).map((m:any)=>[norm(m.nome_externo), m]));
+      const produtosZig: ProdutoZig[] = (json.produtos||[]).map((p: ProdutoZig) => {
+        const pai = p.eh_produto_composto ? paiPorNome.get(norm(p.productName)) : null;
+        if (!pai) return p;
+        return { ...p, eh_produto_composto:false, ignorar_estoque:false, mapeamento:{
+          item_estoque_id:pai.ficha_tecnica_id?null:pai.item_estoque_id, ficha_tecnica_id:pai.ficha_tecnica_id,
+          estoque_id:pai.estoque_id, ignorar_estoque:false } } as ProdutoZig;
+      });
+      const editaveis: ProdutoEditavel[] = produtosZig.map((p: ProdutoZig) => ({
         ...p,
         estoqueId:     p.mapeamento?.estoque_id       || '',
         itemEstoqueId: p.mapeamento?.item_estoque_id  || '',
