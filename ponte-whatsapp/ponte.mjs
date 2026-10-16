@@ -26,6 +26,8 @@ const TOKEN = process.env.AGENTE_PONTE_TOKEN;
 const PASTA_SESSAO = resolve(process.env.SESSAO_DIR ?? "./sessao");
 const INTERVALO_SAIDA = 2000;
 const MIDIA_MAX = 15 * 1024 * 1024;
+// Com --parear, só mostra o QR, salva a sessão e sai. É o que o instalador usa.
+const SO_PAREAR = process.argv.includes("--parear");
 
 if (!URL_AGENTE || !TOKEN) {
   console.error("Defina AGENTE_URL e AGENTE_PONTE_TOKEN no arquivo .env (veja o README).");
@@ -86,7 +88,7 @@ function conteudo(message) {
 
 async function aoReceber(msg) {
   const jid = msg.key.remoteJid;
-  if (!jid || msg.key.fromMe) return;
+  if (SO_PAREAR || !jid || msg.key.fromMe) return;
   // Só conversa direta: grupo, status, lista e canal ficam de fora.
   if (!jid.endsWith("@s.whatsapp.net") && !jid.endsWith("@lid")) return;
   // Ao conectar, o WhatsApp reentrega mensagens antigas.
@@ -194,6 +196,10 @@ async function conectar() {
       conectado = true;
       conectadoEm = Date.now();
       console.log(`[ponte] conectado como ${socket.user?.id?.split(":")[0] ?? "?"}`);
+      if (SO_PAREAR) {
+        console.log("[ponte] pareado. Sessão salva.");
+        setTimeout(() => process.exit(0), 3000);
+      }
     }
     if (connection === "close") {
       conectado = false;
@@ -221,4 +227,4 @@ try {
   process.exit(1);
 }
 await conectar();
-setInterval(() => void entregarSaida(), INTERVALO_SAIDA);
+if (!SO_PAREAR) setInterval(() => void entregarSaida(), INTERVALO_SAIDA);
