@@ -24,7 +24,7 @@ export const RELATORIOS: Definicao[] = [
   { tipo: 'abc', nome: 'Curva ABC', descricao: 'Os itens que fazem 80% do custo das vendas', icon: ListOrdered, filtros: ['periodo'], grupo: 'posicao' },
   { tipo: 'cmv', nome: 'CMV', descricao: 'Custo da mercadoria vendida e consumo por setor', icon: Percent, filtros: ['periodo'], grupo: 'posicao' },
   { tipo: 'contagens', nome: 'Contagens', descricao: 'Cada contagem do período e suas diferenças', icon: ClipboardCheck, filtros: ['periodo', 'estoque'], grupo: 'movimento' },
-  { tipo: 'perdas', nome: 'Perdas e divergências', descricao: 'Diferenças das contagens somadas por item', icon: TrendingDown, filtros: ['periodo', 'estoque'], grupo: 'movimento' },
+  { tipo: 'perdas', nome: 'Perdas e divergências', descricao: 'Perdas registradas e diferenças das contagens, por item', icon: TrendingDown, filtros: ['periodo', 'estoque'], grupo: 'movimento' },
   { tipo: 'reposicao', nome: 'Reposição dos setores', descricao: 'O que saiu do Central para cada setor e kit', icon: Store, filtros: ['periodo', 'estoque'], grupo: 'movimento' },
   { tipo: 'pedidos', nome: 'Pedidos e retiradas', descricao: 'Pedidos dos setores e retiradas fora de hora', icon: Clock3, filtros: ['periodo', 'estoque'], grupo: 'movimento' },
   { tipo: 'kardex_produto', nome: 'Kardex por produto', descricao: 'Extrato de um item com o saldo linha a linha', icon: History, filtros: ['item', 'estoque', 'periodo'], grupo: 'movimento' },
