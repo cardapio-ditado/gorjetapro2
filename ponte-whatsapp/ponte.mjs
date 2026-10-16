@@ -26,6 +26,9 @@ const TOKEN = process.env.AGENTE_PONTE_TOKEN;
 const PASTA_SESSAO = resolve(process.env.SESSAO_DIR ?? "./sessao");
 const INTERVALO_SAIDA = 2000;
 const MIDIA_MAX = 15 * 1024 * 1024;
+// O que chegou enquanto a ponte estava fora (reinício, queda) ainda é atendido
+// se tiver até 15 minutos. Mais velho que isso é histórico, não pedido.
+const IDADE_MAX = 15 * 60 * 1000;
 // Com --parear, só mostra o QR, salva a sessão e sai. É o que o instalador usa.
 const SO_PAREAR = process.argv.includes("--parear");
 
@@ -36,7 +39,6 @@ if (!URL_AGENTE || !TOKEN) {
 
 const logger = pino({ level: "warn" });
 let socket = null;
-let conectadoEm = 0;
 let conectado = false;
 
 async function chamar(acao, corpo) {
@@ -91,11 +93,20 @@ async function aoReceber(msg) {
   if (SO_PAREAR || !jid || msg.key.fromMe) return;
   // Só conversa direta: grupo, status, lista e canal ficam de fora.
   if (!jid.endsWith("@s.whatsapp.net") && !jid.endsWith("@lid")) return;
-  // Ao conectar, o WhatsApp reentrega mensagens antigas.
-  if (timestamp(msg.messageTimestamp) * 1000 < conectadoEm - 5000) return;
+  const idade = Date.now() - timestamp(msg.messageTimestamp) * 1000;
+  if (idade > IDADE_MAX) {
+    console.log(`[ponte] descartada por ser antiga (${Math.round(idade / 60000)} min): ${jid}`);
+    return;
+  }
 
   const c = conteudo(msg.message);
-  if (!c) return;
+  if (!c) {
+    // Sem conteúdo costuma ser mensagem que o WhatsApp ainda não conseguiu
+    // decifrar (comum logo depois de parear). Fica no log para investigar.
+    const tipos = Object.keys(msg.message ?? {}).join(",") || `vazia, stub ${msg.messageStubType ?? "?"}`;
+    console.log(`[ponte] mensagem sem conteúdo legível de ${jid} (${tipos})`);
+    return;
+  }
 
   const telefone = await telefoneDe(msg.key);
   const entrada = { wa_id: msg.key.id, jid, telefone, tipo: c.tipo, texto: c.texto?.trim() || undefined };
@@ -194,7 +205,6 @@ async function conectar() {
     }
     if (connection === "open") {
       conectado = true;
-      conectadoEm = Date.now();
       console.log(`[ponte] conectado como ${socket.user?.id?.split(":")[0] ?? "?"}`);
       if (SO_PAREAR) {
         console.log("[ponte] pareado. Sessão salva.");
@@ -214,8 +224,10 @@ async function conectar() {
     }
   });
 
+  // "notify" é mensagem nova. "append" inclui o que chegou com a ponte fora do
+  // ar. Os dois passam pelo filtro de idade, e a função ignora repetidas.
   socket.ev.on("messages.upsert", ({ type, messages }) => {
-    if (type !== "notify") return;
+    if (type !== "notify" && type !== "append") return;
     for (const m of messages) void aoReceber(m);
   });
 }
