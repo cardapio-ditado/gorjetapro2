@@ -33,7 +33,7 @@ type Definicao = Anthropic.Tool & { acoes: string[] };
 const DEFINICOES: Definicao[] = [
   {
     name: "buscar_itens",
-    acoes: ["consultar", "lancar_nota", "transferir", "compras"],
+    acoes: ["consultar", "lancar_nota", "transferir", "compras", "emprestimo"],
     description:
       "Procura itens do estoque pelo nome (palavras ou nome parecido). Devolve nome, unidade, custo médio, saldo em cada estoque que a pessoa pode ver e a última compra (data, fornecedor, quantidade, custo). Use para achar o item de cada linha da nota, de cada transferência e para consultar saldo.",
     input_schema: {
@@ -168,6 +168,63 @@ const DEFINICOES: Definicao[] = [
     input_schema: { type: "object", properties: {} },
   },
   {
+    name: "buscar_vizinho",
+    acoes: ["emprestimo"],
+    description: "Procura vizinho (bar ou restaurante com quem trocamos mercadoria) pelo nome. Vazio lista todos.",
+    input_schema: {
+      type: "object",
+      properties: { texto: { type: "string" } },
+    },
+  },
+  {
+    name: "emprestimos_abertos",
+    acoes: ["emprestimo"],
+    description: "Empréstimos em aberto com vizinhos, dos dois lados: o que pegamos (devemos) e o que emprestamos (nos devem), com quanto falta devolver.",
+    input_schema: { type: "object", properties: {} },
+  },
+  {
+    name: "registrar_emprestimo",
+    acoes: ["emprestimo"],
+    description:
+      "Registra empréstimo com um vizinho. 'pegamos': a mercadoria entra no Central e ficamos devendo. 'emprestamos': sai do Central e o vizinho fica devendo. Conforme o papel, fica pendente de aprovação.",
+    input_schema: {
+      type: "object",
+      properties: {
+        vizinho_id: { type: "string" },
+        sentido: { type: "string", enum: ["pegamos", "emprestamos"] },
+        itens: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              item_id: { type: "string" },
+              quantidade: { type: "number", description: "Na unidade do sistema." },
+            },
+            required: ["item_id", "quantidade"],
+          },
+        },
+        observacoes: { type: "string" },
+        resumo: { type: "string", description: "Uma linha. Ex.: 'Pegamos 50 L de chopp com o Choppão'." },
+      },
+      required: ["vizinho_id", "sentido", "itens", "resumo"],
+    },
+  },
+  {
+    name: "devolver_emprestimo",
+    acoes: ["emprestimo"],
+    description:
+      "Dá baixa (total ou parcial) num empréstimo em aberto: quando nós devolvemos o que pegamos ou quando o vizinho devolve o que emprestamos. Pegue o emprestimo_id em emprestimos_abertos.",
+    input_schema: {
+      type: "object",
+      properties: {
+        emprestimo_id: { type: "string" },
+        quantidade: { type: "number", description: "Omitir para devolver tudo o que falta." },
+        resumo: { type: "string", description: "Uma linha. Ex.: 'Devolvemos 24 Original 600 ao Original'." },
+      },
+      required: ["emprestimo_id", "resumo"],
+    },
+  },
+  {
     name: "pendencias_abertas",
     acoes: ["aprovar"],
     description: "Pendências aguardando aprovação.",
@@ -200,6 +257,22 @@ async function rpc(db: SupabaseClient, nome: string, args: Record<string, unknow
   const { data, error } = await db.rpc(nome, args);
   if (error) throw new Error(error.message);
   return data;
+}
+
+const ROTULOS_PENDENCIA: Record<string, string> = {
+  lancar_nota: "🧾 nota",
+  transferir: "🔁 transferência",
+  emprestimo: "🤝 empréstimo",
+};
+
+/** Se a ação virou pendência, avisa quem aprova. Vale para qualquer ação. */
+async function sePendente(ctx: Contexto, acao: string, r: any) {
+  if (r?.status !== "pendente") return r;
+  const { data: pend } = await ctx.db.from("agente_pendencias").select("id, resumo").eq("id", r.pendencia_id).single();
+  const [icone, nome] = (ROTULOS_PENDENCIA[acao] ?? `📌 ${acao}`).split(" ");
+  await avisarAprovadores(ctx,
+    `${icone} *Pendência ${pend?.id}*: ${nome} de ${ctx.pessoa.nome}\n${pend?.resumo ?? ""}\n\nResponda *aprovar ${pend?.id}* ou *recusar ${pend?.id} motivo*.`);
+  return r;
 }
 
 /** Avisa quem pode aprovar (menos quem pediu). */
@@ -262,20 +335,15 @@ export async function executarFerramenta(
       const r = await rpc(db, "fn_agente_executar", {
         p_pessoa: pessoa.id, p_acao: "lancar_nota",
         p_args: { rascunho_id: entrada.rascunho_id, ...(entrada.forcar ? { forcar: true } : {}) },
-      }) as any;
-      if (r?.status === "pendente") {
-        const { data: pend } = await db.from("agente_pendencias").select("id, resumo").eq("id", r.pendencia_id).single();
-        await avisarAprovadores(ctx,
-          `🧾 *Pendência ${pend?.id}* — nota enviada por ${pessoa.nome}\n${pend?.resumo ?? ""}\n\nResponda *aprovar ${pend?.id}* ou *recusar ${pend?.id} motivo*.`);
-      }
-      return r;
+      });
+      return sePendente(ctx, "lancar_nota", r);
     }
 
     case "transferir": {
       const de = ESTOQUES[String(entrada.de)];
       const para = ESTOQUES[String(entrada.para)];
       if (!de || !para || de === para) return { status: "erro", motivo: "Origem ou destino inválido." };
-      return rpc(db, "fn_agente_executar", {
+      const r = await rpc(db, "fn_agente_executar", {
         p_pessoa: pessoa.id, p_acao: "transferir",
         p_args: {
           de, para, itens: entrada.itens ?? [],
@@ -283,6 +351,36 @@ export async function executarFerramenta(
           ...(entrada.motivo ? { motivo: entrada.motivo } : {}),
         },
       });
+      return sePendente(ctx, "transferir", r);
+    }
+
+    case "buscar_vizinho":
+      return rpc(db, "fn_agente_buscar_vizinho", { p_texto: String(entrada.texto ?? "") });
+
+    case "emprestimos_abertos":
+      return rpc(db, "fn_agente_emprestimos_abertos", {});
+
+    case "registrar_emprestimo": {
+      const r = await rpc(db, "fn_agente_executar", {
+        p_pessoa: pessoa.id, p_acao: "emprestimo",
+        p_args: {
+          operacao: "registrar", vizinho_id: entrada.vizinho_id, sentido: entrada.sentido,
+          itens: entrada.itens ?? [], observacoes: entrada.observacoes ?? "", resumo: entrada.resumo ?? "",
+        },
+      });
+      return sePendente(ctx, "emprestimo", r);
+    }
+
+    case "devolver_emprestimo": {
+      const r = await rpc(db, "fn_agente_executar", {
+        p_pessoa: pessoa.id, p_acao: "emprestimo",
+        p_args: {
+          operacao: "devolver", emprestimo_id: entrada.emprestimo_id,
+          ...(entrada.quantidade != null ? { quantidade: entrada.quantidade } : {}),
+          resumo: entrada.resumo ?? "",
+        },
+      });
+      return sePendente(ctx, "emprestimo", r);
     }
 
     case "movimentos_item":
@@ -306,7 +404,7 @@ export async function executarFerramenta(
       }) as any;
       if (r?.solicitante_id && r.solicitante_id !== pessoa.id) {
         const msg = r.status === "aprovada"
-          ? `✅ A pendência ${entrada.pendencia_id} foi *aprovada* por ${pessoa.nome} e já está lançada.`
+          ? `✅ A pendência ${entrada.pendencia_id} foi *aprovada* por ${pessoa.nome} e já está registrada no sistema.`
           : r.status === "recusada"
           ? `❌ A pendência ${entrada.pendencia_id} foi *recusada* por ${pessoa.nome}${entrada.motivo ? `: ${entrada.motivo}` : "."}`
           : r.status === "duplicada"
