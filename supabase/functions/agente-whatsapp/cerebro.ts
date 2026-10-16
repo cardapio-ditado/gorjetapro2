@@ -58,8 +58,52 @@ function base64(bytes: Uint8Array): string {
 
 const IMAGENS = ["image/jpeg", "image/png", "image/gif", "image/webp"];
 
+const URL_GROQ = "https://api.groq.com/openai/v1/audio/transcriptions";
+const AUDIO_MAX = 25_000_000;
+
+/**
+ * Áudio vira texto pelo Whisper da Groq (o Claude não recebe áudio). A
+ * transcrição fica gravada no texto da mensagem, para entrar no histórico.
+ * Devolve null com o motivo quando não dá.
+ */
+async function transcrever(db: SupabaseClient, m: Mensagem): Promise<{ texto: string | null; motivo?: string }> {
+  const chave = Deno.env.get("GROQ_API_KEY")?.trim();
+  if (!chave) return { texto: null, motivo: "sem_chave" };
+  if (!m.midia_path) return { texto: null, motivo: "sem_arquivo" };
+  const { data, error } = await db.storage.from(BUCKET).download(m.midia_path);
+  if (error || !data || !data.size || data.size > AUDIO_MAX) return { texto: null, motivo: "arquivo" };
+
+  const form = new FormData();
+  form.append("file", data, (data.type || "").includes("mp4") ? "audio.m4a" : "audio.ogg");
+  form.append("model", "whisper-large-v3-turbo");
+  form.append("language", "pt");
+  form.append("response_format", "json");
+  const resp = await fetch(URL_GROQ, { method: "POST", headers: { authorization: `Bearer ${chave}` }, body: form });
+  if (!resp.ok) {
+    console.error("[agente] transcrição falhou:", resp.status, (await resp.text().catch(() => "")).slice(0, 200));
+    return { texto: null, motivo: resp.status === 429 ? "limite" : "falha" };
+  }
+  const bruto = await resp.json().catch(() => null) as { text?: string } | null;
+  const texto = (bruto?.text ?? "").trim();
+  // Whisper inventa frase feita em ruído ("Legendas pela comunidade Amara.org").
+  if (!texto || /amara\.org|legendas? (pela|por)/i.test(texto)) return { texto: null, motivo: "vazio" };
+  await db.from("agente_mensagens").update({ texto }).eq("id", m.id);
+  return { texto };
+}
+
 async function blocosDaMensagem(db: SupabaseClient, m: Mensagem): Promise<Anthropic.ContentBlockParam[]> {
   const blocos: Anthropic.ContentBlockParam[] = [];
+  if (m.tipo === "audio") {
+    const { texto, motivo } = await transcrever(db, m);
+    if (texto) {
+      blocos.push({ type: "text", text: `[Áudio transcrito] ${texto}` });
+    } else if (motivo === "sem_chave") {
+      blocos.push({ type: "text", text: "[A pessoa mandou um áudio. Você ainda não consegue ouvir áudio: peça para escrever.]" });
+    } else {
+      blocos.push({ type: "text", text: "[A pessoa mandou um áudio, mas não deu para entender. Peça para mandar de novo, falando mais perto do celular, ou para escrever.]" });
+    }
+    return blocos;
+  }
   if (m.midia_path) {
     const { data, error } = await db.storage.from(BUCKET).download(m.midia_path);
     if (error || !data) {
@@ -75,9 +119,6 @@ async function blocosDaMensagem(db: SupabaseClient, m: Mensagem): Promise<Anthro
         blocos.push({ type: "text", text: `[Chegou um arquivo do tipo ${tipo}, que não consigo ler.]` });
       }
     }
-  }
-  if (m.tipo === "audio") {
-    blocos.push({ type: "text", text: "[A pessoa mandou um áudio. Você ainda não consegue ouvir áudio: peça para escrever.]" });
   }
   if (m.texto?.trim()) blocos.push({ type: "text", text: m.texto.trim() });
   if (!blocos.length) blocos.push({ type: "text", text: "[mensagem vazia]" });
@@ -101,8 +142,8 @@ async function historico(db: SupabaseClient, equipeId: string, excluir: number[]
   for (const m of linhas) {
     const role = m.direcao === "entrada" ? "user" : "assistant";
     let texto = m.texto?.trim() ?? "";
-    if (m.direcao === "entrada" && m.midia_path) texto = `[enviou uma foto]${texto ? " " + texto : ""}`;
-    if (m.direcao === "entrada" && m.tipo === "audio") texto = `[enviou um áudio]${texto ? " " + texto : ""}`;
+    if (m.direcao === "entrada" && m.tipo === "audio") texto = `[áudio]${texto ? " " + texto : ""}`;
+    else if (m.direcao === "entrada" && m.midia_path) texto = `[enviou uma foto]${texto ? " " + texto : ""}`;
     if (!texto) continue;
     const ultima = msgs[msgs.length - 1];
     if (ultima && ultima.role === role) {

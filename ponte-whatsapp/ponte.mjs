@@ -84,7 +84,7 @@ function conteudo(message) {
     const d = m.documentWithCaptionMessage.message.documentMessage;
     return { tipo: "documento", texto: d.caption, mime: d.mimetype, tamanho: d.fileLength };
   }
-  if (m.audioMessage) return { tipo: "audio" };
+  if (m.audioMessage) return { tipo: "audio", mime: m.audioMessage.mimetype, tamanho: m.audioMessage.fileLength };
   return null;
 }
 
@@ -111,7 +111,7 @@ async function aoReceber(msg) {
   const telefone = await telefoneDe(msg.key);
   const entrada = { wa_id: msg.key.id, jid, telefone, tipo: c.tipo, texto: c.texto?.trim() || undefined };
 
-  if ((c.tipo === "imagem" || c.tipo === "documento") && Number(c.tamanho ?? 0) <= MIDIA_MAX) {
+  if (c.tipo !== "texto" && Number(c.tamanho ?? 0) <= MIDIA_MAX) {
     try {
       const buffer = await downloadMediaMessage(msg, "buffer", {}, { logger, reuploadRequest: socket.updateMediaMessage });
       entrada.midia = { base64: buffer.toString("base64"), mime: (c.mime ?? "").split(";")[0] };

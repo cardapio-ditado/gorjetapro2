@@ -33,7 +33,7 @@ type Definicao = Anthropic.Tool & { acoes: string[] };
 const DEFINICOES: Definicao[] = [
   {
     name: "buscar_itens",
-    acoes: ["consultar", "lancar_nota", "transferir", "compras", "emprestimo"],
+    acoes: ["consultar", "lancar_nota", "transferir", "compras", "emprestimo", "perda"],
     description:
       "Procura itens do estoque pelo nome (palavras ou nome parecido). Devolve nome, unidade, custo médio, saldo em cada estoque que a pessoa pode ver e a última compra (data, fornecedor, quantidade, custo). Use para achar o item de cada linha da nota, de cada transferência e para consultar saldo.",
     input_schema: {
@@ -227,6 +227,42 @@ const DEFINICOES: Definicao[] = [
     },
   },
   {
+    name: "registrar_perda",
+    acoes: ["perda"],
+    description:
+      "Baixa mercadoria perdida: cerveja choca, produto vencido, garrafa quebrada, comida estragada, bebida derramada. Sai do estoque como perda, separada de venda e de ajuste de contagem. Grava na hora.",
+    input_schema: {
+      type: "object",
+      properties: {
+        estoque: { type: "string", enum: ["central", "bar", "cozinha"], description: "Onde a mercadoria estava." },
+        motivo: { type: "string", enum: ["choca/vencida", "quebrou", "estragou", "derramou", "outro"] },
+        itens: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              item_id: { type: "string" },
+              quantidade: { type: "number", description: "Na unidade do sistema." },
+            },
+            required: ["item_id", "quantidade"],
+          },
+        },
+        detalhe: { type: "string", description: "O que aconteceu, nas palavras da pessoa. Ex.: '2 garrafas chocas no fundo do freezer'." },
+        data: { type: "string", description: "AAAA-MM-DD. Omitir para hoje. Até 3 dias para trás." },
+      },
+      required: ["estoque", "motivo", "itens"],
+    },
+  },
+  {
+    name: "perdas_periodo",
+    acoes: ["perda", "consultar"],
+    description: "Perdas registradas nos últimos dias: total em R$, total por motivo e cada lançamento.",
+    input_schema: {
+      type: "object",
+      properties: { dias: { type: "integer", description: "Padrão 7, máximo 60." } },
+    },
+  },
+  {
     name: "pendencias_abertas",
     acoes: ["aprovar"],
     description: "Pendências aguardando aprovação.",
@@ -265,6 +301,7 @@ const ROTULOS_PENDENCIA: Record<string, string> = {
   lancar_nota: "🧾 nota",
   transferir: "🔁 transferência",
   emprestimo: "🤝 empréstimo",
+  perda: "🗑️ perda",
 };
 
 /** Se a ação virou pendência, avisa quem aprova. Vale para qualquer ação. */
@@ -386,6 +423,23 @@ export async function executarFerramenta(
       });
       return sePendente(ctx, "emprestimo", r);
     }
+
+    case "registrar_perda": {
+      const estoque = ESTOQUES[String(entrada.estoque)];
+      if (!estoque) return { status: "erro", motivo: "Estoque inválido." };
+      const r = await rpc(db, "fn_agente_executar", {
+        p_pessoa: pessoa.id, p_acao: "perda",
+        p_args: {
+          estoque_id: estoque, motivo: entrada.motivo ?? "outro", itens: entrada.itens ?? [],
+          ...(entrada.detalhe ? { detalhe: entrada.detalhe } : {}),
+          ...(entrada.data ? { data: entrada.data } : {}),
+        },
+      });
+      return sePendente(ctx, "perda", r);
+    }
+
+    case "perdas_periodo":
+      return rpc(db, "fn_agente_perdas", { p_equipe: pessoa.id, p_dias: entrada.dias ?? 7 });
 
     case "movimentos_item":
       return rpc(db, "fn_agente_movimentos", { p_equipe: pessoa.id, p_item: entrada.item_id, p_dias: entrada.dias ?? 3 });
