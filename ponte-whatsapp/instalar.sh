@@ -80,6 +80,10 @@ azul "== 4/5  WhatsApp =="
 if [ -f "$DESTINO/sessao/creds.json" ]; then
   verde "Já existe sessão salva, não precisa de QR."
 else
+  # O serviço sem sessão fica gerando QR sozinho no fundo. Dois programas
+  # pareando na mesma pasta estragam a sessão um do outro.
+  systemctl stop "$SERVICO" 2>/dev/null || true
+  rm -rf "$DESTINO/sessao"
   echo "No celular do chip: WhatsApp → Aparelhos conectados → Conectar aparelho, e leia o QR."
   node --env-file=.env ponte.mjs --parear </dev/tty
 fi
