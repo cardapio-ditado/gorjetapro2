@@ -1,0 +1,15 @@
+[Unit]
+Description=Ponte WhatsApp do agente de estoque (Ditado Popular)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/ponte-estoque
+ExecStart=/usr/bin/node --env-file=/opt/ponte-estoque/.env /opt/ponte-estoque/ponte.mjs
+Restart=always
+RestartSec=5
+User=root
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,20 @@
+{
+  "name": "ponte-whatsapp-estoque",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Ponte entre o WhatsApp (Baileys) e o agente de estoque no Supabase",
+  "type": "module",
+  "main": "ponte.mjs",
+  "scripts": {
+    "start": "node --env-file=.env ponte.mjs"
+  },
+  "engines": {
+    "node": ">=20.6"
+  },
+  "dependencies": {
+    "@hapi/boom": "^10.0.1",
+    "@whiskeysockets/baileys": "7.0.0-rc14",
+    "pino": "^9.6.0",
+    "qrcode-terminal": "^0.12.0"
+  }
+}
