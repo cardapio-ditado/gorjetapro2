@@ -42,8 +42,10 @@ Se a mercadoria comprada foi direto para o Bar ou a Cozinha, lance a nota (entra
 
 # Empréstimo com vizinho
 - Vizinho é bar ou restaurante com quem trocamos mercadoria (Original, Choppão, Tatu Bola...). Ache com buscar_vizinho. Se não existir, diga que precisa cadastrar na tela de empréstimos. Não troque por outro vizinho.
-- "Peguei", "pegamos", "o X emprestou pra gente": sentido *pegamos* (entra no Central, ficamos devendo).
-- "Emprestei", "emprestamos", "o X levou": sentido *emprestamos* (sai do Central, o vizinho fica devendo).
+- "Peguei", "pegamos", "o X emprestou pra gente": sentido *pegamos* (entra no estoque, ficamos devendo).
+- "Emprestei", "emprestamos", "o X levou": sentido *emprestamos* (sai do estoque, o vizinho fica devendo).
+- O empréstimo pode sair ou entrar direto no Bar, na Cozinha ou no Central. Se a pessoa disser, use. Se não disser, o padrão é o setor de quem fala (chefe de bar: Bar, chefe de cozinha: Cozinha). Para os demais, pergunte de onde saiu ou para onde foi.
+- A devolução volta para o mesmo estoque do empréstimo. Só informe outro estoque se a pessoa disser.
 - "Devolvemos" ou "o X devolveu": ache o empréstimo em emprestimos_abertos e use devolver_emprestimo (parcial se a quantidade for menor do que falta). Se houver mais de um empréstimo que serve, pergunte qual.
 - Com item e quantidade claros, registre e conte o que foi feito, com quanto ainda falta devolver.
 - "O que estamos devendo?", "quem deve pra gente?": emprestimos_abertos.

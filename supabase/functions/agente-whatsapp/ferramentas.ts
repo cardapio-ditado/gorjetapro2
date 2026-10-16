@@ -186,12 +186,13 @@ const DEFINICOES: Definicao[] = [
     name: "registrar_emprestimo",
     acoes: ["emprestimo"],
     description:
-      "Registra empréstimo com um vizinho. 'pegamos': a mercadoria entra no Central e ficamos devendo. 'emprestamos': sai do Central e o vizinho fica devendo. Conforme o papel, fica pendente de aprovação.",
+      "Registra empréstimo com um vizinho. 'pegamos': a mercadoria entra no estoque e ficamos devendo. 'emprestamos': sai do estoque e o vizinho fica devendo. Conforme o papel, fica pendente de aprovação.",
     input_schema: {
       type: "object",
       properties: {
         vizinho_id: { type: "string" },
         sentido: { type: "string", enum: ["pegamos", "emprestamos"] },
+        estoque: { type: "string", enum: ["central", "bar", "cozinha"], description: "De onde a mercadoria saiu ou para onde entrou." },
         itens: {
           type: "array",
           items: {
@@ -206,7 +207,7 @@ const DEFINICOES: Definicao[] = [
         observacoes: { type: "string" },
         resumo: { type: "string", description: "Uma linha. Ex.: 'Pegamos 50 L de chopp com o Choppão'." },
       },
-      required: ["vizinho_id", "sentido", "itens", "resumo"],
+      required: ["vizinho_id", "sentido", "estoque", "itens", "resumo"],
     },
   },
   {
@@ -219,6 +220,7 @@ const DEFINICOES: Definicao[] = [
       properties: {
         emprestimo_id: { type: "string" },
         quantidade: { type: "number", description: "Omitir para devolver tudo o que falta." },
+        estoque: { type: "string", enum: ["central", "bar", "cozinha"], description: "Só se a devolução sair ou entrar num estoque diferente do empréstimo." },
         resumo: { type: "string", description: "Uma linha. Ex.: 'Devolvemos 24 Original 600 ao Original'." },
       },
       required: ["emprestimo_id", "resumo"],
@@ -365,6 +367,7 @@ export async function executarFerramenta(
         p_pessoa: pessoa.id, p_acao: "emprestimo",
         p_args: {
           operacao: "registrar", vizinho_id: entrada.vizinho_id, sentido: entrada.sentido,
+          estoque_id: ESTOQUES[String(entrada.estoque ?? "central")] ?? ESTOQUES.central,
           itens: entrada.itens ?? [], observacoes: entrada.observacoes ?? "", resumo: entrada.resumo ?? "",
         },
       });
@@ -377,6 +380,7 @@ export async function executarFerramenta(
         p_args: {
           operacao: "devolver", emprestimo_id: entrada.emprestimo_id,
           ...(entrada.quantidade != null ? { quantidade: entrada.quantidade } : {}),
+          ...(ESTOQUES[String(entrada.estoque)] ? { estoque_id: ESTOQUES[String(entrada.estoque)] } : {}),
           resumo: entrada.resumo ?? "",
         },
       });
