@@ -39,7 +39,7 @@ Rodar o mesmo comando de novo atualiza a ponte e mantém o token e a sessão.
 |---|---|
 | Ver se está no ar | `systemctl status ponte-estoque` |
 | Reiniciar | `systemctl restart ponte-estoque` |
-| Celular desconectou o aparelho | A ponte apaga a sessão sozinha. Rode `systemctl stop ponte-estoque` e o comando de instalação de novo: ele mostra o QR. |
+| WhatsApp encerrou a sessão | A ponte apaga a sessão e fica parada. Rode o comando de instalação de novo: ele mostra o QR. |
 | Atualizar o código | Rode o comando de instalação de novo. |
 
 ## Controle pelo Supabase

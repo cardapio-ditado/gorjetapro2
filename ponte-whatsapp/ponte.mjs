@@ -213,13 +213,19 @@ async function conectar() {
     }
     if (connection === "close") {
       conectado = false;
-      const codigo = new Boom(lastDisconnect?.error)?.output?.statusCode;
+      const erro = lastDisconnect?.error;
+      const codigo = new Boom(erro)?.output?.statusCode;
+      const detalhe = [erro?.message, JSON.stringify(erro?.data ?? null)].filter(Boolean).join(" ");
       if (codigo === DisconnectReason.loggedOut) {
-        console.warn("[ponte] o celular desconectou este aparelho. Apagando a sessão: vai pedir QR de novo.");
+        // Sessão encerrada pelo WhatsApp: não adianta tentar de novo. Fica
+        // parado, sem gerar QR no fundo, até alguém rodar o instalador.
+        console.warn(`[ponte] o WhatsApp encerrou a sessão deste aparelho (${detalhe}).`);
+        console.warn("[ponte] Para parear de novo, rode o instalador: ele mostra o QR.");
         await rm(PASTA_SESSAO, { recursive: true, force: true });
-      } else {
-        console.warn(`[ponte] conexão caiu (${codigo ?? "?"}). Reconectando…`);
+        if (SO_PAREAR) process.exit(1);
+        return;
       }
+      console.warn(`[ponte] conexão caiu (${codigo ?? "?"} ${detalhe}). Reconectando…`);
       setTimeout(() => void conectar(), 3000);
     }
   });
