@@ -347,6 +347,17 @@ function enxugarItens(lista: any) {
   }));
 }
 
+/**
+ * Número da nota só com dígitos e sem zero à esquerda ("000.102.460" vira
+ * "102460"), que é como as notas já estão no sistema. A trava de duplicada
+ * compara o número exato. Número com letra fica como veio.
+ */
+function normalizarNumero(n: unknown): string {
+  const s = String(n ?? "").trim();
+  if (!/^[\d.\-\s\/]+$/.test(s)) return s;
+  return s.replace(/\D/g, "").replace(/^0+(?=\d)/, "");
+}
+
 async function rpc(db: SupabaseClient, nome: string, args: Record<string, unknown>) {
   const { data, error } = await db.rpc(nome, args);
   if (error) throw new Error(error.message);
@@ -411,7 +422,7 @@ export async function executarFerramenta(
       const soma = itens.reduce((s: number, i: any) => s + Number(i.quantidade) * Number(i.custo_unitario), 0);
       const args = {
         fornecedor_id: entrada.fornecedor_id,
-        numero_documento: entrada.numero_documento ?? "",
+        numero_documento: normalizarNumero(entrada.numero_documento),
         data_compra: entrada.data_compra,
         observacoes: entrada.observacoes ?? "",
         itens: itens.map((i: any) => ({ item_id: i.item_id, nome: i.nome, quantidade: Number(i.quantidade), custo_unitario: Number(i.custo_unitario) })),
