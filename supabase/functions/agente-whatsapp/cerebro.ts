@@ -178,6 +178,28 @@ export async function enfileirar(
 }
 
 type Params = Anthropic.Beta.MessageCreateParamsNonStreaming;
+type MsgParam = Anthropic.Beta.BetaMessageParam;
+
+/** Devolve a mensagem com cache_control no último bloco (texto vira bloco). */
+function marcarCache(m: MsgParam): MsgParam {
+  const blocos = typeof m.content === "string"
+    ? [{ type: "text", text: m.content } as Anthropic.Beta.BetaTextBlockParam]
+    : [...m.content];
+  const fim = blocos.length - 1;
+  blocos[fim] = { ...blocos[fim], cache_control: { type: "ephemeral" } } as (typeof blocos)[number];
+  return { ...m, content: blocos };
+}
+
+/**
+ * Cache da conversa, além do cache das instruções fixas:
+ * - no fim do histórico, para a próxima mensagem da pessoa reaproveitar;
+ * - no fim do que vai nesta chamada, para as rodadas de ferramenta seguintes
+ *   não pagarem de novo a foto e os resultados (saem a 1/20 do preço).
+ * O ponto móvel é aplicado numa cópia, para não acumular marcas.
+ */
+function comCacheNoFim(msgs: MsgParam[]): MsgParam[] {
+  return [...msgs.slice(0, -1), marcarCache(msgs[msgs.length - 1])];
+}
 
 /** Chama o Claude com fallback do servidor. Se o fallback for recusado, tenta sem. */
 async function chamar(cliente: Anthropic, params: Params): Promise<Anthropic.Beta.BetaMessage> {
@@ -211,10 +233,9 @@ async function responder(db: SupabaseClient, equipeId: string, novas: Mensagem[]
   const extra = (await cfg(db, "regras_extra")) as string | null;
 
   const conteudo = (await Promise.all(novas.map((m) => blocosDaMensagem(db, m)))).flat();
-  const messages: Anthropic.Beta.BetaMessageParam[] = [
-    ...(await historico(db, equipeId, novas.map((m) => m.id))),
-    { role: "user", content: conteudo },
-  ];
+  const anteriores: MsgParam[] = await historico(db, equipeId, novas.map((m) => m.id));
+  if (anteriores.length) anteriores[anteriores.length - 1] = marcarCache(anteriores[anteriores.length - 1]);
+  const messages: MsgParam[] = [...anteriores, { role: "user", content: conteudo }];
 
   const system: Anthropic.Beta.BetaTextBlockParam[] = [
     { type: "text", text: extra ? `${PROMPT_FIXO}\n${extra}` : PROMPT_FIXO, cache_control: { type: "ephemeral" } },
@@ -232,7 +253,7 @@ async function responder(db: SupabaseClient, equipeId: string, novas: Mensagem[]
       max_tokens: 16000,
       system,
       tools,
-      messages,
+      messages: comCacheNoFim(messages),
       output_config: { effort: esforco },
     } as Params);
     uso.rodadas++;

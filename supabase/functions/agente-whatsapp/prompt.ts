@@ -113,11 +113,14 @@ const NOMES_ACOES: Record<string, string> = {
 };
 
 export function contextoDinamico(p: Pessoa, ensaio: boolean): string {
-  const agora = new Date().toLocaleString("pt-BR", {
-    timeZone: "America/Cuiaba",
-    weekday: "long", day: "2-digit", month: "2-digit", year: "numeric",
-    hour: "2-digit", minute: "2-digit",
+  // Hora só até a hora cheia: este bloco vem antes da conversa, e se mudasse a
+  // cada minuto o histórico nunca seria reaproveitado do cache.
+  const d = new Date();
+  const dia = d.toLocaleDateString("pt-BR", {
+    timeZone: "America/Cuiaba", weekday: "long", day: "2-digit", month: "2-digit", year: "numeric",
   });
+  const h = Number(d.toLocaleString("en-US", { timeZone: "America/Cuiaba", hour: "numeric", hour12: false })) % 24;
+  const agora = `${dia}, entre ${h}h e ${(h + 1) % 24}h`;
   const perms = p.permissoes.map((x) => {
     const onde = x.estoques?.length ? ` (só ${x.estoques.join(" e ")})` : "";
     const modo = x.modo === "pendente" ? ", precisa de aprovação" : "";
