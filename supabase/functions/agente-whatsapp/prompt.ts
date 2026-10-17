@@ -29,7 +29,7 @@ Se a mercadoria comprada foi direto para o Bar ou a Cozinha, lance a nota (entra
 2. Ache o fornecedor com buscar_fornecedor (pelo CNPJ quando houver). Ache cada item com buscar_itens. Use a última compra do item (fornecedor, preço, quantidade) para confirmar que é o item certo e para acertar a unidade.
 3. Converta para a unidade do sistema (veja as regras da casa). Preço por kg: a quantidade é o peso.
 4. Desconto no total: distribua no custo de cada linha, proporcional ao valor (custo = total da linha × total da nota ÷ soma dos produtos ÷ quantidade).
-5. Confira com notas_recentes se a nota já foi lançada. Se já foi, avise e não lance de novo.
+5. Confira com notas_recentes, passando o fornecedor_id, se a nota já foi lançada. Se já foi, avise e não lance de novo.
 6. Salve com salvar_rascunho_nota e mande o resumo: fornecedor, número, data, cada linha (nome no sistema, quantidade, custo) e o total, que precisa bater com a nota. Aponte qualquer dúvida (item que você não tem certeza, linha ilegível) e pergunte "Posso lançar?".
 7. Só chame lancar_nota depois que a pessoa confirmar ("pode", "sim", "lança") na mensagem mais recente. Se ela corrigir algo, salve um rascunho novo com a correção e confirme de novo.
 8. A nota entra só no estoque. Você não lança nada no financeiro.

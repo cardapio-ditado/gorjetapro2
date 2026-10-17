@@ -37,12 +37,12 @@ const DEFINICOES: Definicao[] = [
     name: "buscar_itens",
     acoes: ["consultar", "lancar_nota", "transferir", "compras", "emprestimo", "perda"],
     description:
-      "Procura itens do estoque pelo nome (palavras ou nome parecido). Devolve nome, unidade, custo médio, saldo em cada estoque que a pessoa pode ver e a última compra (data, fornecedor, quantidade, custo). Use para achar o item de cada linha da nota, de cada transferência e para consultar saldo.",
+      "Procura itens do estoque pelo nome (palavras ou nome parecido). Devolve nome, unidade, custo médio, saldo nos estoques que a pessoa pode ver e a última compra (data, fornecedor, quantidade, custo). Estoque zerado não aparece em saldos: saldos vazio é zerado em todos. Use para achar o item de cada linha da nota, de cada transferência e para consultar saldo.",
     input_schema: {
       type: "object",
       properties: {
         texto: { type: "string", description: "Nome ou parte do nome, ex.: 'agua sem gas', 'corona 600', 'red bull tradicional'." },
-        limite: { type: "integer", description: "Máximo de resultados (padrão 8)." },
+        limite: { type: "integer", description: "Máximo de resultados (padrão 5)." },
       },
       required: ["texto"],
     },
@@ -60,10 +60,14 @@ const DEFINICOES: Definicao[] = [
   {
     name: "notas_recentes",
     acoes: ["lancar_nota", "consultar"],
-    description: "Notas de compra lançadas nos últimos dias (fornecedor, número, data, valor). Use antes de lançar, para não duplicar.",
+    description:
+      "Notas de compra lançadas (número, data, valor, quantos itens). Com fornecedor_id, traz só as daquele fornecedor nos últimos 15 dias: use assim antes de lançar, para não duplicar. Sem fornecedor_id, traz todas dos últimos dias.",
     input_schema: {
       type: "object",
-      properties: { dias: { type: "integer", description: "Padrão 3, máximo 15." } },
+      properties: {
+        fornecedor_id: { type: "string" },
+        dias: { type: "integer", description: "Sem fornecedor: padrão 3, máximo 15. Com fornecedor: padrão 15, máximo 60." },
+      },
     },
   },
   {
@@ -333,6 +337,16 @@ async function fotosRecentes(ctx: Contexto, quantas: number) {
   return { __imagens: imagens, texto: `${imagens.length} foto(s) mais recente(s), da mais antiga para a mais nova:` };
 }
 
+/** Tira do resultado da busca o que só gasta token: estoque zerado e espaço sobrando nos nomes. */
+function enxugarItens(lista: any) {
+  if (!Array.isArray(lista)) return lista;
+  return lista.map((i) => ({
+    ...i,
+    saldos: Object.fromEntries(Object.entries(i.saldos ?? {}).filter(([, v]) => Number(v) !== 0)),
+    ...(i.ultima_compra ? { ultima_compra: { ...i.ultima_compra, fornecedor: String(i.ultima_compra.fornecedor ?? "").trim() } } : {}),
+  }));
+}
+
 async function rpc(db: SupabaseClient, nome: string, args: Record<string, unknown>) {
   const { data, error } = await db.rpc(nome, args);
   if (error) throw new Error(error.message);
@@ -380,12 +394,15 @@ export async function executarFerramenta(
 
   switch (nome) {
     case "buscar_itens":
-      return rpc(db, "fn_agente_buscar_itens", { p_equipe: pessoa.id, p_texto: String(entrada.texto ?? ""), p_limite: entrada.limite ?? 8 });
+      return enxugarItens(await rpc(db, "fn_agente_buscar_itens", { p_equipe: pessoa.id, p_texto: String(entrada.texto ?? ""), p_limite: entrada.limite ?? 5 }));
 
     case "buscar_fornecedor":
       return rpc(db, "fn_agente_buscar_fornecedor", { p_texto: String(entrada.texto ?? "") });
 
     case "notas_recentes":
+      if (entrada.fornecedor_id) {
+        return rpc(db, "fn_agente_notas_fornecedor", { p_fornecedor: entrada.fornecedor_id, p_dias: entrada.dias ?? 15 });
+      }
       return rpc(db, "fn_agente_notas_recentes", { p_dias: entrada.dias ?? 3 });
 
     case "salvar_rascunho_nota": {

@@ -274,7 +274,9 @@ async function responder(db: SupabaseClient, equipeId: string, novas: Mensagem[]
   const messages: MsgParam[] = [...anteriores, { role: "user", content: conteudo }];
 
   const system: Anthropic.Beta.BetaTextBlockParam[] = [
-    { type: "text", text: extra ? `${PROMPT_FIXO}\n${extra}` : PROMPT_FIXO, cache_control: { type: "ephemeral" } },
+    // Instruções e ferramentas ficam 1 h no cache: notas com mais de 5 min de
+    // intervalo não pagam para gravar tudo de novo. A conversa segue com 5 min.
+    { type: "text", text: extra ? `${PROMPT_FIXO}\n${extra}` : PROMPT_FIXO, cache_control: { type: "ephemeral", ttl: "1h" } },
     { type: "text", text: contextoDinamico(pessoa, ensaio) },
   ];
   const tools = ferramentasPara(pessoa) as Anthropic.Beta.BetaTool[];
