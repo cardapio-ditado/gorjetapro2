@@ -263,6 +263,16 @@ const DEFINICOES: Definicao[] = [
     },
   },
   {
+    name: "ver_foto_original",
+    acoes: ["lancar_nota", "consultar"],
+    description:
+      "Mostra as fotos (ou PDFs) que a pessoa mandou nas últimas 3 horas, a imagem em si. Use só quando a transcrição automática tiver aviso, faltar algo, ou a pessoa disser que não bate com a foto.",
+    input_schema: {
+      type: "object",
+      properties: { quantas: { type: "integer", description: "Quantas fotos, das mais recentes (padrão 1, máximo 3)." } },
+    },
+  },
+  {
     name: "pendencias_abertas",
     acoes: ["aprovar"],
     description: "Pendências aguardando aprovação.",
@@ -289,6 +299,36 @@ export function ferramentasPara(p: Pessoa): Anthropic.Tool[] {
   return DEFINICOES
     .filter((d) => d.acoes.some((a) => acoes.has(a)))
     .map(({ acoes: _a, ...tool }) => tool);
+}
+
+function base64(bytes: Uint8Array): string {
+  let bin = "";
+  for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  return btoa(bin);
+}
+
+/** Fotos recentes da pessoa, para o agente olhar a imagem quando a transcrição não basta. */
+async function fotosRecentes(ctx: Contexto, quantas: number) {
+  const desde = new Date(Date.now() - 3 * 3600 * 1000).toISOString();
+  const { data } = await ctx.db
+    .from("agente_mensagens")
+    .select("midia_path, criado_em")
+    .eq("equipe_id", ctx.pessoa.id)
+    .eq("direcao", "entrada")
+    .not("midia_path", "is", null)
+    .neq("tipo", "audio")
+    .gte("criado_em", desde)
+    .order("id", { ascending: false })
+    .limit(Math.min(Math.max(quantas, 1), 3));
+  const imagens: { mime: string; b64: string }[] = [];
+  for (const m of (data ?? []).reverse()) {
+    const { data: arq } = await ctx.db.storage.from("agente-whatsapp").download(m.midia_path);
+    if (!arq) continue;
+    const mime = arq.type === "image/jpg" ? "image/jpeg" : arq.type;
+    imagens.push({ mime, b64: base64(new Uint8Array(await arq.arrayBuffer())) });
+  }
+  if (!imagens.length) return { status: "vazio", motivo: "Nenhuma foto desta pessoa nas últimas 3 horas." };
+  return { __imagens: imagens, texto: `${imagens.length} foto(s) mais recente(s), da mais antiga para a mais nova:` };
 }
 
 async function rpc(db: SupabaseClient, nome: string, args: Record<string, unknown>) {
@@ -437,6 +477,9 @@ export async function executarFerramenta(
       });
       return sePendente(ctx, "perda", r);
     }
+
+    case "ver_foto_original":
+      return fotosRecentes(ctx, Number(entrada.quantas) || 1);
 
     case "perdas_periodo":
       return rpc(db, "fn_agente_perdas", { p_equipe: pessoa.id, p_dias: entrada.dias ?? 7 });

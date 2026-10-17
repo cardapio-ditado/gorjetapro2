@@ -12,6 +12,7 @@ import Anthropic from "npm:@anthropic-ai/sdk@0.127.0";
 import type { SupabaseClient } from "npm:@supabase/supabase-js@2";
 import { contextoDinamico, type Pessoa, PROMPT_FIXO } from "./prompt.ts";
 import { executarFerramenta, ferramentasPara } from "./ferramentas.ts";
+import { type Leitura, lerDocumento, textoDaLeitura } from "./leitor.ts";
 
 export const BUCKET = "agente-whatsapp";
 const MAX_RODADAS = 12;
@@ -28,6 +29,7 @@ interface Mensagem {
   midia_path: string | null;
   status: string;
   criado_em: string;
+  leitura: Leitura | null;
 }
 
 interface Opcoes {
@@ -91,7 +93,21 @@ async function transcrever(db: SupabaseClient, m: Mensagem): Promise<{ texto: st
   return { texto };
 }
 
-async function blocosDaMensagem(db: SupabaseClient, m: Mensagem): Promise<Anthropic.ContentBlockParam[]> {
+/**
+ * Foto ou PDF: primeiro o leitor externo transcreve e confere. Se der certo, o
+ * agente recebe o texto. Se não, a imagem vai para o Claude como sempre foi.
+ * A leitura fica gravada na mensagem (auditoria e reprocessamento).
+ */
+async function lerMidia(db: SupabaseClient, m: Mensagem, mime: string, b64: string, leitor: string | null): Promise<Leitura | null> {
+  if (!leitor || leitor === "off") return null;
+  if (m.leitura?.ok && m.leitura.nota) return m.leitura;
+  const leitura = await lerDocumento(leitor, mime, b64);
+  await db.from("agente_mensagens").update({ leitura }).eq("id", m.id);
+  if (!leitura.ok) console.warn("[agente] leitura externa recusada:", leitura.motivo);
+  return leitura;
+}
+
+async function blocosDaMensagem(db: SupabaseClient, m: Mensagem, leitor: string | null, leituras: Leitura[]): Promise<Anthropic.ContentBlockParam[]> {
   const blocos: Anthropic.ContentBlockParam[] = [];
   if (m.tipo === "audio") {
     const { texto, motivo } = await transcrever(db, m);
@@ -111,7 +127,13 @@ async function blocosDaMensagem(db: SupabaseClient, m: Mensagem): Promise<Anthro
     } else {
       const tipo = data.type === "image/jpg" ? "image/jpeg" : data.type;
       const b64 = base64(new Uint8Array(await data.arrayBuffer()));
-      if (IMAGENS.includes(tipo)) {
+      const leitura = IMAGENS.includes(tipo) || tipo === "application/pdf"
+        ? await lerMidia(db, m, tipo, b64, leitor)
+        : null;
+      if (leitura) leituras.push(leitura);
+      if (leitura?.ok && leitura.nota) {
+        blocos.push({ type: "text", text: textoDaLeitura(leitura.nota) });
+      } else if (IMAGENS.includes(tipo)) {
         blocos.push({ type: "image", source: { type: "base64", media_type: tipo as "image/jpeg", data: b64 } });
       } else if (tipo === "application/pdf") {
         blocos.push({ type: "document", source: { type: "base64", media_type: "application/pdf", data: b64 } });
@@ -130,7 +152,7 @@ async function historico(db: SupabaseClient, equipeId: string, excluir: number[]
   const desde = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
   const { data } = await db
     .from("agente_mensagens")
-    .select("id, direcao, tipo, texto, midia_path, status")
+    .select("id, direcao, tipo, texto, midia_path, status, leitura")
     .eq("equipe_id", equipeId)
     .gte("criado_em", desde)
     .in("status", ["respondida", "erro", "pendente_envio", "enviada", "falha_envio", "simulada"])
@@ -143,7 +165,11 @@ async function historico(db: SupabaseClient, equipeId: string, excluir: number[]
     const role = m.direcao === "entrada" ? "user" : "assistant";
     let texto = m.texto?.trim() ?? "";
     if (m.direcao === "entrada" && m.tipo === "audio") texto = `[áudio]${texto ? " " + texto : ""}`;
-    else if (m.direcao === "entrada" && m.midia_path) texto = `[enviou uma foto]${texto ? " " + texto : ""}`;
+    else if (m.direcao === "entrada" && m.midia_path) {
+      const n = (m.leitura as Leitura | null)?.ok ? (m.leitura as Leitura).nota : null;
+      const qual = n ? ` de nota: ${n.fornecedor ?? "?"}${n.numero ? ` nº ${n.numero}` : ""} · total ${n.total ?? "?"}` : "";
+      texto = `[enviou uma foto${qual}]${texto ? " " + texto : ""}`;
+    }
     if (!texto) continue;
     const ultima = msgs[msgs.length - 1];
     if (ultima && ultima.role === role) {
@@ -231,8 +257,10 @@ async function responder(db: SupabaseClient, equipeId: string, novas: Mensagem[]
   const modelo = (await cfg(db, "modelo")) ?? MODELO_PADRAO;
   const esforco = (await cfg(db, "esforco")) ?? "medium";
   const extra = (await cfg(db, "regras_extra")) as string | null;
+  const leitor = (await cfg(db, "leitor_modelo")) as string | null;
 
-  const conteudo = (await Promise.all(novas.map((m) => blocosDaMensagem(db, m)))).flat();
+  const leituras: Leitura[] = [];
+  const conteudo = (await Promise.all(novas.map((m) => blocosDaMensagem(db, m, leitor, leituras)))).flat();
   const anteriores: MsgParam[] = await historico(db, equipeId, novas.map((m) => m.id));
   if (anteriores.length) anteriores[anteriores.length - 1] = marcarCache(anteriores[anteriores.length - 1]);
   const messages: MsgParam[] = [...anteriores, { role: "user", content: conteudo }];
@@ -244,7 +272,10 @@ async function responder(db: SupabaseClient, equipeId: string, novas: Mensagem[]
   const tools = ferramentasPara(pessoa) as Anthropic.Beta.BetaTool[];
   const ctx = { db, pessoa, avisos: [] as { equipeId: string; texto: string }[] };
 
-  const uso = { modelo, rodadas: 0, entrada: 0, cache_leitura: 0, cache_escrita: 0, saida: 0, ferramentas: [] as string[] };
+  const uso = {
+    modelo, rodadas: 0, entrada: 0, cache_leitura: 0, cache_escrita: 0, saida: 0, ferramentas: [] as string[],
+    leituras: leituras.map((l) => ({ leitor: l.leitor, ok: l.ok, motivo: l.motivo, ms: l.ms, ...l.uso })),
+  };
   let resposta: Anthropic.Beta.BetaMessage | null = null;
 
   for (let rodada = 0; rodada < MAX_RODADAS; rodada++) {
@@ -270,7 +301,20 @@ async function responder(db: SupabaseClient, equipeId: string, novas: Mensagem[]
     const resultados = await Promise.all(chamadas.map(async (c): Promise<Anthropic.Beta.BetaToolResultBlockParam> => {
       uso.ferramentas.push(c.name);
       try {
-        const r = await executarFerramenta(c.name, (c.input ?? {}) as Record<string, unknown>, ctx);
+        const r = await executarFerramenta(c.name, (c.input ?? {}) as Record<string, unknown>, ctx) as
+          { __imagens?: { mime: string; b64: string }[]; texto?: string } | null;
+        if (r?.__imagens) {
+          // ver_foto_original: devolve as imagens em si, não texto.
+          return {
+            type: "tool_result", tool_use_id: c.id,
+            content: [
+              { type: "text", text: r.texto ?? "Fotos originais:" },
+              ...r.__imagens.map((i) => i.mime === "application/pdf"
+                ? { type: "document" as const, source: { type: "base64" as const, media_type: "application/pdf" as const, data: i.b64 } }
+                : { type: "image" as const, source: { type: "base64" as const, media_type: i.mime as "image/jpeg", data: i.b64 } }),
+            ],
+          } as Anthropic.Beta.BetaToolResultBlockParam;
+        }
         return { type: "tool_result", tool_use_id: c.id, content: JSON.stringify(r ?? null) };
       } catch (e) {
         return { type: "tool_result", tool_use_id: c.id, content: e instanceof Error ? e.message : String(e), is_error: true };

@@ -73,6 +73,8 @@ interface Entrada {
   tipo?: "texto" | "imagem" | "audio" | "documento";
   texto?: string;
   midia?: { base64: string; mime: string };
+  /** Só na simulação: reaproveita uma foto já guardada no bucket. */
+  midia_path?: string;
 }
 
 async function receber(e: Entrada, simulado = false) {
@@ -84,7 +86,7 @@ async function receber(e: Entrada, simulado = false) {
 
   const pessoa = await atendivel(e.telefone ?? null);
 
-  let midiaPath: string | null = null;
+  let midiaPath: string | null = simulado && e.midia_path ? e.midia_path : null;
   if (pessoa && e.midia?.base64) {
     await garantirBucket();
     const mime = e.midia.mime === "image/jpg" ? "image/jpeg" : e.midia.mime;
@@ -103,7 +105,7 @@ async function receber(e: Entrada, simulado = false) {
     telefone: e.telefone ?? null,
     jid: e.jid ?? null,
     direcao: "entrada",
-    tipo: e.tipo ?? (e.midia ? "imagem" : "texto"),
+    tipo: e.tipo ?? (e.midia || midiaPath ? "imagem" : "texto"),
     texto: e.texto ?? null,
     midia_path: midiaPath,
     wa_id: waId,

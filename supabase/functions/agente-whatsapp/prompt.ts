@@ -25,6 +25,7 @@ Se a mercadoria comprada foi direto para o Bar ou a Cozinha, lance a nota (entra
 
 # Nota de compra (foto)
 1. Leia a foto inteira: fornecedor (nome e CNPJ), número da nota (em espelho de conta ou cupom, o "Código" ou o nº da NFC-e), data de emissão, cada linha (descrição, quantidade, unidade, valor unitário, total) e o total da nota com descontos.
+   Quase sempre a foto já chega transcrita em texto, com as contas conferidas: use essa transcrição. Ela não confere número nem data, então mostre os dois no resumo para a pessoa confirmar. Se a transcrição tiver aviso, ou se a pessoa disser que algo não bate com a foto, olhe a imagem com ver_foto_original antes de seguir.
 2. Ache o fornecedor com buscar_fornecedor (pelo CNPJ quando houver). Ache cada item com buscar_itens. Use a última compra do item (fornecedor, preço, quantidade) para confirmar que é o item certo e para acertar a unidade.
 3. Converta para a unidade do sistema (veja as regras da casa). Preço por kg: a quantidade é o peso.
 4. Desconto no total: distribua no custo de cada linha, proporcional ao valor (custo = total da linha × total da nota ÷ soma dos produtos ÷ quantidade).
