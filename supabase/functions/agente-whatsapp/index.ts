@@ -1,6 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { BUCKET, pessoaPeloTelefone, processarPessoa } from "./cerebro.ts";
+import { BUCKET, pessoaPeloTelefone, processarPessoa, responderIsolado } from "./cerebro.ts";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Agente de estoque pelo WhatsApp.
@@ -14,7 +14,8 @@ import { BUCKET, pessoaPeloTelefone, processarPessoa } from "./cerebro.ts";
 //
 // ?acao=simular roda o agente sem WhatsApp (resposta volta no corpo e fica
 // gravada como "simulada"). Aceita o token da ponte ou o token_teste de
-// agente_config, para testar daqui sem expor segredo.
+// agente_config, para testar daqui sem expor segredo. Com "isolado", responde
+// só aquela mensagem, sem histórico nem fila, com o modelo pedido (bancada).
 //
 // Quem não está cadastrado (ou, com so_dono ligado, quem não é o dono) é
 // ignorado em silêncio.
@@ -75,13 +76,15 @@ interface Entrada {
   midia?: { base64: string; mime: string };
   /** Só na simulação: reaproveita uma foto já guardada no bucket. */
   midia_path?: string;
+  /** Só na simulação: bancada de teste (ver cabeçalho). */
+  isolado?: { modelo?: string };
 }
 
 async function receber(e: Entrada, simulado = false) {
   const waId = e.wa_id ?? `sim-${crypto.randomUUID()}`;
   if (!simulado) {
     const { data: ja } = await db.from("agente_mensagens").select("id").eq("wa_id", waId).maybeSingle();
-    if (ja) return { pessoa: null, duplicada: true };
+    if (ja) return { pessoa: null, duplicada: true, id: null };
   }
 
   const pessoa = await atendivel(e.telefone ?? null);
@@ -100,7 +103,7 @@ async function receber(e: Entrada, simulado = false) {
     }
   }
 
-  await db.from("agente_mensagens").insert({
+  const { data: nova } = await db.from("agente_mensagens").insert({
     equipe_id: pessoa?.id ?? null,
     telefone: e.telefone ?? null,
     jid: e.jid ?? null,
@@ -109,9 +112,10 @@ async function receber(e: Entrada, simulado = false) {
     texto: e.texto ?? null,
     midia_path: midiaPath,
     wa_id: waId,
-    status: pessoa ? "nova" : "ignorada",
-  });
-  return { pessoa, duplicada: false };
+    // Bancada entra como ignorada: fica fora da fila e do histórico da pessoa.
+    status: pessoa && !(simulado && e.isolado) ? "nova" : "ignorada",
+  }).select("id").single();
+  return { pessoa, duplicada: false, id: (nova?.id as number | undefined) ?? null };
 }
 
 Deno.serve(async (req) => {
@@ -153,8 +157,13 @@ Deno.serve(async (req) => {
 
     if (acao === "simular" && req.method === "POST") {
       const corpo = await req.json() as Entrada;
-      const { pessoa } = await receber(corpo, true);
+      const { pessoa, id } = await receber(corpo, true);
       if (!pessoa) return json({ ok: false, erro: "telefone não atendido (não cadastrado, inativo ou so_dono ligado)" }, 404);
+      if (corpo.isolado && id) {
+        const ini = Date.now();
+        const r = await responderIsolado(db, pessoa.id, id, corpo.isolado.modelo);
+        return json({ ok: true, pessoa: pessoa.nome, mensagem_id: id, ms: Date.now() - ini, ...r });
+      }
       const respostas = await processarPessoa(db, pessoa.id, { simulado: true });
       return json({ ok: true, pessoa: pessoa.nome, respostas });
     }

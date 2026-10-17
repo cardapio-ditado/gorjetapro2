@@ -34,6 +34,14 @@ interface Mensagem {
 
 interface Opcoes {
   simulado?: boolean;
+  /** Bancada de teste: outro modelo, sem histórico e sem enfileirar nada. */
+  isolado?: { modelo?: string };
+}
+
+interface Resultado {
+  texto: string;
+  uso: unknown;
+  rascunhos: number[];
 }
 
 const dormir = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -244,7 +252,7 @@ async function chamar(cliente: Anthropic, params: Params): Promise<Anthropic.Bet
   }
 }
 
-async function responder(db: SupabaseClient, equipeId: string, novas: Mensagem[], opts: Opcoes): Promise<string> {
+async function responder(db: SupabaseClient, equipeId: string, novas: Mensagem[], opts: Opcoes): Promise<Resultado> {
   const { data: eq } = await db.from("agente_equipe").select("telefone").eq("id", equipeId).single();
   const pessoa = await pessoaPeloTelefone(db, eq?.telefone ?? novas[novas.length - 1].telefone);
   if (!pessoa) throw new Error("Pessoa não reconhecida");
@@ -254,14 +262,14 @@ async function responder(db: SupabaseClient, equipeId: string, novas: Mensagem[]
   const cliente = new Anthropic({ apiKey, maxRetries: 2 });
 
   const ensaio = (await cfg(db, "modo_ensaio")) !== false;
-  const modelo = (await cfg(db, "modelo")) ?? MODELO_PADRAO;
+  const modelo = opts.isolado?.modelo ?? (await cfg(db, "modelo")) ?? MODELO_PADRAO;
   const esforco = (await cfg(db, "esforco")) ?? "medium";
   const extra = (await cfg(db, "regras_extra")) as string | null;
   const leitor = (await cfg(db, "leitor_modelo")) as string | null;
 
   const leituras: Leitura[] = [];
   const conteudo = (await Promise.all(novas.map((m) => blocosDaMensagem(db, m, leitor, leituras)))).flat();
-  const anteriores: MsgParam[] = await historico(db, equipeId, novas.map((m) => m.id));
+  const anteriores: MsgParam[] = opts.isolado ? [] : await historico(db, equipeId, novas.map((m) => m.id));
   if (anteriores.length) anteriores[anteriores.length - 1] = marcarCache(anteriores[anteriores.length - 1]);
   const messages: MsgParam[] = [...anteriores, { role: "user", content: conteudo }];
 
@@ -270,12 +278,16 @@ async function responder(db: SupabaseClient, equipeId: string, novas: Mensagem[]
     { type: "text", text: contextoDinamico(pessoa, ensaio) },
   ];
   const tools = ferramentasPara(pessoa) as Anthropic.Beta.BetaTool[];
-  const ctx = { db, pessoa, avisos: [] as { equipeId: string; texto: string }[] };
+  const ctx = {
+    db, pessoa, avisos: [] as { equipeId: string; texto: string }[],
+    mensagens: opts.isolado ? novas.map((m) => m.id) : undefined,
+  };
 
   const uso = {
     modelo, rodadas: 0, entrada: 0, cache_leitura: 0, cache_escrita: 0, saida: 0, ferramentas: [] as string[],
     leituras: leituras.map((l) => ({ leitor: l.leitor, ok: l.ok, motivo: l.motivo, ms: l.ms, ...l.uso })),
   };
+  const rascunhos: number[] = [];
   let resposta: Anthropic.Beta.BetaMessage | null = null;
 
   for (let rodada = 0; rodada < MAX_RODADAS; rodada++) {
@@ -315,6 +327,8 @@ async function responder(db: SupabaseClient, equipeId: string, novas: Mensagem[]
             ],
           } as Anthropic.Beta.BetaToolResultBlockParam;
         }
+        const id = (r as { rascunho_id?: number } | null)?.rascunho_id;
+        if (c.name === "salvar_rascunho_nota" && id) rascunhos.push(id);
         return { type: "tool_result", tool_use_id: c.id, content: JSON.stringify(r ?? null) };
       } catch (e) {
         return { type: "tool_result", tool_use_id: c.id, content: e instanceof Error ? e.message : String(e), is_error: true };
@@ -331,12 +345,22 @@ async function responder(db: SupabaseClient, equipeId: string, novas: Mensagem[]
   if (resposta?.stop_reason === "refusal") texto = "Não consigo ajudar com isso por aqui.";
   if (!texto) texto = "Pronto.";
 
+  if (opts.isolado) return { texto, uso, rascunhos };
   const ultima = novas[novas.length - 1];
   await enfileirar(db, { equipeId, jid: ultima.jid, telefone: ultima.telefone, texto, simulado: opts.simulado, uso });
   for (const a of ctx.avisos) {
     await enfileirar(db, { equipeId: a.equipeId, texto: a.texto, simulado: opts.simulado });
   }
-  return texto;
+  return { texto, uso, rascunhos };
+}
+
+/**
+ * Bancada: responde uma mensagem só, fora da fila da pessoa e da conversa
+ * dela. Serve para comparar modelos com a mesma entrada.
+ */
+export async function responderIsolado(db: SupabaseClient, equipeId: string, mensagemId: number, modelo?: string): Promise<Resultado> {
+  const { data } = await db.from("agente_mensagens").select("*").eq("id", mensagemId).single();
+  return await responder(db, equipeId, [data as Mensagem], { simulado: true, isolado: { modelo } });
 }
 
 /**
@@ -360,7 +384,7 @@ export async function processarPessoa(db: SupabaseClient, equipeId: string, opts
     if (!novas.length) break;
 
     try {
-      respostas.push(await responder(db, equipeId, novas, opts));
+      respostas.push((await responder(db, equipeId, novas, opts)).texto);
       await db.from("agente_mensagens")
         .update({ status: "respondida", processado_em: new Date().toISOString() })
         .in("id", novas.map((m) => m.id));

@@ -26,6 +26,8 @@ export interface Contexto {
   db: SupabaseClient;
   pessoa: Pessoa;
   avisos: Aviso[];
+  /** Bancada: ver_foto_original só enxerga estas mensagens. */
+  mensagens?: number[];
 }
 
 type Definicao = Anthropic.Tool & { acoes: string[] };
@@ -310,16 +312,16 @@ function base64(bytes: Uint8Array): string {
 /** Fotos recentes da pessoa, para o agente olhar a imagem quando a transcrição não basta. */
 async function fotosRecentes(ctx: Contexto, quantas: number) {
   const desde = new Date(Date.now() - 3 * 3600 * 1000).toISOString();
-  const { data } = await ctx.db
+  let busca = ctx.db
     .from("agente_mensagens")
     .select("midia_path, criado_em")
     .eq("equipe_id", ctx.pessoa.id)
     .eq("direcao", "entrada")
     .not("midia_path", "is", null)
     .neq("tipo", "audio")
-    .gte("criado_em", desde)
-    .order("id", { ascending: false })
-    .limit(Math.min(Math.max(quantas, 1), 3));
+    .gte("criado_em", desde);
+  busca = ctx.mensagens ? busca.in("id", ctx.mensagens) : busca.neq("status", "ignorada");
+  const { data } = await busca.order("id", { ascending: false }).limit(Math.min(Math.max(quantas, 1), 3));
   const imagens: { mime: string; b64: string }[] = [];
   for (const m of (data ?? []).reverse()) {
     const { data: arq } = await ctx.db.storage.from("agente-whatsapp").download(m.midia_path);
