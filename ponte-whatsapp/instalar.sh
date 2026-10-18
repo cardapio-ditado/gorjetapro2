@@ -6,9 +6,15 @@
 # Uso (como root):
 #   bash <(curl -fsSL https://raw.githubusercontent.com/cardapio-ditado/gorjetapro2/main/ponte-whatsapp/instalar.sh)
 #
+# Para parear pelo próprio celular do chip (código em vez de QR), passe o
+# número do chip com DDI e DDD no fim:
+#   bash <(curl -fsSL .../instalar.sh) 5565999999999
+#
 # Pode rodar de novo para atualizar: o .env (token) e a sessão do WhatsApp
 # são mantidos.
 set -euo pipefail
+
+NUMERO_CHIP="${1:-}"
 
 BASE="https://raw.githubusercontent.com/cardapio-ditado/gorjetapro2/main/ponte-whatsapp"
 DESTINO="/opt/ponte-estoque"
@@ -84,8 +90,12 @@ else
   # pareando na mesma pasta estragam a sessão um do outro.
   systemctl stop "$SERVICO" 2>/dev/null || true
   rm -rf "$DESTINO/sessao"
-  echo "No celular do chip: WhatsApp → Aparelhos conectados → Conectar aparelho, e leia o QR."
-  node --env-file=.env ponte.mjs --parear </dev/tty
+  if [ -n "$NUMERO_CHIP" ]; then
+    node --env-file=.env ponte.mjs --parear --numero "$NUMERO_CHIP" </dev/tty
+  else
+    echo "No celular do chip: WhatsApp → Aparelhos conectados → Conectar aparelho, e leia o QR."
+    node --env-file=.env ponte.mjs --parear </dev/tty
+  fi
 fi
 
 azul "== 5/5  Serviço =="

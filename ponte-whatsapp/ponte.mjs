@@ -31,6 +31,11 @@ const MIDIA_MAX = 15 * 1024 * 1024;
 const IDADE_MAX = 15 * 60 * 1000;
 // Com --parear, só mostra o QR, salva a sessão e sai. É o que o instalador usa.
 const SO_PAREAR = process.argv.includes("--parear");
+// Com --numero 5565..., em vez do QR mostra um código de 8 letras para digitar
+// no celular ("Conectar com número de telefone"). Serve para parear pelo
+// próprio celular do chip, onde não dá para escanear a tela.
+const iNumero = process.argv.indexOf("--numero");
+const NUMERO_PAREAR = iNumero > 0 ? String(process.argv[iNumero + 1] ?? "").replace(/\D/g, "") : "";
 
 if (!URL_AGENTE || !TOKEN) {
   console.error("Defina AGENTE_URL e AGENTE_PONTE_TOKEN no arquivo .env (veja o README).");
@@ -194,12 +199,26 @@ async function entregarSaida() {
 
 async function conectar() {
   const { state, saveCreds } = await useMultiFileAuthState(PASTA_SESSAO);
+  let codigoPedido = false;
   socket = makeWASocket({ auth: state, logger, markOnlineOnConnect: false, syncFullHistory: false });
 
   socket.ev.on("creds.update", saveCreds);
 
   socket.ev.on("connection.update", async ({ connection, lastDisconnect, qr }) => {
-    if (qr) {
+    if (qr && NUMERO_PAREAR) {
+      if (!codigoPedido) {
+        codigoPedido = true;
+        try {
+          const codigo = await socket.requestPairingCode(NUMERO_PAREAR);
+          console.log(`\nNo celular do chip: WhatsApp → Aparelhos conectados → Conectar aparelho →`);
+          console.log(`"Conectar com número de telefone" e digite o código:\n`);
+          console.log(`        ${codigo.slice(0, 4)}-${codigo.slice(4)}\n`);
+          console.log("(Vale por pouco tempo. Se expirar, sai um código novo aqui embaixo.)");
+        } catch (e) {
+          console.error("[ponte] não consegui pedir o código:", e.message);
+        }
+      }
+    } else if (qr) {
       console.log("\nEscaneie no celular do chip: WhatsApp → Aparelhos conectados → Conectar aparelho\n");
       qrcode.generate(qr, { small: true });
     }
