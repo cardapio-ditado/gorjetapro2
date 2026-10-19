@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { ArrowLeft, ArrowRight, Package, Users, ClipboardCheck, Truck, Store, Clock3, BarChart3, Warehouse, BookOpen, Settings2, SprayCan, ShoppingCart, FileText, ArrowLeftRight, Handshake, ShieldCheck, Sliders, History, ChefHat } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Package, Users, ClipboardCheck, Truck, Store, Clock3, BarChart3, Warehouse, BookOpen, Settings2, SprayCan, ShoppingCart, FileText, ArrowLeftRight, Handshake, ShieldCheck, Sliders, History, ChefHat, MessageCircle } from 'lucide-react';
 import { Badge, Button, SectionCard } from '../components/ui';
 import ConfigurarSetores from './ConfigurarSetores';
 import Hoje, { type DestinoHoje } from '../components/beta2/Hoje';
@@ -24,6 +24,7 @@ import ZigVinculos from '../components/beta2/ZigVinculos';
 import Producao from '../components/beta2/Producao';
 import Mover from '../components/beta2/Mover';
 import ContagemCentral from '../components/beta2/ContagemCentral';
+import WhatsappEstoque from '../components/beta2/WhatsappEstoque';
 
 /**
  * Estoque Beta 2: a porta única do estoque. Entrada "Hoje" por pessoa e os
@@ -32,11 +33,11 @@ import ContagemCentral from '../components/beta2/ContagemCentral';
  */
 type View = 'menu' | 'itens' | 'fichas' | 'estoques' | 'fornecedores' | 'setores' | 'central' | 'kits'
   | 'recebimento' | 'reposicao' | 'emergencias' | 'movimentacoes'
-  | 'contagem' | 'contagem_central' | 'aprovacoes' | 'compras' | 'relatorios' | 'kardex' | 'kardex_fornecedor' | 'vizinhos' | 'zig' | 'producao' | 'mover';
-const VIEWS: View[] = ['menu', 'itens', 'fichas', 'estoques', 'fornecedores', 'setores', 'central', 'kits', 'recebimento', 'reposicao', 'emergencias', 'movimentacoes', 'contagem', 'contagem_central', 'aprovacoes', 'compras', 'relatorios', 'kardex', 'kardex_fornecedor', 'vizinhos', 'zig', 'producao', 'mover'];
+  | 'contagem' | 'contagem_central' | 'aprovacoes' | 'compras' | 'relatorios' | 'kardex' | 'kardex_fornecedor' | 'vizinhos' | 'zig' | 'producao' | 'mover' | 'whatsapp';
+const VIEWS: View[] = ['menu', 'itens', 'fichas', 'estoques', 'fornecedores', 'setores', 'central', 'kits', 'recebimento', 'reposicao', 'emergencias', 'movimentacoes', 'contagem', 'contagem_central', 'aprovacoes', 'compras', 'relatorios', 'kardex', 'kardex_fornecedor', 'vizinhos', 'zig', 'producao', 'mover', 'whatsapp'];
 /** grava = mexe em dado real · breve = ainda não existe */
 type Estado = 'grava' | 'breve';
-type MenuItem = { v?: View; href?: string; n: string; icon: React.ElementType; estado: Estado; dica?: string };
+type MenuItem = { v?: View; href?: string; n: string; icon: React.ElementType; estado: Estado; dica?: string; soAdmin?: boolean };
 type MenuGrupo = { id: string; title: string; hint: string; items: MenuItem[] };
 const GRUPOS: MenuGrupo[] = [
   { id: 'cadastros', title: '1 · Cadastros', hint: 'Itens, estoques, fichas e fornecedores', items: [
@@ -49,6 +50,7 @@ const GRUPOS: MenuGrupo[] = [
     { v: 'setores', n: 'Configurar setores e kits', icon: Settings2, estado: 'grava', dica: 'itens, nível e saída por setor' },
     { v: 'central', n: 'Configurar Central', icon: Sliders, estado: 'grava', dica: 'ponto de pedido: seu número ou calculado' },
     { v: 'zig', n: 'Vínculos da Zig', icon: ArrowLeftRight, estado: 'grava', dica: 'cada venda da Zig desconta de qual item ou ficha' },
+    { v: 'whatsapp', n: 'WhatsApp do estoque', icon: MessageCircle, estado: 'grava', dica: 'conexão do agente: QR, código, fila de envio', soAdmin: true },
   ] },
   { id: 'movimentacoes', title: '3 · Movimentações', hint: 'Entradas, reposição, retiradas, produção, empréstimos', items: [
     { v: 'recebimento', n: 'Receber compras', icon: Truck, estado: 'grava', dica: 'nota com foto, confere e dá entrada' },
@@ -80,7 +82,7 @@ const GRUPOS: MenuGrupo[] = [
 const EstoqueBeta2: React.FC = () => {
   const [params, setParams] = useSearchParams();
   const navigate = useNavigate();
-  const { usuario } = useAuth();
+  const { usuario, isAdmin } = useAuth();
   const telaParam = params.get('tela');
   const view: View = params.has('setor') && !telaParam ? 'setores' : (VIEWS.includes(telaParam as View) ? (telaParam as View) : 'menu');
   const go = (v: View, extra?: Record<string, string>) => {
@@ -111,6 +113,7 @@ const EstoqueBeta2: React.FC = () => {
   if (view === 'zig') return <ZigVinculos onVoltar={() => go('menu')} />;
   if (view === 'producao') return <Producao responsavel={nome} onVoltar={() => go('menu')} />;
   if (view === 'mover') return <Mover responsavel={nome} onVoltar={() => go('menu')} />;
+  if (view === 'whatsapp') return <WhatsappEstoque onVoltar={() => go('menu')} />;
   if (view === 'relatorios' || view === 'kardex' || view === 'kardex_fornecedor') {
     // ?tela=relatorios&rel=<tipo> abre um relatório; os atalhos do menu só mudam o rel.
     const rel = view === 'kardex' ? 'kardex_produto' : view === 'kardex_fornecedor' ? 'kardex_fornecedor' : params.get('rel');
@@ -128,7 +131,7 @@ const EstoqueBeta2: React.FC = () => {
     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
       {GRUPOS.map(g => <SectionCard key={g.id} title={g.title} descricao={g.hint} noPadding>
         <div className="flex flex-col">
-          {g.items.map(item => {
+          {g.items.filter(item => !item.soAdmin || isAdmin()).map(item => {
             const breve = item.estado === 'breve';
             return <button key={item.n} type="button" disabled={breve} onClick={() => (item.href ? navigate(item.href) : item.v && go(item.v))} className="flex items-center gap-3 px-5 min-h-12 py-2 text-left hover:bg-white/[0.04] focus-ring disabled:opacity-50 disabled:cursor-not-allowed" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
               <item.icon size={16} aria-hidden="true" style={{ color: breve ? 'var(--text-secondary)' : 'var(--gold)' }} />

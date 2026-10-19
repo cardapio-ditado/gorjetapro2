@@ -6,15 +6,19 @@
 # Uso (como root):
 #   bash <(curl -fsSL https://raw.githubusercontent.com/cardapio-ditado/gorjetapro2/main/ponte-whatsapp/instalar.sh)
 #
-# Para parear pelo próprio celular do chip (código em vez de QR), passe o
-# número do chip com DDI e DDD no fim:
+# O pareamento (QR ou código) é feito pelo sistema: Estoque Beta 2 →
+# WhatsApp do estoque. Para parear aqui no terminal, como antes, passe "qr"
+# ou o número do chip com DDI e DDD no fim:
+#   bash <(curl -fsSL .../instalar.sh) qr
 #   bash <(curl -fsSL .../instalar.sh) 5565999999999
 #
 # Pode rodar de novo para atualizar: o .env (token) e a sessão do WhatsApp
 # são mantidos.
 set -euo pipefail
 
-NUMERO_CHIP="${1:-}"
+PAREAR_AQUI="${1:-}"
+NUMERO_CHIP=""
+if [ "$PAREAR_AQUI" != "qr" ]; then NUMERO_CHIP="$PAREAR_AQUI"; fi
 
 BASE="https://raw.githubusercontent.com/cardapio-ditado/gorjetapro2/main/ponte-whatsapp"
 DESTINO="/opt/ponte-estoque"
@@ -85,6 +89,8 @@ done
 azul "== 4/5  WhatsApp =="
 if [ -f "$DESTINO/sessao/creds.json" ]; then
   verde "Já existe sessão salva, não precisa de QR."
+elif [ -z "$PAREAR_AQUI" ]; then
+  verde "Pareie pelo sistema: Estoque Beta 2 → WhatsApp do estoque → Gerar QR."
 else
   # O serviço sem sessão fica gerando QR sozinho no fundo. Dois programas
   # pareando na mesma pasta estragam a sessão um do outro.
@@ -123,4 +129,5 @@ systemctl --no-pager --lines=5 status "$SERVICO" || true
 
 echo
 verde "Pronto. A ponte está rodando e volta sozinha se a VPS reiniciar."
+echo "QR, código e situação da conexão: Estoque Beta 2 → WhatsApp do estoque."
 echo "Ver o que está acontecendo:  journalctl -u $SERVICO -f"

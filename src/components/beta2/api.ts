@@ -432,3 +432,31 @@ export const moverApi = {
     return data as { itens: number; de: string; para: string; faltou: string[] };
   },
 };
+
+export type StatusPonte = 'iniciando' | 'conectando' | 'aguardando_leitura' | 'conectado' | 'caiu' | 'parada' | 'sem_sinal';
+
+export interface PonteTela {
+  status: StatusPonte;
+  qr: string | null;
+  codigo: string | null;
+  telefone: string | null;
+  versao: string | null;
+  detalhe: string | null;
+  sinal_em: string | null;
+  fora_desde: string | null;
+  comando: 'reconectar' | 'desconectar' | 'codigo' | null;
+  fila: { pendentes: number; mais_antiga: string | null; falhas_24h: number };
+}
+
+/** Conexão do WhatsApp do agente de estoque. Só admin e master. */
+export const whatsappApi = {
+  async tela(): Promise<PonteTela> {
+    const { data, error } = await supabase.rpc('fn_agente_ponte_tela');
+    lancar(error);
+    return data as PonteTela;
+  },
+  async comando(comando: 'reconectar' | 'desconectar' | 'codigo', numero?: string) {
+    const { error } = await supabase.rpc('fn_agente_ponte_comando', { p_comando: comando, p_numero: numero ?? null });
+    lancar(error);
+  },
+};

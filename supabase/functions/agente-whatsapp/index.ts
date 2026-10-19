@@ -11,6 +11,11 @@ import { BUCKET, pessoaPeloTelefone, processarPessoa, responderIsolado } from ".
 //   POST ?acao=entrada    mensagem recebida (texto e, se houver, mídia em base64)
 //   GET  ?acao=saida      mensagens a enviar
 //   POST ?acao=confirmar  o que foi enviado e o que falhou
+//   POST ?acao=estado     a cada 5 s: como a ponte está (e o QR); volta o
+//                         comando que a tela "WhatsApp do estoque" deixou
+//
+// Mensagem que falha volta para a fila e é tentada de novo, uma vez por
+// minuto, até TENTATIVAS_ENVIO. Só depois disso vira falha_envio.
 //
 // ?acao=simular roda o agente sem WhatsApp (resposta volta no corpo e fica
 // gravada como "simulada"). Aceita o token da ponte ou o token_teste de
@@ -24,6 +29,8 @@ import { BUCKET, pessoaPeloTelefone, processarPessoa, responderIsolado } from ".
 const db = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, {
   auth: { persistSession: false },
 });
+
+const TENTATIVAS_ENVIO = 4;
 
 let bucketPronto = false;
 async function garantirBucket() {
@@ -134,11 +141,20 @@ Deno.serve(async (req) => {
       return json({ ok: true, reconhecido: Boolean(pessoa), duplicada });
     }
 
+    if (acao === "estado" && req.method === "POST" && quem === "ponte") {
+      const { data, error } = await db.rpc("fn_agente_ponte_sinal", { p_estado: await req.json() });
+      if (error) throw new Error(error.message);
+      return json({ ok: true, ...data });
+    }
+
     if (acao === "saida" && quem === "ponte") {
+      // Enquanto pendente, processado_em guarda a última tentativa que falhou.
+      const umMinuto = new Date(Date.now() - 60_000).toISOString();
       const { data } = await db
         .from("agente_mensagens")
         .select("id, jid, telefone, texto")
         .eq("direcao", "saida").eq("status", "pendente_envio")
+        .or(`processado_em.is.null,processado_em.lt.${umMinuto}`)
         .order("id").limit(20);
       return json({ ok: true, mensagens: data ?? [] });
     }
@@ -150,7 +166,12 @@ Deno.serve(async (req) => {
         await db.from("agente_mensagens").update({ status: "enviada", processado_em: agora }).in("id", corpo.enviadas);
       }
       for (const f of corpo.falhas ?? []) {
-        await db.from("agente_mensagens").update({ status: "falha_envio", erro: f.erro, processado_em: agora }).eq("id", f.id);
+        const { data: m } = await db.from("agente_mensagens").select("tentativas").eq("id", f.id).maybeSingle();
+        const tentativas = (m?.tentativas ?? 0) + 1;
+        await db.from("agente_mensagens").update({
+          status: tentativas >= TENTATIVAS_ENVIO ? "falha_envio" : "pendente_envio",
+          tentativas, erro: f.erro, processado_em: agora,
+        }).eq("id", f.id);
       }
       return json({ ok: true });
     }
