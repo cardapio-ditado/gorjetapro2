@@ -51,7 +51,7 @@ function Situacao({ m }: { m: MensagemAgente }) {
 
 function Balao({ m }: { m: MensagemAgente }) {
   const minha = m.direcao === 'saida';
-  if (m.modelo) {
+  if (m.aviso) {
     return <div className="flex justify-center my-1"><span className="t-caption" style={{ background: 'var(--bg-subtle, rgba(255,255,255,0.05))', padding: '4px 10px', borderRadius: 12 }}>{m.texto}</span></div>;
   }
   return (

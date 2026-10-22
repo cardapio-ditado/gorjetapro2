@@ -236,7 +236,7 @@ async function ultimaEntrada(db: SupabaseClient, equipeId: string): Promise<numb
 
 async function ultimoAviso(db: SupabaseClient, equipeId: string): Promise<number> {
   const { data } = await db.from("agente_mensagens").select("criado_em")
-    .eq("equipe_id", equipeId).eq("direcao", "saida").eq("tipo", "texto").not("uso->>modelo", "is", null)
+    .eq("equipe_id", equipeId).eq("direcao", "saida").eq("tipo", "texto").not("uso->>aviso", "is", null)
     .order("id", { ascending: false }).limit(1).maybeSingle();
   return data ? new Date(data.criado_em).getTime() : 0;
 }
@@ -294,7 +294,7 @@ export async function enviarPendentes(db: SupabaseClient): Promise<{ enviadas: n
           equipe_id: msg.equipe_id, telefone: msg.telefone, direcao: "saida", tipo: "texto",
           texto: `📨 Aviso enviado: ${resumo}. Toque em Ver para abrir.`,
           status: a.error ? "falha_envio" : "enviada", erro: a.error ? textoDoErro(a.error) : null,
-          wa_id: a.messages?.[0]?.id ?? null, uso: { modelo: MODELO_AVISO }, processado_em: new Date().toISOString(),
+          wa_id: a.messages?.[0]?.id ?? null, uso: { aviso: MODELO_AVISO }, processado_em: new Date().toISOString(),
         });
       }
       continue;

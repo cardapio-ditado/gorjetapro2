@@ -487,7 +487,8 @@ export interface MensagemAgente {
   criado_em: string;
   manual: boolean;
   por: string | null;
-  modelo: string | null;
+  /** Aviso da Meta fora da janela de 24 h ("toque em Ver"). */
+  aviso: string | null;
   nota: { fornecedor: string | null; numero: string | null; total: string | null } | null;
 }
 

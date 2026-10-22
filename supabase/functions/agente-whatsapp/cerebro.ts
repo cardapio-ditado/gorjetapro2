@@ -167,9 +167,10 @@ async function historico(db: SupabaseClient, equipeId: string, excluir: number[]
     .order("id", { ascending: false })
     .limit(24);
 
-  // O aviso da Meta ("toque em Ver") não é fala do agente: fica fora.
+  // O aviso da Meta ("toque em Ver") não é fala do agente: fica fora. (uso.modelo
+  // é o modelo de IA de cada resposta; o aviso é marcado com uso.aviso.)
   const linhas = (data ?? [])
-    .filter((m) => !excluir.includes(m.id) && !(m.uso as { modelo?: string } | null)?.modelo)
+    .filter((m) => !excluir.includes(m.id) && !(m.uso as { aviso?: string } | null)?.aviso)
     .reverse();
   const msgs: Anthropic.MessageParam[] = [];
   for (const m of linhas) {
