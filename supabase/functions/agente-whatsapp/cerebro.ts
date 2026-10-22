@@ -373,12 +373,22 @@ export async function responderIsolado(db: SupabaseClient, equipeId: string, men
  * Processa tudo o que chegou de uma pessoa. Espera um pouco antes, para juntar
  * foto e legenda que chegam em mensagens separadas, e volta a olhar no fim,
  * caso algo tenha chegado enquanto respondia.
+ *
+ * Uma fila por pessoa: se outra execução já está respondendo a ela, esta sai
+ * e deixa a mensagem nova para a volta seguinte daquela, que responde tudo
+ * junto. Processamento parado há mais de 5 min (execução que caiu) não conta.
  */
 export async function processarPessoa(db: SupabaseClient, equipeId: string, opts: Opcoes = {}): Promise<string[]> {
   const respostas: string[] = [];
-  if (!opts.simulado) await dormir(2500);
+  if (!opts.simulado) {
+    await dormir(2500);
+    const cincoMin = new Date(Date.now() - 5 * 60_000).toISOString();
+    const { count } = await db.from("agente_mensagens").select("id", { count: "exact", head: true })
+      .eq("equipe_id", equipeId).eq("direcao", "entrada").eq("status", "processando").gte("criado_em", cincoMin);
+    if (count) return respostas;
+  }
 
-  for (let volta = 0; volta < 3; volta++) {
+  for (let volta = 0; volta < 6; volta++) {
     const { data } = await db
       .from("agente_mensagens")
       .update({ status: "processando" })
