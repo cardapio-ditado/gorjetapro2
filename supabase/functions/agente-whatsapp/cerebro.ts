@@ -160,14 +160,17 @@ async function historico(db: SupabaseClient, equipeId: string, excluir: number[]
   const desde = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
   const { data } = await db
     .from("agente_mensagens")
-    .select("id, direcao, tipo, texto, midia_path, status, leitura")
+    .select("id, direcao, tipo, texto, midia_path, status, leitura, uso")
     .eq("equipe_id", equipeId)
     .gte("criado_em", desde)
-    .in("status", ["respondida", "erro", "pendente_envio", "enviada", "falha_envio", "simulada"])
+    .in("status", ["respondida", "erro", "pendente_envio", "enviando", "aguardando_janela", "enviada", "falha_envio", "simulada"])
     .order("id", { ascending: false })
     .limit(24);
 
-  const linhas = (data ?? []).filter((m) => !excluir.includes(m.id)).reverse();
+  // O aviso da Meta ("toque em Ver") não é fala do agente: fica fora.
+  const linhas = (data ?? [])
+    .filter((m) => !excluir.includes(m.id) && !(m.uso as { modelo?: string } | null)?.modelo)
+    .reverse();
   const msgs: Anthropic.MessageParam[] = [];
   for (const m of linhas) {
     const role = m.direcao === "entrada" ? "user" : "assistant";

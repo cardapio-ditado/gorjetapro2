@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { ArrowLeft, KeyRound, LogOut, QrCode, RefreshCw } from 'lucide-react';
+import { ArrowLeft, FileCheck, KeyRound, Link2, LogOut, QrCode, RefreshCw } from 'lucide-react';
 import { Badge, Button, IconButton, Input, PageHeader, SectionCard, type BadgeVariante } from '../ui';
-import { whatsappApi, type PonteTela, type StatusPonte } from './api';
+import { conversasApi, whatsappApi, type MetaSituacao, type PonteTela, type StatusPonte } from './api';
 
 interface Props { onVoltar: () => void }
 
@@ -32,6 +32,86 @@ function telefone(t: string | null): string {
   return t ?? '';
 }
 
+function Item({ ok, children }: { ok: boolean; children: React.ReactNode }) {
+  return <li className="flex items-start gap-2 t-body" style={{ margin: '2px 0' }}>
+    <span aria-hidden="true" style={{ color: ok ? 'var(--success-text, #3fb950)' : 'var(--text-secondary)' }}>{ok ? '✓' : '○'}</span>
+    <span style={{ color: ok ? undefined : 'var(--text-secondary)' }}>{children}</span>
+  </li>;
+}
+
+const NOME_MODELO: Record<string, string> = { APPROVED: 'aprovado', PENDING: 'em análise', REJECTED: 'recusado', PAUSED: 'pausado', DISABLED: 'desativado' };
+
+/** WhatsApp oficial: o que falta, os IDs, o webhook, o modelo de aviso e o canal. */
+const MetaCard: React.FC<{ onCanal: (c: 'ponte' | 'meta') => void }> = ({ onCanal }) => {
+  const [s, setS] = useState<MetaSituacao | null>(null);
+  const [ultimoWebhook, setUltimoWebhook] = useState<string | null>(null);
+  const [phoneId, setPhoneId] = useState('');
+  const [wabaId, setWabaId] = useState('');
+  const [ocupado, setOcupado] = useState<string | null>(null);
+  const [erro, setErro] = useState<string | null>(null);
+  const [aviso, setAviso] = useState<string | null>(null);
+
+  const carregar = async () => {
+    setErro(null);
+    try {
+      const [sit, cfg] = await Promise.all([conversasApi.metaSituacao(), conversasApi.metaConfig({})]);
+      setS(sit); onCanal(sit.canal);
+      setUltimoWebhook(typeof cfg.meta_ultimo_webhook === 'string' ? cfg.meta_ultimo_webhook : null);
+      setPhoneId(sit.phone_number_id ?? ''); setWabaId(sit.waba_id ?? '');
+    } catch (e) { setErro(e instanceof Error ? e.message : 'Erro ao carregar'); }
+  };
+  useEffect(() => { void carregar(); }, []);
+
+  const fazer = async (nome: string, f: () => Promise<unknown>, ok: string) => {
+    setOcupado(nome); setErro(null); setAviso(null);
+    try { await f(); setAviso(ok); await carregar(); } catch (e) { setErro(e instanceof Error ? e.message : 'Erro'); }
+    finally { setOcupado(null); }
+  };
+
+  const secretsOk = !!s && s.secrets.token && s.secrets.app_secret && s.secrets.verify_token;
+  const idsOk = !!s?.phone_number_id && !!s?.waba_id;
+  const numeroOk = !!s?.telefone && !s?.erro;
+  const modeloOk = s?.modelo?.status === 'APPROVED';
+  const tudoPronto = secretsOk && idsOk && numeroOk && !!ultimoWebhook && modeloOk;
+
+  return (
+    <SectionCard title="WhatsApp oficial (Meta)" action={s && <Badge variant={s.canal === 'meta' ? 'success' : 'neutral'}>{s.canal === 'meta' ? 'em uso' : 'desligado'}</Badge>}>
+      {erro && <div className="aviso aviso-perigo mb-3" role="alert">{erro}</div>}
+      {aviso && <div className="aviso aviso-certo mb-3">{aviso}</div>}
+      {!s && !erro && <p className="t-body" style={{ color: 'var(--text-secondary)' }}>Carregando…</p>}
+      {s && <div className="flex flex-col gap-4">
+        <ul style={{ margin: 0, padding: 0, listStyle: 'none' }}>
+          <Item ok={secretsOk}>Secrets no Supabase: META_WA_TOKEN {s.secrets.token ? '✓' : '✗'} · META_APP_SECRET {s.secrets.app_secret ? '✓' : '✗'} · META_VERIFY_TOKEN {s.secrets.verify_token ? '✓' : '✗'}</Item>
+          <Item ok={idsOk}>IDs do telefone e da conta do WhatsApp</Item>
+          <Item ok={numeroOk}>Número {s.telefone ? <b>{s.telefone}</b> : null}{s.nome ? ` · ${s.nome}` : ''}{s.nome_status ? ` (nome: ${s.nome_status})` : ''}{s.qualidade ? ` · qualidade ${s.qualidade}` : ''}{s.erro ? ` · ${s.erro}` : ''}</Item>
+          <Item ok={!!ultimoWebhook}>Webhook {ultimoWebhook ? `recebendo (último: ${new Date(ultimoWebhook).toLocaleString('pt-BR')})` : 'ainda sem mensagem da Meta'}</Item>
+          <Item ok={modeloOk}>Modelo de aviso "aviso_estoque": {s.modelo ? NOME_MODELO[s.modelo.status] ?? s.modelo.status : 'não enviado'}</Item>
+        </ul>
+
+        <div className="flex flex-wrap items-end gap-2">
+          <Input rotulo="ID do telefone (Phone number ID)" value={phoneId} onChange={e => setPhoneId(e.target.value)} inputMode="numeric" className="flex-1 min-w-[200px]" />
+          <Input rotulo="ID da conta do WhatsApp (WABA ID)" value={wabaId} onChange={e => setWabaId(e.target.value)} inputMode="numeric" className="flex-1 min-w-[200px]" />
+          <Button onClick={() => void fazer('ids', () => conversasApi.metaConfig({ phoneId, wabaId }), 'IDs salvos.')} carregando={ocupado === 'ids'} disabled={!!ocupado}>Salvar IDs</Button>
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          <Button icone={<Link2 size={16} />} onClick={() => void fazer('webhook', () => conversasApi.metaConectar(), 'Webhook conectado. Mande uma mensagem para o número para testar.')}
+            carregando={ocupado === 'webhook'} disabled={!!ocupado || !secretsOk || !idsOk}>Conectar webhook</Button>
+          {!modeloOk && <Button icone={<FileCheck size={16} />} onClick={() => void fazer('modelo', () => conversasApi.metaCriarModelo(), 'Modelo enviado para a Meta. A aprovação leva de minutos a 1 dia.')}
+            carregando={ocupado === 'modelo'} disabled={!!ocupado || !secretsOk || !idsOk || !!s.modelo}>Enviar modelo para aprovação</Button>}
+          {s.canal === 'ponte'
+            ? <Button variante="primario" onClick={() => { if (window.confirm('Passar o agente para o WhatsApp oficial? A ponte antiga para de enviar.')) void fazer('canal', () => conversasApi.metaConfig({ canal: 'meta' }), 'Agente usando o WhatsApp oficial.'); }}
+                carregando={ocupado === 'canal'} disabled={!!ocupado || !tudoPronto}>Usar o WhatsApp oficial</Button>
+            : <Button variante="discreto" onClick={() => { if (window.confirm('Voltar para a ponte antiga?')) void fazer('canal', () => conversasApi.metaConfig({ canal: 'ponte' }), 'Agente de volta na ponte.'); }}
+                carregando={ocupado === 'canal'} disabled={!!ocupado}>Voltar para a ponte</Button>}
+          <IconButton aria-label="Atualizar" onClick={() => void carregar()}><RefreshCw size={16} /></IconButton>
+        </div>
+        {s.canal === 'ponte' && !tudoPronto && <p className="t-caption" style={{ margin: 0 }}>O botão "Usar o WhatsApp oficial" libera quando todos os itens acima estiverem marcados.</p>}
+      </div>}
+    </SectionCard>
+  );
+};
+
 /**
  * Conexão do chip do agente de estoque. A ponte na VPS manda como está a cada
  * 5 s e pega o comando deixado aqui. O QR liga o WhatsApp em outro aparelho:
@@ -43,6 +123,7 @@ const WhatsappEstoque: React.FC<Props> = ({ onVoltar }) => {
   const [aviso, setAviso] = useState<string | null>(null);
   const [ocupado, setOcupado] = useState<string | null>(null);
   const [numero, setNumero] = useState('');
+  const [canal, setCanal] = useState<'ponte' | 'meta' | null>(null);
   const vivo = useRef(true);
 
   const carregar = async () => {
@@ -83,7 +164,9 @@ const WhatsappEstoque: React.FC<Props> = ({ onVoltar }) => {
       {aviso && <div className="aviso aviso-certo mb-3">{aviso}</div>}
       {!tela && !erro && <p className="t-body" style={{ color: 'var(--text-secondary)' }}>Carregando…</p>}
 
-      {tela && st && <div className="flex flex-col gap-4">
+      <div className="mb-4"><MetaCard onCanal={setCanal} /></div>
+      {canal === 'meta' && <p className="t-caption">A ponte antiga (QR e VPS) não é mais usada com o WhatsApp oficial ligado.</p>}
+      {tela && st && canal !== 'meta' && <div className="flex flex-col gap-4">
         <SectionCard title="Situação" action={<Badge variant={st.cor}>{st.nome}</Badge>}>
           <div className="flex flex-col gap-1">
             {conectado && <p className="t-body" style={{ margin: 0 }}>Conectado como <b>{telefone(tela.telefone)}</b>.</p>}

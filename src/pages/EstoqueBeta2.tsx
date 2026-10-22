@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { ArrowLeft, ArrowRight, Package, Users, ClipboardCheck, Truck, Store, Clock3, BarChart3, Warehouse, BookOpen, Settings2, SprayCan, ShoppingCart, FileText, ArrowLeftRight, Handshake, ShieldCheck, Sliders, History, ChefHat, MessageCircle } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Package, Users, ClipboardCheck, Truck, Store, Clock3, BarChart3, Warehouse, BookOpen, Settings2, SprayCan, ShoppingCart, FileText, ArrowLeftRight, Handshake, ShieldCheck, Sliders, History, ChefHat, MessageCircle, MessagesSquare } from 'lucide-react';
 import { Badge, Button, SectionCard } from '../components/ui';
 import ConfigurarSetores from './ConfigurarSetores';
 import Hoje, { type DestinoHoje } from '../components/beta2/Hoje';
@@ -25,6 +25,7 @@ import Producao from '../components/beta2/Producao';
 import Mover from '../components/beta2/Mover';
 import ContagemCentral from '../components/beta2/ContagemCentral';
 import WhatsappEstoque from '../components/beta2/WhatsappEstoque';
+import ConversasAgente from '../components/beta2/ConversasAgente';
 
 /**
  * Estoque Beta 2: a porta única do estoque. Entrada "Hoje" por pessoa e os
@@ -33,8 +34,8 @@ import WhatsappEstoque from '../components/beta2/WhatsappEstoque';
  */
 type View = 'menu' | 'itens' | 'fichas' | 'estoques' | 'fornecedores' | 'setores' | 'central' | 'kits'
   | 'recebimento' | 'reposicao' | 'emergencias' | 'movimentacoes'
-  | 'contagem' | 'contagem_central' | 'aprovacoes' | 'compras' | 'relatorios' | 'kardex' | 'kardex_fornecedor' | 'vizinhos' | 'zig' | 'producao' | 'mover' | 'whatsapp';
-const VIEWS: View[] = ['menu', 'itens', 'fichas', 'estoques', 'fornecedores', 'setores', 'central', 'kits', 'recebimento', 'reposicao', 'emergencias', 'movimentacoes', 'contagem', 'contagem_central', 'aprovacoes', 'compras', 'relatorios', 'kardex', 'kardex_fornecedor', 'vizinhos', 'zig', 'producao', 'mover', 'whatsapp'];
+  | 'contagem' | 'contagem_central' | 'aprovacoes' | 'compras' | 'relatorios' | 'kardex' | 'kardex_fornecedor' | 'vizinhos' | 'zig' | 'producao' | 'mover' | 'whatsapp' | 'conversas';
+const VIEWS: View[] = ['menu', 'itens', 'fichas', 'estoques', 'fornecedores', 'setores', 'central', 'kits', 'recebimento', 'reposicao', 'emergencias', 'movimentacoes', 'contagem', 'contagem_central', 'aprovacoes', 'compras', 'relatorios', 'kardex', 'kardex_fornecedor', 'vizinhos', 'zig', 'producao', 'mover', 'whatsapp', 'conversas'];
 /** grava = mexe em dado real · breve = ainda não existe */
 type Estado = 'grava' | 'breve';
 type MenuItem = { v?: View; href?: string; n: string; icon: React.ElementType; estado: Estado; dica?: string; soAdmin?: boolean };
@@ -50,7 +51,8 @@ const GRUPOS: MenuGrupo[] = [
     { v: 'setores', n: 'Configurar setores e kits', icon: Settings2, estado: 'grava', dica: 'itens, nível e saída por setor' },
     { v: 'central', n: 'Configurar Central', icon: Sliders, estado: 'grava', dica: 'ponto de pedido: seu número ou calculado' },
     { v: 'zig', n: 'Vínculos da Zig', icon: ArrowLeftRight, estado: 'grava', dica: 'cada venda da Zig desconta de qual item ou ficha' },
-    { v: 'whatsapp', n: 'WhatsApp do estoque', icon: MessageCircle, estado: 'grava', dica: 'conexão do agente: QR, código, fila de envio', soAdmin: true },
+    { v: 'whatsapp', n: 'WhatsApp do estoque', icon: MessageCircle, estado: 'grava', dica: 'conexão do agente: WhatsApp oficial, fila de envio', soAdmin: true },
+    { v: 'conversas', n: 'Conversas do agente', icon: MessagesSquare, estado: 'grava', dica: 'o que a equipe fala com o agente; responder por cima', soAdmin: true },
   ] },
   { id: 'movimentacoes', title: '3 · Movimentações', hint: 'Entradas, reposição, retiradas, produção, empréstimos', items: [
     { v: 'recebimento', n: 'Receber compras', icon: Truck, estado: 'grava', dica: 'nota com foto, confere e dá entrada' },
@@ -114,6 +116,7 @@ const EstoqueBeta2: React.FC = () => {
   if (view === 'producao') return <Producao responsavel={nome} onVoltar={() => go('menu')} />;
   if (view === 'mover') return <Mover responsavel={nome} onVoltar={() => go('menu')} />;
   if (view === 'whatsapp') return <WhatsappEstoque onVoltar={() => go('menu')} />;
+  if (view === 'conversas') return <ConversasAgente onVoltar={() => go('menu')} />;
   if (view === 'relatorios' || view === 'kardex' || view === 'kardex_fornecedor') {
     // ?tela=relatorios&rel=<tipo> abre um relatório; os atalhos do menu só mudam o rel.
     const rel = view === 'kardex' ? 'kardex_produto' : view === 'kardex_fornecedor' ? 'kardex_fornecedor' : params.get('rel');

@@ -460,3 +460,95 @@ export const whatsappApi = {
     lancar(error);
   },
 };
+
+export interface ConversaResumo {
+  id: string;
+  nome: string;
+  papel: string;
+  telefone: string | null;
+  ativo: boolean;
+  ultima_em: string | null;
+  ultima: string | null;
+  ultima_direcao: 'entrada' | 'saida' | null;
+  ultima_entrada: string | null;
+  na_fila: number;
+  falhas: number;
+}
+
+export interface MensagemAgente {
+  id: number;
+  direcao: 'entrada' | 'saida';
+  tipo: 'texto' | 'imagem' | 'audio' | 'documento';
+  texto: string | null;
+  midia_path: string | null;
+  status: string;
+  entrega: string | null;
+  erro: string | null;
+  criado_em: string;
+  manual: boolean;
+  por: string | null;
+  modelo: string | null;
+  nota: { fornecedor: string | null; numero: string | null; total: string | null } | null;
+}
+
+export interface MetaSituacao {
+  canal: 'ponte' | 'meta';
+  secrets: { token: boolean; app_secret: boolean; verify_token: boolean };
+  phone_number_id: string | null;
+  waba_id: string | null;
+  erro?: string | null;
+  telefone?: string | null;
+  nome?: string | null;
+  nome_status?: string | null;
+  qualidade?: string | null;
+  modelo?: { name: string; status: string; category: string } | null;
+}
+
+/** Ações da função do agente que exigem login de admin ou master. */
+async function chamarAgente<T>(acao: string, corpo?: unknown): Promise<T> {
+  const { data, error } = await supabase.functions.invoke(`agente-whatsapp?acao=${acao}`, { body: corpo ?? {} });
+  if (error) {
+    let msg = error.message;
+    try { const c = await (error as { context?: Response }).context?.json(); if (c?.erro) msg = c.erro; } catch { /* sem corpo */ }
+    throw new Error(msg);
+  }
+  if (data && data.ok === false) throw new Error(data.erro ?? 'Erro');
+  return data as T;
+}
+
+/** Conversas do agente de estoque. Só admin e master. */
+export const conversasApi = {
+  async lista(): Promise<ConversaResumo[]> {
+    const { data, error } = await supabase.rpc('fn_agente_conversas');
+    lancar(error);
+    return (data ?? []) as ConversaResumo[];
+  },
+  async conversa(equipeId: string, antes?: number): Promise<MensagemAgente[]> {
+    const { data, error } = await supabase.rpc('fn_agente_conversa', { p_equipe: equipeId, p_antes: antes ?? null, p_limite: 60 });
+    lancar(error);
+    return (data ?? []) as MensagemAgente[];
+  },
+  async foto(path: string): Promise<string | null> {
+    const { data } = await supabase.storage.from('agente-whatsapp').createSignedUrl(path, 3600);
+    return data?.signedUrl ?? null;
+  },
+  responder(equipeId: string, texto: string) {
+    return chamarAgente<{ status: string; erro: string | null }>('responder', { equipe_id: equipeId, texto });
+  },
+  metaSituacao() {
+    return chamarAgente<MetaSituacao>('meta_status');
+  },
+  metaConectar() {
+    return chamarAgente<{ inscrita: boolean }>('meta_conectar');
+  },
+  metaCriarModelo() {
+    return chamarAgente<{ id: string; status: string }>('meta_modelo');
+  },
+  async metaConfig(p: { canal?: 'ponte' | 'meta'; phoneId?: string; wabaId?: string }) {
+    const { data, error } = await supabase.rpc('fn_agente_meta_config', {
+      p_canal: p.canal ?? null, p_phone_number_id: p.phoneId ?? null, p_waba_id: p.wabaId ?? null,
+    });
+    lancar(error);
+    return data as Record<string, unknown>;
+  },
+};
