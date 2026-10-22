@@ -35,7 +35,7 @@ type Definicao = Anthropic.Tool & { acoes: string[] };
 const DEFINICOES: Definicao[] = [
   {
     name: "buscar_itens",
-    acoes: ["consultar", "lancar_nota", "transferir", "compras", "emprestimo", "perda"],
+    acoes: ["consultar", "lancar_nota", "transferir", "compras", "emprestimo", "perda", "contagem"],
     description:
       "Procura itens do estoque pelo nome (palavras ou nome parecido). Devolve nome, unidade, custo médio, saldo nos estoques que a pessoa pode ver e a última compra (data, fornecedor, quantidade, custo). Estoque zerado não aparece em saldos: saldos vazio é zerado em todos. Use para achar o item de cada linha da nota, de cada transferência e para consultar saldo.",
     input_schema: {
@@ -177,6 +177,80 @@ const DEFINICOES: Definicao[] = [
       properties: {
         data: { type: "string", description: "AAAA-MM-DD. Omitir para ontem, o último dia fechado (\"relatório\" sem data é o de ontem)." },
       },
+    },
+  },
+  {
+    name: "abrir_contagem",
+    acoes: ["contagem"],
+    description:
+      "Abre a contagem de um setor, ou continua a que já está aberta nele (da tela ou do WhatsApp). Auditoria por padrão: diferença passa por aprovação. Diária só se a pessoa pedir.",
+    input_schema: {
+      type: "object",
+      properties: {
+        estoque: { type: "string", enum: ["central", "bar", "cozinha"] },
+        modo: { type: "string", enum: ["auditoria", "diaria"] },
+      },
+      required: ["estoque"],
+    },
+  },
+  {
+    name: "anotar_contagem",
+    acoes: ["contagem"],
+    description:
+      "Anota o que foi contado num local (freezer, prateleira, depósito). Por padrão soma ao que já tinha naquele local; o total do item é a soma dos locais. Para corrigir um local, modo substituir. Devolve o total contado de cada item e os itens fora do setor (não anotados).",
+    input_schema: {
+      type: "object",
+      properties: {
+        estoque: { type: "string", enum: ["central", "bar", "cozinha"] },
+        local: { type: "string", description: "Onde foi contado, como a pessoa disse. Ex.: 'Freezer 1', 'Fardos fechados'." },
+        itens: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              item_id: { type: "string" },
+              quantidade: { type: "number", description: "Na unidade do sistema, já convertida (prateleira, fileira, fardo)." },
+            },
+            required: ["item_id", "quantidade"],
+          },
+        },
+        modo: { type: "string", enum: ["somar", "substituir"], description: "Padrão somar." },
+        apagar_parte: { type: "boolean", description: "Com substituir e quantidade 0: tira o local da conta do item (foi anotado por engano)." },
+        incluir_fora_do_setor: { type: "boolean", description: "Só depois que a pessoa confirmar que o item está mesmo nesse setor." },
+      },
+      required: ["estoque", "local", "itens"],
+    },
+  },
+  {
+    name: "situacao_contagem",
+    acoes: ["contagem"],
+    description:
+      "Como está a contagem aberta: cada item contado (partes por local, total, sistema, diferença em quantidade e R$, da maior para a menor) e os itens do setor ainda não contados.",
+    input_schema: {
+      type: "object",
+      properties: { estoque: { type: "string", enum: ["central", "bar", "cozinha"] } },
+      required: ["estoque"],
+    },
+  },
+  {
+    name: "concluir_contagem",
+    acoes: ["contagem"],
+    description:
+      "Fecha a contagem. Só use depois que a pessoa confirmou o resumo na mensagem mais recente. Item não contado não muda. Auditoria com diferença: se a pessoa pode aprovar, o saldo é acertado na hora; se não, fica aguardando aprovação e quem aprova é avisado.",
+    input_schema: {
+      type: "object",
+      properties: { estoque: { type: "string", enum: ["central", "bar", "cozinha"] } },
+      required: ["estoque"],
+    },
+  },
+  {
+    name: "cancelar_contagem",
+    acoes: ["contagem"],
+    description: "Cancela a contagem aberta do setor, sem mexer em saldo. Só se a pessoa pedir.",
+    input_schema: {
+      type: "object",
+      properties: { estoque: { type: "string", enum: ["central", "bar", "cozinha"] } },
+      required: ["estoque"],
     },
   },
   {
@@ -538,6 +612,24 @@ export async function executarFerramenta(
       const r = await rpc(db, "fn_relatorio_dia", { p_data: entrada.data || null }) as { data: string; texto: string };
       ctx.avisos.push({ equipeId: pessoa.id, texto: r.texto });
       return { status: "enviado", data: r.data, instrucao: "O relatório sai numa mensagem logo depois da sua. Responda só uma linha curta." };
+    }
+
+    case "abrir_contagem":
+    case "anotar_contagem":
+    case "situacao_contagem":
+    case "concluir_contagem":
+    case "cancelar_contagem": {
+      const estoque = ESTOQUES[String(entrada.estoque)];
+      if (!estoque) return { status: "erro", motivo: "Estoque inválido." };
+      const op = nome.replace("_contagem", "");
+      const { estoque: _e, ...resto } = entrada;
+      const r = await rpc(db, "fn_agente_contagem", { p_pessoa: pessoa.id, p_op: op, p_args: { ...resto, estoque_id: estoque } }) as any;
+      if (op === "concluir" && r?.status === "aguardando_aprovacao") {
+        const valor = Number(r.valor ?? 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+        await avisarAprovadores(ctx,
+          `📋 *Contagem do ${String(r.estoque ?? entrada.estoque).replace("Estoque ", "")}* de ${pessoa.nome} aguardando aprovação: ${r.diferencas} diferença(s), ${valor}.\nAprove no sistema em Estoque → Aprovar diferenças.`);
+      }
+      return r;
     }
 
     case "lista_compras": {

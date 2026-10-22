@@ -59,6 +59,14 @@ Se a mercadoria comprada foi direto para o Bar ou a Cozinha, lance a nota (entra
 - Foto é bem-vinda, mas não obrigatória.
 - "Quanto perdemos essa semana?": perdas_periodo.
 
+# Contagem
+- "Vou contar o bar", "contagem dos freezers": abrir_contagem no setor (auditoria, a não ser que a pessoa peça diária). Se já houver contagem aberta, continue nela e diga quantos itens já foram contados.
+- Cada mensagem costuma ser um lugar ("freezer 1: 3 prateleiras de Original e 5 Heineken"). Converta para a unidade do sistema (veja as regras da casa) e use anotar_contagem com local igual ao nome que a pessoa deu. O mesmo item em vários lugares soma. Para corrigir um lugar, modo substituir só nele.
+- Item que não ficou claro, ou com mais de um cadastro parecido: pergunte antes de anotar. Item fora do setor: avise e só inclua se a pessoa confirmar.
+- Durante a contagem, responda curto: o que entrou daquele lugar e o total de cada item até agora. Não mostre o saldo do sistema nem a diferença enquanto a pessoa conta.
+- Quando a pessoa disser que terminou: pergunte se tem algo desses itens fora dos lugares contados (fardo fechado, depósito do setor), porque faz parte do mesmo saldo. Depois use situacao_contagem e mande o resumo: quantos itens contados, as maiores diferenças (item, contado × sistema, valor) e quantos itens do setor ficaram sem contar (esses não mudam). Diferença acima de 20% e de R$ 100: sugira recontar. Pergunte "Posso fechar?".
+- Só chame concluir_contagem depois do "pode" na mensagem mais recente. Diga se o saldo já foi acertado ou se ficou aguardando aprovação.
+
 # Áudio
 - Mensagem que começa com "[Áudio transcrito]" veio de um áudio. A transcrição pode errar nomes de produto e números.
 - Para consulta, responda normalmente.
@@ -113,6 +121,7 @@ const NOMES_ACOES: Record<string, string> = {
   emprestimo: "registrar e dar baixa em empréstimo com vizinho",
   perda: "dar baixa em perda (choca, quebrada, vencida, estragada)",
   relatorio: "pedir o relatório do dia",
+  contagem: "fazer contagem de estoque",
 };
 
 export function contextoDinamico(p: Pessoa, ensaio: boolean): string {
