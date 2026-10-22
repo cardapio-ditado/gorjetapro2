@@ -328,20 +328,34 @@ export async function liberarJanela(db: SupabaseClient, equipeId: string): Promi
 // ─── Painel ─────────────────────────────────────────────────────────────────
 
 /**
- * Liga a conta do WhatsApp do estoque ao app e aponta o webhook dela para
- * esta função (override por conta): o app continua servindo o Brasa sem
- * mudança nenhuma.
+ * Registra o número na Cloud API (sem isso ele fica "pendente" e quem manda
+ * mensagem vê "não está no WhatsApp"), liga a conta do WhatsApp do estoque ao
+ * app e aponta o webhook dela para esta função (override por conta): o app
+ * continua servindo o Brasa sem mudança nenhuma.
  */
 export async function conectar(db: SupabaseClient, urlWebhook: string): Promise<Record<string, unknown>> {
   const c = await configMeta(db);
   if (!completa(c)) throw new Error("Falta o token (secret META_WA_TOKEN) ou os IDs do telefone e da conta.");
   const verify = Deno.env.get("META_VERIFY_TOKEN");
   if (!verify || !Deno.env.get("META_APP_SECRET")) throw new Error("Faltam os secrets META_VERIFY_TOKEN e META_APP_SECRET.");
+
+  let registrado = false;
+  const tel = await graph<{ status?: string }>(`${c.phoneId}?fields=status`, c.token);
+  if (tel.error) throw new Error(`Meta: ${textoDoErro(tel.error)}`);
+  if (tel.status !== "CONNECTED") {
+    // O PIN vira a confirmação em duas etapas do número.
+    const pin = Deno.env.get("META_WA_PIN")?.trim() ?? "";
+    if (!/^\d{6}$/.test(pin)) throw new Error("Falta o secret META_WA_PIN (6 números) para registrar o número.");
+    const reg = await graph<{ success?: boolean }>(`${c.phoneId}/register`, c.token, "POST", { messaging_product: "whatsapp", pin });
+    if (reg.error) throw new Error(`Meta, ao registrar o número: ${textoDoErro(reg.error)}`);
+    registrado = reg.success === true;
+  }
+
   const r = await graph<{ success?: boolean }>(`${c.wabaId}/subscribed_apps`, c.token, "POST", {
     override_callback_uri: urlWebhook, verify_token: verify,
   });
   if (r.error) throw new Error(`Meta: ${textoDoErro(r.error)}`);
-  return { inscrita: r.success === true };
+  return { registrado, inscrita: r.success === true };
 }
 
 export async function criarModelo(db: SupabaseClient): Promise<Record<string, unknown>> {
@@ -369,13 +383,14 @@ export async function situacao(db: SupabaseClient): Promise<Record<string, unkno
     secrets: {
       token: Boolean(c.token), app_secret: Boolean(Deno.env.get("META_APP_SECRET")),
       verify_token: Boolean(Deno.env.get("META_VERIFY_TOKEN")),
+      pin: /^\d{6}$/.test(Deno.env.get("META_WA_PIN")?.trim() ?? ""),
     },
     phone_number_id: c.phoneId ?? null, waba_id: c.wabaId ?? null,
   };
   if (!completa(c)) return base;
   const [tel, modelos] = await Promise.all([
-    graph<{ display_phone_number?: string; verified_name?: string; quality_rating?: string; name_status?: string }>(
-      `${c.phoneId}?fields=display_phone_number,verified_name,quality_rating,name_status`, c.token),
+    graph<{ display_phone_number?: string; verified_name?: string; quality_rating?: string; name_status?: string; status?: string }>(
+      `${c.phoneId}?fields=display_phone_number,verified_name,quality_rating,name_status,status`, c.token),
     graph<{ data?: { name: string; status: string; category: string }[] }>(
       `${c.wabaId}/message_templates?fields=name,status,category&name=${MODELO_AVISO}`, c.token),
   ]);
@@ -386,6 +401,7 @@ export async function situacao(db: SupabaseClient): Promise<Record<string, unkno
     nome: tel.verified_name ?? null,
     nome_status: tel.name_status ?? null,
     qualidade: tel.quality_rating ?? null,
+    status_numero: tel.status ?? null,
     modelo: modelos.data?.find((m) => m.name === MODELO_AVISO) ?? null,
   };
 }

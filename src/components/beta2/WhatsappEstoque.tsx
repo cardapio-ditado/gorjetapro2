@@ -70,7 +70,7 @@ const MetaCard: React.FC<{ onCanal: (c: 'ponte' | 'meta') => void }> = ({ onCana
 
   const secretsOk = !!s && s.secrets.token && s.secrets.app_secret && s.secrets.verify_token;
   const idsOk = !!s?.phone_number_id && !!s?.waba_id;
-  const numeroOk = !!s?.telefone && !s?.erro;
+  const numeroOk = !!s?.telefone && !s?.erro && s?.status_numero === 'CONNECTED';
   const modeloOk = s?.modelo?.status === 'APPROVED';
   const tudoPronto = secretsOk && idsOk && numeroOk && !!ultimoWebhook && modeloOk;
 
@@ -81,9 +81,9 @@ const MetaCard: React.FC<{ onCanal: (c: 'ponte' | 'meta') => void }> = ({ onCana
       {!s && !erro && <p className="t-body" style={{ color: 'var(--text-secondary)' }}>Carregando…</p>}
       {s && <div className="flex flex-col gap-4">
         <ul style={{ margin: 0, padding: 0, listStyle: 'none' }}>
-          <Item ok={secretsOk}>Secrets no Supabase: META_WA_TOKEN {s.secrets.token ? '✓' : '✗'} · META_APP_SECRET {s.secrets.app_secret ? '✓' : '✗'} · META_VERIFY_TOKEN {s.secrets.verify_token ? '✓' : '✗'}</Item>
+          <Item ok={secretsOk}>Secrets no Supabase: META_WA_TOKEN {s.secrets.token ? '✓' : '✗'} · META_APP_SECRET {s.secrets.app_secret ? '✓' : '✗'} · META_VERIFY_TOKEN {s.secrets.verify_token ? '✓' : '✗'} · META_WA_PIN {s.secrets.pin ? '✓' : '✗'}</Item>
           <Item ok={idsOk}>IDs do telefone e da conta do WhatsApp</Item>
-          <Item ok={numeroOk}>Número {s.telefone ? <b>{s.telefone}</b> : null}{s.nome ? ` · ${s.nome}` : ''}{s.nome_status ? ` (nome: ${s.nome_status})` : ''}{s.qualidade ? ` · qualidade ${s.qualidade}` : ''}{s.erro ? ` · ${s.erro}` : ''}</Item>
+          <Item ok={numeroOk}>Número {s.telefone ? <b>{s.telefone}</b> : null}{s.nome ? ` · ${s.nome}` : ''}{s.nome_status ? ` (nome: ${s.nome_status})` : ''}{s.qualidade ? ` · qualidade ${s.qualidade}` : ''}{s.status_numero ? ` · ${s.status_numero === 'CONNECTED' ? 'registrado' : `${s.status_numero.toLowerCase()} (clique em Conectar webhook para registrar)`}` : ''}{s.erro ? ` · ${s.erro}` : ''}</Item>
           <Item ok={!!ultimoWebhook}>Webhook {ultimoWebhook ? `recebendo (último: ${new Date(ultimoWebhook).toLocaleString('pt-BR')})` : 'ainda sem mensagem da Meta'}</Item>
           <Item ok={modeloOk}>Modelo de aviso "aviso_estoque": {s.modelo ? NOME_MODELO[s.modelo.status] ?? s.modelo.status : 'não enviado'}</Item>
         </ul>
@@ -95,7 +95,7 @@ const MetaCard: React.FC<{ onCanal: (c: 'ponte' | 'meta') => void }> = ({ onCana
         </div>
 
         <div className="flex flex-wrap gap-2">
-          <Button icone={<Link2 size={16} />} onClick={() => void fazer('webhook', () => conversasApi.metaConectar(), 'Webhook conectado. Mande uma mensagem para o número para testar.')}
+          <Button icone={<Link2 size={16} />} onClick={() => void fazer('webhook', () => conversasApi.metaConectar(), 'Número registrado e webhook conectado. Mande uma mensagem para o número para testar.')}
             carregando={ocupado === 'webhook'} disabled={!!ocupado || !secretsOk || !idsOk}>Conectar webhook</Button>
           {!modeloOk && <Button icone={<FileCheck size={16} />} onClick={() => void fazer('modelo', () => conversasApi.metaCriarModelo(), 'Modelo enviado para a Meta. A aprovação leva de minutos a 1 dia.')}
             carregando={ocupado === 'modelo'} disabled={!!ocupado || !secretsOk || !idsOk || !!s.modelo}>Enviar modelo para aprovação</Button>}

@@ -493,7 +493,7 @@ export interface MensagemAgente {
 
 export interface MetaSituacao {
   canal: 'ponte' | 'meta';
-  secrets: { token: boolean; app_secret: boolean; verify_token: boolean };
+  secrets: { token: boolean; app_secret: boolean; verify_token: boolean; pin?: boolean };
   phone_number_id: string | null;
   waba_id: string | null;
   erro?: string | null;
@@ -501,6 +501,8 @@ export interface MetaSituacao {
   nome?: string | null;
   nome_status?: string | null;
   qualidade?: string | null;
+  /** CONNECTED quando o número está registrado na Cloud API. */
+  status_numero?: string | null;
   modelo?: { name: string; status: string; category: string } | null;
 }
 
