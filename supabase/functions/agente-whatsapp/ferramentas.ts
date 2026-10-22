@@ -627,7 +627,7 @@ export async function executarFerramenta(
       if (op === "concluir" && r?.status === "aguardando_aprovacao") {
         const valor = Number(r.valor ?? 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
         await avisarAprovadores(ctx,
-          `📋 *Contagem do ${String(r.estoque ?? entrada.estoque).replace("Estoque ", "")}* de ${pessoa.nome} aguardando aprovação: ${r.diferencas} diferença(s), ${valor}.\nAprove no sistema em Estoque → Aprovar diferenças.`);
+          `📋 *Contagem do ${String(r.estoque ?? entrada.estoque).replace("Estoque ", "")}* de ${pessoa.nome} aguardando aprovação: ${r.diferencas} diferença(s), ${valor}.\nAprove no sistema em Estoque → ${r.onde_aprovar ?? "Aprovar diferenças"}.`);
       }
       return r;
     }
