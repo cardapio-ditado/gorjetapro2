@@ -555,3 +555,10 @@ export const conversasApi = {
     return data as Record<string, unknown>;
   },
 };
+
+/** Relatório do dia (o mesmo que o agente manda no WhatsApp). Só admin e master. */
+export async function relatorioDia(data: string | null): Promise<{ data: string; texto: string }> {
+  const { data: r, error } = await supabase.rpc('fn_relatorio_dia_tela', { p_data: data });
+  lancar(error);
+  return r as { data: string; texto: string };
+}

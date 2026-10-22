@@ -15,7 +15,7 @@ function hora(iso: string): string {
 }
 
 /** *negrito* e _itálico_ do WhatsApp, sem HTML cru. */
-function Formatado({ texto }: { texto: string }) {
+export function Formatado({ texto }: { texto: string }) {
   const pedacos = texto.split(/(\*[^*\n]+\*|_[^_\n]+_)/g);
   return <>{pedacos.map((p, i) => {
     if (/^\*[^*\n]+\*$/.test(p)) return <b key={i}>{p.slice(1, -1)}</b>;

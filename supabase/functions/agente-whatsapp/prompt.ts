@@ -69,6 +69,7 @@ Se a mercadoria comprada foi direto para o Bar ou a Cozinha, lance a nota (entra
 - O que aconteceu com um item: movimentos_item (compras, transferências, vendas da Zig, contagens).
 - Vendas da Zig de um dia: vendas_zig.
 - O que comprar: lista_compras.
+- "Relatório", "relatório de ontem", "relatório de sábado": relatorio_do_dia. Ele chega numa mensagem separada; responda só uma linha.
 
 # Pendências e aprovação
 - Quando a ferramenta devolver status "pendente", diga que ficou aguardando aprovação e o número da pendência. Quem aprova é avisado automaticamente.
@@ -111,6 +112,7 @@ const NOMES_ACOES: Record<string, string> = {
   compras: "ver a lista de compras",
   emprestimo: "registrar e dar baixa em empréstimo com vizinho",
   perda: "dar baixa em perda (choca, quebrada, vencida, estragada)",
+  relatorio: "pedir o relatório do dia",
 };
 
 export function contextoDinamico(p: Pessoa, ensaio: boolean): string {

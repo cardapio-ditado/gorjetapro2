@@ -168,6 +168,18 @@ const DEFINICOES: Definicao[] = [
     },
   },
   {
+    name: "relatorio_do_dia",
+    acoes: ["relatorio"],
+    description:
+      "Relatório de um dia: vendas e baixa da Zig, furos no Bar e na Cozinha, notas, transferências, empréstimos, perdas, contagens, caderno de bordo, pendências e zerados no Central. O relatório vai sozinho numa mensagem separada, logo depois da sua resposta: não repita o conteúdo.",
+    input_schema: {
+      type: "object",
+      properties: {
+        data: { type: "string", description: "AAAA-MM-DD. Omitir para ontem, o último dia fechado (\"relatório\" sem data é o de ontem)." },
+      },
+    },
+  },
+  {
     name: "lista_compras",
     acoes: ["compras"],
     description: "Itens abaixo do ponto de pedido no Central, com quanto comprar.",
@@ -519,6 +531,14 @@ export async function executarFerramenta(
 
     case "vendas_zig":
       return rpc(db, "fn_agente_vendas_zig", { p_data: entrada.data, p_texto: entrada.texto ?? null });
+
+    case "relatorio_do_dia": {
+      // O texto já vem pronto do banco: vai direto como mensagem, sem passar
+      // pelo modelo (são uns 3 mil caracteres que ele só copiaria).
+      const r = await rpc(db, "fn_relatorio_dia", { p_data: entrada.data || null }) as { data: string; texto: string };
+      ctx.avisos.push({ equipeId: pessoa.id, texto: r.texto });
+      return { status: "enviado", data: r.data, instrucao: "O relatório sai numa mensagem logo depois da sua. Responda só uma linha curta." };
+    }
 
     case "lista_compras": {
       const lista = await rpc(db, "fn_agente_lista_compras", {}) as unknown[];

@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { ArrowLeft, ArrowRight, Package, Users, ClipboardCheck, Truck, Store, Clock3, BarChart3, Warehouse, BookOpen, Settings2, SprayCan, ShoppingCart, FileText, ArrowLeftRight, Handshake, ShieldCheck, Sliders, History, ChefHat, MessageCircle, MessagesSquare } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Package, Users, ClipboardCheck, Truck, Store, Clock3, BarChart3, Warehouse, BookOpen, Settings2, SprayCan, ShoppingCart, FileText, ArrowLeftRight, Handshake, ShieldCheck, Sliders, History, ChefHat, MessageCircle, MessagesSquare, CalendarDays } from 'lucide-react';
 import { Badge, Button, SectionCard } from '../components/ui';
 import ConfigurarSetores from './ConfigurarSetores';
 import Hoje, { type DestinoHoje } from '../components/beta2/Hoje';
@@ -26,6 +26,7 @@ import Mover from '../components/beta2/Mover';
 import ContagemCentral from '../components/beta2/ContagemCentral';
 import WhatsappEstoque from '../components/beta2/WhatsappEstoque';
 import ConversasAgente from '../components/beta2/ConversasAgente';
+import RelatorioDia from '../components/beta2/RelatorioDia';
 
 /**
  * Estoque Beta 2: a porta única do estoque. Entrada "Hoje" por pessoa e os
@@ -34,8 +35,8 @@ import ConversasAgente from '../components/beta2/ConversasAgente';
  */
 type View = 'menu' | 'itens' | 'fichas' | 'estoques' | 'fornecedores' | 'setores' | 'central' | 'kits'
   | 'recebimento' | 'reposicao' | 'emergencias' | 'movimentacoes'
-  | 'contagem' | 'contagem_central' | 'aprovacoes' | 'compras' | 'relatorios' | 'kardex' | 'kardex_fornecedor' | 'vizinhos' | 'zig' | 'producao' | 'mover' | 'whatsapp' | 'conversas';
-const VIEWS: View[] = ['menu', 'itens', 'fichas', 'estoques', 'fornecedores', 'setores', 'central', 'kits', 'recebimento', 'reposicao', 'emergencias', 'movimentacoes', 'contagem', 'contagem_central', 'aprovacoes', 'compras', 'relatorios', 'kardex', 'kardex_fornecedor', 'vizinhos', 'zig', 'producao', 'mover', 'whatsapp', 'conversas'];
+  | 'contagem' | 'contagem_central' | 'aprovacoes' | 'compras' | 'relatorios' | 'kardex' | 'kardex_fornecedor' | 'vizinhos' | 'zig' | 'producao' | 'mover' | 'whatsapp' | 'conversas' | 'relatorio_dia';
+const VIEWS: View[] = ['menu', 'itens', 'fichas', 'estoques', 'fornecedores', 'setores', 'central', 'kits', 'recebimento', 'reposicao', 'emergencias', 'movimentacoes', 'contagem', 'contagem_central', 'aprovacoes', 'compras', 'relatorios', 'kardex', 'kardex_fornecedor', 'vizinhos', 'zig', 'producao', 'mover', 'whatsapp', 'conversas', 'relatorio_dia'];
 /** grava = mexe em dado real · breve = ainda não existe */
 type Estado = 'grava' | 'breve';
 type MenuItem = { v?: View; href?: string; n: string; icon: React.ElementType; estado: Estado; dica?: string; soAdmin?: boolean };
@@ -72,6 +73,7 @@ const GRUPOS: MenuGrupo[] = [
     { v: 'compras', n: 'Compras', icon: ShoppingCart, estado: 'grava' },
   ] },
   { id: 'relatorios', title: '6 · Relatórios', hint: 'Inventário, kardex, contagens, CMV', items: [
+    { v: 'relatorio_dia', n: 'Relatório do dia', icon: CalendarDays, estado: 'grava', dica: 'vendas, furos, notas, perdas e caderno de bordo de um dia', soAdmin: true },
     { v: 'relatorios', n: 'Relatórios', icon: BarChart3, estado: 'grava', dica: 'treze relatórios, só leitura, exportam para o Excel' },
     { v: 'kardex', n: 'Kardex por produto', icon: History, estado: 'grava', dica: 'extrato de um item com saldo linha a linha' },
     { v: 'kardex_fornecedor', n: 'Kardex por fornecedor · CMV', icon: FileText, estado: 'grava', dica: 'preços por fornecedor e custo da mercadoria vendida' },
@@ -117,6 +119,7 @@ const EstoqueBeta2: React.FC = () => {
   if (view === 'mover') return <Mover responsavel={nome} onVoltar={() => go('menu')} />;
   if (view === 'whatsapp') return <WhatsappEstoque onVoltar={() => go('menu')} />;
   if (view === 'conversas') return <ConversasAgente onVoltar={() => go('menu')} />;
+  if (view === 'relatorio_dia') return <RelatorioDia onVoltar={() => go('menu')} />;
   if (view === 'relatorios' || view === 'kardex' || view === 'kardex_fornecedor') {
     // ?tela=relatorios&rel=<tipo> abre um relatório; os atalhos do menu só mudam o rel.
     const rel = view === 'kardex' ? 'kardex_produto' : view === 'kardex_fornecedor' ? 'kardex_fornecedor' : params.get('rel');
