@@ -7,7 +7,7 @@ import { hhmm, haQuanto, nomeCurto, useVendasAoVivo } from './useVendasAoVivo';
 const VendasAoVivo: React.FC = () => {
   const { d, erro, carregando, agora, buscouEm, buscar } = useVendasAoVivo();
 
-  const maxGarcom = Math.max(1, ...(d?.garcons.map(g => g.valor) ?? [1]));
+  const maxGarcom = Math.max(1, ...(d?.garcons.map(g => g.consumo) ?? [1]));
   // Madrugada vem depois da noite: 00h–05h contam como 24h–29h para ordenar.
   const horas = [...(d?.por_hora ?? [])].sort((a, b) => (Number(a.hora) < 6 ? Number(a.hora) + 24 : Number(a.hora)) - (Number(b.hora) < 6 ? Number(b.hora) + 24 : Number(b.hora)));
   const maxHora = Math.max(1, ...horas.map(h => h.valor));
@@ -29,11 +29,20 @@ const VendasAoVivo: React.FC = () => {
       ) : (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-            <KPICard rotulo="vendido até agora" valor={brl(d.total)} detalhe="sem a taxa de serviço" tom="destaque" />
+            <KPICard rotulo="vendido até agora" valor={brl(d.total)} detalhe={d.couvert > 0 ? `consumo ${brl(d.consumo)} + couvert ${brl(d.couvert)}` : 'sem a taxa de serviço'} tom="destaque" />
             <KPICard rotulo="pedidos" valor={d.pedidos} detalhe={`${d.itens} itens`} />
-            <KPICard rotulo="taxa de serviço" valor={brl(d.gorjeta)} detalhe="gorjeta da noite" />
+            <KPICard rotulo="taxa de serviço prevista" valor={brl(d.taxa_prevista)} detalhe={`das contas da noite · já paga: ${brl(d.taxa_fechada)}`} />
             <KPICard rotulo="última venda" valor={hhmm(d.atualizado_em)} detalhe={haQuanto(d.atualizado_em, agora)} tom={parada ? 'atencao' : 'certo'} />
           </div>
+
+          {d.clientes && (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+              <KPICard rotulo="clientes que vieram" valor={d.clientes.vieram} detalhe="com consumo ou couvert" />
+              <KPICard rotulo="ainda na casa" valor={d.clientes.ainda} detalhe="com conta em aberto" tom="certo" />
+              <KPICard rotulo="já foram" valor={d.clientes.foram} detalhe="conta paga" />
+              <KPICard rotulo="ticket médio" valor={brl(d.clientes.ticket_medio)} detalhe="por cliente" />
+            </div>
+          )}
 
           <div className="flex items-center justify-between mb-2">
             <h3 className="t-body" style={{ margin: 0, fontWeight: 600 }}>Por garçom</h3>
@@ -44,17 +53,20 @@ const VendasAoVivo: React.FC = () => {
               <div key={g.nome} className="px-3 py-2" style={{ borderTop: i ? '1px solid var(--border-subtle)' : 'none' }}>
                 <div className="flex items-baseline justify-between gap-3">
                   <span className="t-body" style={{ fontWeight: 600, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{nomeCurto(g.nome)}</span>
-                  <span className="t-body" style={{ fontWeight: 700, color: 'var(--gold-light)' }}>{brl(g.valor)}</span>
+                  <span className="t-body" style={{ fontWeight: 700, color: 'var(--gold-light)' }}>{brl(g.consumo || g.couvert)}</span>
                 </div>
                 <div style={{ height: 4, borderRadius: 2, background: 'var(--border-subtle)', margin: '6px 0' }}>
-                  <div style={{ height: 4, borderRadius: 2, width: `${Math.max(2, (g.valor / maxGarcom) * 100)}%`, background: 'var(--gold)' }} />
+                  <div style={{ height: 4, borderRadius: 2, width: `${Math.max(2, (g.consumo / maxGarcom) * 100)}%`, background: 'var(--gold)' }} />
                 </div>
                 <div className="t-caption flex flex-wrap gap-x-3">
-                  <span>{g.pedidos} pedido{g.pedidos === 1 ? '' : 's'}</span>
-                  <span>{g.itens} iten{g.itens === 1 ? '' : 's'}</span>
-                  {g.pedidos > 0 && <span>ticket {brl(g.valor / g.pedidos)}</span>}
+                  {g.consumo > 0 ? <>
+                    <span>{g.pedidos} pedido{g.pedidos === 1 ? '' : 's'}</span>
+                    <span>{g.itens} iten{g.itens === 1 ? '' : 's'}</span>
+                    {g.pedidos > 0 && <span>ticket {brl(g.consumo / g.pedidos)}</span>}
+                    <span>taxa prevista {brl(g.taxa_prevista)}</span>
+                  </> : <span>só couvert</span>}
+                  {g.consumo > 0 && g.couvert > 0 && <span>+ couvert {brl(g.couvert)}</span>}
                   <span>última {haQuanto(g.ultima, agora)}</span>
-                  {g.gorjeta > 0 && <span>taxa {brl(g.gorjeta)}</span>}
                 </div>
               </div>
             ))}

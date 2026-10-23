@@ -6,11 +6,21 @@ import { supabase } from '../../lib/supabase';
  * A ZIG manda os horários em UTC; a função devolve instantes com "Z" e aqui
  * tudo é mostrado no horário de Cuiabá.
  */
-export interface Garcom { nome: string; valor: number; gorjeta: number; itens: number; pedidos: number; ultima: string | null }
+export interface Garcom { nome: string; consumo: number; couvert: number; taxa_prevista: number; itens: number; pedidos: number; ultima: string | null }
 export interface Vivo {
   noite: string;
   atualizado_em: string | null;
-  total: number; gorjeta: number; itens: number; pedidos: number;
+  /** consumo + couvert */
+  total: number;
+  consumo: number;
+  couvert: number;
+  /** 10% do consumo (couvert não paga taxa). */
+  taxa_prevista: number;
+  /** O que a ZIG já registrou de taxa: só das comandas fechadas. */
+  taxa_fechada: number;
+  itens: number; pedidos: number;
+  /** Pelo CPF de cada compra; null se a ZIG não mandou as compras. */
+  clientes: { vieram: number; ainda: number; foram: number; ticket_medio: number } | null;
   por_categoria: { categoria: string; valor: number }[];
   por_bar: { bar: string; valor: number }[];
   por_hora: { hora: string; valor: number }[];
