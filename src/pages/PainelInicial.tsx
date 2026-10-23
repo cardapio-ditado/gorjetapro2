@@ -1,20 +1,19 @@
 import React from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import Dashboard from './Dashboard';
+import PortalGestor from './PortalGestor';
 import MeuPainel from './MeuPainel';
 
 /**
  * Roteador da tela inicial ('/' e '/dashboard').
- * Master/admin veem o Painel do Dono (financeiro completo: caixa, CMV,
- * contas, custo RH, cachês). Demais níveis veem o MeuPainel (sem números
- * financeiros) — ambos usam moduloSlug="dashboard" no ProtectedRoute, que
- * é liberado por padrão para todo mundo; a separação de CONTEÚDO sensível
- * acontece aqui, não no gate de rota.
+ * Os gestores (configuracoes_sistema.portal_gestores) veem o Portal do
+ * Gestor; quem é master/admin mas não está na lista cai no MeuPainel pelo
+ * próprio Portal (a função do banco responde gestor:false). Os demais níveis
+ * vão direto ao MeuPainel, sem números financeiros.
  */
 const PainelInicial: React.FC = () => {
   const { usuario } = useAuth();
-  const podeVerPainelDono = usuario?.nivel === 'master' || usuario?.nivel === 'admin';
-  return podeVerPainelDono ? <Dashboard /> : <MeuPainel />;
+  const podeSerGestor = usuario?.nivel === 'master' || usuario?.nivel === 'admin';
+  return podeSerGestor ? <PortalGestor /> : <MeuPainel />;
 };
 
 export default PainelInicial;

@@ -7,8 +7,8 @@ import { useAuth } from '../contexts/AuthContext';
 /**
  * O saguão: a entrada do sistema, um favo por ÁREA da casa.
  *
- * Cinco favos — Operação, Financeiro, Estoque, Recursos Humanos, Gestão — e
- * não um por módulo: catorze hexágonos é o sidebar gigante de novo, só que
+ * Um favo por área — Operação, Financeiro, Estoque, Recursos Humanos, Clientes
+ * e Parceiros, Sistema — e não um por módulo: catorze hexágonos é o sidebar gigante de novo, só que
  * deitado. A pessoa pensa "vou mexer no dinheiro", não "vou abrir o módulo
  * Contas a Pagar"; o favo é a área, e as telas da área aparecem na lateral
  * depois que ela entra.
@@ -87,7 +87,7 @@ const Saguao: React.FC = () => {
   })).filter((a) => a.modulos.length > 0);
 
   // Duas fileiras fixas — 3 em cima, o resto embaixo deslocado meio passo —
-  // é o arranjo de colmeia pra até 5 favos (o total de áreas que existem).
+  // é o arranjo de colmeia pra até 6 favos (o total de áreas que existem).
   // Sem depender de quebra de linha automática pra decidir o deslocamento,
   // que era a causa do desalinhamento. As fileiras NÃO se encaixam uma na
   // outra: favo cobrindo favo come a borda dourada do de cima.

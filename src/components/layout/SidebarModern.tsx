@@ -4,7 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import {
   Home, DollarSign, Warehouse, Users, Music, CalendarDays,
   Settings, BookOpen, Target, ClipboardList, Palette,
-  TrendingUp, ChevronDown, LogOut, Star, X, LayoutDashboard, Hexagon, UserPlus,
+  TrendingUp, ChevronDown, LogOut, Star, X, LayoutDashboard, Hexagon, UserPlus, Handshake,
 } from 'lucide-react';
 
 // Desde 05/10/2026 o estoque vive no Beta 2, que tem o próprio menu dentro da
@@ -14,8 +14,8 @@ import {
 
 export interface SubModule { name: string; path: string; }
 
-/** As cinco áreas da casa. São os favos do saguão. */
-export type Area = 'financeiro' | 'estoque' | 'rh' | 'operacao' | 'gestao';
+/** As áreas da casa. São os favos do saguão. ('gestao' é Clientes e Parceiros.) */
+export type Area = 'financeiro' | 'estoque' | 'rh' | 'operacao' | 'gestao' | 'sistema';
 
 export interface Module {
   name: string; path: string;
@@ -37,11 +37,12 @@ export const AREAS: Array<{ id: Area; nome: string; icone: React.ElementType; de
   { id: 'financeiro', nome: 'Financeiro',        icone: DollarSign,    descricao: 'Caixa, contas, faturamento e DRE' },
   { id: 'estoque',    nome: 'Estoque',           icone: Warehouse,     descricao: 'Contagem, compras, produção e fichas' },
   { id: 'rh',         nome: 'Recursos Humanos',  icone: Users,         descricao: 'Equipe, escalas, férias e recrutamento' },
-  { id: 'gestao',     nome: 'Gestão',            icone: TrendingUp,    descricao: 'Metas, fidelidade e ajustes do sistema' },
+  { id: 'gestao',     nome: 'Clientes e Parceiros', icone: Handshake,  descricao: 'Fidelidade, permutas e clube' },
+  { id: 'sistema',    nome: 'Sistema',           icone: Settings,      descricao: 'Configurações, manual e padrões' },
 ];
 
 export const MODULES: Module[] = [
-  { name: 'Dashboard',      path: '/dashboard',          icon: Home,          slug: 'dashboard',       group: 'operacao' },
+  { name: 'Início',         path: '/dashboard',          icon: Home,          slug: 'dashboard',       group: 'operacao' },
   { name: 'Portal do Gerente', path: '/portal-gerente',  icon: LayoutDashboard, slug: 'dashboard',     group: 'operacao' },
   { name: 'Agenda do Dia',  path: '/agenda-diaria',      icon: ClipboardList, slug: 'dashboard',       group: 'operacao' },
   { name: 'RH',             path: '/staff',              icon: Users,         slug: 'rh',              group: 'rh',
@@ -59,6 +60,7 @@ export const MODULES: Module[] = [
   },
   { name: 'Músicos',        path: '/musicians',          icon: Music,         slug: 'musicos',         group: 'operacao' },
   { name: 'Extras',         path: '/extras',             icon: UserPlus,      slug: 'extras',          group: 'operacao' },
+  { name: 'Metas & Tarefas', path: '/metas-tarefas',    icon: Target,        slug: 'solicitacoes',    group: 'operacao' },
   { name: 'Eventos',        path: '/events',             icon: CalendarDays,  slug: 'eventos',         group: 'operacao' },
   { name: 'Financeiro',     path: '/finance',            icon: DollarSign,    slug: 'financeiro',      group: 'financeiro',
     subModules: [
@@ -80,9 +82,9 @@ export const MODULES: Module[] = [
       { name: 'DRE Simplificado',         path: '/dre-simplificado' },
     ],
   },
+  { name: 'OKRs',           path: '/gestao-estrategica', icon: TrendingUp,    slug: 'financeiro',      group: 'financeiro' },
   { name: 'Estoque',        path: '/estoque-beta2',      icon: Warehouse,     slug: 'estoque',         group: 'estoque' },
   { name: 'Controle De Ville', path: '/controle-deville', icon: Warehouse,     slug: 'estoque',         group: 'estoque' },
-  { name: 'OKRs',           path: '/gestao-estrategica', icon: TrendingUp,    slug: 'financeiro',      group: 'gestao' },
   { name: 'Fidelidade',     path: '/fidelidade',         icon: Star,          slug: 'dashboard',       group: 'gestao',
     subModules: [
       { name: 'Sincronização',        path: '/fidelidade' },
@@ -93,10 +95,9 @@ export const MODULES: Module[] = [
       { name: 'Programa de Pontos',   path: '/fidelidade?tab=pontos' },
     ],
   },
-  { name: 'Metas & Tarefas', path: '/metas-tarefas',    icon: Target,        slug: 'solicitacoes',    group: 'gestao' },
-  { name: 'Manual',         path: '/manual',             icon: BookOpen,      slug: 'manual',          group: 'gestao' },
-  { name: 'Configurações',  path: '/settings',           icon: Settings,      slug: 'configuracoes',   group: 'gestao' },
-  { name: 'Kit de padrões', path: '/kit',                icon: Palette,       slug: 'configuracoes',   group: 'gestao' },
+  { name: 'Manual',         path: '/manual',             icon: BookOpen,      slug: 'manual',          group: 'sistema' },
+  { name: 'Configurações',  path: '/settings',           icon: Settings,      slug: 'configuracoes',   group: 'sistema' },
+  { name: 'Kit de padrões', path: '/kit',                icon: Palette,       slug: 'configuracoes',   group: 'sistema' },
 ];
 
 /**

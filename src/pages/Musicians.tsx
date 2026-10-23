@@ -142,7 +142,11 @@ const Musicians: React.FC = () => {
   const [aviso, setAviso] = useState<string | null>(null);
   const [busca, setBusca] = useState('');
   const [filtro, setFiltro] = useState<Filtro>('todos');
-  const [visao, setVisao] = useState<Visao>('lista');
+  // ?visao=a_pagar abre direto numa visão (o Portal do Gestor usa).
+  const [visao, setVisao] = useState<Visao>(() => {
+    const v = new URLSearchParams(window.location.search).get('visao') as Visao | null;
+    return v && (['lista', 'a_pagar', 'calendario'] as Visao[]).includes(v) ? v : 'lista';
+  });
   const [editando, setEditando] = useState<Partial<Show> | null>(null);
   const [pagando, setPagando] = useState<Show | null>(null);
   const [detalhe, setDetalhe] = useState<Show | null>(null);

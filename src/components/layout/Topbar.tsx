@@ -117,7 +117,8 @@ const Topbar: React.FC<TopbarProps> = ({ toggleSidebar, user, onLogout }) => {
     }
 
     const routes: { [key: string]: { module: string; sub?: string } } = {
-      '/': { module: 'Dashboard' },
+      '/': { module: 'Início' },
+      '/dashboard': { module: 'Início' },
       '/finance': { module: 'Financeiro' },
       '/financeiro': { module: 'Financeiro', sub: 'Dashboard' },
       '/advanced-inventory': { module: 'Estoque' },

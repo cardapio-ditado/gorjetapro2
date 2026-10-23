@@ -47,7 +47,11 @@ function textoExtrato(nome: string, abertas: Diaria[]): string {
 
 const Extras: React.FC = () => {
   const { usuario } = useAuth();
-  const [visao, setVisao] = useState<Visao>('diarias');
+  // ?visao=a_pagar abre direto numa visão (o Portal do Gestor usa).
+  const [visao, setVisao] = useState<Visao>(() => {
+    const v = new URLSearchParams(window.location.search).get('visao') as Visao | null;
+    return v && (['diarias', 'a_pagar', 'pessoas', 'valores'] as Visao[]).includes(v) ? v : 'diarias';
+  });
   const [mes, setMes] = useState(dayjs().startOf('month'));
   const [inicio, setInicio] = useState(dayjs().startOf('month').format('YYYY-MM-DD'));
   const [fim, setFim] = useState(dayjs().endOf('month').format('YYYY-MM-DD'));
