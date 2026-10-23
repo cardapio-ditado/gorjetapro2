@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import dayjs from 'dayjs';
 import { BookOpen, Camera, Check, ChevronLeft, ChevronRight, FileDown, Lock, Plus, RefreshCw, Search, Trash2, Unlock } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { hhmm, useVendasAoVivo } from '../components/zig/useVendasAoVivo';
 import { useSearchParams } from 'react-router-dom';
 import {
   Badge, Button, Chip, EmptyState, IconButton, Input, KPICard, Modal, PageHeader, SectionCard, Segmented, Select, Textarea,
@@ -37,6 +38,8 @@ const LivroNoite: React.FC = () => {
     setCarregando(false);
   };
   useEffect(() => { void carregar(); }, [data]);
+  // Na noite em andamento, o total vem ao vivo da ZIG (o do dia só sincroniza na manhã seguinte).
+  const vivo = useVendasAoVivo(aba === 'livro' && data === noiteAgora());
   useEffect(() => { setParams(p => { const n = new URLSearchParams(p); n.set('data', data); return n; }, { replace: true }); }, [data]);
 
   /** Roda uma gravação, mostra o erro do banco e recarrega o livro. */
@@ -118,7 +121,7 @@ const Livro: React.FC<LivroProps> = ({ carga, noite, editavel, gravar, setErro, 
         <KPICard rotulo="gerente do turno" valor={(noite.gerente_nome || '—').split(' ')[0]} detalhe={noite.status === 'fechado' ? `fechou ${dayjs(noite.fechado_em).format('DD/MM HH:mm')}` : 'livro aberto'} tom={noite.status === 'fechado' ? 'certo' : 'normal'} />
         <KPICard rotulo="setores respondidos" valor={`${respondidos}/${SETORES.length}`} detalhe={respondidos === SETORES.length ? 'todos' : 'faltam responder'} tom={respondidos === SETORES.length ? 'certo' : 'atencao'} />
         <KPICard rotulo="ocorrências" valor={carga.ocorrencias.length} detalhe={graves ? `${graves} grave${graves === 1 ? '' : 's'}` : 'nenhuma grave'} tom={graves ? 'alerta' : 'normal'} />
-        <KPICard rotulo="movimento" valor={rotuloMovimento(noite.movimento)} detalhe={carga.zig_total ? `Zig: ${brl(carga.zig_total)}` : 'Zig chega na manhã seguinte'} tom="destaque" />
+        <KPICard rotulo="movimento" valor={rotuloMovimento(noite.movimento)} detalhe={carga.zig_total ? `Zig: ${brl(carga.zig_total)}` : vivo.d && vivo.d.pedidos > 0 ? `Zig ao vivo: ${brl(vivo.d.total)} · última venda ${hhmm(vivo.d.atualizado_em)}` : 'Zig chega na manhã seguinte'} tom="destaque" />
       </div>
 
       {carga.pendencias.length > 0 && <Pendencias lista={carga.pendencias} onResolver={resolver} />}

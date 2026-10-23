@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { Badge, Button, EmptyState, IconButton, KPICard, PageHeader, SectionCard, type KPITom } from '../components/ui';
 import MeuPainel from './MeuPainel';
+import { hhmm, haQuanto, useVendasAoVivo } from '../components/zig/useVendasAoVivo';
 
 /**
  * Portal do Gestor: a tela inicial de quem toca a casa (lista em
@@ -80,6 +81,8 @@ const PortalGestor: React.FC = () => {
     setCarregando(false);
   };
   useEffect(() => { void carregar(); }, []);
+  // A noite em andamento, direto da ZIG (só depois de saber que é gestor).
+  const vivo = useVendasAoVivo(p?.gestor === true);
 
   if (p && !p.gestor) return <MeuPainel />;
 
@@ -162,7 +165,13 @@ const PortalGestor: React.FC = () => {
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
-        <SectionCard title="Vendas da noite" descricao={v ? diaSemana(v.data) : 'Sem vendas da Zig'}>
+        <SectionCard title="Vendas da noite" descricao={v ? `Última fechada: ${diaSemana(v.data)}` : 'Sem vendas da Zig'}>
+          {vivo.d && vivo.d.pedidos > 0 && (
+            <div className="mb-3">
+              <KPICard rotulo="esta noite · ao vivo" valor={brl(vivo.d.total)} tom="certo"
+                detalhe={`${vivo.d.pedidos} pedidos · última venda ${hhmm(vivo.d.atualizado_em)} (${haQuanto(vivo.d.atualizado_em, vivo.agora)})`} />
+            </div>
+          )}
           {v ? (
             <div className="flex flex-col gap-3">
               <KPICard rotulo="total" valor={brl(v.total)} tom="destaque"
