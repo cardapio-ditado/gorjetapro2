@@ -4,7 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import {
   Home, DollarSign, Warehouse, Users, Music, CalendarDays,
   Settings, BookOpen, Target, ClipboardList, Palette,
-  TrendingUp, ChevronDown, LogOut, Star, X, LayoutDashboard, Hexagon,
+  TrendingUp, ChevronDown, LogOut, Star, X, LayoutDashboard, Hexagon, UserPlus,
 } from 'lucide-react';
 
 // Desde 05/10/2026 o estoque vive no Beta 2, que tem o próprio menu dentro da
@@ -51,11 +51,10 @@ export const MODULES: Module[] = [
       { name: 'Escalas',       path: '/staff?tab=1' },
       { name: 'Férias',        path: '/staff?tab=2' },
       { name: 'Ocorrências',   path: '/staff?tab=3' },
-      { name: 'Extras',        path: '/staff?tab=4' },
-      { name: 'Funções',       path: '/staff?tab=5' },
-      { name: 'Configurações', path: '/staff?tab=6' },
-      { name: 'Relatórios',    path: '/staff?tab=7' },
-      { name: 'Gorjetas',      path: '/staff?tab=8' },
+      { name: 'Funções',       path: '/staff?tab=4' },
+      { name: 'Configurações', path: '/staff?tab=5' },
+      { name: 'Relatórios',    path: '/staff?tab=6' },
+      { name: 'Gorjetas',      path: '/staff?tab=7' },
     ],
   },
   { name: 'Músicos',        path: '/musicians',          icon: Music,         slug: 'musicos',         group: 'operacao' },
@@ -82,6 +81,7 @@ export const MODULES: Module[] = [
   },
   { name: 'Estoque',        path: '/estoque-beta2',      icon: Warehouse,     slug: 'estoque',         group: 'estoque' },
   { name: 'Controle De Ville', path: '/controle-deville', icon: Warehouse,     slug: 'estoque',         group: 'estoque' },
+  { name: 'Extras',         path: '/extras',             icon: UserPlus,      slug: 'extras',          group: 'gestao' },
   { name: 'OKRs',           path: '/gestao-estrategica', icon: TrendingUp,    slug: 'financeiro',      group: 'gestao' },
   { name: 'Fidelidade',     path: '/fidelidade',         icon: Star,          slug: 'dashboard',       group: 'gestao',
     subModules: [

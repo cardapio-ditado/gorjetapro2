@@ -9,7 +9,6 @@ import {
   Search,
   Filter,
   Download,
-  UserPlus,
   CalendarDays,
   Award,
   Clock,
@@ -37,7 +36,6 @@ import ColaboradoresRH from '../components/hr/ColaboradoresRH';
 import EscalasTrabalho from '../components/hr/EscalasTrabalho';
 import FeriasColaboradores from '../components/hr/FeriasColaboradores';
 import OcorrenciasColaborador from '../components/hr/OcorrenciasColaborador';
-import ExtrasFreelancers from '../components/hr/ExtrasFreelancers';
 import ConfiguracoesRH from '../components/hr/ConfiguracoesRH';
 import RelatoriosRH from '../components/hr/RelatoriosRH';
 import GorjetaGarcons from '../components/hr/GorjetaGarcons';
@@ -77,7 +75,6 @@ const Staff: React.FC = () => {
     'Escalas',
     'Férias',
     'Ocorrências',
-    'Extras/Freelancers',
     'Funções',
     'Configurações',
     'Relatórios',
@@ -94,7 +91,6 @@ const Staff: React.FC = () => {
     Calendar,
     CalendarDays,
     AlertTriangle,
-    UserPlus,
     Briefcase,
     Settings,
     BarChart3,
@@ -112,7 +108,7 @@ const Staff: React.FC = () => {
     const tabParam = params.get('tab');
     if (tabParam !== null) {
       const tabIndex = parseInt(tabParam);
-      if (!isNaN(tabIndex) && tabIndex >= 0 && tabIndex < 14) {
+      if (!isNaN(tabIndex) && tabIndex >= 0 && tabIndex < tabTitles.length) {
         setSelectedTab(tabIndex);
       }
     }
@@ -170,24 +166,22 @@ const Staff: React.FC = () => {
       case 3:
         return <OcorrenciasColaborador />;
       case 4:
-        return <ExtrasFreelancers />;
-      case 5:
         return <FuncoesRH />;
-      case 6:
+      case 5:
         return <ConfiguracoesRH />;
-      case 7:
+      case 6:
         return <RelatoriosRH />;
-      case 8:
+      case 7:
         return <GorjetaGarcons />;
-      case 9:
+      case 8:
         return <AvaliacoesDesempenho />;
-      case 10:
+      case 9:
         return <Onboarding />;
-      case 11:
+      case 10:
         return <PerfilDISC />;
-      case 12:
+      case 11:
         return <HistoricoCarreira />;
-      case 13:
+      case 12:
         return <DatasMarcos />;
       default:
         return (

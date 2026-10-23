@@ -124,6 +124,7 @@ const Topbar: React.FC<TopbarProps> = ({ toggleSidebar, user, onLogout }) => {
       '/staff': { module: 'RH' },
       '/recruitment': { module: 'RH', sub: 'Recrutamento' },
       '/musicians': { module: 'Músicos' },
+      '/extras': { module: 'Gestão', sub: 'Extras' },
       '/events': { module: 'Eventos' },
       '/solicitacoes': { module: 'Solicitações' },
       '/marketing': { module: 'Marketing' },
@@ -154,7 +155,7 @@ const Topbar: React.FC<TopbarProps> = ({ toggleSidebar, user, onLogout }) => {
         return { module: 'Financeiro', sub: 'Fluxo de Caixa' };
       }
       if (tabMatch && path === '/staff') {
-        const tabs = ['Colaboradores', 'Escalas', 'Férias', 'Ocorrências', 'Extras', 'Funções', 'Configurações', 'Relatórios', 'Gorjetas'];
+        const tabs = ['Colaboradores', 'Escalas', 'Férias', 'Ocorrências', 'Funções', 'Configurações', 'Relatórios', 'Gorjetas'];
         return { module: 'RH', sub: tabs[parseInt(tabMatch[1])] };
       }
     }

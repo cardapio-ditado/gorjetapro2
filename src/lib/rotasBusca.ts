@@ -1,6 +1,6 @@
 import type { LucideIcon } from 'lucide-react';
 import {
-  BookOpen, CalendarDays, DollarSign, Home, Music, Palette, Settings, Star, Target, TrendingUp, Users, Warehouse,
+  BookOpen, CalendarDays, DollarSign, Home, Music, Palette, Settings, Star, Target, TrendingUp, UserPlus, Users, Warehouse,
 } from 'lucide-react';
 
 /** Uma tela que a busca do topo sabe abrir. */
@@ -25,13 +25,13 @@ export const ROTAS_BUSCA: RotaBusca[] = [
   { label: 'RH — Escalas',            path: '/staff?tab=1',                                         icon: Users },
   { label: 'RH — Férias',             path: '/staff?tab=2',                                         icon: Users },
   { label: 'RH — Ocorrências',        path: '/staff?tab=3',                                         icon: Users },
-  { label: 'RH — Extras',             path: '/staff?tab=4',                                         icon: Users },
-  { label: 'RH — Funções',            path: '/staff?tab=5',                                         icon: Users },
-  { label: 'RH — Configurações',      path: '/staff?tab=6',                                         icon: Users },
-  { label: 'RH — Relatórios',         path: '/staff?tab=7',                                         icon: Users },
-  { label: 'RH — Gorjetas',           path: '/staff?tab=8',                                         icon: Users },
+  { label: 'RH — Funções',            path: '/staff?tab=4',                                         icon: Users },
+  { label: 'RH — Configurações',      path: '/staff?tab=5',                                         icon: Users },
+  { label: 'RH — Relatórios',         path: '/staff?tab=6',                                         icon: Users },
+  { label: 'RH — Gorjetas',           path: '/staff?tab=7',                                         icon: Users },
   { label: 'Recrutamento',            path: '/recruitment',                                          icon: Users, apelidos: 'vaga currículo entrevista' },
   // Músicos & Eventos
+  { label: 'Extras',                  path: '/extras',                                               icon: UserPlus, apelidos: 'diarista freelancer freela diaria' },
   { label: 'Músicos',                 path: '/musicians',                                            icon: Music, apelidos: 'show agenda banda' },
   { label: 'Eventos',                 path: '/events',                                               icon: CalendarDays, apelidos: 'festa reserva' },
   // Financeiro

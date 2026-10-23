@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import ExtrasDoDia from '../components/extras/ExtrasDoDia';
 
 /**
  * PORTAL DO GERENTE — visão operacional do turno
@@ -207,6 +208,10 @@ export default function PortalGerente() {
           </div>
         </div>
       )}
+
+      <div className="mt-4">
+        <ExtrasDoDia data={data} quem={usuario?.nome_completo ?? null} />
+      </div>
 
       {/* Ação rápida */}
       <div className="mt-5 flex gap-3">
