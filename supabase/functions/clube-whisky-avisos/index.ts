@@ -9,7 +9,8 @@
  * botão Mensagens):
  *   clube_modelo_boas_vindas  {{1}} primeiro nome, {{2}} garrafa, {{3}} validade
  *   clube_modelo              {{1}} primeiro nome, {{2}} garrafa, {{3}} quanto
- *                             falta ("7 dias"), {{4}} a data
+ *                             falta ("7 dias"), {{4}} a data; com 3 variáveis,
+ *                             sem a garrafa: nome, quanto falta, data
  * Se o modelo tiver imagem no cabeçalho, vai a de clube_imagem_url (boas-vindas)
  * ou a de clube_imagem_vencimento_url (vencimento).
  *
@@ -29,7 +30,10 @@ const MODELO_PADRAO = "clube_whisky_vencimento";
 type ErroMeta = { code?: number; message?: string; error_data?: { details?: string } };
 type Resposta<T> = T & { error?: ErroMeta };
 interface ConfigMeta { token: string; phoneId: string; wabaId: string; modelo: string; modeloBoasVindas: string | null; imagem: string | null; imagemVencimento: string | null }
-interface Modelo { name: string; status: string; category: string; language?: string; components?: { type: string; format?: string }[] }
+interface Modelo { name: string; status: string; category: string; language?: string; components?: { type: string; format?: string; text?: string }[] }
+
+/** Quantas variáveis ({{n}}) o corpo do modelo tem. */
+const variaveisDoModelo = (m: Modelo) => new Set(m.components?.find((x) => x.type === "BODY")?.text?.match(/\{\{\d+\}\}/g) ?? []).size;
 interface Devido { garrafa_id: string; tipo: "30d" | "7d"; nome: string; telefone: string; garrafa: string; validade: string; dias: number }
 
 async function graph<T>(caminho: string, token: string, metodo: "GET" | "POST" = "GET", corpo?: unknown): Promise<Resposta<T>> {
@@ -165,7 +169,10 @@ async function enviar(db: SupabaseClient, c: ConfigMeta) {
 
     const prazo = d.dias <= 0 ? "hoje" : d.dias === 1 ? "1 dia" : `${d.dias} dias`;
     const dia = d.validade.split("-").reverse().join("/");
-    const r = await mandarModelo(c, modelo, d.telefone, [d.nome || "cliente", nomeGarrafa(d.garrafa), prazo, dia], c.imagemVencimento);
+    const variaveis = variaveisDoModelo(modelo) === 3
+      ? [d.nome || "cliente", prazo, dia]
+      : [d.nome || "cliente", nomeGarrafa(d.garrafa), prazo, dia];
+    const r = await mandarModelo(c, modelo, d.telefone, variaveis, c.imagemVencimento);
     const ok = !r.error && Boolean(r.messages?.[0]?.id);
     await db.from("clube_whisky_avisos").update({
       status: ok ? "enviado" : "falha", wa_id: r.messages?.[0]?.id ?? null, erro: ok ? null : textoDoErro(r.error),
