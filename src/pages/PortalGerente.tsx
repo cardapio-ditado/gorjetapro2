@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import ExtrasDoDia from '../components/extras/ExtrasDoDia';
 import ClubeGerente from '../components/clube/ClubeGerente';
+import VendasAoVivo from '../components/zig/VendasAoVivo';
 import LivroGerente from '../components/livro/LivroGerente';
 
 /**
@@ -197,6 +198,12 @@ export default function PortalGerente() {
               </div>
             )}
           </div>
+        </div>
+      )}
+
+      {temAcessoModulo('livro') && (
+        <div className="mt-4">
+          <VendasAoVivo />
         </div>
       )}
 
