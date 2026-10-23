@@ -997,7 +997,7 @@ const FormShow: React.FC<{ inicial: Partial<Show>; fornecedores: Fornecedor[]; o
         <Input rotulo="Cachê (R$)" inputMode="decimal" value={valor} onChange={e => setValor(e.target.value)} placeholder="0,00" />
         <div className="grid grid-cols-2 gap-3">
           <Input rotulo="Adicional (R$)" inputMode="decimal" value={adicional} onChange={e => setAdicional(e.target.value)} placeholder="0,00" dica="Hora extra, repertório" />
-          <Input rotulo="Consumo (R$)" inputMode="decimal" value={consumo} onChange={e => setConsumo(e.target.value)} placeholder="0,00" dica="Desconta do cachê" />
+          <Input rotulo="Consumo (R$)" inputMode="decimal" value={consumo} onChange={e => setConsumo(e.target.value)} placeholder="0,00" dica="Só o que o músico consumiu. Pagamento vai no botão Pagar." />
         </div>
         <Input rotulo="Material promocional" value={material} onChange={e => setMaterial(e.target.value)} className="md:col-span-2" placeholder="Instagram, link, release" />
         <Textarea rotulo="Observações" value={obs} onChange={e => setObs(e.target.value)} rows={2} className="md:col-span-2" />
