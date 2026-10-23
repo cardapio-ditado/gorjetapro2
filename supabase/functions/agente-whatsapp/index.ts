@@ -2,8 +2,8 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { BUCKET, pessoaPeloTelefone, processarPessoa, responderIsolado } from "./cerebro.ts";
 import {
-  assinaturaValida, baixarMidia, conectar, configMeta, criarModelo, desafio, enviarPendentes, gravarStatus,
-  lerWebhook, liberarJanela, marcarLida, situacao,
+  assinaturaValida, baixarMidia, conectar, configMeta, criarModelo, desafio, enviarPendentes, enviarTexto, gravarStatus,
+  lerWebhook, liberarJanela, marcarLida, situacao, textoDoErro,
 } from "./meta.ts";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -156,6 +156,24 @@ async function receber(e: Entrada, simulado = false, ignorar = false) {
   return { pessoa, duplicada: false, id: (nova?.id as number | undefined) ?? null };
 }
 
+/**
+ * Número de fora (cliente) escrevendo: o robô não atende. Vai a resposta fixa
+ * com o WhatsApp da casa (no máximo uma a cada 12 h) e o banco avisa quem
+ * responde os clientes (fn_agente_cliente_escreveu).
+ */
+async function atenderCliente(c: Awaited<ReturnType<typeof configMeta>>, telefone: string, texto: string | null) {
+  const { data, error } = await db.rpc("fn_agente_cliente_escreveu", { p_telefone: telefone, p_texto: texto });
+  if (error) { console.error("[cliente]", error.message); return; }
+  const r = data as { responder?: boolean; resposta?: string } | null;
+  if (!r?.responder || !r.resposta || !c.token || !c.phoneId) return;
+  const env = await enviarTexto({ token: c.token, phoneId: c.phoneId, wabaId: c.wabaId ?? "" }, telefone, r.resposta);
+  await db.from("agente_mensagens").insert({
+    telefone, direcao: "saida", tipo: "texto", texto: r.resposta,
+    status: env.error ? "falha_envio" : "enviada", erro: env.error ? textoDoErro(env.error) : null,
+    wa_id: env.messages?.[0]?.id ?? null, uso: { auto_cliente: true }, processado_em: new Date().toISOString(),
+  });
+}
+
 /** O que chegou pelo webhook da Meta. Roda depois de responder 200 à Meta. */
 async function tratarWebhook(corpo: unknown) {
   const { recebidas, status } = lerWebhook(corpo);
@@ -177,7 +195,11 @@ async function tratarWebhook(corpo: unknown) {
       else entrada.texto = `${entrada.texto ?? ""} [a mídia não pôde ser baixada]`.trim();
     }
     const { pessoa, duplicada } = await receber(entrada, false, r.abreJanela);
-    if (!pessoa || duplicada) continue;
+    if (duplicada) continue;
+    if (!pessoa) {
+      await atenderCliente(c, r.telefone, entrada.texto ?? null).catch((e) => console.error("[cliente]", e));
+      continue;
+    }
     if (c.token && c.phoneId) await marcarLida({ token: c.token, phoneId: c.phoneId, wabaId: c.wabaId ?? "" }, r.waId);
     await liberarJanela(db, pessoa.id);
     if (!r.abreJanela) respondidas.add(pessoa.id);

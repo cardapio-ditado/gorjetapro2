@@ -61,7 +61,7 @@ async function graph<T>(caminho: string, token: string, metodo: "GET" | "POST" =
   return ((await r.json().catch(() => ({}))) ?? {}) as Resposta<T>;
 }
 
-function textoDoErro(e?: ErroMeta): string {
+export function textoDoErro(e?: ErroMeta): string {
   if (!e) return "erro desconhecido da Meta";
   return [e.code, e.message, e.error_data?.details].filter(Boolean).join(" · ");
 }
@@ -200,7 +200,7 @@ export function previa(texto: string): string {
   return linha.length > 60 ? `${linha.slice(0, 57)}…` : linha;
 }
 
-async function enviarTexto(c: ConfigMeta, para: string, texto: string): Promise<Resposta<{ messages?: { id: string }[] }>> {
+export async function enviarTexto(c: ConfigMeta, para: string, texto: string): Promise<Resposta<{ messages?: { id: string }[] }>> {
   let ultima: Resposta<{ messages?: { id: string }[] }> = {};
   for (const p of partes(texto)) {
     ultima = await graph(`${c.phoneId}/messages`, c.token, "POST", {
