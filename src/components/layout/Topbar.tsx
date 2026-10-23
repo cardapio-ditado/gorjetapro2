@@ -126,6 +126,7 @@ const Topbar: React.FC<TopbarProps> = ({ toggleSidebar, user, onLogout }) => {
       '/recruitment': { module: 'RH', sub: 'Recrutamento' },
       '/musicians': { module: 'Músicos' },
       '/extras': { module: 'Operação', sub: 'Extras' },
+      '/livro': { module: 'Operação', sub: 'Livro da Noite' },
       '/clube-whisky': { module: 'Clientes e Parceiros', sub: 'Clube do Whisky' },
       '/events': { module: 'Eventos' },
       '/solicitacoes': { module: 'Solicitações' },

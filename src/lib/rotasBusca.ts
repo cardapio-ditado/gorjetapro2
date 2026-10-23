@@ -32,6 +32,7 @@ export const ROTAS_BUSCA: RotaBusca[] = [
   { label: 'Recrutamento',            path: '/recruitment',                                          icon: Users, apelidos: 'vaga currículo entrevista' },
   // Músicos & Eventos
   { label: 'Clube do Whisky',         path: '/clube-whisky',                                         icon: Wine, apelidos: 'garrafa guardada whisky clube socio' },
+  { label: 'Livro da Noite',          path: '/livro',                                                icon: BookOpen, apelidos: 'ocorrencias ocorrencia diario caixa noite gerente' },
   { label: 'Extras',                  path: '/extras',                                               icon: UserPlus, apelidos: 'diarista freelancer freela diaria' },
   { label: 'Músicos',                 path: '/musicians',                                            icon: Music, apelidos: 'show agenda banda' },
   { label: 'Eventos',                 path: '/events',                                               icon: CalendarDays, apelidos: 'festa reserva' },

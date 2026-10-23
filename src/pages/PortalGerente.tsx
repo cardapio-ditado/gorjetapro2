@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import ExtrasDoDia from '../components/extras/ExtrasDoDia';
 import ClubeGerente from '../components/clube/ClubeGerente';
+import LivroGerente from '../components/livro/LivroGerente';
 
 /**
  * PORTAL DO GERENTE — visão operacional do turno
@@ -29,7 +30,7 @@ const fmtReais = (v?: number) =>
   (v ?? 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
 export default function PortalGerente() {
-  const { usuario } = useAuth();
+  const { usuario, temAcessoModulo } = useAuth();
   const [data, setData] = useState(hoje());
   const [resumo, setResumo] = useState<ResumoDia | null>(null);
   const [loading, setLoading] = useState(true);
@@ -64,17 +65,6 @@ export default function PortalGerente() {
       .eq('id', premioId);
     if (!error) buscarFidelidade();
     else alert('Erro ao validar: ' + error.message);
-  };
-
-  const abrirManutencao = async () => {
-    const desc = window.prompt('Descreva o problema de manutenção:');
-    if (!desc) return;
-    const { error } = await supabase.from('ocorrencias_setor').insert({
-      data_ocorrencia: data, setor: 'manutencao', tipo_ocorrencia: 'equipamento',
-      gravidade: 'media', titulo: desc.slice(0, 80), descricao: desc,
-      status: 'pendente', registrado_por: usuario?.id ?? null,
-    });
-    alert(error ? 'Erro: ' + error.message : 'Manutenção registrada!');
   };
 
   const card = 'rounded-xl p-4' ;
@@ -210,21 +200,18 @@ export default function PortalGerente() {
         </div>
       )}
 
+      {temAcessoModulo('livro') && (
+        <div className="mt-4">
+          <LivroGerente />
+        </div>
+      )}
+
       <div className="mt-4">
         <ExtrasDoDia data={data} quem={usuario?.nome_completo ?? null} />
       </div>
 
       <div className="mt-4">
         <ClubeGerente />
-      </div>
-
-      {/* Ação rápida */}
-      <div className="mt-5 flex gap-3">
-        <button onClick={abrirManutencao}
-          className="px-4 py-2.5 rounded-lg text-sm font-medium"
-          style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-strong)', color: 'var(--text-primary)' }}>
-          🔧 Abrir manutenção
-        </button>
       </div>
     </div>
   );

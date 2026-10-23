@@ -59,6 +59,7 @@ export const MODULES: Module[] = [
     ],
   },
   { name: 'Músicos',        path: '/musicians',          icon: Music,         slug: 'musicos',         group: 'operacao' },
+  { name: 'Livro da Noite', path: '/livro',            icon: BookOpen,      slug: 'livro',           group: 'operacao' },
   { name: 'Extras',         path: '/extras',             icon: UserPlus,      slug: 'extras',          group: 'operacao' },
   { name: 'Metas & Tarefas', path: '/metas-tarefas',    icon: Target,        slug: 'solicitacoes',    group: 'operacao' },
   { name: 'Eventos',        path: '/events',             icon: CalendarDays,  slug: 'eventos',         group: 'operacao' },

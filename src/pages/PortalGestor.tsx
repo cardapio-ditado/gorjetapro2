@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CalendarDays, CheckCircle2, Inbox, Music, RefreshCw, Target, UserPlus } from 'lucide-react';
+import { BookOpen, CalendarDays, CheckCircle2, Inbox, Music, RefreshCw, Target, UserPlus } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { Badge, Button, EmptyState, IconButton, KPICard, PageHeader, SectionCard, type KPITom } from '../components/ui';
@@ -19,6 +19,11 @@ interface Tarefa { id: string; numero: number | null; titulo: string; setor: str
 interface Portal {
   gestor: boolean;
   hoje: string;
+  livro: {
+    noite: string; atrasado: boolean; pendencias_abertas: number; pendencias_vencidas: number;
+    anterior: { data: string; existe: boolean; status: 'aberto' | 'fechado' | null; gerente: string | null; movimento: string | null; dinheiro_entrada: number | null;
+      diferenca: number | null; pagamentos_total: number | null; ocorrencias: number; graves: number; recado: string | null };
+  };
   estoque: {
     pedidos_a_entregar: number; retiradas_sem_confirmacao: number; repor_setores: number; contagem_setores_falta: number;
     auditoria_hoje: boolean; aprovacoes_pendentes: number; notas_pendentes: number; negativos: number; central_abaixo_ponto: number;
@@ -100,6 +105,10 @@ const PortalGestor: React.FC = () => {
 
   // Pede sua ação: só o que tem pendência, do mais grave para o mais leve.
   const acoes: { rotulo: string; valor: string; detalhe: string; tom: KPITom; ir: string }[] = [
+    p.livro?.atrasado && { rotulo: 'livro da noite sem fechar', valor: dataCurta(p.livro.anterior.data), detalhe: p.livro.anterior.existe ? 'o gerente não fechou' : 'ninguém abriu o livro', tom: 'alerta', ir: `/livro?data=${p.livro.anterior.data}` },
+    (p.livro?.anterior.graves || 0) > 0 && { rotulo: 'ocorrências graves na noite', valor: String(p.livro.anterior.graves), detalhe: `livro de ${dataCurta(p.livro.anterior.data)}`, tom: 'alerta', ir: `/livro?data=${p.livro.anterior.data}` },
+    p.livro?.anterior.diferenca !== null && p.livro?.anterior.diferenca !== undefined && Math.abs(p.livro.anterior.diferenca) >= 0.005 && { rotulo: 'diferença no caixa', valor: brl(p.livro.anterior.diferenca), detalhe: p.livro.anterior.diferenca > 0 ? `sobrou em ${dataCurta(p.livro.anterior.data)}` : `faltou em ${dataCurta(p.livro.anterior.data)}`, tom: 'atencao', ir: `/livro?data=${p.livro.anterior.data}` },
+    (p.livro?.pendencias_abertas || 0) > 0 && { rotulo: 'pendências do livro', valor: String(p.livro.pendencias_abertas), detalhe: p.livro.pendencias_vencidas ? `${p.livro.pendencias_vencidas} com prazo vencido` : 'esperando providência', tom: p.livro.pendencias_vencidas ? 'alerta' : 'atencao', ir: '/livro' },
     p.contas.vencidas.qtd > 0 && { rotulo: 'contas atrasadas', valor: brl(p.contas.vencidas.valor), detalhe: plural(p.contas.vencidas.qtd, 'conta vencida', 'contas vencidas'), tom: 'alerta', ir: '/finance?tab=pagar' },
     p.tarefas.atrasadas > 0 && { rotulo: 'tarefas atrasadas', valor: String(p.tarefas.atrasadas), detalhe: 'passaram do prazo', tom: 'alerta', ir: '/metas-tarefas' },
     zigProblema && { rotulo: 'vendas da Zig', valor: e.zig!.nao_mapeados ? `${e.zig!.nao_mapeados} sem vínculo` : e.zig!.status, detalhe: 'produtos sem mapeamento', tom: 'alerta', ir: beta2('zig') },
@@ -182,6 +191,27 @@ const PortalGestor: React.FC = () => {
             ))}
         </SectionCard>
       </div>
+
+      {p.livro && (
+        <SectionCard noPadding title="Livro da noite" descricao={`${dataCurta(p.livro.anterior.data)}${p.livro.anterior.gerente ? ` · ${p.livro.anterior.gerente.split(' ')[0]}` : ''}`}
+          action={<Button tamanho="sm" variante="discreto" icone={<BookOpen size={14} />} onClick={() => navigate(`/livro?data=${p.livro.anterior.data}`)}>Abrir</Button>} className="mb-4">
+          {!p.livro.anterior.existe ? <p className="t-body px-5 py-4" style={{ color: 'var(--text-secondary)', margin: 0 }}>{p.livro.atrasado ? 'Ninguém abriu o livro desta noite.' : 'Sem livro nesta noite.'}</p> : (
+            <div className="px-5 py-4 flex flex-col gap-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge variant={p.livro.anterior.status === 'fechado' ? 'success' : 'warning'}>{p.livro.anterior.status === 'fechado' ? 'Fechado' : 'Aberto'}</Badge>
+                <span className="t-body">Movimento: {p.livro.anterior.movimento || '—'}</span>
+                <span className="t-caption">· {p.livro.anterior.ocorrencias} ocorrência{p.livro.anterior.ocorrencias === 1 ? '' : 's'}{p.livro.anterior.graves ? `, ${p.livro.anterior.graves} grave${p.livro.anterior.graves === 1 ? '' : 's'}` : ''}</span>
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                <KPICard rotulo="dinheiro que entrou" valor={p.livro.anterior.dinheiro_entrada === null ? '—' : brl(p.livro.anterior.dinheiro_entrada)} />
+                <KPICard rotulo="diferença no caixa" valor={p.livro.anterior.diferenca === null ? '—' : brl(p.livro.anterior.diferenca)} tom={p.livro.anterior.diferenca !== null && Math.abs(p.livro.anterior.diferenca) >= 0.005 ? 'atencao' : 'certo'} />
+                <KPICard rotulo="pagamentos na noite" valor={p.livro.anterior.pagamentos_total === null ? '—' : brl(p.livro.anterior.pagamentos_total)} detalhe="só informativo" />
+              </div>
+              {p.livro.anterior.recado && <p className="t-body" style={{ margin: 0 }}><span className="t-caption">Recado do gerente: </span>{p.livro.anterior.recado}</p>}
+            </div>
+          )}
+        </SectionCard>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
         <SectionCard noPadding title="Extras em aberto" descricao={p.extras.valor ? `${brl(p.extras.valor)} · ${plural(p.extras.diarias, 'diária', 'diárias')} de ${plural(p.extras.pessoas, 'pessoa', 'pessoas')}` : 'Tudo pago'}
