@@ -1,1635 +1,709 @@
-import React, { useState, useEffect } from 'react';
-import { Sparkles, Plus, Search, Filter, CreditCard as Edit, Trash2, Eye, Music, Calendar, DollarSign, Clock, User, Phone, CheckCircle, XCircle, AlertTriangle, Download, Building2, Receipt, CreditCard, ChevronLeft, ChevronRight, CalendarDays, FileText, Grid3x3 as Grid3X3, List } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
+import dayjs from 'dayjs';
+import 'dayjs/locale/pt-br';
+import {
+  Ban, Check, ChevronLeft, ChevronRight, Download, FileText, History, Music, Pencil,
+  Plus, RefreshCw, Search, Sparkles, Trash2, Undo2, Wallet,
+} from 'lucide-react';
 import { ReportGenerator, exportToExcel } from '../utils/reportGenerator';
 import { supabase } from '../lib/supabase';
-import { testConnection } from '../lib/supabase';
-import dayjs from 'dayjs';
 import { SearchableSelect } from '../components/common/SearchableSelect';
-import { PageHeader, KPICard, SectionCard, Badge } from '../components/ui';
+import {
+  Badge, Button, Chip, EmptyState, IconButton, Input, KPICard, Modal, PageHeader, SectionCard, Segmented, Select,
+  Textarea, Toolbar,
+} from '../components/ui';
+import type { BadgeVariante } from '../components/ui';
 import ImportarAgendaMusicosIA from '../components/musicos/ImportarAgendaMusicosIA';
 
-interface Musico {
+dayjs.locale('pt-br');
+
+/**
+ * Músicos: agenda de shows e controle de pagamento dos cachês.
+ *
+ * Lançar o show cria a conta a pagar no Financeiro (trigger no banco). Os
+ * pagamentos lançados aqui são um controle à parte: ficam no histórico do
+ * show (musicos_pagamentos) e não dão baixa no Financeiro. O saldo devedor
+ * que vale é o desta tela.
+ */
+
+interface Show {
   id: string;
-  nome?: string;
-  contato?: string;
-  valor?: number;
-  data_evento?: string;
-  horario_inicio?: string;
-  horario_fim?: string;
-  material_promocional?: string;
-  observacoes?: string;
+  nome: string | null;
+  contato: string | null;
+  valor: number | null;
+  data_evento: string | null;
+  horario_inicio: string | null;
+  horario_fim: string | null;
+  material_promocional: string | null;
+  observacoes: string | null;
   valor_consumo: number;
   valor_adicional: number;
   valor_total_final: number;
   valor_pago: number;
   saldo_restante: number;
   status_pagamento: 'pendente' | 'pago' | 'cancelado';
-  fornecedor_id?: string;
-  fornecedor_nome?: string;
-  criado_em: string;
+  fornecedor_id: string | null;
+  fornecedor_nome: string | null;
 }
 
-interface FormData {
-  nome: string;
-  contato: string;
+interface Pagamento {
+  id: string;
+  tipo: 'pagamento' | 'saldo_inicial';
   valor: number;
-  data_evento: string;
-  horario_inicio: string;
-  horario_fim: string;
-  material_promocional: string;
-  observacoes: string;
-  valor_consumo: number;
-  valor_adicional: number;
-  fornecedor_id: string;
-  status_pagamento: 'pendente' | 'pago' | 'cancelado';
+  data_pagamento: string;
+  forma: string | null;
+  observacao: string | null;
+  criado_por_nome: string | null;
+  criado_em: string;
+  estornado_em: string | null;
+  estornado_por_nome: string | null;
+  motivo_estorno: string | null;
 }
 
-interface IndicadoresMusicos {
-  total_apresentacoes: number;
-  apresentacoes_mes: number;
-  valor_total_mes: number;
-  valor_pago_mes: number;
-  valor_pendente_mes: number;
-  musicos_ativos: number;
-}
+interface Fornecedor { id: string; nome: string; tipo: string }
 
-const similarityScore = (str1: string, str2: string): number => {
-  const s1 = str1.toLowerCase().trim();
-  const s2 = str2.toLowerCase().trim();
+type Situacao = 'pendente' | 'parcial' | 'pago' | 'pago_a_mais' | 'cancelado' | 'sem_valor';
+type Filtro = 'todos' | 'a_pagar' | Situacao;
+type Visao = 'lista' | 'calendario';
 
-  if (s1 === s2) return 100;
-
-  const longer = s1.length > s2.length ? s1 : s2;
-  const shorter = s1.length > s2.length ? s2 : s1;
-
-  if (longer.length === 0) return 100;
-
-  const editDistance = getEditDistance(longer, shorter);
-  return ((longer.length - editDistance) / longer.length) * 100;
+const SITUACAO: Record<Situacao, { rotulo: string; variante: BadgeVariante }> = {
+  pendente: { rotulo: 'Pendente', variante: 'warning' },
+  parcial: { rotulo: 'Parcial', variante: 'info' },
+  pago: { rotulo: 'Pago', variante: 'success' },
+  pago_a_mais: { rotulo: 'Pago a mais', variante: 'danger' },
+  cancelado: { rotulo: 'Cancelado', variante: 'neutral' },
+  sem_valor: { rotulo: 'Sem valor', variante: 'neutral' },
 };
 
-const getEditDistance = (s1: string, s2: string): number => {
-  const costs: number[] = [];
-  for (let i = 0; i <= s1.length; i++) {
-    let lastValue = i;
-    for (let j = 0; j <= s2.length; j++) {
-      if (i === 0) {
-        costs[j] = j;
-      } else if (j > 0) {
-        let newValue = costs[j - 1];
-        if (s1.charAt(i - 1) !== s2.charAt(j - 1)) {
-          newValue = Math.min(Math.min(newValue, lastValue), costs[j]) + 1;
-        }
-        costs[j - 1] = lastValue;
-        lastValue = newValue;
+const FORMAS = ['PIX', 'Dinheiro', 'Transferência', 'Cartão', 'Outro'];
+
+const brl = (v: number) => (v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+const num = (s: string) => Number((s || '').replace(/\./g, '').replace(',', '.')) || 0;
+const hora = (h: string | null) => (h ? h.slice(0, 5) : '');
+const dataCurta = (s: string | null) => (s ? dayjs(s).format('DD/MM') : '—');
+
+function situacao(s: Show): Situacao {
+  if (s.status_pagamento === 'cancelado') return 'cancelado';
+  const total = Number(s.valor_total_final) || 0;
+  const pago = Number(s.valor_pago) || 0;
+  if (total <= 0) return 'sem_valor';
+  if (pago <= 0) return 'pendente';
+  if (pago < total - 0.004) return 'parcial';
+  if (pago > total + 0.004) return 'pago_a_mais';
+  return 'pago';
+}
+
+const saldoDe = (s: Show) => (s.status_pagamento === 'cancelado' ? 0 : (Number(s.valor_total_final) || 0) - (Number(s.valor_pago) || 0));
+
+/** Nome parecido para sugerir o fornecedor do cadastro do músico. */
+function parecido(a: string, b: string): number {
+  const s1 = a.toLowerCase().trim();
+  const s2 = b.toLowerCase().trim();
+  if (s1 === s2) return 100;
+  const longo = s1.length >= s2.length ? s1 : s2;
+  const curto = s1.length >= s2.length ? s2 : s1;
+  if (!longo.length) return 100;
+  const custos: number[] = [];
+  for (let i = 0; i <= longo.length; i++) {
+    let ultimo = i;
+    for (let j = 0; j <= curto.length; j++) {
+      if (i === 0) custos[j] = j;
+      else if (j > 0) {
+        let novo = custos[j - 1];
+        if (longo.charAt(i - 1) !== curto.charAt(j - 1)) novo = Math.min(novo, ultimo, custos[j]) + 1;
+        custos[j - 1] = ultimo;
+        ultimo = novo;
       }
     }
-    if (i > 0) costs[s2.length] = lastValue;
+    if (i > 0) custos[curto.length] = ultimo;
   }
-  return costs[s2.length];
-};
+  return ((longo.length - custos[curto.length]) / longo.length) * 100;
+}
 
 const Musicians: React.FC = () => {
-  const [musicos, setMusicos] = useState<Musico[]>([]);
-  const [fornecedores, setFornecedores] = useState<any[]>([]);
-  const [indicadores, setIndicadores] = useState<IndicadoresMusicos | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [showForm, setShowForm] = useState(false);
-  const [showImportarAgenda, setShowImportarAgenda] = useState(false);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [editingMusico, setEditingMusico] = useState<Musico | null>(null);
-  const [sugestedFornecedorId, setSugestedFornecedorId] = useState<string>('');
-  
-  // Filtros
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'pendente' | 'pago' | 'cancelado'>('all');
-  const [mesFilter, setMesFilter] = useState(dayjs().month() + 1);
-  const [anoFilter, setAnoFilter] = useState(dayjs().year());
-  const [dataInicio, setDataInicio] = useState(dayjs().startOf('month').format('YYYY-MM-DD'));
-  const [dataFim, setDataFim] = useState(dayjs().endOf('month').format('YYYY-MM-DD'));
-  
-  // Calendar view states
-  const [viewMode, setViewMode] = useState<'table' | 'calendar'>('table');
-  const [currentMonth, setCurrentMonth] = useState(dayjs());
-  
-  const [formData, setFormData] = useState<FormData>({
-    nome: '',
-    contato: '',
-    valor: 0,
-    data_evento: dayjs().format('YYYY-MM-DD'),
-    horario_inicio: '20:00',
-    horario_fim: '23:00',
-    material_promocional: '',
-    observacoes: '',
-    valor_consumo: 0,
-    valor_adicional: 0,
-    fornecedor_id: '',
-    status_pagamento: 'pendente'
-  });
+  const [mes, setMes] = useState(dayjs().startOf('month'));
+  const [inicio, setInicio] = useState(dayjs().startOf('month').format('YYYY-MM-DD'));
+  const [fim, setFim] = useState(dayjs().endOf('month').format('YYYY-MM-DD'));
+  const [shows, setShows] = useState<Show[]>([]);
+  const [fornecedores, setFornecedores] = useState<Fornecedor[]>([]);
+  const [carregando, setCarregando] = useState(true);
+  const [erro, setErro] = useState<string | null>(null);
+  const [aviso, setAviso] = useState<string | null>(null);
+  const [busca, setBusca] = useState('');
+  const [filtro, setFiltro] = useState<Filtro>('todos');
+  const [visao, setVisao] = useState<Visao>('lista');
+  const [editando, setEditando] = useState<Partial<Show> | null>(null);
+  const [pagando, setPagando] = useState<Show | null>(null);
+  const [detalhe, setDetalhe] = useState<Show | null>(null);
+  const [importando, setImportando] = useState(false);
 
+  const irParaMes = (m: dayjs.Dayjs) => {
+    setMes(m.startOf('month'));
+    setInicio(m.startOf('month').format('YYYY-MM-DD'));
+    setFim(m.endOf('month').format('YYYY-MM-DD'));
+  };
+
+  const carregar = async () => {
+    setCarregando(true); setErro(null);
+    try {
+      let q = supabase.from('vw_musicos_financeiro').select('*');
+      if (inicio) q = q.gte('data_evento', inicio);
+      if (fim) q = q.lte('data_evento', `${fim} 23:59:59`);
+      const { data, error } = await q.order('data_evento', { ascending: true }).order('horario_inicio', { ascending: true });
+      if (error) throw error;
+      setShows((data || []) as Show[]);
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : 'Erro ao carregar os shows');
+    } finally {
+      setCarregando(false);
+    }
+  };
+
+  useEffect(() => { void carregar(); }, [inicio, fim]);
   useEffect(() => {
-    fetchData();
-    fetchFornecedores();
-    fetchIndicadores();
+    supabase.from('fornecedores').select('id, nome, tipo').eq('status', 'ativo').in('tipo', ['musico', 'geral']).order('nome')
+      .then(({ data }) => setFornecedores(((data || []) as Fornecedor[]).sort((a, b) =>
+        a.tipo === b.tipo ? a.nome.localeCompare(b.nome) : a.tipo === 'musico' ? -1 : 1)));
   }, []);
 
+  // O show aberto no histórico acompanha a lista recarregada.
   useEffect(() => {
-    fetchData();
-    fetchIndicadores();
-  }, [statusFilter, mesFilter, anoFilter, dataInicio, dataFim]);
+    if (detalhe) setDetalhe(shows.find(s => s.id === detalhe.id) || null);
+  }, [shows]);
 
-  useEffect(() => {
-    if (formData.nome && fornecedores.length > 0 && !editingMusico) {
-      const scores = fornecedores.map(f => ({
-        id: f.id,
-        nome: f.nome,
-        score: similarityScore(formData.nome, f.nome)
-      }));
-
-      const bestMatch = scores.sort((a, b) => b.score - a.score)[0];
-
-      if (bestMatch.score >= 60) {
-        setSugestedFornecedorId(bestMatch.id);
-        if (!formData.fornecedor_id) {
-          setFormData(prev => ({ ...prev, fornecedor_id: bestMatch.id }));
-        }
-      } else {
-        setSugestedFornecedorId('');
-      }
-    }
-  }, [formData.nome, fornecedores, editingMusico]);
-
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      const connectionOk = await testConnection();
-      if (!connectionOk) {
-        console.warn('Supabase connection failed, using empty data');
-        setMusicos([]);
-        setLoading(false);
-        return;
-      }
-
-      let query = supabase.from('vw_musicos_financeiro').select('*');
-
-      // Aplicar filtros
-      if (statusFilter !== 'all') {
-        query = query.eq('status_pagamento', statusFilter);
-      }
-
-      // Filtro por período de data
-      if (dataInicio) {
-        query = query.gte('data_evento', dataInicio);
-      }
-      if (dataFim) {
-        query = query.lte('data_evento', dataFim);
-      }
-
-      const { data, error } = await query.order('data_evento', { ascending: false });
-
-      if (error) throw error;
-      setMusicos(data || []);
-    } catch (err) {
-      console.error('Error fetching musicians:', err);
-      setError(err instanceof Error ? err.message : 'Erro ao carregar músicos');
-      setMusicos([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchFornecedores = async () => {
-    try {
-      const connectionOk = await testConnection();
-      if (!connectionOk) {
-        setFornecedores([]);
-        return;
-      }
-
-      const { data, error } = await supabase
-        .from('fornecedores')
-        .select('id, nome, tipo')
-        .eq('status', 'ativo')
-        .in('tipo', ['musico', 'geral'])
-        .order('nome');
-
-      if (error) throw error;
-
-      const fornecedoresData = (data || []).map((f: any) => ({
-        ...f,
-        isMusicianType: f.tipo === 'musico'
-      }));
-
-      fornecedoresData.sort((a: any, b: any) => {
-        if (a.isMusicianType === b.isMusicianType) {
-          return a.nome.localeCompare(b.nome);
-        }
-        return a.isMusicianType ? -1 : 1;
-      });
-
-      setFornecedores(fornecedoresData);
-    } catch (err) {
-      console.error('Error fetching suppliers:', err);
-      setFornecedores([]);
-    }
-  };
-
-  const fetchIndicadores = async () => {
-    try {
-      const connectionOk = await testConnection();
-      if (!connectionOk) {
-        setIndicadores(null);
-        return;
-      }
-
-      let query = supabase.from('musicos').select('*');
-      if (dataInicio) query = query.gte('data_evento', dataInicio);
-      if (dataFim) query = query.lte('data_evento', dataFim);
-      if (statusFilter !== 'all') query = query.eq('status_pagamento', statusFilter);
-
-      const { data, error } = await query;
-      if (error) throw error;
-
-      const { data: todosMusicos, error: todosError } = await supabase
-        .from('musicos')
-        .select('nome');
-      if (todosError) throw todosError;
-
-      const registros = data || [];
-      const valorTotal = registros.reduce((sum, m) => sum + (m.valor_total_final || 0), 0);
-      const valorPago = registros.filter(m => m.status_pagamento === 'pago').reduce((sum, m) => sum + (m.valor_total_final || 0), 0);
-      const valorPendente = registros.filter(m => m.status_pagamento === 'pendente').reduce((sum, m) => sum + (m.valor_total_final || 0), 0);
-      const musicosUnicos = new Set((todosMusicos || []).map(m => m.nome)).size;
-
-      setIndicadores({
-        total_apresentacoes: (todosMusicos || []).length,
-        apresentacoes_mes: registros.length,
-        valor_total_mes: valorTotal,
-        valor_pago_mes: valorPago,
-        valor_pendente_mes: valorPendente,
-        musicos_ativos: musicosUnicos
-      });
-    } catch (err) {
-      console.error('Error fetching indicators:', err);
-      setIndicadores(null);
-    }
-  };
-
-  const handleSave = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      // Validações
-      if (!formData.nome || !formData.data_evento || formData.valor <= 0) {
-        throw new Error('Preencha todos os campos obrigatórios');
-      }
-
-      let fornecedorId = formData.fornecedor_id;
-
-      // Se não houver fornecedor selecionado, criar automaticamente
-      if (!fornecedorId && !editingMusico) {
-        const { data: fornecedorExistente } = await supabase
-          .from('fornecedores')
-          .select('id')
-          .eq('nome', formData.nome)
-          .eq('tipo', 'musico')
-          .maybeSingle();
-
-        if (fornecedorExistente) {
-          fornecedorId = fornecedorExistente.id;
-        } else {
-          const { data: novoFornecedor, error: fornecedorError } = await supabase
-            .from('fornecedores')
-            .insert([{
-              nome: formData.nome,
-              telefone: formData.contato || null,
-              status: 'ativo',
-              tipo: 'musico',
-              observacoes: 'Cadastrado automaticamente via módulo de Músicos'
-            }])
-            .select('id')
-            .single();
-
-          if (fornecedorError) throw fornecedorError;
-          fornecedorId = novoFornecedor.id;
-        }
-      }
-
-      const valorTotal = formData.valor + formData.valor_adicional - formData.valor_consumo;
-
-      const dataToSave = {
-        ...formData,
-        fornecedor_id: fornecedorId,
-        valor_total_final: Math.max(0, valorTotal)
-      };
-
-      if (editingMusico) {
-        const { error } = await supabase
-          .from('musicos')
-          .update(dataToSave)
-          .eq('id', editingMusico.id);
-
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from('musicos')
-          .insert([dataToSave]);
-
-        if (error) throw error;
-      }
-
-      setShowForm(false);
-      setEditingMusico(null);
-      resetForm();
-      fetchData();
-      fetchFornecedores();
-      fetchIndicadores();
-    } catch (err) {
-      console.error('Error saving musician:', err);
-      setError(err instanceof Error ? err.message : 'Erro ao salvar músico');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleDelete = async (id: string) => {
-    if (!confirm('Tem certeza que deseja excluir este músico?')) return;
-
-    try {
-      setLoading(true);
-      const { error } = await supabase
-        .from('musicos')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
-      fetchData();
-      fetchIndicadores();
-    } catch (err) {
-      console.error('Error deleting musician:', err);
-      setError(err instanceof Error ? err.message : 'Erro ao excluir músico');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-
-  const marcarComoPago = async (id: string) => {
-    try {
-      setLoading(true);
-      const { error } = await supabase
-        .from('musicos')
-        .update({
-          status_pagamento: 'pago'
-        })
-        .eq('id', id);
-
-      if (error) throw error;
-      fetchData();
-      fetchIndicadores();
-    } catch (err) {
-      console.error('Error marking as paid:', err);
-      setError(err instanceof Error ? err.message : 'Erro ao marcar como pago');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const openForm = (musico?: Musico) => {
-    if (musico) {
-      setEditingMusico(musico);
-      setFormData({
-        nome: musico.nome || '',
-        contato: musico.contato || '',
-        valor: musico.valor || 0,
-        data_evento: musico.data_evento ? dayjs(musico.data_evento).format('YYYY-MM-DD') : dayjs().format('YYYY-MM-DD'),
-        horario_inicio: musico.horario_inicio || '20:00',
-        horario_fim: musico.horario_fim || '23:00',
-        material_promocional: musico.material_promocional || '',
-        observacoes: musico.observacoes || '',
-        valor_consumo: musico.valor_consumo || 0,
-        valor_adicional: musico.valor_adicional || 0,
-        fornecedor_id: musico.fornecedor_id || '',
-        status_pagamento: musico.status_pagamento || 'pendente'
-      });
-    } else {
-      setEditingMusico(null);
-      resetForm();
-    }
-    setShowForm(true);
-  };
-
-  const resetForm = () => {
-    setFormData({
-      nome: '',
-      contato: '',
-      valor: 0,
-      data_evento: dayjs().format('YYYY-MM-DD'),
-      horario_inicio: '20:00',
-      horario_fim: '23:00',
-      material_promocional: '',
-      observacoes: '',
-      valor_consumo: 0,
-      valor_adicional: 0,
-      fornecedor_id: '',
-      status_pagamento: 'pendente'
+  const visiveis = useMemo(() => {
+    const t = busca.trim().toLowerCase();
+    return shows.filter(s => {
+      if (t && !`${s.nome || ''} ${s.contato || ''} ${s.fornecedor_nome || ''}`.toLowerCase().includes(t)) return false;
+      const sit = situacao(s);
+      if (filtro === 'todos') return true;
+      if (filtro === 'a_pagar') return sit === 'pendente' || sit === 'parcial';
+      return sit === filtro;
     });
+  }, [shows, busca, filtro]);
+
+  const totais = useMemo(() => {
+    const ativos = shows.filter(s => s.status_pagamento !== 'cancelado');
+    const aPagar = ativos.filter(s => saldoDe(s) > 0.004);
+    return {
+      shows: ativos.length,
+      artistas: new Set(ativos.map(s => (s.nome || '').trim().toLowerCase())).size,
+      cache: ativos.reduce((a, s) => a + (Number(s.valor_total_final) || 0), 0),
+      pago: ativos.reduce((a, s) => a + (Number(s.valor_pago) || 0), 0),
+      aPagar: aPagar.reduce((a, s) => a + saldoDe(s), 0),
+      aPagarShows: aPagar.length,
+      parciais: ativos.filter(s => situacao(s) === 'parcial').length,
+      aMais: ativos.filter(s => situacao(s) === 'pago_a_mais'),
+    };
+  }, [shows]);
+
+  const contagem = useMemo(() => {
+    const c: Record<string, number> = {};
+    for (const s of shows) c[situacao(s)] = (c[situacao(s)] || 0) + 1;
+    return c;
+  }, [shows]);
+
+  const excluir = async (s: Show) => {
+    if (!window.confirm(`Excluir o show de ${s.nome} em ${dataCurta(s.data_evento)}? A conta a pagar ligada a ele também sai do Financeiro, e o histórico de pagamentos deste show é apagado.`)) return;
+    setErro(null);
+    const { error } = await supabase.from('musicos').delete().eq('id', s.id);
+    if (error) { setErro(error.message); return; }
+    setAviso(`Show de ${s.nome} excluído.`);
+    await carregar();
   };
 
-  const calcularValorTotal = () => {
-    const valorBase = formData.valor || 0;
-    const adicional = formData.valor_adicional || 0;
-    const consumo = formData.valor_consumo || 0;
-    return Math.max(0, valorBase + adicional - consumo);
+  const periodo = `${dayjs(inicio).format('DD/MM/YYYY')} a ${dayjs(fim).format('DD/MM/YYYY')}`;
+  const arquivo = `musicos-${dayjs(inicio).format('DD-MM-YYYY')}-a-${dayjs(fim).format('DD-MM-YYYY')}`;
+
+  const exportarExcel = () => {
+    if (!visiveis.length) { setErro('Não há shows para exportar.'); return; }
+    exportToExcel(visiveis.map(s => [
+      s.nome || '', s.contato || '', s.data_evento ? dayjs(s.data_evento).format('DD/MM/YYYY') : '',
+      `${hora(s.horario_inicio)} - ${hora(s.horario_fim)}`, s.valor || 0, s.valor_consumo || 0, s.valor_adicional || 0,
+      s.valor_total_final || 0, s.valor_pago || 0, saldoDe(s), SITUACAO[situacao(s)].rotulo, s.fornecedor_nome || '', s.observacoes || '',
+    ]), arquivo, ['Nome', 'Contato', 'Data', 'Horário', 'Cachê', 'Consumo', 'Adicional', 'Total', 'Pago', 'Saldo', 'Situação', 'Fornecedor', 'Observações']);
   };
 
-  const filteredMusicos = musicos.filter(musico => {
-    const matchesSearch = musico.nome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         musico.contato?.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesSearch;
-  });
-
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(value);
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'pago':
-        return 'text-emerald-400 bg-emerald-500/20';
-      case 'pendente':
-        return 'text-yellow-400 bg-yellow-500/20';
-      case 'cancelado':
-        return 'text-red-400 bg-red-500/20';
-      default:
-        return 'text-white/80 bg-[#12141f]/10';
-    }
-  };
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'pago':
-        return <CheckCircle className="w-4 h-4" />;
-      case 'pendente':
-        return <Clock className="w-4 h-4" />;
-      case 'cancelado':
-        return <XCircle className="w-4 h-4" />;
-      default:
-        return <AlertTriangle className="w-4 h-4" />;
-    }
-  };
-
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'pago':
-        return 'Pago';
-      case 'pendente':
-        return 'Pendente';
-      case 'cancelado':
-        return 'Cancelado';
-      default:
-        return 'Desconhecido';
-    }
-  };
-
-  // Calendar functions
-  const getDaysInMonth = () => {
-    const startOfMonth = currentMonth.startOf('month');
-    const endOfMonth = currentMonth.endOf('month');
-    const startOfWeek = startOfMonth.startOf('week');
-    const endOfWeek = endOfMonth.endOf('week');
-    
-    const days = [];
-    let currentDay = startOfWeek;
-    
-    while (currentDay.isBefore(endOfWeek) || currentDay.isSame(endOfWeek, 'day')) {
-      days.push(currentDay);
-      currentDay = currentDay.add(1, 'day');
-    }
-    
-    return days;
-  };
-
-  const getMusicosForDay = (day: dayjs.Dayjs) => {
-    return filteredMusicos.filter(musico => 
-      musico.data_evento && dayjs(musico.data_evento).isSame(day, 'day')
-    );
-  };
-
-  const isToday = (day: dayjs.Dayjs) => {
-    return day.isSame(dayjs(), 'day');
-  };
-
-  const isPastDay = (day: dayjs.Dayjs) => {
-    return day.isBefore(dayjs(), 'day');
-  };
-
-  const isCurrentMonth = (day: dayjs.Dayjs) => {
-    return day.isSame(currentMonth, 'month');
-  };
-
-  const goToPreviousMonth = () => {
-    setCurrentMonth(currentMonth.subtract(1, 'month'));
-  };
-
-  const goToNextMonth = () => {
-    setCurrentMonth(currentMonth.add(1, 'month'));
-  };
-
-  const goToToday = () => {
-    setCurrentMonth(dayjs());
-  };
-
-  const exportData = () => {
-    if (filteredMusicos.length === 0) {
-      alert('Não há dados para exportar');
-      return;
-    }
-
-    const headers = [
-      'Nome',
-      'Contato',
-      'Data Evento',
-      'Horário',
-      'Valor Base',
-      'Consumo',
-      'Adicional',
-      'Total Final',
-      'Status',
-      'Check-in',
-      'Fornecedor',
-      'Observações'
-    ];
-
-    const data = filteredMusicos.map(musico => [
-      musico.nome || '',
-      musico.contato || '',
-      musico.data_evento ? dayjs(musico.data_evento).format('DD/MM/YYYY') : '',
-      `${musico.horario_inicio || ''} - ${musico.horario_fim || ''}`,
-      musico.valor || 0,
-      musico.valor_consumo || 0,
-      musico.valor_adicional || 0,
-      musico.valor_total_final || 0,
-      getStatusText(musico.status_pagamento),
-      musico.checkin ? 'Presente' : 'Pendente',
-      musico.fornecedor_nome || '',
-      musico.observacoes || ''
-    ]);
-
-    const fileName = `musicos-${dayjs(dataInicio).format('DD-MM-YYYY')}-a-${dayjs(dataFim).format('DD-MM-YYYY')}`;
-    exportToExcel(data, fileName, headers);
-  };
-
-  const exportToPDF = () => {
-    if (filteredMusicos.length === 0) {
-      alert('Não há dados para exportar');
-      return;
-    }
-
+  const exportarPDF = () => {
+    if (!visiveis.length) { setErro('Não há shows para exportar.'); return; }
     try {
-      const fileName = `musicos-${dayjs(dataInicio).format('DD-MM-YYYY')}-a-${dayjs(dataFim).format('DD-MM-YYYY')}`;
-
-      const reportGenerator = new ReportGenerator({
-        title: 'Relatório de Músicos',
-        subtitle: `Período: ${dayjs(dataInicio).format('DD/MM/YYYY')} a ${dayjs(dataFim).format('DD/MM/YYYY')}`,
-        filename: fileName,
-        orientation: 'landscape'
-      });
-
-      let currentY = reportGenerator.addHeader(
-        'RELATÓRIO DE MÚSICOS',
-        `Período: ${dayjs(dataInicio).format('DD/MM/YYYY')} a ${dayjs(dataFim).format('DD/MM/YYYY')}`
-      );
-
-      // Resumo do período
-      const totalValorBase = filteredMusicos.reduce((sum, m) => sum + (m.valor || 0), 0);
-      const totalConsumo = filteredMusicos.reduce((sum, m) => sum + (m.valor_consumo || 0), 0);
-      const totalAdicional = filteredMusicos.reduce((sum, m) => sum + (m.valor_adicional || 0), 0);
-      const totalGeral = filteredMusicos.reduce((sum, m) => sum + (m.valor_total_final || 0), 0);
-      const musicosPagos = filteredMusicos.filter(m => m.status_pagamento === 'pago').length;
-      const musicosPendentes = filteredMusicos.filter(m => m.status_pagamento === 'pendente').length;
-
-      const resumo = [
-        ['Total de Apresentações', filteredMusicos.length.toString()],
-        ['Apresentações Pagas', musicosPagos.toString()],
-        ['Apresentações Pendentes', musicosPendentes.toString()],
-        ['Total Valor Base', formatCurrency(totalValorBase)],
-        ['Total Consumo', formatCurrency(totalConsumo)],
-        ['Total Adicional', formatCurrency(totalAdicional)],
-        ['Total Geral', formatCurrency(totalGeral)],
-        ['Ticket Médio', filteredMusicos.length > 0 ? formatCurrency(totalGeral / filteredMusicos.length) : formatCurrency(0)]
-      ];
-
-      currentY = reportGenerator.addSection('Resumo do Período', [], currentY);
-      currentY = reportGenerator.addTable(['Indicador', 'Valor'], resumo, currentY);
-
-      // Lista detalhada
-      const headers = [
-        'Nome',
-        'Data',
-        'Horário',
-        'Valor Base',
-        'Consumo',
-        'Adicional',
-        'Total Final',
-        'Status'
-      ];
-
-      const data = filteredMusicos.map(musico => [
-        musico.nome || '',
-        musico.data_evento ? dayjs(musico.data_evento).format('DD/MM/YYYY') : '',
-        `${musico.horario_inicio || ''} - ${musico.horario_fim || ''}`,
-        formatCurrency(musico.valor || 0),
-        formatCurrency(musico.valor_consumo || 0),
-        formatCurrency(musico.valor_adicional || 0),
-        formatCurrency(musico.valor_total_final || 0),
-        getStatusText(musico.status_pagamento)
-      ]);
-
-      currentY = reportGenerator.addSection('Detalhamento das Apresentações', [], currentY);
-      reportGenerator.addTable(headers, data, currentY);
-
-      reportGenerator.save();
-    } catch (error) {
-      console.error('Erro ao gerar PDF:', error);
-      alert('Erro ao gerar PDF. Tente novamente.');
+      const r = new ReportGenerator({ title: 'Relatório de Músicos', subtitle: `Período: ${periodo}`, filename: arquivo, orientation: 'landscape' });
+      let y = r.addHeader('RELATÓRIO DE MÚSICOS', `Período: ${periodo}`);
+      y = r.addSection('Resumo do período', [], y);
+      y = r.addTable(['Indicador', 'Valor'], [
+        ['Shows', String(totais.shows)],
+        ['Cachês', brl(totais.cache)],
+        ['Pago', brl(totais.pago)],
+        ['A pagar', `${brl(totais.aPagar)} (${totais.aPagarShows} shows)`],
+      ], y);
+      y = r.addSection('Shows', [], y);
+      r.addTable(['Nome', 'Data', 'Horário', 'Total', 'Pago', 'Saldo', 'Situação'], visiveis.map(s => [
+        s.nome || '', s.data_evento ? dayjs(s.data_evento).format('DD/MM/YYYY') : '', `${hora(s.horario_inicio)} - ${hora(s.horario_fim)}`,
+        brl(s.valor_total_final), brl(s.valor_pago), brl(saldoDe(s)), SITUACAO[situacao(s)].rotulo,
+      ]), y);
+      r.save(`${arquivo}.pdf`);
+    } catch {
+      setErro('Erro ao gerar o PDF. Tente de novo.');
     }
-  };
-
-  const handleDayClick = (day: dayjs.Dayjs) => {
-    setFormData({
-      ...formData,
-      data_evento: day.format('YYYY-MM-DD')
-    });
-    openForm();
-  };
-
-  const generateCalendarPDF = () => {
-    try {
-      const reportGenerator = new ReportGenerator({
-        title: 'Calendário de Músicos',
-        subtitle: `${currentMonth.format('MMMM [de] YYYY')}`,
-        filename: `calendario-musicos-${currentMonth.format('YYYY-MM')}.pdf`,
-        orientation: 'landscape'
-      });
-
-      let currentY = reportGenerator.addHeader(
-        'CALENDÁRIO DE MÚSICOS',
-        `${currentMonth.format('MMMM [de] YYYY').toUpperCase()}`
-      );
-
-      // Resumo do mês
-      const musicosDoMes = musicos.filter(musico => 
-        musico.data_evento && dayjs(musico.data_evento).isSame(currentMonth, 'month')
-      );
-
-      const valorTotalMes = musicosDoMes.reduce((sum, m) => sum + (m.valor_total_final || 0), 0);
-      const musicosPagos = musicosDoMes.filter(m => m.status_pagamento === 'pago').length;
-      const musicosPendentes = musicosDoMes.filter(m => m.status_pagamento === 'pendente').length;
-
-      const resumo = [
-        ['Total de Apresentações', musicosDoMes.length.toString()],
-        ['Valor Total do Mês', formatCurrency(valorTotalMes)],
-        ['Apresentações Pagas', musicosPagos.toString()],
-        ['Apresentações Pendentes', musicosPendentes.toString()],
-        ['Ticket Médio', musicosDoMes.length > 0 ? formatCurrency(valorTotalMes / musicosDoMes.length) : formatCurrency(0)]
-      ];
-
-      currentY = reportGenerator.addSection('Resumo do Mês', [], currentY);
-      currentY = reportGenerator.addTable(['Indicador', 'Valor'], resumo, currentY);
-
-      // Agenda detalhada por dia
-      const diasComMusicos = getDaysInMonth()
-        .filter(day => isCurrentMonth(day) && getMusicosForDay(day).length > 0)
-        .sort((a, b) => a.date() - b.date());
-
-      if (diasComMusicos.length > 0) {
-        const agendaHeaders = [
-          'Data',
-          'Dia Semana',
-          'Músico/Banda',
-          'Horário',
-          'Valor Total',
-          'Status',
-          'Contato'
-        ];
-
-        const agendaData = [];
-        diasComMusicos.forEach(day => {
-          const musicosDoDia = getMusicosForDay(day);
-          musicosDoDia.forEach((musico, index) => {
-            agendaData.push([
-              index === 0 ? day.format('DD/MM/YYYY') : '',
-              index === 0 ? day.format('dddd') : '',
-              musico.nome || 'Não informado',
-              musico.horario_inicio && musico.horario_fim
-                ? `${musico.horario_inicio} - ${musico.horario_fim}`
-                : 'Não definido',
-              formatCurrency(musico.valor_total_final || 0),
-              musico.status_pagamento === 'pago' ? 'Pago' :
-              musico.status_pagamento === 'pendente' ? 'Pendente' : 'Cancelado',
-              musico.contato || '-'
-            ]);
-          });
-        });
-
-        currentY = reportGenerator.addSection('Agenda Detalhada', [], currentY + 10);
-        reportGenerator.addTable(agendaHeaders, agendaData, currentY);
-      }
-
-      reportGenerator.save(`calendario-musicos-${currentMonth.format('YYYY-MM')}.pdf`);
-      
-    } catch (error) {
-      console.error('Error generating PDF:', error);
-      alert('Erro ao gerar PDF. Tente novamente.');
-    }
-  };
-
-  const renderCalendarView = () => {
-    const days = getDaysInMonth();
-    const weekDays = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
-
-    return (
-      <div className="space-y-6">
-        {/* Calendar Header */}
-        <div className="flex justify-between items-center">
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
-              <button
-                onClick={goToPreviousMonth}
-                className="p-2 hover:bg-[#12141f]/10 rounded-lg"
-              >
-                <ChevronLeft className="w-5 h-5" />
-              </button>
-              <h4 className="text-xl font-semibold text-white min-w-[200px] text-center">
-                {currentMonth.format('MMMM [de] YYYY')}
-              </h4>
-              <button
-                onClick={goToNextMonth}
-                className="p-2 hover:bg-[#12141f]/10 rounded-lg"
-              >
-                <ChevronRight className="w-5 h-5" />
-              </button>
-            </div>
-            <button
-              onClick={goToToday}
-              className="px-3 py-1 bg-gradient-to-r from-wine to-[#601C28] text-white text-sm rounded-md hover:from-[#8B2332] hover:to-wine transition-all shadow-sm"
-            >
-              Hoje
-            </button>
-          </div>
-          <button
-            onClick={generateCalendarPDF}
-            className="px-4 py-2 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white rounded-lg hover:from-emerald-700 hover:to-emerald-800 transition-all shadow-md"
-          >
-            <FileText className="w-4 h-4 inline mr-2" />
-            Imprimir PDF
-          </button>
-        </div>
-
-        {/* Calendar Grid */}
-        <div className="bg-[#12141f] rounded-lg border border-white/10 overflow-hidden">
-          {/* Week Days Header */}
-          <div className="grid grid-cols-7 border-b border-white/10">
-            {weekDays.map((day) => (
-              <div key={day} className="p-3 text-center text-sm font-medium text-white/40 bg-[#12141f]/5">
-                {day}
-              </div>
-            ))}
-          </div>
-
-          {/* Calendar Days */}
-          <div className="grid grid-cols-7">
-            {days.map((day) => {
-              const musicosDoDia = getMusicosForDay(day);
-              const isCurrentMonthDay = isCurrentMonth(day);
-              const isTodayDay = isToday(day);
-              const isPast = isPastDay(day);
-
-              return (
-                <div
-                  key={day.format('YYYY-MM-DD')}
-                  onClick={() => isCurrentMonthDay && handleDayClick(day)}
-                  className={`min-h-[120px] p-2 border-b border-r border-white/10 cursor-pointer transition-colors ${
-                    isCurrentMonthDay 
-                      ? isPast 
-                        ? 'bg-[#12141f]/5 hover:bg-[#12141f]/10'
-                        : 'bg-[#12141f] hover:bg-blue-500/10'
-                      : 'bg-[#12141f]/10'
-                  } ${
-                    isTodayDay ? 'ring-2 ring-blue-500 ring-inset' : ''
-                  }`}
-                >
-                  <div className={`text-sm font-medium mb-2 ${
-                    isCurrentMonthDay 
-                      ? isTodayDay 
-                        ? 'text-blue-400'
-                        : 'text-white'
-                      : 'text-white/30'
-                  }`}>
-                    {day.format('D')}
-                  </div>
-
-                  {isCurrentMonthDay && (
-                    <div className="space-y-1">
-                      {musicosDoDia.slice(0, 2).map((musico, index) => (
-                        <div
-                          key={musico.id}
-                          className={`p-1 rounded text-xs ${
-                            musico.status_pagamento === 'pago'
-                              ? 'bg-green-500/15 text-green-300'
-                              : musico.status_pagamento === 'pendente'
-                              ? 'bg-yellow-500/15 text-yellow-300'
-                              : 'bg-red-500/15 text-red-300'
-                          }`}
-                          title={`${musico.nome || 'Sem nome'}\n${musico.horario_inicio || ''} - ${musico.horario_fim || ''}\nValor: ${formatCurrency(musico.valor_total_final || 0)}\nStatus: ${getStatusText(musico.status_pagamento)}`}
-                        >
-                          <div className="flex items-center">
-                            <Music className="w-3 h-3 mr-1" />
-                            <span className="truncate">
-                              {musico.nome || 'Sem nome'}
-                            </span>
-                          </div>
-                          <div className="text-xs opacity-75">
-                            {musico.horario_inicio || ''} - {formatCurrency(musico.valor_total_final || 0)}
-                          </div>
-                        </div>
-                      ))}
-                      
-                      {musicosDoDia.length > 2 && (
-                        <div className="text-xs text-white/40 text-center">
-                          +{musicosDoDia.length - 2} mais
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Calendar Legend */}
-        <div className="bg-[#12141f] p-4 rounded-lg shadow-sm border border-white/10">
-          <h5 className="text-sm font-medium text-white/80 mb-2">Legenda:</h5>
-          <div className="flex flex-wrap gap-4 text-xs">
-            <div className="flex items-center">
-              <div className="w-3 h-3 bg-green-500/15 border border-green-200 rounded mr-2"></div>
-              <span className="text-white/60">Pago</span>
-            </div>
-            <div className="flex items-center">
-              <div className="w-3 h-3 bg-yellow-500/15 border border-yellow-200 rounded mr-2"></div>
-              <span className="text-white/60">Pendente</span>
-            </div>
-            <div className="flex items-center">
-              <div className="w-3 h-3 bg-red-500/15 border border-red-200 rounded mr-2"></div>
-              <span className="text-white/60">Cancelado</span>
-            </div>
-            <div className="flex items-center">
-              <div className="w-3 h-3 border-2 border-blue-500 rounded mr-2"></div>
-              <span className="text-white/60">Hoje</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
   };
 
   return (
-    <div className="flex flex-col min-h-screen -m-6 lg:-m-8" style={{ background: '#0d0f1a' }}>
-
-      {/* HERO DA SEÇÃO */}
-      <div
-        className="relative overflow-hidden"
-        style={{
-          background: 'linear-gradient(135deg, #7D1F2C 0%, #5a1520 60%, #3d0f16 100%)',
-        }}
-      >
-        {/* Ruído decorativo */}
-        <div
-          className="absolute inset-0 opacity-[0.03]"
-          style={{
-            backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)',
-            backgroundSize: '24px 24px',
-          }}
-        />
-        {/* Glow dourado */}
-        <div
-          className="absolute -top-20 -right-20 w-80 h-80 rounded-full opacity-10"
-          style={{ background: 'radial-gradient(circle, #D4AF37, transparent 70%)' }}
-        />
-
-        <div className="relative px-6 lg:px-8 pt-7 pb-0">
-          {/* Breadcrumb */}
-          <div className="flex items-center gap-1.5 mb-4">
-            <span className="text-white/60 text-xs">Músicos</span>
-            <ChevronRight className="text-white/20" style={{width:'12px',height:'12px'}} />
-            <span className="text-white/60 text-xs font-medium">{viewMode === 'table' ? 'Listagem' : 'Calendário'}</span>
+    <div className="max-w-7xl mx-auto">
+      <PageHeader
+        caminho={['Operação', 'Músicos']}
+        title="Músicos"
+        subtitle="Agenda de shows e controle do pagamento dos cachês. Os pagamentos daqui não dão baixa no Financeiro."
+        actions={
+          <div className="flex flex-wrap items-center gap-2">
+            <Button tamanho="sm" variante="discreto" icone={<Sparkles size={14} />} onClick={() => setImportando(true)}>Importar agenda</Button>
+            <Button tamanho="sm" icone={<Download size={14} />} onClick={exportarExcel}>Excel</Button>
+            <Button tamanho="sm" icone={<FileText size={14} />} onClick={exportarPDF}>PDF</Button>
+            <Button variante="primario" icone={<Plus size={16} />} onClick={() => setEditando({ data_evento: dayjs().format('YYYY-MM-DD') })}>Novo show</Button>
           </div>
+        }
+      />
 
-          {/* Título + ações */}
-          <div className="flex items-start justify-between gap-4 mb-6">
-            <div className="flex items-center gap-4">
-              <div
-                className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.15)' }}
-              >
-                <Music className="text-white/80" style={{width:'18px',height:'18px'}} />
-              </div>
-              <div>
-                <h1 className="text-white text-2xl font-bold leading-none tracking-tight">
-                  Cadastro de Músicos
-                </h1>
-                <p className="text-white/60 text-sm mt-1">Gerencie apresentações e pagamentos de músicos</p>
-              </div>
-            </div>
+      {erro && <div className="aviso aviso-perigo mb-3" role="alert">{erro}</div>}
+      {aviso && <div className="aviso aviso-certo mb-3">{aviso}</div>}
 
-            <div className="flex gap-2 flex-shrink-0">
-              {/* View Mode Toggle */}
-              <div className="flex rounded-lg p-1" style={{ background: 'rgba(255,255,255,0.1)' }}>
-                <button
-                  onClick={() => setViewMode('table')}
-                  className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${
-                    viewMode === 'table'
-                      ? 'bg-[#12141f]/20 text-white shadow-sm'
-                      : 'text-white/50 hover:text-white/80'
-                  }`}
-                >
-                  <List className="w-3 h-3 inline mr-1" />
-                  Tabela
-                </button>
-                <button
-                  onClick={() => setViewMode('calendar')}
-                  className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${
-                    viewMode === 'calendar'
-                      ? 'bg-[#12141f]/20 text-white shadow-sm'
-                      : 'text-white/50 hover:text-white/80'
-                  }`}
-                >
-                  <CalendarDays className="w-3 h-3 inline mr-1" />
-                  Calendário
-                </button>
-              </div>
-
-              <button
-                onClick={exportData}
-                className="px-3 py-1.5 text-xs font-medium text-white rounded-lg transition-all"
-                style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.15)' }}
-              >
-                <Download className="w-3 h-3 inline mr-1" />
-                Excel
-              </button>
-
-              <button
-                onClick={exportToPDF}
-                className="px-3 py-1.5 text-xs font-medium text-white rounded-lg transition-all"
-                style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.15)' }}
-              >
-                <FileText className="w-3 h-3 inline mr-1" />
-                PDF
-              </button>
-
-              <button
-                onClick={() => setShowImportarAgenda(true)}
-                className="px-3 py-1.5 text-xs font-medium text-white rounded-lg transition-all"
-                style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.15)' }}
-                title="Ler a agenda de shows de uma foto ou PDF e lançar as apresentações"
-              >
-                <Sparkles className="w-3 h-3 inline mr-1" />
-                Importar agenda
-              </button>
-
-              <button
-                onClick={() => openForm()}
-                className="px-4 py-1.5 text-xs font-medium rounded-lg transition-all"
-                style={{ background: 'linear-gradient(135deg, #D4AF37, #C5A028)', color: '#000' }}
-              >
-                <Plus className="w-3 h-3 inline mr-1" />
-                Nova Apresentação
-              </button>
-            </div>
-          </div>
-
-          {/* SUBNAV - Filtros rápidos */}
-          <nav className="flex items-end gap-2 overflow-x-auto scrollbar-hide pb-0">
-            <button
-              onClick={() => setStatusFilter('all')}
-              className={`flex items-center gap-1.5 px-4 py-2.5 text-xs font-medium border-b-2 whitespace-nowrap transition-all duration-150 flex-shrink-0 ${
-                statusFilter === 'all'
-                  ? 'border-gold text-white bg-[#12141f]/5'
-                  : 'border-transparent text-white/35 hover:text-white/60 hover:bg-[#12141f]/5'
-              }`}
-            >
-              Todos
-            </button>
-            <button
-              onClick={() => setStatusFilter('pendente')}
-              className={`flex items-center gap-1.5 px-4 py-2.5 text-xs font-medium border-b-2 whitespace-nowrap transition-all duration-150 flex-shrink-0 ${
-                statusFilter === 'pendente'
-                  ? 'border-gold text-white bg-[#12141f]/5'
-                  : 'border-transparent text-white/35 hover:text-white/60 hover:bg-[#12141f]/5'
-              }`}
-            >
-              <Clock style={{width:'12px',height:'12px'}} />
-              Pendentes
-            </button>
-            <button
-              onClick={() => setStatusFilter('pago')}
-              className={`flex items-center gap-1.5 px-4 py-2.5 text-xs font-medium border-b-2 whitespace-nowrap transition-all duration-150 flex-shrink-0 ${
-                statusFilter === 'pago'
-                  ? 'border-gold text-white bg-[#12141f]/5'
-                  : 'border-transparent text-white/35 hover:text-white/60 hover:bg-[#12141f]/5'
-              }`}
-            >
-              <CheckCircle style={{width:'12px',height:'12px'}} />
-              Pagos
-            </button>
-            <button
-              onClick={() => setStatusFilter('cancelado')}
-              className={`flex items-center gap-1.5 px-4 py-2.5 text-xs font-medium border-b-2 whitespace-nowrap transition-all duration-150 flex-shrink-0 ${
-                statusFilter === 'cancelado'
-                  ? 'border-gold text-white bg-[#12141f]/5'
-                  : 'border-transparent text-white/35 hover:text-white/60 hover:bg-[#12141f]/5'
-              }`}
-            >
-              <XCircle style={{width:'12px',height:'12px'}} />
-              Cancelados
-            </button>
-          </nav>
+      <div className="flex flex-wrap items-center gap-2 mb-4">
+        <IconButton aria-label="Mês anterior" onClick={() => irParaMes(mes.subtract(1, 'month'))}><ChevronLeft size={16} /></IconButton>
+        <span className="t-subsec capitalize" style={{ minWidth: 170, textAlign: 'center' }}>{mes.format('MMMM [de] YYYY')}</span>
+        <IconButton aria-label="Próximo mês" onClick={() => irParaMes(mes.add(1, 'month'))}><ChevronRight size={16} /></IconButton>
+        <Button tamanho="sm" variante="discreto" onClick={() => irParaMes(dayjs())}>Hoje</Button>
+        <div className="flex items-center gap-2 ml-auto">
+          <Input aria-label="De" type="date" value={inicio} onChange={e => setInicio(e.target.value)} />
+          <span className="t-caption">até</span>
+          <Input aria-label="Até" type="date" value={fim} onChange={e => setFim(e.target.value)} />
+          <IconButton aria-label="Atualizar" onClick={carregar} disabled={carregando}><RefreshCw size={16} className={carregando ? 'animate-spin' : ''} /></IconButton>
         </div>
       </div>
 
-      {/* CONTEÚDO */}
-      <div className="flex-1 px-6 lg:px-8 py-6" style={{ background: '#0d0f1a' }}>
-        {error && (
-          <div className="mb-6 p-4 rounded-lg" style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#fca5a5' }}>
-            {error}
-          </div>
-        )}
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-4">
+        <KPICard rotulo="shows" valor={totais.shows} detalhe={`${totais.artistas} artista${totais.artistas === 1 ? '' : 's'}`} />
+        <KPICard rotulo="cachês" valor={brl(totais.cache)} detalhe={totais.shows ? `média ${brl(totais.cache / totais.shows)}` : 'no período'} tom="destaque" />
+        <KPICard rotulo="pago" valor={brl(totais.pago)} detalhe={totais.cache ? `${Math.round((totais.pago / totais.cache) * 100)}% dos cachês` : '—'} tom="certo" />
+        <KPICard rotulo="a pagar" valor={brl(totais.aPagar)} detalhe={`${totais.aPagarShows} show${totais.aPagarShows === 1 ? '' : 's'}${totais.parciais ? `, ${totais.parciais} parcial` : ''}`}
+          tom={totais.aPagar > 0 ? 'atencao' : 'certo'} onClick={() => setFiltro('a_pagar')} />
+        <KPICard rotulo="pago a mais" valor={totais.aMais.length} detalhe={totais.aMais.length ? brl(totais.aMais.reduce((a, s) => a - saldoDe(s), 0)) : 'nenhum'}
+          tom={totais.aMais.length ? 'alerta' : 'normal'} onClick={totais.aMais.length ? () => setFiltro('pago_a_mais') : undefined} />
+      </div>
 
-        {successMessage && (
-          <div className="mb-6 p-4 rounded-lg flex items-center gap-2" style={{ background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.3)', color: '#6ee7b7' }}>
-            <CheckCircle className="w-4 h-4" />
-            {successMessage}
-          </div>
-        )}
-
-        {/* Indicadores */}
-        {indicadores && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-            <div className="p-6 rounded-xl hover:scale-[1.02] transition-all" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
-              <div className="flex items-center">
-                <div className="p-3 bg-gradient-to-br from-wine to-[#601C28] rounded-lg">
-                  <Music className="w-8 h-8 text-white" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-white/60">Apresentações no Período</p>
-                  <p className="text-3xl font-bold text-white">
-                    {indicadores.apresentacoes_mes}
-                  </p>
-                  <p className="text-xs text-white/60 mt-1">
-                    Total histórico: {indicadores.total_apresentacoes}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="p-6 rounded-xl hover:scale-[1.02] transition-all" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
-              <div className="flex items-center">
-                <div className="p-3 bg-gradient-to-br from-gold to-[#C5A028] rounded-lg">
-                  <DollarSign className="w-8 h-8 text-white" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-white/60">Valor Total no Período</p>
-                  <p className="text-3xl font-bold text-gold">
-                    {formatCurrency(indicadores.valor_total_mes)}
-                  </p>
-                  <p className="text-xs text-white/60 mt-1">
-                    Pago: {formatCurrency(indicadores.valor_pago_mes)}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="p-6 rounded-xl hover:scale-[1.02] transition-all" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
-              <div className="flex items-center">
-                <div className="p-3 bg-gradient-to-br from-amber-600 to-amber-700 rounded-lg">
-                  <Clock className="w-8 h-8 text-white" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-white/60">Pendentes</p>
-                  <p className="text-3xl font-bold text-amber-400">
-                    {formatCurrency(indicadores.valor_pendente_mes)}
-                  </p>
-                  <p className="text-xs text-white/60 mt-1">
-                    {indicadores.musicos_ativos} músicos ativos
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Filtros */}
-        <div className="p-6 rounded-xl mb-6" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-xs font-medium text-white/60 mb-2">Buscar</label>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/30 w-4 h-4" />
-                <input
-                  type="text"
-                  placeholder="Buscar músicos..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 rounded-lg text-sm text-white placeholder-white/30 focus:ring-2 focus:ring-gold focus:outline-none"
-                  style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.1)' }}
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-medium text-white/60 mb-2">Data Início</label>
-              <input
-                type="date"
-                value={dataInicio}
-                onChange={(e) => setDataInicio(e.target.value)}
-                className="w-full px-4 py-2 rounded-lg text-sm text-white focus:ring-2 focus:ring-gold focus:outline-none"
-                style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.1)' }}
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-medium text-white/60 mb-2">Data Fim</label>
-              <input
-                type="date"
-                value={dataFim}
-                onChange={(e) => setDataFim(e.target.value)}
-                className="w-full px-4 py-2 rounded-lg text-sm text-white focus:ring-2 focus:ring-gold focus:outline-none"
-                style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.1)' }}
-              />
-            </div>
-          </div>
+      <Toolbar className="mb-3">
+        <Segmented<Visao> rotulo="Visão" valor={visao} onMudar={setVisao}
+          opcoes={[{ valor: 'lista', rotulo: 'Lista' }, { valor: 'calendario', rotulo: 'Calendário' }]} />
+        <div className="flex flex-wrap gap-2">
+          <Chip ligado={filtro === 'todos'} onMudar={() => setFiltro('todos')}>Todos {shows.length}</Chip>
+          <Chip ligado={filtro === 'a_pagar'} onMudar={() => setFiltro('a_pagar')} tom="atencao">A pagar {(contagem.pendente || 0) + (contagem.parcial || 0)}</Chip>
+          <Chip ligado={filtro === 'parcial'} onMudar={() => setFiltro('parcial')} tom="atencao">Parcial {contagem.parcial || 0}</Chip>
+          <Chip ligado={filtro === 'pago'} onMudar={() => setFiltro('pago')} tom="certo">Pago {contagem.pago || 0}</Chip>
+          {!!contagem.pago_a_mais && <Chip ligado={filtro === 'pago_a_mais'} onMudar={() => setFiltro('pago_a_mais')} tom="perigo">Pago a mais {contagem.pago_a_mais}</Chip>}
+          {!!contagem.cancelado && <Chip ligado={filtro === 'cancelado'} onMudar={() => setFiltro('cancelado')}>Cancelado {contagem.cancelado}</Chip>}
         </div>
+        <Toolbar.Espaco />
+        <div className="relative" style={{ minWidth: 220 }}>
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-secondary)' }} />
+          <input className="input-dark w-full" style={{ paddingLeft: 32 }} placeholder="Buscar artista" value={busca} onChange={e => setBusca(e.target.value)} />
+        </div>
+      </Toolbar>
 
-        {/* Content */}
-        {loading ? (
-          <div className="flex justify-center items-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gold"></div>
-          </div>
-        ) : (
-          <>
-            {viewMode === 'table' ? (
-              <div className="rounded-xl overflow-hidden" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="text-left border-b" style={{ background: 'rgba(255,255,255,0.03)', borderColor: 'rgba(255,255,255,0.1)' }}>
-                        <th className="px-6 py-3 text-xs font-medium text-white/50 uppercase tracking-wider">
-                          Músico/Banda
-                        </th>
-                        <th className="px-6 py-3 text-xs font-medium text-white/50 uppercase tracking-wider">
-                          Data/Hora
-                        </th>
-                        <th className="px-6 py-3 text-xs font-medium text-white/50 uppercase tracking-wider">
-                          Valor Base
-                        </th>
-                        <th className="px-6 py-3 text-xs font-medium text-white/50 uppercase tracking-wider">
-                          Consumo
-                        </th>
-                        <th className="px-6 py-3 text-xs font-medium text-white/50 uppercase tracking-wider">
-                          Adicional
-                        </th>
-                        <th className="px-6 py-3 text-xs font-medium text-white/50 uppercase tracking-wider">
-                          Total Final
-                        </th>
-                        <th className="px-6 py-3 text-xs font-medium text-white/50 uppercase tracking-wider">
-                          Status
-                        </th>
-                        <th className="px-6 py-3 text-xs font-medium text-white/50 uppercase tracking-wider">
-                          Ações
-                        </th>
+      {visao === 'lista' ? (
+        <SectionCard noPadding>
+          {carregando && !shows.length ? (
+            <p className="t-body px-5 py-8" style={{ color: 'var(--text-secondary)' }}>Carregando…</p>
+          ) : visiveis.length === 0 ? (
+            <EmptyState icon={Music} compact variant={shows.length ? 'filtered' : 'empty'}
+              title={shows.length ? 'Nenhum show com esse filtro' : 'Nenhum show no período'}
+              description={shows.length ? 'Troque o filtro ou a busca.' : 'Lance um show ou importe a agenda.'}
+              action={shows.length ? { label: 'Ver todos', onClick: () => { setFiltro('todos'); setBusca(''); } } : { label: 'Novo show', onClick: () => setEditando({ data_evento: dayjs().format('YYYY-MM-DD') }) }} />
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr style={{ borderBottom: '1px solid var(--border)' }}>
+                    <th className="px-4 py-2.5 text-left">Data</th>
+                    <th className="px-4 py-2.5 text-left">Artista</th>
+                    <th className="px-4 py-2.5 text-right">Total</th>
+                    <th className="px-4 py-2.5 text-right">Pago</th>
+                    <th className="px-4 py-2.5 text-right">Saldo</th>
+                    <th className="px-4 py-2.5 text-left">Situação</th>
+                    <th className="px-4 py-2.5 text-right" aria-label="Ações" />
+                  </tr>
+                </thead>
+                <tbody>
+                  {visiveis.map(s => {
+                    const sit = situacao(s);
+                    const saldo = saldoDe(s);
+                    const passou = s.data_evento ? dayjs(s.data_evento).isBefore(dayjs(), 'day') : false;
+                    return (
+                      <tr key={s.id} className="transition-colors hover:bg-white/[0.04] cursor-pointer" style={{ borderBottom: '1px solid var(--border-subtle)', opacity: sit === 'cancelado' ? 0.55 : 1 }}
+                        onClick={() => setDetalhe(s)}>
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          <p className="t-body num" style={{ margin: 0, fontWeight: 600 }}>{dataCurta(s.data_evento)}</p>
+                          <p className="t-caption capitalize" style={{ margin: 0 }}>{s.data_evento ? dayjs(s.data_evento).format('ddd') : ''}{s.horario_inicio && ` · ${hora(s.horario_inicio)}`}</p>
+                        </td>
+                        <td className="px-4 py-3">
+                          <p className="t-body" style={{ margin: 0, fontWeight: 500 }}>{s.nome || 'Sem nome'}</p>
+                          <p className="t-caption" style={{ margin: 0 }}>
+                            Cachê {brl(s.valor || 0)}
+                            {s.valor_adicional > 0 && <span className="texto-certo"> + {brl(s.valor_adicional)}</span>}
+                            {s.valor_consumo > 0 && <span className="texto-perigo"> − {brl(s.valor_consumo)} consumo</span>}
+                          </p>
+                        </td>
+                        <td className="px-4 py-3 text-right num" style={{ fontWeight: 600 }}>{brl(s.valor_total_final)}</td>
+                        <td className="px-4 py-3 text-right num">{s.valor_pago > 0 ? brl(s.valor_pago) : <span className="t-caption">—</span>}</td>
+                        <td className={`px-4 py-3 text-right num ${saldo > 0.004 ? (passou ? 'texto-atencao' : '') : saldo < -0.004 ? 'texto-perigo' : ''}`} style={{ fontWeight: 600 }}>
+                          {sit === 'cancelado' ? <span className="t-caption">—</span> : Math.abs(saldo) < 0.005 ? <span className="t-caption">zerado</span> : brl(saldo)}
+                        </td>
+                        <td className="px-4 py-3"><Badge variant={SITUACAO[sit].variante}>{SITUACAO[sit].rotulo}</Badge></td>
+                        <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
+                          <div className="flex items-center justify-end gap-1">
+                            {(sit === 'pendente' || sit === 'parcial') && <Button tamanho="sm" icone={<Wallet size={14} />} onClick={() => setPagando(s)}>Pagar</Button>}
+                            <IconButton aria-label="Histórico de pagamentos" title="Histórico de pagamentos" onClick={() => setDetalhe(s)}><History size={14} /></IconButton>
+                            <IconButton aria-label="Editar show" title="Editar" onClick={() => setEditando(s)}><Pencil size={14} /></IconButton>
+                            <IconButton aria-label="Excluir show" title="Excluir" tom="perigo" onClick={() => excluir(s)}><Trash2 size={14} /></IconButton>
+                          </div>
+                        </td>
                       </tr>
-                    </thead>
-                    <tbody className="divide-y" style={{ divideColor: 'rgba(255,255,255,0.05)' }}>
-                      {filteredMusicos.map((musico) => (
-                        <tr key={musico.id} className="hover:bg-[#12141f]/5 transition-colors" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
-                          <td className="px-6 py-4">
-                            <div>
-                              <div className="font-medium text-white">{musico.nome}</div>
-                              {musico.contato && (
-                                <div className="text-sm text-white/50 flex items-center">
-                                  <Phone className="w-3 h-3 mr-1" />
-                                  {musico.contato}
-                                </div>
-                              )}
-                              {musico.fornecedor_nome && (
-                                <div className="text-sm flex items-center gap-1 mt-1 px-2 py-1 rounded-full w-fit" style={{ background: 'rgba(59, 130, 246, 0.2)', color: '#93c5fd' }}>
-                                  <Music className="w-3 h-3" />
-                                  <span className="font-medium">{musico.fornecedor_nome}</span>
-                                </div>
-                              )}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4">
-                            <div>
-                              <div className="text-sm text-white">
-                                {musico.data_evento ? dayjs(musico.data_evento).format('DD/MM/YYYY') : '-'}
-                              </div>
-                              {musico.horario_inicio && musico.horario_fim && (
-                                <div className="text-sm text-white/50">
-                                  {musico.horario_inicio} - {musico.horario_fim}
-                                </div>
-                              )}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4">
-                            <span className="font-medium text-white">
-                              {formatCurrency(musico.valor || 0)}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4">
-                            <span className={`font-medium ${
-                              (musico.valor_consumo || 0) > 0 ? 'text-rose-400' : 'text-white/30'
-                            }`}>
-                              {(musico.valor_consumo || 0) > 0 ? '-' : ''}{formatCurrency(musico.valor_consumo || 0)}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4">
-                            <span className={`font-medium ${
-                              (musico.valor_adicional || 0) > 0 ? 'text-emerald-400' : 'text-white/30'
-                            }`}>
-                              {(musico.valor_adicional || 0) > 0 ? '+' : ''}{formatCurrency(musico.valor_adicional || 0)}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4">
-                            <div>
-                              <span className="font-bold text-lg text-gold">
-                                {formatCurrency(Math.max(0, (musico.valor || 0) + (musico.valor_adicional || 0) - (musico.valor_consumo || 0)))}
-                              </span>
-                              <div className="text-xs text-white/40">
-                                Base: {formatCurrency(musico.valor || 0)} + Adicional: {formatCurrency(musico.valor_adicional || 0)} - Consumo: {formatCurrency(musico.valor_consumo || 0)}
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4">
-                            <span className={`inline-flex items-center px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(musico.status_pagamento)}`}>
-                              {getStatusIcon(musico.status_pagamento)}
-                              <span className="ml-1">{getStatusText(musico.status_pagamento)}</span>
-                            </span>
-                          </td>
-                          <td className="px-6 py-4">
-                            <div className="flex space-x-2">
-                              {musico.status_pagamento === 'pendente' && (
-                                <button
-                                  onClick={() => marcarComoPago(musico.id)}
-                                  className="text-green-400 hover:text-green-300"
-                                  title="Marcar como Pago"
-                                >
-                                  <CheckCircle className="w-4 h-4" />
-                                </button>
-                              )}
-                              <button
-                                onClick={() => openForm(musico)}
-                                className="text-blue-400 hover:text-blue-300"
-                                title="Editar"
-                              >
-                                <Edit className="w-4 h-4" />
-                              </button>
-                              <button
-                                onClick={() => handleDelete(musico.id)}
-                                className="text-red-400 hover:text-red-300"
-                                title="Excluir"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                    );
+                  })}
+                </tbody>
+                <tfoot>
+                  <tr style={{ borderTop: '1px solid var(--border)' }}>
+                    <td className="px-4 py-3 t-label" colSpan={2}>{visiveis.length} show{visiveis.length === 1 ? '' : 's'}</td>
+                    <td className="px-4 py-3 text-right num" style={{ fontWeight: 600 }}>{brl(visiveis.filter(s => s.status_pagamento !== 'cancelado').reduce((a, s) => a + s.valor_total_final, 0))}</td>
+                    <td className="px-4 py-3 text-right num" style={{ fontWeight: 600 }}>{brl(visiveis.filter(s => s.status_pagamento !== 'cancelado').reduce((a, s) => a + s.valor_pago, 0))}</td>
+                    <td className="px-4 py-3 text-right num" style={{ fontWeight: 600 }}>{brl(visiveis.reduce((a, s) => a + saldoDe(s), 0))}</td>
+                    <td colSpan={2} />
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          )}
+        </SectionCard>
+      ) : (
+        <Calendario mes={mes} shows={visiveis} onAbrir={setDetalhe} onNovo={d => setEditando({ data_evento: d })} />
+      )}
 
-                {filteredMusicos.length === 0 && (
-                  <div className="text-center py-12">
-                    <Music className="w-16 h-16 text-white/20 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-white mb-2">Nenhuma apresentação encontrada</h3>
-                    <p className="text-white/50">
-                      {searchTerm || statusFilter !== 'all'
-                        ? 'Nenhuma apresentação corresponde aos filtros aplicados.'
-                        : 'Nenhuma apresentação cadastrada.'}
-                    </p>
-                  </div>
+      {editando && (
+        <FormShow inicial={editando} fornecedores={fornecedores} onFechar={() => setEditando(null)}
+          onSalvo={async m => { setEditando(null); setAviso(m); await carregar(); }} />
+      )}
+      {pagando && (
+        <Pagar show={pagando} onFechar={() => setPagando(null)}
+          onFeito={async m => { setPagando(null); setAviso(m); await carregar(); }} />
+      )}
+      {detalhe && (
+        <Detalhe show={detalhe} onFechar={() => setDetalhe(null)} onPagar={() => setPagando(detalhe)} onEditar={() => { setEditando(detalhe); setDetalhe(null); }}
+          onMudou={async m => { setAviso(m); await carregar(); }} />
+      )}
+
+      <ImportarAgendaMusicosIA isOpen={importando} onClose={() => setImportando(false)}
+        onImportado={q => { void carregar(); if (q > 0) setAviso(`${q} show(s) lançados a partir da agenda.`); }} />
+    </div>
+  );
+};
+
+// ── Calendário ──────────────────────────────────────────────────────────────
+const COR_SITUACAO: Record<Situacao, string> = {
+  pendente: 'var(--warn-text)', parcial: 'var(--info-text, #93c5fd)', pago: 'var(--ok-text)',
+  pago_a_mais: 'var(--danger-text)', cancelado: 'var(--text-secondary)', sem_valor: 'var(--text-secondary)',
+};
+
+const Calendario: React.FC<{ mes: dayjs.Dayjs; shows: Show[]; onAbrir: (s: Show) => void; onNovo: (data: string) => void }> = ({ mes, shows, onAbrir, onNovo }) => {
+  const dias: dayjs.Dayjs[] = [];
+  for (let d = mes.startOf('month').startOf('week'); !d.isAfter(mes.endOf('month').endOf('week'), 'day'); d = d.add(1, 'day')) dias.push(d);
+  const porDia = new Map<string, Show[]>();
+  for (const s of shows) {
+    if (!s.data_evento) continue;
+    const k = dayjs(s.data_evento).format('YYYY-MM-DD');
+    porDia.set(k, [...(porDia.get(k) || []), s]);
+  }
+  return (
+    <SectionCard noPadding>
+      <div className="grid grid-cols-7" style={{ borderBottom: '1px solid var(--border)' }}>
+        {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map(d => <div key={d} className="t-label px-2 py-2 text-center" style={{ color: 'var(--text-secondary)' }}>{d}</div>)}
+      </div>
+      <div className="grid grid-cols-7">
+        {dias.map(d => {
+          const k = d.format('YYYY-MM-DD');
+          const doMes = d.isSame(mes, 'month');
+          const lista = porDia.get(k) || [];
+          const hoje = d.isSame(dayjs(), 'day');
+          return (
+            <div key={k} className="min-h-[104px] p-1.5 flex flex-col gap-1" style={{ borderRight: '1px solid var(--border-subtle)', borderBottom: '1px solid var(--border-subtle)', opacity: doMes ? 1 : 0.35, boxShadow: hoje ? 'inset 0 0 0 2px var(--gold)' : undefined }}>
+              <div className="flex items-center justify-between">
+                <span className="t-caption num" style={{ color: hoje ? 'var(--gold)' : undefined, fontWeight: hoje ? 700 : 500 }}>{d.format('D')}</span>
+                {doMes && <button type="button" className="btn-icon" style={{ width: 20, height: 20 }} aria-label={`Novo show em ${d.format('DD/MM')}`} onClick={() => onNovo(k)}><Plus size={12} /></button>}
+              </div>
+              {lista.map(s => {
+                const sit = situacao(s);
+                return (
+                  <button key={s.id} type="button" onClick={() => onAbrir(s)} className="text-left rounded px-1.5 py-1 focus-ring"
+                    style={{ background: 'var(--bg-hover)', borderLeft: `3px solid ${COR_SITUACAO[sit]}` }}
+                    title={`${s.nome} · ${hora(s.horario_inicio)} · ${brl(s.valor_total_final)} · ${SITUACAO[sit].rotulo}`}>
+                    <p className="t-caption truncate" style={{ margin: 0, color: 'var(--text-primary)', fontWeight: 600 }}>{s.nome}</p>
+                    <p className="t-caption num" style={{ margin: 0 }}>{hora(s.horario_inicio)} · {brl(s.valor_total_final)}</p>
+                  </button>
+                );
+              })}
+            </div>
+          );
+        })}
+      </div>
+      <div className="flex flex-wrap gap-4 px-4 py-3">
+        {(['pendente', 'parcial', 'pago', 'pago_a_mais', 'cancelado'] as Situacao[]).map(s => (
+          <span key={s} className="t-caption flex items-center gap-1.5"><span style={{ width: 10, height: 10, borderRadius: 2, background: COR_SITUACAO[s] }} />{SITUACAO[s].rotulo}</span>
+        ))}
+      </div>
+    </SectionCard>
+  );
+};
+
+// ── Registrar pagamento ─────────────────────────────────────────────────────
+const Pagar: React.FC<{ show: Show; onFechar: () => void; onFeito: (m: string) => Promise<void> }> = ({ show, onFechar, onFeito }) => {
+  const saldo = Math.max(0, saldoDe(show));
+  const [valor, setValor] = useState(saldo ? saldo.toFixed(2).replace('.', ',') : '');
+  const [data, setData] = useState(dayjs().format('YYYY-MM-DD'));
+  const [forma, setForma] = useState('PIX');
+  const [obs, setObs] = useState('');
+  const [erro, setErro] = useState<string | null>(null);
+  const [ocupado, setOcupado] = useState(false);
+  const v = num(valor);
+  const sobra = saldo - v;
+
+  const confirmar = async () => {
+    if (v <= 0) { setErro('Informe o valor pago.'); return; }
+    setOcupado(true); setErro(null);
+    const { data: r, error } = await supabase.rpc('fn_musico_pagar', { p_musico: show.id, p_valor: v, p_data: data, p_forma: forma, p_obs: obs || null });
+    if (error) { setErro(error.message); setOcupado(false); return; }
+    const res = r as { saldo: number };
+    await onFeito(res.saldo > 0.004 ? `${show.nome}: ${brl(v)} lançado. Ainda falta ${brl(res.saldo)}.` : `${show.nome}: ${brl(v)} lançado. Show quitado.`);
+  };
+
+  return (
+    <Modal aberto onFechar={onFechar} travado={ocupado} titulo={`Pagar ${show.nome || 'músico'}`}
+      descricao={`Show de ${dataCurta(show.data_evento)}. Controle desta tela: não dá baixa no Financeiro.`}
+      rodape={<><Button onClick={onFechar} disabled={ocupado}>Cancelar</Button><Button variante="primario" icone={<Check size={16} />} onClick={confirmar} carregando={ocupado}>Lançar pagamento</Button></>}>
+      {erro && <div className="aviso aviso-perigo mb-3" role="alert">{erro}</div>}
+      <div className="grid grid-cols-3 gap-2 mb-4">
+        <Resumo rotulo="Total" valor={brl(show.valor_total_final)} />
+        <Resumo rotulo="Já pago" valor={brl(show.valor_pago)} />
+        <Resumo rotulo="Falta" valor={brl(saldo)} destaque />
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <Input rotulo="Valor pago (R$)" inputMode="decimal" value={valor} onChange={e => setValor(e.target.value)} autoFocus
+          dica={v > 0 && sobra > 0.004 ? `Parcial: vai faltar ${brl(sobra)}` : v > 0 && sobra < -0.004 ? `Passa ${brl(-sobra)} do que falta` : 'Pode ser parcial.'} />
+        <Input rotulo="Data" type="date" value={data} onChange={e => setData(e.target.value)} />
+        <Select rotulo="Forma" value={forma} onChange={e => setForma(e.target.value)}>
+          {FORMAS.map(f => <option key={f} value={f}>{f}</option>)}
+        </Select>
+        <Input rotulo="Observação" value={obs} onChange={e => setObs(e.target.value)} placeholder="Opcional" />
+      </div>
+      {v > 0 && sobra < -0.004 && <div className="aviso aviso-atencao mt-3">O valor passa do que falta. O show vai ficar como <strong>pago a mais</strong>.</div>}
+    </Modal>
+  );
+};
+
+const Resumo: React.FC<{ rotulo: string; valor: string; destaque?: boolean }> = ({ rotulo, valor, destaque }) => (
+  <div className="rounded px-3 py-2" style={{ background: 'var(--bg-hover)', border: '1px solid var(--border-subtle)' }}>
+    <p className="t-caption" style={{ margin: 0 }}>{rotulo}</p>
+    <p className="t-body num" style={{ margin: 0, fontWeight: 700, color: destaque ? 'var(--gold)' : undefined }}>{valor}</p>
+  </div>
+);
+
+// ── Detalhe e histórico ─────────────────────────────────────────────────────
+const Detalhe: React.FC<{ show: Show; onFechar: () => void; onPagar: () => void; onEditar: () => void; onMudou: (m: string) => Promise<void> }> = ({ show, onFechar, onPagar, onEditar, onMudou }) => {
+  const [pagamentos, setPagamentos] = useState<Pagamento[] | null>(null);
+  const [erro, setErro] = useState<string | null>(null);
+  const [estornando, setEstornando] = useState<string | null>(null);
+  const [motivo, setMotivo] = useState('');
+  const [ocupado, setOcupado] = useState(false);
+  const sit = situacao(show);
+
+  const carregar = async () => {
+    const { data, error } = await supabase.from('musicos_pagamentos').select('*').eq('musico_id', show.id).order('data_pagamento').order('criado_em');
+    if (error) setErro(error.message); else setPagamentos((data || []) as Pagamento[]);
+  };
+  useEffect(() => { void carregar(); }, [show.id, show.valor_pago]);
+
+  const estornar = async (p: Pagamento) => {
+    if (!motivo.trim()) { setErro('Diga o motivo do estorno.'); return; }
+    setOcupado(true); setErro(null);
+    const { error } = await supabase.rpc('fn_musico_estornar', { p_pagamento: p.id, p_motivo: motivo.trim() });
+    setOcupado(false);
+    if (error) { setErro(error.message); return; }
+    setEstornando(null); setMotivo('');
+    await onMudou(`Pagamento de ${brl(p.valor)} estornado.`);
+    await carregar();
+  };
+
+  return (
+    <Modal aberto onFechar={onFechar} largura="lg" titulo={show.nome || 'Show'}
+      descricao={`${show.data_evento ? dayjs(show.data_evento).format('dddd, DD/MM/YYYY') : ''}${show.horario_inicio ? ` · ${hora(show.horario_inicio)} às ${hora(show.horario_fim)}` : ''}${show.contato ? ` · ${show.contato}` : ''}`}
+      rodape={<>
+        <Button icone={<Pencil size={14} />} onClick={onEditar}>Editar show</Button>
+        {(sit === 'pendente' || sit === 'parcial') && <Button variante="primario" icone={<Wallet size={16} />} onClick={onPagar}>Registrar pagamento</Button>}
+      </>}>
+      {erro && <div className="aviso aviso-perigo mb-3" role="alert">{erro}</div>}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
+        <Resumo rotulo="Cachê" valor={brl(show.valor || 0)} />
+        <Resumo rotulo="Total do show" valor={brl(show.valor_total_final)} />
+        <Resumo rotulo="Pago" valor={brl(show.valor_pago)} />
+        <Resumo rotulo={saldoDe(show) < 0 ? 'Pago a mais' : 'Falta'} valor={brl(Math.abs(saldoDe(show)))} destaque />
+      </div>
+      <div className="flex items-center gap-2 mb-2">
+        <span className="t-label" style={{ color: 'var(--text-secondary)' }}>Histórico de pagamentos</span>
+        <Badge variant={SITUACAO[sit].variante}>{SITUACAO[sit].rotulo}</Badge>
+      </div>
+      {pagamentos === null ? <p className="t-caption">Carregando…</p> : pagamentos.length === 0 ? (
+        <p className="t-body" style={{ color: 'var(--text-secondary)' }}>Nenhum pagamento lançado ainda.</p>
+      ) : (
+        <div className="flex flex-col" style={{ border: '1px solid var(--border-subtle)', borderRadius: 'var(--r-control)' }}>
+          {pagamentos.map(p => (
+            <div key={p.id} className="px-3 py-2" style={{ borderBottom: '1px solid var(--border-subtle)', opacity: p.estornado_em ? 0.6 : 1 }}>
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="flex-1 min-w-[180px]">
+                  <p className="t-body" style={{ margin: 0, fontWeight: 500, textDecoration: p.estornado_em ? 'line-through' : undefined }}>
+                    {p.tipo === 'saldo_inicial' ? 'Saldo inicial' : p.forma || 'Pagamento'} · {dayjs(p.data_pagamento).format('DD/MM/YYYY')}
+                  </p>
+                  <p className="t-caption" style={{ margin: 0 }}>
+                    {p.observacao || (p.tipo === 'saldo_inicial' ? 'Já estava pago antes do histórico' : '')}
+                    {p.criado_por_nome && ` · ${p.criado_por_nome}`}
+                    {p.estornado_em && ` · estornado por ${p.estornado_por_nome || '—'} em ${dayjs(p.estornado_em).format('DD/MM')}: ${p.motivo_estorno}`}
+                  </p>
+                </div>
+                <span className="t-body num" style={{ fontWeight: 700 }}>{brl(p.valor)}</span>
+                {!p.estornado_em && estornando !== p.id && (
+                  <Button tamanho="sm" variante="discreto" icone={<Undo2 size={14} />} onClick={() => { setEstornando(p.id); setMotivo(''); }}>Estornar</Button>
                 )}
               </div>
-            ) : (
-              renderCalendarView()
-            )}
-          </>
-        )}
-      </div>
-
-      {/* Modal do Formulário */}
-      {showForm && (
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
-            <div className="rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto" style={{ background: '#1a1d2e', border: '1px solid rgba(212, 175, 55, 0.3)' }}>
-              <h3 className="text-lg font-medium text-white mb-4">
-                {editingMusico ? 'Editar Apresentação' : 'Nova Apresentação'}
-              </h3>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-white/80 mb-1">
-                    Nome do Músico/Banda *
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.nome}
-                    onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
-                    className="w-full rounded-lg px-4 py-2 text-white placeholder-white/30 focus:ring-2 focus:ring-gold focus:outline-none"
-                    style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)' }}
-                    required
-                    placeholder="Ex: João da Silva, Banda Samba Raiz"
-                  />
+              {estornando === p.id && (
+                <div className="flex flex-wrap items-end gap-2 mt-2">
+                  <Input rotulo="Motivo do estorno" value={motivo} onChange={e => setMotivo(e.target.value)} autoFocus className="flex-1 min-w-[200px]" placeholder="Ex.: lançado em dobro" />
+                  <Button tamanho="sm" onClick={() => setEstornando(null)} disabled={ocupado}>Voltar</Button>
+                  <Button tamanho="sm" variante="perigo" icone={<Undo2 size={14} />} onClick={() => estornar(p)} carregando={ocupado}>Confirmar estorno</Button>
                 </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-white/80 mb-1">
-                    Contato
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.contato}
-                    onChange={(e) => setFormData({ ...formData, contato: e.target.value })}
-                    className="w-full rounded-lg px-4 py-2 text-white placeholder-white/30 focus:ring-2 focus:ring-gold focus:outline-none"
-                    style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)' }}
-                    placeholder="Telefone ou email"
-                  />
-                </div>
-
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <label className="block text-sm font-medium text-white/80">
-                      Fornecedor (Para Pagamento)
-                    </label>
-                    {sugestedFornecedorId && formData.fornecedor_id === sugestedFornecedorId && (
-                      <span className="text-xs bg-green-500/15 text-green-300 px-2 py-1 rounded-full flex items-center gap-1">
-                        <CheckCircle className="w-3 h-3" />
-                        Auto-detectado
-                      </span>
-                    )}
-                  </div>
-                  <SearchableSelect
-                    options={fornecedores.map((f: any) => ({
-                      value: f.id,
-                      label: f.nome,
-                      sublabel: f.isMusicianType ? '🎵 Músico/Artista' : undefined
-                    }))}
-                    value={formData.fornecedor_id}
-                    onChange={(value) => {
-                      setFormData({ ...formData, fornecedor_id: value });
-                      setSugestedFornecedorId('');
-                    }}
-                    placeholder="Buscar fornecedor..."
-                    emptyMessage="Nenhum fornecedor encontrado"
-                    className={sugestedFornecedorId && formData.fornecedor_id === sugestedFornecedorId
-                      ? 'border-green-400 bg-green-500/10'
-                      : ''
-                    }
-                  />
-                  {sugestedFornecedorId && formData.fornecedor_id === sugestedFornecedorId && (
-                    <p className="text-xs text-green-400 mt-1 flex items-center gap-1">
-                      <CheckCircle className="w-3 h-3" />
-                      Fornecedor associado automaticamente pelo sistema
-                    </p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-white/80 mb-1">
-                    Data do Evento *
-                  </label>
-                  <input
-                    type="date"
-                    value={formData.data_evento}
-                    onChange={(e) => setFormData({ ...formData, data_evento: e.target.value })}
-                    className="w-full rounded-lg px-4 py-2 text-white placeholder-white/30 focus:ring-2 focus:ring-gold focus:outline-none"
-                    style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)' }}
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-white/80 mb-1">
-                    Horário de Início
-                  </label>
-                  <input
-                    type="time"
-                    value={formData.horario_inicio}
-                    onChange={(e) => setFormData({ ...formData, horario_inicio: e.target.value })}
-                    className="w-full rounded-lg px-4 py-2 text-white placeholder-white/30 focus:ring-2 focus:ring-gold focus:outline-none"
-                    style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)' }}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-white/80 mb-1">
-                    Horário de Fim
-                  </label>
-                  <input
-                    type="time"
-                    value={formData.horario_fim}
-                    onChange={(e) => setFormData({ ...formData, horario_fim: e.target.value })}
-                    className="w-full rounded-lg px-4 py-2 text-white placeholder-white/30 focus:ring-2 focus:ring-gold focus:outline-none"
-                    style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)' }}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-white/80 mb-1">
-                    Valor da Apresentação *
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <span className="text-white/60 sm:text-sm">R$</span>
-                    </div>
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      value={formData.valor}
-                      onChange={(e) => setFormData({ ...formData, valor: parseFloat(e.target.value) || 0 })}
-                      className="pl-10 w-full rounded-md bg-[#12141f]/5 border-white/20 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-white/80 mb-1">
-                    Desconto de Consumo
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <span className="text-white/60 sm:text-sm">R$</span>
-                    </div>
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      value={formData.valor_consumo}
-                      onChange={(e) => setFormData({ ...formData, valor_consumo: parseFloat(e.target.value) || 0 })}
-                      className="pl-10 w-full rounded-md bg-[#12141f]/5 border-white/20 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-white/80 mb-1">
-                    Adicional de Extras
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <span className="text-white/60 sm:text-sm">R$</span>
-                    </div>
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      value={formData.valor_adicional}
-                      onChange={(e) => setFormData({ ...formData, valor_adicional: parseFloat(e.target.value) || 0 })}
-                      className="pl-10 w-full rounded-md bg-[#12141f]/5 border-white/20 text-white shadow-sm focus:border-wine focus:ring focus:ring-wine focus:ring-opacity-50"
-                    />
-                  </div>
-                  <p className="text-xs text-white/60 mt-1">
-                    Ex: Extensão de tempo, repertório especial
-                  </p>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-white/80 mb-1">
-                    Status do Pagamento
-                  </label>
-                  <select
-                    value={formData.status_pagamento}
-                    onChange={(e) => setFormData({ ...formData, status_pagamento: e.target.value as any })}
-                    className="w-full rounded-lg px-4 py-2 text-white placeholder-white/30 focus:ring-2 focus:ring-gold focus:outline-none"
-                    style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)' }}
-                  >
-                    <option value="pendente">Pendente</option>
-                    <option value="pago">Pago</option>
-                    <option value="cancelado">Cancelado</option>
-                  </select>
-                </div>
-
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-white/80 mb-1">
-                    Material Promocional
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.material_promocional}
-                    onChange={(e) => setFormData({ ...formData, material_promocional: e.target.value })}
-                    className="w-full rounded-lg px-4 py-2 text-white placeholder-white/30 focus:ring-2 focus:ring-gold focus:outline-none"
-                    style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)' }}
-                    placeholder="Links para redes sociais, portfolio, etc."
-                  />
-                </div>
-
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-white/80 mb-1">
-                    Observações
-                  </label>
-                  <textarea
-                    value={formData.observacoes}
-                    onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
-                    className="w-full rounded-lg px-4 py-2 text-white placeholder-white/30 focus:ring-2 focus:ring-gold focus:outline-none"
-                    style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)' }}
-                    rows={3}
-                    placeholder="Observações sobre a apresentação..."
-                  />
-                </div>
-
-                {/* Cálculo do Valor Total */}
-                <div className="md:col-span-2 p-4 rounded-lg" style={{ background: 'rgba(212, 175, 55, 0.1)', border: '1px solid rgba(212, 175, 55, 0.3)' }}>
-                  <h4 className="font-medium text-gold mb-2">Cálculo do Valor Total</h4>
-                  <div className="grid grid-cols-4 gap-4 text-sm">
-                    <div>
-                      <span className="text-white/60 font-medium">Valor Base:</span>
-                      <div className="text-lg font-bold text-white">
-                        {formatCurrency(formData.valor)}
-                      </div>
-                    </div>
-                    <div>
-                      <span className="text-white/60 font-medium">Consumo (-):</span>
-                      <div className="text-lg font-bold text-rose-400">
-                        -{formatCurrency(formData.valor_consumo)}
-                      </div>
-                    </div>
-                    <div>
-                      <span className="text-white/60 font-medium">Adicional (+):</span>
-                      <div className="text-lg font-bold text-emerald-400">
-                        +{formatCurrency(formData.valor_adicional)}
-                      </div>
-                    </div>
-                    <div>
-                      <span className="text-white/60 font-medium">Total Final:</span>
-                      <div className="text-lg font-bold text-gold">
-                        {formatCurrency(calcularValorTotal())}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="mt-6 flex justify-end space-x-3">
-                <button
-                  onClick={() => {
-                    setShowForm(false);
-                    setEditingMusico(null);
-                    resetForm();
-                  }}
-                  className="px-6 py-2 rounded-lg text-white/80 hover:bg-[#12141f]/10 transition-all"
-                  style={{ border: '1px solid rgba(255,255,255,0.2)' }}
-                >
-                  Cancelar
-                </button>
-                <button
-                  onClick={handleSave}
-                  disabled={loading || !formData.nome || !formData.data_evento || formData.valor <= 0}
-                  className="px-6 py-2 rounded-lg text-white font-medium hover:scale-105 transition-all shadow-md disabled:opacity-50"
-                  style={{ background: 'linear-gradient(135deg, #D4AF37, #C5A028)' }}
-                >
-                  {loading ? 'Salvando...' : 'Salvar'}
-                </button>
-              </div>
+              )}
             </div>
-          </div>
-        )}
+          ))}
+        </div>
+      )}
+      {(show.observacoes || show.material_promocional) && (
+        <div className="mt-4 flex flex-col gap-1">
+          {show.observacoes && <p className="t-caption" style={{ margin: 0 }}><strong>Observações:</strong> {show.observacoes}</p>}
+          {show.material_promocional && <p className="t-caption" style={{ margin: 0 }}><strong>Material:</strong> {show.material_promocional}</p>}
+        </div>
+      )}
+    </Modal>
+  );
+};
 
-        <ImportarAgendaMusicosIA
-          isOpen={showImportarAgenda}
-          onClose={() => setShowImportarAgenda(false)}
-          onImportado={(quantidade) => {
-            fetchData();
-            fetchIndicadores();
-            if (quantidade > 0) {
-              setSuccessMessage(
-                `${quantidade} apresentação(ões) lançadas a partir da agenda.`,
-              );
-              setTimeout(() => setSuccessMessage(null), 5000);
-            }
-          }}
-        />
-    </div>
+// ── Cadastro do show ────────────────────────────────────────────────────────
+const FormShow: React.FC<{ inicial: Partial<Show>; fornecedores: Fornecedor[]; onFechar: () => void; onSalvo: (m: string) => Promise<void> }> = ({ inicial, fornecedores, onFechar, onSalvo }) => {
+  const novo = !inicial.id;
+  const [nome, setNome] = useState(inicial.nome || '');
+  const [contato, setContato] = useState(inicial.contato || '');
+  const [fornecedorId, setFornecedorId] = useState(inicial.fornecedor_id || '');
+  const [sugerido, setSugerido] = useState('');
+  const [data, setData] = useState(inicial.data_evento ? dayjs(inicial.data_evento).format('YYYY-MM-DD') : dayjs().format('YYYY-MM-DD'));
+  const [hIni, setHIni] = useState(hora(inicial.horario_inicio || null) || '20:00');
+  const [hFim, setHFim] = useState(hora(inicial.horario_fim || null) || '23:00');
+  const [valor, setValor] = useState(inicial.valor ? String(inicial.valor).replace('.', ',') : '');
+  const [consumo, setConsumo] = useState(inicial.valor_consumo ? String(inicial.valor_consumo).replace('.', ',') : '');
+  const [adicional, setAdicional] = useState(inicial.valor_adicional ? String(inicial.valor_adicional).replace('.', ',') : '');
+  const [material, setMaterial] = useState(inicial.material_promocional || '');
+  const [obs, setObs] = useState(inicial.observacoes || '');
+  const [cancelado, setCancelado] = useState(inicial.status_pagamento === 'cancelado');
+  const [erro, setErro] = useState<string | null>(null);
+  const [ocupado, setOcupado] = useState(false);
+  const total = Math.max(0, num(valor) + num(adicional) - num(consumo));
+  const pago = Number(inicial.valor_pago) || 0;
+
+  useEffect(() => {
+    if (!novo || !nome.trim() || !fornecedores.length) return;
+    const melhor = fornecedores.map(f => ({ id: f.id, nota: parecido(nome, f.nome) })).sort((a, b) => b.nota - a.nota)[0];
+    if (melhor && melhor.nota >= 60) {
+      setSugerido(melhor.id);
+      setFornecedorId(atual => atual || melhor.id);
+    } else setSugerido('');
+  }, [nome, fornecedores, novo]);
+
+  const salvar = async () => {
+    if (!nome.trim() || !data || num(valor) <= 0) { setErro('Preencha nome, data e o valor do cachê.'); return; }
+    setOcupado(true); setErro(null);
+    try {
+      let fid = fornecedorId;
+      if (!fid && novo) {
+        const { data: existe } = await supabase.from('fornecedores').select('id').eq('nome', nome.trim()).eq('tipo', 'musico').maybeSingle();
+        if (existe) fid = existe.id;
+        else {
+          const { data: criado, error } = await supabase.from('fornecedores').insert([{
+            nome: nome.trim(), telefone: contato.trim() || null, status: 'ativo', tipo: 'musico', observacoes: 'Cadastrado automaticamente via módulo de Músicos',
+          }]).select('id').single();
+          if (error) throw error;
+          fid = criado.id;
+        }
+      }
+      const linha = {
+        nome: nome.trim(), contato: contato.trim() || null, data_evento: data, horario_inicio: hIni || null, horario_fim: hFim || null,
+        valor: num(valor), valor_consumo: num(consumo), valor_adicional: num(adicional), material_promocional: material.trim() || null,
+        observacoes: obs.trim() || null, fornecedor_id: fid || null,
+        // O banco recalcula total, saldo e situação; aqui só se marca o cancelamento.
+        status_pagamento: cancelado ? 'cancelado' : 'pendente',
+      };
+      const { error } = novo
+        ? await supabase.from('musicos').insert([linha])
+        : await supabase.from('musicos').update(linha).eq('id', inicial.id!);
+      if (error) throw error;
+      await onSalvo(novo ? `Show de ${linha.nome} lançado.` : `Show de ${linha.nome} atualizado.`);
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : 'Erro ao salvar');
+      setOcupado(false);
+    }
+  };
+
+  return (
+    <Modal aberto onFechar={onFechar} largura="lg" travado={ocupado} titulo={novo ? 'Novo show' : 'Editar show'}
+      descricao="O show gera a conta a pagar no Financeiro. Os pagamentos se lançam depois, no botão Pagar."
+      rodape={<><Button onClick={onFechar} disabled={ocupado}>Cancelar</Button><Button variante="primario" icone={<Check size={16} />} onClick={salvar} carregando={ocupado}>Salvar</Button></>}>
+      {erro && <div className="aviso aviso-perigo mb-3" role="alert">{erro}</div>}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <Input rotulo="Músico ou banda" value={nome} onChange={e => setNome(e.target.value)} autoFocus className="md:col-span-2" placeholder="Ex.: Wender e Falcão" />
+        <Input rotulo="Contato" value={contato} onChange={e => setContato(e.target.value)} placeholder="Telefone" />
+        <div>
+          <SearchableSelect label="Fornecedor (para o Financeiro)" theme="dark"
+            options={fornecedores.map(f => ({ value: f.id, label: f.nome, sublabel: f.tipo === 'musico' ? 'Músico' : undefined }))}
+            value={fornecedorId} onChange={v => { setFornecedorId(v); setSugerido(''); }} placeholder="Buscar fornecedor…" emptyMessage="Nenhum fornecedor" />
+          <p className="t-caption mt-1" style={{ margin: 0 }}>
+            {sugerido && fornecedorId === sugerido ? <span className="texto-certo">Achado pelo nome. Confira.</span> : novo ? 'Sem fornecedor, o sistema cadastra um com o nome do músico.' : ''}
+          </p>
+        </div>
+        <Input rotulo="Data" type="date" value={data} onChange={e => setData(e.target.value)} />
+        <div className="grid grid-cols-2 gap-3">
+          <Input rotulo="Início" type="time" value={hIni} onChange={e => setHIni(e.target.value)} />
+          <Input rotulo="Fim" type="time" value={hFim} onChange={e => setHFim(e.target.value)} />
+        </div>
+        <Input rotulo="Cachê (R$)" inputMode="decimal" value={valor} onChange={e => setValor(e.target.value)} placeholder="0,00" />
+        <div className="grid grid-cols-2 gap-3">
+          <Input rotulo="Adicional (R$)" inputMode="decimal" value={adicional} onChange={e => setAdicional(e.target.value)} placeholder="0,00" dica="Hora extra, repertório" />
+          <Input rotulo="Consumo (R$)" inputMode="decimal" value={consumo} onChange={e => setConsumo(e.target.value)} placeholder="0,00" dica="Desconta do cachê" />
+        </div>
+        <Input rotulo="Material promocional" value={material} onChange={e => setMaterial(e.target.value)} className="md:col-span-2" placeholder="Instagram, link, release" />
+        <Textarea rotulo="Observações" value={obs} onChange={e => setObs(e.target.value)} rows={2} className="md:col-span-2" />
+      </div>
+      <div className="grid grid-cols-3 gap-2 mt-4">
+        <Resumo rotulo="Total do show" valor={brl(total)} destaque />
+        <Resumo rotulo="Já pago" valor={brl(pago)} />
+        <Resumo rotulo={total - pago < 0 ? 'Pago a mais' : 'Vai faltar'} valor={brl(Math.abs(total - pago))} />
+      </div>
+      {!novo && (
+        <label className="flex items-center gap-2 t-body mt-4">
+          <input type="checkbox" checked={cancelado} onChange={e => setCancelado(e.target.checked)} />
+          <Ban size={14} /> Show cancelado (sai do a pagar e cancela a conta no Financeiro)
+        </label>
+      )}
+    </Modal>
   );
 };
 
