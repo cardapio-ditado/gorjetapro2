@@ -15,8 +15,10 @@ import {
  */
 
 type Filtro = 'ativas' | 'vence_30' | 'vence_7' | 'vencida' | 'encerradas' | 'todas';
-interface Aviso { garrafa_id: string; tipo: '30d' | '7d'; status: 'enviando' | 'enviado' | 'falha'; erro: string | null; atualizado_em: string }
+interface Aviso { garrafa_id: string; tipo: 'boas_vindas' | '30d' | '7d'; status: 'enviando' | 'enviado' | 'falha'; erro: string | null; atualizado_em: string }
 interface Historico { id: number; tipo: string; nivel_antes: string | null; nivel_depois: string | null; texto: string | null; por_nome: string | null; criado_em: string }
+
+const ROTULO_AVISO: Record<Aviso['tipo'], string> = { boas_vindas: 'Boas-vindas', '30d': '30 dias', '7d': '7 dias' };
 
 const noFiltro = (s: Situacao, f: Filtro) =>
   f === 'todas' ? true
@@ -34,15 +36,21 @@ const ClubeWhisky: React.FC = () => {
   const [busca, setBusca] = useState('');
   const [nova, setNova] = useState(false);
   const [ficha, setFicha] = useState<Garrafa | null>(null);
+  const [mensagens, setMensagens] = useState(false);
 
   const carregar = async () => {
     setCarregando(true); setErro(null);
-    const [g, a] = await Promise.all([
+    const [g, a, b] = await Promise.all([
       supabase.from('clube_whisky_garrafas').select('*').order('validade'),
       supabase.from('clube_whisky_avisos').select('garrafa_id, tipo, status, erro, atualizado_em'),
+      supabase.from('clube_whisky_boas_vindas').select('garrafa_id, status, erro, atualizado_em'),
     ]);
     if (g.error) setErro(g.error.message);
-    else { setGarrafas((g.data || []) as Garrafa[]); setAvisos((a.data || []) as Aviso[]); }
+    else {
+      setGarrafas((g.data || []) as Garrafa[]);
+      const boas = ((b.data || []) as Omit<Aviso, 'tipo'>[]).map(x => ({ ...x, tipo: 'boas_vindas' as const }));
+      setAvisos([...boas, ...((a.data || []) as Aviso[])]);
+    }
     setCarregando(false);
   };
   useEffect(() => { void carregar(); }, []);
@@ -73,6 +81,7 @@ const ClubeWhisky: React.FC = () => {
         subtitle="Garrafas guardadas dos clientes. Valem 6 meses; o cliente recebe aviso no WhatsApp com 30 e 7 dias. Vencida, fica para a casa."
         actions={<div className="flex items-center gap-2">
           <IconButton aria-label="Atualizar" onClick={carregar} disabled={carregando}><RefreshCw size={16} className={carregando ? 'animate-spin' : ''} /></IconButton>
+          <Button icone={<MessageCircle size={16} />} onClick={() => setMensagens(true)}>Mensagens</Button>
           <Button variante="primario" icone={<Plus size={16} />} onClick={() => setNova(true)}>Nova garrafa</Button>
         </div>} />
 
@@ -148,7 +157,7 @@ const ClubeWhisky: React.FC = () => {
                           {!g.aceita_whatsapp ? <span className="t-caption">não aceita</span>
                             : !av.length ? <span className="t-caption">—</span>
                             : <div className="flex gap-1">{av.map(a => (
-                              <Badge key={a.tipo} variant={a.status === 'enviado' ? 'success' : a.status === 'falha' ? 'danger' : 'neutral'}>{a.tipo === '30d' ? '30 dias' : '7 dias'}{a.status === 'falha' ? ' falhou' : ''}</Badge>
+                              <Badge key={a.tipo} variant={a.status === 'enviado' ? 'success' : a.status === 'falha' ? 'danger' : 'neutral'}>{ROTULO_AVISO[a.tipo]}{a.status === 'falha' ? ' falhou' : ''}</Badge>
                             ))}</div>}
                         </td>
                       </tr>
@@ -160,9 +169,87 @@ const ClubeWhisky: React.FC = () => {
           )}
       </SectionCard>
 
+      {mensagens && <Mensagens onFechar={() => setMensagens(false)} onSalvo={m => { setMensagens(false); setAviso(m); }} />}
       {nova && <NovaGarrafa onFechar={() => setNova(false)} onFeito={async m => { setNova(false); await onMudou(m); }} />}
       {ficha && <Ficha g={ficha} avisos={avisosDe(ficha.id)} onFechar={() => setFicha(null)} onMudou={onMudou} onErro={setErro} />}
     </div>
+  );
+};
+
+interface ConfigClube { modelo_boas_vindas: string | null; modelo_vencimento: string | null; imagem_url: string | null; pode_editar: boolean }
+
+/**
+ * As mensagens do WhatsApp do Clube: nomes dos modelos aprovados na Meta e a
+ * imagem do cabeçalho (a Meta pede a imagem por link em cada envio).
+ */
+const Mensagens: React.FC<{ onFechar: () => void; onSalvo: (m: string) => void }> = ({ onFechar, onSalvo }) => {
+  const [cfg, setCfg] = useState<ConfigClube | null>(null);
+  const [boas, setBoas] = useState('');
+  const [venc, setVenc] = useState('');
+  const [imagem, setImagem] = useState<string | null>(null);
+  const [erro, setErro] = useState<string | null>(null);
+  const [ocupado, setOcupado] = useState(false);
+
+  useEffect(() => {
+    supabase.rpc('fn_clube_whisky_config').then(({ data, error }) => {
+      if (error) { setErro(error.message); return; }
+      const c = data as ConfigClube;
+      setCfg(c); setBoas(c.modelo_boas_vindas || ''); setVenc(c.modelo_vencimento || ''); setImagem(c.imagem_url);
+    });
+  }, []);
+
+  const subir = async (arquivo: File) => {
+    if (!/^image\/(jpeg|png)$/.test(arquivo.type)) { setErro('A imagem precisa ser JPG ou PNG.'); return; }
+    if (arquivo.size > 5 * 1024 * 1024) { setErro('A imagem passa de 5 MB.'); return; }
+    setOcupado(true); setErro(null);
+    const caminho = `mensagens/clube-${Date.now()}.${arquivo.type === 'image/png' ? 'png' : 'jpg'}`;
+    const { error } = await supabase.storage.from('clube').upload(caminho, arquivo, { contentType: arquivo.type });
+    setOcupado(false);
+    if (error) { setErro(error.message); return; }
+    setImagem(supabase.storage.from('clube').getPublicUrl(caminho).data.publicUrl);
+  };
+
+  const salvar = async () => {
+    setOcupado(true); setErro(null);
+    const { error } = await supabase.rpc('fn_clube_whisky_config_salvar', { p: { modelo_boas_vindas: boas, modelo_vencimento: venc, imagem_url: imagem || '' } });
+    setOcupado(false);
+    if (error) { setErro(error.message); return; }
+    onSalvo('Mensagens do Clube salvas.');
+  };
+
+  const pode = !!cfg?.pode_editar;
+  return (
+    <Modal aberto onFechar={onFechar} largura="lg" travado={ocupado} titulo="Mensagens do Clube no WhatsApp"
+      descricao="Os modelos são criados e aprovados na Meta (categoria Utilidade). Aqui vão os nomes deles e a imagem do cabeçalho."
+      rodape={<><Button onClick={onFechar} disabled={ocupado}>Fechar</Button>{pode && <Button variante="primario" icone={<Check size={16} />} onClick={salvar} carregando={ocupado}>Salvar</Button>}</>}>
+      {erro && <div className="aviso aviso-perigo mb-3" role="alert">{erro}</div>}
+      {cfg && !pode && <div className="aviso aviso-atencao mb-3">Só o gestor muda as mensagens.</div>}
+      {!cfg ? <p className="t-caption">Carregando…</p> : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="flex flex-col gap-3">
+            <Input rotulo="Modelo de boas-vindas" value={boas} onChange={e => setBoas(e.target.value)} disabled={!pode} placeholder="nome do modelo na Meta"
+              dica="Sai assim que a garrafa é cadastrada. {{1}} nome, {{2}} garrafa, {{3}} validade." />
+            <Input rotulo="Modelo de vencimento" value={venc} onChange={e => setVenc(e.target.value)} disabled={!pode} placeholder="nome do modelo na Meta"
+              dica="Sai com 30 e com 7 dias. {{1}} nome, {{2}} garrafa, {{3}} quanto falta, {{4}} data." />
+          </div>
+          <div className="flex flex-col gap-2">
+            <span className="t-label" style={{ color: 'var(--text-secondary)' }}>Imagem do cabeçalho</span>
+            {imagem ? <img src={imagem} alt="Imagem das mensagens do Clube" style={{ width: '100%', maxWidth: 260, borderRadius: 'var(--r-control)', border: '1px solid var(--border-subtle)' }} />
+              : <p className="t-caption" style={{ margin: 0 }}>Nenhuma imagem. Só é preciso se o modelo tiver imagem no cabeçalho.</p>}
+            {pode && (
+              <div className="flex flex-wrap gap-2">
+                <label className="btn-secondary btn-sm" style={{ cursor: 'pointer' }}>
+                  {imagem ? 'Trocar imagem' : 'Subir imagem'}
+                  <input type="file" accept="image/jpeg,image/png" hidden onChange={e => { const f = e.target.files?.[0]; if (f) void subir(f); e.target.value = ''; }} />
+                </label>
+                {imagem && <Button tamanho="sm" variante="discreto" onClick={() => setImagem(null)}>Tirar</Button>}
+              </div>
+            )}
+            <p className="t-caption" style={{ margin: 0 }}>Use a mesma imagem do modelo aprovado. JPG ou PNG, até 5 MB.</p>
+          </div>
+        </div>
+      )}
+    </Modal>
   );
 };
 
@@ -240,7 +327,7 @@ const Ficha: React.FC<{ g: Garrafa; avisos: Aviso[]; onFechar: () => void; onMud
         <div className="flex flex-wrap gap-2 mb-4">
           {avisos.map(a => (
             <Badge key={a.tipo} variant={a.status === 'enviado' ? 'success' : a.status === 'falha' ? 'danger' : 'neutral'}>
-              Aviso {a.tipo === '30d' ? '30' : '7'} dias: {a.status === 'enviado' ? `enviado ${dayjs(a.atualizado_em).format('DD/MM')}` : a.status === 'falha' ? 'falhou' : 'enviando'}
+              {a.tipo === 'boas_vindas' ? 'Boas-vindas' : `Aviso ${ROTULO_AVISO[a.tipo]}`}: {a.status === 'enviado' ? `enviado ${dayjs(a.atualizado_em).format('DD/MM')}` : a.status === 'falha' ? 'falhou' : 'enviando'}
             </Badge>
           ))}
         </div>

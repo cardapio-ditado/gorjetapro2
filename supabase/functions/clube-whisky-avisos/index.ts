@@ -1,14 +1,19 @@
 /**
- * Clube do Whisky: avisa o cliente pelo WhatsApp que a garrafa guardada vai
- * vencer (com 30 e com 7 dias). Roda todo dia pelo cron.
+ * Clube do Whisky no WhatsApp do cliente: boas-vindas assim que a garrafa é
+ * cadastrada (gatilho no banco) e aviso de que ela vai vencer, com 30 e com 7
+ * dias (cron diário, que também repesca boas-vindas que falharam).
  *
  * Usa o mesmo número da Cloud API do agente (secret META_WA_TOKEN e os IDs em
  * agente_config). Mensagem para cliente fora da janela de 24 h precisa de
- * modelo aprovado pela Meta; o nome dele fica em agente_config.clube_modelo
- * (padrão "clube_whisky_vencimento"), com as variáveis {{1}} primeiro nome,
- * {{2}} garrafa, {{3}} quanto falta ("7 dias") e {{4}} a data.
+ * modelo aprovado pela Meta. Os nomes ficam em agente_config (tela do Clube,
+ * botão Mensagens):
+ *   clube_modelo_boas_vindas  {{1}} primeiro nome, {{2}} garrafa, {{3}} validade
+ *   clube_modelo              {{1}} primeiro nome, {{2}} garrafa, {{3}} quanto
+ *                             falta ("7 dias"), {{4}} a data
+ * Se o modelo tiver imagem no cabeçalho, vai a de clube_imagem_url.
  *
- *   POST ?acao=enviar     (padrão) manda os avisos do dia
+ *   POST ?acao=boas_vindas  {garrafa_id}  boas-vindas de uma garrafa
+ *   POST ?acao=enviar     (padrão) avisos de vencimento e boas-vindas pendentes
  *   POST ?acao=modelo     cria o modelo na Meta (uma vez)
  *   POST ?acao=situacao   status do modelo
  *
@@ -22,7 +27,8 @@ const MODELO_PADRAO = "clube_whisky_vencimento";
 
 type ErroMeta = { code?: number; message?: string; error_data?: { details?: string } };
 type Resposta<T> = T & { error?: ErroMeta };
-interface ConfigMeta { token: string; phoneId: string; wabaId: string; modelo: string }
+interface ConfigMeta { token: string; phoneId: string; wabaId: string; modelo: string; modeloBoasVindas: string | null; imagem: string | null }
+interface Modelo { name: string; status: string; category: string; language?: string; components?: { type: string; format?: string }[] }
 interface Devido { garrafa_id: string; tipo: "30d" | "7d"; nome: string; telefone: string; garrafa: string; validade: string; dias: number }
 
 async function graph<T>(caminho: string, token: string, metodo: "GET" | "POST" = "GET", corpo?: unknown): Promise<Resposta<T>> {
@@ -37,11 +43,13 @@ async function graph<T>(caminho: string, token: string, metodo: "GET" | "POST" =
 
 const textoDoErro = (e?: ErroMeta) => (e ? [e.code, e.message, e.error_data?.details].filter(Boolean).join(" · ") : "erro desconhecido da Meta");
 
+const texto = (v: unknown) => (typeof v === "string" && v.trim() ? v.trim() : null);
+
 async function config(db: SupabaseClient): Promise<ConfigMeta> {
-  const { data } = await db.from("agente_config").select("chave, valor").in("chave", ["meta_phone_number_id", "meta_waba_id", "clube_modelo"]);
+  const { data } = await db.from("agente_config").select("chave, valor").in("chave", ["meta_phone_number_id", "meta_waba_id", "clube_modelo", "clube_modelo_boas_vindas", "clube_imagem_url"]);
   const v = Object.fromEntries((data ?? []).map((r) => [r.chave, r.valor]));
   const c = { token: Deno.env.get("META_WA_TOKEN") ?? "", phoneId: String(v.meta_phone_number_id ?? ""), wabaId: String(v.meta_waba_id ?? ""),
-    modelo: typeof v.clube_modelo === "string" && v.clube_modelo.trim() ? v.clube_modelo.trim() : MODELO_PADRAO };
+    modelo: texto(v.clube_modelo) ?? MODELO_PADRAO, modeloBoasVindas: texto(v.clube_modelo_boas_vindas), imagem: texto(v.clube_imagem_url) };
   if (!c.token || !c.phoneId || !c.wabaId) throw new Error("WhatsApp da Meta não configurado (token ou IDs).");
   return c;
 }
@@ -67,21 +75,70 @@ async function criarModelo(c: ConfigMeta) {
   return { id: r.id, status: r.status, categoria: r.category };
 }
 
-async function statusModelo(c: ConfigMeta): Promise<{ name: string; status: string; category: string; language?: string } | null> {
-  const r = await graph<{ data?: { name: string; status: string; category: string; language?: string }[] }>(
-    `${c.wabaId}/message_templates?fields=name,status,category,language&name=${c.modelo}`, c.token);
+async function statusModelo(c: ConfigMeta, nome = c.modelo): Promise<Modelo | null> {
+  const r = await graph<{ data?: Modelo[] }>(
+    `${c.wabaId}/message_templates?fields=name,status,category,language,components&name=${encodeURIComponent(nome)}`, c.token);
   if (r.error) throw new Error(`Meta: ${textoDoErro(r.error)}`);
   // Mais de um idioma com o mesmo nome: vale o aprovado.
-  const lista = (r.data ?? []).filter((m) => m.name === c.modelo);
+  const lista = (r.data ?? []).filter((m) => m.name === nome);
   return lista.find((m) => m.status === "APPROVED") ?? lista[0] ?? null;
+}
+
+/** Manda um modelo aprovado; com imagem no cabeçalho, vai a imagem do Clube. */
+async function mandarModelo(c: ConfigMeta, m: Modelo, para: string, variaveis: string[]) {
+  const cabecalho = m.components?.find((x) => x.type === "HEADER");
+  const componentes: unknown[] = [];
+  if (cabecalho?.format === "IMAGE") {
+    if (!c.imagem) return { error: { message: "o modelo tem imagem e falta a imagem do Clube (tela do Clube, botão Mensagens)" } as ErroMeta };
+    componentes.push({ type: "header", parameters: [{ type: "image", image: { link: c.imagem } }] });
+  }
+  componentes.push({ type: "body", parameters: variaveis.map((text) => ({ type: "text", text })) });
+  return await graph<{ messages?: { id: string }[] }>(`${c.phoneId}/messages`, c.token, "POST", {
+    messaging_product: "whatsapp", to: para, type: "template",
+    template: { name: m.name, language: { code: m.language ?? "pt_BR" }, components: componentes },
+  });
+}
+
+interface BoasVindas { garrafa_id: string; nome: string; telefone: string; garrafa: string; validade: string }
+
+/** Boas-vindas: uma por garrafa, reservada antes de sair. */
+async function boasVindas(db: SupabaseClient, c: ConfigMeta, garrafaId: string | null) {
+  if (!c.modeloBoasVindas) return { enviados: 0, aguardando_modelo: "sem nome do modelo" };
+  const modelo = await statusModelo(c, c.modeloBoasVindas);
+  if (modelo?.status !== "APPROVED") return { enviados: 0, aguardando_modelo: modelo?.status ?? "inexistente" };
+  const { data, error } = await db.rpc("fn_clube_whisky_boas_vindas_devidas", { p_garrafa: garrafaId });
+  if (error) throw error;
+  const placar = { enviados: 0, falhas: 0, ignorados: 0 };
+  for (const d of (data ?? []) as BoasVindas[]) {
+    const { data: atual } = await db.from("clube_whisky_boas_vindas").select("garrafa_id, tentativas").eq("garrafa_id", d.garrafa_id).maybeSingle();
+    const reserva = atual
+      ? await db.from("clube_whisky_boas_vindas").update({ status: "enviando", tentativas: atual.tentativas + 1, atualizado_em: new Date().toISOString() })
+          .eq("garrafa_id", d.garrafa_id).eq("status", "falha").select("garrafa_id").maybeSingle()
+      : await db.from("clube_whisky_boas_vindas").insert({ garrafa_id: d.garrafa_id }).select("garrafa_id").maybeSingle();
+    if (reserva.error || !reserva.data) { placar.ignorados++; continue; }
+
+    const r = await mandarModelo(c, modelo, d.telefone, [d.nome || "cliente", nomeGarrafa(d.garrafa), d.validade.split("-").reverse().join("/")]);
+    const ok = !r.error && Boolean(r.messages?.[0]?.id);
+    await db.from("clube_whisky_boas_vindas").update({
+      status: ok ? "enviado" : "falha", wa_id: r.messages?.[0]?.id ?? null, erro: ok ? null : textoDoErro(r.error),
+      atualizado_em: new Date().toISOString(),
+    }).eq("garrafa_id", d.garrafa_id);
+    await db.from("clube_whisky_historico").insert({
+      garrafa_id: d.garrafa_id, tipo: "aviso", por_nome: "WhatsApp automático",
+      texto: ok ? "Boas-vindas enviada" : `Boas-vindas falhou: ${textoDoErro(r.error)}`,
+    });
+    if (ok) placar.enviados++; else placar.falhas++;
+  }
+  return placar;
 }
 
 const nomeGarrafa = (s: string) =>
   s.replace(/\s+GF\b/i, "").replace(/\s{2,}/g, " ").trim().toLowerCase().replace(/(^|\s|\()\S/g, (x) => x.toUpperCase());
 
 async function enviar(db: SupabaseClient, c: ConfigMeta) {
+  const boas = await boasVindas(db, c, null);
   const modelo = await statusModelo(c);
-  if (modelo?.status !== "APPROVED") return { enviados: 0, falhas: 0, aguardando_modelo: modelo?.status ?? "inexistente" };
+  if (modelo?.status !== "APPROVED") return { boas_vindas: boas, vencimento: { enviados: 0, aguardando_modelo: modelo?.status ?? "inexistente" } };
 
   const { data, error } = await db.rpc("fn_clube_whisky_avisos_devidos");
   if (error) throw error;
@@ -106,13 +163,7 @@ async function enviar(db: SupabaseClient, c: ConfigMeta) {
 
     const prazo = d.dias <= 0 ? "hoje" : d.dias === 1 ? "1 dia" : `${d.dias} dias`;
     const dia = d.validade.split("-").reverse().join("/");
-    const r = await graph<{ messages?: { id: string }[] }>(`${c.phoneId}/messages`, c.token, "POST", {
-      messaging_product: "whatsapp", to: d.telefone, type: "template",
-      template: {
-        name: c.modelo, language: { code: modelo.language ?? "pt_BR" },
-        components: [{ type: "body", parameters: [d.nome || "cliente", nomeGarrafa(d.garrafa), prazo, dia].map((text) => ({ type: "text", text })) }],
-      },
-    });
+    const r = await mandarModelo(c, modelo, d.telefone, [d.nome || "cliente", nomeGarrafa(d.garrafa), prazo, dia]);
     const ok = !r.error && Boolean(r.messages?.[0]?.id);
     await db.from("clube_whisky_avisos").update({
       status: ok ? "enviado" : "falha", wa_id: r.messages?.[0]?.id ?? null, erro: ok ? null : textoDoErro(r.error),
@@ -124,7 +175,7 @@ async function enviar(db: SupabaseClient, c: ConfigMeta) {
     });
     if (ok) placar.enviados++; else placar.falhas++;
   }
-  return placar;
+  return { boas_vindas: boas, vencimento: placar };
 }
 
 Deno.serve(async (req) => {
@@ -136,7 +187,14 @@ Deno.serve(async (req) => {
     const acao = new URL(req.url).searchParams.get("acao") ?? "enviar";
     const c = await config(db);
     if (acao === "modelo") return json(await criarModelo(c));
-    if (acao === "situacao") return json({ modelo: await statusModelo(c) });
+    if (acao === "situacao") {
+      return json({ vencimento: await statusModelo(c), boas_vindas: c.modeloBoasVindas ? await statusModelo(c, c.modeloBoasVindas) : null, imagem: c.imagem });
+    }
+    if (acao === "boas_vindas") {
+      const corpo = await req.json().catch(() => ({})) as { garrafa_id?: string };
+      if (!corpo.garrafa_id) return json({ erro: "falta garrafa_id" }, 400);
+      return json(await boasVindas(db, c, corpo.garrafa_id));
+    }
     return json(await enviar(db, c));
   } catch (e) {
     return json({ erro: e instanceof Error ? e.message : String(e) }, 500);
