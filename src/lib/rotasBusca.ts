@@ -1,6 +1,6 @@
 import type { LucideIcon } from 'lucide-react';
 import {
-  BookOpen, CalendarDays, DollarSign, Home, Music, Palette, Settings, Star, Target, TrendingUp, UserPlus, Users, Warehouse,
+  BookOpen, CalendarDays, DollarSign, Home, Music, Palette, Settings, Star, Target, TrendingUp, UserPlus, Users, Warehouse, Wine,
 } from 'lucide-react';
 
 /** Uma tela que a busca do topo sabe abrir. */
@@ -31,6 +31,7 @@ export const ROTAS_BUSCA: RotaBusca[] = [
   { label: 'RH — Gorjetas',           path: '/staff?tab=7',                                         icon: Users },
   { label: 'Recrutamento',            path: '/recruitment',                                          icon: Users, apelidos: 'vaga currículo entrevista' },
   // Músicos & Eventos
+  { label: 'Clube do Whisky',         path: '/clube-whisky',                                         icon: Wine, apelidos: 'garrafa guardada whisky clube socio' },
   { label: 'Extras',                  path: '/extras',                                               icon: UserPlus, apelidos: 'diarista freelancer freela diaria' },
   { label: 'Músicos',                 path: '/musicians',                                            icon: Music, apelidos: 'show agenda banda' },
   { label: 'Eventos',                 path: '/events',                                               icon: CalendarDays, apelidos: 'festa reserva' },
