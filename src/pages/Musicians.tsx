@@ -2,11 +2,12 @@ import React, { useEffect, useMemo, useState } from 'react';
 import dayjs from 'dayjs';
 import 'dayjs/locale/pt-br';
 import {
-  Ban, Check, ChevronLeft, ChevronRight, Download, FileText, History, Music, Pencil,
-  Plus, RefreshCw, Search, Sparkles, Trash2, Undo2, Wallet,
+  Ban, Check, ChevronLeft, ChevronRight, Download, FileText, History, MessageCircle, Music, Pencil,
+  Plus, RefreshCw, Search, Sparkles, Trash2, Undo2, UserRound, Wallet, X,
 } from 'lucide-react';
 import { ReportGenerator, exportToExcel } from '../utils/reportGenerator';
 import { supabase } from '../lib/supabase';
+import { urlWhatsApp } from '../components/inventory/comprasShared';
 import { SearchableSelect } from '../components/common/SearchableSelect';
 import {
   Badge, Button, Chip, EmptyState, IconButton, Input, KPICard, Modal, PageHeader, SectionCard, Segmented, Select,
@@ -64,7 +65,7 @@ interface Fornecedor { id: string; nome: string; tipo: string }
 
 type Situacao = 'pendente' | 'parcial' | 'pago' | 'pago_a_mais' | 'cancelado' | 'sem_valor';
 type Filtro = 'todos' | 'a_pagar' | Situacao;
-type Visao = 'lista' | 'calendario';
+type Visao = 'lista' | 'a_pagar' | 'calendario';
 
 const SITUACAO: Record<Situacao, { rotulo: string; variante: BadgeVariante }> = {
   pendente: { rotulo: 'Pendente', variante: 'warning' },
@@ -94,6 +95,16 @@ function situacao(s: Show): Situacao {
 }
 
 const saldoDe = (s: Show) => (s.status_pagamento === 'cancelado' ? 0 : (Number(s.valor_total_final) || 0) - (Number(s.valor_pago) || 0));
+const emAberto = (s: Show) => saldoDe(s) > 0.004;
+/** O mesmo artista com o nome escrito diferente (caixa, espaço) cai junto. */
+const chaveArtista = (nome: string | null) => (nome || '').trim().toLowerCase().replace(/\s+/g, ' ');
+
+/** Extrato do que está em aberto, para mandar ao músico pelo WhatsApp. */
+function textoExtrato(nome: string, abertos: Show[]): string {
+  const linhas = abertos.map(s => `• ${dataCurta(s.data_evento)}: show ${brl(s.valor_total_final)}${s.valor_pago > 0 ? `, pago ${brl(s.valor_pago)}` : ''}, falta ${brl(saldoDe(s))}`);
+  const total = abertos.reduce((a, s) => a + saldoDe(s), 0);
+  return [`🎵 Ditado Popular · cachês de ${nome}`, '', ...linhas, '', `Total em aberto: ${brl(total)}`].join('\n');
+}
 
 /** Nome parecido para sugerir o fornecedor do cadastro do músico. */
 function parecido(a: string, b: string): number {
@@ -136,6 +147,11 @@ const Musicians: React.FC = () => {
   const [pagando, setPagando] = useState<Show | null>(null);
   const [detalhe, setDetalhe] = useState<Show | null>(null);
   const [importando, setImportando] = useState(false);
+  const [marcados, setMarcados] = useState<Set<string>>(new Set());
+  const [lote, setLote] = useState<{ titulo: string; shows: Show[] } | null>(null);
+  const [ficha, setFicha] = useState<string | null>(null);
+  // Muda a cada pagamento, para a visão "A pagar" e a ficha recarregarem.
+  const [versao, setVersao] = useState(0);
 
   const irParaMes = (m: dayjs.Dayjs) => {
     setMes(m.startOf('month'));
@@ -152,6 +168,7 @@ const Musicians: React.FC = () => {
       const { data, error } = await q.order('data_evento', { ascending: true }).order('horario_inicio', { ascending: true });
       if (error) throw error;
       setShows((data || []) as Show[]);
+      setVersao(v => v + 1);
     } catch (e) {
       setErro(e instanceof Error ? e.message : 'Erro ao carregar os shows');
     } finally {
@@ -167,8 +184,13 @@ const Musicians: React.FC = () => {
   }, []);
 
   // O show aberto no histórico acompanha a lista recarregada.
+  // Show fora do período (aberto pela ficha ou pelo "A pagar") é buscado sozinho.
   useEffect(() => {
-    if (detalhe) setDetalhe(shows.find(s => s.id === detalhe.id) || null);
+    if (!detalhe) return;
+    const achado = shows.find(s => s.id === detalhe.id);
+    if (achado) { setDetalhe(achado); return; }
+    supabase.from('vw_musicos_financeiro').select('*').eq('id', detalhe.id).maybeSingle()
+      .then(({ data }) => setDetalhe(data ? (data as Show) : null));
   }, [shows]);
 
   const visiveis = useMemo(() => {
@@ -196,6 +218,16 @@ const Musicians: React.FC = () => {
       aMais: ativos.filter(s => situacao(s) === 'pago_a_mais'),
     };
   }, [shows]);
+
+  // Seleção para pagar vários shows de uma vez (só os que têm saldo).
+  const selecionados = useMemo(() => shows.filter(s => marcados.has(s.id) && emAberto(s)), [shows, marcados]);
+  const artistasSelecionados = new Set(selecionados.map(s => chaveArtista(s.nome))).size;
+  const marcar = (id: string, ligado: boolean) => setMarcados(p => {
+    const n = new Set(p);
+    if (ligado) n.add(id); else n.delete(id);
+    return n;
+  });
+  useEffect(() => { setMarcados(new Set()); }, [inicio, fim]);
 
   const contagem = useMemo(() => {
     const c: Record<string, number> = {};
@@ -266,9 +298,10 @@ const Musicians: React.FC = () => {
       {erro && <div className="aviso aviso-perigo mb-3" role="alert">{erro}</div>}
       {aviso && <div className="aviso aviso-certo mb-3">{aviso}</div>}
 
+      {visao !== 'a_pagar' && <>
       <div className="flex flex-wrap items-center gap-2 mb-4">
         <IconButton aria-label="Mês anterior" onClick={() => irParaMes(mes.subtract(1, 'month'))}><ChevronLeft size={16} /></IconButton>
-        <span className="t-subsec capitalize" style={{ minWidth: 170, textAlign: 'center' }}>{mes.format('MMMM [de] YYYY')}</span>
+        <span className="t-subsec" style={{ minWidth: 170, textAlign: 'center' }}>{mes.format('MMMM [de] YYYY').replace(/^./, c => c.toUpperCase())}</span>
         <IconButton aria-label="Próximo mês" onClick={() => irParaMes(mes.add(1, 'month'))}><ChevronRight size={16} /></IconButton>
         <Button tamanho="sm" variante="discreto" onClick={() => irParaMes(dayjs())}>Hoje</Button>
         <div className="flex items-center gap-2 ml-auto">
@@ -288,18 +321,19 @@ const Musicians: React.FC = () => {
         <KPICard rotulo="pago a mais" valor={totais.aMais.length} detalhe={totais.aMais.length ? brl(totais.aMais.reduce((a, s) => a - saldoDe(s), 0)) : 'nenhum'}
           tom={totais.aMais.length ? 'alerta' : 'normal'} onClick={totais.aMais.length ? () => setFiltro('pago_a_mais') : undefined} />
       </div>
+      </>}
 
       <Toolbar className="mb-3">
         <Segmented<Visao> rotulo="Visão" valor={visao} onMudar={setVisao}
-          opcoes={[{ valor: 'lista', rotulo: 'Lista' }, { valor: 'calendario', rotulo: 'Calendário' }]} />
-        <div className="flex flex-wrap gap-2">
+          opcoes={[{ valor: 'lista', rotulo: 'Lista' }, { valor: 'a_pagar', rotulo: 'A pagar' }, { valor: 'calendario', rotulo: 'Calendário' }]} />
+        {visao !== 'a_pagar' && <div className="flex flex-wrap gap-2">
           <Chip ligado={filtro === 'todos'} onMudar={() => setFiltro('todos')}>Todos {shows.length}</Chip>
           <Chip ligado={filtro === 'a_pagar'} onMudar={() => setFiltro('a_pagar')} tom="atencao">A pagar {(contagem.pendente || 0) + (contagem.parcial || 0)}</Chip>
           <Chip ligado={filtro === 'parcial'} onMudar={() => setFiltro('parcial')} tom="atencao">Parcial {contagem.parcial || 0}</Chip>
           <Chip ligado={filtro === 'pago'} onMudar={() => setFiltro('pago')} tom="certo">Pago {contagem.pago || 0}</Chip>
           {!!contagem.pago_a_mais && <Chip ligado={filtro === 'pago_a_mais'} onMudar={() => setFiltro('pago_a_mais')} tom="perigo">Pago a mais {contagem.pago_a_mais}</Chip>}
           {!!contagem.cancelado && <Chip ligado={filtro === 'cancelado'} onMudar={() => setFiltro('cancelado')}>Cancelado {contagem.cancelado}</Chip>}
-        </div>
+        </div>}
         <Toolbar.Espaco />
         <div className="relative" style={{ minWidth: 220 }}>
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-secondary)' }} />
@@ -307,7 +341,23 @@ const Musicians: React.FC = () => {
         </div>
       </Toolbar>
 
-      {visao === 'lista' ? (
+      {visao === 'lista' && selecionados.length > 0 && (
+        <div className="aviso flex flex-wrap items-center gap-3 mb-3" style={{ position: 'sticky', top: 8, zIndex: 5 }}>
+          <span className="t-body" style={{ margin: 0 }}>
+            <strong>{selecionados.length} show{selecionados.length === 1 ? '' : 's'}</strong> · falta {brl(selecionados.reduce((a, s) => a + saldoDe(s), 0))}
+            {artistasSelecionados > 1 && <span className="texto-atencao"> · são {artistasSelecionados} artistas: pague um de cada vez</span>}
+          </span>
+          <Toolbar.Espaco />
+          <Button tamanho="sm" variante="discreto" icone={<X size={14} />} onClick={() => setMarcados(new Set())}>Limpar</Button>
+          <Button tamanho="sm" variante="primario" icone={<Wallet size={14} />} disabled={artistasSelecionados !== 1}
+            onClick={() => setLote({ titulo: selecionados[0].nome || 'Músico', shows: selecionados })}>Pagar selecionados</Button>
+        </div>
+      )}
+
+      {visao === 'a_pagar' ? (
+        <APagar versao={versao} busca={busca} onFicha={setFicha} onPagar={setPagando} onDetalhe={setDetalhe}
+          onPagarTudo={(nome, lista) => setLote({ titulo: nome, shows: lista })} />
+      ) : visao === 'lista' ? (
         <SectionCard noPadding>
           {carregando && !shows.length ? (
             <p className="t-body px-5 py-8" style={{ color: 'var(--text-secondary)' }}>Carregando…</p>
@@ -321,6 +371,11 @@ const Musicians: React.FC = () => {
               <table className="w-full">
                 <thead>
                   <tr style={{ borderBottom: '1px solid var(--border)' }}>
+                    <th className="pl-4 py-2.5 w-8">
+                      <input type="checkbox" aria-label="Marcar todos os shows a pagar da lista"
+                        checked={visiveis.some(emAberto) && visiveis.filter(emAberto).every(s => marcados.has(s.id))}
+                        onChange={e => setMarcados(e.target.checked ? new Set(visiveis.filter(emAberto).map(s => s.id)) : new Set())} />
+                    </th>
                     <th className="px-4 py-2.5 text-left">Data</th>
                     <th className="px-4 py-2.5 text-left">Artista</th>
                     <th className="px-4 py-2.5 text-right">Total</th>
@@ -338,12 +393,17 @@ const Musicians: React.FC = () => {
                     return (
                       <tr key={s.id} className="transition-colors hover:bg-white/[0.04] cursor-pointer" style={{ borderBottom: '1px solid var(--border-subtle)', opacity: sit === 'cancelado' ? 0.55 : 1 }}
                         onClick={() => setDetalhe(s)}>
+                        <td className="pl-4 py-3 w-8" onClick={e => e.stopPropagation()}>
+                          {emAberto(s) && <input type="checkbox" aria-label={`Marcar o show de ${s.nome} em ${dataCurta(s.data_evento)}`}
+                            checked={marcados.has(s.id)} onChange={e => marcar(s.id, e.target.checked)} />}
+                        </td>
                         <td className="px-4 py-3 whitespace-nowrap">
-                          <p className="t-body num" style={{ margin: 0, fontWeight: 600 }}>{dataCurta(s.data_evento)}</p>
+                          <p className="t-body num" style={{ margin: 0, fontWeight: 600, textAlign: 'left' }}>{dataCurta(s.data_evento)}</p>
                           <p className="t-caption capitalize" style={{ margin: 0 }}>{s.data_evento ? dayjs(s.data_evento).format('ddd') : ''}{s.horario_inicio && ` · ${hora(s.horario_inicio)}`}</p>
                         </td>
                         <td className="px-4 py-3">
-                          <p className="t-body" style={{ margin: 0, fontWeight: 500 }}>{s.nome || 'Sem nome'}</p>
+                          <button type="button" className="t-body text-left hover:underline focus-ring" style={{ margin: 0, fontWeight: 500, color: 'var(--text-primary)' }}
+                            title="Abrir a ficha do artista" onClick={e => { e.stopPropagation(); setFicha(s.nome || ''); }}>{s.nome || 'Sem nome'}</button>
                           <p className="t-caption" style={{ margin: 0 }}>
                             Cachê {brl(s.valor || 0)}
                             {s.valor_adicional > 0 && <span className="texto-certo"> + {brl(s.valor_adicional)}</span>}
@@ -370,10 +430,10 @@ const Musicians: React.FC = () => {
                 </tbody>
                 <tfoot>
                   <tr style={{ borderTop: '1px solid var(--border)' }}>
-                    <td className="px-4 py-3 t-label" colSpan={2}>{visiveis.length} show{visiveis.length === 1 ? '' : 's'}</td>
+                    <td className="px-4 py-3 t-label" colSpan={3}>{visiveis.length} show{visiveis.length === 1 ? '' : 's'}</td>
                     <td className="px-4 py-3 text-right num" style={{ fontWeight: 600 }}>{brl(visiveis.filter(s => s.status_pagamento !== 'cancelado').reduce((a, s) => a + s.valor_total_final, 0))}</td>
                     <td className="px-4 py-3 text-right num" style={{ fontWeight: 600 }}>{brl(visiveis.filter(s => s.status_pagamento !== 'cancelado').reduce((a, s) => a + s.valor_pago, 0))}</td>
-                    <td className="px-4 py-3 text-right num" style={{ fontWeight: 600 }}>{brl(visiveis.reduce((a, s) => a + saldoDe(s), 0))}</td>
+                    <td className="px-4 py-3 text-right num" style={{ fontWeight: 600 }}>{brl(visiveis.reduce((a, s) => a + Math.max(0, saldoDe(s)), 0))}</td>
                     <td colSpan={2} />
                   </tr>
                 </tfoot>
@@ -385,6 +445,11 @@ const Musicians: React.FC = () => {
         <Calendario mes={mes} shows={visiveis} onAbrir={setDetalhe} onNovo={d => setEditando({ data_evento: d })} />
       )}
 
+      {/* Ordem importa: o modal de baixo fica por cima (pagar sobre o histórico). */}
+      {detalhe && (
+        <Detalhe show={detalhe} onFechar={() => setDetalhe(null)} onPagar={() => setPagando(detalhe)} onEditar={() => { setEditando(detalhe); setDetalhe(null); }}
+          onMudou={async m => { setAviso(m); await carregar(); }} />
+      )}
       {editando && (
         <FormShow inicial={editando} fornecedores={fornecedores} onFechar={() => setEditando(null)}
           onSalvo={async m => { setEditando(null); setAviso(m); await carregar(); }} />
@@ -393,14 +458,259 @@ const Musicians: React.FC = () => {
         <Pagar show={pagando} onFechar={() => setPagando(null)}
           onFeito={async m => { setPagando(null); setAviso(m); await carregar(); }} />
       )}
-      {detalhe && (
-        <Detalhe show={detalhe} onFechar={() => setDetalhe(null)} onPagar={() => setPagando(detalhe)} onEditar={() => { setEditando(detalhe); setDetalhe(null); }}
-          onMudou={async m => { setAviso(m); await carregar(); }} />
+
+      {lote && (
+        <PagarLote titulo={lote.titulo} shows={lote.shows} onFechar={() => setLote(null)}
+          onFeito={async m => { setLote(null); setMarcados(new Set()); setAviso(m); await carregar(); }} />
+      )}
+      {ficha !== null && (
+        <Ficha nome={ficha} versao={versao} onFechar={() => setFicha(null)} onDetalhe={s => { setFicha(null); setDetalhe(s); }}
+          onPagarTudo={(nome, lista) => { setFicha(null); setLote({ titulo: nome, shows: lista }); }} />
       )}
 
       <ImportarAgendaMusicosIA isOpen={importando} onClose={() => setImportando(false)}
         onImportado={q => { void carregar(); if (q > 0) setAviso(`${q} show(s) lançados a partir da agenda.`); }} />
     </div>
+  );
+};
+
+const temTelefone = (c: string | null) => (c || '').replace(/\D/g, '').length >= 10;
+const diasDesde = (s: string | null) => (s ? dayjs().startOf('day').diff(dayjs(s).startOf('day'), 'day') : 0);
+
+// ── A pagar, por artista (todo o histórico, não só o período) ───────────────
+const APagar: React.FC<{
+  versao: number; busca: string; onFicha: (nome: string) => void; onPagar: (s: Show) => void; onDetalhe: (s: Show) => void;
+  onPagarTudo: (nome: string, lista: Show[]) => void;
+}> = ({ versao, busca, onFicha, onPagar, onDetalhe, onPagarTudo }) => {
+  const [lista, setLista] = useState<Show[] | null>(null);
+  const [erro, setErro] = useState<string | null>(null);
+
+  useEffect(() => {
+    supabase.from('vw_musicos_financeiro').select('*').neq('status_pagamento', 'cancelado').gt('saldo_restante', 0)
+      .order('data_evento').then(({ data, error }) => (error ? setErro(error.message) : setLista((data || []) as Show[])));
+  }, [versao]);
+
+  const grupos = useMemo(() => {
+    const t = busca.trim().toLowerCase();
+    const m = new Map<string, Show[]>();
+    for (const s of lista || []) {
+      if (t && !(s.nome || '').toLowerCase().includes(t)) continue;
+      const k = chaveArtista(s.nome);
+      m.set(k, [...(m.get(k) || []), s]);
+    }
+    return [...m.values()]
+      .map(itens => ({ nome: itens[0].nome || 'Sem nome', contato: itens.map(s => s.contato).find(temTelefone) || itens.find(s => s.contato)?.contato || null, itens, total: itens.reduce((a, s) => a + saldoDe(s), 0) }))
+      .sort((a, b) => b.total - a.total);
+  }, [lista, busca]);
+
+  if (erro) return <div className="aviso aviso-perigo" role="alert">{erro}</div>;
+  if (!lista) return <p className="t-body" style={{ color: 'var(--text-secondary)' }}>Carregando…</p>;
+  if (!grupos.length) return <EmptyState icon={Wallet} title="Nada a pagar" description={busca ? 'Nenhum artista com esse nome tem saldo em aberto.' : 'Todos os cachês estão pagos.'} />;
+
+  const geral = grupos.reduce((a, g) => a + g.total, 0);
+  const shows = grupos.reduce((a, g) => a + g.itens.length, 0);
+  const maisAntigo = Math.max(...grupos.flatMap(g => g.itens.map(s => diasDesde(s.data_evento))));
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="grid grid-cols-3 gap-3">
+        <KPICard rotulo="total a pagar" valor={brl(geral)} detalhe="todo o histórico" tom="atencao" />
+        <KPICard rotulo="artistas" valor={grupos.length} detalhe={`${shows} show${shows === 1 ? '' : 's'} em aberto`} />
+        <KPICard rotulo="mais antigo" valor={`${maisAntigo} dia${maisAntigo === 1 ? '' : 's'}`} detalhe="desde o show" tom={maisAntigo > 30 ? 'alerta' : maisAntigo > 7 ? 'atencao' : 'normal'} />
+      </div>
+      {grupos.map(g => (
+        <SectionCard key={chaveArtista(g.nome)} noPadding title={g.nome}
+          descricao={`${g.itens.length} show${g.itens.length === 1 ? '' : 's'} · desde ${dataCurta(g.itens[0].data_evento)}${g.contato ? ` · ${g.contato}` : ''} · falta ${brl(g.total)}`}
+          action={
+            <div className="flex flex-wrap items-center gap-2">
+              {temTelefone(g.contato) && <Button tamanho="sm" variante="discreto" icone={<MessageCircle size={14} />}
+                onClick={() => window.open(urlWhatsApp(textoExtrato(g.nome, g.itens), g.contato), '_blank', 'noopener')}>Extrato</Button>}
+              <Button tamanho="sm" variante="discreto" icone={<UserRound size={14} />} onClick={() => onFicha(g.nome)}>Ficha</Button>
+              <Button tamanho="sm" variante="primario" icone={<Wallet size={14} />} onClick={() => onPagarTudo(g.nome, g.itens)}>
+                {g.itens.length > 1 ? `Pagar ${brl(g.total)}` : 'Pagar'}
+              </Button>
+            </div>
+          }>
+          {g.itens.map(s => {
+            const sit = situacao(s);
+            const dias = diasDesde(s.data_evento);
+            return (
+              <div key={s.id} className="px-5 py-2 flex flex-wrap items-center gap-3 cursor-pointer hover:bg-white/[0.04]" style={{ borderBottom: '1px solid var(--border-subtle)' }}
+                onClick={() => onDetalhe(s)}>
+                <div className="flex-1 min-w-[160px]">
+                  <p className="t-body num" style={{ margin: 0, fontWeight: 600, textAlign: 'left' }}>{dataCurta(s.data_evento)} <span className="t-caption capitalize">{s.data_evento ? dayjs(s.data_evento).format('ddd') : ''}</span></p>
+                  <p className={`t-caption ${dias > 30 ? 'texto-perigo' : dias > 7 ? 'texto-atencao' : ''}`} style={{ margin: 0 }}>
+                    {dias > 0 ? `há ${dias} dia${dias === 1 ? '' : 's'}` : dias === 0 ? 'hoje' : `daqui a ${-dias} dia${dias === -1 ? '' : 's'}`}
+                    {' · '}show {brl(s.valor_total_final)}{s.valor_pago > 0 && ` · pago ${brl(s.valor_pago)}`}
+                  </p>
+                </div>
+                <Badge variant={SITUACAO[sit].variante}>{SITUACAO[sit].rotulo}</Badge>
+                <span className="t-body num" style={{ minWidth: 96, textAlign: 'right', fontWeight: 700 }}>{brl(saldoDe(s))}</span>
+                <Button tamanho="sm" icone={<Wallet size={14} />} onClick={e => { e.stopPropagation(); onPagar(s); }}>Pagar</Button>
+              </div>
+            );
+          })}
+        </SectionCard>
+      ))}
+    </div>
+  );
+};
+
+// ── Pagar vários shows de uma vez ───────────────────────────────────────────
+const PagarLote: React.FC<{ titulo: string; shows: Show[]; onFechar: () => void; onFeito: (m: string) => Promise<void> }> = ({ titulo, shows, onFechar, onFeito }) => {
+  const ordenados = useMemo(() => [...shows].filter(emAberto).sort((a, b) => dayjs(a.data_evento).valueOf() - dayjs(b.data_evento).valueOf()), [shows]);
+  const [marcados, setMarcados] = useState<Set<string>>(() => new Set(ordenados.map(s => s.id)));
+  const escolhidos = ordenados.filter(s => marcados.has(s.id));
+  const falta = escolhidos.reduce((a, s) => a + saldoDe(s), 0);
+  const [valor, setValor] = useState(falta.toFixed(2).replace('.', ','));
+  const [data, setData] = useState(dayjs().format('YYYY-MM-DD'));
+  const [forma, setForma] = useState('PIX');
+  const [obs, setObs] = useState('');
+  const [erro, setErro] = useState<string | null>(null);
+  const [ocupado, setOcupado] = useState(false);
+  const v = num(valor);
+
+  const alternar = (id: string) => {
+    const n = new Set(marcados);
+    if (n.has(id)) n.delete(id); else n.add(id);
+    setMarcados(n);
+    setValor(ordenados.filter(s => n.has(s.id)).reduce((a, s) => a + saldoDe(s), 0).toFixed(2).replace('.', ','));
+  };
+
+  // Do mais antigo para o mais novo, como o banco vai fazer.
+  const previa = useMemo(() => {
+    let resta = v;
+    return new Map(escolhidos.map(s => {
+      const parte = Math.max(0, Math.min(resta, saldoDe(s)));
+      resta -= parte;
+      return [s.id, parte] as const;
+    }));
+  }, [escolhidos, v]);
+
+  const confirmar = async () => {
+    if (!escolhidos.length) { setErro('Marque pelo menos um show.'); return; }
+    if (v <= 0) { setErro('Informe o valor pago.'); return; }
+    if (v > falta + 0.004) { setErro(`O valor passa do que falta (${brl(falta)}). Pagamento a mais se lança show a show.`); return; }
+    setOcupado(true); setErro(null);
+    const { data: r, error } = await supabase.rpc('fn_musico_pagar_lote', { p_musicos: escolhidos.map(s => s.id), p_valor: v, p_data: data, p_forma: forma, p_obs: obs || null });
+    if (error) { setErro(error.message); setOcupado(false); return; }
+    const res = r as { itens: unknown[]; falta_depois: number };
+    await onFeito(`${titulo}: ${brl(v)} lançado em ${res.itens.length} show${res.itens.length === 1 ? '' : 's'}. ${res.falta_depois > 0.004 ? `Ainda falta ${brl(res.falta_depois)} nesses shows.` : 'Tudo quitado.'}`);
+  };
+
+  return (
+    <Modal aberto onFechar={onFechar} largura="lg" travado={ocupado} titulo={`Pagar ${titulo}`}
+      descricao="Um pagamento só para vários shows. O valor cobre do show mais antigo para o mais novo. Não dá baixa no Financeiro."
+      rodape={<><Button onClick={onFechar} disabled={ocupado}>Cancelar</Button><Button variante="primario" icone={<Check size={16} />} onClick={confirmar} carregando={ocupado} disabled={!escolhidos.length}>Lançar {v > 0 ? brl(v) : ''}</Button></>}>
+      {erro && <div className="aviso aviso-perigo mb-3" role="alert">{erro}</div>}
+      <div className="flex flex-col mb-4" style={{ border: '1px solid var(--border-subtle)', borderRadius: 'var(--r-control)' }}>
+        {ordenados.map(s => {
+          const parte = previa.get(s.id) || 0;
+          const ligado = marcados.has(s.id);
+          return (
+            <label key={s.id} className="px-3 py-2 flex items-center gap-3 cursor-pointer" style={{ borderBottom: '1px solid var(--border-subtle)', opacity: ligado ? 1 : 0.55 }}>
+              <input type="checkbox" checked={ligado} onChange={() => alternar(s.id)} />
+              <span className="flex-1 t-body num" style={{ textAlign: 'left' }}>{dataCurta(s.data_evento)} <span className="t-caption">· show {brl(s.valor_total_final)}{s.valor_pago > 0 && ` · pago ${brl(s.valor_pago)}`}</span></span>
+              <span className="t-caption num" style={{ minWidth: 90, textAlign: 'right' }}>falta {brl(saldoDe(s))}</span>
+              <span className="t-body num" style={{ minWidth: 110, textAlign: 'right', fontWeight: 700, color: !ligado ? undefined : parte >= saldoDe(s) - 0.004 ? 'var(--ok-text)' : parte > 0 ? 'var(--info-text)' : 'var(--text-secondary)' }}>
+                {!ligado ? '—' : parte >= saldoDe(s) - 0.004 ? `quita ${brl(parte)}` : parte > 0 ? `parcial ${brl(parte)}` : 'fica para depois'}
+              </span>
+            </label>
+          );
+        })}
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <Input rotulo="Valor pago (R$)" inputMode="decimal" value={valor} onChange={e => setValor(e.target.value)} autoFocus
+          dica={v > 0 && v < falta - 0.004 ? `Vai faltar ${brl(falta - v)}` : `Falta ${brl(falta)} nos shows marcados`} erro={v > falta + 0.004 ? `Passa do que falta (${brl(falta)})` : undefined} />
+        <Input rotulo="Data" type="date" value={data} onChange={e => setData(e.target.value)} />
+        <Select rotulo="Forma" value={forma} onChange={e => setForma(e.target.value)}>
+          {FORMAS.map(f => <option key={f} value={f}>{f}</option>)}
+        </Select>
+        <Input rotulo="Observação" value={obs} onChange={e => setObs(e.target.value)} placeholder="Opcional" />
+      </div>
+    </Modal>
+  );
+};
+
+// ── Ficha do artista ────────────────────────────────────────────────────────
+const Ficha: React.FC<{ nome: string; versao: number; onFechar: () => void; onDetalhe: (s: Show) => void; onPagarTudo: (nome: string, lista: Show[]) => void }> = ({ nome, versao, onFechar, onDetalhe, onPagarTudo }) => {
+  const [lista, setLista] = useState<Show[] | null>(null);
+  const [erro, setErro] = useState<string | null>(null);
+
+  useEffect(() => {
+    const busca = nome.trim().replace(/[%_]/g, '');
+    supabase.from('vw_musicos_financeiro').select('*').ilike('nome', `%${busca}%`).order('data_evento', { ascending: false })
+      .then(({ data, error }) => {
+        if (error) { setErro(error.message); return; }
+        setLista(((data || []) as Show[]).filter(s => chaveArtista(s.nome) === chaveArtista(nome)));
+      });
+  }, [nome, versao]);
+
+  const r = useMemo(() => {
+    const todos = lista || [];
+    const ativos = todos.filter(s => s.status_pagamento !== 'cancelado');
+    const feitos = ativos.filter(s => !dayjs(s.data_evento).isAfter(dayjs(), 'day'));
+    const abertos = ativos.filter(emAberto).sort((a, b) => dayjs(a.data_evento).valueOf() - dayjs(b.data_evento).valueOf());
+    const cache = ativos.reduce((a, s) => a + s.valor_total_final, 0);
+    return {
+      todos, abertos,
+      shows: ativos.length,
+      cache,
+      pago: ativos.reduce((a, s) => a + s.valor_pago, 0),
+      falta: abertos.reduce((a, s) => a + saldoDe(s), 0),
+      media: ativos.length ? cache / ativos.length : 0,
+      ultimoCache: feitos[0]?.valor ?? ativos[0]?.valor ?? 0,
+      ultimo: feitos[0]?.data_evento || null,
+      proximo: [...ativos].reverse().find(s => dayjs(s.data_evento).isAfter(dayjs(), 'day'))?.data_evento || null,
+      primeiro: ativos[ativos.length - 1]?.data_evento || null,
+      contato: todos.map(s => s.contato).find(temTelefone) || todos.find(s => s.contato)?.contato || null,
+      fornecedor: todos.find(s => s.fornecedor_nome)?.fornecedor_nome || null,
+      cancelados: todos.length - ativos.length,
+    };
+  }, [lista]);
+
+  const titulo = lista?.[0]?.nome || nome;
+  return (
+    <Modal aberto onFechar={onFechar} largura="lg" titulo={titulo}
+      descricao={[r.contato, r.fornecedor && `Financeiro: ${r.fornecedor}`, r.primeiro && `toca na casa desde ${dayjs(r.primeiro).format('MM/YYYY')}`].filter(Boolean).join(' · ')}
+      rodape={<>
+        {r.abertos.length > 0 && temTelefone(r.contato) && <Button icone={<MessageCircle size={14} />} onClick={() => window.open(urlWhatsApp(textoExtrato(titulo, r.abertos), r.contato), '_blank', 'noopener')}>Mandar extrato</Button>}
+        {r.abertos.length > 0 && <Button variante="primario" icone={<Wallet size={16} />} onClick={() => onPagarTudo(titulo, r.abertos)}>Pagar em aberto ({brl(r.falta)})</Button>}
+        {r.abertos.length === 0 && <Button onClick={onFechar}>Fechar</Button>}
+      </>}>
+      {erro && <div className="aviso aviso-perigo mb-3" role="alert">{erro}</div>}
+      {!lista ? <p className="t-caption">Carregando…</p> : (
+        <>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-2">
+            <Resumo rotulo="Shows" valor={String(r.shows)} />
+            <Resumo rotulo="Cachês" valor={brl(r.cache)} />
+            <Resumo rotulo="Pago" valor={brl(r.pago)} />
+            <Resumo rotulo="A pagar" valor={brl(r.falta)} destaque />
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
+            <Resumo rotulo="Cachê médio" valor={brl(r.media)} />
+            <Resumo rotulo="Último cachê" valor={brl(r.ultimoCache || 0)} />
+            <Resumo rotulo="Último show" valor={r.ultimo ? dayjs(r.ultimo).format('DD/MM/YY') : '—'} />
+            <Resumo rotulo="Próximo show" valor={r.proximo ? dayjs(r.proximo).format('DD/MM/YY') : '—'} />
+          </div>
+          <span className="t-label" style={{ color: 'var(--text-secondary)' }}>Shows{r.cancelados ? ` (${r.cancelados} cancelado${r.cancelados === 1 ? '' : 's'})` : ''}</span>
+          <div className="flex flex-col mt-2" style={{ border: '1px solid var(--border-subtle)', borderRadius: 'var(--r-control)', maxHeight: 320, overflowY: 'auto' }}>
+            {r.todos.map(s => {
+              const sit = situacao(s);
+              return (
+                <button key={s.id} type="button" onClick={() => onDetalhe(s)} className="px-3 py-2 flex items-center gap-3 text-left hover:bg-white/[0.04] focus-ring"
+                  style={{ borderBottom: '1px solid var(--border-subtle)', opacity: sit === 'cancelado' ? 0.55 : 1 }}>
+                  <span className="t-body num" style={{ minWidth: 76, textAlign: 'left' }}>{s.data_evento ? dayjs(s.data_evento).format('DD/MM/YY') : '—'}</span>
+                  <span className="flex-1 t-caption num" style={{ textAlign: 'left' }}>show {brl(s.valor_total_final)}{s.valor_pago > 0 && ` · pago ${brl(s.valor_pago)}`}</span>
+                  {emAberto(s) && <span className="t-body num texto-atencao" style={{ fontWeight: 600 }}>falta {brl(saldoDe(s))}</span>}
+                  <Badge variant={SITUACAO[sit].variante}>{SITUACAO[sit].rotulo}</Badge>
+                </button>
+              );
+            })}
+          </div>
+        </>
+      )}
+    </Modal>
   );
 };
 
@@ -443,7 +753,7 @@ const Calendario: React.FC<{ mes: dayjs.Dayjs; shows: Show[]; onAbrir: (s: Show)
                     style={{ background: 'var(--bg-hover)', borderLeft: `3px solid ${COR_SITUACAO[sit]}` }}
                     title={`${s.nome} · ${hora(s.horario_inicio)} · ${brl(s.valor_total_final)} · ${SITUACAO[sit].rotulo}`}>
                     <p className="t-caption truncate" style={{ margin: 0, color: 'var(--text-primary)', fontWeight: 600 }}>{s.nome}</p>
-                    <p className="t-caption num" style={{ margin: 0 }}>{hora(s.horario_inicio)} · {brl(s.valor_total_final)}</p>
+                    <p className="t-caption num" style={{ margin: 0, textAlign: 'left' }}>{hora(s.horario_inicio)} · {brl(s.valor_total_final)}</p>
                   </button>
                 );
               })}
