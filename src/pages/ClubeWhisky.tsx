@@ -176,17 +176,18 @@ const ClubeWhisky: React.FC = () => {
   );
 };
 
-interface ConfigClube { modelo_boas_vindas: string | null; modelo_vencimento: string | null; imagem_url: string | null; pode_editar: boolean }
+interface ConfigClube { modelo_boas_vindas: string | null; modelo_vencimento: string | null; imagem_url: string | null; imagem_vencimento_url: string | null; pode_editar: boolean }
+type QualImagem = 'boas' | 'venc';
 
 /**
  * As mensagens do WhatsApp do Clube: nomes dos modelos aprovados na Meta e a
- * imagem do cabeçalho (a Meta pede a imagem por link em cada envio).
+ * imagem do cabeçalho de cada um (a Meta pede a imagem por link em cada envio).
  */
 const Mensagens: React.FC<{ onFechar: () => void; onSalvo: (m: string) => void }> = ({ onFechar, onSalvo }) => {
   const [cfg, setCfg] = useState<ConfigClube | null>(null);
   const [boas, setBoas] = useState('');
   const [venc, setVenc] = useState('');
-  const [imagem, setImagem] = useState<string | null>(null);
+  const [imagens, setImagens] = useState<Record<QualImagem, string | null>>({ boas: null, venc: null });
   const [erro, setErro] = useState<string | null>(null);
   const [ocupado, setOcupado] = useState(false);
 
@@ -194,24 +195,25 @@ const Mensagens: React.FC<{ onFechar: () => void; onSalvo: (m: string) => void }
     supabase.rpc('fn_clube_whisky_config').then(({ data, error }) => {
       if (error) { setErro(error.message); return; }
       const c = data as ConfigClube;
-      setCfg(c); setBoas(c.modelo_boas_vindas || ''); setVenc(c.modelo_vencimento || ''); setImagem(c.imagem_url);
+      setCfg(c); setBoas(c.modelo_boas_vindas || ''); setVenc(c.modelo_vencimento || ''); setImagens({ boas: c.imagem_url, venc: c.imagem_vencimento_url });
     });
   }, []);
 
-  const subir = async (arquivo: File) => {
+  const subir = async (arquivo: File, qual: QualImagem) => {
     if (!/^image\/(jpeg|png)$/.test(arquivo.type)) { setErro('A imagem precisa ser JPG ou PNG.'); return; }
     if (arquivo.size > 5 * 1024 * 1024) { setErro('A imagem passa de 5 MB.'); return; }
     setOcupado(true); setErro(null);
-    const caminho = `mensagens/clube-${Date.now()}.${arquivo.type === 'image/png' ? 'png' : 'jpg'}`;
+    const caminho = `mensagens/${qual === 'boas' ? 'boas-vindas' : 'vencimento'}-${Date.now()}.${arquivo.type === 'image/png' ? 'png' : 'jpg'}`;
     const { error } = await supabase.storage.from('clube').upload(caminho, arquivo, { contentType: arquivo.type });
     setOcupado(false);
     if (error) { setErro(error.message); return; }
-    setImagem(supabase.storage.from('clube').getPublicUrl(caminho).data.publicUrl);
+    const url = supabase.storage.from('clube').getPublicUrl(caminho).data.publicUrl;
+    setImagens(i => ({ ...i, [qual]: url }));
   };
 
   const salvar = async () => {
     setOcupado(true); setErro(null);
-    const { error } = await supabase.rpc('fn_clube_whisky_config_salvar', { p: { modelo_boas_vindas: boas, modelo_vencimento: venc, imagem_url: imagem || '' } });
+    const { error } = await supabase.rpc('fn_clube_whisky_config_salvar', { p: { modelo_boas_vindas: boas, modelo_vencimento: venc, imagem_url: imagens.boas || '', imagem_vencimento_url: imagens.venc || '' } });
     setOcupado(false);
     if (error) { setErro(error.message); return; }
     onSalvo('Mensagens do Clube salvas.');
@@ -232,20 +234,24 @@ const Mensagens: React.FC<{ onFechar: () => void; onSalvo: (m: string) => void }
             <Input rotulo="Modelo de vencimento" value={venc} onChange={e => setVenc(e.target.value)} disabled={!pode} placeholder="nome do modelo na Meta"
               dica="Sai com 30 e com 7 dias. {{1}} nome, {{2}} garrafa, {{3}} quanto falta, {{4}} data." />
           </div>
-          <div className="flex flex-col gap-2">
-            <span className="t-label" style={{ color: 'var(--text-secondary)' }}>Imagem do cabeçalho</span>
-            {imagem ? <img src={imagem} alt="Imagem das mensagens do Clube" style={{ width: '100%', maxWidth: 260, borderRadius: 'var(--r-control)', border: '1px solid var(--border-subtle)' }} />
-              : <p className="t-caption" style={{ margin: 0 }}>Nenhuma imagem. Só é preciso se o modelo tiver imagem no cabeçalho.</p>}
-            {pode && (
-              <div className="flex flex-wrap gap-2">
-                <label className="btn-secondary btn-sm" style={{ cursor: 'pointer' }}>
-                  {imagem ? 'Trocar imagem' : 'Subir imagem'}
-                  <input type="file" accept="image/jpeg,image/png" hidden onChange={e => { const f = e.target.files?.[0]; if (f) void subir(f); e.target.value = ''; }} />
-                </label>
-                {imagem && <Button tamanho="sm" variante="discreto" onClick={() => setImagem(null)}>Tirar</Button>}
+          <div className="grid grid-cols-2 gap-3">
+            {([['boas', 'Imagem da boas-vindas'], ['venc', 'Imagem do vencimento']] as [QualImagem, string][]).map(([qual, rotulo]) => (
+              <div key={qual} className="flex flex-col gap-2">
+                <span className="t-label" style={{ color: 'var(--text-secondary)' }}>{rotulo}</span>
+                {imagens[qual] ? <img src={imagens[qual]!} alt={rotulo} style={{ width: '100%', borderRadius: 'var(--r-control)', border: '1px solid var(--border-subtle)' }} />
+                  : <p className="t-caption" style={{ margin: 0 }}>Nenhuma. Só é preciso se o modelo tiver imagem.</p>}
+                {pode && (
+                  <div className="flex flex-wrap gap-2">
+                    <label className="btn-secondary btn-sm" style={{ cursor: 'pointer' }}>
+                      {imagens[qual] ? 'Trocar' : 'Subir'}
+                      <input type="file" accept="image/jpeg,image/png" hidden onChange={e => { const f = e.target.files?.[0]; if (f) void subir(f, qual); e.target.value = ''; }} />
+                    </label>
+                    {imagens[qual] && <Button tamanho="sm" variante="discreto" onClick={() => setImagens(x => ({ ...x, [qual]: null }))}>Tirar</Button>}
+                  </div>
+                )}
               </div>
-            )}
-            <p className="t-caption" style={{ margin: 0 }}>Use a mesma imagem do modelo aprovado. JPG ou PNG, até 5 MB.</p>
+            ))}
+            <p className="t-caption col-span-2" style={{ margin: 0 }}>A mesma imagem usada no modelo aprovado na Meta. JPG ou PNG, até 5 MB.</p>
           </div>
         </div>
       )}

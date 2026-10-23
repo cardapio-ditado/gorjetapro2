@@ -10,7 +10,8 @@
  *   clube_modelo_boas_vindas  {{1}} primeiro nome, {{2}} garrafa, {{3}} validade
  *   clube_modelo              {{1}} primeiro nome, {{2}} garrafa, {{3}} quanto
  *                             falta ("7 dias"), {{4}} a data
- * Se o modelo tiver imagem no cabeçalho, vai a de clube_imagem_url.
+ * Se o modelo tiver imagem no cabeçalho, vai a de clube_imagem_url (boas-vindas)
+ * ou a de clube_imagem_vencimento_url (vencimento).
  *
  *   POST ?acao=boas_vindas  {garrafa_id}  boas-vindas de uma garrafa
  *   POST ?acao=enviar     (padrão) avisos de vencimento e boas-vindas pendentes
@@ -27,7 +28,7 @@ const MODELO_PADRAO = "clube_whisky_vencimento";
 
 type ErroMeta = { code?: number; message?: string; error_data?: { details?: string } };
 type Resposta<T> = T & { error?: ErroMeta };
-interface ConfigMeta { token: string; phoneId: string; wabaId: string; modelo: string; modeloBoasVindas: string | null; imagem: string | null }
+interface ConfigMeta { token: string; phoneId: string; wabaId: string; modelo: string; modeloBoasVindas: string | null; imagem: string | null; imagemVencimento: string | null }
 interface Modelo { name: string; status: string; category: string; language?: string; components?: { type: string; format?: string }[] }
 interface Devido { garrafa_id: string; tipo: "30d" | "7d"; nome: string; telefone: string; garrafa: string; validade: string; dias: number }
 
@@ -46,10 +47,11 @@ const textoDoErro = (e?: ErroMeta) => (e ? [e.code, e.message, e.error_data?.det
 const texto = (v: unknown) => (typeof v === "string" && v.trim() ? v.trim() : null);
 
 async function config(db: SupabaseClient): Promise<ConfigMeta> {
-  const { data } = await db.from("agente_config").select("chave, valor").in("chave", ["meta_phone_number_id", "meta_waba_id", "clube_modelo", "clube_modelo_boas_vindas", "clube_imagem_url"]);
+  const { data } = await db.from("agente_config").select("chave, valor").in("chave", ["meta_phone_number_id", "meta_waba_id", "clube_modelo", "clube_modelo_boas_vindas", "clube_imagem_url", "clube_imagem_vencimento_url"]);
   const v = Object.fromEntries((data ?? []).map((r) => [r.chave, r.valor]));
   const c = { token: Deno.env.get("META_WA_TOKEN") ?? "", phoneId: String(v.meta_phone_number_id ?? ""), wabaId: String(v.meta_waba_id ?? ""),
-    modelo: texto(v.clube_modelo) ?? MODELO_PADRAO, modeloBoasVindas: texto(v.clube_modelo_boas_vindas), imagem: texto(v.clube_imagem_url) };
+    modelo: texto(v.clube_modelo) ?? MODELO_PADRAO, modeloBoasVindas: texto(v.clube_modelo_boas_vindas), imagem: texto(v.clube_imagem_url),
+    imagemVencimento: texto(v.clube_imagem_vencimento_url) };
   if (!c.token || !c.phoneId || !c.wabaId) throw new Error("WhatsApp da Meta não configurado (token ou IDs).");
   return c;
 }
@@ -84,13 +86,13 @@ async function statusModelo(c: ConfigMeta, nome = c.modelo): Promise<Modelo | nu
   return lista.find((m) => m.status === "APPROVED") ?? lista[0] ?? null;
 }
 
-/** Manda um modelo aprovado; com imagem no cabeçalho, vai a imagem do Clube. */
-async function mandarModelo(c: ConfigMeta, m: Modelo, para: string, variaveis: string[]) {
+/** Manda um modelo aprovado; com imagem no cabeçalho, vai a imagem dada. */
+async function mandarModelo(c: ConfigMeta, m: Modelo, para: string, variaveis: string[], imagem: string | null) {
   const cabecalho = m.components?.find((x) => x.type === "HEADER");
   const componentes: unknown[] = [];
   if (cabecalho?.format === "IMAGE") {
-    if (!c.imagem) return { error: { message: "o modelo tem imagem e falta a imagem do Clube (tela do Clube, botão Mensagens)" } as ErroMeta };
-    componentes.push({ type: "header", parameters: [{ type: "image", image: { link: c.imagem } }] });
+    if (!imagem) return { error: { message: "o modelo tem imagem e falta a imagem dele (tela do Clube, botão Mensagens)" } as ErroMeta };
+    componentes.push({ type: "header", parameters: [{ type: "image", image: { link: imagem } }] });
   }
   componentes.push({ type: "body", parameters: variaveis.map((text) => ({ type: "text", text })) });
   return await graph<{ messages?: { id: string }[] }>(`${c.phoneId}/messages`, c.token, "POST", {
@@ -117,7 +119,7 @@ async function boasVindas(db: SupabaseClient, c: ConfigMeta, garrafaId: string |
       : await db.from("clube_whisky_boas_vindas").insert({ garrafa_id: d.garrafa_id }).select("garrafa_id").maybeSingle();
     if (reserva.error || !reserva.data) { placar.ignorados++; continue; }
 
-    const r = await mandarModelo(c, modelo, d.telefone, [d.nome || "cliente", nomeGarrafa(d.garrafa), d.validade.split("-").reverse().join("/")]);
+    const r = await mandarModelo(c, modelo, d.telefone, [d.nome || "cliente", nomeGarrafa(d.garrafa), d.validade.split("-").reverse().join("/")], c.imagem);
     const ok = !r.error && Boolean(r.messages?.[0]?.id);
     await db.from("clube_whisky_boas_vindas").update({
       status: ok ? "enviado" : "falha", wa_id: r.messages?.[0]?.id ?? null, erro: ok ? null : textoDoErro(r.error),
@@ -163,7 +165,7 @@ async function enviar(db: SupabaseClient, c: ConfigMeta) {
 
     const prazo = d.dias <= 0 ? "hoje" : d.dias === 1 ? "1 dia" : `${d.dias} dias`;
     const dia = d.validade.split("-").reverse().join("/");
-    const r = await mandarModelo(c, modelo, d.telefone, [d.nome || "cliente", nomeGarrafa(d.garrafa), prazo, dia]);
+    const r = await mandarModelo(c, modelo, d.telefone, [d.nome || "cliente", nomeGarrafa(d.garrafa), prazo, dia], c.imagemVencimento);
     const ok = !r.error && Boolean(r.messages?.[0]?.id);
     await db.from("clube_whisky_avisos").update({
       status: ok ? "enviado" : "falha", wa_id: r.messages?.[0]?.id ?? null, erro: ok ? null : textoDoErro(r.error),
@@ -188,7 +190,8 @@ Deno.serve(async (req) => {
     const c = await config(db);
     if (acao === "modelo") return json(await criarModelo(c));
     if (acao === "situacao") {
-      return json({ vencimento: await statusModelo(c), boas_vindas: c.modeloBoasVindas ? await statusModelo(c, c.modeloBoasVindas) : null, imagem: c.imagem });
+      return json({ vencimento: await statusModelo(c), boas_vindas: c.modeloBoasVindas ? await statusModelo(c, c.modeloBoasVindas) : null,
+        imagem_boas_vindas: c.imagem, imagem_vencimento: c.imagemVencimento });
     }
     if (acao === "boas_vindas") {
       const corpo = await req.json().catch(() => ({})) as { garrafa_id?: string };
