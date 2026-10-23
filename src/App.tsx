@@ -108,7 +108,7 @@ function AppContent() {
     <Suspense fallback={<PageLoader />}>
       <Routes>
         <Route path="/dashboard"           element={<ProtectedRoute moduloSlug="dashboard">     <PainelInicial />       </ProtectedRoute>} />
-        <Route path="/portal-gerente"      element={<ProtectedRoute moduloSlug="dashboard">     <PortalGerente />       </ProtectedRoute>} />
+        <Route path="/portal-gerente"      element={<ProtectedRoute moduloSlug="dashboard" ou="livro">     <PortalGerente />       </ProtectedRoute>} />
         <Route path="/agenda-diaria"       element={<ProtectedRoute moduloSlug="dashboard">     <AgendaDiaria />        </ProtectedRoute>} />
         <Route path="/finance"             element={<ProtectedRoute moduloSlug="financeiro">    <Finance />             </ProtectedRoute>} />
         <Route path="/financeiro"          element={<ProtectedRoute moduloSlug="financeiro">    <DashboardFinanceiro /> </ProtectedRoute>} />

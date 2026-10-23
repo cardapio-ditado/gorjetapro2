@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ChevronRight, Inbox } from 'lucide-react';
 import { EmptyState, PageHeader, SectionCard } from '../components/ui';
 import { useAuth } from '../contexts/AuthContext';
-import { MODULES } from '../components/layout/SidebarModern';
+import { MODULES, moduloLiberado } from '../components/layout/SidebarModern';
 
 /**
  * Painel inicial de quem NÃO é master/admin (nível 'usuario'/'visitante').
@@ -29,7 +29,7 @@ const MeuPainel: React.FC = () => {
   const vistos = new Set<string>();
   const modulosDisponiveis = MODULES.filter(m => {
     if (m.slug === 'dashboard') return false;
-    if (!temAcessoModulo(m.slug)) return false;
+    if (!moduloLiberado(m, temAcessoModulo)) return false;
     if (vistos.has(m.path)) return false;
     vistos.add(m.path);
     return true;

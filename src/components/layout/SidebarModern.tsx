@@ -24,6 +24,13 @@ export interface Module {
   group?: Area;
   /** Só o gestor vê (admin/master). */
   soGestor?: boolean;
+  /** Outro módulo que também libera este item (ex.: quem tem o Livro vê o Portal do Gerente). */
+  tambem?: string;
+}
+
+/** O item aparece se a pessoa tem o módulo dele ou o módulo alternativo. */
+export function moduloLiberado(m: Module, temAcessoModulo: (slug: string) => boolean): boolean {
+  return temAcessoModulo(m.slug) || (!!m.tambem && temAcessoModulo(m.tambem));
 }
 
 /**
@@ -43,7 +50,7 @@ export const AREAS: Array<{ id: Area; nome: string; icone: React.ElementType; de
 
 export const MODULES: Module[] = [
   { name: 'Início',         path: '/dashboard',          icon: Home,          slug: 'dashboard',       group: 'operacao' },
-  { name: 'Portal do Gerente', path: '/portal-gerente',  icon: LayoutDashboard, slug: 'dashboard',     group: 'operacao' },
+  { name: 'Portal do Gerente', path: '/portal-gerente',  icon: LayoutDashboard, slug: 'dashboard',     group: 'operacao', tambem: 'livro' },
   { name: 'Agenda do Dia',  path: '/agenda-diaria',      icon: ClipboardList, slug: 'dashboard',       group: 'operacao' },
   { name: 'RH',             path: '/staff',              icon: Users,         slug: 'rh',              group: 'rh',
     subModules: [
@@ -128,7 +135,7 @@ const SidebarModern: React.FC<Props> = ({ onNavigate, onCloseMobile }) => {
     return cur?.name ?? null;
   });
 
-  const filtered = modulesWithDynamic.filter(m => temAcessoModulo(m.slug));
+  const filtered = modulesWithDynamic.filter(m => moduloLiberado(m, temAcessoModulo));
 
   const isActive    = (path: string) =>
     location.pathname + location.search === path || location.pathname === path;

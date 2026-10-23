@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { X } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
-import { AREAS, modulosDaCasa, type Area, type Module } from './SidebarModern';
+import { AREAS, modulosDaCasa, moduloLiberado, type Area, type Module } from './SidebarModern';
 import ColunaArea from './ColunaArea';
 import Topo from './Topo';
 import Paleta from './Paleta';
@@ -28,7 +28,7 @@ const AppShell: React.FC<Props> = ({ children }) => {
   const [buscaAberta, setBuscaAberta] = useState(false);
 
   const modulos = useMemo<Module[]>(
-    () => modulosDaCasa(isAdmin()).filter(m => temAcessoModulo(m.slug)),
+    () => modulosDaCasa(isAdmin()).filter(m => moduloLiberado(m, temAcessoModulo)),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [usuario?.id, usuario?.nivel],
   );

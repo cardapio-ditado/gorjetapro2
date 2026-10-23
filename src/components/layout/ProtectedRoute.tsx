@@ -5,6 +5,8 @@ import { Shield, Lock } from 'lucide-react';
 interface ProtectedRouteProps {
   children: React.ReactNode;
   moduloSlug: string;
+  /** Outro módulo que também dá acesso a esta rota. */
+  ou?: string;
   abaSlug?: string;
   acao?: 'visualizar' | 'criar' | 'editar' | 'excluir' | 'aprovar';
   fallback?: React.ReactNode;
@@ -13,6 +15,7 @@ interface ProtectedRouteProps {
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   children,
   moduloSlug,
+  ou,
   abaSlug,
   acao = 'visualizar',
   fallback
@@ -53,7 +56,8 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   }
 
   // Verificar permissão específica
-  const temPermissao = verificarPermissao(moduloSlug, abaSlug, acao);
+  const temPermissao = verificarPermissao(moduloSlug, abaSlug, acao)
+    || (!!ou && verificarPermissao(ou, abaSlug, acao));
 
   if (!temPermissao) {
     if (fallback) {

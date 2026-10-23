@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LogOut, ChevronRight } from 'lucide-react';
-import { AREAS, MODULES } from '../components/layout/SidebarModern';
+import { AREAS, MODULES, moduloLiberado } from '../components/layout/SidebarModern';
 import { useAuth } from '../contexts/AuthContext';
 
 /**
@@ -77,7 +77,7 @@ const Saguao: React.FC = () => {
   const navigate = useNavigate();
   const { temAcessoModulo, usuario, logout } = useAuth();
 
-  const permitidos = MODULES.filter((m) => temAcessoModulo(m.slug));
+  const permitidos = MODULES.filter((m) => moduloLiberado(m, temAcessoModulo));
 
   // Cada favo leva ao primeiro módulo visível da área — a ordem em MODULES
   // já é a ordem de importância dentro dela.
