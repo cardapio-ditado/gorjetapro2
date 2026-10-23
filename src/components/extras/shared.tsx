@@ -6,7 +6,7 @@ import { Button, Input, Modal, Select, Textarea } from '../ui';
 import type { BadgeVariante } from '../ui';
 
 /**
- * Peças dos Extras (diaristas) usadas na tela de Gestão e no Painel do
+ * Peças dos Extras (diaristas) usadas na tela de Extras (Operação) e no Painel do
  * Gerente: tipos, formatação e o modal de lançar diárias.
  *
  * Cada diária gera a conta a pagar no Financeiro (trigger no banco), na

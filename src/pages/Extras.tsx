@@ -181,7 +181,7 @@ const Extras: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto">
-      <PageHeader caminho={['Gestão', 'Extras']} title="Extras"
+      <PageHeader caminho={['Operação', 'Extras']} title="Extras"
         subtitle="Diaristas: lançar, conferir presença e pagar. Cada diária gera a conta no Financeiro; os pagamentos daqui são controle à parte."
         actions={<div className="flex flex-wrap items-center gap-2">
           {visao === 'diarias' && <Button tamanho="sm" icone={<Download size={14} />} onClick={exportar}>Excel</Button>}

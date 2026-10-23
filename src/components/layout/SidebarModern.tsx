@@ -58,6 +58,7 @@ export const MODULES: Module[] = [
     ],
   },
   { name: 'Músicos',        path: '/musicians',          icon: Music,         slug: 'musicos',         group: 'operacao' },
+  { name: 'Extras',         path: '/extras',             icon: UserPlus,      slug: 'extras',          group: 'operacao' },
   { name: 'Eventos',        path: '/events',             icon: CalendarDays,  slug: 'eventos',         group: 'operacao' },
   { name: 'Financeiro',     path: '/finance',            icon: DollarSign,    slug: 'financeiro',      group: 'financeiro',
     subModules: [
@@ -81,7 +82,6 @@ export const MODULES: Module[] = [
   },
   { name: 'Estoque',        path: '/estoque-beta2',      icon: Warehouse,     slug: 'estoque',         group: 'estoque' },
   { name: 'Controle De Ville', path: '/controle-deville', icon: Warehouse,     slug: 'estoque',         group: 'estoque' },
-  { name: 'Extras',         path: '/extras',             icon: UserPlus,      slug: 'extras',          group: 'gestao' },
   { name: 'OKRs',           path: '/gestao-estrategica', icon: TrendingUp,    slug: 'financeiro',      group: 'gestao' },
   { name: 'Fidelidade',     path: '/fidelidade',         icon: Star,          slug: 'dashboard',       group: 'gestao',
     subModules: [
