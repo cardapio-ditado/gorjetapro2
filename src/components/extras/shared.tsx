@@ -62,9 +62,19 @@ export interface Diaria {
   lancado_por_nome: string | null;
   conta_pagar_id: string | null;
   pessoa?: { nome: string; telefone: string | null; pix: string | null } | null;
+  pagamentos?: { valor: number; data_pagamento: string; estornado_em: string | null }[];
 }
 
 export const SELECT_DIARIA = '*, pessoa:extras_pessoas(nome, telefone, pix)';
+const PAGAMENTOS = 'valor, data_pagamento, estornado_em';
+/** Diária com os pagamentos, para a coluna "Pago em". */
+export const SELECT_DIARIA_PAG = `${SELECT_DIARIA}, pagamentos:extras_pagamentos(${PAGAMENTOS})`;
+/** Só as diárias com pagamento no dia filtrado (o filtro vai no embed). */
+export const SELECT_DIARIA_PAGO_EM = `${SELECT_DIARIA}, pagamentos:extras_pagamentos!inner(${PAGAMENTOS})`;
+
+/** Datas dos pagamentos que valem (sem os estornados), da mais antiga à mais nova. */
+export const datasPagamento = (d: Diaria) =>
+  [...new Set((d.pagamentos || []).filter(p => !p.estornado_em).map(p => p.data_pagamento))].sort();
 
 export type Situacao = 'pendente' | 'parcial' | 'pago' | 'faltou' | 'cancelado';
 

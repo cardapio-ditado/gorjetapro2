@@ -14,7 +14,7 @@ import {
   Textarea, Toolbar,
 } from '../components/ui';
 import {
-  brl, carregarCadastros, dataCurta, emAberto, FORMAS, hora, LancarExtras, MOTIVOS, nomeDe, num, Resumo, SELECT_DIARIA,
+  brl, carregarCadastros, dataCurta, emAberto, FORMAS, hora, LancarExtras, MOTIVOS, nomeDe, num, Resumo, SELECT_DIARIA, SELECT_DIARIA_PAG, SELECT_DIARIA_PAGO_EM, datasPagamento,
   SETORES, SITUACAO, situacao, temTelefone, type Diaria, type PessoaExtra, type Situacao, type TipoExtra,
 } from '../components/extras/shared';
 
@@ -51,6 +51,8 @@ const Extras: React.FC = () => {
   const [mes, setMes] = useState(dayjs().startOf('month'));
   const [inicio, setInicio] = useState(dayjs().startOf('month').format('YYYY-MM-DD'));
   const [fim, setFim] = useState(dayjs().endOf('month').format('YYYY-MM-DD'));
+  // Dia de pagamento: mostra as diárias pagas nesse dia, de qualquer data de trabalho.
+  const [pagoEm, setPagoEm] = useState('');
   const [diarias, setDiarias] = useState<Diaria[]>([]);
   const [tipos, setTipos] = useState<TipoExtra[]>([]);
   const [pessoas, setPessoas] = useState<PessoaExtra[]>([]);
@@ -69,6 +71,7 @@ const Extras: React.FC = () => {
   const [versao, setVersao] = useState(0);
 
   const irParaMes = (m: dayjs.Dayjs) => {
+    setPagoEm('');
     setMes(m.startOf('month'));
     setInicio(m.startOf('month').format('YYYY-MM-DD'));
     setFim(m.endOf('month').format('YYYY-MM-DD'));
@@ -78,8 +81,11 @@ const Extras: React.FC = () => {
     setCarregando(true); setErro(null);
     try {
       const [{ data, error }, cad] = await Promise.all([
-        supabase.from('extras_freelancers').select(SELECT_DIARIA).gte('data_trabalho', inicio).lte('data_trabalho', fim)
-          .order('data_trabalho', { ascending: false }).order('nome'),
+        pagoEm
+          ? supabase.from('extras_freelancers').select(SELECT_DIARIA_PAGO_EM).eq('pagamentos.data_pagamento', pagoEm).is('pagamentos.estornado_em', null)
+            .order('data_trabalho', { ascending: false }).order('nome')
+          : supabase.from('extras_freelancers').select(SELECT_DIARIA_PAG).gte('data_trabalho', inicio).lte('data_trabalho', fim)
+            .order('data_trabalho', { ascending: false }).order('nome'),
         carregarCadastros(),
       ]);
       if (error) throw error;
@@ -93,8 +99,8 @@ const Extras: React.FC = () => {
       setCarregando(false);
     }
   };
-  useEffect(() => { void carregar(); }, [inicio, fim]);
-  useEffect(() => { setMarcados(new Set()); }, [inicio, fim]);
+  useEffect(() => { void carregar(); }, [inicio, fim, pagoEm]);
+  useEffect(() => { setMarcados(new Set()); }, [inicio, fim, pagoEm]);
 
   // A diária aberta no histórico acompanha a lista; fora do período, busca sozinha.
   useEffect(() => {
@@ -123,7 +129,9 @@ const Extras: React.FC = () => {
     const porSetor = new Map<string, number>();
     for (const d of validas) porSetor.set(d.setor, (porSetor.get(d.setor) || 0) + d.valor_diaria);
     const antigas = validas.filter(d => emAberto(d) && dayjs().diff(dayjs(d.data_trabalho), 'day') > 7);
+    const pagoNoDia = pagoEm ? diarias.reduce((a, d) => a + (d.pagamentos || []).reduce((b, p) => b + Number(p.valor), 0), 0) : 0;
     return {
+      pagoNoDia,
       diarias: validas.length,
       pessoas: new Set(validas.map(chave)).size,
       custo: validas.reduce((a, d) => a + d.valor_diaria, 0),
@@ -134,7 +142,7 @@ const Extras: React.FC = () => {
       antigas: antigas.length,
       porSetor: [...porSetor.entries()].sort((a, b) => b[1] - a[1]),
     };
-  }, [diarias]);
+  }, [diarias, pagoEm]);
 
   const contagem = useMemo(() => {
     const c: Record<string, number> = {};
@@ -165,9 +173,10 @@ const Extras: React.FC = () => {
     if (!visiveis.length) { setErro('Não há diárias para exportar.'); return; }
     exportToExcel(visiveis.map(d => [
       dayjs(d.data_trabalho).format('DD/MM/YYYY'), nomeDe(d), d.funcao_temporaria, d.setor, d.motivo_contratacao || '', d.pedido_por || '',
-      d.valor_diaria, d.valor_pago, Math.max(0, d.saldo_restante), SITUACAO[situacao(d)].rotulo, d.lancado_por_nome || '',
-    ]), `extras-${dayjs(inicio).format('DD-MM-YYYY')}-a-${dayjs(fim).format('DD-MM-YYYY')}`,
-    ['Data', 'Pessoa', 'Tipo', 'Setor', 'Motivo', 'Pediu', 'Diária', 'Pago', 'Falta', 'Situação', 'Lançou']);
+      d.valor_diaria, d.valor_pago, Math.max(0, d.saldo_restante), datasPagamento(d).map(x => dayjs(x).format('DD/MM/YYYY')).join(', '),
+      SITUACAO[situacao(d)].rotulo, d.lancado_por_nome || '',
+    ]), pagoEm ? `extras-pagos-em-${dayjs(pagoEm).format('DD-MM-YYYY')}` : `extras-${dayjs(inicio).format('DD-MM-YYYY')}-a-${dayjs(fim).format('DD-MM-YYYY')}`,
+    ['Data', 'Pessoa', 'Tipo', 'Setor', 'Motivo', 'Pediu', 'Diária', 'Pago', 'Falta', 'Pago em', 'Situação', 'Lançou']);
   };
 
   return (
@@ -200,18 +209,32 @@ const Extras: React.FC = () => {
           <span className="t-subsec" style={{ minWidth: 170, textAlign: 'center' }}>{capital(mes.format('MMMM [de] YYYY'))}</span>
           <IconButton aria-label="Próximo mês" onClick={() => irParaMes(mes.add(1, 'month'))}><ChevronRight size={16} /></IconButton>
           <Button tamanho="sm" variante="discreto" onClick={() => irParaMes(dayjs())}>Hoje</Button>
-          <div className="flex items-center gap-2 ml-auto">
-            <Input aria-label="De" type="date" value={inicio} onChange={e => setInicio(e.target.value)} />
+          <div className="flex flex-wrap items-center gap-2 ml-auto">
+            <Input aria-label="De" type="date" value={inicio} onChange={e => { setPagoEm(''); setInicio(e.target.value); }} />
             <span className="t-caption">até</span>
-            <Input aria-label="Até" type="date" value={fim} onChange={e => setFim(e.target.value)} />
+            <Input aria-label="Até" type="date" value={fim} onChange={e => { setPagoEm(''); setFim(e.target.value); }} />
+            <span className="t-caption ml-2">pago em</span>
+            <Input aria-label="Pago em" type="date" value={pagoEm} onChange={e => setPagoEm(e.target.value)} />
             <IconButton aria-label="Atualizar" onClick={carregar} disabled={carregando}><RefreshCw size={16} className={carregando ? 'animate-spin' : ''} /></IconButton>
           </div>
         </div>
 
+        {pagoEm && (
+          <div className="aviso flex flex-wrap items-center gap-3 mb-3">
+            <span className="t-body" style={{ margin: 0 }}>
+              Pagamentos feitos em <strong>{capital(dayjs(pagoEm).format('dddd, DD/MM/YYYY'))}</strong>: {diarias.length} diária{diarias.length === 1 ? '' : 's'}, <strong>{brl(totais.pagoNoDia)}</strong> pagos nesse dia.
+            </span>
+            <Toolbar.Espaco />
+            <Button tamanho="sm" variante="discreto" icone={<X size={14} />} onClick={() => setPagoEm('')}>Voltar ao período</Button>
+          </div>
+        )}
+
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-3">
           <KPICard rotulo="diárias" valor={totais.diarias} detalhe={`${totais.pessoas} pessoa${totais.pessoas === 1 ? '' : 's'}`} />
           <KPICard rotulo="custo com extras" valor={brl(totais.custo)} detalhe={totais.diarias ? `média ${brl(totais.custo / totais.diarias)}` : 'no período'} tom="destaque" />
-          <KPICard rotulo="pago" valor={brl(totais.pago)} detalhe={totais.custo ? `${Math.round((totais.pago / totais.custo) * 100)}% do custo` : '—'} tom="certo" />
+          {pagoEm
+            ? <KPICard rotulo="pago nesse dia" valor={brl(totais.pagoNoDia)} detalhe={capital(dayjs(pagoEm).format('ddd, DD/MM'))} tom="certo" />
+            : <KPICard rotulo="pago" valor={brl(totais.pago)} detalhe={totais.custo ? `${Math.round((totais.pago / totais.custo) * 100)}% do custo` : '—'} tom="certo" />}
           <KPICard rotulo="a pagar" valor={brl(totais.aPagar)} detalhe={`${totais.aPagarN} diária${totais.aPagarN === 1 ? '' : 's'}${totais.antigas ? `, ${totais.antigas} há +7 dias` : ''}`}
             tom={totais.antigas ? 'alerta' : totais.aPagar > 0 ? 'atencao' : 'certo'} onClick={() => setFiltro('a_pagar')} />
           <KPICard rotulo="faltas" valor={totais.faltas} detalhe="marcadas no período" tom={totais.faltas ? 'atencao' : 'normal'} onClick={totais.faltas ? () => setFiltro('faltou') : undefined} />
@@ -270,6 +293,7 @@ const Extras: React.FC = () => {
                       <th className="px-4 py-2.5 text-left">Setor</th>
                       <th className="px-4 py-2.5 text-right">Diária</th>
                       <th className="px-4 py-2.5 text-right">Falta</th>
+                      <th className="px-4 py-2.5 text-left">{pagoEm ? 'Pago no dia' : 'Pago em'}</th>
                       <th className="px-4 py-2.5 text-left">Situação</th>
                       <th className="px-4 py-2.5 text-right" aria-label="Ações" />
                     </tr>
@@ -297,6 +321,14 @@ const Extras: React.FC = () => {
                           <td className={`px-4 py-3 text-right num ${emAberto(d) && dias > 7 ? 'texto-atencao' : ''}`} style={{ fontWeight: 600 }}>
                             {emAberto(d) ? brl(d.saldo_restante) : <span className="t-caption">—</span>}
                           </td>
+                          <td className="px-4 py-3 whitespace-nowrap">
+                            {pagoEm ? <span className="t-body num" style={{ fontWeight: 600 }}>{brl((d.pagamentos || []).reduce((a, p) => a + Number(p.valor), 0))}</span>
+                              : datasPagamento(d).length ? (
+                                <span className="t-body num" title={datasPagamento(d).map(x => dayjs(x).format('DD/MM/YYYY')).join(', ')}>
+                                  {dataCurta(datasPagamento(d)[datasPagamento(d).length - 1])}{datasPagamento(d).length > 1 && <span className="t-caption"> +{datasPagamento(d).length - 1}</span>}
+                                </span>
+                              ) : <span className="t-caption">—</span>}
+                          </td>
                           <td className="px-4 py-3">
                             <div className="flex flex-wrap items-center gap-1">
                               <Badge variant={SITUACAO[s].variante}>{SITUACAO[s].rotulo}</Badge>
@@ -320,6 +352,7 @@ const Extras: React.FC = () => {
                       <td colSpan={4} className="px-4 py-3 t-label">{visiveis.length} diária{visiveis.length === 1 ? '' : 's'}</td>
                       <td className="px-4 py-3 text-right num" style={{ fontWeight: 600 }}>{brl(visiveis.filter(d => d.status_pagamento !== 'cancelado').reduce((a, d) => a + d.valor_diaria, 0))}</td>
                       <td className="px-4 py-3 text-right num" style={{ fontWeight: 600 }}>{brl(visiveis.filter(emAberto).reduce((a, d) => a + d.saldo_restante, 0))}</td>
+                      <td className="px-4 py-3 num" style={{ fontWeight: 600, textAlign: 'left' }}>{pagoEm ? brl(visiveis.reduce((a, d) => a + (d.pagamentos || []).reduce((b, p) => b + Number(p.valor), 0), 0)) : ''}</td>
                       <td colSpan={2} />
                     </tr>
                   </tfoot>
