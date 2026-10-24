@@ -4,6 +4,7 @@
  * tailwind.config.js. A vitrine viva está em /kit.
  */
 export { KPICard } from './KPICard';
+export { BlocoSeguro } from './BlocoSeguro';
 export type { KPITom } from './KPICard';
 export { PageHeader } from './PageHeader';
 export { SectionCard } from './SectionCard';

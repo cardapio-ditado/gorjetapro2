@@ -1,5 +1,5 @@
 import React from 'react';
-import { RefreshCw } from 'lucide-react';
+import { Inbox, RefreshCw, WifiOff } from 'lucide-react';
 import { Badge, EmptyState, IconButton, KPICard, SectionCard } from '../ui';
 import { brl } from '../livro/shared';
 import { hhmm, haQuanto, nomeCurto, useVendasAoVivo } from './useVendasAoVivo';
@@ -23,9 +23,9 @@ const VendasAoVivo: React.FC = () => {
 
       {!d ? (
         carregando ? <p className="t-caption" style={{ margin: 0 }}>Buscando as vendas…</p>
-          : <EmptyState title="Sem leitura ainda" description="Toque em atualizar para tentar de novo." compact />
+          : <EmptyState icon={WifiOff} title="Sem leitura ainda" description="Toque em atualizar para tentar de novo." compact />
       ) : d.pedidos === 0 ? (
-        <EmptyState title="Ainda sem vendas nesta noite" description="Assim que a ZIG registrar a primeira venda, ela aparece aqui." compact />
+        <EmptyState icon={Inbox} title="Ainda sem vendas nesta noite" description="Assim que a ZIG registrar a primeira venda, ela aparece aqui." compact />
       ) : (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 mb-4">

@@ -38,8 +38,6 @@ const LivroNoite: React.FC = () => {
     setCarregando(false);
   };
   useEffect(() => { void carregar(); }, [data]);
-  // Na noite em andamento, o total vem ao vivo da ZIG (o do dia só sincroniza na manhã seguinte).
-  const vivo = useVendasAoVivo(aba === 'livro' && data === noiteAgora());
   useEffect(() => { setParams(p => { const n = new URLSearchParams(p); n.set('data', data); return n; }, { replace: true }); }, [data]);
 
   /** Roda uma gravação, mostra o erro do banco e recarrega o livro. */
@@ -110,6 +108,8 @@ const Livro: React.FC<LivroProps> = ({ carga, noite, editavel, gravar, setErro, 
   const respondidos = SETORES.filter(s => carga.ocorrencias.some(o => o.setor === s.id) || carga.setores.some(x => x.setor === s.id)).length;
   const graves = carga.ocorrencias.filter(o => o.gravidade === 'grave').length;
   const caixaOk = noite.fundo_troco !== null && noite.dinheiro_entrada !== null && noite.dinheiro_contado !== null;
+  // Na noite em andamento, o total vem ao vivo da ZIG (o do dia só sincroniza na manhã seguinte).
+  const vivo = useVendasAoVivo(!carga.zig_total && noite.data === noiteAgora());
   const atualizarNoite = (campos: Partial<Noite>, msg?: string) => gravar(() => supabase.from('livro_noites').update(campos).eq('id', noite.id), msg);
 
   const resolver = (id: string, texto: string) => gravar(() => supabase.from('livro_ocorrencias').update({ status_pendencia: 'resolvida', resolucao: texto }).eq('id', id), 'Pendência resolvida.');

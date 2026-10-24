@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import ExtrasDoDia from '../components/extras/ExtrasDoDia';
 import ClubeGerente from '../components/clube/ClubeGerente';
 import VendasAoVivo from '../components/zig/VendasAoVivo';
+import { BlocoSeguro } from '../components/ui';
 import LivroGerente from '../components/livro/LivroGerente';
 
 /**
@@ -203,22 +204,22 @@ export default function PortalGerente() {
 
       {temAcessoModulo('livro') && (
         <div className="mt-4">
-          <VendasAoVivo />
+          <BlocoSeguro nome="Vendas da noite"><VendasAoVivo /></BlocoSeguro>
         </div>
       )}
 
       {temAcessoModulo('livro') && (
         <div className="mt-4">
-          <LivroGerente />
+          <BlocoSeguro nome="Livro da Noite"><LivroGerente /></BlocoSeguro>
         </div>
       )}
 
       <div className="mt-4">
-        <ExtrasDoDia data={data} quem={usuario?.nome_completo ?? null} />
+        <BlocoSeguro nome="Extras do dia"><ExtrasDoDia data={data} quem={usuario?.nome_completo ?? null} /></BlocoSeguro>
       </div>
 
       <div className="mt-4">
-        <ClubeGerente />
+        <BlocoSeguro nome="Clube do Whisky"><ClubeGerente /></BlocoSeguro>
       </div>
     </div>
   );
