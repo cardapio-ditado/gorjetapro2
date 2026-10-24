@@ -20,7 +20,13 @@ export interface Vivo {
   taxa_fechada: number;
   itens: number; pedidos: number;
   /** Pelo CPF de cada compra; null se a ZIG não mandou as compras. */
-  clientes: { vieram: number; ainda: number; foram: number; ticket_medio: number } | null;
+  clientes: {
+    vieram: number; ainda: number; foram: number; ticket_medio: number;
+    /** Entraram sem consumo no próprio cartão (só registros de R$ 0). */
+    sem_consumo?: number;
+    /** Total dividido só por quem consumiu. */
+    ticket_consumidor?: number;
+  } | null;
   por_categoria: { categoria: string; valor: number }[];
   por_bar: { bar: string; valor: number }[];
   por_hora: { hora: string; valor: number }[];

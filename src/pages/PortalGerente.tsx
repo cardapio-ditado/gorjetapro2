@@ -204,13 +204,13 @@ export default function PortalGerente() {
 
       {temAcessoModulo('livro') && (
         <div className="mt-4">
-          <BlocoSeguro nome="Vendas da noite"><VendasAoVivo /></BlocoSeguro>
+          <BlocoSeguro nome="Vendas da noite"><VendasAoVivo key={data} data={data} /></BlocoSeguro>
         </div>
       )}
 
       {temAcessoModulo('livro') && (
         <div className="mt-4">
-          <BlocoSeguro nome="Livro da Noite"><LivroGerente /></BlocoSeguro>
+          <BlocoSeguro nome="Livro da Noite"><LivroGerente key={data} data={data} /></BlocoSeguro>
         </div>
       )}
 

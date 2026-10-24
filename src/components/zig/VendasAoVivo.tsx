@@ -1,46 +1,82 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import dayjs from 'dayjs';
 import { Inbox, RefreshCw, WifiOff } from 'lucide-react';
+import { supabase } from '../../lib/supabase';
 import { Badge, EmptyState, IconButton, KPICard, SectionCard } from '../ui';
-import { brl } from '../livro/shared';
-import { hhmm, haQuanto, nomeCurto, useVendasAoVivo } from './useVendasAoVivo';
+import { brl, noiteAgora } from '../livro/shared';
+import { hhmm, haQuanto, nomeCurto, useVendasAoVivo, type Vivo } from './useVendasAoVivo';
 
-const VendasAoVivo: React.FC = () => {
-  const { d, erro, carregando, agora, buscouEm, buscar } = useVendasAoVivo();
+interface Salva { resumo: Vivo; final: boolean; atualizado_em: string }
+
+/**
+ * Vendas da noite. Na noite em andamento (ou no dia de hoje) lê ao vivo da ZIG;
+ * numa data passada mostra o resumo salvo em zig_noites.
+ */
+const VendasAoVivo: React.FC<{ data?: string }> = ({ data }) => {
+  const aoVivo = !data || data === noiteAgora() || data === new Date().toLocaleDateString('sv-SE');
+  const vivo = useVendasAoVivo(aoVivo);
+  const [salva, setSalva] = useState<Salva | null | undefined>(undefined);
+
+  useEffect(() => {
+    if (aoVivo) return;
+    let vale = true;
+    setSalva(undefined);
+    supabase.from('zig_noites').select('resumo, final, atualizado_em').eq('data', data).maybeSingle()
+      .then(({ data: r }) => { if (vale) setSalva((r as Salva) ?? null); });
+    return () => { vale = false; };
+  }, [aoVivo, data]);
+
+  const d: Vivo | null = aoVivo ? vivo.d : salva?.resumo ?? null;
+  const { erro, agora, buscouEm, buscar } = vivo;
+  const carregando = aoVivo ? vivo.carregando : salva === undefined;
 
   const maxGarcom = Math.max(1, ...(d?.garcons.map(g => g.consumo) ?? [1]));
   // Madrugada vem depois da noite: 00h–05h contam como 24h–29h para ordenar.
   const horas = [...(d?.por_hora ?? [])].sort((a, b) => (Number(a.hora) < 6 ? Number(a.hora) + 24 : Number(a.hora)) - (Number(b.hora) < 6 ? Number(b.hora) + 24 : Number(b.hora)));
   const maxHora = Math.max(1, ...horas.map(h => h.valor));
-  const parada = d?.atualizado_em ? (agora - new Date(d.atualizado_em).getTime()) / 60000 > 30 : false;
+  const parada = aoVivo && d?.atualizado_em ? (agora - new Date(d.atualizado_em).getTime()) / 60000 > 30 : false;
+  const c = d?.clientes;
 
   return (
     <SectionCard
-      title="Vendas da noite · ao vivo"
-      descricao={buscouEm ? `Atualiza sozinho a cada minuto · lido às ${hhmm(new Date(buscouEm).toISOString())}` : 'Direto da ZIG'}
-      action={<IconButton aria-label="Atualizar vendas" onClick={() => buscar()} disabled={carregando}><RefreshCw size={16} className={carregando ? 'animate-spin' : ''} /></IconButton>}
+      title={aoVivo ? 'Vendas da noite · ao vivo' : `Vendas da noite · ${dayjs(data).format('DD/MM')}`}
+      descricao={aoVivo
+        ? (buscouEm ? `Atualiza sozinho a cada minuto · lido às ${hhmm(new Date(buscouEm).toISOString())}` : 'Direto da ZIG')
+        : salva ? (salva.final ? 'Noite fechada · resumo salvo pela manhã' : `Parcial · última leitura salva às ${hhmm(salva.atualizado_em)}`) : 'Resumo salvo da noite'}
+      action={aoVivo ? <IconButton aria-label="Atualizar vendas" onClick={() => buscar()} disabled={carregando}><RefreshCw size={16} className={carregando ? 'animate-spin' : ''} /></IconButton> : undefined}
     >
-      {erro && <p className="t-caption" style={{ margin: '0 0 12px', color: 'var(--warning)' }}>{erro}</p>}
+      {aoVivo && erro && <p className="t-caption" style={{ margin: '0 0 12px', color: 'var(--warning)' }}>{erro}</p>}
 
       {!d ? (
         carregando ? <p className="t-caption" style={{ margin: 0 }}>Buscando as vendas…</p>
-          : <EmptyState icon={WifiOff} title="Sem leitura ainda" description="Toque em atualizar para tentar de novo." compact />
+          : aoVivo ? <EmptyState icon={WifiOff} title="Sem leitura ainda" description="Toque em atualizar para tentar de novo." compact />
+          : <EmptyState icon={Inbox} title="Nada salvo desta noite" description="As noites ficam salvas a partir de 23/10/2026." compact />
       ) : d.pedidos === 0 ? (
         <EmptyState icon={Inbox} title="Ainda sem vendas nesta noite" description="Assim que a ZIG registrar a primeira venda, ela aparece aqui." compact />
       ) : (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-            <KPICard rotulo="vendido até agora" valor={brl(d.total)} detalhe={d.couvert > 0 ? `consumo ${brl(d.consumo)} + couvert ${brl(d.couvert)}` : 'sem a taxa de serviço'} tom="destaque" />
+            <KPICard rotulo={aoVivo ? 'vendido até agora' : 'vendido na noite'} valor={brl(d.total)} detalhe={d.couvert > 0 ? `consumo ${brl(d.consumo)} + couvert ${brl(d.couvert)}` : 'sem a taxa de serviço'} tom="destaque" />
             <KPICard rotulo="pedidos" valor={d.pedidos} detalhe={`${d.itens} itens`} />
-            <KPICard rotulo="taxa de serviço prevista" valor={brl(d.taxa_prevista)} detalhe={`das contas da noite · já paga: ${brl(d.taxa_fechada)}`} />
-            <KPICard rotulo="última venda" valor={hhmm(d.atualizado_em)} detalhe={haQuanto(d.atualizado_em, agora)} tom={parada ? 'atencao' : 'certo'} />
+            {aoVivo
+              ? <KPICard rotulo="taxa de serviço prevista" valor={brl(d.taxa_prevista)} detalhe={`das contas da noite · já paga: ${brl(d.taxa_fechada)}`} />
+              : <KPICard rotulo="taxa de serviço" valor={brl(d.taxa_prevista)} detalhe={`paga: ${brl(d.taxa_fechada)}`} />}
+            {aoVivo
+              ? <KPICard rotulo="última venda" valor={hhmm(d.atualizado_em)} detalhe={haQuanto(d.atualizado_em, agora)} tom={parada ? 'atencao' : 'certo'} />
+              : <KPICard rotulo="última venda" valor={hhmm(d.atualizado_em)} detalhe="fechamento da noite" />}
           </div>
 
-          {d.clientes && (
+          {c && (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-              <KPICard rotulo="clientes que vieram" valor={d.clientes.vieram} detalhe="com consumo ou couvert" />
-              <KPICard rotulo="ainda na casa" valor={d.clientes.ainda} detalhe="com conta em aberto" tom="certo" />
-              <KPICard rotulo="já foram" valor={d.clientes.foram} detalhe="conta paga" />
-              <KPICard rotulo="ticket médio" valor={brl(d.clientes.ticket_medio)} detalhe="por cliente" />
+              <KPICard rotulo="clientes que vieram" valor={c.vieram} detalhe={c.sem_consumo ? `${c.sem_consumo} sem consumo próprio` : 'com consumo ou couvert'} />
+              {aoVivo ? <>
+                <KPICard rotulo="ainda na casa" valor={c.ainda} detalhe="com conta em aberto" tom="certo" />
+                <KPICard rotulo="já foram" valor={c.foram} detalhe="conta paga" />
+              </> : <>
+                <KPICard rotulo="consumiram" valor={c.vieram - (c.sem_consumo ?? 0)} detalhe="com conta própria" />
+                <KPICard rotulo="sem consumo próprio" valor={c.sem_consumo ?? 0} detalhe="acompanhantes, entrada" />
+              </>}
+              <KPICard rotulo="ticket médio" valor={brl(c.ticket_medio)} detalhe={c.ticket_consumidor ? `por pessoa · ${brl(c.ticket_consumidor)} por quem consumiu` : 'por cliente'} />
             </div>
           )}
 
@@ -66,7 +102,7 @@ const VendasAoVivo: React.FC = () => {
                     <span>taxa prevista {brl(g.taxa_prevista)}</span>
                   </> : <span>só couvert</span>}
                   {g.consumo > 0 && g.couvert > 0 && <span>+ couvert {brl(g.couvert)}</span>}
-                  <span>última {haQuanto(g.ultima, agora)}</span>
+                  <span>{aoVivo ? `última ${haQuanto(g.ultima, agora)}` : `última às ${hhmm(g.ultima)}`}</span>
                 </div>
               </div>
             ))}
