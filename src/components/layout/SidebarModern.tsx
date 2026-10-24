@@ -4,7 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import {
   Home, DollarSign, Warehouse, Users, Music, CalendarDays,
   Settings, BookOpen, Target, ClipboardList, Palette,
-  TrendingUp, ChevronDown, LogOut, Star, X, LayoutDashboard, Hexagon, UserPlus, Handshake, Wine,
+  TrendingUp, ChevronDown, LogOut, Star, X, LayoutDashboard, Hexagon, UserPlus, Handshake, Wine, Gamepad2,
 } from 'lucide-react';
 
 // Desde 05/10/2026 o estoque vive no Beta 2, que tem o próprio menu dentro da
@@ -67,6 +67,7 @@ export const MODULES: Module[] = [
   },
   { name: 'Músicos',        path: '/musicians',          icon: Music,         slug: 'musicos',         group: 'operacao' },
   { name: 'Livro da Noite', path: '/livro',            icon: BookOpen,      slug: 'livro',           group: 'operacao' },
+  { name: 'A Casa ao Vivo', path: '/casa',             icon: Gamepad2,      slug: 'casa',            group: 'operacao' },
   { name: 'Extras',         path: '/extras',             icon: UserPlus,      slug: 'extras',          group: 'operacao' },
   { name: 'Metas & Tarefas', path: '/metas-tarefas',    icon: Target,        slug: 'solicitacoes',    group: 'operacao' },
   { name: 'Eventos',        path: '/events',             icon: CalendarDays,  slug: 'eventos',         group: 'operacao' },

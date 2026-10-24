@@ -20,6 +20,7 @@ const Musicians           = lazy(() => import('./pages/Musicians'));
 const Extras              = lazy(() => import('./pages/Extras'));
 const ClubeWhisky         = lazy(() => import('./pages/ClubeWhisky'));
 const LivroNoite          = lazy(() => import('./pages/LivroNoite'));
+const CasaAoVivo          = lazy(() => import('./pages/CasaAoVivo'));
 const Events              = lazy(() => import('./pages/Events'));
 const Settings            = lazy(() => import('./pages/Settings'));
 const MetasTarefas        = lazy(() => import('./pages/MetasTarefas'));
@@ -116,6 +117,7 @@ function AppContent() {
         <Route path="/staff"               element={<ProtectedRoute moduloSlug="rh">            <Staff />               </ProtectedRoute>} />
         <Route path="/recruitment"         element={<ProtectedRoute moduloSlug="rh">            <Recruitment />         </ProtectedRoute>} />
         <Route path="/livro"               element={<ProtectedRoute moduloSlug="livro">         <LivroNoite />          </ProtectedRoute>} />
+        <Route path="/casa"                element={<ProtectedRoute moduloSlug="casa">          <CasaAoVivo />          </ProtectedRoute>} />
         <Route path="/clube-whisky"        element={<ProtectedRoute moduloSlug="clube_whisky">  <ClubeWhisky />         </ProtectedRoute>} />
         <Route path="/extras"              element={<ProtectedRoute moduloSlug="extras">        <Extras />              </ProtectedRoute>} />
         <Route path="/musicians"           element={<ProtectedRoute moduloSlug="musicos">       <Musicians />           </ProtectedRoute>} />

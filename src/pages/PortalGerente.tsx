@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Gamepad2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import ExtrasDoDia from '../components/extras/ExtrasDoDia';
 import ClubeGerente from '../components/clube/ClubeGerente';
 import VendasAoVivo from '../components/zig/VendasAoVivo';
-import { BlocoSeguro } from '../components/ui';
+import { BlocoSeguro, Button } from '../components/ui';
 import LivroGerente from '../components/livro/LivroGerente';
 
 /**
@@ -33,6 +35,7 @@ const fmtReais = (v?: number) =>
 
 export default function PortalGerente() {
   const { usuario, temAcessoModulo } = useAuth();
+  const navigate = useNavigate();
   const [data, setData] = useState(hoje());
   const [resumo, setResumo] = useState<ResumoDia | null>(null);
   const [loading, setLoading] = useState(true);
@@ -199,6 +202,12 @@ export default function PortalGerente() {
               </div>
             )}
           </div>
+        </div>
+      )}
+
+      {temAcessoModulo('casa') && (
+        <div className="mt-4 flex justify-end">
+          <Button variante="primario" icone={<Gamepad2 size={16} />} onClick={() => navigate('/casa')}>Ver a casa ao vivo</Button>
         </div>
       )}
 

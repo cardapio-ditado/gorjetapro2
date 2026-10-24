@@ -1,6 +1,6 @@
 import type { LucideIcon } from 'lucide-react';
 import {
-  BookOpen, CalendarDays, DollarSign, Home, Music, Palette, Settings, Star, Target, TrendingUp, UserPlus, Users, Warehouse, Wine,
+  BookOpen, CalendarDays, DollarSign, Gamepad2, Home, Music, Palette, Settings, Star, Target, TrendingUp, UserPlus, Users, Warehouse, Wine,
 } from 'lucide-react';
 
 /** Uma tela que a busca do topo sabe abrir. */
@@ -33,6 +33,7 @@ export const ROTAS_BUSCA: RotaBusca[] = [
   // Músicos & Eventos
   { label: 'Clube do Whisky',         path: '/clube-whisky',                                         icon: Wine, apelidos: 'garrafa guardada whisky clube socio' },
   { label: 'Livro da Noite',          path: '/livro',                                                icon: BookOpen, apelidos: 'ocorrencias ocorrencia diario caixa noite gerente' },
+  { label: 'A Casa ao Vivo',          path: '/casa',                                                 icon: Gamepad2, apelidos: 'maquete jogo clientes garcom praca 3d tempo real' },
   { label: 'Extras',                  path: '/extras',                                               icon: UserPlus, apelidos: 'diarista freelancer freela diaria' },
   { label: 'Músicos',                 path: '/musicians',                                            icon: Music, apelidos: 'show agenda banda' },
   { label: 'Eventos',                 path: '/events',                                               icon: CalendarDays, apelidos: 'festa reserva' },
