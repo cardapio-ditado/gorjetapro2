@@ -58,6 +58,7 @@ type ProdutoZig = {
   count: number; eventDate: string;
   mapeado: boolean; ignorar_estoque: boolean; eh_produto_composto: boolean;
   expandido_de: string | null;
+  adicional?: boolean;
   mapeamento: { item_estoque_id: string | null; ficha_tecnica_id: string | null; estoque_id: string | null } | null;
 };
 
@@ -183,6 +184,18 @@ Deno.serve(async (req) => {
     const paiPorNome = new Map<string, any>();
     for (const m of paisComFicha || []) paiPorNome.set(normalizarZig(m.nome_externo), m);
 
+    // Destilado escolhido como complemento de um drink (o gin do Gin Tropical)
+    // vem da ZIG com o mesmo nome da garrafa. Quando existe o mapeamento
+    // "<nome> (adicional)", ele vale para o complemento: baixa a dose, não a
+    // garrafa inteira. Em 23-25/10 cada gin com Tanqueray baixou uma garrafa.
+    const { data: mapsAdicional, error: errAdic } = await supabase
+      .from('mapeamento_itens_vendas')
+      .select('nome_externo, item_estoque_id, ficha_tecnica_id, estoque_id')
+      .ilike('nome_externo', '% (adicional)');
+    if (errAdic) throw new Error('Erro ao ler mapeamento dos complementos: ' + errAdic.message);
+    const adicionalPorNome = new Map<string, any>();
+    for (const m of mapsAdicional || []) adicionalPorNome.set(normalizarZig(m.nome_externo.replace(/\s*\(adicional\)\s*$/i, '')), m);
+
     // 1. Busca e classifica, um dia por chamada. zig-buscar-vendas soma o
     //    produto pai de vários dias numa linha só, com a data do primeiro, o
     //    que quebraria a baixa por dia dos pais acima.
@@ -197,6 +210,16 @@ Deno.serve(async (req) => {
 
       for (const p of (json.produtos || []) as ProdutoZig[]) {
         totalProdutosZig++;
+        if (p.expandido_de) {
+          const adic = adicionalPorNome.get(normalizarZig(p.productName));
+          if (adic && adic.estoque_id && (adic.item_estoque_id || adic.ficha_tecnica_id)) {
+            prontos.push({ ...p, adicional: true, mapeamento: {
+              item_estoque_id: adic.ficha_tecnica_id ? null : adic.item_estoque_id,
+              ficha_tecnica_id: adic.ficha_tecnica_id, estoque_id: adic.estoque_id,
+            } });
+            continue;
+          }
+        }
         if (p.eh_produto_composto) {
           const pai = paiPorNome.get(normalizarZig(p.productName));
           if (pai && pai.estoque_id && (pai.item_estoque_id || pai.ficha_tecnica_id)) {
@@ -269,17 +292,21 @@ Deno.serve(async (req) => {
     for (const p of prontos) {
       const dataVenda = (p.eventDate || dtfim).split('T')[0];
       const m = p.mapeamento!;
+      // Complemento tem chave e nome próprios: a garrafa vendida no mesmo dia
+      // tem o mesmo productId e não pode se misturar com as doses.
+      const chave = p.adicional ? `${p.productId}:adicional` : p.productId;
+      const nome = p.adicional ? `${p.productName} (adicional)` : p.productName;
 
       // Baixa por diferença: quanto o dia já tinha baixado × quanto a ZIG diz
       // agora. Linha antiga sem quantidade = dia fechado pela versão anterior.
       const { data: jaSync } = await supabase
         .from('zig_vendas_sync_ids').select('id, quantidade')
-        .eq('zig_product_id', p.productId).eq('data_venda', dataVenda).maybeSingle();
+        .eq('zig_product_id', chave).eq('data_venda', dataVenda).maybeSingle();
       const jaBaixado = jaSync ? (jaSync.quantidade === null || jaSync.quantidade === undefined ? Number(p.count) : Number(jaSync.quantidade)) : 0;
       const delta = Number(p.count) - jaBaixado;
       if (delta <= 0) { totalDup++; continue; }
 
-      if (dryRun) { processados.push({ nome: p.productName, quantidade: delta, total_dia: p.count, data_venda: dataVenda, simulado: true }); continue; }
+      if (dryRun) { processados.push({ nome, quantidade: delta, total_dia: p.count, data_venda: dataVenda, simulado: true }); continue; }
 
       try {
         const movIds: string[] = [];
@@ -295,12 +322,12 @@ Deno.serve(async (req) => {
               continue;
             }
             movIds.push(await baixarItem(supabase, ing.item_estoque_id, m.estoque_id!,
-              Number(ing.quantidade) * delta, dataVenda, p.productName, p.productId, jaBaixado));
+              Number(ing.quantidade) * delta, dataVenda, nome, chave, jaBaixado));
           }
         } else if (m.item_estoque_id) {
           if (await permiteBaixaZig(supabase, m.item_estoque_id, m.estoque_id!)) {
             movIds.push(await baixarItem(supabase, m.item_estoque_id, m.estoque_id!,
-              delta, dataVenda, p.productName, p.productId, jaBaixado));
+              delta, dataVenda, nome, chave, jaBaixado));
           } else {
             ignoradosPorControle++;
           }
@@ -315,16 +342,16 @@ Deno.serve(async (req) => {
               .update({ quantidade: Number(p.count), sincronizado_em: new Date().toISOString() }).eq('id', jaSync.id);
           } else {
             await supabase.from('zig_vendas_sync_ids').insert({
-              zig_product_id: p.productId, zig_product_name: p.productName,
+              zig_product_id: chave, zig_product_name: nome,
               data_venda: dataVenda, movimentacao_id: movIds[0] || null, quantidade: Number(p.count),
             });
           }
-          await supabase.rpc('fn_registrar_uso_mapeamento_zig', { p_nome_externo: p.productName })
+          await supabase.rpc('fn_registrar_uso_mapeamento_zig', { p_nome_externo: nome })
             .then(() => {}, () => {});
-          processados.push({ nome: p.productName, quantidade: delta, total_dia: p.count, data_venda: dataVenda, movimentacoes: movIds.length, expandido_de: p.expandido_de || null });
+          processados.push({ nome, quantidade: delta, total_dia: p.count, data_venda: dataVenda, movimentacoes: movIds.length, expandido_de: p.expandido_de || null });
         }
       } catch (e: any) {
-        erros.push(`${p.productName}: ${e.message}`);
+        erros.push(`${nome}: ${e.message}`);
       }
     }
 
