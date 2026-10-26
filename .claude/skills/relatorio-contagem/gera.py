@@ -152,6 +152,8 @@ exp_linhas = ''.join(
     f"<tr><td class=\"item\">{e(x['item'])}<small>{e(x.get('sub', ''))}</small></td><td style=\"text-align:left;font-size:18px\">{x['oque']}</td>"
     f"<td><span class=\"pill {x.get('tipo', 'pos')}\">{e(x['ajuste'])}</span></td></tr>" for x in exp.get('linhas', []))
 for item, txt in ignorar.items():
+    if not txt:  # explicado na linha de outro item
+        continue
     exp_linhas += (f"<tr><td class=\"item\">{e(nome_bonito(item, 'unidade', False))}<small>fora do resultado</small></td>"
                    f"<td style=\"text-align:left;font-size:18px\">{txt}</td><td><span class=\"pill pos\">ok</span></td></tr>")
 if sem_custo:
