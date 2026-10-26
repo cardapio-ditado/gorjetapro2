@@ -33,6 +33,7 @@ O layout é fixo: **não invente formato novo**. A referência é `modelo-23-10.
    - `ignorar`: `{"NOME NO SISTEMA": "explicação"}`. Item com correção fora do resultado (ex.: unidade errada no cadastro). Vai para "não é perda".
    - `pares`: `[["ITEM NO BAR", "ITEM NO CENTRAL", "rótulo do chip"]]`, quando o mesmo produto aparece com nomes diferentes nos dois estoques.
    - `notas`: `{"Bar|NOME NO SISTEMA": "texto curto"}`. Aparece na linha de baixo do item.
+   - `vendas_sem_baixa`: `{"Bar|NOME NO SISTEMA": [qtd, "texto"]}`. Venda que a Zig fez e o estoque não baixou (qtd > 0) ou baixou a mais (qtd < 0), contada nas vendas da Zig (`zig-buscar-vendas` do dia, só leitura). Entra na coluna Vendeu e deixa de ser falta. Não use estimativa: só número tirado da Zig.
    - `explicados.linhas`, `blocos`, `dicas`: textos do dia, curtos e diretos, com valores e quantidades.
 3. **Gerar.** `python3 gera.py dados.json config.json Contagem-Bar-Central-DD-MM.html` e `node pdf.cjs Contagem-Bar-Central-DD-MM.html Contagem-Bar-Central-DD-MM.pdf`.
 4. **Conferir** as páginas (`pdftoppm -r 60 -png arquivo.pdf pg` e ler as imagens) antes de mandar. Envie com SendUserFile.

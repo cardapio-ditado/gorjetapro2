@@ -84,6 +84,17 @@ for a in acertos:
 for r in reg.values():
     r['dif'] = round(r['explicito'] if not r['contado_hoje'] and r['explicito'] else r['contado'] - r['deveria'], 3)
 
+# Venda que a Zig não baixou (qtd > 0) ou baixou a mais (qtd < 0), conferida nas
+# vendas da Zig: entra na coluna "Vendeu" e deixa de ser falta ou sobra.
+for chave, (qtd, txt) in cfg.get('vendas_sem_baixa', {}).items():
+    r = reg.get(tuple(chave.split('|', 1)))
+    if not r:
+        continue
+    r['vendeu'] = round((r['vendeu'] or 0) + qtd, 3)
+    r['deveria'] = round(r['deveria'] - qtd, 3)
+    r['dif'] = round(r['dif'] + qtd, 3)
+    r['extra'].append(txt)
+
 # ---------- 2. Central x Bar: o que foi só transferência ----------
 # Sobra num estoque e falta no outro = mercadoria que mudou de lugar sem registro.
 # Transferência explícita (acerto com custo): quantidade exata. Senão: unidades inteiras.
@@ -244,6 +255,7 @@ doc = f"""<!doctype html>
     <div class="tot" style="background:var(--greenbg);color:var(--green)"><div class="l">Sobras (a custo)</div><div class="v">{brl(tot_s)}</div><div class="s">{e(top(sobras))}</div></div>
   </div>
 
+  <div class="fim">
   <div class="tips">
     <h3>Para a próxima contagem fechar</h3>
     <ul>
@@ -251,6 +263,7 @@ doc = f"""<!doctype html>
     </ul>
   </div>
   <div class="foot">Gerado a partir do Estoque Beta 2 · contagem de {e(dados['contagem'])} aprovada (Bar: {n.get('Bar', 0)} itens, Central: {n.get('Central', 0)} itens)</div>
+  </div>
 </body></html>"""
 Path(sys.argv[3]).write_text(doc)
 print(f'faltas {tot_f:.2f} sobras {tot_s:.2f} desceu {len(desceu)} subiu {len(subiu)} linhas F{len(faltas)} S{len(sobras)} doses {len(doses_f)}/{len(doses_s)}')

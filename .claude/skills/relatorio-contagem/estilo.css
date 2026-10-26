@@ -47,6 +47,7 @@ td.cnt { font-weight:700; }
 .musico .t { font-size:24px; font-weight:800; color:#9a5b00; }
 .musico .d { font-size:18px; color:#7a5a20; margin-top:4px; }
 .musico .v { font-size:36px; font-weight:800; color:#9a5b00; white-space:nowrap; }
+.fim { break-inside: avoid; }
 .foot { font-size:16px; color:var(--muted); margin-top:20px; text-align:center; }
 .stella { background:#eef2f7; border-radius:22px; padding:24px 28px; margin-bottom:24px; }
 .stella h2 { font-size:26px; font-weight:800; color:var(--accent); margin-bottom:6px; }
