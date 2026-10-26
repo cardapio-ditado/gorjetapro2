@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><title>Contagem Bar e Central 23/10</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root { --ink:#1b1f24; --muted:#6b7280; --line:#e6e8ec; --bg:#f6f4ef; --card:#fff;
+          --red:#c2410c; --redbg:#fff1e8; --green:#15803d; --greenbg:#ecf8ef; --accent:#1f3a5f; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { width:1080px; background:var(--bg); font-family:Inter, system-ui, sans-serif; color:var(--ink); padding:56px 56px 48px; }
+  .top { display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:28px; }
+  .tag { font-size:20px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--accent); }
+  h1 { font-size:56px; font-weight:800; line-height:1.05; margin-top:8px; }
+  .date { text-align:right; font-size:22px; color:var(--muted); line-height:1.5; }
+  .date b { color:var(--ink); }
+  .formula { background:var(--accent); color:#fff; border-radius:18px; padding:22px 28px; display:flex; align-items:center; gap:14px; font-size:22px; font-weight:600; margin-bottom:28px; flex-wrap:wrap; }
+  .formula span.op { opacity:.6; font-weight:400; }
+  .formula span.res { background:#fff; color:var(--accent); border-radius:10px; padding:4px 12px; }
+  .card { background:var(--card); border-radius:22px; padding:26px 28px 14px; margin-bottom:24px; box-shadow:0 1px 0 var(--line); }
+  .card h2 { font-size:28px; font-weight:800; display:flex; align-items:center; gap:12px; margin-bottom:6px; }
+  .card h2 .dot { width:16px; height:16px; border-radius:50%; }
+  .card p.sub { font-size:19px; color:var(--muted); margin-bottom:14px; }
+  table { width:100%; border-collapse:collapse; font-size:22px; table-layout:fixed; }
+  th:nth-child(1) { width:34%; } th:nth-child(2) { width:14%; } th:nth-child(7) { width:11%; }
+  th { font-size:15px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); font-weight:600; text-align:right; padding:8px 6px; border-bottom:2px solid var(--line); }
+  th:first-child, td:first-child { text-align:left; }
+  td { padding:13px 6px; border-bottom:1px solid var(--line); text-align:right; font-variant-numeric:tabular-nums; }
+  tr:last-child td { border-bottom:none; }
+  td.item { font-weight:600; }
+  td.item small { display:block; font-size:15px; color:var(--muted); font-weight:400; margin-top:2px; }
+  td.exp { font-weight:700; }
+  td.cnt { font-weight:700; }
+  .pill { display:inline-block; min-width:64px; text-align:center; border-radius:999px; padding:4px 12px; font-weight:800; }
+  .neg { background:var(--redbg); color:var(--red); }
+  .pos { background:var(--greenbg); color:var(--green); }
+  .totals { display:flex; gap:20px; margin-bottom:24px; }
+  .tot { flex:1; border-radius:20px; padding:22px 26px; }
+  .tot .l { font-size:18px; font-weight:600; text-transform:uppercase; letter-spacing:.06em; }
+  .tot .v { font-size:44px; font-weight:800; margin-top:4px; }
+  .tot .s { font-size:18px; margin-top:2px; opacity:.85; }
+  .tips { background:var(--card); border-radius:22px; padding:24px 28px; }
+  .tips h3 { font-size:24px; font-weight:800; margin-bottom:12px; }
+  .tips li { font-size:20px; line-height:1.45; margin:0 0 10px 26px; }
+  .ok { background:var(--card); border-radius:22px; padding:22px 28px; margin-bottom:24px; }
+  .ok h2 { font-size:26px; font-weight:800; display:flex; align-items:center; gap:12px; margin-bottom:12px; }
+  .ok h2 .dot { width:16px; height:16px; border-radius:50%; background:var(--accent); }
+  .chips { display:flex; flex-wrap:wrap; gap:10px; }
+  .chip { background:#eef2f7; color:var(--accent); border-radius:999px; padding:8px 16px; font-size:19px; font-weight:600; }
+  .chip b { font-weight:800; }
+  .note { font-size:18px; color:var(--muted); margin-top:12px; }
+  .status { display:inline-block; background:var(--greenbg); color:var(--green); border-radius:999px; padding:6px 16px; font-size:18px; font-weight:700; margin-top:10px; }
+  .musico { background:#fff7e6; border-radius:22px; padding:22px 28px; margin-bottom:24px; display:flex; justify-content:space-between; align-items:center; gap:20px; }
+  .musico .t { font-size:24px; font-weight:800; color:#9a5b00; }
+  .musico .d { font-size:18px; color:#7a5a20; margin-top:4px; }
+  .musico .v { font-size:36px; font-weight:800; color:#9a5b00; white-space:nowrap; }
+  .foot { font-size:16px; color:var(--muted); margin-top:20px; text-align:center; }
+  .stella { background:#eef2f7; border-radius:22px; padding:24px 28px; margin-bottom:24px; }
+  .stella h2 { font-size:26px; font-weight:800; color:var(--accent); margin-bottom:6px; }
+  .stella p { font-size:19px; color:#3b4b63; margin-bottom:12px; line-height:1.4; }
+  .stella table { font-size:21px; }
+  .pend { display:inline-block; background:#fff7e6; color:#9a5b00; border-radius:999px; padding:6px 16px; font-size:18px; font-weight:700; margin-top:10px; margin-left:8px; }
+  @page { size: A4; margin: 10mm 0; }
+  @media print {
+    html, body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    body { padding-top: 24px; padding-bottom: 24px; }
+    tr, .stella, .ok, .totals, .tips, .formula, .top { break-inside: avoid; }
+    .card h2, .card p.sub { break-after: avoid; }
+  }
+</style></head>
+<body>
+  <div class="top">
+    <div><div class="tag">Ditado Popular · Bar e Central</div><h1>Faltas e sobras<br>da contagem</h1><div class="status">✓ Lançado e aprovado no sistema</div><span class="pend">Stella 600 recontada e ajustada</span></div>
+    <div class="date">Contagem: <b>23/10 (sex)</b><br>Vendas Zig: <b>22/10 (qui)</b><br>Anterior: <b>22/10</b></div>
+  </div>
+
+  <div class="formula">
+    Contagem 22/10 <span class="op">+</span> Entradas e transferências <span class="op">−</span> Vendas Zig 22/10 <span class="op">=</span> <span class="res">Deveria ter</span> <span class="op">→ comparado com a contagem de hoje</span>
+  </div>
+
+  <div class="card">
+    <h2><span class="dot" style="background:var(--red)"></span>Faltas: sumiu do estoque</h2>
+    <p class="sub">Tinha que estar no estoque e não estava na contagem. Valores a custo.</p>
+    <table>
+<tr><th>Item</th><th>Contagem 22/10</th><th>Entrou</th><th>Vendeu</th><th>Deveria</th><th>Contado</th><th>Dif.</th></tr>
+<tr><td class="item">Chopp Brahma (litros)<small>Central · barris + o engatado · R$ 549,33</small></td><td>410</td><td>–</td><td>90,65</td><td class="exp">319,35</td><td class="cnt">280</td><td><span class="pill neg">−39,35</span></td></tr>
+<tr><td class="item">Red Bull tropical<small>Bar · R$ 54,60</small></td><td>64</td><td>14</td><td>12</td><td class="exp">66</td><td class="cnt">60</td><td><span class="pill neg">−6</span></td></tr>
+<tr><td class="item">Aperol (garrafa)<small>Bar · R$ 26,20</small></td><td>0,20</td><td>1</td><td>0,67</td><td class="exp">0,53</td><td class="cnt">0,15</td><td><span class="pill neg">−0,38</span></td></tr>
+<tr><td class="item">Campari (garrafa)<small>Bar · não havia aberta no balcão · R$ 24,03</small></td><td>–</td><td>–</td><td>–</td><td class="exp">0,33</td><td class="cnt">0</td><td><span class="pill neg">−0,33</span></td></tr>
+<tr><td class="item">Água de copo 200 ml<small>Central · chegaram 48 na nota De Ville 98479 · R$ 18,72</small></td><td>0</td><td>48</td><td>0</td><td class="exp">48</td><td class="cnt">30</td><td><span class="pill neg">−18</span></td></tr>
+<tr><td class="item">Old Parr (garrafa)<small>Bar · R$ 15,45</small></td><td>0,60</td><td>3</td><td>3,15</td><td class="exp">0,45</td><td class="cnt">0,35</td><td><span class="pill neg">−0,10</span></td></tr>
+<tr><td class="item">Água sem gás<small>Bar · R$ 10,35</small></td><td>42</td><td>36</td><td>24</td><td class="exp">54</td><td class="cnt">49</td><td><span class="pill neg">−5</span></td></tr>
+<tr><td class="item">Água sem gás<small>Central · R$ 4,14</small></td><td>56</td><td>12</td><td>–</td><td class="exp">68</td><td class="cnt">66</td><td><span class="pill neg">−2</span></td></tr>
+<tr><td class="item">Primícias (garrafa)<small>Bar · R$ 8,84</small></td><td>0,20</td><td>3</td><td>1,70</td><td class="exp">1,50</td><td class="cnt">1,20</td><td><span class="pill neg">−0,30</span></td></tr>
+<tr><td class="item">Guaraná Zero lata<small>Bar</small></td><td>12</td><td>–</td><td>0</td><td class="exp">12</td><td class="cnt">11</td><td><span class="pill neg">−1</span></td></tr>
+<tr><td class="item">Tônica Antarctica<small>Bar</small></td><td>17</td><td>–</td><td>4</td><td class="exp">13</td><td class="cnt">12</td><td><span class="pill neg">−1</span></td></tr>
+<tr><td class="item" colspan="7">Doses abertas no balcão<small>Red Label −0,10 · Gin Rocks −0,20 · Smirnoff −0,10 · Triple Sec −0,05 · R$ 22,42</small></td></tr>
+</table>
+  </div>
+
+  <div class="card">
+    <h2><span class="dot" style="background:var(--green)"></span>Sobras: tem mais do que o sistema esperava</h2>
+    <p class="sub">Normalmente é produto batido errado na Zig, garrafa que desceu sem registro ou drink feito diferente da ficha.</p>
+    <table>
+<tr><th>Item</th><th>Contagem 22/10</th><th>Entrou</th><th>Vendeu</th><th>Deveria</th><th>Contado</th><th>Dif.</th></tr>
+<tr><td class="item">Original 600<small>Bar · R$ 98,56</small></td><td>357</td><td>−1</td><td>83</td><td class="exp">273</td><td class="cnt">284</td><td><span class="pill pos">+11</span></td></tr>
+<tr><td class="item">Gin Seagers<small>Bar · garrafa lacrada sem registro de compra · R$ 54,50</small></td><td>–</td><td>–</td><td>–</td><td class="exp">0</td><td class="cnt">1</td><td><span class="pill pos">+1</span></td></tr>
+<tr><td class="item">Montilla Branca (garrafa)<small>Bar · R$ 41,98</small></td><td>0,35</td><td>–</td><td>0</td><td class="exp">0,35</td><td class="cnt">1,05</td><td><span class="pill pos">+0,70</span></td></tr>
+<tr><td class="item">Red Bull tradicional<small>Bar · R$ 28,50</small></td><td>28</td><td>12</td><td>33</td><td class="exp">7</td><td class="cnt">10</td><td><span class="pill pos">+3</span></td></tr>
+<tr><td class="item">Saquê (garrafa)<small>Bar · garrafa cheia no balcão · R$ 23,66</small></td><td>0,05</td><td>–</td><td>0</td><td class="exp">0,05</td><td class="cnt">1</td><td><span class="pill pos">+0,95</span></td></tr>
+<tr><td class="item">Água com gás<small>Bar · R$ 14,46</small></td><td>46</td><td>24</td><td>35</td><td class="exp">35</td><td class="cnt">41</td><td><span class="pill pos">+6</span></td></tr>
+<tr><td class="item">Stella Pure Gold 600<small>Central · R$ 11,67</small></td><td>0</td><td>90</td><td>–</td><td class="exp">90</td><td class="cnt">91</td><td><span class="pill pos">+1</span></td></tr>
+<tr><td class="item">Soda<small>Bar · fichas de drink baixam 1 lata · R$ 7,50</small></td><td>3</td><td>–</td><td>2</td><td class="exp">1</td><td class="cnt">3</td><td><span class="pill pos">+2</span></td></tr>
+<tr><td class="item">Budweiser long neck<small>Bar · R$ 7,00</small></td><td>9</td><td>6</td><td>0</td><td class="exp">15</td><td class="cnt">16</td><td><span class="pill pos">+1</span></td></tr>
+<tr><td class="item">Água de coco<small>Bar · entrou −6 = empréstimo ao Haru · R$ 5,29</small></td><td>43</td><td>−6</td><td>13</td><td class="exp">24</td><td class="cnt">25</td><td><span class="pill pos">+1</span></td></tr>
+<tr><td class="item" colspan="7">Doses abertas no balcão<small>Absolut +0,10 · Curaçao Blue +0,05 · Pérgola Seco +0,05 · Velho Barreiro +0,05 · R$ 17,42</small></td></tr>
+</table>
+  </div>
+
+  <div class="stella">
+    <h2>Vendas de garrafa e cadastro da Zig (não é perda)</h2>
+    <p>Diferenças explicadas por venda que a Zig não baixou certo ou rótulo trocado. Já corrigido no sistema.</p>
+    <table>
+      <tr><th>Item</th><th style="width:52%">O que houve</th><th>Ajuste</th></tr>
+      <tr><td class="item">Grey Goose<small>Central · R$ 120,00</small></td><td style="text-align:left;font-size:18px">Garrafa vendida em 22/10. Na Zig o produto está como "GREY GROOSE GF" e estava marcado para não baixar estoque.</td><td><span class="pill neg">−1</span></td></tr>
+      <tr><td class="item">Belvedere<small>Central → Bar</small></td><td style="text-align:left;font-size:18px">Garrafa vendida em 22/10: a Zig baixou no Bar, mas ela saiu do Central. Lançada a transferência; os dois ficaram zerados.</td><td><span class="pill pos">ok</span></td></tr>
+      <tr><td class="item">DV Catena<small>Bar · R$ 230,00</small></td><td style="text-align:left;font-size:18px">No freezer são 2 Malbec Malbec. O sistema tinha também 2 Cabernet Malbec (rótulo lançado em 14/10); a Zig baixava Malbec Malbec como Cabernet Malbec.</td><td><span class="pill neg">−2 Cab.</span></td></tr>
+    </table>
+    <p style="margin-top:14px;margin-bottom:0"><b>Vínculos da Zig corrigidos:</b> Grey Goose (Groose), Royal Salute (não baixava), DV Catena Malbec Malbec (baixava o Cabernet), Tanqueray garrafa (baixava só uma dose) e Pérgola Suave (baixava um item duplicado, agora desativado).</p>
+  </div>
+
+  <div class="stella">
+    <h2>Stella 600: rótulos trocados na contagem de 22/10</h2>
+    <p>A recontagem de hoje confirmou 164 Pure Gold e 89 Artois. As duas juntas fecham (253 contra 251 esperadas): o erro foi a contagem de 22/10, que lançou como Artois garrafas que eram Pure Gold. A Zig está baixando certo. Ajustado no sistema; não é perda nem sobra real (efeito líquido: +2 garrafas).</p>
+    <table>
+      <tr><th>Item</th><th>Contagem 22/10</th><th>Entrou</th><th>Vendeu</th><th>Deveria</th><th>Contado</th><th>Dif.</th></tr>
+      <tr><td class="item">Stella Pure Gold 600</td><td>3</td><td>150</td><td>61</td><td class="exp">92</td><td class="cnt">164</td><td><span class="pill pos">+72</span></td></tr>
+      <tr><td class="item">Stella Artois 600</td><td>159</td><td>–</td><td>0</td><td class="exp">159</td><td class="cnt">89</td><td><span class="pill neg">−70</span></td></tr>
+    </table>
+  </div>
+
+  <div class="ok">
+    <h2><span class="dot"></span>Desceu do Central sem requisição (lançado hoje como transferência)</h2>
+    <div class="chips">
+      <span class="chip">Pepsi lata <b>12</b></span><span class="chip">Guaraná lata <b>12</b></span><span class="chip">Red Bull sugar free <b>8</b></span>
+      <span class="chip">Budweiser <b>6</b></span><span class="chip">Red Bull tradicional <b>4</b></span><span class="chip">Tônica Zero <b>4</b></span>
+      <span class="chip">Old Parr <b>3</b></span><span class="chip">Smirnoff Ice <b>2</b></span><span class="chip">Sukita <b>1</b></span><span class="chip">Primícias <b>1</b></span>
+    </div>
+    <p class="note">53 unidades. Com as transferências, Bar e Central desses itens fecharam certo.</p>
+  </div>
+
+  <div class="totals">
+    <div class="tot" style="background:var(--redbg);color:var(--red)"><div class="l">Faltas (a custo)</div><div class="v">R$ 741,58</div><div class="s">chopp R$ 549,33 · Red Bull tropical R$ 54,60 · Aperol R$ 26,20</div></div>
+    <div class="tot" style="background:var(--greenbg);color:var(--green)"><div class="l">Sobras (a custo)</div><div class="v">R$ 310,54</div><div class="s">Original +11 · Gin Seagers · Montilla · Red Bull</div></div>
+  </div>
+
+  <div class="tips">
+    <h3>Para a próxima contagem fechar</h3>
+    <ul>
+      <li><b>Tirou do Central? Faz requisição.</b> Hoje 53 unidades desceram sem registro, fora as garrafas lacradas de Gin Seagers, Saquê e Montilla que apareceram no Bar.</li>
+      <li><b>Chopp: 39 litros abaixo do esperado</b> (R$ 549). Conferir perda na troca de barril e na limpeza da linha, e se todo chopp servido está batido na Zig.</li>
+      <li><b>Stella: confira o rótulo na contagem.</b> Na contagem de 22/10, cerca de 70 Pure Gold foram contadas como Artois. Artois de um lado, Pure Gold do outro no freezer.</li>
+      <li><b>Garrafa vendida: a Zig baixa no Bar.</b> Tirou a garrafa do Central para vender? Faz requisição na hora, senão o Bar fica negativo e o Central sobrando.</li>
+      <li><b>Bata na Zig exatamente o que saiu.</b> Original (+11) e Red Bull tradicional (+3): a Zig baixou mais do que saiu do freezer.</li>
+    </ul>
+  </div>
+  <div class="foot">Gerado a partir do Estoque Beta 2 · contagem de 23/10/2026 aprovada (Bar: 57 itens + recontagem das Stella 600, Central: 56 itens)</div>
+</body></html>

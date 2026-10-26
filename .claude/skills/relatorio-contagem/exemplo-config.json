@@ -1,0 +1,29 @@
+{
+ "data_curta": "26/10", "dia_semana": "seg", "vendas_zig": "23 a 25/10 (sex a dom)", "anterior": "23/10",
+ "badges": [{"txt": "✓ Lançado e aprovado no sistema"}, {"txt": "3 entradas AMBEV lançadas antes de fechar", "tipo": "pend"}],
+ "ignorar": {"TANQUERAY GF": "Saldo do Bar estava em −24,8 porque o item está cadastrado em litro e é contado em garrafa. Corrigido para 0,3 garrafa, sem custo."},
+ "pares": [["H20", "H2O LIMONETO", "H2O (Limoneto no Central × tradicional no Bar)"]],
+ "notas": {
+  "Central|CHOPP BRAHMA BARRIL": "10 barris + o engatado",
+  "Bar|BRAHMA CHOPP 600ML": "o Bar estava negativo",
+  "Central|ÁGUA DE COCO": "não estava no Central",
+  "Central|PEPSI TWIST LATA": "não estava no Central"
+ },
+ "explicados": {
+  "linhas": [
+   {"item": "Gold Reserve", "sub": "Central → Bar · R$ 232,96", "oque": "A garrafa que faltou no Central foi vendida pelo Bar (a Zig baixou no Bar). Lançada como saída do Central para o Bar.", "ajuste": "ok", "tipo": "pos"},
+   {"item": "Buchanan's", "sub": "Central → Bar", "oque": "A Zig baixou 4 no Bar. As 2 do Central foram para lá sem requisição; as outras 2 foram vendidas sem estoque no sistema (compra não lançada ou venda batida errada).", "ajuste": "+2 sem custo", "tipo": "pos"}
+  ]
+ },
+ "blocos": [
+  {"titulo": "Entradas lançadas antes de fechar", "texto": "<b>AMBEV 946252</b> (R$ 3.785,88): 4 barris de chopp e 10 cx de água com gás, estava faltando. <b>AMBEV 946517</b> (R$ 2.432,53): chegou hoje às 06:28. <b>3 barris de chopp sem nota</b> de sábado (150 L, lançados a R$ 13,47/L, valor a confirmar). Sem a 946252, a contagem acusaria 210 L de chopp e 118 águas sobrando."}
+ ],
+ "dicas": [
+  "<b>Tirou do Central? Faz requisição.</b> Hoje cerca de 89 unidades desceram sem registro: água com gás 36, água de coco 19, H2O 12, Pepsi Twist 6, Old Parr 4.",
+  "<b>Transferência é lançada quando a mercadoria desce.</b> 150 unidades foram lançadas para o Bar, mas ainda estavam no Central: Original 48, Guaraná Zero 42, Spaten long neck 24, água sem gás 15.",
+  "<b>Corona 600 (−21) e Red Bull (tropical −11, sugar free −8).</b> Conferir se tudo que saiu do freezer foi batido na Zig.",
+  "<b>Brahma 600 (+24) e Original 600 (−10).</b> A Zig baixou Brahma que não saiu e Original que saiu: conferir se a Brahma está sendo batida como Original.",
+  "<b>Garrafa vendida: a Zig baixa no Bar.</b> Gold Reserve, Buchanan's e Cuervo saíram do Central sem requisição. Faz a requisição na hora, senão o Bar fica negativo e o Central sobrando.",
+  "<b>Tanqueray:</b> trocar a unidade do cadastro para garrafa, para o saldo não ficar negativo de novo."
+ ]
+}
