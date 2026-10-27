@@ -21,6 +21,10 @@ O layout é fixo: **não invente formato novo**. A referência é `modelo-23-10.
 9. **Para a próxima contagem fechar** — 4 a 6 orientações curtas, em negrito o título.
 10. Rodapé: "Gerado a partir do Estoque Beta 2 · contagem de DD/MM/AAAA aprovada (Bar: N itens, Central: M itens)".
 
+## Quando gerar
+
+Só gere o PDF quando o Kadu disser que terminou de conferir os itens. Durante a revisão (item por item), responda com tabelas no chat e vá acertando o sistema; nada de PDF a cada correção.
+
 ## Passo a passo
 
 1. **Dados.** Rode `consulta.sql` trocando `__DATA__` pela data da contagem (ex.: `2026-10-26`) com `mcp__Supabase__execute_sql` (projeto `nzdiojmrukdxavrdazot`). Remova as linhas de comentário (`--`) antes de enviar. Salve o JSON da coluna `r` em `dados.json` no scratchpad.
