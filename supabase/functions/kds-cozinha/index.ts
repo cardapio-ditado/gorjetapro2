@@ -5,8 +5,9 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 // - Lê a ZIG pela zig-consulta (que guarda o token): erp/saida-produtos da noite
 //   em andamento, só o que sai na COZINHA (barName). O transactionId é a comanda
 //   do cliente (dura a noite toda): um pedido é a comanda + a hora do lançamento,
-//   e cada produto do pedido, um prato (somado), com os adicionais. A mesa vem
-//   na observação do lançamento ("Mesa: 45").
+//   e cada produto do pedido, um prato (somado; o montado, por combinação de
+//   escolhas), com os adicionais. A mesa vem na observação do lançamento
+//   ("Mesa: 45"), que o garçom escreve para o cumim.
 // - A ZIG só lê: não sabe quando o prato ficou pronto. O "pronto" é o toque no
 //   tablet, gravado aqui. O cronômetro corre desde a hora do pedido na ZIG.
 // - Guarda quando cada prato apareceu na leitura (visto_em) e a leitura de antes
@@ -111,7 +112,9 @@ async function ler(): Promise<{ lido_em: string | null; erro: string | null; leu
     const pedido_em = utc(v.transactionDate);
     if (!pedido_em) continue;
     const transacao = `${v.transactionId}|${pedido_em}`;
-    const chave = `${transacao}|${v.productId || produto}`;
+    // Prato montado (Monte seu Petisco): cada combinação de escolhas é um prato.
+    const escolhas = (Array.isArray(v.additions) ? v.additions : []).map((a: any) => `${limpo(a?.name)}×${Number(a?.count || 1)}`).sort().join(',');
+    const chave = `${transacao}|${v.productId || produto}${escolhas ? `|${escolhas}` : ''}`;
     const p = pratos.get(chave) ?? {
       chave, noite, transacao, produto, qtd: 0, adicionais: [],
       garcom: limpo(v.employeeName) || null, categoria: limpo(v.productCategory) || null, obs: limpo(v.obs) || null, pedido_em, cancelado: true,
@@ -120,11 +123,14 @@ async function ler(): Promise<{ lido_em: string | null; erro: string | null; leu
     if (!v.isRefunded) {
       p.qtd += q;
       p.cancelado = false;
-      for (const a of Array.isArray(v.additions) ? v.additions : []) {
-        const nome = limpo(a?.name);
-        if (!nome) continue;
-        const n = Number(a?.count || 1) * q;
-        p.adicionais.push(n > 1 ? `${n}× ${nome}` : nome);
+      // As escolhas são de cada prato (a quantidade fica em qtd): grava uma vez.
+      if (!p.adicionais.length) {
+        for (const a of Array.isArray(v.additions) ? v.additions : []) {
+          const nome = limpo(a?.name);
+          if (!nome) continue;
+          const n = Number(a?.count || 1);
+          p.adicionais.push(n > 1 ? `${n}× ${nome}` : nome);
+        }
       }
     }
     pratos.set(chave, p);

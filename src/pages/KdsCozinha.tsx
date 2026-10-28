@@ -194,9 +194,9 @@ const KdsCozinha: React.FC = () => {
                           <div style={{ fontSize: 19, fontWeight: 700, lineHeight: 1.25 }}>
                             <span style={{ color: c.texto }}>{qtd(p.qtd)}×</span> {p.produto}
                           </div>
-                          {p.adicionais.length > 0 && (
-                            <div style={{ fontSize: 15, opacity: 0.85, paddingLeft: 22 }}>{p.adicionais.map((a) => `+ ${a}`).join('  ·  ')}</div>
-                          )}
+                          {p.adicionais.map((a, i) => (
+                            <div key={i} style={{ fontSize: 16, opacity: 0.9, paddingLeft: 22 }}>+ {a}</div>
+                          ))}
                         </button>
                       ))}
                     </div>
