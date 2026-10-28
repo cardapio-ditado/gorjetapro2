@@ -21,6 +21,7 @@ const Extras              = lazy(() => import('./pages/Extras'));
 const ClubeWhisky         = lazy(() => import('./pages/ClubeWhisky'));
 const LivroNoite          = lazy(() => import('./pages/LivroNoite'));
 const CasaAoVivo          = lazy(() => import('./pages/CasaAoVivo'));
+const KdsCozinha          = lazy(() => import('./pages/KdsCozinha'));
 const Events              = lazy(() => import('./pages/Events'));
 const Settings            = lazy(() => import('./pages/Settings'));
 const MetasTarefas        = lazy(() => import('./pages/MetasTarefas'));
@@ -152,6 +153,15 @@ function AppContent() {
   // O saguão toma a tela inteira, sem lateral nem topbar: é a entrada do
   // sistema, não uma página dentro dele. A lateral só existe DENTRO de um
   // módulo — e lá mostra apenas as telas daquele módulo.
+  // O KDS da cozinha toma a tela inteira do tablet, sem lateral nem topbar.
+  if (location.pathname === '/kds') {
+    return (
+      <Suspense fallback={<PageLoader />}>
+        <ProtectedRoute moduloSlug="kds"><KdsCozinha /></ProtectedRoute>
+      </Suspense>
+    );
+  }
+
   if (location.pathname === '/') {
     return (
       <Suspense fallback={<PageLoader />}>
