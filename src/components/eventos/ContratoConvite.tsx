@@ -29,7 +29,7 @@ export interface EventoBase {
 
 interface ConviteSalvo {
   layout?: string; chamada?: string; titulo?: string; organizador?: string; horario?: string;
-  destaques?: string; preco_venda?: number | null; contato?: string; endereco?: string; logo_cliente?: string | null;
+  destaques?: string; preco_venda?: number | null; contato?: string; regras?: string; titulo_escala?: number | null; endereco?: string; logo_cliente?: string | null;
 }
 
 interface Registro {
@@ -196,6 +196,7 @@ const ContratoConvite: React.FC<{ evento: EventoBase; onClose: () => void; onAtu
   const textoConvite: ConviteTexto = {
     chamada: reg.convite.chamada ?? '',
     titulo: reg.convite.titulo ?? 'Feijoada',
+    tituloEscala: reg.convite.titulo_escala ?? null,
     organizador: reg.convite.organizador ?? '',
     diaSemana: diaDaSemana(evento.data_evento),
     data: diaEMes(evento.data_evento),
@@ -204,6 +205,7 @@ const ContratoConvite: React.FC<{ evento: EventoBase; onClose: () => void; onAtu
     // o preço do convite é o que o cliente cobra na venda, não o valor do contrato (custo dele)
     preco: reg.convite.preco_venda ? `Convite ${brl(reg.convite.preco_venda).replace(',00', '')}` : '',
     contato: reg.convite.contato ?? '',
+    regras: reg.convite.regras ?? `Crianças de 0 a 7 anos não pagam\nDe 8 a 12 anos pagam meia\nEmbalagem para viagem: ${brl(cond.taxa_embalagem).replace(',00', '')}`,
     endereco: reg.convite.endereco ?? ENDERECO_PADRAO,
   };
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -429,7 +431,17 @@ const ContratoConvite: React.FC<{ evento: EventoBase; onClose: () => void; onAtu
                 </div>
                 <div className="grid sm:grid-cols-2 gap-3">
                   <Campo rotulo="Linha acima do título (opcional)"><input className={inputCls} value={textoConvite.chamada} onChange={e => setConvite({ chamada: e.target.value })} placeholder="Ex.: Convites à venda" /></Campo>
-                  <Campo rotulo="Título"><input className={inputCls} value={textoConvite.titulo} onChange={e => setConvite({ titulo: e.target.value })} /></Campo>
+                  <div className="sm:col-span-2 grid grid-cols-[1fr_auto] gap-2 items-end">
+                    <Campo rotulo="Nome da feijoada (Enter quebra a linha)">
+                      <textarea className={inputCls} rows={2} value={textoConvite.titulo} onChange={e => setConvite({ titulo: e.target.value })} />
+                    </Campo>
+                    <Campo rotulo="Tamanho do nome">
+                      <select className={inputCls} value={reg.convite.titulo_escala ?? ''} onChange={e => setConvite({ titulo_escala: e.target.value ? Number(e.target.value) : null })}>
+                        <option value="">Automático</option>
+                        {[0.7, 0.8, 0.9, 1, 1.1, 1.2, 1.3].map(v => <option key={v} value={v}>{Math.round(v * 100)}%</option>)}
+                      </select>
+                    </Campo>
+                  </div>
                   <Campo rotulo="De quem é a feijoada" className="sm:col-span-2">
                     <input className={inputCls} value={textoConvite.organizador} onChange={e => setConvite({ organizador: e.target.value })} placeholder="Ex.: do Rotary Club Cuiabá · da Turma de 2006" />
                   </Campo>
@@ -437,6 +449,9 @@ const ContratoConvite: React.FC<{ evento: EventoBase; onClose: () => void; onAtu
                   <Campo rotulo="Destaques"><input className={inputCls} value={textoConvite.destaques} onChange={e => setConvite({ destaques: e.target.value })} /></Campo>
                   <Campo rotulo="Onde comprar (opcional)" className="sm:col-span-2">
                     <input className={inputCls} value={textoConvite.contato} onChange={e => setConvite({ contato: e.target.value })} placeholder="Ex.: Garanta o seu: (65) 9 9999-9999" />
+                  </Campo>
+                  <Campo rotulo="Regras (uma por linha)" className="sm:col-span-2">
+                    <textarea className={inputCls} rows={3} value={textoConvite.regras} onChange={e => setConvite({ regras: e.target.value })} />
                   </Campo>
                   <Campo rotulo="Endereço (rodapé)" className="sm:col-span-2"><input className={inputCls} value={textoConvite.endereco} onChange={e => setConvite({ endereco: e.target.value })} /></Campo>
                 </div>

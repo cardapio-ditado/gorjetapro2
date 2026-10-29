@@ -17,8 +17,8 @@ export interface Layout {
   id: string;
   nome: string;
   foto: string; // nome do arquivo em convites/feijoada/
-  /** de onde a foto é recortada quando sobra altura */
-  ancora: 'topo' | 'centro' | 'base';
+  /** de onde a foto é recortada quando sobra altura (ou a fração: 0 = topo, 1 = base) */
+  ancora: 'topo' | 'centro' | 'base' | number;
   /** onde vai o texto: sobre a parte vazia de cima, de baixo, ou num painel sob a foto */
   zona: 'topo' | 'base' | 'painel';
   alinhamento: 'centro' | 'esquerda';
@@ -38,18 +38,20 @@ export interface Layout {
 }
 
 export const LAYOUTS: Layout[] = [
-  { id: 'rustico', nome: 'Rústico', foto: 'rustico', ancora: 'centro', zona: 'base', livre: [930, 1560], alinhamento: 'centro', tinta: '#F6EFE3', acento: '#E9A548', veu: 'rgba(20,11,6,0.78)', halo: 'escuro' },
+  { id: 'rustico', nome: 'Rústico', foto: 'rustico', ancora: 0.8, zona: 'base', livre: [840, 1560], alinhamento: 'centro', tinta: '#F6EFE3', acento: '#E9A548', veu: 'rgba(20,11,6,0.78)', halo: 'escuro' },
   { id: 'linho', nome: 'Linho', foto: 'linho', ancora: 'topo', zona: 'topo', livre: [200, 960], alinhamento: 'centro', tinta: '#2B1E17', acento: '#A8432A', tituloItalico: true, halo: 'claro' },
   { id: 'graos', nome: 'Grãos', foto: 'graos', ancora: 'topo', zona: 'topo', livre: [200, 900], alinhamento: 'esquerda', tinta: '#1F1A16', acento: '#A9481C', halo: 'claro' },
   { id: 'noir', nome: 'Noir', foto: 'noir', ancora: 'base', zona: 'topo', livre: [200, 930], alinhamento: 'centro', tinta: '#EFE8DC', acento: '#D4B06A', tituloItalico: true, halo: 'escuro' },
   { id: 'panela', nome: 'Panela', foto: 'panela', ancora: 'topo', zona: 'topo', livre: [200, 880], largura: 560, alinhamento: 'esquerda', tinta: '#F6EFE3', acento: '#F0B064', halo: 'escuro' },
   { id: 'sol', nome: 'Sol', foto: 'sol', ancora: 'base', zona: 'base', livre: [760, 1560], alinhamento: 'esquerda', tinta: '#2A2420', acento: '#A4461A', veu: 'rgba(250,247,242,0.6)', halo: 'claro' },
-  { id: 'mesa', nome: 'Mesa farta', foto: 'mesa', ancora: 'centro', zona: 'painel', livre: [950, 1580], alinhamento: 'centro', tinta: '#2A1F18', acento: '#B4532A', fotoAte: 900 },
+  { id: 'mesa', nome: 'Mesa farta', foto: 'mesa', ancora: 'centro', zona: 'painel', livre: [800, 1580], alinhamento: 'centro', tinta: '#2A1F18', acento: '#B4532A', fotoAte: 760 },
 ];
 
 export interface ConviteTexto {
   chamada: string;      // linha pequena acima do título (opcional)
-  titulo: string;       // "Feijoada"
+  titulo: string;       // "Feijoada"; Enter (\n) quebra a linha onde a pessoa quiser
+  /** tamanho do título: vazio = automático (o maior que couber); 0.6 a 1.3 = escolhido */
+  tituloEscala?: number | null;
   organizador: string;  // "do Rotary Club Cuiabá"
   diaSemana: string;    // "sábado"
   data: string;         // "14 de novembro"
@@ -57,6 +59,7 @@ export interface ConviteTexto {
   destaques: string;    // "Banda ao vivo · Buffet completo"
   preco: string;        // "Convite R$ 35" (vazio = não mostra)
   contato: string;      // "Garanta o seu: (65) 9 9999-9999" (opcional)
+  regras: string;       // uma por linha: "0 a 7 anos não pagam", "Embalagem para viagem R$ 15"
   endereco: string;     // "Rua Senador Vilas Boas, 89 · Popular · Cuiabá"
 }
 
@@ -111,7 +114,8 @@ function desenharCobrindo(ctx: Ctx, img: ConviteRecursos['foto'], x: number, y: 
   const escala = Math.max(w / img.width, h / img.height);
   const sw = w / escala, sh = h / escala;
   const sx = (img.width - sw) / 2;
-  const sy = ancora === 'topo' ? 0 : ancora === 'base' ? img.height - sh : (img.height - sh) / 2;
+  const f = ancora === 'topo' ? 0 : ancora === 'base' ? 1 : ancora === 'centro' ? 0.5 : ancora;
+  const sy = (img.height - sh) * f;
   ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
 }
 
@@ -122,8 +126,35 @@ function caber(img: { width: number; height: number }, maxW: number, maxH: numbe
 
 interface Linha { altura: number; desenhar: (y: number) => void }
 
+const TITULO_BASE = 250;
+const TITULO_MAX_LINHAS = 3;
+
+/** Quebra em linhas de tamanho parecido (nada de "Amigos do / Bairro"). */
+function quebrarEquilibrado(ctx: Ctx, t: string, max: number): string[] {
+  const linhas = quebrarLinhas(ctx, t, max, 99);
+  if (linhas.length < 2) return linhas;
+  let lo = max / linhas.length, hi = max;
+  for (let i = 0; i < 14; i++) {
+    const meio = (lo + hi) / 2;
+    if (quebrarLinhas(ctx, t, meio, 99).length > linhas.length) lo = meio; else hi = meio;
+  }
+  return quebrarLinhas(ctx, t, hi, 99);
+}
+
+/** Quebra o título no tamanho dado: respeita o Enter da pessoa e equilibra o resto. */
+function linhasDoTitulo(ctx: Ctx, texto: string, largura: number): string[] | null {
+  const linhas: string[] = [];
+  for (const trecho of texto.split(/\n/).map(x => x.trim()).filter(Boolean)) {
+    for (const ln of quebrarEquilibrado(ctx, trecho, largura)) {
+      if (ctx.measureText(ln).width > largura) return null; // palavra sozinha maior que a largura
+      linhas.push(ln);
+    }
+  }
+  return linhas.length && linhas.length <= TITULO_MAX_LINHAS ? linhas : null;
+}
+
 /** Monta o bloco de texto como uma pilha de linhas, para medir antes de posicionar. k = escala. */
-function blocoDeTexto(ctx: Ctx, l: Layout, t: ConviteTexto, x: number, largura: number, k: number, comDestaques = true): Linha[] {
+function blocoDeTexto(ctx: Ctx, l: Layout, t: ConviteTexto, x: number, largura: number, k: number, comDestaques = true, tituloMax = TITULO_BASE): Linha[] {
   const al = l.alinhamento;
   const tx = al === 'centro' ? x + largura / 2 : x;
   const alinhar = () => { ctx.textAlign = al === 'centro' ? 'center' : 'left'; };
@@ -135,18 +166,22 @@ function blocoDeTexto(ctx: Ctx, l: Layout, t: ConviteTexto, x: number, largura: 
     linhas.push({ altura: px(66), desenhar: y => { ctx.font = `700 ${px(29)}px ${SANS}`; ctx.fillStyle = l.acento; textoEspacado(ctx, t.chamada.trim().toUpperCase(), tx, y + px(30), 7 * k, al); } });
   }
 
-  // título: o maior que couber
+  // título: o maior tamanho (até tituloMax) em que ele cabe em até 3 linhas
   const titulo = t.titulo.trim() || 'Feijoada';
   const fTitulo = (tam: number) => `${l.tituloItalico ? 'italic ' : ''}400 ${tam}px ${SERIFA}`;
-  let tam = px(250);
+  let tam = px(tituloMax);
   ctx.font = fTitulo(tam);
-  while (ctx.measureText(titulo).width > largura && tam > 80) { tam -= 4; ctx.font = fTitulo(tam); }
+  let partes = linhasDoTitulo(ctx, titulo, largura);
+  while (!partes && tam > 60) { tam -= 4; ctx.font = fTitulo(tam); partes = linhasDoTitulo(ctx, titulo, largura); }
   const tamTitulo = tam;
-  linhas.push({ altura: tamTitulo * 0.86, desenhar: y => {
-    ctx.font = fTitulo(tamTitulo); ctx.fillStyle = l.tinta; alinhar();
-    // a serifa tem "respiro" à esquerda: puxa um pouco para alinhar com o resto
-    ctx.fillText(titulo, al === 'centro' ? tx : tx - tamTitulo * 0.03, y + tamTitulo * 0.74);
-  } });
+  (partes ?? [titulo]).forEach((parte, i, todas) => {
+    // entrelinha de cartaz, com folga para acento e descendente (ç, j, p)
+    linhas.push({ altura: tamTitulo * (i === todas.length - 1 ? 0.86 : 0.94), desenhar: y => {
+      ctx.font = fTitulo(tamTitulo); ctx.fillStyle = l.tinta; alinhar();
+      // a serifa tem "respiro" à esquerda: puxa um pouco para alinhar com o resto
+      ctx.fillText(parte, al === 'centro' ? tx : tx - tamTitulo * 0.03, y + tamTitulo * 0.74);
+    } });
+  });
 
   if (t.organizador.trim()) {
     ctx.font = `italic 400 ${px(66)}px ${SERIFA}`;
@@ -198,22 +233,52 @@ export function desenharConvite(canvas: HTMLCanvasElement, l: Layout, t: Convite
   ctx.clearRect(0, 0, LARGURA, ALTURA);
   ctx.fillStyle = PAPEL; ctx.fillRect(0, 0, LARGURA, ALTURA);
 
-  const topoFaixa = ALTURA - FAIXA;
+  // as regras (crianças, embalagem) vão na faixa clara de baixo, que sempre se lê bem
+  ctx.font = `600 25px ${SANS}`;
+  const regras = t.regras.split(/\n/).map(x => x.trim()).filter(Boolean);
+  // junta as regras em linhas sem partir uma regra no meio
+  const linhasRegras: string[] = [];
+  for (const r of regras) {
+    const ultima = linhasRegras[linhasRegras.length - 1];
+    if (ultima && ctx.measureText(`${ultima}  ·  ${r}`).width <= LARGURA - 140) linhasRegras[linhasRegras.length - 1] = `${ultima}  ·  ${r}`;
+    else linhasRegras.push(...quebrarLinhas(ctx, r, LARGURA - 140, 2));
+  }
+  const faixa = FAIXA + (linhasRegras.length ? 26 + linhasRegras.length * 38 : 0);
+  const topoFaixa = ALTURA - faixa;
   const fotoAte = l.zona === 'painel' ? (l.fotoAte ?? 900) : topoFaixa;
   desenharCobrindo(ctx, r.foto, 0, 0, LARGURA, fotoAte, l.ancora);
 
   const margem = l.alinhamento === 'centro' ? 90 : 96;
   const largura = l.largura ?? LARGURA - 2 * margem;
-  const [livreIni, livreFim] = l.livre;
+  const livreIni = l.livre[0];
+  const livreFim = Math.min(l.livre[1], topoFaixa - 50);
   const soma = (ls: Linha[]) => ls.reduce((acc, x) => acc + x.altura, 0);
-  // mede no tamanho cheio; se não couber na parte livre da foto, reduz tudo junto
+  // O título manda: no automático ele fica o maior possível. Para caber na parte
+  // livre da foto, primeiro o título desce até 190; depois saem os destaques e o
+  // título desce até 140; só então tudo encolhe junto. Com tamanho escolhido, o
+  // título fica no tamanho pedido e o resto se ajusta.
   const livre = livreFim - livreIni;
-  let linhas = blocoDeTexto(ctx, l, t, margem, largura, 1);
-  // não deixa a letra ficar miúda: antes de encolher muito, tira os destaques
-  let comDestaques = true;
-  if (livre / soma(linhas) < 0.85 && t.destaques.trim()) { comDestaques = false; linhas = blocoDeTexto(ctx, l, t, margem, largura, 1, false); }
-  const k = Math.min(1, livre / soma(linhas));
-  if (k < 1) linhas = blocoDeTexto(ctx, l, t, margem, largura, k, comDestaques);
+  const bloco = (k: number, comDestaques: boolean, tituloMax: number) => blocoDeTexto(ctx, l, t, margem, largura, k, comDestaques, tituloMax);
+  const tentativas: [boolean, number][] = [];
+  if (t.tituloEscala) {
+    const alvo = Math.round(TITULO_BASE * Math.min(1.3, Math.max(0.6, t.tituloEscala)));
+    tentativas.push([true, alvo], [false, alvo]);
+  } else {
+    for (let m = TITULO_BASE; m >= 200; m -= 10) tentativas.push([true, m]);
+    for (let m = TITULO_BASE; m >= 160; m -= 10) tentativas.push([false, m]);
+  }
+  let linhas: Linha[] = [];
+  let escolha = tentativas[tentativas.length - 1];
+  for (const tentativa of tentativas) {
+    linhas = bloco(1, ...tentativa);
+    if (soma(linhas) <= livre) { escolha = tentativa; break; }
+  }
+  if (soma(linhas) > livre) {
+    // o título reflui conforme o tamanho, então a escala não é proporcional: procura a maior que cabe
+    let lo = 0.3, hi = 1;
+    for (let i = 0; i < 12; i++) { const k = (lo + hi) / 2; if (soma(bloco(k, ...escolha)) <= livre) lo = k; else hi = k; }
+    linhas = bloco(lo, ...escolha);
+  }
   const alturaBloco = soma(linhas);
 
   const y0 = l.zona === 'topo' ? livreIni
@@ -238,9 +303,16 @@ export function desenharConvite(canvas: HTMLCanvasElement, l: Layout, t: Convite
   for (const linha of linhas) { linha.desenhar(y); y += linha.altura; }
   ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0;
 
-  // faixa dos logos
-  ctx.fillStyle = PAPEL; ctx.fillRect(0, topoFaixa, LARGURA, FAIXA);
-  const centroLogos = topoFaixa + 96;
+  // faixa: regras, logos e endereço
+  ctx.fillStyle = PAPEL; ctx.fillRect(0, topoFaixa, LARGURA, faixa);
+  let yf = topoFaixa;
+  if (linhasRegras.length) {
+    ctx.font = `600 25px ${SANS}`; ctx.fillStyle = '#2E2520'; ctx.textAlign = 'center';
+    linhasRegras.forEach((ln, i) => ctx.fillText(ln, LARGURA / 2, topoFaixa + 50 + i * 38));
+    yf += 26 + linhasRegras.length * 38;
+    ctx.fillStyle = 'rgba(74,63,55,0.25)'; ctx.fillRect(LARGURA / 2 - 60, yf + 4, 120, 2);
+  }
+  const centroLogos = yf + 96;
   const bar = caber(r.logoBar, 290, 120);
   if (r.logoCliente) {
     const cli = caber(r.logoCliente, 300, 130);
@@ -257,7 +329,7 @@ export function desenharConvite(canvas: HTMLCanvasElement, l: Layout, t: Convite
   }
   if (t.endereco.trim()) {
     ctx.font = `600 21px ${SANS}`; ctx.fillStyle = PAPEL_TINTA;
-    textoEspacado(ctx, t.endereco.trim().toUpperCase(), LARGURA / 2, topoFaixa + 196, 3.5, 'centro');
+    textoEspacado(ctx, t.endereco.trim().toUpperCase(), LARGURA / 2, yf + 196, 3.5, 'centro');
   }
 }
 
