@@ -12,6 +12,13 @@ export interface Kpi { rotulo: string; valor: number | string | null; formato: '
 export type Linha = Record<string, string | number | null>;
 export interface Grupo { titulo: string; n: number; valor?: number | null; colunas?: Coluna[]; linhas: Linha[] }
 export interface Relatorio { titulo: string; subtitulo: string; kpis: Kpi[]; colunas: Coluna[]; grupos: Grupo[]; avisos: string[] }
+/** Os lançamentos que formam uma linha (a linha traz a chave em "det"). */
+export interface Detalhe { colunas: Coluna[]; linhas: Linha[] }
+/** A chave de detalhe que vem numa linha, se o relatório tiver detalhe. */
+export const detDaLinha = (l: Linha): Record<string, unknown> | null => {
+  const d = (l as unknown as { det?: unknown }).det;
+  return d && typeof d === 'object' ? (d as Record<string, unknown>) : null;
+};
 export interface Parametros { de?: string; ate?: string; estoque_id?: string | null; item_id?: string | null; fornecedor_id?: string | null; dias?: number }
 
 export type Filtro = 'periodo' | 'estoque' | 'fornecedor' | 'item' | 'dias';
@@ -55,6 +62,14 @@ export const relatoriosApi = {
     return { ...r, kpis: r.kpis || [], colunas: r.colunas || [], grupos: r.grupos || [], avisos: r.avisos || [] };
   },
 };
+
+/** Detalhe de uma linha: os filtros do relatório mais a chave "det" da linha. */
+export async function detalheDaLinha(tipo: string, p: Parametros, det: Record<string, unknown>): Promise<Detalhe> {
+  const { data, error } = await supabase.rpc('fn_relatorio_detalhe', { p_tipo: tipo, p: { ...p, det } });
+  if (error) throw new Error(error.message);
+  const d = data as Detalhe | null;
+  return { colunas: d?.colunas || [], linhas: d?.linhas || [] };
+}
 
 /** CSV com ; e BOM: abre certo no Excel em português. */
 export function csvDoRelatorio(r: Relatorio): string {

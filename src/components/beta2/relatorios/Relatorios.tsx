@@ -4,7 +4,7 @@ import { Button, EmptyState, IconButton, Input, KPICard, PageHeader, SectionCard
 import { fmt } from '../api';
 import { brl, cadastrosApi, semAcento, type Estoque, type Fornecedor, type ItemBasico } from '../cadastros/api';
 import BuscaItem from '../BuscaItem';
-import { csvDoRelatorio, GRUPOS_REL, RELATORIOS, relatoriosApi, type Coluna, type Definicao, type Grupo, type Kpi, type Parametros, type Relatorio } from './api';
+import { csvDoRelatorio, detalheDaLinha, detDaLinha, GRUPOS_REL, RELATORIOS, relatoriosApi, type Coluna, type Definicao, type Detalhe, type Grupo, type Kpi, type Parametros, type Relatorio } from './api';
 
 interface Props {
   /** Relatório aberto (tipo) ou null para o menu. */
@@ -39,11 +39,43 @@ function celula(c: Coluna, v: string | number | null): React.ReactNode {
 const numerica = (c: Coluna) => c.t === 'brl' || c.t === 'num' || c.t === 'int' || c.t === 'pct';
 const kpiValor = (k: Kpi) => k.valor === null || k.valor === undefined ? '—' : k.formato === 'brl' ? brl(Number(k.valor)) : k.formato === 'pct' ? `${fmt(Number(k.valor))}%` : k.formato === 'int' ? Number(k.valor).toLocaleString('pt-BR') : k.formato === 'num' ? fmt(Number(k.valor)) : String(k.valor);
 
-/** Um grupo do relatório: cabeçalho com total e a tabela, que abre e fecha. */
-const GrupoCard: React.FC<{ g: Grupo; colunas: Coluna[]; aberto: boolean; onAlternar: () => void; busca: string }> = ({ g, colunas, aberto, onAlternar, busca }) => {
+type EstadoDetalhe = { carregando: true } | { erro: string } | { dados: Detalhe };
+
+/** Os lançamentos de uma linha, numa tabela dentro da tabela. */
+const TabelaDetalhe: React.FC<{ estado: EstadoDetalhe | undefined }> = ({ estado }) => {
+  if (!estado || 'carregando' in estado) return <p className="t-caption px-3 py-2" style={{ margin: 0 }}>Buscando os lançamentos…</p>;
+  if ('erro' in estado) return <p className="t-caption px-3 py-2 texto-perigo" style={{ margin: 0 }}>{estado.erro}</p>;
+  const { colunas, linhas } = estado.dados;
+  if (linhas.length === 0) return <p className="t-caption px-3 py-2" style={{ margin: 0 }}>Nenhum lançamento encontrado.</p>;
+  return (
+    <table className="w-full" style={{ fontSize: 12 }}>
+      <thead><tr>{colunas.map(c => <th key={c.k} className={`px-3 py-1 t-label whitespace-nowrap ${numerica(c) ? 'text-right' : 'text-left'}`} style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>{c.r}</th>)}</tr></thead>
+      <tbody>
+        {linhas.map((l, i) => (
+          <tr key={i} style={{ borderTop: '1px solid var(--border-subtle)' }}>
+            {colunas.map(c => <td key={c.k} className={`px-3 py-1 ${numerica(c) ? 'text-right num whitespace-nowrap' : ''}`} style={{ maxWidth: 320 }}>{celula(c, l[c.k])}</td>)}
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+};
+
+/** Um grupo do relatório: cabeçalho com total e a tabela, que abre e fecha. Linha com detalhe abre os lançamentos. */
+const GrupoCard: React.FC<{ g: Grupo; colunas: Coluna[]; aberto: boolean; onAlternar: () => void; busca: string; onDetalhe?: (det: Record<string, unknown>) => Promise<Detalhe> }> = ({ g, colunas, aberto, onAlternar, busca, onDetalhe }) => {
   const cols = g.colunas || colunas;
   const b = semAcento(busca.trim());
   const linhas = useMemo(() => (b ? g.linhas.filter(l => cols.some(c => c.t === 'texto' && l[c.k] != null && semAcento(String(l[c.k])).includes(b))) : g.linhas), [g, cols, b]);
+  const [detalhes, setDetalhes] = useState<Map<number, EstadoDetalhe>>(new Map());
+  // Relatório novo (outro período ou filtro): as linhas abertas fecham.
+  useEffect(() => { setDetalhes(new Map()); }, [g]);
+  const alternarLinha = async (i: number, det: Record<string, unknown>) => {
+    if (detalhes.has(i)) { setDetalhes(p => { const n = new Map(p); n.delete(i); return n; }); return; }
+    if (!onDetalhe) return;
+    setDetalhes(p => new Map(p).set(i, { carregando: true }));
+    try { const dados = await onDetalhe(det); setDetalhes(p => (p.has(i) ? new Map(p).set(i, { dados }) : p)); }
+    catch (e) { setDetalhes(p => (p.has(i) ? new Map(p).set(i, { erro: e instanceof Error ? e.message : 'Erro ao buscar' }) : p)); }
+  };
   if (b && linhas.length === 0) return null;
   return (
     <section className="card">
@@ -55,16 +87,27 @@ const GrupoCard: React.FC<{ g: Grupo; colunas: Coluna[]; aberto: boolean; onAlte
       {aberto && (
         <div className="overflow-x-auto">
           <table className="w-full" style={{ fontSize: 13 }}>
-            <thead><tr>{cols.map(c => <th key={c.k} className={`px-3 py-1.5 t-label whitespace-nowrap ${numerica(c) ? 'text-right' : 'text-left'}`} style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>{c.r}</th>)}</tr></thead>
+            <thead><tr>{onDetalhe && <th className="w-6" />}{cols.map(c => <th key={c.k} className={`px-3 py-1.5 t-label whitespace-nowrap ${numerica(c) ? 'text-right' : 'text-left'}`} style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>{c.r}</th>)}</tr></thead>
             <tbody>
-              {linhas.map((l, i) => (
-                <tr key={i} style={{ borderTop: '1px solid var(--border-subtle)' }}>
-                  {cols.map(c => {
-                    const v = l[c.k]; const neg = numerica(c) && typeof v === 'number' && v < 0;
-                    return <td key={c.k} className={`px-3 py-1.5 ${numerica(c) ? 'text-right num whitespace-nowrap' : ''}`} style={{ color: neg ? 'var(--danger-text)' : undefined, maxWidth: 360 }}>{celula(c, v)}</td>;
-                  })}
-                </tr>
-              ))}
+              {linhas.map((l, i) => {
+                const det = onDetalhe ? detDaLinha(l) : null;
+                const aberta = detalhes.has(i);
+                return (
+                  <React.Fragment key={i}>
+                    <tr style={{ borderTop: '1px solid var(--border-subtle)', cursor: det ? 'pointer' : undefined, background: aberta ? 'rgba(255,255,255,0.03)' : undefined }}
+                      onClick={det ? () => void alternarLinha(i, det) : undefined} title={det ? 'Toque para ver os lançamentos' : undefined}>
+                      {onDetalhe && <td className="pl-2" style={{ color: 'var(--text-secondary)' }}>{det && (aberta ? <ChevronDown size={14} aria-label="Fechar lançamentos" /> : <ChevronRight size={14} aria-label="Ver lançamentos" />)}</td>}
+                      {cols.map(c => {
+                        const v = l[c.k]; const neg = numerica(c) && typeof v === 'number' && v < 0;
+                        return <td key={c.k} className={`px-3 py-1.5 ${numerica(c) ? 'text-right num whitespace-nowrap' : ''}`} style={{ color: neg ? 'var(--danger-text)' : undefined, maxWidth: 360 }}>{celula(c, v)}</td>;
+                      })}
+                    </tr>
+                    {aberta && (
+                      <tr><td colSpan={cols.length + 1} className="pl-6 pr-2 pb-2" style={{ background: 'rgba(255,255,255,0.03)' }}><TabelaDetalhe estado={detalhes.get(i)} /></td></tr>
+                    )}
+                  </React.Fragment>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -142,6 +185,8 @@ const Relatorios: React.FC<Props> = ({ tipo, itemId, onAbrir, onVoltar }) => {
     a.click(); URL.revokeObjectURL(a.href);
   };
   const todosAbertos = rel ? abertos.size === rel.grupos.length : false;
+  // Relatório com linhas que se abrem nos lançamentos (a linha traz "det").
+  const temDetalhe = !!rel?.grupos.some(g => g.linhas.some(l => detDaLinha(l)));
   const alternarTodos = () => setAbertos(todosAbertos ? new Set() : new Set((rel?.grupos || []).map((_, i) => i)));
   const opcoesItem = useMemo(() => itens.map(i => ({ id: i.id, nome: i.nome, sub: `${i.categoria || 'Sem categoria'} · ${i.unidade_medida}` })), [itens]);
   const nomeItem = itens.find(i => i.id === item)?.nome || '';
@@ -217,7 +262,8 @@ const Relatorios: React.FC<Props> = ({ tipo, itemId, onAbrir, onVoltar }) => {
                 {rel.grupos.length > 1 && <Button tamanho="sm" variante="discreto" onClick={alternarTodos}>{todosAbertos ? 'Recolher todos' : 'Abrir todos'}</Button>}
               </div>
               <div className="flex flex-col gap-3">
-                {rel.grupos.map((g, i) => <GrupoCard key={i} g={g} colunas={rel.colunas} busca={busca} aberto={abertos.has(i) || busca.trim().length > 1} onAlternar={() => setAbertos(p => { const n = new Set(p); if (n.has(i)) n.delete(i); else n.add(i); return n; })} />)}
+                {rel.grupos.map((g, i) => <GrupoCard key={i} g={g} colunas={rel.colunas} busca={busca} aberto={abertos.has(i) || busca.trim().length > 1} onAlternar={() => setAbertos(p => { const n = new Set(p); if (n.has(i)) n.delete(i); else n.add(i); return n; })}
+                  onDetalhe={temDetalhe && params ? (det) => detalheDaLinha(def.tipo, params, det) : undefined} />)}
               </div>
             </>}
         </>
