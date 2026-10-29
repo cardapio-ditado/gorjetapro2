@@ -141,6 +141,8 @@ export interface PedidoItem { linha_id: string; item_id: string; nome: string; u
 export interface PedidoPendente { id: string; fornecedor_id: string | null; fornecedor: string; data_pedido: string; valor: number; observacoes: string | null; itens: PedidoItem[] }
 export interface NotaRecente { id: string; fornecedor: string; data_compra: string; valor: number; numero_documento: string | null; arquivo: string | null; criado_em: string; itens: number }
 export interface RecebimentoTela { pendentes: PedidoPendente[]; recentes: NotaRecente[] }
+/** Nota achada na busca, com os itens que bateram com o texto. */
+export interface NotaAchada extends NotaRecente { achados: Array<{ nome: string; um: string; qtd: number; custo: number }> }
 export interface LinhaRecebida { linha_id: string | null; item_id: string; quantidade_recebida: number; custo_unitario: number; data_validade: string | null }
 export const BUCKET_NOTAS = 'notas-fiscais';
 export const recebimentoApi = {
@@ -148,6 +150,12 @@ export const recebimentoApi = {
     const { data, error } = await supabase.rpc('fn_recebimento_tela');
     lancar(error);
     return data as RecebimentoTela;
+  },
+  /** Todas as notas recebidas em que o fornecedor ou um produto tem o texto. */
+  async buscar(texto: string): Promise<NotaAchada[]> {
+    const { data, error } = await supabase.rpc('fn_recebimento_buscar', { p_texto: texto, p_limite: 60 });
+    lancar(error);
+    return (data || []) as NotaAchada[];
   },
   async confirmar(p: { entrada_id: string | null; fornecedor_id: string | null; numero_documento: string; data_compra: string; condicao_pagamento: string; observacoes: string | null; arquivo: string | null; itens: LinhaRecebida[] }) {
     const { data, error } = await supabase.rpc('fn_recebimento_confirmar', { p });

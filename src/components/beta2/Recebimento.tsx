@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { ArrowLeft, Camera, Check, ClipboardList, FileText, Pencil, Plus, Truck, X } from 'lucide-react';
+import { ArrowLeft, Camera, Check, ClipboardList, FileText, Pencil, Plus, Search, Truck, X } from 'lucide-react';
 import { Badge, Button, EmptyState, Input, Modal, PageHeader, SectionCard, Select } from '../ui';
 import BuscaItem from './BuscaItem';
-import { fmt, pedidoApi, recebimentoApi, type LinhaRecebida, type NotaDetalhe, type PedidoPendente, type RecebimentoTela } from './api';
+import { fmt, pedidoApi, recebimentoApi, type LinhaRecebida, type NotaAchada, type NotaDetalhe, type NotaRecente, type PedidoPendente, type RecebimentoTela } from './api';
 import { brl, cadastrosApi, type Fornecedor, type ItemBasico } from './cadastros/api';
 
 interface Props { onVoltar: () => void }
@@ -24,6 +24,23 @@ const Recebimento: React.FC<Props> = ({ onVoltar }) => {
   const [ocupado, setOcupado] = useState<string | null>(null);
   const [pedidoEdit, setPedidoEdit] = useState<PedidoPendente | 'novo' | null>(null);
   const [notaAberta, setNotaAberta] = useState<string | null>(null);
+  const [busca, setBusca] = useState('');
+  const [achadas, setAchadas] = useState<NotaAchada[] | null>(null);
+  const [buscando, setBuscando] = useState(false);
+
+  // Busca em todas as notas recebidas (a lista só tem as 30 últimas), a partir de 2 letras.
+  useEffect(() => {
+    const t = busca.trim();
+    if (t.length < 2) { setAchadas(null); setBuscando(false); return; }
+    let vivo = true;
+    setBuscando(true);
+    const id = setTimeout(async () => {
+      try { const r = await recebimentoApi.buscar(t); if (vivo) setAchadas(r); }
+      catch (e) { if (vivo) setErro(e instanceof Error ? e.message : 'Erro na busca'); }
+      finally { if (vivo) setBuscando(false); }
+    }, 300);
+    return () => { vivo = false; clearTimeout(id); };
+  }, [busca]);
 
   const carregar = async () => {
     setErro(null);
@@ -76,18 +93,14 @@ const Recebimento: React.FC<Props> = ({ onVoltar }) => {
             ))}
           </SectionCard>
 
-          <SectionCard title="Recebidas" descricao="As últimas notas que entraram no Central" noPadding>
-            {tela.recentes.length === 0 && <p className="t-body px-5 py-4" style={{ margin: 0, color: 'var(--text-secondary)' }}>Nenhuma ainda.</p>}
-            {tela.recentes.map(n => (
-              <div key={n.id} className="flex flex-wrap items-center gap-3 px-5 py-2" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-                <button type="button" onClick={() => setNotaAberta(n.id)} className="flex-1 min-w-[200px] text-left focus-ring rounded-md">
-                  <p className="t-body" style={{ margin: 0, fontWeight: 500 }}>{n.fornecedor}</p>
-                  <p className="t-caption" style={{ margin: 0 }}>{dataBR(n.data_compra)} · {n.itens} item{n.itens !== 1 ? 's' : ''}{n.numero_documento ? ` · nota ${n.numero_documento}` : ''} · toque para ver</p>
-                </button>
-                <span className="t-body num">{brl(n.valor)}</span>
-                {n.arquivo ? <Button tamanho="sm" variante="discreto" icone={<FileText size={14} />} onClick={() => verFoto(n.arquivo!)}>Foto</Button> : <Badge variant="neutral">sem foto</Badge>}
-              </div>
-            ))}
+          <SectionCard title="Recebidas" descricao={achadas ? `${achadas.length}${achadas.length === 60 ? '+' : ''} nota${achadas.length !== 1 ? 's' : ''} com "${busca.trim()}"` : 'As últimas notas que entraram no Central'} noPadding>
+            <div className="px-5 py-3" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+              <Input type="search" aria-label="Buscar recebidas" placeholder="Buscar recebidas: produto ou fornecedor (ex.: chopp, Ambev)" value={busca} onChange={e => setBusca(e.target.value)}
+                dica={buscando ? 'Buscando em todas as notas…' : busca.trim().length === 1 ? 'Digite pelo menos 2 letras' : undefined} />
+            </div>
+            {achadas && achadas.length === 0 && !buscando && <div className="p-4"><EmptyState icon={Search} title="Nada encontrado" description="Nenhuma nota recebida com esse produto ou fornecedor." compact /></div>}
+            {(achadas ?? tela.recentes).length === 0 && !achadas && <p className="t-body px-5 py-4" style={{ margin: 0, color: 'var(--text-secondary)' }}>Nenhuma ainda.</p>}
+            {(achadas ?? tela.recentes).map(n => <LinhaNota key={n.id} n={n} onAbrir={() => setNotaAberta(n.id)} onVerFoto={verFoto} />)}
           </SectionCard>
         </div>
       )}
@@ -97,6 +110,24 @@ const Recebimento: React.FC<Props> = ({ onVoltar }) => {
 };
 
 export default Recebimento;
+
+/** Uma nota recebida na lista; na busca, com os itens que bateram embaixo. */
+const LinhaNota: React.FC<{ n: NotaRecente | NotaAchada; onAbrir: () => void; onVerFoto: (c: string) => void }> = ({ n, onAbrir, onVerFoto }) => {
+  const achados = 'achados' in n ? n.achados : [];
+  return (
+    <div className="flex flex-wrap items-center gap-3 px-5 py-2" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+      <button type="button" onClick={onAbrir} className="flex-1 min-w-[200px] text-left focus-ring rounded-md">
+        <p className="t-body" style={{ margin: 0, fontWeight: 500 }}>{n.fornecedor}</p>
+        <p className="t-caption" style={{ margin: 0 }}>{dataBR(n.data_compra)} · {n.itens} item{n.itens !== 1 ? 's' : ''}{n.numero_documento ? ` · nota ${n.numero_documento}` : ''} · toque para ver</p>
+        {achados.map((a, i) => (
+          <p key={i} className="t-caption" style={{ margin: 0, color: 'var(--text-primary)' }}>{a.nome} · {fmt(a.qtd)} {a.um} · {brl(a.custo)}/{a.um}</p>
+        ))}
+      </button>
+      <span className="t-body num">{brl(n.valor)}</span>
+      {n.arquivo ? <Button tamanho="sm" variante="discreto" icone={<FileText size={14} />} onClick={() => onVerFoto(n.arquivo!)}>Foto</Button> : <Badge variant="neutral">sem foto</Badge>}
+    </div>
+  );
+};
 
 // ── Nota recebida, aberta ───────────────────────────────────────────────────
 const NotaDetalheModal: React.FC<{ id: string | null; onFechar: () => void; onVerFoto: (c: string) => void }> = ({ id, onFechar, onVerFoto }) => {
