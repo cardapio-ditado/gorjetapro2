@@ -1,9 +1,11 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-// KDS da cozinha: a fila de pratos da noite, para o tablet da cozinha.
+// KDS da cozinha, do bar e dos drinks: a fila da noite, para o tablet de cada setor.
 //
 // - Lê a ZIG pela zig-consulta (que guarda o token): erp/saida-produtos da noite
-//   em andamento, só o que sai na COZINHA (barName). O transactionId é a comanda
+//   em andamento. Cozinha é o ponto COZINHA (barName). Bar e drinks se separam
+//   pela categoria do produto (ver setorDe), porque a ZIG manda drinks pelo
+//   ponto CHOPP e água de coco pelo ponto DRINK. O transactionId é a comanda
 //   do cliente (dura a noite toda): um pedido é a comanda + a hora do lançamento,
 //   e cada produto do pedido, um prato (somado; o montado, por combinação de
 //   escolhas), com os adicionais. A mesa vem na observação do lançamento
@@ -40,6 +42,25 @@ const PRONTOS_MIN = 15;
 const ESQUECIDO_H = 3;
 /** Fora da fila: rodízio (sai em rodadas, não é um prato) e couvert. */
 const FORA_DA_FILA = /^(ROD[IÍ]ZIO|COUVER)/i;
+
+type Setor = 'cozinha' | 'bar' | 'drinks';
+/** Amarelo e vermelho de cada setor (minutos desde o pedido). */
+const LIMITES: Record<Setor, { amarelo: number; vermelho: number }> = {
+  cozinha: { amarelo: 15, vermelho: 20 },
+  bar: { amarelo: 5, vermelho: 8 },
+  drinks: { amarelo: 8, vermelho: 12 },
+};
+/** Categorias da ZIG que saem nos drinks: drinks, caipirinhas, doses, combos e garrafas. */
+const DRINKS = /^(DRINK|CAIPIRINHA|DOSE|CACHA[CÇ]A|COMBO|WHISKY|VODKA|GIN|LICOR|VINHO|CHAMPAGNE|ESPUMANTE|TEQUILA|RUM|CONHAQUE)/;
+
+/** Cozinha pelo ponto da ZIG; o resto, drinks pela categoria, e bar o que sobra. */
+function setorDe(v: any): Setor | null {
+  const ponto = limpo(v.barName).toUpperCase();
+  if (!ponto) return null;
+  if (ponto.includes('COZINHA')) return 'cozinha';
+  return DRINKS.test(limpo(v.productCategory).toUpperCase()) ? 'drinks' : 'bar';
+}
+const ehSetor = (s: unknown): s is Setor => s === 'cozinha' || s === 'bar' || s === 'drinks';
 
 function iguais(a: string, b: string) {
   if (a.length !== b.length) return false;
@@ -80,6 +101,7 @@ function noiteAtual(agora = new Date()) {
 interface Prato {
   chave: string; noite: string; transacao: string; produto: string; qtd: number;
   adicionais: string[]; garcom: string | null; categoria: string | null; obs: string | null; pedido_em: string; cancelado: boolean;
+  setor: Setor;
 }
 
 /** Lê a ZIG (se a última leitura tiver mais de LER_A_CADA_MS) e grava os pratos novos. */
@@ -104,7 +126,8 @@ async function ler(): Promise<{ lido_em: string | null; erro: string | null; leu
   const pratos = new Map<string, Prato>();
   for (const v of vendas) {
     for (const k of Object.keys(v ?? {})) campos.add(k);
-    if (!limpo(v.barName).toUpperCase().includes('COZINHA')) continue;
+    const setor = setorDe(v);
+    if (!setor) continue;
     if (v.source === 'tip' || v.type === 'Tip' || v.type === 'Entrance' || !v.transactionId) continue;
     const produto = limpo(v.productName) || 'Prato';
     if (FORA_DA_FILA.test(produto)) continue;
@@ -116,7 +139,7 @@ async function ler(): Promise<{ lido_em: string | null; erro: string | null; leu
     const chave = `${transacao}|${v.productId || produto}${escolhas ? `|${escolhas}` : ''}`;
     const p = pratos.get(chave) ?? {
       chave, noite, transacao, produto, qtd: 0, adicionais: [],
-      garcom: limpo(v.employeeName) || null, categoria: limpo(v.productCategory) || null, obs: limpo(v.obs) || null, pedido_em, cancelado: true,
+      garcom: limpo(v.employeeName) || null, categoria: limpo(v.productCategory) || null, obs: limpo(v.obs) || null, pedido_em, cancelado: true, setor,
     };
     const q = Number(v.count || v.fractionalAmount || 1);
     if (!v.isRefunded) {
@@ -179,8 +202,8 @@ function atrasoZig(pratos: any[]) {
   return { pratos: max.length, ate_seg: Math.round(mediana(max)!), desde_seg: Math.round(mediana(min)!) };
 }
 
-/** Resumo de uma noite: tempo de preparo por prato e pela noite. */
-function resumir(pratos: any[]) {
+/** Resumo de uma noite de um setor: tempo de preparo por prato e pela noite. */
+function resumir(pratos: any[], { amarelo, vermelho }: { amarelo: number; vermelho: number }) {
   const feitos = pratos.filter((p) => p.pronto_em && !p.cancelado);
   const tempos = feitos.map((p) => minutos(p.pedido_em, p.pronto_em));
   const porProduto = new Map<string, number[]>();
@@ -203,17 +226,17 @@ function resumir(pratos: any[]) {
     sem_pronto: pratos.filter((p) => !p.pronto_em && !p.cancelado).length,
     media_min: media(tempos),
     mediana_min: tempos.length ? r1(mediana(tempos)!) : null,
-    amarelos: tempos.filter((t) => t >= 15 && t < 20).length,
-    vermelhos: tempos.filter((t) => t >= 20).length,
+    amarelos: tempos.filter((t) => t >= amarelo && t < vermelho).length,
+    vermelhos: tempos.filter((t) => t >= vermelho).length,
     atraso_zig: atrasoZig(pratos),
     por_produto: [...porProduto.entries()].map(([produto, t]) => ({
-      produto, feitos: t.length, media_min: media(t), maior_min: r1(Math.max(...t)), acima_20: t.filter((x) => x >= 20).length,
+      produto, feitos: t.length, media_min: media(t), maior_min: r1(Math.max(...t)), acima_vermelho: t.filter((x) => x >= vermelho).length,
     })).sort((a, b) => (b.media_min ?? 0) - (a.media_min ?? 0)),
     por_hora: [...porHora.entries()].sort().map(([hora, t]) => ({ hora, feitos: t.length, media_min: media(t) })),
   };
 }
 
-const CAMPOS = 'id, transacao, produto, qtd, adicionais, garcom, categoria, obs, pedido_em, visto_em, leitura_anterior, pronto_em, pronto_por, cancelado';
+const CAMPOS = 'id, setor, transacao, produto, qtd, adicionais, garcom, categoria, obs, pedido_em, visto_em, leitura_anterior, pronto_em, pronto_por, cancelado';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS });
@@ -221,6 +244,7 @@ Deno.serve(async (req) => {
   try {
     const body = await req.json().catch(() => ({}));
     const acao = String(body?.acao || 'fila');
+    const setor: Setor = ehSetor(body?.setor) ? body.setor : 'cozinha';
 
     if (acao === 'ler' && (await ehAgendamento(req))) {
       // Fora da noite (6h às 17h em Cuiabá) o agendamento não lê nada.
@@ -240,14 +264,15 @@ Deno.serve(async (req) => {
       const { noite } = noiteAtual();
       const desde = Date.now() - PRONTOS_MIN * 60_000;
       const velho = Date.now() - ESQUECIDO_H * 3600_000;
-      // A noite tem poucas dezenas de pratos: filtra aqui o que vai para a tela.
+      // A noite tem algumas centenas de itens nos três setores: filtra aqui o do setor e o que vai para a tela.
       const { data: todos, error } = await db.from('kds_pratos').select(CAMPOS).eq('noite', noite).order('pedido_em');
       if (error) throw new Error(error.message);
       const ms = (t: string) => new Date(t).getTime();
-      const pratos = (todos ?? []).filter((p: any) => !p.cancelado && ms(p.pedido_em) > velho && (!p.pronto_em || ms(p.pronto_em) > desde));
-      const r = resumir(todos ?? []);
+      const doSetor = (todos ?? []).filter((p: any) => p.setor === setor);
+      const pratos = doSetor.filter((p: any) => !p.cancelado && ms(p.pedido_em) > velho && (!p.pronto_em || ms(p.pronto_em) > desde));
+      const r = resumir(doSetor, LIMITES[setor]);
       return json({
-        ok: true, noite, agora: new Date().toISOString(), lido_em: leitura.lido_em, erro: leitura.erro,
+        ok: true, noite, setor, limites: LIMITES[setor], agora: new Date().toISOString(), lido_em: leitura.lido_em, erro: leitura.erro,
         pratos,
         resumo: { pratos: r.pratos, feitos: r.feitos, media_min: r.media_min, vermelhos: r.vermelhos, atraso_zig: r.atraso_zig },
       });
@@ -275,10 +300,10 @@ Deno.serve(async (req) => {
 
     if (acao === 'relatorio') {
       const noite = /^\d{4}-\d{2}-\d{2}$/.test(String(body?.noite || '')) ? String(body.noite) : noiteAtual().noite;
-      const { data: pratos, error } = await db.from('kds_pratos').select(CAMPOS).eq('noite', noite).order('pedido_em');
+      const { data: pratos, error } = await db.from('kds_pratos').select(CAMPOS).eq('noite', noite).eq('setor', setor).order('pedido_em');
       if (error) throw new Error(error.message);
       const { data: estado } = await db.from('kds_estado').select('campos').eq('id', 1).maybeSingle();
-      return json({ ok: true, noite, ...resumir(pratos ?? []), campos_zig: estado?.campos ?? [], lista: pratos ?? [] });
+      return json({ ok: true, noite, setor, limites: LIMITES[setor], ...resumir(pratos ?? [], LIMITES[setor]), campos_zig: estado?.campos ?? [], lista: pratos ?? [] });
     }
 
     return json({ ok: false, error: 'Ação desconhecida.' }, 400);

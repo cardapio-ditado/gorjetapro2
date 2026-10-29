@@ -1,6 +1,6 @@
 import type { LucideIcon } from 'lucide-react';
 import {
-  BookOpen, CalendarDays, ChefHat, DollarSign, Gamepad2, Home, Music, Palette, Settings, Star, Target, TrendingUp, UserPlus, Users, Warehouse, Wine,
+  Beer, BookOpen, CalendarDays, ChefHat, DollarSign, Gamepad2, Martini, Home, Music, Palette, Settings, Star, Target, TrendingUp, UserPlus, Users, Warehouse, Wine,
 } from 'lucide-react';
 
 /** Uma tela que a busca do topo sabe abrir. */
@@ -35,6 +35,8 @@ export const ROTAS_BUSCA: RotaBusca[] = [
   { label: 'Livro da Noite',          path: '/livro',                                                icon: BookOpen, apelidos: 'ocorrencias ocorrencia diario caixa noite gerente' },
   { label: 'A Casa ao Vivo',          path: '/casa',                                                 icon: Gamepad2, apelidos: 'maquete jogo clientes garcom praca 3d tempo real' },
   { label: 'KDS da Cozinha',          path: '/kds',                                                  icon: ChefHat, apelidos: 'cozinha pedidos pratos tempo tablet fila preparo' },
+  { label: 'KDS do Bar',              path: '/kds/bar',                                              icon: Beer, apelidos: 'bar chopp cerveja pedidos tempo tablet fila' },
+  { label: 'KDS de Drinks',           path: '/kds/drinks',                                           icon: Martini, apelidos: 'drinks caipirinha dose garrafa pedidos tempo tablet fila' },
   { label: 'Extras',                  path: '/extras',                                               icon: UserPlus, apelidos: 'diarista freelancer freela diaria' },
   { label: 'Músicos',                 path: '/musicians',                                            icon: Music, apelidos: 'show agenda banda' },
   { label: 'Eventos',                 path: '/events',                                               icon: CalendarDays, apelidos: 'festa reserva' },

@@ -4,7 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import {
   Home, DollarSign, Warehouse, Users, Music, CalendarDays,
   Settings, BookOpen, Target, ClipboardList, Palette,
-  TrendingUp, ChevronDown, LogOut, Star, X, LayoutDashboard, Hexagon, UserPlus, Handshake, Wine, Gamepad2, ChefHat,
+  TrendingUp, ChevronDown, LogOut, Star, X, LayoutDashboard, Hexagon, UserPlus, Handshake, Wine, Gamepad2, ChefHat, Beer, Martini,
 } from 'lucide-react';
 
 // Desde 05/10/2026 o estoque vive no Beta 2, que tem o próprio menu dentro da
@@ -69,6 +69,8 @@ export const MODULES: Module[] = [
   { name: 'Livro da Noite', path: '/livro',            icon: BookOpen,      slug: 'livro',           group: 'operacao' },
   { name: 'A Casa ao Vivo', path: '/casa',             icon: Gamepad2,      slug: 'casa',            group: 'operacao' },
   { name: 'KDS da Cozinha', path: '/kds',              icon: ChefHat,       slug: 'kds',             group: 'operacao' },
+  { name: 'KDS do Bar',     path: '/kds/bar',          icon: Beer,          slug: 'kds',             group: 'operacao' },
+  { name: 'KDS de Drinks',  path: '/kds/drinks',       icon: Martini,       slug: 'kds',             group: 'operacao' },
   { name: 'Extras',         path: '/extras',             icon: UserPlus,      slug: 'extras',          group: 'operacao' },
   { name: 'Metas & Tarefas', path: '/metas-tarefas',    icon: Target,        slug: 'solicitacoes',    group: 'operacao' },
   { name: 'Eventos',        path: '/events',             icon: CalendarDays,  slug: 'eventos',         group: 'operacao' },

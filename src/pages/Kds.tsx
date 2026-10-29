@@ -1,20 +1,27 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, BarChart3, ChefHat, Check, Maximize2, RotateCcw } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { ArrowLeft, BarChart3, Beer, ChefHat, Check, Martini, Maximize2, RotateCcw } from 'lucide-react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { Button, IconButton, Segmented } from '../components/ui';
 
 /**
- * KDS da cozinha: a fila de pratos da noite no tablet. Os pedidos vêm da ZIG
- * (função kds-cozinha); o cronômetro corre desde a hora do pedido e o cartão
- * fica amarelo aos 15 minutos e vermelho aos 20. Um toque em "Pronto" tira o
- * pedido da fila; um toque num prato marca só aquele prato.
+ * KDS: a fila da noite no tablet de cada setor (/kds cozinha, /kds/bar,
+ * /kds/drinks). Os pedidos vêm da ZIG (função kds-cozinha); o cronômetro corre
+ * desde a hora do pedido e o cartão fica amarelo e depois vermelho, nos tempos
+ * do setor. Um toque em "Pronto" tira o pedido da fila; um toque num item
+ * marca só aquele item.
  */
 
 const FUSO = 'America/Cuiaba';
-const AMARELO_MIN = 15;
-const VERMELHO_MIN = 20;
 const LER_MS = 15_000;
+
+type Setor = 'cozinha' | 'bar' | 'drinks';
+const SETORES: Record<Setor, { nome: string; caminho: string; Icone: React.ElementType; amarelo: number; vermelho: number; item: string; vazio: string }> = {
+  cozinha: { nome: 'Cozinha', caminho: '/kds', Icone: ChefHat, amarelo: 15, vermelho: 20, item: 'prato', vazio: 'Os pedidos da cozinha aparecem aqui assim que o garçom lança na ZIG.' },
+  bar: { nome: 'Bar', caminho: '/kds/bar', Icone: Beer, amarelo: 5, vermelho: 8, item: 'item', vazio: 'Chopp, cervejas, long neck, refrigerantes e águas aparecem aqui assim que o garçom lança na ZIG.' },
+  drinks: { nome: 'Drinks', caminho: '/kds/drinks', Icone: Martini, amarelo: 8, vermelho: 12, item: 'drink', vazio: 'Drinks, caipirinhas, doses, combos e garrafas aparecem aqui assim que o garçom lança na ZIG.' },
+};
+const setorDoCaminho = (caminho: string): Setor => (caminho.startsWith('/kds/bar') ? 'bar' : caminho.startsWith('/kds/drinks') ? 'drinks' : 'cozinha');
 
 interface Prato {
   id: number; transacao: string; produto: string; qtd: number; adicionais: string[];
@@ -40,7 +47,7 @@ const COR = {
   amarelo: { borda: '#e0a526', fundo: 'rgba(224,165,38,0.16)', texto: '#f5c451' },
   vermelho: { borda: '#e5484d', fundo: 'rgba(229,72,77,0.18)', texto: '#ff6b6f' },
 };
-const corDe = (min: number) => (min >= VERMELHO_MIN ? COR.vermelho : min >= AMARELO_MIN ? COR.amarelo : COR.verde);
+const corDe = (min: number, s: Setor) => (min >= SETORES[s].vermelho ? COR.vermelho : min >= SETORES[s].amarelo ? COR.amarelo : COR.verde);
 
 /** Bipe curto para pedido novo (precisa de um toque antes: regra do navegador). */
 function bipe(ctx: AudioContext | null) {
@@ -58,8 +65,10 @@ function bipe(ctx: AudioContext | null) {
   }
 }
 
-const KdsCozinha: React.FC = () => {
+const Kds: React.FC = () => {
   const navigate = useNavigate();
+  const setor = setorDoCaminho(useLocation().pathname);
+  const S = SETORES[setor];
   const [aba, setAba] = useState<'fila' | 'relatorio'>('fila');
   const [fila, setFila] = useState<Fila | null>(null);
   const [erro, setErro] = useState<string | null>(null);
@@ -72,7 +81,7 @@ const KdsCozinha: React.FC = () => {
 
   const buscar = useCallback(async () => {
     try {
-      const { data, error } = await supabase.functions.invoke('kds-cozinha', { body: { acao: 'fila' } });
+      const { data, error } = await supabase.functions.invoke('kds-cozinha', { body: { acao: 'fila', setor } });
       if (error || !data?.ok) throw new Error(data?.error || 'sem resposta');
       const f = data as Fila;
       // Pedido novo na fila: bipa (menos na primeira leitura).
@@ -84,7 +93,10 @@ const KdsCozinha: React.FC = () => {
     } catch {
       setErro('Sem conexão com o sistema. Mostrando a última leitura.');
     }
-  }, []);
+  }, [setor]);
+
+  // Trocou de setor: começa do zero (sem bipar pelo que já estava na fila).
+  useEffect(() => { setFila(null); vistos.current = null; }, [setor]);
 
   useEffect(() => {
     buscar();
@@ -143,15 +155,16 @@ const KdsCozinha: React.FC = () => {
       {/* topo */}
       <div className="flex flex-wrap items-center gap-3 px-4 py-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
         <IconButton aria-label="Voltar ao sistema" onClick={() => navigate('/')}><ArrowLeft size={18} /></IconButton>
-        <ChefHat size={22} style={{ color: '#f5c451' }} />
-        <span style={{ fontSize: 20, fontWeight: 800 }}>Cozinha</span>
+        <S.Icone size={22} style={{ color: '#f5c451' }} />
+        <Segmented<Setor> rotulo="Setor" valor={setor} onMudar={(s) => navigate(SETORES[s].caminho)}
+          opcoes={(Object.keys(SETORES) as Setor[]).map((s) => ({ valor: s, rotulo: SETORES[s].nome }))} />
         <span style={{ fontSize: 26, fontWeight: 800, fontVariantNumeric: 'tabular-nums' }}>{hhmm(new Date(agora).toISOString())}</span>
         <Segmented<'fila' | 'relatorio'> rotulo="Tela" valor={aba} onMudar={setAba}
           opcoes={[{ valor: 'fila', rotulo: `Fila (${pedidos.length})` }, { valor: 'relatorio', rotulo: 'Tempos' }]} />
         <div className="flex-1" />
         {r && (
           <span style={{ fontSize: 15, opacity: 0.85 }}>
-            {r.feitos} prontos · média {r.media_min ?? '—'} min · {r.vermelhos} passaram de {VERMELHO_MIN} min
+            {r.feitos} prontos · média {r.media_min ?? '—'} min · {r.vermelhos} passaram de {S.vermelho} min
           </span>
         )}
         <span style={{ fontSize: 13, opacity: 0.6 }}>
@@ -171,15 +184,15 @@ const KdsCozinha: React.FC = () => {
         <div className="flex-1 p-4">
           {pedidos.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center gap-2" style={{ minHeight: '50vh', opacity: 0.7 }}>
-              <ChefHat size={48} />
-              <p style={{ fontSize: 20 }}>{fila ? 'Nenhum prato na fila.' : 'Lendo a ZIG…'}</p>
-              <p style={{ fontSize: 14 }}>Os pedidos da cozinha aparecem aqui assim que o garçom lança na ZIG.</p>
+              <S.Icone size={48} />
+              <p style={{ fontSize: 20 }}>{fila ? 'Nada na fila.' : 'Lendo a ZIG…'}</p>
+              <p style={{ fontSize: 14 }}>{S.vazio}</p>
             </div>
           ) : (
             <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))' }}>
               {pedidos.map((ped) => {
                 const ms = agora - new Date(ped.pedido_em).getTime();
-                const c = corDe(ms / 60000);
+                const c = corDe(ms / 60000, setor);
                 return (
                   <div key={ped.transacao} className="flex flex-col" style={{ border: `3px solid ${c.borda}`, background: c.fundo, borderRadius: 14, overflow: 'hidden' }}>
                     <div className="flex items-baseline justify-between px-3 pt-2">
@@ -190,7 +203,7 @@ const KdsCozinha: React.FC = () => {
                     <div className="flex-1 px-3 py-2">
                       {ped.pratos.map((p) => (
                         <button key={p.id} type="button" onClick={() => marcar([p.id], 'pronto')} className="w-full text-left py-1.5"
-                          style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }} title="Toque para marcar só este prato">
+                          style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }} title={`Toque para marcar só este ${S.item}`}>
                           <div style={{ fontSize: 19, fontWeight: 700, lineHeight: 1.25 }}>
                             <span style={{ color: c.texto }}>{qtd(p.qtd)}×</span> {p.produto}
                           </div>
@@ -225,14 +238,14 @@ const KdsCozinha: React.FC = () => {
           )}
         </div>
       ) : (
-        <Relatorio noiteAtual={fila?.noite ?? null} />
+        <Relatorio key={setor} setor={setor} noiteAtual={fila?.noite ?? null} />
       )}
 
       {!iniciado && (
         <button type="button" onClick={comecar} className="fixed inset-0 flex flex-col items-center justify-center gap-3"
           style={{ zIndex: 60, background: 'rgba(11,14,19,0.92)', color: '#ece6da' }}>
-          <ChefHat size={56} style={{ color: '#f5c451' }} />
-          <span style={{ fontSize: 28, fontWeight: 800 }}>Toque para começar</span>
+          <S.Icone size={56} style={{ color: '#f5c451' }} />
+          <span style={{ fontSize: 28, fontWeight: 800 }}>KDS {S.nome}: toque para começar</span>
           <span style={{ fontSize: 16, opacity: 0.75 }}>Liga o som de pedido novo, deixa a tela acesa e abre em tela cheia.</span>
         </button>
       )}
@@ -243,13 +256,14 @@ const KdsCozinha: React.FC = () => {
 interface Relat {
   noite: string; pratos: number; feitos: number; sem_pronto: number; media_min: number | null; mediana_min: number | null;
   amarelos: number; vermelhos: number; atraso_zig: { pratos: number; ate_seg: number; desde_seg: number } | null;
-  por_produto: Array<{ produto: string; feitos: number; media_min: number | null; maior_min: number; acima_20: number }>;
+  por_produto: Array<{ produto: string; feitos: number; media_min: number | null; maior_min: number; acima_vermelho: number }>;
   por_hora: Array<{ hora: string; feitos: number; media_min: number | null }>;
   campos_zig: string[];
 }
 
-/** Tempos de uma noite: por prato e por hora, e quanto a ZIG demora a mostrar o pedido. */
-const Relatorio: React.FC<{ noiteAtual: string | null }> = ({ noiteAtual }) => {
+/** Tempos de uma noite do setor: por item e por hora, e quanto a ZIG demora a mostrar o pedido. */
+const Relatorio: React.FC<{ setor: Setor; noiteAtual: string | null }> = ({ setor, noiteAtual }) => {
+  const S = SETORES[setor];
   const [noite, setNoite] = useState<string>(noiteAtual ?? new Date(Date.now() - 4 * 3600 * 1000).toISOString().slice(0, 10));
   const [dados, setDados] = useState<Relat | null>(null);
   const [carregando, setCarregando] = useState(false);
@@ -257,34 +271,34 @@ const Relatorio: React.FC<{ noiteAtual: string | null }> = ({ noiteAtual }) => {
   useEffect(() => {
     let vivo = true;
     setCarregando(true);
-    supabase.functions.invoke('kds-cozinha', { body: { acao: 'relatorio', noite } }).then(({ data }) => {
+    supabase.functions.invoke('kds-cozinha', { body: { acao: 'relatorio', noite, setor } }).then(({ data }) => {
       if (vivo) { setDados(data?.ok ? (data as Relat) : null); setCarregando(false); }
     });
     return () => { vivo = false; };
-  }, [noite]);
+  }, [noite, setor]);
 
   const celula: React.CSSProperties = { padding: '8px 10px', borderBottom: '1px solid rgba(255,255,255,0.08)', fontSize: 16 };
   return (
     <div className="p-4" style={{ maxWidth: 1100 }}>
       <div className="flex flex-wrap items-center gap-3 mb-4">
         <BarChart3 size={20} />
-        <span style={{ fontSize: 18, fontWeight: 800 }}>Tempos da noite</span>
+        <span style={{ fontSize: 18, fontWeight: 800 }}>Tempos da noite · {S.nome}</span>
         <input type="date" value={noite} onChange={(e) => setNoite(e.target.value)} aria-label="Noite"
           style={{ background: '#151a22', color: '#ece6da', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 8, padding: '6px 10px', fontSize: 16 }} />
         {carregando && <span style={{ opacity: 0.6 }}>carregando…</span>}
       </div>
       {!dados || dados.pratos === 0 ? (
-        <p style={{ opacity: 0.7, fontSize: 16 }}>{carregando ? '' : 'Nenhum prato registrado nesta noite.'}</p>
+        <p style={{ opacity: 0.7, fontSize: 16 }}>{carregando ? '' : 'Nada registrado neste setor nesta noite.'}</p>
       ) : (
         <>
           <div className="flex flex-wrap gap-3 mb-5">
             {[
-              ['Pratos', dados.pratos],
+              ['Pedidos', dados.pratos],
               ['Marcados prontos', dados.feitos],
               ['Tempo médio', dados.media_min === null ? '—' : `${dados.media_min} min`],
               ['Mediana', dados.mediana_min === null ? '—' : `${dados.mediana_min} min`],
-              [`${AMARELO_MIN}–${VERMELHO_MIN} min`, dados.amarelos],
-              [`${VERMELHO_MIN}+ min`, dados.vermelhos],
+              [`${S.amarelo}–${S.vermelho} min`, dados.amarelos],
+              [`${S.vermelho}+ min`, dados.vermelhos],
               ['Sem "pronto"', dados.sem_pronto],
             ].map(([rotulo, valor]) => (
               <div key={String(rotulo)} className="px-4 py-3" style={{ border: '1px solid rgba(255,255,255,0.12)', borderRadius: 12, minWidth: 130 }}>
@@ -295,19 +309,19 @@ const Relatorio: React.FC<{ noiteAtual: string | null }> = ({ noiteAtual }) => {
           </div>
           <p style={{ fontSize: 15, opacity: 0.8, marginBottom: 16 }}>
             {dados.atraso_zig
-              ? `Atraso da ZIG: o pedido aparece entre ${dados.atraso_zig.desde_seg}s e ${dados.atraso_zig.ate_seg}s depois de lançado (mediana de ${dados.atraso_zig.pratos} pratos).`
+              ? `Atraso da ZIG: o pedido aparece entre ${dados.atraso_zig.desde_seg}s e ${dados.atraso_zig.ate_seg}s depois de lançado (mediana de ${dados.atraso_zig.pratos} itens).`
               : 'Atraso da ZIG: ainda sem leituras seguidas para medir.'}
           </p>
           <table className="w-full" style={{ borderCollapse: 'collapse', marginBottom: 20 }}>
             <thead><tr style={{ textAlign: 'left', opacity: 0.65 }}>
-              <th style={celula}>Prato</th><th style={celula}>Feitos</th><th style={celula}>Média</th><th style={celula}>Maior</th><th style={celula}>{VERMELHO_MIN}+ min</th>
+              <th style={celula}>Item</th><th style={celula}>Feitos</th><th style={celula}>Média</th><th style={celula}>Maior</th><th style={celula}>{S.vermelho}+ min</th>
             </tr></thead>
             <tbody>
               {dados.por_produto.map((p) => (
                 <tr key={p.produto}>
                   <td style={celula}>{p.produto}</td><td style={celula}>{p.feitos}</td>
-                  <td style={{ ...celula, color: corDe(p.media_min ?? 0).texto, fontWeight: 700 }}>{p.media_min} min</td>
-                  <td style={celula}>{p.maior_min} min</td><td style={celula}>{p.acima_20}</td>
+                  <td style={{ ...celula, color: corDe(p.media_min ?? 0, setor).texto, fontWeight: 700 }}>{p.media_min} min</td>
+                  <td style={celula}>{p.maior_min} min</td><td style={celula}>{p.acima_vermelho}</td>
                 </tr>
               ))}
             </tbody>
@@ -315,8 +329,8 @@ const Relatorio: React.FC<{ noiteAtual: string | null }> = ({ noiteAtual }) => {
           <div className="flex flex-wrap gap-2">
             {dados.por_hora.map((h) => (
               <div key={h.hora} className="px-3 py-2" style={{ border: '1px solid rgba(255,255,255,0.12)', borderRadius: 10 }}>
-                <div style={{ fontSize: 13, opacity: 0.65 }}>{h.hora}h · {h.feitos} pratos</div>
-                <div style={{ fontSize: 18, fontWeight: 800, color: corDe(h.media_min ?? 0).texto }}>{h.media_min} min</div>
+                <div style={{ fontSize: 13, opacity: 0.65 }}>{h.hora}h · {h.feitos} itens</div>
+                <div style={{ fontSize: 18, fontWeight: 800, color: corDe(h.media_min ?? 0, setor).texto }}>{h.media_min} min</div>
               </div>
             ))}
           </div>
@@ -327,4 +341,4 @@ const Relatorio: React.FC<{ noiteAtual: string | null }> = ({ noiteAtual }) => {
   );
 };
 
-export default KdsCozinha;
+export default Kds;
