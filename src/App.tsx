@@ -9,6 +9,7 @@ import AppShell from './components/layout/AppShell';
 import { aoMudarLayout, lerLayout, type Layout } from './lib/layout';
 import Login from './pages/Login';
 import AuthRecoveryGate from './components/AuthRecoveryGate';
+import AssistenteIA from './components/assistente/AssistenteIA';
 import { testConnection } from './lib/supabase';
 
 const PainelInicial       = lazy(() => import('./pages/PainelInicial'));
@@ -166,12 +167,13 @@ function AppContent() {
     return (
       <Suspense fallback={<PageLoader />}>
         <Saguao />
+        <AssistenteIA />
       </Suspense>
     );
   }
 
   if (layout === 'novo') {
-    return <AppShell>{rotas}</AppShell>;
+    return <><AppShell>{rotas}</AppShell><AssistenteIA /></>;
   }
 
   // Dentro de um módulo o layout é de sistema: fundo chapado, lateral e topo
@@ -220,6 +222,7 @@ function AppContent() {
           </motion.div>
         </main>
       </div>
+      <AssistenteIA />
     </div>
   );
 }
