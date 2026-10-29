@@ -8,7 +8,8 @@ import { Button, IconButton, Segmented } from '../components/ui';
  * KDS: a fila da noite no tablet de cada setor (/kds cozinha, /kds/bar,
  * /kds/drinks). Os pedidos vêm da ZIG (função kds-cozinha); o cronômetro corre
  * desde a hora do pedido e o cartão fica amarelo e depois vermelho, nos tempos
- * do setor. Um toque em "Pronto" tira o pedido da fila; um toque num item
+ * do setor. Um toque em "Pronto" (cozinha) ou "Entregue" (bar e drinks) tira o
+ * pedido da fila; um toque num item
  * marca só aquele item.
  */
 
@@ -16,10 +17,10 @@ const FUSO = 'America/Cuiaba';
 const LER_MS = 15_000;
 
 type Setor = 'cozinha' | 'bar' | 'drinks';
-const SETORES: Record<Setor, { nome: string; caminho: string; Icone: React.ElementType; amarelo: number; vermelho: number; item: string; vazio: string }> = {
-  cozinha: { nome: 'Cozinha', caminho: '/kds', Icone: ChefHat, amarelo: 15, vermelho: 20, item: 'prato', vazio: 'Os pedidos da cozinha aparecem aqui assim que o garçom lança na ZIG.' },
-  bar: { nome: 'Bar', caminho: '/kds/bar', Icone: Beer, amarelo: 5, vermelho: 8, item: 'item', vazio: 'Chopp, cervejas, long neck, refrigerantes e águas aparecem aqui assim que o garçom lança na ZIG.' },
-  drinks: { nome: 'Drinks', caminho: '/kds/drinks', Icone: Martini, amarelo: 8, vermelho: 12, item: 'drink', vazio: 'Drinks, caipirinhas, doses, combos e garrafas aparecem aqui assim que o garçom lança na ZIG.' },
+const SETORES: Record<Setor, { nome: string; caminho: string; Icone: React.ElementType; amarelo: number; vermelho: number; item: string; feito: string; feitos: string; vazio: string }> = {
+  cozinha: { nome: 'Cozinha', caminho: '/kds', Icone: ChefHat, amarelo: 15, vermelho: 20, item: 'prato', feito: 'Pronto', feitos: 'prontos', vazio: 'Os pedidos da cozinha aparecem aqui assim que o garçom lança na ZIG.' },
+  bar: { nome: 'Bar', caminho: '/kds/bar', Icone: Beer, amarelo: 5, vermelho: 8, item: 'item', feito: 'Entregue', feitos: 'entregues', vazio: 'Chopp, cervejas, long neck, refrigerantes e águas aparecem aqui assim que o garçom lança na ZIG.' },
+  drinks: { nome: 'Drinks', caminho: '/kds/drinks', Icone: Martini, amarelo: 8, vermelho: 12, item: 'drink', feito: 'Entregue', feitos: 'entregues', vazio: 'Drinks, caipirinhas, doses, combos e garrafas aparecem aqui assim que o garçom lança na ZIG.' },
 };
 const setorDoCaminho = (caminho: string): Setor => (caminho.startsWith('/kds/bar') ? 'bar' : caminho.startsWith('/kds/drinks') ? 'drinks' : 'cozinha');
 
@@ -164,7 +165,7 @@ const Kds: React.FC = () => {
         <div className="flex-1" />
         {r && (
           <span style={{ fontSize: 15, opacity: 0.85 }}>
-            {r.feitos} prontos · média {r.media_min ?? '—'} min · {r.vermelhos} passaram de {S.vermelho} min
+            {r.feitos} {S.feitos} · média {r.media_min ?? '—'} min · {r.vermelhos} passaram de {S.vermelho} min
           </span>
         )}
         <span style={{ fontSize: 13, opacity: 0.6 }}>
@@ -215,7 +216,7 @@ const Kds: React.FC = () => {
                     </div>
                     <button type="button" onClick={() => marcar(ped.pratos.map((p) => p.id), 'pronto')}
                       className="flex items-center justify-center gap-2" style={{ minHeight: 56, background: c.borda, color: '#0b0e13', fontSize: 20, fontWeight: 800 }}>
-                      <Check size={22} /> Pronto
+                      <Check size={22} /> {S.feito}
                     </button>
                   </div>
                 );
@@ -225,7 +226,7 @@ const Kds: React.FC = () => {
 
           {prontos.length > 0 && (
             <div className="mt-6">
-              <p style={{ fontSize: 14, opacity: 0.6, marginBottom: 6 }}>Prontos nos últimos 15 minutos (toque para voltar à fila)</p>
+              <p style={{ fontSize: 14, opacity: 0.6, marginBottom: 6 }}>{S.feitos.charAt(0).toUpperCase() + S.feitos.slice(1)} nos últimos 15 minutos (toque para voltar à fila)</p>
               <div className="flex flex-wrap gap-2">
                 {prontos.map((p) => (
                   <button key={p.id} type="button" onClick={() => marcar([p.id], 'desfazer')} className="flex items-center gap-2 px-3 py-2"
@@ -294,12 +295,12 @@ const Relatorio: React.FC<{ setor: Setor; noiteAtual: string | null }> = ({ seto
           <div className="flex flex-wrap gap-3 mb-5">
             {[
               ['Pedidos', dados.pratos],
-              ['Marcados prontos', dados.feitos],
+              [`Marcados ${S.feitos}`, dados.feitos],
               ['Tempo médio', dados.media_min === null ? '—' : `${dados.media_min} min`],
               ['Mediana', dados.mediana_min === null ? '—' : `${dados.mediana_min} min`],
               [`${S.amarelo}–${S.vermelho} min`, dados.amarelos],
               [`${S.vermelho}+ min`, dados.vermelhos],
-              ['Sem "pronto"', dados.sem_pronto],
+              [`Sem "${S.feito.toLowerCase()}"`, dados.sem_pronto],
             ].map(([rotulo, valor]) => (
               <div key={String(rotulo)} className="px-4 py-3" style={{ border: '1px solid rgba(255,255,255,0.12)', borderRadius: 12, minWidth: 130 }}>
                 <div style={{ fontSize: 13, opacity: 0.65 }}>{rotulo}</div>
