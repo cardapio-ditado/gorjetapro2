@@ -84,13 +84,12 @@ interface Prato {
 
 /** Lê a ZIG (se a última leitura tiver mais de LER_A_CADA_MS) e grava os pratos novos. */
 async function ler(): Promise<{ lido_em: string | null; erro: string | null; leu: boolean }> {
-  const agora = new Date();
-  const { data: antes } = await db.from('kds_estado').select('lido_em, erro').eq('id', 1).maybeSingle();
-  const limite = new Date(agora.getTime() - LER_A_CADA_MS).toISOString();
-  // Reserva a leitura: só passa quem achar a última leitura velha.
-  const { data: reservou } = await db.from('kds_estado').update({ lido_em: agora.toISOString(), atualizado_em: agora.toISOString() })
-    .eq('id', 1).or(`lido_em.is.null,lido_em.lt."${limite}"`).select('id');
-  if (!reservou?.length) return { lido_em: antes?.lido_em ?? null, erro: antes?.erro ?? null, leu: false };
+  // Reserva a leitura no banco: só passa quem achar a última leitura velha.
+  const { data: res, error: resErr } = await db.rpc('fn_kds_reservar_leitura', { p_intervalo_ms: LER_A_CADA_MS });
+  if (resErr) throw new Error(resErr.message);
+  const antes = { lido_em: (res?.anterior as string | null) ?? null, erro: (res?.erro as string | null) ?? null };
+  if (!res?.reservou) return { lido_em: antes.lido_em, erro: antes.erro, leu: false };
+  const agora = new Date(res.agora);
 
   const { noite, periodo } = noiteAtual(agora);
   const vendas = await zig('erp/saida-produtos', periodo);
@@ -100,7 +99,7 @@ async function ler(): Promise<{ lido_em: string | null; erro: string | null; leu
     return { lido_em: agora.toISOString(), erro, leu: true };
   }
 
-  const anterior = antes?.lido_em && agora.getTime() - new Date(antes.lido_em).getTime() < LEITURA_VALIDA_MS ? antes.lido_em : null;
+  const anterior = antes.lido_em && agora.getTime() - new Date(antes.lido_em).getTime() < LEITURA_VALIDA_MS ? antes.lido_em : null;
   const campos = new Set<string>();
   const pratos = new Map<string, Prato>();
   for (const v of vendas) {
@@ -239,16 +238,17 @@ Deno.serve(async (req) => {
     if (acao === 'fila' || acao === 'ler') {
       const leitura = await ler();
       const { noite } = noiteAtual();
-      const desde = new Date(Date.now() - PRONTOS_MIN * 60_000).toISOString();
-      const velho = new Date(Date.now() - ESQUECIDO_H * 3600_000).toISOString();
-      const { data: pratos, error } = await db.from('kds_pratos').select(CAMPOS).eq('noite', noite).eq('cancelado', false)
-        .gt('pedido_em', velho).or(`pronto_em.is.null,pronto_em.gt."${desde}"`).order('pedido_em');
+      const desde = Date.now() - PRONTOS_MIN * 60_000;
+      const velho = Date.now() - ESQUECIDO_H * 3600_000;
+      // A noite tem poucas dezenas de pratos: filtra aqui o que vai para a tela.
+      const { data: todos, error } = await db.from('kds_pratos').select(CAMPOS).eq('noite', noite).order('pedido_em');
       if (error) throw new Error(error.message);
-      const { data: todos } = await db.from('kds_pratos').select('pedido_em, visto_em, leitura_anterior, pronto_em, cancelado, produto').eq('noite', noite);
+      const ms = (t: string) => new Date(t).getTime();
+      const pratos = (todos ?? []).filter((p: any) => !p.cancelado && ms(p.pedido_em) > velho && (!p.pronto_em || ms(p.pronto_em) > desde));
       const r = resumir(todos ?? []);
       return json({
         ok: true, noite, agora: new Date().toISOString(), lido_em: leitura.lido_em, erro: leitura.erro,
-        pratos: pratos ?? [],
+        pratos,
         resumo: { pratos: r.pratos, feitos: r.feitos, media_min: r.media_min, vermelhos: r.vermelhos, atraso_zig: r.atraso_zig },
       });
     }
