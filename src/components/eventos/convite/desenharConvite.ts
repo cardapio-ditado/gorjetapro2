@@ -261,13 +261,24 @@ export function desenharConvite(canvas: HTMLCanvasElement, l: Layout, t: Convite
   }
 }
 
-export async function carregarFontesConvite() {
-  if (!('fonts' in document)) return;
-  await Promise.all([
-    document.fonts.load(`400 100px "Instrument Serif"`),
-    document.fonts.load(`italic 400 100px "Instrument Serif"`),
-    document.fonts.load(`500 30px Manrope`),
-    document.fonts.load(`600 30px Manrope`),
-    document.fonts.load(`700 30px Manrope`),
-  ]);
+/**
+ * Carrega as fontes do convite (arquivos em public/fonts/convite, licença OFL)
+ * antes de desenhar: o canvas não espera a webfont sozinho.
+ */
+const FONTES: [string, string, FontFaceDescriptors][] = [
+  ['Instrument Serif', 'instrument-serif-latin-400-normal.woff2', { weight: '400', style: 'normal' }],
+  ['Instrument Serif', 'instrument-serif-latin-400-italic.woff2', { weight: '400', style: 'italic' }],
+  ['Manrope', 'manrope-latin-500-normal.woff2', { weight: '500' }],
+  ['Manrope', 'manrope-latin-600-normal.woff2', { weight: '600' }],
+  ['Manrope', 'manrope-latin-700-normal.woff2', { weight: '700' }],
+];
+let fontesCarregadas: Promise<void> | null = null;
+
+export function carregarFontesConvite(): Promise<void> {
+  if (typeof FontFace === 'undefined' || !('fonts' in document)) return Promise.resolve();
+  fontesCarregadas ??= Promise.all(FONTES.map(async ([familia, arquivo, desc]) => {
+    const f = new FontFace(familia, `url(/fonts/convite/${arquivo})`, desc);
+    document.fonts.add(await f.load());
+  })).then(() => undefined).catch(e => { fontesCarregadas = null; throw e; });
+  return fontesCarregadas;
 }

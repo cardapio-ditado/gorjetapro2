@@ -1,10 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Check, Download, ExternalLink, FileSignature, FileText, ImagePlus, Loader2, Search, Share2, Trash2, Upload, X } from 'lucide-react';
-import '@fontsource/instrument-serif/400.css';
-import '@fontsource/instrument-serif/400-italic.css';
-import '@fontsource/manrope/500.css';
-import '@fontsource/manrope/600.css';
-import '@fontsource/manrope/700.css';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { CONDICOES_PADRAO, montarContratoFeijoada, type Condicoes, type Contratante } from './contratoFeijoada';
