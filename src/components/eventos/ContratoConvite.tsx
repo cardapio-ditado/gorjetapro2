@@ -6,6 +6,7 @@ import { CONDICOES_PADRAO, montarContratoFeijoada, type Condicoes, type Contrata
 import { gerarContratoPdf } from './contratoPdf';
 import { brl, diaDaSemana, diaEMes, documentoValido, formatarCep, formatarDocumento, hora, soDigitos } from './extenso';
 import { carregarFontesConvite, desenharConvite, LAYOUTS, type ConviteTexto } from './convite/desenharConvite';
+import { prepararLogo } from './convite/prepararLogo';
 
 /**
  * Contrato e convite de um evento fechado (por enquanto o modelo da feijoada).
@@ -28,7 +29,7 @@ export interface EventoBase {
 
 interface ConviteSalvo {
   layout?: string; chamada?: string; titulo?: string; organizador?: string; horario?: string;
-  destaques?: string; mostrar_preco?: boolean; contato?: string; endereco?: string; logo_cliente?: string | null;
+  destaques?: string; preco_venda?: number | null; contato?: string; endereco?: string; logo_cliente?: string | null;
 }
 
 interface Registro {
@@ -200,7 +201,8 @@ const ContratoConvite: React.FC<{ evento: EventoBase; onClose: () => void; onAtu
     data: diaEMes(evento.data_evento),
     horario: reg.convite.horario ?? `das ${hora(cond.buffet_inicio)} às ${hora(cond.buffet_fim)}`,
     destaques: reg.convite.destaques ?? 'Banda ao vivo · Buffet completo · Sobremesa',
-    preco: reg.convite.mostrar_preco === false ? '' : `Convite ${brl(cond.valor_pessoa).replace(',00', '')}`,
+    // o preço do convite é o que o cliente cobra na venda, não o valor do contrato (custo dele)
+    preco: reg.convite.preco_venda ? `Convite ${brl(reg.convite.preco_venda).replace(',00', '')}` : '',
     contato: reg.convite.contato ?? '',
     endereco: reg.convite.endereco ?? ENDERECO_PADRAO,
   };
@@ -235,16 +237,39 @@ const ContratoConvite: React.FC<{ evento: EventoBase; onClose: () => void; onAtu
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [aba, carregando, chaveDesenho]);
 
-  const enviarLogo = async (arquivo: File) => {
-    if (!/^image\/(png|jpeg|webp|svg\+xml)$/.test(arquivo.type)) { setAviso({ tipo: 'erro', texto: 'Use PNG (de preferência com fundo transparente), JPG ou SVG.' }); return; }
-    const ext = arquivo.type === 'image/svg+xml' ? 'svg' : arquivo.type.split('/')[1].replace('jpeg', 'jpg');
-    const caminho = `convites/clientes/${evento.id}/logo-${Date.now()}.${ext}`;
-    setSalvando(true);
-    const { error } = await supabase.storage.from(BUCKET_FOTOS).upload(caminho, arquivo, { contentType: arquivo.type });
-    setSalvando(false);
-    if (error) { setAviso({ tipo: 'erro', texto: `Não consegui enviar o logo: ${error.message}` }); return; }
-    setConvite({ logo_cliente: supabase.storage.from(BUCKET_FOTOS).getPublicUrl(caminho).data.publicUrl });
+  // logo do cliente: qualquer imagem vira PNG recortado, sem o fundo liso
+  const logoOriginal = useRef<File | null>(null);
+  const [logoInfo, setLogoInfo] = useState<{ removeu: boolean; aviso?: string } | null>(null);
+  const [preparandoLogo, setPreparandoLogo] = useState(false);
+  const enviarLogo = async (arquivo: File, removerFundo = true) => {
+    if (!arquivo.type.startsWith('image/')) { setAviso({ tipo: 'erro', texto: 'Envie uma imagem (PNG, JPG, WEBP ou SVG).' }); return; }
+    logoOriginal.current = arquivo;
+    setPreparandoLogo(true); setAviso(null);
+    try {
+      const r = await prepararLogo(arquivo, removerFundo);
+      const caminho = `convites/clientes/${evento.id}/logo-${Date.now()}.png`;
+      const { error } = await supabase.storage.from(BUCKET_FOTOS).upload(caminho, r.blob, { contentType: 'image/png' });
+      if (error) throw new Error(`Não consegui enviar o logo: ${error.message}`);
+      setLogoInfo({ removeu: r.removeuFundo, aviso: r.aviso });
+      setConvite({ logo_cliente: supabase.storage.from(BUCKET_FOTOS).getPublicUrl(caminho).data.publicUrl });
+    } catch (e) {
+      setAviso({ tipo: 'erro', texto: e instanceof Error ? e.message : 'Não consegui preparar o logo' });
+    } finally { setPreparandoLogo(false); }
   };
+  // colar o logo (Ctrl+V) com a aba do convite aberta
+  useEffect(() => {
+    if (aba !== 'convite') return;
+    const aoColar = (e: ClipboardEvent) => {
+      const alvo = e.target as HTMLElement | null;
+      if (alvo && (alvo.tagName === 'INPUT' || alvo.tagName === 'TEXTAREA')) return;
+      const item = [...(e.clipboardData?.items ?? [])].find(i => i.type.startsWith('image/'));
+      const f = item?.getAsFile();
+      if (f) { e.preventDefault(); void enviarLogo(new File([f], 'logo-colado.png', { type: f.type })); }
+    };
+    window.addEventListener('paste', aoColar);
+    return () => window.removeEventListener('paste', aoColar);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [aba]);
 
   const comoArquivo = () => new Promise<File>((ok, erro) => {
     canvasRef.current?.toBlob(b => (b ? ok(new File([b], `Convite ${evento.nome_evento}.png`.replace(/[\\/:*?"<>|]/g, '-'), { type: 'image/png' })) : erro(new Error('Não gerou a imagem'))), 'image/png');
@@ -415,19 +440,33 @@ const ContratoConvite: React.FC<{ evento: EventoBase; onClose: () => void; onAtu
                   </Campo>
                   <Campo rotulo="Endereço (rodapé)" className="sm:col-span-2"><input className={inputCls} value={textoConvite.endereco} onChange={e => setConvite({ endereco: e.target.value })} /></Campo>
                 </div>
-                <label className="flex items-center gap-2 text-sm text-white/80">
-                  <input type="checkbox" checked={reg.convite.mostrar_preco !== false} onChange={e => setConvite({ mostrar_preco: e.target.checked })} />
-                  Mostrar o preço ({brl(cond.valor_pessoa)} por pessoa, do contrato)
-                </label>
-                <div className="flex flex-wrap items-center gap-2">
-                  <label className={`${botao} border border-white/20 text-white/80 hover:bg-white/5 cursor-pointer`}>
-                    <ImagePlus className="w-4 h-4" /> {reg.convite.logo_cliente ? 'Trocar logo do cliente' : 'Logo do cliente'}
-                    <input type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) void enviarLogo(f); e.target.value = ''; }} />
-                  </label>
-                  {reg.convite.logo_cliente && (
-                    <button onClick={() => setConvite({ logo_cliente: null })} className={`${botao} text-white/60 hover:bg-white/5`}><Trash2 className="w-4 h-4" /> Tirar logo</button>
+                <div className="flex flex-wrap items-end gap-3">
+                  <Campo rotulo="Preço de venda do convite (R$)" className="w-48">
+                    <input type="number" min={0} step="1" className={inputCls} value={reg.convite.preco_venda ?? ''}
+                      onChange={e => setConvite({ preco_venda: e.target.value === '' ? null : Number(e.target.value) })} placeholder="ex.: 60" />
+                  </Campo>
+                  <p className="text-xs text-white/50 pb-2 flex-1 min-w-[200px]">O valor que o cliente cobra de quem compra. Não é o valor do contrato ({brl(cond.valor_pessoa)}, custo dele). Em branco, o convite sai sem preço.</p>
+                </div>
+                <div className="rounded-xl border border-white/10 p-3 space-y-2">
+                  <div className="flex flex-wrap items-center gap-3">
+                    {reg.convite.logo_cliente && (
+                      <div className="h-16 w-36 rounded-md flex items-center justify-center p-1" style={{ background: 'repeating-conic-gradient(#d9d4cc 0 25%, #f4eee4 0 50%) 0 0/14px 14px' }}>
+                        <img src={reg.convite.logo_cliente} alt="Logo do cliente" className="max-h-full max-w-full object-contain" />
+                      </div>
+                    )}
+                    <label className={`${botao} border border-white/20 text-white/80 hover:bg-white/5 cursor-pointer`}>
+                      {preparandoLogo ? <Loader2 className="w-4 h-4 animate-spin" /> : <ImagePlus className="w-4 h-4" />} {reg.convite.logo_cliente ? 'Trocar logo do cliente' : 'Logo do cliente'}
+                      <input type="file" accept="image/*" className="hidden" disabled={preparandoLogo} onChange={e => { const f = e.target.files?.[0]; if (f) void enviarLogo(f); e.target.value = ''; }} />
+                    </label>
+                    {reg.convite.logo_cliente && (
+                      <button onClick={() => { setConvite({ logo_cliente: null }); setLogoInfo(null); }} className={`${botao} text-white/60 hover:bg-white/5`}><Trash2 className="w-4 h-4" /> Tirar logo</button>
+                    )}
+                  </div>
+                  <p className="text-xs text-white/50">Pode ser a imagem que o cliente mandou no WhatsApp (JPG, print, PNG ou SVG), ou cole com Ctrl+V. O sistema transforma em PNG, recorta e tira o fundo branco ou de cor lisa.</p>
+                  {logoInfo?.aviso && <p className="text-xs text-amber-300">{logoInfo.aviso}</p>}
+                  {logoInfo?.removeu && logoOriginal.current && (
+                    <button onClick={() => logoOriginal.current && void enviarLogo(logoOriginal.current, false)} disabled={preparandoLogo} className="text-xs text-blue-300 underline">O fundo saiu errado? Usar com o fundo original</button>
                   )}
-                  <span className="text-xs text-white/40">PNG com fundo transparente fica melhor.</span>
                 </div>
                 <p className="text-xs text-white/40">Data: {diaDaSemana(evento.data_evento)}, {diaEMes(evento.data_evento)} (vem do evento). Fotos geradas por IA, sem nada que identifique o lugar.</p>
               </section>
