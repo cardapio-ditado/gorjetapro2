@@ -9,8 +9,10 @@ import {
 } from './lancar';
 
 // Extrato automático da Conta Stone (Pluggy / Meu Pluggy, função pluggy-sync).
-// - Entradas de cartão, Pix da maquininha e a Reserva Stone entram sozinhas
-//   (regras em banco_regras); só aparecem no resumo.
+// - Entradas de cartão e Pix da maquininha são reconhecidas sozinhas (regras em
+//   banco_regras) e, com um clique por dia, viram até 3 contas a receber já
+//   recebidas (cartão liquidação, cartão antecipação, Pix maquininha). A Reserva
+//   Stone é movimento interno e fica fora.
 // - Saídas para conciliar: o mesmo fluxo da importação por arquivo (criar conta,
 //   baixar conta aberta, já lançada, ignorar). Ao aprovar, o CNPJ/CPF de quem
 //   recebeu vira regra: da próxima vez o fornecedor já vem preenchido.
@@ -28,11 +30,39 @@ interface Movimento {
   id: string; externo_id: string; data: string; valor: number; sentido: 'credito' | 'debito';
   descricao: string | null; contraparte_nome: string | null; contraparte_doc_tipo: string | null;
   doc_digitos: string | null; classe: string; status: string; fornecedor_id: string | null; categoria_id: string | null;
+  conta_receber_id: string | null;
+}
+
+/** Recebimentos de um dia ainda não lançados, por grupo (o banco agrupa igual em fn_banco_lancar_recebimentos). */
+interface DiaReceber {
+  data: string;
+  grupos: { grupo: string; qtd: number; total: number }[];
+  total: number;
+  manuais: { descricao: string; valor: number; forma: string | null }[];
+  inicioDoExtrato: boolean;
+  lancando: boolean;
+  erro: string | null;
+}
+
+const GRUPOS: Record<string, string> = {
+  cartao_liquidacao: 'Cartão (liquidação)',
+  cartao_antecipacao: 'Cartão (antecipação)',
+  pix_maquininha: 'Pix maquininha',
+};
+const grupoDe = (m: Movimento) => (m.classe === 'receita_pix' ? 'pix_maquininha'
+  : /^Antecipação/i.test(m.descricao || '') ? 'cartao_antecipacao' : 'cartao_liquidacao');
+
+/** "Já no fluxo" só vale se o lançamento parecido tiver o nome de quem recebeu (valor e data sozinhos enganam). */
+const normal = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+function mesmoNome(nome: string | null, descricao: string) {
+  if (!nome) return false;
+  const d = normal(descricao);
+  return normal(nome).split(/[^a-z0-9]+/).filter(p => p.length >= 4).some(p => d.includes(p));
 }
 
 type LinhaAuto = Linha & { extratoId: string; nome: string | null; docTipo: string | null; doc: string | null; lembrar: boolean };
 
-const CAMPOS = 'id, externo_id, data, valor, sentido, descricao, contraparte_nome, contraparte_doc_tipo, doc_digitos, classe, status, fornecedor_id, categoria_id';
+const CAMPOS = 'id, externo_id, data, valor, sentido, descricao, contraparte_nome, contraparte_doc_tipo, doc_digitos, classe, status, fornecedor_id, categoria_id, conta_receber_id';
 const DIAS_RESUMO = 7;
 
 /** CPF aparece mascarado na tela; CNPJ inteiro. */
@@ -61,6 +91,7 @@ export default function ExtratoAutomatico() {
   const [resumo, setResumo] = useState<Movimento[]>([]);
   const [saidas, setSaidas] = useState<LinhaAuto[]>([]);
   const [entradas, setEntradas] = useState<Movimento[]>([]);
+  const [receber, setReceber] = useState<DiaReceber[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [buscando, setBuscando] = useState(false);
   const [aviso, setAviso] = useState<{ tipo: 'ok' | 'erro'; texto: string } | null>(null);
@@ -83,15 +114,50 @@ export default function ExtratoAutomatico() {
       if (!integracao) return;
 
       const desde = dayjs().subtract(DIAS_RESUMO - 1, 'day').format('YYYY-MM-DD');
-      const [r, pd, pc] = await Promise.all([
+      const hoje = dayjs().format('YYYY-MM-DD');
+      const [r, pd, pc, rc, pri] = await Promise.all([
         supabase.from('banco_extrato').select(CAMPOS).eq('integracao_id', integracao.id).gte('data', desde).limit(5000),
         supabase.from('banco_extrato').select(CAMPOS).eq('integracao_id', integracao.id).eq('status', 'pendente').eq('sentido', 'debito')
           .order('data', { ascending: false }).limit(200),
         supabase.from('banco_extrato').select(CAMPOS).eq('integracao_id', integracao.id).eq('status', 'pendente').eq('sentido', 'credito')
           .order('data', { ascending: false }).limit(200),
+        // recebimentos de dias já encerrados ainda não lançados em Contas a Receber
+        supabase.from('banco_extrato').select(CAMPOS).eq('integracao_id', integracao.id).is('conta_receber_id', null)
+          .in('classe', ['receita_cartao', 'receita_pix']).neq('status', 'ignorada').lt('data', hoje).limit(5000),
+        supabase.from('banco_extrato').select('data').eq('integracao_id', integracao.id).order('data').limit(1).maybeSingle(),
       ]);
       setResumo((r.data || []) as Movimento[]);
       setEntradas((pc.data || []) as Movimento[]);
+
+      // agrupa por dia e grupo, e mostra o que já foi lançado à mão no mesmo dia
+      const porDia = new Map<string, Map<string, { qtd: number; total: number }>>();
+      for (const m of (rc.data || []) as Movimento[]) {
+        const g = porDia.get(m.data) ?? new Map();
+        const atual = g.get(grupoDe(m)) ?? { qtd: 0, total: 0 };
+        g.set(grupoDe(m), { qtd: atual.qtd + 1, total: atual.total + Number(m.valor) });
+        porDia.set(m.data, g);
+      }
+      const diasReceber = [...porDia.keys()].sort().reverse();
+      const { data: manuais } = diasReceber.length
+        ? await supabase.from('contas_receber').select('descricao, valor_total, data_vencimento, numero_documento, formas_pagamento:forma_recebimento_id(nome)')
+          .in('data_vencimento', diasReceber).neq('status', 'cancelado')
+        : { data: [] as any[] };
+      setReceber(diasReceber.map(d => {
+        const grupos = [...(porDia.get(d) ?? new Map()).entries()]
+          .map(([grupo, v]) => ({ grupo, qtd: v.qtd, total: Math.round(v.total * 100) / 100 }))
+          .sort((a, b) => a.grupo.localeCompare(b.grupo));
+        return {
+          data: d,
+          grupos,
+          total: grupos.reduce((s, g) => s + g.total, 0),
+          manuais: (manuais || [])
+            .filter((c: any) => c.data_vencimento === d && !String(c.numero_documento || '').startsWith('stone-'))
+            .map((c: any) => ({ descricao: String(c.descricao || '').trim(), valor: Number(c.valor_total), forma: c.formas_pagamento?.nome ?? null })),
+          inicioDoExtrato: d === pri.data?.data,
+          lancando: false,
+          erro: null,
+        };
+      }));
 
       const lista = f.data || [];
       const pix = lista.find(x => /pix/i.test(x.nome))?.id || lista[0]?.id || '';
@@ -99,6 +165,7 @@ export default function ExtratoAutomatico() {
       const linhas: LinhaAuto[] = await Promise.all(((pd.data || []) as Movimento[]).map(async (m) => {
         const descricao = [m.contraparte_nome, m.descricao].filter(Boolean).join(' · ');
         const sug = await sugerir(m.contraparte_nome || m.descricao || '', Number(m.valor), m.data, null);
+        sug.ja_conciliado = sug.ja_conciliado.filter(j => mesmoNome(m.contraparte_nome, j.descricao || ''));
         // fornecedor que a regra (ou o CNPJ) já indicou vem primeiro; e a conta aberta dele
         const fornRegra = m.fornecedor_id ? fornPorId.get(m.fornecedor_id) : undefined;
         const contaDoForn = fornRegra ? sug.contas_abertas.find(c => c.fornecedor_id === fornRegra.id) : undefined;
@@ -148,6 +215,20 @@ export default function ExtratoAutomatico() {
     } finally {
       setBuscando(false);
     }
+  };
+
+  /** Um clique: os grupos do dia viram contas a receber já recebidas na conta Stone. */
+  const lancarDia = async (data: string) => {
+    if (!integ) return;
+    setReceber(prev => prev.map(d => (d.data === data ? { ...d, lancando: true, erro: null } : d)));
+    const { data: res, error } = await supabase.rpc('fn_banco_lancar_recebimentos', { p_integracao_id: integ.id, p_data: data });
+    if (error) {
+      setReceber(prev => prev.map(d => (d.data === data ? { ...d, lancando: false, erro: error.message } : d)));
+      return;
+    }
+    const total = (res?.lancados || []).reduce((s: number, l: any) => s + Number(l.total), 0);
+    setAviso({ tipo: 'ok', texto: `${dayjs(data).format('DD/MM')}: ${(res?.lancados || []).length} lançamento(s) em Contas a Receber, ${fmt(total)}.` });
+    setReceber(prev => prev.filter(d => d.data !== data));
   };
 
   const atualizarSaida = (idx: number, patch: Partial<LinhaAuto>) =>
@@ -333,6 +414,45 @@ export default function ExtratoAutomatico() {
         </table>
         <p className="text-caption text-white/40 mt-2">Cartão vem líquido (já sem a taxa). A Reserva Stone (guarda e resgate automáticos) é movimento interno e não entra aqui.</p>
       </div>
+
+      {/* ── Recebimentos do dia para lançar ── */}
+      {receber.length > 0 && (
+        <div className="space-y-2">
+          <p className="text-xs font-semibold text-white/60 uppercase tracking-wide">Recebimentos para lançar em Contas a Receber ({receber.length} dia{receber.length > 1 ? 's' : ''})</p>
+          {receber.map(d => (
+            <div key={d.data} className="bg-[#12141f] rounded-xl border border-white/10 p-3 space-y-2">
+              <div className="flex items-center justify-between gap-3 flex-wrap">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-semibold text-white">{dayjs(d.data).format('ddd DD/MM')}</span>
+                  <span className="text-sm font-semibold text-green-400">{fmt(d.total)}</span>
+                  <span className="text-xs text-white/50">{d.grupos.length} lançamento{d.grupos.length > 1 ? 's' : ''}</span>
+                </div>
+                <button onClick={() => lancarDia(d.data)} disabled={d.lancando}
+                  className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-green-600 hover:bg-green-700 text-white text-xs font-medium disabled:opacity-50">
+                  {d.lancando ? <RefreshCw size={11} className="animate-spin" /> : <CheckCircle2 size={11} />} Lançar
+                </button>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                {d.grupos.map(g => (
+                  <div key={g.grupo} className="rounded-lg bg-white/5 border border-white/5 px-2.5 py-1.5">
+                    <p className="text-caption text-white/50">{GRUPOS[g.grupo] ?? g.grupo} · {g.qtd} mov.</p>
+                    <p className="text-xs font-semibold text-white tabular-nums">{fmt(g.total)}</p>
+                  </div>
+                ))}
+              </div>
+              {d.inicioDoExtrato && (
+                <p className="text-caption text-yellow-300/80">Primeiro dia lido da Stone: pode estar incompleto (a leitura começou no meio do dia).</p>
+              )}
+              {d.manuais.length > 0 && (
+                <p className="text-caption text-white/40">
+                  Já lançado à mão neste dia: {d.manuais.map(m => `${m.descricao} ${fmt(m.valor)}${m.forma ? ` (${m.forma})` : ''}`).join(' · ')}
+                </p>
+              )}
+              {d.erro && <p className="text-caption text-red-400">{d.erro}</p>}
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* ── Entradas a conferir ── */}
       {entradas.length > 0 && (
