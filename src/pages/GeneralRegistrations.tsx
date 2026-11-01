@@ -117,7 +117,7 @@ const GeneralRegistrations: React.FC = () => {
     'Categorias Financeiras',
     'Formas de Pagamento',
     'Bancos e Contas',
-    'Relatório DRE'
+    // o DRE saiu daqui: fica em Financeiro › Relatórios
   ];
 
   const tabIcons = [
@@ -127,7 +127,6 @@ const GeneralRegistrations: React.FC = () => {
     Tag,
     CreditCard,
     Banknote,
-    BarChart3
   ];
 
   useEffect(() => {
