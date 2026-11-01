@@ -1,0 +1,212 @@
+-- Segurança do financeiro: o site usa a chave pública (anon) do Supabase, que
+-- fica no navegador de qualquer visitante. Até aqui as tabelas do financeiro
+-- estavam sem RLS e com permissão total para anon: quem tivesse a chave lia,
+-- alterava ou apagava contas, pagamentos e fornecedores sem login.
+--
+-- Agora:
+-- - anon perde todo acesso às tabelas e visões do financeiro;
+-- - tabelas que estavam sem RLS passam a ter RLS com acesso para quem está
+--   logado (authenticated) — o mesmo que cada usuário já fazia pelo app;
+-- - funções SECURITY DEFINER que leem ou gravam o financeiro deixam de poder
+--   ser chamadas sem login (ficam para authenticated e service_role).
+-- As funções do servidor usam service_role (ignora RLS) e o papel ia_leitura
+-- também ignora RLS; as telas públicas usam só funções próprias
+-- (fn_lista_publica e fn_lista_publica_comprar continuam abertas).
+
+-- 1. Tabelas que estavam sem RLS
+alter table public.contas_pagar enable row level security;
+create policy contas_pagar_usuario_logado on public.contas_pagar for all to authenticated using (true) with check (true);
+revoke all on table public.contas_pagar from anon;
+alter table public.contas_receber enable row level security;
+create policy contas_receber_usuario_logado on public.contas_receber for all to authenticated using (true) with check (true);
+revoke all on table public.contas_receber from anon;
+alter table public.fluxo_caixa enable row level security;
+create policy fluxo_caixa_usuario_logado on public.fluxo_caixa for all to authenticated using (true) with check (true);
+revoke all on table public.fluxo_caixa from anon;
+alter table public.pagamentos_contas enable row level security;
+create policy pagamentos_contas_usuario_logado on public.pagamentos_contas for all to authenticated using (true) with check (true);
+revoke all on table public.pagamentos_contas from anon;
+alter table public.recebimentos_contas enable row level security;
+create policy recebimentos_contas_usuario_logado on public.recebimentos_contas for all to authenticated using (true) with check (true);
+revoke all on table public.recebimentos_contas from anon;
+alter table public.fornecedores enable row level security;
+create policy fornecedores_usuario_logado on public.fornecedores for all to authenticated using (true) with check (true);
+revoke all on table public.fornecedores from anon;
+alter table public.categorias_financeiras enable row level security;
+create policy categorias_financeiras_usuario_logado on public.categorias_financeiras for all to authenticated using (true) with check (true);
+revoke all on table public.categorias_financeiras from anon;
+alter table public.clientes enable row level security;
+create policy clientes_usuario_logado on public.clientes for all to authenticated using (true) with check (true);
+revoke all on table public.clientes from anon;
+alter table public.conciliacao_transacoes enable row level security;
+create policy conciliacao_transacoes_usuario_logado on public.conciliacao_transacoes for all to authenticated using (true) with check (true);
+revoke all on table public.conciliacao_transacoes from anon;
+alter table public.conciliacao_importacoes enable row level security;
+create policy conciliacao_importacoes_usuario_logado on public.conciliacao_importacoes for all to authenticated using (true) with check (true);
+revoke all on table public.conciliacao_importacoes from anon;
+alter table public.metas_financeiras enable row level security;
+create policy metas_financeiras_usuario_logado on public.metas_financeiras for all to authenticated using (true) with check (true);
+revoke all on table public.metas_financeiras from anon;
+alter table public.contas_bancarias enable row level security;
+create policy contas_bancarias_usuario_logado on public.contas_bancarias for all to authenticated using (true) with check (true);
+revoke all on table public.contas_bancarias from anon;
+alter table public.centros_custo enable row level security;
+create policy centros_custo_usuario_logado on public.centros_custo for all to authenticated using (true) with check (true);
+revoke all on table public.centros_custo from anon;
+alter table public.formas_pagamento enable row level security;
+create policy formas_pagamento_usuario_logado on public.formas_pagamento for all to authenticated using (true) with check (true);
+revoke all on table public.formas_pagamento from anon;
+alter table public.historico_estornos_pagamento enable row level security;
+create policy historico_estornos_pagamento_usuario_logado on public.historico_estornos_pagamento for all to authenticated using (true) with check (true);
+revoke all on table public.historico_estornos_pagamento from anon;
+alter table public.anexos_contas enable row level security;
+create policy anexos_contas_usuario_logado on public.anexos_contas for all to authenticated using (true) with check (true);
+revoke all on table public.anexos_contas from anon;
+alter table public.log_alteracoes_contas enable row level security;
+create policy log_alteracoes_contas_usuario_logado on public.log_alteracoes_contas for all to authenticated using (true) with check (true);
+revoke all on table public.log_alteracoes_contas from anon;
+alter table public.credito_fornecedores enable row level security;
+create policy credito_fornecedores_usuario_logado on public.credito_fornecedores for all to authenticated using (true) with check (true);
+revoke all on table public.credito_fornecedores from anon;
+alter table public.zig_recebimentos_sync enable row level security;
+create policy zig_recebimentos_sync_usuario_logado on public.zig_recebimentos_sync for all to authenticated using (true) with check (true);
+revoke all on table public.zig_recebimentos_sync from anon;
+alter table public.zig_config_formas enable row level security;
+create policy zig_config_formas_usuario_logado on public.zig_config_formas for all to authenticated using (true) with check (true);
+revoke all on table public.zig_config_formas from anon;
+
+-- 2. Tabelas que já tinham RLS: tira o acesso de anon
+revoke all on table public.bancos_contas from anon;
+revoke all on table public.agenda_pagamentos from anon;
+revoke all on table public.agenda_receitas from anon;
+revoke all on table public.agenda_sessoes from anon;
+revoke all on table public.chat_ia_financeiro from anon;
+revoke all on table public.ia_extractions_financeiro from anon;
+revoke all on table public.fornecedor_pagamentos from anon;
+revoke all on table public.visao_estrategica_despesas from anon;
+revoke all on table public.visao_estrategica_pagamentos_dividas from anon;
+revoke all on table public.visao_estrategica_pagamentos_informativos from anon;
+revoke all on table public.visao_estrategica_categorias from anon;
+revoke all on table public.visao_estrategica_categorias_config from anon;
+revoke all on table public.visao_estrategica_subcategorias from anon;
+
+-- 3. Visões que leem o financeiro (rodam com o dono e ignoram RLS)
+revoke all on table public.ordem_pagamento_consolidada from anon;
+revoke all on table public.v_categorias_disponiveis_ve from anon;
+revoke all on table public.v_contas_futuras_por_categoria from anon;
+revoke all on table public.v_contas_pagar_disponiveis_ve from anon;
+revoke all on table public.v_contas_vencidas_por_categoria from anon;
+revoke all on table public.v_despesas_visao_estrategica from anon;
+revoke all on table public.v_relatorio_pagamentos_informativos from anon;
+revoke all on table public.v_resumo_contas_categoria from anon;
+revoke all on table public.v_resumo_pagamentos_informativos_por_data from anon;
+revoke all on table public.view_despesas_visao_estrategica from anon;
+revoke all on table public.view_extrato_fluxo_caixa from anon;
+revoke all on table public.view_ve_contas_futuras_disponiveis from anon;
+revoke all on table public.view_ve_despesas_contas_pagar_disponiveis from anon;
+revoke all on table public.vw_agenda_relatorio from anon;
+revoke all on table public.vw_bancos_contas_saldo from anon;
+revoke all on table public.vw_categoria_tree from anon;
+revoke all on table public.vw_consignado_resumo from anon;
+revoke all on table public.vw_contas_pagar from anon;
+revoke all on table public.vw_contas_receber from anon;
+revoke all on table public.vw_dre_consolidado from anon;
+revoke all on table public.vw_dre_gerencial from anon;
+revoke all on table public.vw_dre_vs_meta from anon;
+revoke all on table public.vw_extrato_consolidado from anon;
+revoke all on table public.vw_fiado_fornecedor from anon;
+revoke all on table public.vw_ficha_financeira_fornecedor from anon;
+revoke all on table public.vw_fluxo_caixa_sem_categoria from anon;
+revoke all on table public.vw_fornecedor_estoque from anon;
+revoke all on table public.vw_fornecedor_resumo_fiado from anon;
+revoke all on table public.vw_indicadores_aprovacao from anon;
+revoke all on table public.vw_indicadores_financeiros from anon;
+revoke all on table public.vw_indicadores_fornecedor from anon;
+revoke all on table public.vw_indicadores_recebimentos from anon;
+revoke all on table public.vw_lancamentos_em_categorias_pai from anon;
+revoke all on table public.vw_lista_compras_fornecedor from anon;
+revoke all on table public.vw_metricas_ia_financeiro from anon;
+revoke all on table public.vw_musicos_financeiro from anon;
+revoke all on table public.vw_pagamentos_fornecedor from anon;
+revoke all on table public.vw_pagamentos_rh from anon;
+revoke all on table public.vw_projecao_30dias from anon;
+revoke all on table public.vw_projecao_fluxo_caixa from anon;
+revoke all on table public.vw_projecao_recebimentos from anon;
+revoke all on table public.vw_ranking_fornecedores from anon;
+revoke all on table public.vw_resumo_lancamentos_sem_categoria from anon;
+
+-- 4. Funções que leem ou gravam o financeiro
+revoke execute on function public.api_fin_dar_baixa_conta(p_conta_pagar_id uuid, p_valor_pagamento numeric, p_data_pagamento date, p_forma_pagamento_id uuid, p_conta_bancaria_id uuid, p_numero_comprovante text, p_observacoes text, p_usuario uuid) from public, anon;
+grant execute on function public.api_fin_dar_baixa_conta(p_conta_pagar_id uuid, p_valor_pagamento numeric, p_data_pagamento date, p_forma_pagamento_id uuid, p_conta_bancaria_id uuid, p_numero_comprovante text, p_observacoes text, p_usuario uuid) to authenticated, service_role;
+revoke execute on function public.api_fin_fechar_agenda(p_agenda_id uuid, p_usuario uuid) from public, anon;
+grant execute on function public.api_fin_fechar_agenda(p_agenda_id uuid, p_usuario uuid) to authenticated, service_role;
+revoke execute on function public.api_fin_incluir_adhoc(p_agenda_id uuid, p_fornecedor text, p_descricao text, p_valor numeric, p_vencimento date, p_observacao text, p_fornecedor_id uuid) from public, anon;
+grant execute on function public.api_fin_incluir_adhoc(p_agenda_id uuid, p_fornecedor text, p_descricao text, p_valor numeric, p_vencimento date, p_observacao text, p_fornecedor_id uuid) to authenticated, service_role;
+revoke execute on function public.api_fin_set_status_item(p_item_id uuid, p_novo_status text, p_usuario uuid) from public, anon;
+grant execute on function public.api_fin_set_status_item(p_item_id uuid, p_novo_status text, p_usuario uuid) to authenticated, service_role;
+revoke execute on function public.categorizar_lancamento_fluxo(p_lancamento_id uuid, p_categoria_id uuid) from public, anon;
+grant execute on function public.categorizar_lancamento_fluxo(p_lancamento_id uuid, p_categoria_id uuid) to authenticated, service_role;
+revoke execute on function public.categorizar_lancamentos_lote(p_lancamento_ids uuid[], p_categoria_id uuid) from public, anon;
+grant execute on function public.categorizar_lancamentos_lote(p_lancamento_ids uuid[], p_categoria_id uuid) to authenticated, service_role;
+revoke execute on function public.converter_despesa_em_conta_pagar(p_despesa_id uuid, p_fornecedor_id uuid) from public, anon;
+grant execute on function public.converter_despesa_em_conta_pagar(p_despesa_id uuid, p_fornecedor_id uuid) to authenticated, service_role;
+revoke execute on function public.criar_conta_pagar_de_despesa_ve(p_despesa_id uuid, p_fornecedor_id uuid) from public, anon;
+grant execute on function public.criar_conta_pagar_de_despesa_ve(p_despesa_id uuid, p_fornecedor_id uuid) to authenticated, service_role;
+revoke execute on function public.estornar_pagamento(p_fluxo_caixa_id uuid, p_motivo text) from public, anon;
+grant execute on function public.estornar_pagamento(p_fluxo_caixa_id uuid, p_motivo text) to authenticated, service_role;
+revoke execute on function public.estornar_pagamento_parcial(p_fluxo_caixa_id uuid, p_motivo text, p_observacoes text) from public, anon;
+grant execute on function public.estornar_pagamento_parcial(p_fluxo_caixa_id uuid, p_motivo text, p_observacoes text) to authenticated, service_role;
+revoke execute on function public.fn_banco_lancar_recebimentos(p_integracao_id uuid, p_data date) from public, anon;
+grant execute on function public.fn_banco_lancar_recebimentos(p_integracao_id uuid, p_data date) to authenticated, service_role;
+revoke execute on function public.fn_cadastro_excluir(p_tipo text, p_id uuid, p_modo text) from public, anon;
+grant execute on function public.fn_cadastro_excluir(p_tipo text, p_id uuid, p_modo text) to authenticated, service_role;
+revoke execute on function public.gerar_proxima_conta_recorrente(conta_origem_id uuid) from public, anon;
+grant execute on function public.gerar_proxima_conta_recorrente(conta_origem_id uuid) to authenticated, service_role;
+revoke execute on function public.recategorizar_lancamento(p_lancamento_id uuid, p_nova_categoria_id uuid) from public, anon;
+grant execute on function public.recategorizar_lancamento(p_lancamento_id uuid, p_nova_categoria_id uuid) to authenticated, service_role;
+revoke execute on function public.recategorizar_lancamento_fluxo(p_fluxo_caixa_id uuid, p_nova_categoria_id uuid) from public, anon;
+grant execute on function public.recategorizar_lancamento_fluxo(p_fluxo_caixa_id uuid, p_nova_categoria_id uuid) to authenticated, service_role;
+revoke execute on function public.recategorizar_lote_por_padrao(p_descricao_padrao text, p_nova_categoria_id uuid, p_data_inicial date, p_data_final date, p_simular boolean) from public, anon;
+grant execute on function public.recategorizar_lote_por_padrao(p_descricao_padrao text, p_nova_categoria_id uuid, p_data_inicial date, p_data_final date, p_simular boolean) to authenticated, service_role;
+revoke execute on function public.api_fin_criar_ou_importar_agenda(p_data date) from public, anon;
+grant execute on function public.api_fin_criar_ou_importar_agenda(p_data date) to authenticated, service_role;
+revoke execute on function public.calcular_indicadores_fluxo_caixa(p_data_inicial date, p_data_final date, p_conta_bancaria_id uuid, p_tipo text) from public, anon;
+grant execute on function public.calcular_indicadores_fluxo_caixa(p_data_inicial date, p_data_final date, p_conta_bancaria_id uuid, p_tipo text) to authenticated, service_role;
+revoke execute on function public.criar_despesa_ve_de_conta_pagar(p_conta_pagar_id uuid, p_semana_id uuid) from public, anon;
+grant execute on function public.criar_despesa_ve_de_conta_pagar(p_conta_pagar_id uuid, p_semana_id uuid) to authenticated, service_role;
+revoke execute on function public.editar_pagamento_informativo(p_pagamento_id uuid, p_novo_valor numeric, p_nova_observacao text) from public, anon;
+grant execute on function public.editar_pagamento_informativo(p_pagamento_id uuid, p_novo_valor numeric, p_nova_observacao text) to authenticated, service_role;
+revoke execute on function public.fn_cadastro_vinculos(p_tipo text, p_id uuid) from public, anon;
+grant execute on function public.fn_cadastro_vinculos(p_tipo text, p_id uuid) to authenticated, service_role;
+revoke execute on function public.fn_central_itens() from public, anon;
+grant execute on function public.fn_central_itens() to authenticated, service_role;
+revoke execute on function public.fn_fechamento_socios_periodo(p_inicio date, p_fim date, p_com_anterior boolean, p_com_extrato boolean) from public, anon;
+grant execute on function public.fn_fechamento_socios_periodo(p_inicio date, p_fim date, p_com_anterior boolean, p_com_extrato boolean) to authenticated, service_role;
+revoke execute on function public.fn_recebimento_nota(p_id uuid) from public, anon;
+grant execute on function public.fn_recebimento_nota(p_id uuid) to authenticated, service_role;
+revoke execute on function public.fn_recebimento_tela() from public, anon;
+grant execute on function public.fn_recebimento_tela() to authenticated, service_role;
+revoke execute on function public.fn_rel_compras(p jsonb) from public, anon;
+grant execute on function public.fn_rel_compras(p jsonb) to authenticated, service_role;
+revoke execute on function public.fn_rel_kardex_fornecedor(p jsonb) from public, anon;
+grant execute on function public.fn_rel_kardex_fornecedor(p jsonb) to authenticated, service_role;
+revoke execute on function public.get_categorias_visao_estrategica() from public, anon;
+grant execute on function public.get_categorias_visao_estrategica() to authenticated, service_role;
+revoke execute on function public.get_pagamentos_por_categoria_semana(p_semana_id uuid) from public, anon;
+grant execute on function public.get_pagamentos_por_categoria_semana(p_semana_id uuid) to authenticated, service_role;
+revoke execute on function public.importar_conta_futura_como_previsao(p_conta_pagar_id uuid, p_semana_id uuid, p_data_pagamento_prevista date) from public, anon;
+grant execute on function public.importar_conta_futura_como_previsao(p_conta_pagar_id uuid, p_semana_id uuid, p_data_pagamento_prevista date) to authenticated, service_role;
+revoke execute on function public.listar_lancamentos_categoria(p_categoria_nome_parcial text, p_ano integer, p_mes integer, p_centro_custo_id uuid) from public, anon;
+grant execute on function public.listar_lancamentos_categoria(p_categoria_nome_parcial text, p_ano integer, p_mes integer, p_centro_custo_id uuid) to authenticated, service_role;
+revoke execute on function public.listar_nao_classificados(p_ano integer, p_mes integer, p_tipo text) from public, anon;
+grant execute on function public.listar_nao_classificados(p_ano integer, p_mes integer, p_tipo text) to authenticated, service_role;
+revoke execute on function public.recategorizar_lancamentos_lote(p_lancamento_ids uuid[], p_nova_categoria_id uuid) from public, anon;
+grant execute on function public.recategorizar_lancamentos_lote(p_lancamento_ids uuid[], p_nova_categoria_id uuid) to authenticated, service_role;
+revoke execute on function public.registrar_pagamento_parcial_ve(p_conta_pagar_id uuid, p_semana_id uuid, p_valor_pago numeric, p_observacao text) from public, anon;
+grant execute on function public.registrar_pagamento_parcial_ve(p_conta_pagar_id uuid, p_semana_id uuid, p_valor_pago numeric, p_observacao text) to authenticated, service_role;
+revoke execute on function public.resumo_nao_classificados(p_ano integer, p_mes integer) from public, anon;
+grant execute on function public.resumo_nao_classificados(p_ano integer, p_mes integer) to authenticated, service_role;
+revoke execute on function public.somar_lancamentos_categoria(p_categoria_raiz_nome text, p_ano integer, p_mes integer, p_centro_custo_id uuid) from public, anon;
+grant execute on function public.somar_lancamentos_categoria(p_categoria_raiz_nome text, p_ano integer, p_mes integer, p_centro_custo_id uuid) to authenticated, service_role;
+revoke execute on function public.vincular_despesa_conta_pagar(p_despesa_id uuid, p_conta_pagar_id uuid) from public, anon;
+grant execute on function public.vincular_despesa_conta_pagar(p_despesa_id uuid, p_conta_pagar_id uuid) to authenticated, service_role;
