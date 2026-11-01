@@ -1,42 +1,13 @@
 import { useState, useEffect } from 'react';
-import {
-  Upload, RefreshCw, CheckCircle2, AlertTriangle,
-  ArrowLeft, Ban, Sparkles, FileText,
-} from 'lucide-react';
+import { Upload, RefreshCw, AlertTriangle, ArrowLeft, Sparkles, FileText, Landmark } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import dayjs from 'dayjs';
-
-// ─── Tipos ────────────────────────────────────────────────────────────────
-interface Banco { id: string; banco: string; tipo_conta: string; }
-interface Forma { id: string; nome: string; }
-interface Categoria { id: string; nome: string; }
-interface Fornecedor { id: string; nome: string; categoria_padrao_id: string | null; }
-
-interface SugFornecedor { id: string; nome: string; categoria_padrao_id: string | null; categoria_padrao_nome: string | null; score: number; }
-interface SugConta { id: string; descricao: string; fornecedor_id: string; fornecedor_nome: string; valor_total: number; saldo_restante: number; data_vencimento: string; categoria_id: string | null; }
-interface SugJa { fluxo_id: string; data: string; valor: number; descricao: string; }
-interface Sugestao { fornecedores: SugFornecedor[]; contas_abertas: SugConta[]; ja_conciliado: SugJa[]; }
-
-type Acao = 'nova' | 'baixa' | 'ja' | 'ignorar';
-
-interface Linha {
-  fitid: string;
-  data: string;          // YYYY-MM-DD
-  valor: number;         // positivo
-  descricao: string;
-  acao: Acao;
-  contaPagarId: string;  // quando acao='baixa'
-  fornecedorId: string;  // quando acao='nova'
-  categoriaId: string;
-  formaPagamentoId: string;
-  sug: Sugestao;
-  status: 'pendente' | 'conciliada' | 'ignorada';
-  jaImportada: boolean;  // veio de importação anterior
-  salvando: boolean;
-  erro: string | null;
-}
-
-const fmt = (v: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
+import ExtratoAutomatico from './conciliacao/ExtratoAutomatico';
+import LinhaConciliacao from './conciliacao/LinhaConciliacao';
+import {
+  inputCls, sugerir, acaoInicial, validar, lancar, registrarIgnorada,
+  type Banco, type Forma, type Categoria, type Fornecedor, type Linha,
+} from './conciliacao/lancar';
 
 // ─── Parser OFX (SGML 1.x e XML 2.x) ────────────────────────────────────────
 function parseExtrato(raw: string): { acct: string; bankId: string; transacoes: { fitid: string; data: string; valor: number; tipo: 'debito' | 'credito'; descricao: string }[] } {
@@ -63,6 +34,27 @@ function parseExtrato(raw: string): { acct: string; bankId: string; transacoes: 
 
 // ─── Componente ──────────────────────────────────────────────────────────────
 export default function ConciliacaoBancaria() {
+  const [modo, setModo] = useState<'automatico' | 'arquivo'>('automatico');
+
+  return (
+    <div className="space-y-4">
+      <div className="flex gap-1 p-1 rounded-xl bg-white/5 border border-white/10 w-fit">
+        {([
+          ['automatico', 'Conta Stone (automático)', Landmark],
+          ['arquivo', 'Importar arquivo (OFX/XML)', Upload],
+        ] as const).map(([m, rotulo, Icone]) => (
+          <button key={m} onClick={() => setModo(m)}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${modo === m ? 'bg-wine text-white' : 'text-white/60 hover:text-white'}`}>
+            <Icone size={13} /> {rotulo}
+          </button>
+        ))}
+      </div>
+      {modo === 'automatico' ? <ExtratoAutomatico /> : <ImportarArquivo />}
+    </div>
+  );
+}
+
+function ImportarArquivo() {
   const [etapa, setEtapa] = useState<'upload' | 'revisao'>('upload');
   const [bancos, setBancos] = useState<Banco[]>([]);
   const [formas, setFormas] = useState<Forma[]>([]);
@@ -149,23 +141,15 @@ export default function ConciliacaoBancaria() {
 
       // Sugestões (em paralelo)
       const linhasMontadas: Linha[] = await Promise.all(debitos.map(async (t) => {
-        const { data: sugData } = await supabase.rpc('fn_conciliacao_sugerir', {
-          p_descricao: t.descricao, p_valor: t.valor, p_data: t.data, p_banco_conta_id: bancoContaId,
-        });
-        const sug: Sugestao = sugData || { fornecedores: [], contas_abertas: [], ja_conciliado: [] };
+        const sug = await sugerir(t.descricao, t.valor, t.data, bancoContaId);
         const jaImportada = mapaJa.get(t.fitid) === 'conciliada';
-
-        let acao: Acao = 'nova';
-        if (jaImportada || sug.ja_conciliado.length > 0) acao = 'ja';
-        else if (sug.contas_abertas.length > 0) acao = 'baixa';
-
         const topForn = sug.fornecedores[0];
         return {
           fitid: t.fitid,
           data: t.data,
           valor: t.valor,
           descricao: t.descricao,
-          acao,
+          acao: acaoInicial(sug, jaImportada),
           contaPagarId: sug.contas_abertas[0]?.id || '',
           fornecedorId: topForn?.id || '',
           categoriaId: topForn?.categoria_padrao_id || sug.contas_abertas[0]?.categoria_id || '',
@@ -194,63 +178,11 @@ export default function ConciliacaoBancaria() {
   const aprovar = async (idx: number) => {
     const l = linhas[idx];
     if (l.status === 'conciliada') return;
-    // validações
-    if (l.acao === 'baixa' && !l.contaPagarId) { atualizarLinha(idx, { erro: 'Escolha a conta a pagar.' }); return; }
-    if (l.acao === 'nova' && !l.fornecedorId) { atualizarLinha(idx, { erro: 'Escolha o fornecedor.' }); return; }
-    if ((l.acao === 'baixa' || l.acao === 'nova') && (!l.formaPagamentoId || !bancoContaId)) { atualizarLinha(idx, { erro: 'Escolha a forma de pagamento.' }); return; }
-
+    const msg = validar(l, bancoContaId);
+    if (msg) { atualizarLinha(idx, { erro: msg }); return; }
     atualizarLinha(idx, { salvando: true, erro: null });
     try {
-      const { data: userData } = await supabase.auth.getUser();
-      const usuario = userData?.user?.id || null;
-      let contaPagarId: string | null = null;
-
-      if (l.acao === 'nova') {
-        // 1. cria a conta a pagar
-        const { data: nova, error: cErr } = await supabase.from('contas_pagar').insert([{
-          fornecedor_id: l.fornecedorId,
-          descricao: l.descricao || 'Conciliação bancária',
-          categoria_id: l.categoriaId || null,
-          forma_pagamento_id: l.formaPagamentoId || null,
-          valor_original: l.valor, valor_total: l.valor, valor_final: l.valor,
-          data_emissao: l.data, data_vencimento: l.data,
-          numero_documento: l.fitid || null,
-          observacoes: 'Criado via conciliação bancária',
-        }]).select().single();
-        if (cErr) throw cErr;
-        contaPagarId = nova.id;
-      } else if (l.acao === 'baixa') {
-        contaPagarId = l.contaPagarId;
-      }
-
-      // 2. baixa (exceto 'ja', que já está no fluxo)
-      if (l.acao === 'nova' || l.acao === 'baixa') {
-        const { error: bErr } = await supabase.rpc('api_fin_dar_baixa_conta', {
-          p_conta_pagar_id: contaPagarId,
-          p_valor_pagamento: l.valor,
-          p_data_pagamento: l.data,
-          p_forma_pagamento_id: l.formaPagamentoId,
-          p_conta_bancaria_id: bancoContaId,
-          p_numero_comprovante: l.fitid || null,
-          p_observacoes: 'Conciliação bancária',
-          p_usuario: usuario,
-        });
-        if (bErr) throw bErr;
-      }
-
-      // 3. registra a transação como conciliada
-      await supabase.from('conciliacao_transacoes').insert({
-        importacao_id: importacaoId,
-        banco_conta_id: bancoContaId,
-        fitid: l.fitid || null,
-        data: l.data,
-        valor: l.valor,
-        tipo: 'debito',
-        descricao: l.descricao,
-        status: 'conciliada',
-        conta_pagar_id: contaPagarId,
-      });
-
+      await lancar(l, bancoContaId, importacaoId);
       atualizarLinha(idx, { status: 'conciliada', salvando: false });
     } catch (e: any) {
       atualizarLinha(idx, { salvando: false, erro: e.message || 'Erro ao lançar.' });
@@ -262,10 +194,7 @@ export default function ConciliacaoBancaria() {
     if (l.status !== 'pendente') return;
     atualizarLinha(idx, { salvando: true, erro: null });
     try {
-      await supabase.from('conciliacao_transacoes').insert({
-        importacao_id: importacaoId, banco_conta_id: bancoContaId, fitid: l.fitid || null,
-        data: l.data, valor: l.valor, tipo: 'debito', descricao: l.descricao, status: 'ignorada',
-      });
+      await registrarIgnorada(l, bancoContaId, importacaoId);
       atualizarLinha(idx, { status: 'ignorada', salvando: false });
     } catch (e: any) {
       atualizarLinha(idx, { salvando: false, erro: e.message });
@@ -276,7 +205,6 @@ export default function ConciliacaoBancaria() {
     setEtapa('upload'); setLinhas([]); setArquivo(null); setPrevia(null); setParsed(null); setImportacaoId(null); setErro(null);
   };
 
-  const inputCls = 'w-full text-xs border border-white/15 rounded-md px-2 py-1.5 bg-white/5 text-white focus:outline-none focus:ring-2 focus:ring-wine/40';
   const totalPend = linhas.filter(l => l.status === 'pendente').length;
   const totalConc = linhas.filter(l => l.status === 'conciliada').length;
 
@@ -350,100 +278,10 @@ export default function ConciliacaoBancaria() {
       </div>
 
       <div className="space-y-2">
-        {linhas.map((l, idx) => {
-          const conciliada = l.status === 'conciliada';
-          const ignorada = l.status === 'ignorada';
-          return (
-            <div key={idx} className={`bg-[#12141f] rounded-xl border p-3 transition-colors ${conciliada ? 'border-green-500/30' : ignorada ? 'border-white/5 opacity-50' : 'border-white/10'}`}>
-              {/* Cabeçalho da transação */}
-              <div className="flex items-center justify-between gap-3 flex-wrap">
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold text-white">{fmt(l.valor)}</span>
-                    <span className="text-xs text-white/60">{dayjs(l.data).format('DD/MM/YY')}</span>
-                    {l.acao === 'ja' && <span className="text-caption px-1.5 py-0.5 rounded border bg-green-500/10 text-green-400 border-green-500/30">já no fluxo</span>}
-                    {l.acao === 'baixa' && l.status === 'pendente' && <span className="text-caption px-1.5 py-0.5 rounded border bg-yellow-500/10 text-yellow-400 border-yellow-500/30">baixa sugerida</span>}
-                    {l.acao === 'nova' && l.status === 'pendente' && <span className="text-caption px-1.5 py-0.5 rounded border bg-blue-500/10 text-blue-400 border-blue-500/30">nova</span>}
-                    {conciliada && <span className="text-caption px-1.5 py-0.5 rounded border bg-green-500/15 text-green-400 border-green-500/30 flex items-center gap-1"><CheckCircle2 size={10} /> conciliada</span>}
-                    {ignorada && <span className="text-caption px-1.5 py-0.5 rounded border bg-white/5 text-white/60 border-white/10">ignorada</span>}
-                  </div>
-                  <p className="text-xs text-white/50 truncate max-w-[420px]">{l.descricao || '(sem descrição)'}</p>
-                </div>
-
-                {l.status === 'pendente' && (
-                  <div className="flex items-center gap-1.5">
-                    {/* seletor de ação */}
-                    <select value={l.acao} onChange={e => atualizarLinha(idx, { acao: e.target.value as Acao, erro: null })}
-                      className="text-xs border border-white/15 rounded-md px-2 py-1 bg-white/5 text-white">
-                      <option value="nova">Criar nova</option>
-                      <option value="baixa" disabled={l.sug.contas_abertas.length === 0}>Baixar conta aberta</option>
-                      <option value="ja">Já lançada (só marcar)</option>
-                    </select>
-                    <button onClick={() => aprovar(idx)} disabled={l.salvando}
-                      className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-green-600 hover:bg-green-700 text-white text-xs font-medium disabled:opacity-50">
-                      {l.salvando ? <RefreshCw size={11} className="animate-spin" /> : <CheckCircle2 size={11} />} Aprovar
-                    </button>
-                    <button onClick={() => ignorar(idx)} disabled={l.salvando} title="Ignorar"
-                      className="p-1.5 rounded-md border border-white/10 text-white/40 hover:text-red-400 hover:border-red-400/30">
-                      <Ban size={12} />
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              {/* Campos por ação (só quando pendente) */}
-              {l.status === 'pendente' && l.acao === 'nova' && (
-                <div className="grid grid-cols-1 sm:grid-cols-4 gap-2 mt-3">
-                  <div className="sm:col-span-2">
-                    <label className="block text-caption text-white/60 mb-1">Fornecedor {l.sug.fornecedores[0] && <span className="text-white/60">(sugestão: {l.sug.fornecedores[0].nome})</span>}</label>
-                    <select value={l.fornecedorId} onChange={e => {
-                      const f = fornecedores.find(x => x.id === e.target.value);
-                      atualizarLinha(idx, { fornecedorId: e.target.value, categoriaId: f?.categoria_padrao_id || l.categoriaId });
-                    }} className={inputCls}>
-                      <option value="">Selecione...</option>
-                      {fornecedores.map(f => <option key={f.id} value={f.id}>{f.nome}</option>)}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-caption text-white/60 mb-1">Categoria</label>
-                    <select value={l.categoriaId} onChange={e => atualizarLinha(idx, { categoriaId: e.target.value })} className={inputCls}>
-                      <option value="">—</option>
-                      {categorias.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-caption text-white/60 mb-1">Forma pgto</label>
-                    <select value={l.formaPagamentoId} onChange={e => atualizarLinha(idx, { formaPagamentoId: e.target.value })} className={inputCls}>
-                      {formas.map(f => <option key={f.id} value={f.id}>{f.nome}</option>)}
-                    </select>
-                  </div>
-                </div>
-              )}
-
-              {l.status === 'pendente' && l.acao === 'baixa' && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3">
-                  <div>
-                    <label className="block text-caption text-white/60 mb-1">Conta a pagar (em aberto)</label>
-                    <select value={l.contaPagarId} onChange={e => atualizarLinha(idx, { contaPagarId: e.target.value })} className={inputCls}>
-                      <option value="">Selecione...</option>
-                      {l.sug.contas_abertas.map(c => (
-                        <option key={c.id} value={c.id}>{c.fornecedor_nome} · {c.descricao} · vc {dayjs(c.data_vencimento).format('DD/MM')}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-caption text-white/60 mb-1">Forma pgto</label>
-                    <select value={l.formaPagamentoId} onChange={e => atualizarLinha(idx, { formaPagamentoId: e.target.value })} className={inputCls}>
-                      {formas.map(f => <option key={f.id} value={f.id}>{f.nome}</option>)}
-                    </select>
-                  </div>
-                </div>
-              )}
-
-              {l.erro && <p className="text-caption text-red-400 mt-2">{l.erro}</p>}
-            </div>
-          );
-        })}
+        {linhas.map((l, idx) => (
+          <LinhaConciliacao key={idx} linha={l} fornecedores={fornecedores} categorias={categorias} formas={formas}
+            onChange={patch => atualizarLinha(idx, patch)} onAprovar={() => aprovar(idx)} onIgnorar={() => ignorar(idx)} />
+        ))}
       </div>
     </div>
   );

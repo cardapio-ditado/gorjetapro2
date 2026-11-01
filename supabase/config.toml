@@ -17,3 +17,6 @@ verify_jwt = true
 # Chamada pela tela Estoque › ZIG Vendas sem sessão; sempre rodou sem JWT.
 [functions.zig-processar-baixas]
 verify_jwt = false
+
+[functions.pluggy-sync]
+verify_jwt = false

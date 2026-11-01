@@ -41,7 +41,7 @@ const TABS: Tab[] = [
   { slug: 'pagar',             label: 'Contas a Pagar',       icon: CreditCard,     description: 'Obrigações financeiras em aberto' },
   { slug: 'receber',           label: 'Contas a Receber',     icon: Receipt,        description: 'Valores a receber' },
   { slug: 'historico',         label: 'Histórico e Estornos', icon: ArrowLeftRight, description: 'Histórico completo e estornos' },
-  { slug: 'conciliacao',       label: 'Conciliação Bancária', icon: Upload,         description: 'Importe o extrato (OFX/XML) e concilie com o que está lançado' },
+  { slug: 'conciliacao',       label: 'Conciliação Bancária', icon: Upload,         description: 'Extrato da Stone automático (ou arquivo OFX/XML) conciliado com o que está lançado' },
   { slug: 'categorizar',       label: 'Categorizar',          icon: Tag,            description: 'Categorize os lançamentos' },
   { slug: 'ficha-fornecedor',  label: 'Ficha Fornecedor',     icon: Building2,      description: 'Dados financeiros por fornecedor' },
   { slug: 'kardex-fornecedor', label: 'Kardex Fornecedor',    icon: Activity,       description: 'Movimentações por fornecedor' },
