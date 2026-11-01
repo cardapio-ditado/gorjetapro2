@@ -275,7 +275,7 @@ const RelatoriosGerenciais: React.FC = () => {
         .lte('data', periodoFinal);
 
       if (centroCusto !== 'all') {
-        query = query.eq('centro_custo', centrosCusto.find(c => c.id === centroCusto)?.nome);
+        query = query.eq('centro_custo_id', centroCusto); // a coluna de texto antiga não é mais preenchida
       }
 
       const { data, error } = await query.order('data');
@@ -291,18 +291,10 @@ const RelatoriosGerenciais: React.FC = () => {
 
       let saldoAcumulado = 0;
 
-      // Buscar saldo inicial das contas bancárias
-      const { data: contasBancarias, error: bancariasError } = await supabase
-        .from('vw_bancos_contas_saldo')
-        .select('saldo_inicial, saldo_atual')
-        .eq('status', 'ativo');
-
-      if (!bancariasError && contasBancarias) {
-        saldoAcumulado = contasBancarias.reduce((sum, conta) => {
-          const saldoInicial = parseFloat(conta.saldo_inicial?.toString() || '0') || 0;
-          return sum + saldoInicial;
-        }, 0);
-      }
+      // saldo real no início do período: saldo inicial do cadastro + tudo antes dele
+      // (antes começava só do saldo inicial e esquecia o histórico anterior)
+      const { data: saldosAntes } = await supabase.rpc('fn_saldos_contas_antes', { p_data: periodoInicial });
+      saldoAcumulado = (saldosAntes || []).reduce((sum: number, c: any) => sum + Number(c.saldo || 0), 0);
 
       (data || []).forEach(mov => {
         let periodo = '';
@@ -370,7 +362,7 @@ const RelatoriosGerenciais: React.FC = () => {
         .lte('data', periodoFinal);
 
       if (centroCusto !== 'all') {
-        query = query.eq('centro_custo', centrosCusto.find(c => c.id === centroCusto)?.nome);
+        query = query.eq('centro_custo_id', centroCusto); // a coluna de texto antiga não é mais preenchida
       }
 
       const { data: fluxoData, error: fluxoError } = await query;
@@ -530,6 +522,10 @@ const RelatoriosGerenciais: React.FC = () => {
 
       if (contasError) throw contasError;
 
+      // saldo de cada conta no início do período
+      const { data: saldosAntes } = await supabase.rpc('fn_saldos_contas_antes', { p_data: periodoInicial });
+      const saldoAntes = new Map<string, number>((saldosAntes || []).map((c: any) => [c.conta_id, Number(c.saldo || 0)]));
+
       // Buscar movimentações por conta
       const { data: fluxoData, error: fluxoError } = await supabase
         .from('fluxo_caixa')
@@ -552,7 +548,7 @@ const RelatoriosGerenciais: React.FC = () => {
           .filter(m => m.tipo === 'saida')
           .reduce((sum, m) => sum + Math.abs(parseFloat(m.valor?.toString() || '0') || 0), 0);
 
-        const saldoInicial = parseFloat(conta.saldo_inicial?.toString() || '0') || 0;
+        const saldoInicial = saldoAntes.get(conta.id) ?? (parseFloat(conta.saldo_inicial?.toString() || '0') || 0);
         const saldoFinal = saldoInicial + entradas - saidas;
 
         return {
