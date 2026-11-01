@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Upload, RefreshCw, AlertTriangle, ArrowLeft, Sparkles, FileText, Landmark } from 'lucide-react';
+import { Upload, RefreshCw, AlertTriangle, ArrowLeft, Sparkles, FileText } from 'lucide-react';
+import { Segmented } from '../ui';
 import { supabase } from '../../lib/supabase';
 import dayjs from 'dayjs';
 import ExtratoAutomatico from './conciliacao/ExtratoAutomatico';
@@ -37,18 +38,9 @@ export default function ConciliacaoBancaria() {
   const [modo, setModo] = useState<'automatico' | 'arquivo'>('automatico');
 
   return (
-    <div className="space-y-4">
-      <div className="flex gap-1 p-1 rounded-xl bg-white/5 border border-white/10 w-fit">
-        {([
-          ['automatico', 'Conta Stone (automático)', Landmark],
-          ['arquivo', 'Importar arquivo (OFX/XML)', Upload],
-        ] as const).map(([m, rotulo, Icone]) => (
-          <button key={m} onClick={() => setModo(m)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${modo === m ? 'bg-wine text-white' : 'text-white/60 hover:text-white'}`}>
-            <Icone size={13} /> {rotulo}
-          </button>
-        ))}
-      </div>
+    <div className="flex flex-col gap-4">
+      <Segmented rotulo="Origem do extrato" valor={modo} onMudar={setModo}
+        opcoes={[{ valor: 'automatico', rotulo: 'Conta Stone' }, { valor: 'arquivo', rotulo: 'Arquivo OFX/XML' }]} />
       {modo === 'automatico' ? <ExtratoAutomatico /> : <ImportarArquivo />}
     </div>
   );

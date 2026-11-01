@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { RefreshCw, CheckCircle2, Ban } from 'lucide-react';
 import dayjs from 'dayjs';
+import { Combobox } from '../../ui';
 import { fmt, inputCls, type Linha, type Acao, type Fornecedor, type Categoria, type Forma } from './lancar';
 
 interface Props {
@@ -43,9 +44,9 @@ export default function LinhaConciliacao({ linha: l, fornecedores, categorias, f
           <div className="flex items-center gap-1.5">
             <select value={l.acao} onChange={e => onChange({ acao: e.target.value as Acao, erro: null })}
               className="text-xs border border-white/15 rounded-md px-2 py-1 bg-white/5 text-white">
-              <option value="nova">Criar nova</option>
-              <option value="baixa" disabled={l.sug.contas_abertas.length === 0}>Baixar conta aberta</option>
-              <option value="ja">Já lançada (só marcar)</option>
+              <option value="nova">Criar conta e pagar</option>
+              <option value="baixa" disabled={l.sug.contas_abertas.length === 0}>Pagar conta aberta</option>
+              <option value="ja">Já está lançada</option>
             </select>
             <button onClick={onAprovar} disabled={l.salvando}
               className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-green-600 hover:bg-green-700 text-white text-xs font-medium disabled:opacity-50">
@@ -63,21 +64,16 @@ export default function LinhaConciliacao({ linha: l, fornecedores, categorias, f
       {l.status === 'pendente' && l.acao === 'nova' && (
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-2 mt-3">
           <div className="sm:col-span-2">
-            <label className="block text-caption text-white/60 mb-1">Fornecedor {l.sug.fornecedores[0] && <span className="text-white/60">(sugestão: {l.sug.fornecedores[0].nome})</span>}</label>
-            <select value={l.fornecedorId} onChange={e => {
-              const f = fornecedores.find(x => x.id === e.target.value);
-              onChange({ fornecedorId: e.target.value, categoriaId: f?.categoria_padrao_id || l.categoriaId });
-            }} className={inputCls}>
-              <option value="">Selecione...</option>
-              {fornecedores.map(f => <option key={f.id} value={f.id}>{f.nome}</option>)}
-            </select>
+            <Combobox rotulo="Fornecedor" valor={l.fornecedorId} sugestaoId={l.sug.fornecedores[0]?.id}
+              opcoes={fornecedores.map(f => ({ id: f.id, nome: f.nome }))}
+              onEscolher={id => {
+                const f = fornecedores.find(x => x.id === id);
+                onChange({ fornecedorId: id, categoriaId: f?.categoria_padrao_id || l.categoriaId });
+              }} />
           </div>
           <div>
-            <label className="block text-caption text-white/60 mb-1">Categoria</label>
-            <select value={l.categoriaId} onChange={e => onChange({ categoriaId: e.target.value })} className={inputCls}>
-              <option value="">—</option>
-              {categorias.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
-            </select>
+            <Combobox rotulo="Categoria" valor={l.categoriaId} opcoes={categorias.map(c => ({ id: c.id, nome: c.nome }))}
+              onEscolher={id => onChange({ categoriaId: id })} />
           </div>
           <div>
             <label className="block text-caption text-white/60 mb-1">Forma pgto</label>
