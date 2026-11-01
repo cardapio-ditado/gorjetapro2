@@ -58,7 +58,7 @@ const HistoricoPagamentosEstorno: React.FC = () => {
       `).eq('tipo','saida').not('conta_pagar_id','is',null).gte('data',dataInicio).lte('data',dataFim).order('data',{ascending:false});
       if (pe) throw pe;
       setPagamentos((pd||[]).map((p: any) => ({ id:p.id, valor:p.valor, data:p.data, descricao:p.descricao, conta_pagar_id:p.conta_pagar_id, conta_pagar_descricao:p.contas_pagar?.descricao, fornecedor_nome:p.contas_pagar?.fornecedores?.nome, forma_pagamento_nome:p.contas_pagar?.formas_pagamento?.nome, conta_bancaria: p.bancos_contas?`${p.bancos_contas.banco} - ${p.bancos_contas.tipo_conta}`:null, observacoes:p.observacoes, criado_em:p.criado_em })));
-      const { data: ed, error: ee } = await supabase.from('historico_estornos_pagamento').select('*').gte('data_estorno',dataInicio).lte('data_estorno',dataFim).order('data_estorno',{ascending:false});
+      const { data: ed, error: ee } = await supabase.from('historico_estornos_pagamento').select('*').gte('data_estorno',dataInicio).lt('data_estorno',dayjs(dataFim).add(1,'day').format('YYYY-MM-DD')).order('data_estorno',{ascending:false});
       if (ee) throw ee;
       setEstornos(ed||[]);
     } catch (err: any) { setError(err.message); }

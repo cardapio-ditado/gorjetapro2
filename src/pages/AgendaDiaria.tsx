@@ -26,10 +26,13 @@ const fmtR = (v: number) =>
 const fmtData = (d: string) =>
   new Date(d + 'T12:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
 
+/** Data de hoje no fuso do navegador (não em UTC, que depois das 20h já é amanhã). */
+const hojeLocal = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
+
 const offsetDate = (base: string, days: number) => {
   const d = new Date(base + 'T12:00');
   d.setDate(d.getDate() + days);
-  return d.toISOString().split('T')[0];
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 };
 
 /** Quanto falta (ou passou) do vencimento, como etiqueta do kit. */
@@ -72,10 +75,11 @@ type Filtro = 'vencidas' | '7dias' | 'todas';
 
 // ─── Componente Principal ────────────────────────────────────────────────────
 const AgendaDiaria: React.FC = () => {
-  const [dataAtual, setDataAtual]   = useState(new Date().toISOString().split('T')[0]);
+  const [dataAtual, setDataAtual]   = useState(hojeLocal());
   const [sessao, setSessao]         = useState<Sessao | null>(null);
   const [pagamentos, setPagamentos] = useState<Pagamento[]>([]);
   const [receitas, setReceitas]     = useState<Receita[]>([]);
+  const [falha, setFalha]           = useState<string | null>(null);
   const [contas, setContas]         = useState<ContaPagar[]>([]);
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [loading, setLoading]       = useState(true);
@@ -105,12 +109,12 @@ const AgendaDiaria: React.FC = () => {
 
   // Modal lançar no sistema
   const [modalLancar, setModalLancar] = useState<Pagamento | null>(null);
-  const [lVenc, setLVenc] = useState(new Date().toISOString().split('T')[0]);
+  const [lVenc, setLVenc] = useState(hojeLocal());
   const [lObs, setLObs]   = useState('');
 
   const [showRelatorio, setShowRelatorio] = useState(false);
 
-  const hoje = new Date().toISOString().split('T')[0];
+  const hoje = hojeLocal();
   const isHoje = dataAtual === hoje;
   const somenteLeitura = sessao?.status === 'finalizada' && !isHoje;
 
@@ -141,7 +145,7 @@ const AgendaDiaria: React.FC = () => {
         supabase.from('agenda_receitas').select('*').eq('data_base', data).order('criado_em'),
         supabase.from('categorias_financeiras').select('id, nome').order('nome'),
         supabase.from('contas_pagar')
-          .select('id, descricao, saldo_restante, data_vencimento, valor_total, status, categorias_financeiras!inner(id, nome), fornecedores(nome)')
+          .select('id, descricao, saldo_restante, data_vencimento, valor_total, status, categorias_financeiras(id, nome), fornecedores(nome)')
           .not('status', 'in', '("pago","cancelado")')
           .gt('saldo_restante', 0)
           .order('data_vencimento', { ascending: true }),
@@ -226,7 +230,7 @@ const AgendaDiaria: React.FC = () => {
         fornecedor_nome: modalAuth.fornecedores?.nome ?? null,
         lancado_contas_pagar: true,
       }).select().single();
-      if (error) { console.error('Erro ao autorizar:', error); return; }
+      if (error) { setFalha(`Não consegui autorizar: ${error.message}`); return; }
       if (novo) setPagamentos(p => [...p, novo as Pagamento]);
       setModalAuth(null);
     } finally { setSalvando(false); }
@@ -244,7 +248,7 @@ const AgendaDiaria: React.FC = () => {
         valor: parseFloat(rValor) || 0,
         tipo: rTipo,
       }).select().single();
-      if (error) { console.error('Erro ao adicionar receita:', error); return; }
+      if (error) { setFalha(`Não consegui adicionar a receita: ${error.message}`); return; }
       if (nova) setReceitas(r => [...r, nova as Receita]);
       setModalReceita(false);
       setRDesc(''); setRValor(''); setRTipo('pix');
@@ -252,7 +256,10 @@ const AgendaDiaria: React.FC = () => {
   };
 
   const removerReceita = async (id: string) => {
-    await supabase.from('agenda_receitas').delete().eq('id', id);
+    const r0 = receitas.find(x => x.id === id);
+    if (!window.confirm(`Remover a receita "${r0?.descricao ?? ''}"?`)) return;
+    const { error } = await supabase.from('agenda_receitas').delete().eq('id', id);
+    if (error) { setFalha(`Não consegui remover: ${error.message}`); return; }
     setReceitas(r => r.filter(x => x.id !== id));
   };
 
@@ -278,7 +285,7 @@ const AgendaDiaria: React.FC = () => {
         fornecedor_nome: null,
         lancado_contas_pagar: false,
       }).select().single();
-      if (error) { console.error('Erro ao lançar manual:', error); return; }
+      if (error) { setFalha(`Não consegui lançar: ${error.message}`); return; }
       if (novo) setPagamentos(p => [...p, novo as Pagamento]);
       setModalManual(false);
       setMDesc(''); setMValor(''); setMCatId(''); setMGerente(GERENTES[0]);
@@ -287,7 +294,10 @@ const AgendaDiaria: React.FC = () => {
 
   // ── Remover pagamento ─────────────────────────────────────────────────────
   const removerItem = async (id: string) => {
-    await supabase.from('agenda_pagamentos').delete().eq('id', id);
+    const p0 = pagamentos.find(x => x.id === id);
+    if (!window.confirm(`Remover "${p0?.descricao ?? ''}" da agenda do dia?`)) return;
+    const { error } = await supabase.from('agenda_pagamentos').delete().eq('id', id);
+    if (error) { setFalha(`Não consegui remover: ${error.message}`); return; }
     setPagamentos(p => p.filter(x => x.id !== id));
   };
 
@@ -296,20 +306,23 @@ const AgendaDiaria: React.FC = () => {
     if (!modalLancar) return;
     setSalvando(true);
     try {
-      const { data: conta } = await supabase.from('contas_pagar').insert({
+      // saldo_restante é calculado pelo banco: enviar o campo fazia o lançamento falhar
+      const { data: conta, error } = await supabase.from('contas_pagar').insert({
         fornecedor_id: FORNECEDOR_AVULSO_ID,
         descricao: modalLancar.descricao,
         categoria_id: modalLancar.categoria_id,
-        valor_total: modalLancar.valor, saldo_restante: modalLancar.valor, valor_pago: 0,
+        valor_total: modalLancar.valor, valor_pago: 0,
         data_vencimento: lVenc, status: 'em_aberto',
         observacoes: lObs || `Via Agenda Diária — ${modalLancar.solicitado_por}`,
         origem_modulo: 'agenda_diaria',
       }).select().single();
       const cid = (conta as { id?: string } | null)?.id;
-      await supabase.from('agenda_pagamentos').update({
+      if (error || !cid) { setFalha(`A conta a pagar não foi criada: ${error?.message ?? 'sem resposta do banco'}`); return; }
+      const { error: errAg } = await supabase.from('agenda_pagamentos').update({
         lancado_contas_pagar: true, lancado_em: new Date().toISOString(),
         lancado_por: 'financeiro', conta_pagar_criada_id: cid, conta_pagar_ref_id: cid,
       }).eq('id', modalLancar.id);
+      if (errAg) { setFalha(`A conta foi criada, mas não consegui marcar na agenda: ${errAg.message}`); return; }
       setPagamentos(p => p.map(x => x.id === modalLancar.id
         ? { ...x, lancado_contas_pagar: true, conta_pagar_criada_id: cid ?? null, conta_pagar_ref_id: cid ?? null } : x));
       setModalLancar(null); setLVenc(hoje); setLObs('');
@@ -318,9 +331,11 @@ const AgendaDiaria: React.FC = () => {
 
   const finalizarDia = async () => {
     if (!sessao) return;
-    await supabase.from('agenda_sessoes').update({
+    if (!window.confirm('Finalizar o dia? Depois de finalizado, a agenda de hoje fica fechada.')) return;
+    const { error } = await supabase.from('agenda_sessoes').update({
       status: 'finalizada', finalizado_em: new Date().toISOString(),
     }).eq('id', sessao.id);
+    if (error) { setFalha(`Não consegui finalizar o dia: ${error.message}`); return; }
     setSessao(s => s ? { ...s, status: 'finalizada' } : s);
   };
 
@@ -382,6 +397,13 @@ const AgendaDiaria: React.FC = () => {
           </>
         }
       />
+
+      {falha && (
+        <div className="aviso aviso-perigo mb-4 flex items-start justify-between gap-3" role="alert">
+          <span>{falha}</span>
+          <button className="text-xs underline" onClick={() => setFalha(null)}>fechar</button>
+        </div>
+      )}
 
       {/* ── Números do dia ─────────────────────────────────────────────────── */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">

@@ -100,7 +100,7 @@ const ContasPagar: React.FC = () => {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [showBulkActions, setShowBulkActions] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('pendentes');
   const [situacaoFilter, setSituacaoFilter] = useState('all');
   const [fornecedorFilter, setFornecedorFilter] = useState('all');
   const [prioridadeFilter, setPrioridadeFilter] = useState('all');
@@ -138,7 +138,7 @@ const ContasPagar: React.FC = () => {
       setLoading(true); setError(null);
       if (!await testConnection()) { setContas([]); setLoading(false); return; }
       let q = supabase.from('vw_contas_pagar').select('*');
-      if (statusFilter!=='all') q=q.eq('status',statusFilter);
+      if (statusFilter==='pendentes') q=q.in('status',['em_aberto','parcialmente_pago','autorizado_pagamento']); else if (statusFilter!=='all') q=q.eq('status',statusFilter);
       if (fornecedorFilter!=='all') q=q.eq('fornecedor_id',fornecedorFilter);
       if (prioridadeFilter!=='all') q=q.eq('prioridade_sugerida',prioridadeFilter);
       if (dataInicial) q=q.gte('data_vencimento',dataInicial);
@@ -154,7 +154,7 @@ const ContasPagar: React.FC = () => {
     try {
       if (!await testConnection()) { setIndicadores(null); return; }
       let q = supabase.from('vw_contas_pagar').select('valor_total,valor_pago,saldo_restante,status,data_vencimento,aprovado_para_pagamento,fornecedor_id,prioridade_sugerida,situacao_vencimento');
-      if (statusFilter!=='all') q=q.eq('status',statusFilter);
+      if (statusFilter==='pendentes') q=q.in('status',['em_aberto','parcialmente_pago','autorizado_pagamento']); else if (statusFilter!=='all') q=q.eq('status',statusFilter);
       if (fornecedorFilter!=='all') q=q.eq('fornecedor_id',fornecedorFilter);
       if (prioridadeFilter!=='all') q=q.eq('prioridade_sugerida',prioridadeFilter);
       if (dataInicial) q=q.gte('data_vencimento',dataInicial);
@@ -326,7 +326,7 @@ const ContasPagar: React.FC = () => {
             { label:'Atrasadas',    value:indicadores.contas_vencidas,           sub:fmt(indicadores.valor_vencido),   color:S.red,    bg:S.redBg,    border:S.redBorder },
             { label:'Vencem Hoje',  value:indicadores.contas_vence_hoje,         sub:fmt(indicadores.valor_vence_hoje),color:S.amber,  bg:'rgba(251,191,36,0.08)', border:'rgba(251,191,36,0.15)' },
             { label:'A Vencer',     value:indicadores.contas_a_vencer,           sub:fmt(indicadores.valor_a_vencer),  color:S.orange, bg:S.orangeBg, border:S.orangeBorder },
-            { label:'Já Pago',      value:fmt(indicadores.valor_pago),           sub:`de ${fmt(indicadores.valor_total)}`,color:S.green,bg:S.greenBg,border:S.greenBorder },
+            { label:'Já pago (parcial)', value:fmt(indicadores.valor_pago),       sub:`das contas pendentes, de ${fmt(indicadores.valor_total)}`,color:S.green,bg:S.greenBg,border:S.greenBorder },
           ].map((c,i) => (
             <div key={i} style={{ background:c.bg, borderRadius:12, padding:'12px 14px', border:`1px solid ${c.border}` }}>
               <p style={{ color:c.color, opacity:.6, fontSize:'var(--fs-caption)', margin:'0 0 6px', textTransform:'uppercase', letterSpacing:'.6px' }}>{c.label}</p>
@@ -344,7 +344,7 @@ const ContasPagar: React.FC = () => {
           <input type="text" placeholder="Buscar..." value={searchTerm} onChange={e=>setSearchTerm(e.target.value)} style={{ ...inputStyle, paddingLeft:28 }} />
         </div>
         <SearchableSelect options={[{value:'all',label:'Situação'},{value:'atrasada',label:'Atrasadas'},{value:'vence_hoje',label:'Vence Hoje'},{value:'vence_em_breve',label:'Próx. 7 dias'},{value:'no_prazo',label:'No Prazo'},{value:'paga',label:'Pagas'}]} value={situacaoFilter} onChange={v=>setSituacaoFilter(v)} placeholder="Situação" theme="dark" />
-        <SearchableSelect options={[{value:'all',label:'Status'},{value:'em_aberto',label:'Em Aberto'},{value:'parcialmente_pago',label:'Parcial'},{value:'autorizado_pagamento',label:'Autorizado'},{value:'pago',label:'Pago'},{value:'cancelado',label:'Cancelado'}]} value={statusFilter} onChange={v=>setStatusFilter(v)} placeholder="Status" theme="dark" />
+        <SearchableSelect options={[{value:'pendentes',label:'Pendentes'},{value:'all',label:'Todas'},{value:'em_aberto',label:'Em Aberto'},{value:'parcialmente_pago',label:'Parcial'},{value:'autorizado_pagamento',label:'Autorizado'},{value:'pago',label:'Pago'},{value:'cancelado',label:'Cancelado'}]} value={statusFilter} onChange={v=>setStatusFilter(v)} placeholder="Status" theme="dark" />
         <SearchableSelect options={[{value:'all',label:'Fornecedor'},...fornecedores.map(f=>({value:f.id,label:f.nome}))]} value={fornecedorFilter} onChange={v=>setFornecedorFilter(v)} placeholder="Fornecedor" theme="dark" />
         <SearchableSelect options={[{value:'all',label:'Prioridade'},{value:'urgente',label:'Urgente'},{value:'alta',label:'Alta'},{value:'media',label:'Média'},{value:'baixa',label:'Baixa'}]} value={prioridadeFilter} onChange={v=>setPrioridadeFilter(v)} placeholder="Prioridade" theme="dark" />
         <input type="date" value={dataInicial} onChange={e=>setDataInicial(e.target.value)} style={inputStyle} />
@@ -536,8 +536,9 @@ const ContasPagar: React.FC = () => {
               </div>
             </div>
 
+            {error && <div role="alert" style={{ background:S.redBg, border:`1px solid ${S.redBorder}`, borderRadius:10, padding:'10px 14px', color:S.red, fontSize:12, marginTop:14 }}>{error}</div>}
             <div style={{ display:'flex', justifyContent:'flex-end', gap:8, marginTop:20, paddingTop:16, borderTop:`1px solid ${S.border}` }}>
-              <button onClick={()=>setShowForm(false)} style={{ background:'rgba(255,255,255,0.05)', border:`1px solid ${S.border}`, borderRadius:8, padding:'9px 18px', color:S.muted, fontSize:12, cursor:'pointer' }}>Cancelar</button>
+              <button onClick={()=>{setShowForm(false);setError(null);}} style={{ background:'rgba(255,255,255,0.05)', border:`1px solid ${S.border}`, borderRadius:8, padding:'9px 18px', color:S.muted, fontSize:12, cursor:'pointer' }}>Cancelar</button>
               <button onClick={handleSave} disabled={loading||!formData.fornecedor_id||!formData.descricao||!formData.valor_total}
                 style={{ background:S.wine, border:'none', borderRadius:8, padding:'9px 18px', color:'white', fontSize:12, cursor:'pointer', fontWeight:500, opacity:loading||!formData.fornecedor_id||!formData.descricao?0.5:1 }}>
                 {loading?'Salvando...':'Salvar Conta'}
@@ -569,8 +570,9 @@ const ContasPagar: React.FC = () => {
               <div style={fStyle}><label style={labelStyle}>Número do Comprovante</label><input type="text" value={baixaModal.numeroComprovante} onChange={e=>setBaixaModal({...baixaModal,numeroComprovante:e.target.value})} placeholder="Ex: 123456" style={inputStyle} /></div>
               <div style={fStyle}><label style={labelStyle}>Observações</label><textarea value={baixaModal.observacoes} onChange={e=>setBaixaModal({...baixaModal,observacoes:e.target.value})} rows={2} style={{ ...inputStyle, resize:'vertical' }} /></div>
             </div>
+            {error && <div role="alert" style={{ background:S.redBg, border:`1px solid ${S.redBorder}`, borderRadius:10, padding:'10px 14px', color:S.red, fontSize:12, marginTop:14 }}>{error}</div>}
             <div style={{ display:'flex', justifyContent:'flex-end', gap:8, marginTop:20 }}>
-              <button onClick={fecharModalBaixa} disabled={loading} style={{ background:'rgba(255,255,255,0.05)', border:`1px solid ${S.border}`, borderRadius:8, padding:'8px 16px', color:S.muted, fontSize:12, cursor:'pointer' }}>Cancelar</button>
+              <button onClick={()=>{fecharModalBaixa();setError(null);}} disabled={loading} style={{ background:'rgba(255,255,255,0.05)', border:`1px solid ${S.border}`, borderRadius:8, padding:'8px 16px', color:S.muted, fontSize:12, cursor:'pointer' }}>Cancelar</button>
               <button onClick={handleDarBaixa} disabled={loading||!baixaModal.formaPagamentoId||!baixaModal.contaBancariaId||baixaModal.valorPagamento<=0||baixaModal.valorPagamento>baixaModal.conta.saldo_restante}
                 style={{ background:'rgba(74,222,128,0.15)', border:`1px solid rgba(74,222,128,0.25)`, borderRadius:8, padding:'8px 16px', color:S.green, fontSize:12, cursor:'pointer', fontWeight:600, opacity:loading?0.5:1 }}>
                 {loading?'Processando...':'Confirmar Baixa'}

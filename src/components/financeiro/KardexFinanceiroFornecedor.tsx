@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import dayjs from 'dayjs';
+import { exportToExcel } from '../../utils/reportGenerator';
 
 interface Fornecedor {
   id: string;
@@ -174,9 +175,14 @@ const KardexFinanceiroFornecedor: React.FC = () => {
     }
   };
 
+  /** Planilha com o extrato do fornecedor, como está na tela. */
   const exportarKardex = () => {
-    // TODO: Implementar exportação em PDF/Excel
-    console.log('Exportar kardex financeiro');
+    if (!fornecedorSelecionado) { setError('Escolha um fornecedor para exportar.'); return; }
+    exportToExcel(extrato.map(e => [
+      dayjs(e.data).format('DD/MM/YYYY'), e.tipo === 'pagamento' ? 'Pagamento' : 'Compra', e.descricao, e.documento || '',
+      e.categoria || '', Number(e.valor_total), Number(e.valor_pago), Number(e.saldo_restante), e.status,
+    ]), `kardex-${fornecedorSelecionado.nome.replace(/[^\w]+/g, '-').toLowerCase()}-${dayjs().format('YYYY-MM-DD')}`,
+    ['Data', 'Tipo', 'Descrição', 'Documento', 'Categoria', 'Valor', 'Pago', 'Saldo', 'Situação']);
   };
 
   const formatCurrency = (value: number) => {

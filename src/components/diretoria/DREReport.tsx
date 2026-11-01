@@ -45,16 +45,17 @@ interface CategoriaConsolidada {
 type ModoVisualizacao = 'sintetico' | 'analitico' | 'detalhado';
 
 export default function DREReport() {
-  const [ano, setAno] = useState(2026);
-  const [mes, setMes] = useState<number | 'all'>(3);
+  // abre no mês corrente (antes ficava preso em março/2026)
+  const [ano, setAno] = useState(new Date().getFullYear());
+  const [mes, setMes] = useState<number | 'all'>(new Date().getMonth() + 1);
   const [modo, setModo] = useState<ModoVisualizacao>('analitico');
   const [dreData, setDreData] = useState<DREData[]>([]);
   const [lancamentos, setLancamentos] = useState<Lancamento[]>([]);
   const [loading, setLoading] = useState(false);
-  const [showDebug, setShowDebug] = useState(false);
+  const [showDebug] = useState(false); // painel de depuração escondido de quem usa
   const [saldoInicialMes, setSaldoInicialMes] = useState<number | null>(null);
 
-  const anos = [2024, 2025, 2026, 2027];
+  const anos = Array.from({ length: new Date().getFullYear() - 2024 + 2 }, (_, i) => 2024 + i);
   const meses = [
     { value: 'all', label: 'Ano Todo' },
     { value: 1, label: 'Janeiro' },
@@ -221,7 +222,7 @@ export default function DREReport() {
 
     } catch (error) {
       console.error('❌ Erro ao buscar dados:', error);
-      alert('Erro ao buscar dados: ' + error);
+      alert('Não consegui carregar o DRE. Atualize a página e tente de novo.');
     } finally {
       setLoading(false);
     }
@@ -900,19 +901,6 @@ export default function DREReport() {
           </div>
         </div>
 
-        {/* Debug Toggle */}
-        <div className="mt-4 flex items-center gap-2">
-          <input
-            type="checkbox"
-            id="showDebug"
-            checked={showDebug}
-            onChange={(e) => setShowDebug(e.target.checked)}
-            className="rounded border-slate-300"
-          />
-          <label htmlFor="showDebug" className="text-sm text-slate-600 cursor-pointer">
-            Mostrar informações de debug
-          </label>
-        </div>
       </div>
 
       {/* Loading */}

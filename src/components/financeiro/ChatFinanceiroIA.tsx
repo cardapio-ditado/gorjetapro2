@@ -8,6 +8,7 @@ interface Mensagem {
   role: 'user' | 'assistant';
   content: string;
   acao?: any;
+  confirmado?: boolean;
   timestamp: Date;
 }
 
@@ -57,6 +58,45 @@ const ChatFinanceiroIA: React.FC<ChatFinanceiroIAProps> = ({ onClose }) => {
     }
   }, [usuario]);
 
+  /** Chama a função do chat com o token da sessão (a função exige login). */
+  const chamarChat = async (corpo: Record<string, unknown>) => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token) throw new Error('Sua sessão expirou. Entre de novo no sistema.');
+    const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat-financeiro-ia`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
+        'Content-Type': 'application/json',
+        apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
+      },
+      body: JSON.stringify({ ...corpo, usuario_id: usuario?.id }),
+    });
+    const resultado = await response.json();
+    if (!response.ok || !resultado.sucesso) throw new Error(resultado.erro || 'Erro ao processar mensagem');
+    return resultado;
+  };
+
+  /** Lança as contas que a pessoa conferiu na proposta do chat. */
+  const confirmarLancamento = async (msg: Mensagem) => {
+    if (loading || msg.confirmado) return;
+    setLoading(true);
+    try {
+      const resultado = await chamarChat({ mensagem: 'Confirmar lançamento', confirmar_lancamento: msg.acao?.dados?.contas ?? [] });
+      setMensagens(prev => [
+        ...prev.map(m => (m.id === msg.id ? { ...m, confirmado: true } : m)),
+        { id: Date.now().toString(), role: 'assistant', content: resultado.resposta, acao: resultado.acao, timestamp: new Date() },
+      ]);
+      if (resultado.sugestoes?.length) setSugestoes(resultado.sugestoes);
+    } catch (error) {
+      setMensagens(prev => [...prev, {
+        id: Date.now().toString(), role: 'assistant',
+        content: `Não lancei: ${error instanceof Error ? error.message : 'erro desconhecido'}`, timestamp: new Date(),
+      }]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const enviarMensagem = async (texto?: string) => {
     const mensagemTexto = texto || inputMensagem.trim();
     if (!mensagemTexto || loading) return;
@@ -77,57 +117,11 @@ const ChatFinanceiroIA: React.FC<ChatFinanceiroIAProps> = ({ onClose }) => {
         throw new Error('Você precisa estar logado para usar o chat');
       }
 
-      console.log('Enviando mensagem para o chat IA...');
-
-      const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat-financeiro-ia`;
-      const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
       const contexto = mensagens.slice(-5).map(m => ({
         role: m.role === 'user' ? 'user' : 'assistant',
         content: m.content
       }));
-
-      let authToken = anonKey;
-
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session?.access_token) {
-          authToken = session.access_token;
-          console.log('Usando token de sessão real');
-        } else {
-          console.log('Usando anon key (desenvolvimento)');
-        }
-      } catch (err) {
-        console.warn('Erro ao obter sessão, usando anon key:', err);
-      }
-
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${authToken}`,
-          'Content-Type': 'application/json',
-          'apikey': anonKey
-        },
-        body: JSON.stringify({
-          mensagem: mensagemTexto,
-          contexto,
-          usuario_id: usuario.id
-        })
-      });
-
-      const resultado = await response.json();
-
-      console.log('📦 RESPOSTA DA API:');
-      console.log('  Status:', response.status);
-      console.log('  Sucesso:', resultado.sucesso);
-      console.log('  Resposta:', resultado.resposta?.substring(0, 200));
-      console.log('  Ação:', resultado.acao);
-      console.log('  Sugestões:', resultado.sugestoes);
-
-      if (!response.ok || !resultado.sucesso) {
-        console.error('❌ Erro da API:', resultado);
-        throw new Error(resultado.erro || 'Erro ao processar mensagem');
-      }
+      const resultado = await chamarChat({ mensagem: mensagemTexto, contexto });
 
       const respostaIA: Mensagem = {
         id: (Date.now() + 1).toString(),
@@ -236,11 +230,16 @@ const ChatFinanceiroIA: React.FC<ChatFinanceiroIAProps> = ({ onClose }) => {
                   : 'bg-white/10 text-white/90'
               }`}>
                 <p className="whitespace-pre-wrap text-sm leading-relaxed">{msg.content}</p>
-                {msg.acao && (
-                  <div className="mt-2 pt-2 border-t border-white/20">
-                    <p className="text-xs opacity-75">
-                      Ação executada: {msg.acao.tipo}
-                    </p>
+                {msg.acao?.tipo === 'confirmar_lancamento' && (msg.acao.dados?.contas?.length ?? 0) > 0 && (
+                  <div className="mt-3 pt-2 border-t border-white/20">
+                    {msg.confirmado
+                      ? <p className="text-xs opacity-75">Lançamento confirmado.</p>
+                      : (
+                        <button onClick={() => confirmarLancamento(msg)} disabled={loading}
+                          className="px-3 py-1.5 rounded-lg bg-wine hover:bg-[#6a1a25] text-white text-xs font-semibold disabled:opacity-50">
+                          Confirmar lançamento
+                        </button>
+                      )}
                   </div>
                 )}
               </div>

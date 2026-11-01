@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import dayjs from 'dayjs';
+import { exportToExcel } from '../../utils/reportGenerator';
 
 interface Fornecedor {
   id: string;
@@ -260,9 +261,18 @@ const FichaFinanceiraFornecedor: React.FC = () => {
     });
   };
 
+  /** Planilha com as compras (contas) e os pagamentos do fornecedor, como estão na tela. */
   const exportarFicha = () => {
-    // TODO: Implementar exportação em PDF/Excel
-    console.log('Exportar ficha financeira');
+    if (!fornecedorSelecionado) { setError('Escolha um fornecedor para exportar.'); return; }
+    const d = (x?: string) => (x ? dayjs(x).format('DD/MM/YYYY') : '');
+    const linhas = [
+      ...contasPagar.map(c => ['Compra', d(c.data_emissao), d(c.data_vencimento), c.numero_documento || '', c.descricao, c.categoria_nome || '',
+        Number(c.valor_total), Number(c.valor_pago), Number(c.saldo_restante), c.status]),
+      ...pagamentos.map(p => ['Pagamento', d(p.data_pagamento), '', p.numero_comprovante || '', p.descricao_conta, p.forma_pagamento_nome || '',
+        '', Number(p.valor_pagamento), '', p.conta_bancaria || '']),
+    ];
+    exportToExcel(linhas, `ficha-${fornecedorSelecionado.nome.replace(/[^\w]+/g, '-').toLowerCase()}-${dayjs().format('YYYY-MM-DD')}`,
+      ['Tipo', 'Data', 'Vencimento', 'Documento', 'Descrição', 'Categoria / Forma', 'Valor', 'Pago', 'Saldo', 'Situação / Conta']);
   };
 
   const formatCurrency = (value: number) => {

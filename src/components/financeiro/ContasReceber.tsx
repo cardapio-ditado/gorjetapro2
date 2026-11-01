@@ -9,7 +9,7 @@ import { TableSkeleton } from '../ui/Skeleton';
 
 interface ContaReceber {
   id: string; cliente_id: string; cliente_nome: string; cliente_documento?: string;
-  cliente_telefone?: string; descricao: string; categoria_nome?: string;
+  cliente_telefone?: string; descricao: string; categoria_id?: string | null; centro_custo_id?: string | null; categoria_nome?: string;
   forma_recebimento_id?: string; valor_total: number; valor_recebido: number;
   saldo_restante: number; data_emissao: string; data_vencimento: string;
   numero_documento?: string; status: 'em_aberto'|'parcialmente_recebido'|'recebido'|'vencido'|'cancelado';
@@ -94,7 +94,7 @@ const ContasReceber: React.FC = () => {
       if (dataInicial) query = query.gte('data_vencimento', dataInicial);
       if (dataFinal) query = query.lte('data_vencimento', dataFinal);
       const { data } = await query;
-      const hoje = new Date().toISOString().split('T')[0];
+      const hoje = dayjs().format('YYYY-MM-DD');
       setIndicadores({
         total_contas: (data||[]).length,
         valor_total: (data||[]).reduce((s,c) => s+c.valor_total,0),
@@ -160,6 +160,9 @@ const ContasReceber: React.FC = () => {
 
   const handleSaveRecebimento = async () => {
     if (!contaSelecionada) return;
+    // dinheiro recebido sempre cai numa conta (banco ou cofre): sem ela o saldo das contas não fecha
+    if (!(Number(formDataRecebimento.valor_recebimento) > 0)) { setError('Informe o valor recebido.'); return; }
+    if (!formDataRecebimento.conta_bancaria_id) { setError('Escolha a conta bancária (ou o cofre) onde o dinheiro entrou.'); return; }
     try {
       setLoading(true); setError(null);
 
@@ -192,7 +195,7 @@ const ContasReceber: React.FC = () => {
   const resetFormRecebimento = () => setFormDataRecebimento({ valor_recebimento:0, data_recebimento: dayjs().format('YYYY-MM-DD'), forma_pagamento_id:'', conta_bancaria_id:'', numero_comprovante:'', observacoes:'' });
 
   const openFormConta = (c?: ContaReceber) => {
-    if (c) { setEditingConta(c); setFormDataConta({ cliente_id: c.cliente_id, descricao: c.descricao, categoria_id:'', centro_custo_id:'', forma_recebimento_id: c.forma_recebimento_id||'', valor_total: c.valor_total, data_emissao: c.data_emissao, data_vencimento: c.data_vencimento, numero_documento: c.numero_documento||'', observacoes: c.observacoes||'' }); }
+    if (c) { setEditingConta(c); setFormDataConta({ cliente_id: c.cliente_id, descricao: c.descricao, categoria_id: c.categoria_id||'', centro_custo_id: c.centro_custo_id||'', forma_recebimento_id: c.forma_recebimento_id||'', valor_total: c.valor_total, data_emissao: c.data_emissao, data_vencimento: c.data_vencimento, numero_documento: c.numero_documento||'', observacoes: c.observacoes||'' }); }
     else { setEditingConta(null); resetFormConta(); }
     setShowFormConta(true);
   };
@@ -224,7 +227,7 @@ const ContasReceber: React.FC = () => {
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
         <button style={{ ...btnStyle('rgba(255,255,255,0.08)'), color: S.muted, border: `1px solid ${S.border}` }}
-          onClick={() => exportToExcel(filtered.map(c => [c.cliente_nome,c.descricao,fmt(c.valor_total),fmt(c.saldo_restante),dayjs(c.data_vencimento).format('DD/MM/YYYY')]), ['Cliente','Descrição','Total','Saldo','Vencimento'], 'contas-receber')}>
+          onClick={() => exportToExcel(filtered.map(c => [c.cliente_nome,c.descricao,Number(c.valor_total),Number(c.saldo_restante),dayjs(c.data_vencimento).format('DD/MM/YYYY')]), `contas-receber-${dayjs().format('YYYY-MM-DD')}`, ['Cliente','Descrição','Total','Saldo','Vencimento'])}>
           <Download style={{ width: 13, height: 13 }} /> Excel
         </button>
         <button style={btnStyle()} onClick={() => openFormConta()}>
@@ -358,7 +361,7 @@ const ContasReceber: React.FC = () => {
               </div>
               <div style={fieldStyle}>
                 <label style={labelStyle}>Valor Total *</label>
-                <input type="number" step="0.01" value={formDataConta.valor_total} onChange={e=>setFormDataConta({...formDataConta,valor_total:parseFloat(e.target.value)||0})} style={inputStyle} />
+                <input type="number" step="0.01" min="0.01" value={formDataConta.valor_total} onChange={e=>setFormDataConta({...formDataConta,valor_total:parseFloat(e.target.value)||0})} style={inputStyle} />
               </div>
               <div style={fieldStyle}>
                 <label style={labelStyle}>Data Emissão *</label>
@@ -389,8 +392,9 @@ const ContasReceber: React.FC = () => {
                 <textarea value={formDataConta.observacoes} onChange={e=>setFormDataConta({...formDataConta,observacoes:e.target.value})} rows={2} style={{ ...inputStyle, resize: 'vertical' }} />
               </div>
             </div>
+            {error && <div style={{ background: S.redBg, border: `1px solid ${S.redBorder}`, borderRadius: 10, padding: '10px 14px', color: S.red, fontSize: 12, marginTop: 14 }}>{error}</div>}
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 20 }}>
-              <button onClick={()=>setShowFormConta(false)} style={{ background:'rgba(255,255,255,0.05)',border:`1px solid ${S.border}`,borderRadius:8,padding:'8px 16px',color:S.muted,fontSize:12,cursor:'pointer' }}>Cancelar</button>
+              <button onClick={()=>{setShowFormConta(false);setError(null);}} style={{ background:'rgba(255,255,255,0.05)',border:`1px solid ${S.border}`,borderRadius:8,padding:'8px 16px',color:S.muted,fontSize:12,cursor:'pointer' }}>Cancelar</button>
               <button onClick={handleSaveConta} disabled={loading||!formDataConta.cliente_id||!formDataConta.descricao} style={{ ...btnStyle(), opacity: loading||!formDataConta.cliente_id||!formDataConta.descricao?0.5:1 }}>{loading?'Salvando...':'Salvar'}</button>
             </div>
           </div>
@@ -424,7 +428,7 @@ const ContasReceber: React.FC = () => {
                 <SearchableSelect options={formasPagamento.map(f=>({value:f.id,label:f.nome}))} value={formDataRecebimento.forma_pagamento_id} onChange={v=>setFormDataRecebimento({...formDataRecebimento,forma_pagamento_id:v})} placeholder="Buscar..." theme="dark" />
               </div>
               <div style={fieldStyle}>
-                <label style={labelStyle}>Conta Bancária</label>
+                <label style={labelStyle}>Conta Bancária *</label>
                 <SearchableSelect options={contasBancarias.map(c=>({value:c.id,label:`${c.banco} - ${c.tipo_conta}`}))} value={formDataRecebimento.conta_bancaria_id} onChange={v=>setFormDataRecebimento({...formDataRecebimento,conta_bancaria_id:v})} placeholder="Buscar..." theme="dark" />
               </div>
               <div style={fieldStyle}>
@@ -436,8 +440,9 @@ const ContasReceber: React.FC = () => {
                 <textarea value={formDataRecebimento.observacoes} onChange={e=>setFormDataRecebimento({...formDataRecebimento,observacoes:e.target.value})} rows={2} style={{ ...inputStyle, resize: 'vertical' }} />
               </div>
             </div>
+            {error && <div style={{ background: S.redBg, border: `1px solid ${S.redBorder}`, borderRadius: 10, padding: '10px 14px', color: S.red, fontSize: 12, marginTop: 14 }}>{error}</div>}
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 20 }}>
-              <button onClick={()=>setShowFormRecebimento(false)} style={{ background:'rgba(255,255,255,0.05)',border:`1px solid ${S.border}`,borderRadius:8,padding:'8px 16px',color:S.muted,fontSize:12,cursor:'pointer' }}>Cancelar</button>
+              <button onClick={()=>{setShowFormRecebimento(false);setError(null);}} style={{ background:'rgba(255,255,255,0.05)',border:`1px solid ${S.border}`,borderRadius:8,padding:'8px 16px',color:S.muted,fontSize:12,cursor:'pointer' }}>Cancelar</button>
               <button onClick={handleSaveRecebimento} disabled={loading||!formDataRecebimento.valor_recebimento||formDataRecebimento.valor_recebimento>contaSelecionada.saldo_restante}
                 style={{ background:'rgba(74,222,128,0.15)',border:`1px solid rgba(74,222,128,0.25)`,borderRadius:8,padding:'8px 16px',color:S.green,fontSize:12,cursor:'pointer',fontWeight:600,opacity:loading?0.5:1 }}>
                 {loading?'Salvando...':'Registrar Recebimento'}

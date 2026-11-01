@@ -11,7 +11,7 @@ interface Transaction {
   id: string; tipo: 'entrada'|'saida'; valor: number; data: string; descricao: string;
   centro_custo?: string; categoria_id?: string; conta_bancaria_id?: string;
   forma_pagamento_id?: string; comprovante?: string; observacoes?: string;
-  origem?: string; criado_por?: string; criado_em: string;
+  origem?: string; conta_pagar_id?: string | null; conta_receber_id?: string | null; criado_por?: string; criado_em: string;
   valor_entrada?: number; valor_saida?: number; saldo_acumulado?: number; saldo_anterior?: number;
 }
 interface FormData {
@@ -97,6 +97,8 @@ const FluxoCaixa: React.FC = () => {
   const handleSave = async () => {
     try {
       setLoading(true); setError(null);
+      if (!formData.conta_bancaria_id) { setError('Escolha a conta bancária (ou o cofre) do lançamento.'); setLoading(false); return; }
+      if (!(Number(formData.valor) > 0)) { setError('Informe um valor maior que zero.'); setLoading(false); return; }
       if (formData.tipo === 'transferencia') {
         if (!formData.conta_bancaria_id || !formData.conta_destino_id) { alert('Selecione conta de origem e destino'); setLoading(false); return; }
         if (formData.conta_bancaria_id === formData.conta_destino_id) { alert('Conta de origem e destino devem ser diferentes'); setLoading(false); return; }
@@ -107,7 +109,8 @@ const FluxoCaixa: React.FC = () => {
         if (e2) throw e2;
       } else {
         const d = { tipo:formData.tipo, valor:parseFloat(formData.valor.toString()), data:formData.data, descricao:formData.descricao, centro_custo:formData.centro_custo, conta_bancaria_id:formData.conta_bancaria_id, observacoes:formData.observacoes, comprovante:formData.comprovante, origem:'manual' };
-        if (editingTransaction) { const { error } = await supabase.from('fluxo_caixa').update(d).eq('id',editingTransaction.id); if (error) throw error; }
+        // na edição a origem fica como estava (só lançamentos manuais chegam aqui)
+        if (editingTransaction) { const { origem: _o, ...semOrigem } = d; const { error } = await supabase.from('fluxo_caixa').update(semOrigem).eq('id',editingTransaction.id); if (error) throw error; }
         else { const { error } = await supabase.from('fluxo_caixa').insert([d]); if (error) throw error; }
       }
       setShowForm(false); setEditingTransaction(null); resetForm(); fetchTransactions(); fetchIndicadores(); fetchContasBancarias();
@@ -115,14 +118,31 @@ const FluxoCaixa: React.FC = () => {
     finally { setLoading(false); }
   };
 
+  /**
+   * Lançamento que veio de uma baixa (conta a pagar/receber) ou de uma
+   * transferência não se edita nem se exclui aqui: excluir reabria a conta em
+   * silêncio (é um estorno) e mexer numa perna da transferência deixava a outra
+   * sozinha. O caminho certo é o estorno em Histórico e Estornos.
+   */
+  const travado = (t: Transaction) => {
+    if (t.origem === 'conta_pagar' || t.conta_pagar_id) return 'Veio da baixa de uma conta a pagar. Para desfazer, use "Estornar" em Histórico e Estornos.';
+    if (t.origem === 'conta_receber' || t.conta_receber_id) return 'Veio do recebimento de uma conta a receber. Para desfazer, exclua o recebimento em Contas a Receber.';
+    if (t.origem === 'transferencia') return 'Faz parte de uma transferência entre contas (saída e entrada). Para desfazer, lance a transferência de volta.';
+    return null;
+  };
+
   const handleDelete = async (id: string) => {
-    if (!confirm('Excluir esta transação?')) return;
+    const t = transactions.find(x => x.id === id);
+    const motivo = t ? travado(t) : null;
+    if (motivo) { alert(motivo); return; }
+    if (!confirm('Excluir este lançamento? Ele sai do caixa e do saldo da conta.')) return;
     try { setLoading(true); const { error } = await supabase.from('fluxo_caixa').delete().eq('id',id); if (error) throw error; fetchTransactions(); fetchIndicadores(); }
     catch (err: any) { setError(err.message); }
     finally { setLoading(false); }
   };
 
   const openForm = (t?: Transaction) => {
+    if (t && travado(t)) { alert(travado(t)); return; }
     if (t) { setEditingTransaction(t); setFormData({ tipo:t.tipo, valor:t.valor, data:t.data, descricao:t.descricao, centro_custo:t.centro_custo||'', observacoes:t.observacoes||'', comprovante:t.comprovante||'', conta_bancaria_id:t.conta_bancaria_id||'', conta_destino_id:'' }); }
     else { setEditingTransaction(null); resetForm(); }
     setShowForm(true);
@@ -137,7 +157,7 @@ const FluxoCaixa: React.FC = () => {
       const { error: ue } = await supabase.storage.from('comprovantes').upload(path, file); if (ue) throw ue;
       const { data: { publicUrl } } = supabase.storage.from('comprovantes').getPublicUrl(path);
       setFormData({ ...formData, comprovante: publicUrl });
-    } catch {}
+    } catch (e: any) { setError(`Não consegui enviar o comprovante: ${e?.message ?? 'erro desconhecido'}`); }
   };
 
   const gerarRelatorioPDF = async () => {
@@ -335,10 +355,10 @@ const FluxoCaixa: React.FC = () => {
                     </td>
                     <td style={{ padding:'9px 14px', whiteSpace:'nowrap' }}>
                       <div style={{ display:'flex', gap:6, justifyContent:'center' }}>
-                        <button onClick={()=>openForm(t)} className="btn-icon btn-icon-accent" aria-label={`Editar lançamento: ${t.descricao}`} title="Editar" style={{ color:S.blue }}>
+                        <button onClick={()=>openForm(t)} className="btn-icon btn-icon-accent" aria-label={`Editar lançamento: ${t.descricao}`} title={travado(t) ?? 'Editar'} style={{ color:S.blue, opacity: travado(t) ? 0.35 : 1 }}>
                           <Edit style={{ width:12, height:12 }} />
                         </button>
-                        <button onClick={()=>handleDelete(t.id)} className="btn-icon btn-icon-danger" aria-label={`Excluir lançamento: ${t.descricao}`} title="Excluir" style={{ color:S.red }}>
+                        <button onClick={()=>handleDelete(t.id)} className="btn-icon btn-icon-danger" aria-label={`Excluir lançamento: ${t.descricao}`} title={travado(t) ?? 'Excluir'} style={{ color:S.red, opacity: travado(t) ? 0.35 : 1 }}>
                           <Trash2 style={{ width:12, height:12 }} />
                         </button>
                       </div>
@@ -360,7 +380,7 @@ const FluxoCaixa: React.FC = () => {
                       {fmt(filteredTransactions.filter(t=>t.tipo==='saida').reduce((a,t)=>a+Number(t.valor||0),0))}
                     </td>
                     <td className="num num-total" style={{ padding:'var(--sp-4)', color:'var(--gold)', background:'rgba(212,175,55,0.05)', whiteSpace:'nowrap' }}>
-                      {fmt(filteredTransactions[filteredTransactions.length-1]?.saldo_acumulado||0)}
+                      {fmt((ordemVisualizacao==='desc' ? filteredTransactions[0] : filteredTransactions[filteredTransactions.length-1])?.saldo_acumulado||0)}
                     </td>
                     <td />
                   </tr>
@@ -444,8 +464,9 @@ const FluxoCaixa: React.FC = () => {
                 {formData.comprovante && <p style={{ color:S.green, fontSize:'var(--fs-caption)', margin:'4px 0 0' }}>✓ Arquivo carregado</p>}
               </div>
             </div>
+            {error && <div role="alert" style={{ background:S.redBg, border:`1px solid ${S.redBorder}`, borderRadius:10, padding:'10px 14px', color:S.red, fontSize:12, marginTop:14 }}>{error}</div>}
             <div style={{ display:'flex', justifyContent:'flex-end', gap:8, marginTop:20 }}>
-              <button onClick={()=>setShowForm(false)} className="btn-secondary" style={{ fontSize:'var(--fs-label)' }}>Cancelar</button>
+              <button onClick={()=>{setShowForm(false);setError(null);}} className="btn-secondary" style={{ fontSize:'var(--fs-label)' }}>Cancelar</button>
               <button onClick={handleSave} disabled={loading||!formData.descricao||!formData.valor||formData.valor<=0}
                 className="btn-primary" style={{ fontSize:'var(--fs-label)' }}>
                 {loading?'Salvando...':'Salvar'}

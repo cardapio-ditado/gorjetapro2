@@ -830,22 +830,26 @@ const exportToCSV = (data: any[], filename: string, headers: string[]) => {
   document.body.removeChild(link);
 };
 
-// Função para exportar dados como Excel (usando CSV com extensão .xls)
+/**
+ * Planilha .xlsx de verdade (biblioteca xlsx, carregada só na hora de exportar):
+ * acentos certos, números como números e zero continua zero. Cada linha é uma
+ * lista de células na ordem dos cabeçalhos.
+ */
 export const exportToExcel = (data: any[], filename: string, headers: string[]) => {
-  const csvContent = [
-    headers.join('\t'),
-    ...data.map(row => 
-      row.map(cell => cell || '').join('\t')
-    )
-  ].join('\n');
-
-  const blob = new Blob([csvContent], { type: 'application/vnd.ms-excel;charset=utf-8;' });
-  const link = document.createElement('a');
-  const url = URL.createObjectURL(blob);
-  link.setAttribute('href', url);
-  link.setAttribute('download', `${filename}.xls`);
-  link.style.visibility = 'hidden';
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+  void (async () => {
+    const XLSX = await import('xlsx');
+    const linhas = data.map(row => (Array.isArray(row) ? row : Object.values(row ?? {}))
+      .map(cell => (cell === null || cell === undefined ? '' : cell)));
+    const planilha = XLSX.utils.aoa_to_sheet([headers, ...linhas]);
+    // largura das colunas pelo maior texto (até 50 caracteres)
+    planilha['!cols'] = headers.map((h, i) => ({
+      wch: Math.min(50, Math.max(String(h).length, ...linhas.map(l => String(l[i] ?? '').length)) + 2),
+    }));
+    const livro = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(livro, planilha, 'Dados');
+    XLSX.writeFile(livro, `${filename}.xlsx`);
+  })().catch(err => {
+    console.error('Erro ao exportar planilha:', err);
+    alert('Não consegui gerar a planilha. Tente de novo.');
+  });
 };

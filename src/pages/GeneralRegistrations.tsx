@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Tab } from '@headlessui/react';
 import { Plus, Search, CreditCard as Edit, Trash2, Download, Building2, Users, CreditCard, Tag, Banknote, Building, Eye, EyeOff, FileText, CheckCircle, XCircle, BarChart3, Vault } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { exportToExcel } from '../utils/reportGenerator';
 import FinancialCategories from '../components/financeiro/FinancialCategories';
 import DRESimplificado from '../components/diretoria/DRESimplificado';
 
@@ -346,9 +347,16 @@ const GeneralRegistrations: React.FC = () => {
     setShowForm(true);
   };
 
+  /** Planilha com o cadastro da aba aberta, como está filtrado na tela. */
   const exportData = () => {
-    // Implementation for CSV/Excel export
-    console.log('Export functionality to be implemented');
+    const linhas: any[] = filteredData;
+    if (!linhas.length) { alert('Nada para exportar com esse filtro.'); return; }
+    const NOMES: Record<number, string> = { 0: 'centros-de-custo', 1: 'fornecedores', 2: 'clientes', 4: 'formas-de-pagamento', 5: 'contas-bancarias' };
+    // colunas: as do primeiro registro, sem ids internos nem datas técnicas
+    const colunas = Object.keys(linhas[0]).filter(k => k !== 'id' && !k.endsWith('_id') && !['criado_em', 'atualizado_em'].includes(k)
+      && linhas.some(l => l[k] !== null && l[k] !== undefined && typeof l[k] !== 'object'));
+    exportToExcel(linhas.map(l => colunas.map(c => l[c])), `${NOMES[selectedTab] ?? 'cadastro'}-${new Date().toISOString().slice(0, 10)}`,
+      colunas.map(c => c.replace(/_/g, ' ')));
   };
 
   const getCurrentData = () => {

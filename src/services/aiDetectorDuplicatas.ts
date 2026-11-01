@@ -57,7 +57,7 @@ export async function detectarDuplicatas(
               id: conta.id,
               fornecedor_nome: conta.fornecedores?.nome || conta.fornecedor_nome,
               descricao: conta.descricao,
-              valor: conta.valor,
+              valor: Number(conta.valor_total ?? conta.valor),
               data_vencimento: conta.data_vencimento,
               numero_documento: conta.numero_documento,
               status: conta.status,
@@ -83,7 +83,7 @@ export async function detectarDuplicatas(
       // Valor com margem de 2%
       const valorMin = dados.valor * 0.98;
       const valorMax = dados.valor * 1.02;
-      query = query.gte('valor', valorMin).lte('valor', valorMax);
+      query = query.gte('valor_total', valorMin).lte('valor_total', valorMax); // a coluna é valor_total (não existe 'valor')
 
       // Vencimento próximo (±7 dias)
       const dataVenc = dayjs(dados.data_vencimento);
@@ -106,7 +106,7 @@ export async function detectarDuplicatas(
           }
 
           // Valor similar (quanto mais próximo, mais pontos)
-          const diferencaValor = Math.abs(conta.valor - dados.valor);
+          const diferencaValor = Math.abs(Number(conta.valor_total ?? conta.valor) - dados.valor);
           const percDiferencaValor = diferencaValor / dados.valor;
           if (percDiferencaValor < 0.01) {
             pontos += 30;
@@ -157,7 +157,7 @@ export async function detectarDuplicatas(
                   id: conta.id,
                   fornecedor_nome: conta.fornecedores?.nome || conta.fornecedor_nome,
                   descricao: conta.descricao,
-                  valor: conta.valor,
+                  valor: Number(conta.valor_total ?? conta.valor),
                   data_vencimento: conta.data_vencimento,
                   numero_documento: conta.numero_documento,
                   status: conta.status,
@@ -180,7 +180,7 @@ export async function detectarDuplicatas(
     if (dados.fornecedor_id) {
       const { data: contasMesmoDia } = await supabase
         .from(tabela)
-        .select('id, valor, data_vencimento')
+        .select('id, valor_total, data_vencimento')
         .eq('fornecedor_id', dados.fornecedor_id)
         .eq('data_vencimento', dados.data_vencimento)
         .neq('status', 'cancelado');

@@ -78,8 +78,33 @@ Deno.serve(async (req: Request) => {
     }
 
     const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // só quem está logado no sistema usa o chat (a função usa a chave de serviço)
+    const auth = req.headers.get('Authorization') ?? '';
+    const anonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
+    const { data: quem } = await createClient(supabaseUrl, anonKey, { global: { headers: { Authorization: auth } } }).auth.getUser();
+    if (!quem?.user) {
+      return new Response(JSON.stringify({ sucesso: false, erro: 'Faça login para usar o chat.' }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
     const body = await req.json();
     const { mensagem, contexto = [], usuario_id }: ChatRequest = body;
+
+    // 2º passo do lançamento: a pessoa conferiu e clicou em "Confirmar"
+    if (Array.isArray(body.confirmar_lancamento)) {
+      const uid = usuario_id && isValidUUID(usuario_id) ? usuario_id : null;
+      const dados = await confirmarLancamento(supabase, body.confirmar_lancamento, uid);
+      const resposta = formatarRespostaManual('lancar_conta_pagar', dados);
+      await supabase.from('chat_ia_financeiro').insert({
+        usuario_id: uid, mensagem: 'Confirmar lançamento', resposta_ia: resposta,
+        acao_executada: { tipo: 'lancar_conta_pagar', dados }, contexto: [], tokens_usados: 0,
+      });
+      return new Response(JSON.stringify({
+        sucesso: true, resposta, acao: { tipo: 'lancar_conta_pagar', dados },
+        sugestoes: gerarSugestoes('lancar_conta_pagar'),
+      }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
 
     console.log('='.repeat(60));
     console.log('📩 MENSAGEM:', mensagem);
@@ -172,8 +197,8 @@ async function processarComGPT(
         const contasExtraidas = await extrairMultiplasContas(mensagem, model);
         console.log('  📋 Contas detectadas:', contasExtraidas.length);
         parametros = { total_contas: contasExtraidas.length };
-        dadosBanco = await executarLancamentoMultiplo(supabase, contasExtraidas, usuario_id);
-        break;
+        // não grava nada aqui: devolve a proposta para a pessoa conferir e confirmar
+        return await prepararLancamento(supabase, contasExtraidas);
       
       case 'consultar_compras':
         parametros = { periodo: extrairPeriodo(mensagem) };
@@ -248,17 +273,10 @@ Formate uma resposta clara, objetiva e humanizada. Se foram lançadas várias co
 function detectarIntencao(mensagem: string): string {
   const msg = mensagem.toLowerCase();
 
-  // Aceita: "lançar 500", "criar conta 300", "500 de luz", etc
-  if (
-    (msg.includes('lanç') && (msg.includes('conta') || /\d+/.test(msg))) ||
-    (msg.includes('lanc') && (msg.includes('conta') || /\d+/.test(msg))) ||
-    (msg.includes('criar') && (msg.includes('conta') || /\d+/.test(msg))) ||
-    (msg.includes('adicionar') && (msg.includes('conta') || /\d+/.test(msg))) ||
-    (msg.includes('incluir') && (msg.includes('conta') || /\d+/.test(msg))) ||
-    msg.match(/r\$\s*\d/) || 
-    msg.match(/reais?\s*\d/) ||
-    msg.match(/\d+[.,]?\d*\s*(de|luz|agua|água|aluguel|telefone|internet|energia)/)
-  ) {
+  // Lançar só com pedido explícito ("lançar 500 de luz", "criar conta de 300").
+  // Antes, qualquer "R$ 5" ou "5 de outubro" virava lançamento.
+  const pedeLancar = /\b(lan[cç]a|lan[cç]ar|lance|criar|crie|adicionar|adicione|incluir|inclua|registrar|registre)\b/.test(msg);
+  if (pedeLancar && (msg.includes('conta') || /\d/.test(msg))) {
     return 'lancar_conta_pagar';
   }
 
@@ -392,100 +410,11 @@ function calcularVencimento(relativo: string): Date {
   }
 }
 
-async function executarLancamentoMultiplo(supabase: any, contas: any[], usuario_id: string | null) {
-  console.log(`  💳 Lançando ${contas.length} conta(s)...`);
-
-  // Buscar TODOS os fornecedores ativos com categorias
-  const { data: fornecedores, error: fornecedoresError } = await supabase
-    .from('fornecedores')
-    .select(`
-      id, 
-      nome, 
-      categoria_padrao_id,
-      categorias_financeiras:categoria_padrao_id (
-        id,
-        nome,
-        tipo
-      )
-    `)
-    .eq('status', 'ativo');
-
-  if (fornecedoresError || !fornecedores || fornecedores.length === 0) {
-    throw new Error('Nenhum fornecedor ativo cadastrado.');
-  }
-
-  console.log(`  🏢 ${fornecedores.length} fornecedores disponíveis`);
-
-  // Processar cada conta individualmente
-  const contasInseridas = [];
-
-  for (const conta of contas) {
-    console.log(`\n  📝 Processando: "${conta.descricao}"`);
-    
-    // Buscar fornecedor por similaridade
-    const fornecedor = buscarFornecedorPorSimilaridade(
-      conta.descricao, 
-      conta.fornecedorSugerido,
-      fornecedores
-    );
-
-    console.log(`    🏢 Fornecedor escolhido: ${fornecedor.nome}`);
-    console.log(`    🏷️ Categoria: ${fornecedor.categorias_financeiras?.nome || 'Sem categoria'}`);
-
-    const contaParaInserir = {
-      fornecedor_id: fornecedor.id,
-      categoria_id: fornecedor.categoria_padrao_id || null,
-      descricao: conta.descricao,
-      valor_total: conta.valor,
-      data_vencimento: conta.dataVencimento.toISOString().split('T')[0],
-      status: 'em_aberto',
-      criado_por: usuario_id
-    };
-
-    const { data: contaInserida, error } = await supabase
-      .from('contas_pagar')
-      .insert(contaParaInserir)
-      .select(`
-        id, 
-        descricao, 
-        valor_total, 
-        data_vencimento,
-        fornecedores(nome),
-        categorias_financeiras(nome)
-      `)
-      .single();
-
-    if (error) {
-      console.error('    ❌ Erro ao inserir:', error);
-      throw new Error(`Erro ao lançar "${conta.descricao}": ${error.message}`);
-    }
-
-    console.log(`    ✅ Conta lançada: ID ${contaInserida.id}`);
-
-    contasInseridas.push({
-      id: contaInserida.id,
-      descricao: contaInserida.descricao,
-      valor: parseFloat(contaInserida.valor_total),
-      vencimento: contaInserida.data_vencimento,
-      fornecedor: contaInserida.fornecedores?.nome || 'Sem fornecedor',
-      categoria: contaInserida.categorias_financeiras?.nome || 'Sem categoria'
-    });
-  }
-
-  console.log(`\n  ✅ Total: ${contasInseridas.length} conta(s) lançada(s)`);
-
-  return {
-    sucesso: true,
-    total_contas: contasInseridas.length,
-    contas: contasInseridas
-  };
-}
-
 function buscarFornecedorPorSimilaridade(
   descricao: string, 
   fornecedorSugerido: string | null,
   fornecedores: any[]
-): any {
+): any | null {
   const descLower = descricao.toLowerCase();
   
   // Se fornecedor foi sugerido pela IA, tentar encontrá-lo primeiro
@@ -532,16 +461,73 @@ function buscarFornecedorPorSimilaridade(
     }
   }
 
-  // Fallback: primeiro fornecedor com categoria
-  const fornecedorComCategoria = fornecedores.find(f => f.categoria_padrao_id);
-  if (fornecedorComCategoria) {
-    console.log(`    🤷 Usando fornecedor padrão: ${fornecedorComCategoria.nome}`);
-    return fornecedorComCategoria;
-  }
+  // Sem fornecedor reconhecido: não inventa (antes pegava o primeiro da lista)
+  return null;
+}
 
-  // Último recurso: primeiro fornecedor da lista
-  console.log(`    ⚠️ Usando primeiro fornecedor: ${fornecedores[0].nome}`);
-  return fornecedores[0];
+/** 1º passo: monta a proposta (fornecedor, categoria, valor, vencimento) sem gravar. */
+async function prepararLancamento(supabase: any, contas: any[]) {
+  const { data: fornecedores } = await supabase
+    .from('fornecedores')
+    .select('id, nome, categoria_padrao_id, categorias_financeiras:categoria_padrao_id (id, nome, tipo)')
+    .eq('status', 'ativo');
+  const propostas = contas.map((conta) => {
+    const f = buscarFornecedorPorSimilaridade(conta.descricao, conta.fornecedorSugerido, fornecedores || []);
+    return {
+      descricao: conta.descricao,
+      valor: Number(conta.valor),
+      vencimento: conta.dataVencimento.toISOString().split('T')[0],
+      fornecedor_id: f?.id ?? null,
+      fornecedor: f?.nome ?? null,
+      fornecedor_citado: conta.fornecedorSugerido ?? null,
+      categoria_id: f?.categoria_padrao_id ?? null,
+      categoria: f?.categorias_financeiras?.nome ?? null,
+    };
+  });
+  const prontas = propostas.filter((p) => p.fornecedor_id && p.valor > 0);
+  const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  const linhas = propostas.map((p) => p.fornecedor_id
+    ? `• ${p.descricao}: ${fmt(p.valor)}, vence ${p.vencimento.split('-').reverse().join('/')} — ${p.fornecedor}${p.categoria ? ` (${p.categoria})` : ''}`
+    : `• ${p.descricao}: ${fmt(p.valor)} — fornecedor não encontrado${p.fornecedor_citado ? ` ("${p.fornecedor_citado}")` : ''}. Diga o nome exato do fornecedor ou lance em Contas a Pagar.`);
+  const resposta = propostas.length === 0
+    ? 'Não entendi qual conta lançar. Diga o valor, o que é e o fornecedor (ex.: "lançar 450 de energia da Energisa para dia 10").'
+    : `Confira antes de lançar:\n\n${linhas.join('\n')}\n\n${prontas.length ? `Clique em "Confirmar lançamento" para lançar ${prontas.length === 1 ? 'esta conta' : `estas ${prontas.length} contas`}.` : 'Nenhuma conta está pronta para lançar.'}`;
+  return {
+    resposta,
+    tokens: 0,
+    acao: { tipo: 'confirmar_lancamento', dados: { contas: prontas, todas: propostas } },
+    sugestoes: [],
+  };
+}
+
+/** 2º passo: grava só o que a pessoa confirmou, conferindo fornecedor e valores. */
+async function confirmarLancamento(supabase: any, contas: any[], usuario_id: string | null) {
+  const inseridas = [];
+  for (const c of contas.slice(0, 20)) {
+    const valor = Number(c?.valor);
+    const venc = String(c?.vencimento ?? '');
+    if (!isValidUUID(String(c?.fornecedor_id ?? '')) || !(valor > 0) || !/^20\d{2}-\d{2}-\d{2}$/.test(venc)) {
+      throw new Error(`Conta inválida: ${c?.descricao ?? 'sem descrição'}`);
+    }
+    const { data: f } = await supabase.from('fornecedores').select('id').eq('id', c.fornecedor_id).maybeSingle();
+    if (!f) throw new Error(`Fornecedor não encontrado para "${c.descricao}"`);
+    const { data: conta, error } = await supabase.from('contas_pagar').insert({
+      fornecedor_id: c.fornecedor_id,
+      categoria_id: isValidUUID(String(c.categoria_id ?? '')) ? c.categoria_id : null,
+      descricao: String(c.descricao ?? 'Conta lançada pelo chat').slice(0, 200),
+      valor_total: valor,
+      data_vencimento: venc,
+      status: 'em_aberto',
+      criado_por: usuario_id,
+      observacoes: 'Lançada pelo chat financeiro (confirmada)',
+    }).select('id, descricao, valor_total, data_vencimento, fornecedores(nome), categorias_financeiras(nome)').single();
+    if (error) throw new Error(`Erro ao lançar "${c.descricao}": ${error.message}`);
+    inseridas.push({
+      id: conta.id, descricao: conta.descricao, valor: Number(conta.valor_total), vencimento: conta.data_vencimento,
+      fornecedor: conta.fornecedores?.nome || 'Sem fornecedor', categoria: conta.categorias_financeiras?.nome || 'Sem categoria',
+    });
+  }
+  return { sucesso: true, total_contas: inseridas.length, contas: inseridas };
 }
 
 function extrairPeriodo(mensagem: string): string {
@@ -641,7 +627,7 @@ async function executarConsultaContasPagar(supabase: any, args: any) {
     .gte('data_vencimento', periodo.inicio)
     .lte('data_vencimento', periodo.fim)
     .order('data_vencimento')
-    .limit(20);
+    .limit(1000); // soma o período inteiro (antes somava só as 20 primeiras); a lista mostra 10
 
   if (error) throw error;
 

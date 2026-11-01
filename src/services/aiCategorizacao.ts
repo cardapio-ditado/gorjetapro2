@@ -121,9 +121,9 @@ export async function sugerirCategoria(
     if (valor) {
       const { data: porValor } = await supabase
         .from('contas_pagar')
-        .select('categoria_id, categorias_financeiras(id, nome), valor')
-        .gte('valor', valor * 0.8)
-        .lte('valor', valor * 1.2)
+        .select('categoria_id, categorias_financeiras(id, nome), valor_total')
+        .gte('valor_total', valor * 0.8)
+        .lte('valor_total', valor * 1.2)
         .not('categoria_id', 'is', null)
         .limit(20);
 
