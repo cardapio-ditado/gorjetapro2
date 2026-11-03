@@ -31,6 +31,14 @@ Se lá mudar, vale o que estiver lá. Hoje:
 - **Caixa** de cerveja (600 ml ou long neck) = 24. **Fardo** de água e de lata = 12.
   Caixa de Red Bull = 24. Budweiser às vezes vem em caixa de 6.
 - **Garrafa aberta** em fração (meia = 0,5). Item que não tem: 0.
+- **Long neck em fardo de 6** na câmara fria ("fardo", "fardinho"): 6 cada, salvo se ele disser outro número.
+
+## Onde fica cada local
+
+- **Bar:** freezers (Pepsi, Red Bull, Original 1/2/3, long neck, freezer 4), garrafas abertas e lacradas do balcão.
+- **Câmara fria = Estoque Central** (não é do Bar). Anote na contagem do Central.
+- **Chopp Brahma barril** fica no Central, em litros: barril = 50 L, o engatado vai pelo que ele disser.
+- **Coca-Cola** não entra na folha do Bar (só no Central).
 - Margarina em kg (caixa 12 kg = 12, pote 3 kg = 3, pote 500 g = 0,5).
 - Tanqueray por garrafa (1 por garrafa), mesmo o cadastro estando em litro.
 
@@ -79,8 +87,10 @@ select fn_contagem_setor_abrir('10b3aacf-61b1-4add-91ac-0949d3e7f3a3', 'auditori
 ```
 A contagem aberta: `contagens_estoque` com `bloco = '__auditoria'` e `status = 'em_andamento'`.
 
-**Central:** a contagem é por zona (categoria do item): `fn_contagem_bloco_abrir(estoque, bloco, responsavel)`.
-Leia a definição da função antes de usar.
+**Central:** a contagem é por zona = categoria do item (`itens_estoque.categoria`).
+`fn_contagem_bloco_abrir(central, categoria, 'Kadu')` abre a zona ou devolve a do dia
+(`->>'id'`). Item que não estiver na zona: insira a linha com
+`calcular_saldo_item_estoque(item, central)` e anote igual (partes por local).
 
 **Anotar por local**, igual ao agente do WhatsApp: cada linha guarda `partes`
 (`{"Freezer Pepsi": 26, "Freezer Original 1": 77}`) e `quantidade_contada` é a soma.
