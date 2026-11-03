@@ -52,6 +52,7 @@ const PortalGerente       = lazy(() => import('./pages/PortalGerente'));
 const Saguao              = lazy(() => import('./pages/Saguao'));
 const KitDesign           = lazy(() => import('./pages/KitDesign'));
 const ConfigurarSetores   = lazy(() => import('./pages/ConfigurarSetores'));
+const Portaria            = lazy(() => import('./pages/Portaria'));
 
 const PageLoader = () => (
   <div className="flex flex-col items-center justify-center h-full min-h-[300px] gap-4">
@@ -159,6 +160,19 @@ function AppContent() {
     return (
       <Suspense fallback={<PageLoader />}>
         <ProtectedRoute moduloSlug="kds"><Kds /></ProtectedRoute>
+      </Suspense>
+    );
+  }
+
+  // Portaria dos eventos: tela cheia no celular. Qualquer usuário logado
+  // (a conferência no banco exige usuário ativo). /ingresso/CODIGO é o link do QR.
+  if (location.pathname === '/portaria' || location.pathname.startsWith('/ingresso/')) {
+    return (
+      <Suspense fallback={<PageLoader />}>
+        <Routes>
+          <Route path="/portaria" element={<Portaria />} />
+          <Route path="/ingresso/:codigo" element={<Portaria />} />
+        </Routes>
       </Suspense>
     );
   }

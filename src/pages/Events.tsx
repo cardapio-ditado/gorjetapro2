@@ -3,7 +3,7 @@ import { Tab } from '@headlessui/react';
 import {
   Plus, Search, CreditCard as Edit, Trash2, Calendar,
   DollarSign, CheckSquare, MessageSquare, X,
-  List, CalendarDays, ChevronLeft, ChevronRight, FileSignature
+  List, CalendarDays, ChevronLeft, ChevronRight, FileSignature, Ticket
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { testConnection } from '../lib/supabase';
@@ -11,6 +11,7 @@ import dayjs from 'dayjs';
 import ChatFinanceiroIA from '../components/financeiro/ChatFinanceiroIA';
 import MapaMesasAdmin from '../components/events/MapaMesasAdmin';
 import ContratoConvite from '../components/eventos/ContratoConvite';
+import ImprimirIngressos from '../components/eventos/ingressos/ImprimirIngressos';
 
 /**
  * Mapa de Mesas adormecido a pedido da casa: enquanto não houver reserva por
@@ -116,6 +117,7 @@ const Events: React.FC = () => {
   const [showGerarContaModal, setShowGerarContaModal]   = useState(false);
   // Contrato e convite (modelo feijoada)
   const [eventoContrato, setEventoContrato] = useState<EventoFechado | null>(null);
+  const [eventoIngressos, setEventoIngressos] = useState<EventoFechado | null>(null);
   const [eventoParaGerarConta, setEventoParaGerarConta] = useState<any>(null);
   const [dataVencimentoConta, setDataVencimentoConta]   = useState('');
 
@@ -747,6 +749,7 @@ const Events: React.FC = () => {
                 <div className="flex gap-2">
                   <button onClick={() => openForm(e)} className="text-blue-400 hover:text-blue-300"><Edit className="w-4 h-4" /></button>
                   <button onClick={() => setEventoContrato(e)} title="Contrato e convite" className="text-amber-300 hover:text-amber-200"><FileSignature className="w-4 h-4" /></button>
+                  <button onClick={() => setEventoIngressos(e)} title="Imprimir ingressos" aria-label="Imprimir ingressos" className="text-emerald-300 hover:text-emerald-200"><Ticket className="w-4 h-4" /></button>
                   <button onClick={() => handleDelete(e.id)} className="text-red-400 hover:text-red-300"><Trash2 className="w-4 h-4" /></button>
                 </div>
               </td>
@@ -955,6 +958,10 @@ const Events: React.FC = () => {
               </div>
             </div>
           </div>
+        )}
+
+        {eventoIngressos && (
+          <ImprimirIngressos evento={eventoIngressos} onClose={() => setEventoIngressos(null)} />
         )}
 
         {eventoContrato && (
