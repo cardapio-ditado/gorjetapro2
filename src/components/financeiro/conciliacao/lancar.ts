@@ -13,7 +13,8 @@ export interface SugConta { id: string; descricao: string; fornecedor_id: string
 export interface SugJa { fluxo_id: string; data: string; valor: number; descricao: string; }
 export interface Sugestao { fornecedores: SugFornecedor[]; contas_abertas: SugConta[]; ja_conciliado: SugJa[]; }
 
-export type Acao = 'nova' | 'baixa' | 'ja' | 'ignorar';
+/** transferencia: só no extrato automático (Pix entre contas do próprio bar). */
+export type Acao = 'nova' | 'baixa' | 'ja' | 'ignorar' | 'transferencia';
 
 export interface Linha {
   fitid: string;
@@ -25,6 +26,7 @@ export interface Linha {
   fornecedorId: string;  // quando acao='nova'
   categoriaId: string;
   formaPagamentoId: string;
+  contaOutraId?: string; // quando acao='transferencia': a outra conta do bar
   sug: Sugestao;
   status: 'pendente' | 'conciliada' | 'ignorada';
   jaImportada: boolean;  // veio de importação anterior
@@ -57,6 +59,7 @@ export function acaoInicial(sug: Sugestao, jaImportada = false): Acao {
 export function validar(l: Linha, bancoContaId: string): string | null {
   if (l.acao === 'baixa' && !l.contaPagarId) return 'Escolha a conta a pagar.';
   if (l.acao === 'nova' && !l.fornecedorId) return 'Escolha o fornecedor.';
+  if (l.acao === 'transferencia' && !l.contaOutraId) return 'Escolha a conta para onde foi a transferência.';
   if ((l.acao === 'baixa' || l.acao === 'nova') && (!l.formaPagamentoId || !bancoContaId)) return 'Escolha a forma de pagamento.';
   return null;
 }
@@ -115,6 +118,17 @@ export async function lancar(l: Linha, bancoContaId: string, importacaoId: strin
   });
   if (tErr) throw tErr;
   return contaPagarId;
+}
+
+/**
+ * Lança um movimento do extrato automático como transferência entre contas do
+ * bar: saída numa conta e entrada na outra, sem conta a pagar e sem afetar o
+ * resultado. Se a transferência já estava lançada à mão, só concilia.
+ */
+export async function lancarTransferencia(extratoId: string, contaOutraId: string) {
+  const { data, error } = await supabase.rpc('fn_banco_lancar_transferencia', { p_extrato_id: extratoId, p_outra_conta: contaOutraId });
+  if (error) throw error;
+  return data as { ja_lancada: boolean; origem: string; destino: string; valor: number };
 }
 
 /** Marca a saída como ignorada (não é lançamento do financeiro). */

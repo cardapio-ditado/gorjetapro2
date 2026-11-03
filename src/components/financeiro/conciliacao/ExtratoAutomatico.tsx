@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { RefreshCw, CheckCircle2, Ban, ChevronDown, ChevronRight, Search, Inbox, ArrowDownLeft, ArrowUpRight } from 'lucide-react';
+import { RefreshCw, CheckCircle2, Ban, ChevronDown, ChevronRight, Search, Inbox, ArrowDownLeft, ArrowUpRight, ArrowLeftRight } from 'lucide-react';
 import dayjs from 'dayjs';
 import { supabase } from '../../../lib/supabase';
 import {
@@ -7,7 +7,7 @@ import {
 } from '../../ui';
 import NovoFornecedor from './NovoFornecedor';
 import {
-  fmt, acaoInicial, validar, lancar, registrarIgnorada, SUG_VAZIA,
+  fmt, acaoInicial, validar, lancar, lancarTransferencia, registrarIgnorada, SUG_VAZIA,
   type Forma, type Categoria, type Fornecedor, type Linha, type Sugestao, type Acao,
 } from './lancar';
 
@@ -15,6 +15,9 @@ import {
 // - Saídas para conciliar, agrupadas por quem recebeu (CPF/CNPJ): escolhe o
 //   fornecedor uma vez para o grupo e aprova tudo, ou marca linhas e aprova em
 //   lote. O fornecedor escolhido vira regra para o mesmo documento.
+// - Pix para o próprio CNPJ do bar (ex.: Nubank da empresa) é transferência
+//   entre contas: sai de uma conta e entra na outra, sem conta a pagar
+//   (fn_banco_lancar_transferencia). A conta do outro lado vem pelo banco do Pix.
 // - Cartão e Pix da maquininha são reconhecidos sozinhos e, com um clique por
 //   dia, viram até 3 contas a receber (fn_banco_lancar_recebimentos).
 // - Entradas fora da maquininha ficam para conferir. A Reserva Stone é
@@ -32,8 +35,10 @@ interface Movimento {
   id: string; externo_id: string; data: string; valor: number; sentido: 'credito' | 'debito';
   descricao: string | null; contraparte_nome: string | null; contraparte_doc_tipo: string | null; operacao: string | null;
   doc_digitos: string | null; classe: string; status: string; fornecedor_id: string | null; categoria_id: string | null;
-  regra_id: string | null; conta_receber_id: string | null;
+  regra_id: string | null; conta_receber_id: string | null; conta_transferencia_id: string | null;
 }
+
+interface Conta { id: string; banco: string; tipo_conta: string }
 
 type LinhaAuto = Linha & {
   extratoId: string; nome: string | null; docTipo: string | null; doc: string | null; classe: string;
@@ -54,7 +59,7 @@ interface DiaReceber {
   erro: string | null;
 }
 
-const CAMPOS = 'id, externo_id, data, valor, sentido, descricao, contraparte_nome, contraparte_doc_tipo, operacao, doc_digitos, classe, status, fornecedor_id, categoria_id, regra_id, conta_receber_id';
+const CAMPOS = 'id, externo_id, data, valor, sentido, descricao, contraparte_nome, contraparte_doc_tipo, operacao, doc_digitos, classe, status, fornecedor_id, categoria_id, regra_id, conta_receber_id, conta_transferencia_id';
 const DIAS_RESUMO = 7;
 const GRUPOS_RECEBER: Record<string, string> = {
   cartao_liquidacao: 'Cartão (liquidação)', cartao_antecipacao: 'Cartão (antecipação)', pix_maquininha: 'Pix maquininha',
@@ -69,7 +74,9 @@ const COLUNAS_RESUMO: { chave: string; rotulo: string; entrada: boolean }[] = [
   { chave: 'pessoa', rotulo: 'Pessoas físicas', entrada: false },
   { chave: 'outros', rotulo: 'Outras saídas', entrada: false },
 ];
-const ACOES: Record<Acao, string> = { nova: 'Criar conta e pagar', baixa: 'Pagar conta aberta', ja: 'Já está lançada', ignorar: 'Ignorar' };
+const ACOES: Record<Acao, string> = {
+  nova: 'Criar conta e pagar', baixa: 'Pagar conta aberta', ja: 'Já está lançada', ignorar: 'Ignorar', transferencia: 'Transferência entre contas',
+};
 
 /** CPF aparece mascarado na tela; CNPJ inteiro. */
 function documento(tipo: string | null, d: string | null) {
@@ -89,7 +96,8 @@ function mesmoNome(nome: string | null, descricao: string) {
 
 /** Pronta = tem tudo que precisa para aprovar. */
 const pronta = (l: LinhaAuto) => l.status === 'pendente'
-  && (l.acao === 'ja' || (l.acao === 'baixa' && !!l.contaPagarId) || (l.acao === 'nova' && !!l.fornecedorId));
+  && (l.acao === 'ja' || (l.acao === 'baixa' && !!l.contaPagarId) || (l.acao === 'nova' && !!l.fornecedorId)
+    || (l.acao === 'transferencia' && !!l.contaOutraId));
 
 /** Ao escolher o fornecedor: conta aberta dele com o mesmo valor vira "pagar conta aberta"; senão "criar conta e pagar". */
 function aplicarFornecedor(l: LinhaAuto, f: Fornecedor | undefined, categoriaId?: string): LinhaAuto {
@@ -99,7 +107,7 @@ function aplicarFornecedor(l: LinhaAuto, f: Fornecedor | undefined, categoriaId?
     ...l,
     fornecedorId: f.id,
     categoriaId: categoriaId || l.categoriaId || f.categoria_padrao_id || '',
-    acao: l.acao === 'ja' ? 'ja' : conta ? 'baixa' : 'nova',
+    acao: l.acao === 'ja' || l.acao === 'transferencia' ? l.acao : conta ? 'baixa' : 'nova',
     contaPagarId: conta?.id || l.contaPagarId,
     erro: null,
   };
@@ -111,6 +119,9 @@ export default function ExtratoAutomatico() {
   const [formas, setFormas] = useState<Forma[]>([]);
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [fornecedores, setFornecedores] = useState<Fornecedor[]>([]);
+  const [contas, setContas] = useState<Conta[]>([]);
+  /** entradas fora da maquininha marcadas como transferência: id → conta de origem */
+  const [entradaTransf, setEntradaTransf] = useState<Record<string, string>>({});
   const [resumo, setResumo] = useState<Movimento[]>([]);
   const [saidas, setSaidas] = useState<LinhaAuto[]>([]);
   const [entradas, setEntradas] = useState<Movimento[]>([]);
@@ -120,7 +131,7 @@ export default function ExtratoAutomatico() {
   const [aprovando, setAprovando] = useState<{ feitas: number; total: number } | null>(null);
   const [aviso, setAviso] = useState<{ tipo: 'certo' | 'perigo'; texto: string } | null>(null);
   // filtros
-  const [tipo, setTipo] = useState<'todas' | 'fornecedor' | 'pessoa' | 'outros'>('todas');
+  const [tipo, setTipo] = useState<'todas' | 'fornecedor' | 'pessoa' | 'transferencia' | 'outros'>('todas');
   const [soSemFornecedor, setSoSemFornecedor] = useState(false);
   const [busca, setBusca] = useState('');
   const [abertos, setAbertos] = useState<Set<string>>(new Set());
@@ -132,11 +143,12 @@ export default function ExtratoAutomatico() {
   const carregar = useCallback(async () => {
     setCarregando(true);
     try {
-      const [ig, f, c, forn] = await Promise.all([
+      const [ig, f, c, forn, cb] = await Promise.all([
         supabase.from('banco_integracoes').select('*').eq('ativo', true).order('criado_em').limit(1).maybeSingle(),
         supabase.from('formas_pagamento').select('id, nome').eq('status', 'ativo').order('nome'),
         supabase.from('categorias_financeiras').select('id, nome').eq('status', 'ativo').eq('tipo', 'despesa').order('nome'),
         supabase.from('fornecedores').select('id, nome, cnpj, categoria_padrao_id').eq('status', 'ativo').order('nome'),
+        supabase.from('bancos_contas').select('id, banco, tipo_conta').eq('status', 'ativo').order('banco'),
       ]);
       const integracao = ig.data as Integracao | null;
       setInteg(integracao);
@@ -144,6 +156,7 @@ export default function ExtratoAutomatico() {
       setFormas(f.data || []);
       setCategorias((c.data || []) as Categoria[]);
       setFornecedores((forn.data || []) as any);
+      setContas(((cb.data || []) as Conta[]).filter(x => x.id !== integracao?.banco_conta_id));
       if (!integracao) return;
 
       const desde = dayjs().subtract(DIAS_RESUMO - 1, 'day').format('YYYY-MM-DD');
@@ -159,7 +172,9 @@ export default function ExtratoAutomatico() {
         supabase.from('banco_extrato').select('data').eq('integracao_id', integracao.id).order('data').limit(1).maybeSingle(),
       ]);
       setResumo((r.data || []) as Movimento[]);
-      setEntradas((pc.data || []) as Movimento[]);
+      const ents = (pc.data || []) as Movimento[];
+      setEntradas(ents);
+      setEntradaTransf(Object.fromEntries(ents.filter(m => m.classe === 'transferencia').map(m => [m.id, m.conta_transferencia_id || ''])));
 
       // recebimentos por dia e grupo, com o que foi lançado à mão no mesmo dia
       const porDia = new Map<string, Map<string, { qtd: number; total: number }>>();
@@ -201,11 +216,12 @@ export default function ExtratoAutomatico() {
         const sug: Sugestao = { ...(sugPorId.get(m.id) ?? SUG_VAZIA) };
         sug.ja_conciliado = sug.ja_conciliado.filter(j => mesmoNome(m.contraparte_nome, j.descricao || ''));
         const fornRegra = m.fornecedor_id ? fornPorId.get(m.fornecedor_id) : undefined;
+        const transf = m.classe === 'transferencia';
         const base: LinhaAuto = {
           fitid: m.externo_id, data: m.data, valor: Number(m.valor),
           descricao: [m.contraparte_nome, m.descricao].filter(Boolean).join(' · '),
-          acao: acaoInicial(sug), contaPagarId: sug.contas_abertas[0]?.id || '',
-          fornecedorId: '', categoriaId: m.categoria_id || '',
+          acao: transf ? 'transferencia' : acaoInicial(sug), contaPagarId: sug.contas_abertas[0]?.id || '',
+          fornecedorId: '', categoriaId: m.categoria_id || '', contaOutraId: m.conta_transferencia_id || '',
           formaPagamentoId: /boleto/i.test(m.operacao || '') && boleto ? boleto : pix,
           sug, status: 'pendente', jaImportada: false, salvando: false, erro: null,
           extratoId: m.id, nome: m.contraparte_nome, docTipo: m.contraparte_doc_tipo, doc: m.doc_digitos, classe: m.classe,
@@ -246,7 +262,8 @@ export default function ExtratoAutomatico() {
   const selecionadas = pendentes.filter(l => l.selecionada);
   const totalPend = pendentes.reduce((s, l) => s + l.valor, 0);
   const prontas = pendentes.filter(pronta);
-  const semForn = pendentes.filter(l => !l.fornecedorId && l.acao !== 'ja');
+  const semForn = pendentes.filter(l => !l.fornecedorId && l.acao !== 'ja' && l.acao !== 'transferencia');
+  const nomeConta = (id: string | null | undefined) => contas.find(c => c.id === id)?.banco.trim() || '';
 
   const atualizar = (ids: string[], f: (l: LinhaAuto) => LinhaAuto) =>
     setSaidas(prev => prev.map(l => (ids.includes(l.extratoId) ? f(l) : l)));
@@ -312,6 +329,14 @@ export default function ExtratoAutomatico() {
     for (const l of validas) {
       atualizar([l.extratoId], x => ({ ...x, salvando: true, erro: null }));
       try {
+        if (l.acao === 'transferencia') {
+          // a função grava as duas pernas, concilia e marca o extrato
+          await lancarTransferencia(l.extratoId, l.contaOutraId!);
+          atualizar([l.extratoId], x => ({ ...x, status: 'conciliada', salvando: false, selecionada: false }));
+          ok++;
+          setAprovando(p => (p ? { ...p, feitas: p.feitas + 1 } : p));
+          continue;
+        }
         const contaPagarId = await lancar(l, integ.banco_conta_id, null);
         const fornecedorId = l.acao === 'nova' ? l.fornecedorId
           : l.acao === 'baixa' ? (l.sug.contas_abertas.find(c => c.id === l.contaPagarId)?.fornecedor_id || l.fornecedorId || null) : (l.fornecedorId || null);
@@ -362,6 +387,21 @@ export default function ExtratoAutomatico() {
     const total = (res?.lancados || []).reduce((s: number, l: any) => s + Number(l.total), 0);
     setAviso({ tipo: 'certo', texto: `${dayjs(data).format('DD/MM')}: ${(res?.lancados || []).length} lançamento(s) em Contas a Receber, ${fmt(total)}.` });
     setReceber(prev => prev.filter(d => d.data !== data));
+  };
+
+  /** Entrada que veio de outra conta do bar: lança as duas pernas da transferência. */
+  const lancarEntradaTransf = async (m: Movimento) => {
+    const origem = entradaTransf[m.id];
+    if (!origem) { setAviso({ tipo: 'perigo', texto: 'Escolha de qual conta veio a transferência.' }); return; }
+    try {
+      const r = await lancarTransferencia(m.id, origem);
+      setAviso({ tipo: 'certo', texto: r.ja_lancada
+        ? `Transferência de ${r.origem} já estava lançada: só conciliei.`
+        : `Transferência lançada: ${fmt(Number(r.valor))} de ${r.origem} para ${r.destino}.` });
+      setEntradas(prev => prev.filter(e => e.id !== m.id));
+    } catch (e: any) {
+      setAviso({ tipo: 'perigo', texto: e.message || 'Erro ao lançar a transferência.' });
+    }
   };
 
   const conferirEntrada = async (m: Movimento, sempre = false) => {
@@ -437,7 +477,8 @@ export default function ExtratoAutomatico() {
       <SectionCard title="Saídas para conciliar" descricao="Agrupadas por quem recebeu. Escolha o fornecedor uma vez para o grupo e aprove.">
         <Toolbar className="mb-3">
           <Segmented rotulo="Tipo" valor={tipo} onMudar={setTipo}
-            opcoes={[{ valor: 'todas', rotulo: 'Todas' }, { valor: 'fornecedor', rotulo: 'Empresas' }, { valor: 'pessoa', rotulo: 'Pessoas' }, { valor: 'outros', rotulo: 'Outras' }]} />
+            opcoes={[{ valor: 'todas', rotulo: 'Todas' }, { valor: 'fornecedor', rotulo: 'Empresas' }, { valor: 'pessoa', rotulo: 'Pessoas' },
+              { valor: 'transferencia', rotulo: 'Transferências' }, { valor: 'outros', rotulo: 'Outras' }]} />
           <Chip ligado={soSemFornecedor} onMudar={setSoSemFornecedor} tom="perigo">Sem fornecedor</Chip>
           <Toolbar.Espaco />
           <div className="relative w-full sm:w-64">
@@ -459,6 +500,8 @@ export default function ExtratoAutomatico() {
               const prontasG = g.linhas.filter(pronta);
               const sugId = g.linhas[0].sug.fornecedores[0]?.id;
               const todasSel = g.linhas.every(l => l.selecionada);
+              const ehTransf = g.linhas.every(l => l.acao === 'transferencia');
+              const contaGrupo = g.linhas.every(l => l.contaOutraId === g.linhas[0].contaOutraId) ? g.linhas[0].contaOutraId || '' : '';
               return (
                 <div key={g.chave} className="rounded-lg" style={{ border: '1px solid var(--border-subtle, rgba(255,255,255,0.08))', background: 'var(--bg-card, #12161f)' }}>
                   {/* cabeçalho do grupo */}
@@ -474,12 +517,31 @@ export default function ExtratoAutomatico() {
                         <span className="block t-caption">
                           {documento(g.docTipo, g.doc)}{g.doc ? ' · ' : ''}{g.linhas.length} {g.linhas.length === 1 ? 'pagamento' : 'pagamentos'}
                           {g.linhas[0].reconhecido && <> · <span style={{ color: 'var(--ok-text)' }}>reconhecido</span></>}
+                          {g.classe === 'transferencia' && <> · <span style={{ color: 'var(--ok-text)' }}>mesmo CNPJ do bar</span></>}
                         </span>
                       </span>
                     </button>
                     <span className="t-body tabular-nums" style={{ color: 'var(--text-primary)', fontWeight: 700 }}>{fmt(g.total)}</span>
                   </div>
-                  {/* fornecedor e categoria do grupo */}
+                  {/* transferência: só a outra conta */}
+                  {ehTransf ? (
+                    <div className="grid grid-cols-1 md:grid-cols-[2fr_auto] gap-2 px-3 pb-3 items-end">
+                      <label className="flex flex-col gap-1">
+                        <span className="t-caption">Transferência para a conta</span>
+                        <Select aria-label="Conta de destino" value={contaGrupo}
+                          onChange={e => atualizar(g.linhas.map(l => l.extratoId), l => ({ ...l, contaOutraId: e.target.value, erro: null }))}>
+                          <option value="">Escolha a conta…</option>
+                          {contas.map(c => <option key={c.id} value={c.id}>{c.banco.trim()}</option>)}
+                        </Select>
+                      </label>
+                      <div className="flex items-center gap-2">
+                        <Button tamanho="md" icone={<ArrowLeftRight size={14} />} disabled={!prontasG.length || !!aprovando} onClick={() => aprovar(prontasG)}>
+                          Lançar transferência{prontasG.length > 1 ? `s (${prontasG.length})` : ''}
+                        </Button>
+                        <IconButton aria-label={`Ignorar pagamentos para ${g.nome}`} tom="perigo" title="Ignorar" onClick={() => ignorar(g.linhas)}><Ban size={14} /></IconButton>
+                      </div>
+                    </div>
+                  ) : (
                   <div className="grid grid-cols-1 md:grid-cols-[2fr_1.4fr_auto] gap-2 px-3 pb-3 items-end">
                     <Combobox rotulo="Fornecedor" valor={fornGrupo} opcoes={opcoesForn} sugestaoId={sugId}
                       onEscolher={id => escolherFornecedorGrupo(g, id)} rotuloCriar="fornecedor"
@@ -494,7 +556,11 @@ export default function ExtratoAutomatico() {
                         onClick={() => (g.doc ? setIgnorarSempre(g) : ignorar(g.linhas))}><Ban size={14} /></IconButton>
                     </div>
                   </div>
-                  {!fornGrupo && !g.linhas.some(l => l.acao === 'ja') && (
+                  )}
+                  {ehTransf && (
+                    <p className="t-caption px-3 pb-3">Sai da Stone e entra na conta escolhida. Não vira conta a pagar nem despesa.</p>
+                  )}
+                  {!ehTransf && !fornGrupo && !g.linhas.some(l => l.acao === 'ja' || l.acao === 'transferencia') && (
                     <p className="t-caption px-3 pb-3">Não achou na lista? Digite o nome e escolha <strong>Criar fornecedor</strong>.</p>
                   )}
                   {/* linhas */}
@@ -511,7 +577,18 @@ export default function ExtratoAutomatico() {
                             <option value="nova">{ACOES.nova}</option>
                             <option value="baixa" disabled={!l.sug.contas_abertas.length}>{ACOES.baixa}</option>
                             <option value="ja">{ACOES.ja}</option>
+                            <option value="transferencia">{ACOES.transferencia}</option>
                           </Select>
+                          {l.acao === 'transferencia' && !ehTransf && (
+                            <Select aria-label="Conta de destino" value={l.contaOutraId || ''} className="flex-1 min-w-[180px]"
+                              onChange={e => atualizar([l.extratoId], x => ({ ...x, contaOutraId: e.target.value, erro: null }))}>
+                              <option value="">Para qual conta?</option>
+                              {contas.map(c => <option key={c.id} value={c.id}>{c.banco.trim()}</option>)}
+                            </Select>
+                          )}
+                          {l.acao === 'transferencia' && ehTransf && l.contaOutraId && (
+                            <span className="t-caption flex-1">Para {nomeConta(l.contaOutraId)}</span>
+                          )}
                           {l.acao === 'baixa' && (
                             <Select aria-label="Conta aberta" value={l.contaPagarId} className="flex-1 min-w-[200px]"
                               onChange={e => atualizar([l.extratoId], x => ({ ...x, contaPagarId: e.target.value }))}>
@@ -525,11 +602,14 @@ export default function ExtratoAutomatico() {
                             </span>
                           )}
                           <span className="flex-1" />
-                          <Select aria-label="Forma de pagamento" value={l.formaPagamentoId} className="w-36"
-                            onChange={e => atualizar([l.extratoId], x => ({ ...x, formaPagamentoId: e.target.value }))}>
-                            {formas.map(f => <option key={f.id} value={f.id}>{f.nome}</option>)}
-                          </Select>
-                          {pronta(l) ? <Badge variant="success">pronta</Badge> : <Badge variant="warning">falta fornecedor</Badge>}
+                          {l.acao !== 'transferencia' && (
+                            <Select aria-label="Forma de pagamento" value={l.formaPagamentoId} className="w-36"
+                              onChange={e => atualizar([l.extratoId], x => ({ ...x, formaPagamentoId: e.target.value }))}>
+                              {formas.map(f => <option key={f.id} value={f.id}>{f.nome}</option>)}
+                            </Select>
+                          )}
+                          {pronta(l) ? <Badge variant="success">pronta</Badge>
+                            : <Badge variant="warning">{l.acao === 'transferencia' ? 'falta a conta' : 'falta fornecedor'}</Badge>}
                           <IconButton aria-label="Ignorar este pagamento" tom="perigo" onClick={() => ignorar([l])}><Ban size={14} /></IconButton>
                           {l.erro && <p className="aviso aviso-perigo w-full" role="alert">{l.erro}</p>}
                         </li>
@@ -579,16 +659,35 @@ export default function ExtratoAutomatico() {
       {entradas.length > 0 && (
         <SectionCard title={`Entradas fora da maquininha (${entradas.length})`} descricao="Pix e transferências recebidas direto na conta.">
           <ul className="flex flex-col gap-2">
-            {entradas.map(m => (
-              <li key={m.id} className="flex flex-wrap items-center gap-3">
-                <span className="t-caption w-12">{dayjs(m.data).format('DD/MM')}</span>
-                <span className="t-body tabular-nums w-28" style={{ color: 'var(--ok-text)', fontWeight: 600 }}>{fmt(Number(m.valor))}</span>
-                <span className="t-body flex-1 min-w-0 truncate">{m.contraparte_nome || m.descricao}
-                  {m.doc_digitos && <span className="t-caption"> · {documento(m.contraparte_doc_tipo, m.doc_digitos)}</span>}</span>
-                <Button tamanho="sm" onClick={() => conferirEntrada(m)}>Conferido</Button>
-                {m.doc_digitos && <Button tamanho="sm" variante="discreto" title="As próximas entradas deste pagador não precisam de conferência" onClick={() => conferirEntrada(m, true)}>Sempre automático</Button>}
-              </li>
-            ))}
+            {entradas.map(m => {
+              const transf = m.id in entradaTransf;
+              return (
+                <li key={m.id} className="flex flex-wrap items-center gap-3">
+                  <span className="t-caption w-12">{dayjs(m.data).format('DD/MM')}</span>
+                  <span className="t-body tabular-nums w-28" style={{ color: 'var(--ok-text)', fontWeight: 600 }}>{fmt(Number(m.valor))}</span>
+                  <span className="t-body flex-1 min-w-0 truncate">{m.contraparte_nome || m.descricao}
+                    {m.doc_digitos && <span className="t-caption"> · {documento(m.contraparte_doc_tipo, m.doc_digitos)}</span>}
+                    {m.classe === 'transferencia' && <span className="t-caption" style={{ color: 'var(--ok-text)' }}> · mesmo CNPJ do bar</span>}</span>
+                  {transf ? (
+                    <>
+                      <Select aria-label="Veio da conta" value={entradaTransf[m.id]} className="w-48"
+                        onChange={e => setEntradaTransf(p => ({ ...p, [m.id]: e.target.value }))}>
+                        <option value="">Veio de qual conta?</option>
+                        {contas.map(c => <option key={c.id} value={c.id}>{c.banco.trim()}</option>)}
+                      </Select>
+                      <Button tamanho="sm" icone={<ArrowLeftRight size={14} />} disabled={!entradaTransf[m.id]} onClick={() => lancarEntradaTransf(m)}>Lançar transferência</Button>
+                      <Button tamanho="sm" variante="discreto" onClick={() => setEntradaTransf(p => { const n = { ...p }; delete n[m.id]; return n; })}>Não é</Button>
+                    </>
+                  ) : (
+                    <>
+                      <Button tamanho="sm" onClick={() => conferirEntrada(m)}>Conferido</Button>
+                      <Button tamanho="sm" variante="discreto" title="Dinheiro que veio de outra conta do bar" onClick={() => setEntradaTransf(p => ({ ...p, [m.id]: '' }))}>É transferência</Button>
+                      {m.doc_digitos && <Button tamanho="sm" variante="discreto" title="As próximas entradas deste pagador não precisam de conferência" onClick={() => conferirEntrada(m, true)}>Sempre automático</Button>}
+                    </>
+                  )}
+                </li>
+              );
+            })}
           </ul>
         </SectionCard>
       )}
@@ -621,7 +720,7 @@ export default function ExtratoAutomatico() {
                 ))}
               </tbody>
             </table>
-            <p className="t-caption mt-2">Cartão vem líquido (já sem a taxa). A Reserva Stone (guarda e resgate automáticos) é movimento interno e não entra aqui.</p>
+            <p className="t-caption mt-2">Cartão vem líquido (já sem a taxa). A Reserva Stone (guarda e resgate automáticos) e as transferências entre contas do bar são movimento interno e não entram aqui.</p>
           </div>
         )}
       </SectionCard>
@@ -662,8 +761,9 @@ export default function ExtratoAutomatico() {
           </>
         )}>
         <p className="t-body">
-          Ignorar quer dizer que estes pagamentos não viram lançamento no financeiro (ex.: transferência entre contas do próprio bar).
+          Ignorar quer dizer que estes pagamentos não viram lançamento nenhum no financeiro.
           Com <strong>Ignorar sempre</strong>, os próximos pagamentos para este destinatário também deixam de aparecer aqui.
+          Se foi dinheiro para outra conta do bar, use <strong>Transferência entre contas</strong> na linha: assim o saldo das duas contas fica certo.
         </p>
       </Modal>
     </div>
