@@ -1,5 +1,7 @@
 import { jsPDF } from 'jspdf';
-import QRCode from 'qrcode';
+import { createElement } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { QRCodeSVG } from 'qrcode.react';
 import { supabase } from '../../../lib/supabase';
 
 /**
@@ -93,23 +95,20 @@ async function logoPreto() {
   return logoCache;
 }
 
-/** QR em quadradinhos vetoriais (nítido na laser). */
+/**
+ * QR em retângulos vetoriais (nítido na laser). Usa o qrcode.react, que o
+ * sistema já tem: o SVG dele traz cada trecho preto de uma linha como
+ * "M x y h largura v1 H x z", e cada trecho vira um retângulo no PDF.
+ */
 function desenharQr(doc: jsPDF, texto: string, x: number, y: number, lado: number) {
-  const qr = QRCode.create(texto, { errorCorrectionLevel: 'M' });
-  const n = qr.modules.size;
+  const svg = renderToStaticMarkup(createElement(QRCodeSVG, { value: texto, level: 'M', marginSize: 0 }));
+  const n = Number(/viewBox="0 0 (\d+)/.exec(svg)?.[1]);
+  const preto = /fill="#000000" d="([^"]+)"/.exec(svg)?.[1];
+  if (!n || !preto) throw new Error('Não consegui gerar o QR code.');
   const m = lado / n;
   doc.setFillColor(0, 0, 0);
-  for (let r = 0; r < n; r++) {
-    let inicio = -1;
-    for (let c = 0; c <= n; c++) {
-      const preto = c < n && qr.modules.get(r, c);
-      if (preto && inicio < 0) inicio = c;
-      if (!preto && inicio >= 0) {
-        // emenda os módulos da linha num retângulo só (sem frestas brancas)
-        doc.rect(x + inicio * m, y + r * m, (c - inicio) * m + 0.02, m + 0.02, 'F');
-        inicio = -1;
-      }
-    }
+  for (const t of preto.matchAll(/M\s*(\d+)[\s,]+(\d+)\s*h(\d+)v1H\d+z/g)) {
+    doc.rect(x + Number(t[1]) * m, y + Number(t[2]) * m, Number(t[3]) * m + 0.02, m + 0.02, 'F');
   }
 }
 

@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import jsQR from 'jsqr';
 import { Camera, CheckCircle2, XCircle, AlertTriangle, Keyboard, ScanLine } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { Button, Input } from '../components/ui';
@@ -27,7 +26,32 @@ const VISUAL: Record<Resultado['status'], { titulo: string; cor: string; fundo: 
   outra_data: { titulo: 'Evento de outra data', cor: '#fbbf24', fundo: 'rgba(217,119,6,0.18)', icone: AlertTriangle },
 };
 
-const dataBr = (iso?: string) => (iso ? iso.split('-').reverse().join('/') : '');
+/**
+ * Leitor de QR: o do próprio navegador (Chrome/Android) quando existe; senão
+ * (iPhone) o jsQR, baixado na hora do CDN. Sem dependência nova no projeto.
+ */
+type Leitor = (c: HTMLCanvasElement, ctx: CanvasRenderingContext2D) => Promise<string | null>;
+async function criarLeitor(): Promise<Leitor> {
+  const BD = (window as any).BarcodeDetector;
+  if (BD) {
+    try {
+      const formatos: string[] = await BD.getSupportedFormats?.() ?? ['qr_code'];
+      if (formatos.includes('qr_code')) {
+        const det = new BD({ formats: ['qr_code'] });
+        return async c => ((await det.detect(c))[0]?.rawValue as string) || null;
+      }
+    } catch { /* usa o jsQR */ }
+  }
+  const url = 'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/+esm';
+  const mod: any = await import(/* @vite-ignore */ url);
+  const jsQR = mod.default ?? mod;
+  return async (c, ctx) => {
+    const img = ctx.getImageData(0, 0, c.width, c.height);
+    return jsQR(img.data, img.width, img.height, { inversionAttempts: 'dontInvert' })?.data || null;
+  };
+}
+
+const dataBr =(iso?: string) => (iso ? iso.split('-').reverse().join('/') : '');
 const horaBr = (ts?: string) => (ts ? new Date(ts).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '');
 
 function sinal(ok: boolean) {
@@ -46,6 +70,7 @@ export default function Portaria() {
   const video = useRef<HTMLVideoElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
   const lendo = useRef(false);
+  const leitor = useRef<Leitor | null>(null);
   const [camera, setCamera] = useState<'desligada' | 'ligando' | 'ligada' | 'erro'>('desligada');
   const [erroCamera, setErroCamera] = useState('');
   const [resultado, setResultado] = useState<Resultado | null>(null);
@@ -81,6 +106,11 @@ export default function Portaria() {
   const ligarCamera = async () => {
     setCamera('ligando'); setErroCamera('');
     try {
+      if (!leitor.current) {
+        try { leitor.current = await criarLeitor(); } catch {
+          setCamera('erro'); setErroCamera('Não consegui carregar o leitor de QR (sem internet?). Use a digitação do código.'); return;
+        }
+      }
       const s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment', width: { ideal: 1280 } }, audio: false });
       const v = video.current!;
       v.srcObject = s; await v.play();
@@ -96,17 +126,16 @@ export default function Portaria() {
   };
 
   const ler = () => {
-    const passo = () => {
+    const passo = async () => {
       if (!lendo.current) return;
       const v = video.current, c = canvas.current;
-      if (v && c && v.readyState >= 2 && v.videoWidth) {
+      if (v && c && leitor.current && v.readyState >= 2 && v.videoWidth) {
         const escala = Math.min(1, 720 / v.videoWidth);
         c.width = Math.round(v.videoWidth * escala); c.height = Math.round(v.videoHeight * escala);
         const ctx = c.getContext('2d', { willReadFrequently: true })!;
         ctx.drawImage(v, 0, 0, c.width, c.height);
-        const img = ctx.getImageData(0, 0, c.width, c.height);
-        const qr = jsQR(img.data, img.width, img.height, { inversionAttempts: 'dontInvert' });
-        if (qr?.data) { conferir(qr.data); return; }
+        const lido = await leitor.current(c, ctx).catch(() => null);
+        if (lido && lendo.current) { conferir(lido); return; }
       }
       setTimeout(() => requestAnimationFrame(passo), 120);
     };
