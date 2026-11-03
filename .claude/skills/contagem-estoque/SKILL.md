@@ -57,6 +57,12 @@ Se lá mudar, vale o que estiver lá. Hoje:
 | Corona Zero | CORONA CERO LONG NECK |
 | Skol Beats Sense / GT | SKOL BEATS SENSES LONG NECK / SKOL BEATS GT LONG NECK |
 | Smirnoff Ice | ICE SMIRNOFF LONG NECK |
+| Stella 600 (sem dizer qual) | STELLA ARTOIS 600 ML |
+| La Linda | LA LINDA MALBEC |
+| DV Catena | DV. CATENA MALBEC MALBEC GF |
+| Nuances | NUACES  CABERNET SAUVIGNON GF |
+| Naturelli | NATURELLE TINTO SUABE 750 ML |
+| Pérgola tinto seco 1 L / suave 750 ml | PERGOLA SECO 1 L / PERGOLA SUAVE 750  ML GF |
 
 Acrescente aqui todo apelido novo confirmado.
 
