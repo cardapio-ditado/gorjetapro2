@@ -25,7 +25,7 @@ Se lá mudar, vale o que estiver lá. Hoje:
 
 - **Freezers do bar, 600 ml:** prateleira cheia = **49** (7 fileiras de **7**).
   Fundo cheio = **56** (7 fileiras de **8**). Fileira na prateleira = 7; fileira no fundo = 8.
-- **Fileira de long neck = 9.**
+- **Fileira de long neck = 9.** No **freezer long neck**, a fileira do **fundo tem 10**.
 - **Freezer do Red Bull:** fileira de lata = **8** (contagem de 03/11). Água de coco: o
   Kadu diz quantas por fileira.
 - **Caixa** de cerveja (600 ml ou long neck) = 24. **Fardo** de água e de lata = 12.
@@ -52,7 +52,11 @@ Se lá mudar, vale o que estiver lá. Hoje:
 | Água com gás / sem gás | ÁGUA C/ GAS / ÁGUA S/ GÁS |
 | Original / Corona (600) | ORIGINAL 600ML / CORONA 600ML |
 | Stella normal (600) | STELLA ARTOIS 600 ML (não é a Pure Gold) |
-| Stella Pure Gold | STELLA PURE GOLD 600 ML ou … LONG NECK |
+| Stella Pure Gold / "Puro Gold" | STELLA PURE GOLD 600 ML ou … LONG NECK |
+| Stella normal long neck | STELLA ARTOIS LONG NECK |
+| Corona Zero | CORONA CERO LONG NECK |
+| Skol Beats Sense / GT | SKOL BEATS SENSES LONG NECK / SKOL BEATS GT LONG NECK |
+| Smirnoff Ice | ICE SMIRNOFF LONG NECK |
 
 Acrescente aqui todo apelido novo confirmado.
 
