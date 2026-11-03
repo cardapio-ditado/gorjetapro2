@@ -28,7 +28,10 @@ Se lá mudar, vale o que estiver lá. Hoje:
 - **Fileira de long neck = 9.** No **freezer long neck**, a fileira do **fundo tem 10**.
 - **Freezer do Red Bull:** fileira de lata = **8** (contagem de 03/11). Água de coco: o
   Kadu diz quantas por fileira.
-- **Caixa** de cerveja (600 ml ou long neck) = 24. **Fardo** de água e de lata = 12.
+- **Fardo de refrigerante lata = 15** (Pepsi, Pepsi Black, Pepsi Twist, Guaraná, Guaraná Zero).
+  **Sukita e Soda: fardo de 12.** Tônica vem em caixa de 12 (espelho da De Ville). Água: fardo de 12.
+  Se ele disser a quantidade do fardo ("3 fardos, 24 cada"), vale o que ele disse.
+- **Caixa** de cerveja (600 ml ou long neck) = 24.
   Caixa de Red Bull = 24. Budweiser às vezes vem em caixa de 6.
 - **Garrafa aberta** em fração (meia = 0,5). Item que não tem: 0.
 - **Long neck em fardo de 6** na câmara fria ("fardo", "fardinho"): 6 cada, salvo se ele disser outro número.
