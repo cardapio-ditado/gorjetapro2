@@ -75,6 +75,14 @@ Se lá mudar, vale o que estiver lá. Hoje:
 | Naturelli | NATURELLE TINTO SUABE 750 ML |
 | Pérgola tinto seco 1 L / suave 750 ml | PERGOLA SECO 1 L / PERGOLA SUAVE 750  ML GF |
 | Pérgola **aberta** (seco ou suave) | sempre a de **1 L**: PERGOLA SECO 1 L / PERGOLA SUAVE 1 L |
+| Gold / Black / Red / Blue | JOHNNIE WALKER GOLD RESERVE GF / … BLACK LABEL  GF / … RED LABEL GF / … BLUE LABEL GF |
+| Velho Barreiro ("Zero Barreiro" no áudio) | Velho barreiro |
+| Stock Curaçao / Stock Curaçao Blue | CURACAU TRIPLE SEC / CURACAU BLUE |
+| Tequila ouro / prata, José Corvo | JOSÉ CUERVO OURO GF / JOSÉ CUERVO PRATA GF |
+| Absolute / Grey Goose / Belvedere | ABSOLUT GF / GREY GOOSE GF / BELVEDERE GF |
+| Balena | LICOR BALLENA GF |
+| Premissas / Premícias | PRIMICIAS MOSCATEL |
+| Xarope sem quantidade ("xarope de cranberry, …") | 1 de cada (avise) |
 | "Garrafas abertas" / "letras aberto" | local das garrafas em uso no balcão, anotadas em fração |
 
 Acrescente aqui todo apelido novo confirmado.
