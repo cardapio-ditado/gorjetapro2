@@ -29,8 +29,11 @@ interface EntradaCompra {
   status: 'pendente' | 'recebido' | 'cancelado';
   criado_por?: string;
   criado_em: string;
-  /** pagamento ligado pela Conciliação bancária ("um por um", notas marcadas) */
+  /** pagamento que quitou a nota (ligado sozinho na baixa, ou na Conciliação) */
   conta_pagar_id?: string | null;
+  pago_em?: string | null;
+  /** "Dinheiro · Cofre Principal", "Pix · Stone" */
+  pago_meio?: string | null;
   itens?: ItemEntradaCompra[];
 }
 
@@ -82,6 +85,9 @@ interface IndicadoresCompras {
   fornecedores_ativos: number;
 }
 
+/** A partir desta data cada pagamento de fornecedor liga a nota sozinho (e o passado foi ligado). */
+const INICIO_LIGACAO_PAGAMENTO = '2026-10-01';
+
 const ComprasEstoque: React.FC = () => {
   const [compras, setCompras] = useState<EntradaCompra[]>([]);
   const [indicadores, setIndicadores] = useState<IndicadoresCompras | null>(null);
@@ -107,8 +113,8 @@ const ComprasEstoque: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<'all' | 'pendente' | 'recebido' | 'cancelado'>('all');
   const [fornecedorFilter, setFornecedorFilter] = useState('all');
   const [pagamentoFilter, setPagamentoFilter] = useState<'todas' | 'sem' | 'pagas'>('todas');
-  /** primeiro dia do extrato da Stone: antes dele a conciliação não liga pagamento */
-  const [inicioConciliacao, setInicioConciliacao] = useState<string | null>(null);
+  /** desde quando as notas são ligadas ao pagamento (antes disso, "—") */
+  const inicioConciliacao = INICIO_LIGACAO_PAGAMENTO;
   const [dataInicial, setDataInicial] = useState(dayjs().subtract(30, 'days').format('YYYY-MM-DD'));
   const [dataFinal, setDataFinal] = useState(dayjs().format('YYYY-MM-DD'));
   
@@ -133,8 +139,6 @@ const ComprasEstoque: React.FC = () => {
     fetchData();
     fetchIndicadores();
     fetchFormData();
-    supabase.from('banco_extrato').select('data').order('data').limit(1).maybeSingle()
-      .then(({ data }) => setInicioConciliacao(data?.data ?? null));
   }, []);
 
   useEffect(() => {
@@ -200,6 +204,8 @@ const ComprasEstoque: React.FC = () => {
         criado_por: compra.criado_por,
         criado_em: compra.criado_em,
         conta_pagar_id: compra.conta_pagar_id ?? null,
+        pago_em: compra.pago_em ?? null,
+        pago_meio: compra.pago_meio ?? null,
       }));
 
       setCompras(comprasProcessadas);
@@ -735,9 +741,8 @@ const ComprasEstoque: React.FC = () => {
   };
 
   /**
-   * paga = ligada a um pagamento na Conciliação bancária; sem = recebida, sem
-   * pagamento, desde o início do extrato; fora = pendente, cancelada ou anterior
-   * ao extrato (a conciliação não alcança).
+   * paga = ligada a um pagamento (caixa, Pix, conciliação); sem = recebida e sem
+   * pagamento desde o início da ligação; fora = pendente, cancelada ou anterior.
    */
   const situacaoPagamento = (c: EntradaCompra): 'paga' | 'sem' | 'fora' => {
     if (c.conta_pagar_id) return 'paga';
@@ -991,8 +996,9 @@ const ComprasEstoque: React.FC = () => {
       {pagamentoFilter === 'sem' && !loading && (
         <p className="aviso aviso-atencao m-0">
           <strong>{semPagamento.length} {semPagamento.length === 1 ? 'nota sem pagamento' : 'notas sem pagamento'}</strong> · {formatCurrency(semPagamento.reduce((s, c) => s + Number(c.valor_total || 0), 0))}
-          {inicioConciliacao && <> · desde {dayjs(inicioConciliacao).format('DD/MM/YYYY')}, quando começou o extrato da Stone</>}.
-          {' '}Sai daqui sozinha quando o Pix é conciliado no modo "um por um" com a nota marcada.
+          {' '}· desde {dayjs(inicioConciliacao).format('DD/MM/YYYY')}.
+          {' '}Sai daqui sozinha quando o pagamento é lançado (caixa, Contas a Pagar ou conciliação) e o valor bate com a nota.
+          {' '}Se não sair, confira se o pagamento foi lançado no mesmo fornecedor e com o mesmo valor.
         </p>
       )}
 
@@ -1080,7 +1086,10 @@ const ComprasEstoque: React.FC = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       {situacaoPagamento(compra) === 'paga' ? (
-                        <span className="badge badge-success" title="Ligada a um pagamento na Conciliação bancária">Paga</span>
+                        <div className="flex flex-col gap-0.5">
+                          <span className="badge badge-success self-start">Paga{compra.pago_em ? ` · ${dayjs(compra.pago_em).format('DD/MM')}` : ''}</span>
+                          {compra.pago_meio && <span className="text-xs text-white/50">{compra.pago_meio}</span>}
+                        </div>
                       ) : situacaoPagamento(compra) === 'sem' ? (
                         <span className="badge badge-warning">Sem pagamento</span>
                       ) : (
