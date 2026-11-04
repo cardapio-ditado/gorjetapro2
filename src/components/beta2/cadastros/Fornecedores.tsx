@@ -4,6 +4,9 @@ import { Badge, Button, Chip, Input, Modal, PageHeader, Segmented, Select } from
 import ListaAgrupada, { agrupar } from './ListaAgrupada';
 import ExcluirModal from './ExcluirModal';
 import { cadastrosApi, DIAS, semAcento, type CategoriaFinanceira, type Fornecedor } from './api';
+import { supabase } from '../../../lib/supabase';
+
+interface Parecido { id: string; nome: string; motivo: string }
 
 type Filtro = 'ativos' | 'arquivados' | 'todos';
 const NOVO = '__novo__';
@@ -21,6 +24,9 @@ const Fornecedores: React.FC = () => {
   const [novoGrupo, setNovoGrupo] = useState('');
   const [salvando, setSalvando] = useState(false);
   const [excluir, setExcluir] = useState<Fornecedor | null>(null);
+  /** nomes parecidos já cadastrados: avisa uma vez antes de criar outro */
+  const [parecidos, setParecidos] = useState<Parecido[] | null>(null);
+  useEffect(() => { setParecidos(null); }, [edicao?.nome, edicao?.cnpj, edicao?.id]);
 
   const carregar = async () => {
     setErro(null);
@@ -65,6 +71,11 @@ const Fornecedores: React.FC = () => {
     if (ciclo !== null && (!Number.isInteger(ciclo) || ciclo < 1)) { setErro('Ciclo de compra deve ser um número inteiro de dias.'); return; }
     setSalvando(true); setErro(null);
     try {
+      // novo cadastro: mostra os parecidos (ASSAI × ASSAI ATACADISTA) antes de criar outro
+      if (!edicao.id && !parecidos) {
+        const { data: ps } = await supabase.rpc('fn_fornecedor_parecidos', { p_nome: nome, p_cnpj: cnpj || null });
+        if (ps && (ps as Parecido[]).length) { setParecidos(ps as Parecido[]); return; }
+      }
       const valores: Record<string, unknown> = {
         nome, grupo, tipo: edicao.tipo || 'geral', modalidade: edicao.modalidade || 'entrega', telefone: (edicao.telefone || '').trim() || null, email: (edicao.email || '').trim() || null,
         responsavel: (edicao.responsavel || '').trim() || null, cnpj: (edicao.cnpj || '').trim() || null, categoria_padrao_id: edicao.categoria_padrao_id || null,
@@ -102,6 +113,13 @@ const Fornecedores: React.FC = () => {
         </>}
       >
         {erro && <div className="aviso aviso-perigo" role="alert">{erro}</div>}
+        {parecidos && (
+          <div className="aviso aviso-atencao mb-3" role="alert">
+            Já tem fornecedor com nome parecido: {parecidos.map(p => <strong key={p.id}>{p.nome.trim()}</strong>).reduce<React.ReactNode[]>((a, el, i) => (i ? [...a, ', ', el] : [el]), [])}
+            {' '}({parecidos.map(p => p.motivo).filter((m, i, a) => a.indexOf(m) === i).join(', ')}).
+            {' '}Se for o mesmo, cancele e use o que existe. Se for outro, clique em <strong>Salvar</strong> de novo.
+          </div>
+        )}
         {edicao && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <Input rotulo="Nome" value={edicao.nome || ''} onChange={e => campo('nome', e.target.value)} className="md:col-span-2" autoFocus />

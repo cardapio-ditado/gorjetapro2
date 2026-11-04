@@ -949,8 +949,8 @@ const FormShow: React.FC<{ inicial: Partial<Show>; fornecedores: Fornecedor[]; o
     try {
       let fid = fornecedorId;
       if (!fid && novo) {
-        const { data: existe } = await supabase.from('fornecedores').select('id').eq('nome', nome.trim()).eq('tipo', 'musico').maybeSingle();
-        if (existe) fid = existe.id;
+        const { data: existe } = await supabase.rpc('fn_fornecedor_encontrar', { p_nome: nome.trim(), p_cnpj: null });
+        if (existe) fid = existe as string;
         else {
           const { data: criado, error } = await supabase.from('fornecedores').insert([{
             nome: nome.trim(), telefone: contato.trim() || null, status: 'ativo', tipo: 'musico', observacoes: 'Cadastrado automaticamente via módulo de Músicos',

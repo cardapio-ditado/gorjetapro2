@@ -4,6 +4,7 @@ import { Button, Combobox, Input, Modal, Segmented } from '../../ui';
 import type { Categoria, Fornecedor } from './lancar';
 
 type Tipo = 'geral' | 'rh' | 'musico';
+interface Parecido { id: string; nome: string; cnpj: string | null; motivo: string; score: number }
 
 interface Props {
   aberto: boolean;
@@ -31,23 +32,31 @@ export default function NovoFornecedor({ aberto, nomeInicial, documento, categor
   const [categoriaId, setCategoriaId] = useState('');
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+  /** cadastros com nome parecido: confirma antes de criar outro */
+  const [parecidos, setParecidos] = useState<Parecido[] | null>(null);
 
   useEffect(() => {
     if (!aberto) return;
     setNome(nomeInicial); setDoc(formatarDoc(documento)); setTipo(documento?.length === 11 ? 'rh' : 'geral');
-    setCategoriaId(''); setErro(null);
+    setCategoriaId(''); setErro(null); setParecidos(null);
   }, [aberto, nomeInicial, documento]);
+
+  const usar = async (id: string) => {
+    const { data: f } = await supabase.from('fornecedores').select('id, nome, categoria_padrao_id').eq('id', id).single();
+    if (f) onCriado(f as Fornecedor);
+  };
 
   const salvar = async () => {
     if (nome.trim().length < 2) { setErro('Escreva o nome.'); return; }
     setSalvando(true); setErro(null);
     try {
-      const digitos = doc.replace(/\D/g, '');
-      if (digitos) {
-        // mesmo documento já cadastrado: usa o que existe em vez de duplicar
-        const { data: todos } = await supabase.from('fornecedores').select('id, nome, cnpj, categoria_padrao_id').not('cnpj', 'is', null);
-        const existe = (todos || []).find(f => String(f.cnpj || '').replace(/\D/g, '') === digitos);
-        if (existe) { onCriado({ id: existe.id, nome: existe.nome, categoria_padrao_id: existe.categoria_padrao_id }); return; }
+      // mesmo documento, ou mesmo nome sem acento/Ltda: usa o que existe em vez de duplicar
+      const { data: igual } = await supabase.rpc('fn_fornecedor_encontrar', { p_nome: nome.trim(), p_cnpj: doc.trim() || null });
+      if (igual) { await usar(igual as string); return; }
+      // parecido (ASSAI × ASSAI ATACADISTA): mostra antes de criar outro
+      if (!parecidos) {
+        const { data: ps } = await supabase.rpc('fn_fornecedor_parecidos', { p_nome: nome.trim(), p_cnpj: doc.trim() || null });
+        if (ps && (ps as Parecido[]).length) { setParecidos(ps as Parecido[]); return; }
       }
       const { data, error } = await supabase.from('fornecedores').insert({
         nome: nome.trim(), cnpj: doc.trim() || null, tipo, status: 'ativo', categoria_padrao_id: categoriaId || null,
@@ -67,7 +76,7 @@ export default function NovoFornecedor({ aberto, nomeInicial, documento, categor
       rodape={(
         <>
           <Button variante="discreto" onClick={onFechar}>Cancelar</Button>
-          <Button variante="primario" carregando={salvando} onClick={salvar}>Cadastrar</Button>
+          <Button variante="primario" carregando={salvando} onClick={salvar}>{parecidos ? 'Cadastrar mesmo assim' : 'Cadastrar'}</Button>
         </>
       )}>
       <div className="flex flex-col gap-3">
@@ -77,6 +86,18 @@ export default function NovoFornecedor({ aberto, nomeInicial, documento, categor
           opcoes={[{ valor: 'geral', rotulo: 'Fornecedor' }, { valor: 'rh', rotulo: 'Colaborador' }, { valor: 'musico', rotulo: 'Músico' }]} />
         <Combobox rotulo="Categoria padrão" valor={categoriaId} onEscolher={setCategoriaId}
           opcoes={categorias.map(c => ({ id: c.id, nome: c.nome }))} placeholder="Ex.: Pessoal, Bebidas…" />
+        {parecidos && (
+          <div className="aviso aviso-atencao flex flex-col gap-2" role="alert">
+            <span>Já tem fornecedor com nome parecido. É algum destes?</span>
+            {parecidos.map(p => (
+              <div key={p.id} className="flex items-center gap-2">
+                <span className="flex-1 min-w-0 truncate"><strong>{p.nome}</strong> · {p.motivo}</span>
+                <Button tamanho="sm" onClick={() => usar(p.id)}>Usar este</Button>
+              </div>
+            ))}
+            <span className="t-caption">Se não for nenhum, clique em <strong>Cadastrar mesmo assim</strong>.</span>
+          </div>
+        )}
         {erro && <p className="aviso aviso-perigo" role="alert">{erro}</p>}
       </div>
     </Modal>

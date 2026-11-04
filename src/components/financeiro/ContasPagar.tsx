@@ -181,14 +181,11 @@ const ContasPagar: React.FC = () => {
       setLoading(true); setShowIAModal(false);
       let fornecedorId='';
       const nome=extracted.beneficiario.nome, cnpj=extracted.beneficiario.cnpj;
-      if (cnpj) {
-        const { data: e } = await supabase.from('fornecedores').select('id').eq('cnpj',cnpj.replace(/\D/g,'')).maybeSingle();
-        if (e) { fornecedorId=e.id; }
-        else { const { data: n, error: ne } = await supabase.from('fornecedores').insert({nome,cnpj:cnpj.replace(/\D/g,'')}).select().single(); if(ne)throw ne; fornecedorId=n.id; }
-      } else if (nome) {
-        const { data: s } = await supabase.from('fornecedores').select('id').ilike('nome',`%${nome}%`).limit(1).maybeSingle();
-        if (s) { fornecedorId=s.id; }
-        else { const { data: n, error: ne } = await supabase.from('fornecedores').insert({nome}).select().single(); if(ne)throw ne; fornecedorId=n.id; }
+      if (cnpj || nome) {
+        // cadastro igual (mesmo CNPJ, ou mesmo nome sem acento/Ltda): usa o que existe
+        const { data: achado } = await supabase.rpc('fn_fornecedor_encontrar', { p_nome: nome || '', p_cnpj: cnpj || null });
+        if (achado) { fornecedorId = achado as string; }
+        else { const { data: n, error: ne } = await supabase.from('fornecedores').insert({ nome: nome || cnpj, cnpj: cnpj ? cnpj.replace(/\D/g,'') : null }).select().single(); if(ne)throw ne; fornecedorId=n.id; }
       }
       const duplicatas = await detectarDuplicatas({ fornecedor_id:fornecedorId, fornecedor_nome:nome, valor:extracted.valores.total, data_vencimento:extracted.datas.vencimento, numero_documento:extracted.codigo_barras||extracted.linha_digitavel, descricao:extracted.descricao }, 'pagar');
       if (duplicatas.length>0 && duplicatas[0].tipo==='exata') { if(!window.confirm(`⚠️ DUPLICATA DETECTADA!\n\nDeseja continuar?`)){setLoading(false);return;} }

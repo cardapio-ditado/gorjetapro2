@@ -165,14 +165,10 @@ const ImportarAgendaMusicosIA: React.FC<Props> = ({ isOpen, onClose, onImportado
   const garantirFornecedor = async (linha: Linha): Promise<string | null> => {
     if (linha.fornecedor_id) return linha.fornecedor_id;
 
-    const { data: existente } = await supabase
-      .from('fornecedores')
-      .select('id')
-      .eq('nome', linha.nome)
-      .eq('tipo', 'musico')
-      .maybeSingle();
+    // mesmo nome (sem acento, maiúscula ou "Ltda"): usa o cadastro que existe
+    const { data: existente } = await supabase.rpc('fn_fornecedor_encontrar', { p_nome: linha.nome, p_cnpj: null });
 
-    if (existente) return existente.id;
+    if (existente) return existente as string;
 
     const { data: novo, error } = await supabase
       .from('fornecedores')
