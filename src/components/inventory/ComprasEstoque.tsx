@@ -29,6 +29,8 @@ interface EntradaCompra {
   status: 'pendente' | 'recebido' | 'cancelado';
   criado_por?: string;
   criado_em: string;
+  /** pagamento ligado pela Conciliação bancária ("um por um", notas marcadas) */
+  conta_pagar_id?: string | null;
   itens?: ItemEntradaCompra[];
 }
 
@@ -104,6 +106,9 @@ const ComprasEstoque: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'pendente' | 'recebido' | 'cancelado'>('all');
   const [fornecedorFilter, setFornecedorFilter] = useState('all');
+  const [pagamentoFilter, setPagamentoFilter] = useState<'todas' | 'sem' | 'pagas'>('todas');
+  /** primeiro dia do extrato da Stone: antes dele a conciliação não liga pagamento */
+  const [inicioConciliacao, setInicioConciliacao] = useState<string | null>(null);
   const [dataInicial, setDataInicial] = useState(dayjs().subtract(30, 'days').format('YYYY-MM-DD'));
   const [dataFinal, setDataFinal] = useState(dayjs().format('YYYY-MM-DD'));
   
@@ -128,6 +133,8 @@ const ComprasEstoque: React.FC = () => {
     fetchData();
     fetchIndicadores();
     fetchFormData();
+    supabase.from('banco_extrato').select('data').order('data').limit(1).maybeSingle()
+      .then(({ data }) => setInicioConciliacao(data?.data ?? null));
   }, []);
 
   useEffect(() => {
@@ -191,7 +198,8 @@ const ComprasEstoque: React.FC = () => {
         observacoes: compra.observacoes,
         status: compra.status,
         criado_por: compra.criado_por,
-        criado_em: compra.criado_em
+        criado_em: compra.criado_em,
+        conta_pagar_id: compra.conta_pagar_id ?? null,
       }));
 
       setCompras(comprasProcessadas);
@@ -726,12 +734,27 @@ const ComprasEstoque: React.FC = () => {
     return formData.itens.reduce((sum, item) => sum + (item.quantidade * item.custo_unitario), 0);
   };
 
+  /**
+   * paga = ligada a um pagamento na Conciliação bancária; sem = recebida, sem
+   * pagamento, desde o início do extrato; fora = pendente, cancelada ou anterior
+   * ao extrato (a conciliação não alcança).
+   */
+  const situacaoPagamento = (c: EntradaCompra): 'paga' | 'sem' | 'fora' => {
+    if (c.conta_pagar_id) return 'paga';
+    if (c.status !== 'recebido') return 'fora';
+    if (inicioConciliacao && c.data_compra < inicioConciliacao) return 'fora';
+    return 'sem';
+  };
+
   const filteredCompras = compras.filter(compra => {
     const matchesSearch = compra.fornecedor_nome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          compra.numero_documento?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          compra.observacoes?.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesSearch;
+    const pagamento = situacaoPagamento(compra);
+    const matchesPagamento = pagamentoFilter === 'todas' || (pagamentoFilter === 'sem' ? pagamento === 'sem' : pagamento === 'paga');
+    return matchesSearch && matchesPagamento;
   });
+  const semPagamento = filteredCompras.filter(c => situacaoPagamento(c) === 'sem');
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -892,7 +915,7 @@ const ComprasEstoque: React.FC = () => {
 
       {/* Filtros */}
       <div className="bg-[#12141f] p-4 rounded-lg border border-white/10">
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
           <div>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/30 w-5 h-5" />
@@ -916,6 +939,19 @@ const ComprasEstoque: React.FC = () => {
               <option value="pendente">Pendente</option>
               <option value="recebido">Recebido</option>
               <option value="cancelado">Cancelado</option>
+            </select>
+          </div>
+
+          <div>
+            <select
+              aria-label="Pagamento"
+              value={pagamentoFilter}
+              onChange={(e) => setPagamentoFilter(e.target.value as 'todas' | 'sem' | 'pagas')}
+              className="w-full border border-white/20 rounded-lg px-4 py-2 bg-white/5 text-white focus:ring-2 focus:ring-wine focus:border-wine"
+            >
+              <option value="todas">Pagas e sem pagamento</option>
+              <option value="sem">Sem pagamento</option>
+              <option value="pagas">Pagas</option>
             </select>
           </div>
 
@@ -952,6 +988,14 @@ const ComprasEstoque: React.FC = () => {
         </div>
       </div>
 
+      {pagamentoFilter === 'sem' && !loading && (
+        <p className="aviso aviso-atencao m-0">
+          <strong>{semPagamento.length} {semPagamento.length === 1 ? 'nota sem pagamento' : 'notas sem pagamento'}</strong> · {formatCurrency(semPagamento.reduce((s, c) => s + Number(c.valor_total || 0), 0))}
+          {inicioConciliacao && <> · desde {dayjs(inicioConciliacao).format('DD/MM/YYYY')}, quando começou o extrato da Stone</>}.
+          {' '}Sai daqui sozinha quando o Pix é conciliado no modo "um por um" com a nota marcada.
+        </p>
+      )}
+
       {/* Lista de Compras */}
       {loading ? (
         <div className="w-full">
@@ -986,6 +1030,9 @@ const ComprasEstoque: React.FC = () => {
                   </th>
                   <th className="px-6 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">
                     Status
+                  </th>
+                  <th className="px-6 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">
+                    Pagamento
                   </th>
                   <th className="px-6 py-3 text-xs font-medium text-white/60 uppercase tracking-wider">
                     Ações
@@ -1030,6 +1077,15 @@ const ComprasEstoque: React.FC = () => {
                         {getStatusIcon(compra.status)}
                         <span className="ml-1">{getStatusText(compra.status)}</span>
                       </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {situacaoPagamento(compra) === 'paga' ? (
+                        <span className="badge badge-success" title="Ligada a um pagamento na Conciliação bancária">Paga</span>
+                      ) : situacaoPagamento(compra) === 'sem' ? (
+                        <span className="badge badge-warning">Sem pagamento</span>
+                      ) : (
+                        <span className="text-sm text-white/40">—</span>
+                      )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex space-x-2">
@@ -1078,7 +1134,7 @@ const ComprasEstoque: React.FC = () => {
               <ShoppingCart className="w-16 h-16 text-white/30 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-white mb-2">Nenhuma compra encontrada</h3>
               <p className="text-white/60">
-                {searchTerm || statusFilter !== 'all' || fornecedorFilter !== 'all'
+                {searchTerm || statusFilter !== 'all' || fornecedorFilter !== 'all' || pagamentoFilter !== 'todas'
                   ? 'Nenhuma compra corresponde aos filtros aplicados.'
                   : 'Nenhuma compra cadastrada.'}
               </p>
