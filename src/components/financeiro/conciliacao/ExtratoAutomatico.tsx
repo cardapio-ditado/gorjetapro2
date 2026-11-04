@@ -6,10 +6,12 @@ import {
   Badge, Button, Chip, Combobox, EmptyState, IconButton, Input, KPICard, Modal, SectionCard, Segmented, Select, Toolbar, TableSkeleton,
 } from '../../ui';
 import NovoFornecedor from './NovoFornecedor';
+import ConciliarUmPorUm from './ConciliarUmPorUm';
 import {
-  fmt, acaoInicial, validar, lancar, lancarTransferencia, registrarIgnorada, SUG_VAZIA,
-  type Forma, type Categoria, type Fornecedor, type Linha, type Sugestao, type Acao,
+  fmt, acaoInicial, validar, lancar, lancarTransferencia, registrarIgnorada, adiar, SUG_VAZIA,
+  type Forma, type Categoria, type Fornecedor, type Sugestao, type Acao,
 } from './lancar';
+import { ACOES, aplicarFornecedor, documento, pronta, type Conta, type LinhaAuto } from './extrato';
 
 // Extrato automático da Conta Stone (Pluggy / Meu Pluggy, função pluggy-sync).
 // - Saídas para conciliar, agrupadas por quem recebeu (CPF/CNPJ): escolhe o
@@ -36,16 +38,8 @@ interface Movimento {
   descricao: string | null; contraparte_nome: string | null; contraparte_doc_tipo: string | null; operacao: string | null;
   doc_digitos: string | null; classe: string; status: string; fornecedor_id: string | null; categoria_id: string | null;
   regra_id: string | null; conta_receber_id: string | null; conta_transferencia_id: string | null;
+  adiado_motivo: string | null;
 }
-
-interface Conta { id: string; banco: string; tipo_conta: string }
-
-type LinhaAuto = Linha & {
-  extratoId: string; nome: string | null; docTipo: string | null; doc: string | null; classe: string;
-  /** fornecedor veio de regra ou do CNPJ cadastrado (sugestão confiável) */
-  reconhecido: boolean;
-  selecionada: boolean;
-};
 
 interface Grupo { chave: string; nome: string; doc: string | null; docTipo: string | null; classe: string; linhas: LinhaAuto[]; total: number }
 
@@ -59,7 +53,7 @@ interface DiaReceber {
   erro: string | null;
 }
 
-const CAMPOS = 'id, externo_id, data, valor, sentido, descricao, contraparte_nome, contraparte_doc_tipo, operacao, doc_digitos, classe, status, fornecedor_id, categoria_id, regra_id, conta_receber_id, conta_transferencia_id';
+const CAMPOS = 'id, externo_id, data, valor, sentido, descricao, contraparte_nome, contraparte_doc_tipo, operacao, doc_digitos, classe, status, fornecedor_id, categoria_id, regra_id, conta_receber_id, conta_transferencia_id, adiado_motivo';
 const DIAS_RESUMO = 7;
 const GRUPOS_RECEBER: Record<string, string> = {
   cartao_liquidacao: 'Cartão (liquidação)', cartao_antecipacao: 'Cartão (antecipação)', pix_maquininha: 'Pix maquininha',
@@ -74,17 +68,6 @@ const COLUNAS_RESUMO: { chave: string; rotulo: string; entrada: boolean }[] = [
   { chave: 'pessoa', rotulo: 'Pessoas físicas', entrada: false },
   { chave: 'outros', rotulo: 'Outras saídas', entrada: false },
 ];
-const ACOES: Record<Acao, string> = {
-  nova: 'Criar conta e pagar', baixa: 'Pagar conta aberta', ja: 'Já está lançada', ignorar: 'Ignorar', transferencia: 'Transferência entre contas',
-};
-
-/** CPF aparece mascarado na tela; CNPJ inteiro. */
-function documento(tipo: string | null, d: string | null) {
-  if (!d) return '';
-  if (d.length === 11) return `CPF •••.${d.slice(3, 6)}.${d.slice(6, 9)}-••`;
-  if (d.length === 14) return `CNPJ ${d.slice(0, 2)}.${d.slice(2, 5)}.${d.slice(5, 8)}/${d.slice(8, 12)}-${d.slice(12)}`;
-  return `${tipo ?? 'Doc'} ${d}`;
-}
 
 /** "Já está lançada" só vale se o lançamento parecido tiver o nome de quem recebeu (valor e data sozinhos enganam). */
 const normal = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
@@ -94,24 +77,8 @@ function mesmoNome(nome: string | null, descricao: string) {
   return normal(nome).split(/[^a-z0-9]+/).filter(p => p.length >= 4).some(p => d.includes(p));
 }
 
-/** Pronta = tem tudo que precisa para aprovar. */
-const pronta = (l: LinhaAuto) => l.status === 'pendente'
-  && (l.acao === 'ja' || (l.acao === 'baixa' && !!l.contaPagarId) || (l.acao === 'nova' && !!l.fornecedorId)
-    || (l.acao === 'transferencia' && !!l.contaOutraId));
-
-/** Ao escolher o fornecedor: conta aberta dele com o mesmo valor vira "pagar conta aberta"; senão "criar conta e pagar". */
-function aplicarFornecedor(l: LinhaAuto, f: Fornecedor | undefined, categoriaId?: string): LinhaAuto {
-  if (!f) return { ...l, fornecedorId: '', erro: null };
-  const conta = l.sug.contas_abertas.find(c => c.fornecedor_id === f.id);
-  return {
-    ...l,
-    fornecedorId: f.id,
-    categoriaId: categoriaId || l.categoriaId || f.categoria_padrao_id || '',
-    acao: l.acao === 'ja' || l.acao === 'transferencia' ? l.acao : conta ? 'baixa' : 'nova',
-    contaPagarId: conta?.id || l.contaPagarId,
-    erro: null,
-  };
-}
+/** Agrupa por quem recebeu: o documento, ou o nome quando não veio documento. */
+const chaveDe = (l: LinhaAuto) => l.doc || `sem-doc:${l.nome || l.descricao}`;
 
 export default function ExtratoAutomatico() {
   const [integ, setInteg] = useState<Integracao | null>(null);
@@ -133,6 +100,8 @@ export default function ExtratoAutomatico() {
   // filtros
   const [tipo, setTipo] = useState<'todas' | 'fornecedor' | 'pessoa' | 'transferencia' | 'outros'>('todas');
   const [soSemFornecedor, setSoSemFornecedor] = useState(false);
+  const [soAdiadas, setSoAdiadas] = useState(false);
+  const [modo, setModo] = useState<'lista' | 'card'>('lista');
   const [busca, setBusca] = useState('');
   const [abertos, setAbertos] = useState<Set<string>>(new Set());
   const [verResumo, setVerResumo] = useState(false);
@@ -225,7 +194,7 @@ export default function ExtratoAutomatico() {
           formaPagamentoId: /boleto/i.test(m.operacao || '') && boleto ? boleto : pix,
           sug, status: 'pendente', jaImportada: false, salvando: false, erro: null,
           extratoId: m.id, nome: m.contraparte_nome, docTipo: m.contraparte_doc_tipo, doc: m.doc_digitos, classe: m.classe,
-          reconhecido: !!fornRegra, selecionada: false,
+          reconhecido: !!fornRegra, selecionada: false, adiado: m.adiado_motivo,
         };
         // fornecedor só vem preenchido quando é certo (regra ou CNPJ cadastrado)
         return fornRegra ? aplicarFornecedor(base, fornRegra, m.categoria_id || undefined) : base;
@@ -250,19 +219,21 @@ export default function ExtratoAutomatico() {
       if (l.status !== 'pendente') continue;
       if (tipo !== 'todas' && l.classe !== tipo) continue;
       if (soSemFornecedor && l.fornecedorId) continue;
+      if (soAdiadas && !l.adiado) continue;
       if (t && !normal(`${l.nome ?? ''} ${l.descricao}`).includes(t) && !fmt(l.valor).includes(busca.trim())) continue;
-      const chave = l.doc || `sem-doc:${l.nome || l.descricao}`;
+      const chave = chaveDe(l);
       const g = mapa.get(chave) ?? { chave, nome: l.nome || l.descricao || 'Sem nome', doc: l.doc, docTipo: l.docTipo, classe: l.classe, linhas: [], total: 0 };
       g.linhas.push(l); g.total += l.valor;
       mapa.set(chave, g);
     }
     return [...mapa.values()].sort((a, b) => b.total - a.total);
-  }, [saidas, tipo, soSemFornecedor, busca]);
+  }, [saidas, tipo, soSemFornecedor, soAdiadas, busca]);
 
   const selecionadas = pendentes.filter(l => l.selecionada);
   const totalPend = pendentes.reduce((s, l) => s + l.valor, 0);
   const prontas = pendentes.filter(pronta);
   const semForn = pendentes.filter(l => !l.fornecedorId && l.acao !== 'ja' && l.acao !== 'transferencia');
+  const adiadas = pendentes.filter(l => l.adiado);
   const nomeConta = (id: string | null | undefined) => contas.find(c => c.id === id)?.banco.trim() || '';
 
   const atualizar = (ids: string[], f: (l: LinhaAuto) => LinhaAuto) =>
@@ -314,16 +285,17 @@ export default function ExtratoAutomatico() {
   };
 
   /** Aprova as linhas em sequência, com progresso; regras e reclassificação uma vez no fim. */
-  const aprovar = async (linhas: LinhaAuto[]) => {
-    if (!integ) return;
+  const aprovar = async (linhas: LinhaAuto[], silencioso = false): Promise<number> => {
+    if (!integ) return 0;
     const validas: LinhaAuto[] = [];
     for (const l of linhas) {
       const msg = validar(l, integ.banco_conta_id);
       if (msg) atualizar([l.extratoId], x => ({ ...x, erro: msg }));
       else validas.push(l);
     }
-    if (!validas.length) return;
-    setAprovando({ feitas: 0, total: validas.length }); setAviso(null);
+    if (!validas.length) return 0;
+    if (!silencioso) setAprovando({ feitas: 0, total: validas.length });
+    setAviso(null);
     const regras = new Map<string, { nome: string; fornecedorId: string; categoriaId: string | null }>();
     let ok = 0;
     for (const l of validas) {
@@ -334,7 +306,7 @@ export default function ExtratoAutomatico() {
           await lancarTransferencia(l.extratoId, l.contaOutraId!);
           atualizar([l.extratoId], x => ({ ...x, status: 'conciliada', salvando: false, selecionada: false }));
           ok++;
-          setAprovando(p => (p ? { ...p, feitas: p.feitas + 1 } : p));
+          if (!silencioso) setAprovando(p => (p ? { ...p, feitas: p.feitas + 1 } : p));
           continue;
         }
         const contaPagarId = await lancar(l, integ.banco_conta_id, null);
@@ -347,16 +319,24 @@ export default function ExtratoAutomatico() {
       } catch (e: any) {
         atualizar([l.extratoId], x => ({ ...x, salvando: false, erro: e.message || 'Erro ao lançar.' }));
       }
-      setAprovando(p => (p ? { ...p, feitas: p.feitas + 1 } : p));
+      if (!silencioso) setAprovando(p => (p ? { ...p, feitas: p.feitas + 1 } : p));
     }
     try {
       for (const [doc, r] of regras) await salvarRegra(doc, r.nome, 'sugerir', r.fornecedorId, r.categoriaId);
       if (regras.size) await supabase.rpc('fn_banco_reclassificar');
     } catch { /* a regra é conveniência: o lançamento já foi feito */ }
+    if (silencioso) return ok;
     setAprovando(null);
     setAviso(ok === validas.length
       ? { tipo: 'certo', texto: `${ok} ${ok === 1 ? 'saída conciliada' : 'saídas conciliadas'}.` }
       : { tipo: 'perigo', texto: `${ok} de ${validas.length} conciliadas. As que falharam mostram o motivo na linha.` });
+    return ok;
+  };
+
+  /** "Pular, lançar depois" (motivo) ou tirar a marca (null). */
+  const marcarAdiada = async (l: LinhaAuto, motivo: string | null) => {
+    await adiar(l.extratoId, motivo);
+    atualizar([l.extratoId], x => ({ ...x, adiado: motivo }));
   };
 
   const ignorar = async (linhas: LinhaAuto[], sempre: Grupo | null = null) => {
@@ -474,12 +454,25 @@ export default function ExtratoAutomatico() {
       </div>
 
       {/* ── saídas ── */}
-      <SectionCard title="Saídas para conciliar" descricao="Agrupadas por quem recebeu. Escolha o fornecedor uma vez para o grupo e aprove.">
+      <SectionCard title="Saídas para conciliar"
+        descricao={modo === 'lista' ? 'Agrupadas por quem recebeu. Escolha o fornecedor uma vez para o grupo e aprove.' : 'Um pagamento de cada vez, já preenchido. Confira, complete e passe para o próximo.'}
+        action={<Segmented rotulo="Modo" valor={modo} onMudar={setModo} opcoes={[{ valor: 'lista', rotulo: 'Lista' }, { valor: 'card', rotulo: 'Um por um' }]} />}>
+        {modo === 'card' ? (carregando ? <TableSkeleton /> : (
+          <ConciliarUmPorUm
+            linhas={saidas} fornecedores={opcoesForn} categorias={opcoesCat} formas={formas} contas={contas} fornPorId={fornPorId}
+            onMudar={(id, f) => atualizar([id], f)}
+            onLancar={async l => (await aprovar([l], true)) === 1}
+            onIgnorar={l => ignorar([l])}
+            onAdiar={marcarAdiada}
+            onCriarFornecedor={(l, texto) => setNovoForn({ chave: chaveDe(l), nome: texto, doc: l.doc })}
+            onVerLista={() => setModo('lista')} />
+        )) : (<>
         <Toolbar className="mb-3">
           <Segmented rotulo="Tipo" valor={tipo} onMudar={setTipo}
             opcoes={[{ valor: 'todas', rotulo: 'Todas' }, { valor: 'fornecedor', rotulo: 'Empresas' }, { valor: 'pessoa', rotulo: 'Pessoas' },
               { valor: 'transferencia', rotulo: 'Transferências' }, { valor: 'outros', rotulo: 'Outras' }]} />
           <Chip ligado={soSemFornecedor} onMudar={setSoSemFornecedor} tom="perigo">Sem fornecedor</Chip>
+          {adiadas.length > 0 && <Chip ligado={soAdiadas} onMudar={setSoAdiadas} tom="atencao">Para depois ({adiadas.length})</Chip>}
           <Toolbar.Espaco />
           <div className="relative w-full sm:w-64">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-secondary)' }} />
@@ -489,7 +482,7 @@ export default function ExtratoAutomatico() {
 
         {carregando ? <TableSkeleton /> : grupos.length === 0 ? (
           pendentes.length
-            ? <EmptyState icon={Search} title="Nada com esse filtro" variant="filtered" compact action={{ label: 'Limpar filtros', onClick: () => { setTipo('todas'); setSoSemFornecedor(false); setBusca(''); } }} />
+            ? <EmptyState icon={Search} title="Nada com esse filtro" variant="filtered" compact action={{ label: 'Limpar filtros', onClick: () => { setTipo('todas'); setSoSemFornecedor(false); setSoAdiadas(false); setBusca(''); } }} />
             : <EmptyState icon={CheckCircle2} title="Tudo conciliado" description="Nenhuma saída pendente na Conta Stone." compact />
         ) : (
           <div className="flex flex-col gap-2">
@@ -572,6 +565,12 @@ export default function ExtratoAutomatico() {
                             onChange={e => atualizar([l.extratoId], x => ({ ...x, selecionada: e.target.checked }))} />
                           <span className="t-caption w-12">{dayjs(l.data).format('DD/MM')}</span>
                           <span className="t-body tabular-nums w-28" style={{ color: 'var(--text-primary)' }}>{fmt(l.valor)}</span>
+                          {l.adiado && (
+                            <button type="button" className="badge badge-warning" title="Tirar a marca de para depois"
+                              onClick={() => marcarAdiada(l, null).catch(e => setAviso({ tipo: 'perigo', texto: e.message }))}>
+                              para depois · {l.adiado} ✕
+                            </button>
+                          )}
                           <Select aria-label="O que fazer" value={l.acao} className="w-48"
                             onChange={e => atualizar([l.extratoId], x => ({ ...x, acao: e.target.value as Acao, erro: null }))}>
                             <option value="nova">{ACOES.nova}</option>
@@ -621,6 +620,7 @@ export default function ExtratoAutomatico() {
             })}
           </div>
         )}
+        </>)}
       </SectionCard>
 
       {/* ── recebimentos do dia ── */}
@@ -746,8 +746,9 @@ export default function ExtratoAutomatico() {
         onFechar={() => setNovoForn(null)}
         onCriado={f => {
           setFornecedores(prev => (prev.some(x => x.id === f.id) ? prev : [...prev, f].sort((a, b) => a.nome.localeCompare(b.nome))));
-          const g = grupos.find(x => x.chave === novoForn?.chave);
-          if (g) atualizar(g.linhas.map(l => l.extratoId), l => aplicarFornecedor(l, f));
+          // todas as linhas do mesmo destinatário (na lista e no um por um)
+          const ids = saidas.filter(l => l.status === 'pendente' && chaveDe(l) === novoForn?.chave).map(l => l.extratoId);
+          if (ids.length) atualizar(ids, l => aplicarFornecedor(l, f));
           setNovoForn(null);
         }} />
 

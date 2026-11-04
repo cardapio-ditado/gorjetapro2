@@ -27,6 +27,9 @@ export interface Linha {
   categoriaId: string;
   formaPagamentoId: string;
   contaOutraId?: string; // quando acao='transferencia': a outra conta do bar
+  numeroNota?: string;   // nº da nota/espelho: vai para o documento da conta a pagar
+  observacao?: string;   // vai para as observações da conta a pagar / da baixa
+  notasIds?: string[];   // notas de compra (entradas_compras) pagas por este lançamento
   sug: Sugestao;
   status: 'pendente' | 'conciliada' | 'ignorada';
   jaImportada: boolean;  // veio de importação anterior
@@ -73,6 +76,8 @@ export async function lancar(l: Linha, bancoContaId: string, importacaoId: strin
   const { data: userData } = await supabase.auth.getUser();
   const usuario = userData?.user?.id || null;
   let contaPagarId: string | null = null;
+  const nota = l.numeroNota?.trim() || '';
+  const obs = l.observacao?.trim() || '';
 
   if (l.acao === 'nova') {
     const { data: nova, error: cErr } = await supabase.from('contas_pagar').insert([{
@@ -82,8 +87,9 @@ export async function lancar(l: Linha, bancoContaId: string, importacaoId: strin
       forma_pagamento_id: l.formaPagamentoId || null,
       valor_original: l.valor, valor_total: l.valor, valor_final: l.valor,
       data_emissao: l.data, data_vencimento: l.data,
-      numero_documento: l.fitid || null,
-      observacoes: 'Criado via conciliação bancária',
+      // o código do banco continua no comprovante da baixa
+      numero_documento: nota || l.fitid || null,
+      observacoes: ['Criado via conciliação bancária', obs].filter(Boolean).join(' · '),
     }]).select().single();
     if (cErr) throw cErr;
     contaPagarId = nova.id;
@@ -99,10 +105,15 @@ export async function lancar(l: Linha, bancoContaId: string, importacaoId: strin
       p_forma_pagamento_id: l.formaPagamentoId,
       p_conta_bancaria_id: bancoContaId,
       p_numero_comprovante: l.fitid || null,
-      p_observacoes: 'Conciliação bancária',
+      p_observacoes: ['Conciliação bancária', l.acao === 'baixa' && nota ? `Nota ${nota}` : '', obs].filter(Boolean).join(' · '),
       p_usuario: usuario,
     });
     if (bErr) throw bErr;
+    // as notas de compra pagas por este Pix ficam ligadas à conta (aparecem pagas)
+    if (contaPagarId && l.notasIds?.length) {
+      const { error: vErr } = await supabase.rpc('fn_banco_vincular_notas', { p_conta_pagar: contaPagarId, p_notas: l.notasIds });
+      if (vErr) throw vErr;
+    }
   }
 
   const { error: tErr } = await supabase.from('conciliacao_transacoes').insert({
@@ -129,6 +140,29 @@ export async function lancarTransferencia(extratoId: string, contaOutraId: strin
   const { data, error } = await supabase.rpc('fn_banco_lancar_transferencia', { p_extrato_id: extratoId, p_outra_conta: contaOutraId });
   if (error) throw error;
   return data as { ja_lancada: boolean; origem: string; destino: string; valor: number };
+}
+
+export interface NotaCompra { id: string; numero: string | null; data: string; valor: number; itens: number }
+export interface NotasSugeridas { notas: NotaCompra[]; combinacao: string[]; diferenca: number | null }
+
+/**
+ * Notas de compra do fornecedor, ainda sem pagamento, perto da data do Pix.
+ * `combinacao` é a nota (ou soma de até 3) que dá o valor pago.
+ */
+export async function notasSugeridas(fornecedorId: string, valor: number, data: string): Promise<NotasSugeridas> {
+  const { data: r, error } = await supabase.rpc('fn_banco_notas_sugeridas', { p_fornecedor: fornecedorId, p_valor: valor, p_data: data });
+  if (error) throw error;
+  const v = (r || {}) as Partial<NotasSugeridas>;
+  return { notas: (v.notas || []).map(n => ({ ...n, valor: Number(n.valor) })), combinacao: v.combinacao || [], diferenca: v.diferenca ?? null };
+}
+
+/** "Pular, lançar depois": guarda o motivo no extrato (null tira a marca). */
+export async function adiar(extratoId: string, motivo: string | null) {
+  const { data: u } = await supabase.auth.getUser();
+  const { error } = await supabase.from('banco_extrato').update(motivo
+    ? { adiado_motivo: motivo, adiado_em: new Date().toISOString(), adiado_por: u?.user?.id || null }
+    : { adiado_motivo: null, adiado_em: null, adiado_por: null }).eq('id', extratoId);
+  if (error) throw error;
 }
 
 /** Marca a saída como ignorada (não é lançamento do financeiro). */
