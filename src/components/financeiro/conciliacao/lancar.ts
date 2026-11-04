@@ -109,8 +109,10 @@ export async function lancar(l: Linha, bancoContaId: string, importacaoId: strin
       p_usuario: usuario,
     });
     if (bErr) throw bErr;
-    // as notas de compra pagas por este Pix ficam ligadas à conta (aparecem pagas)
-    if (contaPagarId && l.notasIds?.length) {
+    // as notas de compra pagas por este Pix ficam ligadas à conta (aparecem pagas).
+    // A baixa já liga sozinha as que batem; aqui vale a escolha de quem concilia
+    // (lista vazia = desmarcou todas). undefined = não houve escolha: fica a automática.
+    if (contaPagarId && l.notasIds !== undefined) {
       const { error: vErr } = await supabase.rpc('fn_banco_vincular_notas', { p_conta_pagar: contaPagarId, p_notas: l.notasIds });
       if (vErr) throw vErr;
     }
