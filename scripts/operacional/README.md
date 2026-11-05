@@ -23,4 +23,10 @@ A página lê um único documento do banco do artifact: coleção `op`, document
 - Prazo: extra registrado na casa 7 dias, extra de fora 2 dias, músico 7 dias.
 - Ordem de prioridade (na página): dias sem receber descontado o prazo, quantidade em aberto,
   quem volta a trabalhar logo, diarista antes de banda; desempate pelo menor valor.
+- Corte do financeiro: o dia anterior ao primeiro Pix da Stone (`banco_extrato` pendente) que não
+  tem baixa no fluxo de caixa. Até o corte, controle e financeiro têm que bater; depois dele,
+  o Pix que já saiu no banco aparece ao lado da pessoa como "sem baixa, a confirmar" e não abate
+  a dívida (pode ser vale/salário de quem é da casa).
+- Cada pessoa do módulo de Extras aponta para o fornecedor que recebe o Pix (`extras_pessoas.fornecedor_id`);
+  só quem não tem esse vínculo é ligado pelo nome.
 - Nada no financeiro é alterado pelo andar. Correções só com o OK do Kadu.
