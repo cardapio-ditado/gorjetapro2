@@ -53,7 +53,8 @@ interface DiaReceber {
   erro: string | null;
 }
 
-const CAMPOS = 'id, externo_id, data, valor, sentido, descricao, contraparte_nome, contraparte_doc_tipo, operacao, doc_digitos, classe, status, fornecedor_id, categoria_id, regra_id, conta_receber_id, conta_transferencia_id, adiado_motivo';
+// data = dia da Stone (horário de Brasília), igual ao extrato que o banco manda.
+const CAMPOS = 'id, externo_id, data:data_stone, valor, sentido, descricao, contraparte_nome, contraparte_doc_tipo, operacao, doc_digitos, classe, status, fornecedor_id, categoria_id, regra_id, conta_receber_id, conta_transferencia_id, adiado_motivo';
 const DIAS_RESUMO = 7;
 const GRUPOS_RECEBER: Record<string, string> = {
   cartao_liquidacao: 'Cartão (liquidação)', cartao_antecipacao: 'Cartão (antecipação)', pix_maquininha: 'Pix maquininha',
@@ -132,14 +133,14 @@ export default function ExtratoAutomatico() {
       const desde = dayjs().subtract(DIAS_RESUMO - 1, 'day').format('YYYY-MM-DD');
       const hoje = dayjs().format('YYYY-MM-DD');
       const [r, pd, pc, rc, pri] = await Promise.all([
-        supabase.from('banco_extrato').select(CAMPOS).eq('integracao_id', integracao.id).gte('data', desde).limit(5000),
+        supabase.from('banco_extrato').select(CAMPOS).eq('integracao_id', integracao.id).gte('data_stone', desde).limit(5000),
         supabase.from('banco_extrato').select(CAMPOS).eq('integracao_id', integracao.id).eq('status', 'pendente').eq('sentido', 'debito')
-          .order('data', { ascending: false }).limit(300),
+          .order('data_stone', { ascending: false }).limit(300),
         supabase.from('banco_extrato').select(CAMPOS).eq('integracao_id', integracao.id).eq('status', 'pendente').eq('sentido', 'credito')
-          .order('data', { ascending: false }).limit(200),
+          .order('data_stone', { ascending: false }).limit(200),
         supabase.from('banco_extrato').select(CAMPOS).eq('integracao_id', integracao.id).is('conta_receber_id', null)
-          .in('classe', ['receita_cartao', 'receita_pix']).neq('status', 'ignorada').lt('data', hoje).limit(5000),
-        supabase.from('banco_extrato').select('data').eq('integracao_id', integracao.id).order('data').limit(1).maybeSingle(),
+          .in('classe', ['receita_cartao', 'receita_pix']).neq('status', 'ignorada').lt('data_stone', hoje).limit(5000),
+        supabase.from('banco_extrato').select('data:data_stone').eq('integracao_id', integracao.id).order('data_stone').limit(1).maybeSingle(),
       ]);
       setResumo((r.data || []) as Movimento[]);
       const ents = (pc.data || []) as Movimento[];
