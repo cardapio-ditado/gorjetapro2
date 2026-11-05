@@ -3,7 +3,7 @@ import { supabase } from '../../../lib/supabase';
 import { Button, Combobox, Input, Modal, Segmented } from '../../ui';
 import type { Categoria, Fornecedor } from './lancar';
 
-type Tipo = 'geral' | 'rh' | 'musico';
+type Tipo = 'geral' | 'rh' | 'musico' | 'extra';
 interface Parecido { id: string; nome: string; cnpj: string | null; motivo: string; score: number }
 
 interface Props {
@@ -83,7 +83,7 @@ export default function NovoFornecedor({ aberto, nomeInicial, documento, categor
         <Input rotulo="Nome" value={nome} onChange={e => setNome(e.target.value)} autoFocus />
         <Input rotulo="CPF ou CNPJ" value={doc} onChange={e => setDoc(e.target.value)} dica="Veio do extrato. Serve para reconhecer os próximos pagamentos." />
         <Segmented rotulo="Tipo" valor={tipo} onMudar={v => setTipo(v)}
-          opcoes={[{ valor: 'geral', rotulo: 'Fornecedor' }, { valor: 'rh', rotulo: 'Colaborador' }, { valor: 'musico', rotulo: 'Músico' }]} />
+          opcoes={[{ valor: 'geral', rotulo: 'Fornecedor' }, { valor: 'rh', rotulo: 'Colaborador' }, { valor: 'musico', rotulo: 'Músico' }, { valor: 'extra', rotulo: 'Extra' }]} />
         <Combobox rotulo="Categoria padrão" valor={categoriaId} onEscolher={setCategoriaId}
           opcoes={categorias.map(c => ({ id: c.id, nome: c.nome }))} placeholder="Ex.: Pessoal, Bebidas…" />
         {parecidos && (

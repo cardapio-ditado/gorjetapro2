@@ -3,6 +3,7 @@ import dayjs from 'dayjs';
 import { AlertTriangle, Check, Plus, X } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { Button, Input, Modal, Select, Textarea } from '../ui';
+import { SearchableSelect } from '../common/SearchableSelect';
 import type { BadgeVariante } from '../ui';
 
 /**
@@ -122,12 +123,70 @@ export async function carregarCadastros(): Promise<{ tipos: TipoExtra[]; pessoas
   return { tipos: (t.data || []) as TipoExtra[], pessoas: (p.data || []) as PessoaExtra[] };
 }
 
+// ── Nova pessoa ─────────────────────────────────────────────────────────────
+/**
+ * Cadastro de pessoa nova, sempre pelo banco (fn_extras_cadastrar_pessoa): nome completo
+ * como aparece no PIX, chave PIX obrigatória, aviso de nome parecido, e a pessoa já sai
+ * ligada a quem recebe o PIX no Financeiro (fornecedor do tipo "extra").
+ */
+export const NovaPessoaExtra: React.FC<{
+  tipoId?: string | null;
+  onCriada: (p: PessoaExtra) => void;
+  onCancelar: () => void;
+}> = ({ tipoId, onCriada, onCancelar }) => {
+  const [nome, setNome] = useState('');
+  const [pix, setPix] = useState('');
+  const [tel, setTel] = useState('');
+  const [parecidos, setParecidos] = useState<string | null>(null);
+  const [outra, setOutra] = useState(false);
+  const [erro, setErro] = useState<string | null>(null);
+  const [ocupado, setOcupado] = useState(false);
+
+  const cadastrar = async () => {
+    setOcupado(true); setErro(null);
+    const { data, error } = await supabase.rpc('fn_extras_cadastrar_pessoa', {
+      p_nome: nome, p_pix: pix, p_telefone: tel || null, p_tipo_id: tipoId || null, p_outra_pessoa: outra,
+    });
+    setOcupado(false);
+    if (error) {
+      const m = error.message || '';
+      if (m.startsWith('PARECIDO: ')) { setParecidos(m.slice(10)); setOutra(false); return; }
+      setErro(m); return;
+    }
+    onCriada(data as PessoaExtra);
+  };
+
+  return (
+    <div className="rounded p-3 mb-3 flex flex-col gap-3" style={{ background: 'var(--bg-hover)', border: '1px solid var(--border-subtle)' }}>
+      <p className="t-label" style={{ margin: 0 }}>Nova pessoa</p>
+      {erro && <div className="aviso aviso-perigo" role="alert">{erro}</div>}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <Input rotulo="Nome completo" value={nome} onChange={e => { setNome(e.target.value); setParecidos(null); setOutra(false); }} autoFocus
+          placeholder="Como aparece no PIX" dica="Nome e sobrenome. Nada de apelido." />
+        <Input rotulo="Chave PIX" value={pix} onChange={e => setPix(e.target.value)} placeholder="CPF, telefone ou e-mail" />
+        <Input rotulo="WhatsApp" value={tel} onChange={e => setTel(e.target.value)} placeholder="65 9xxxx-xxxx" />
+      </div>
+      {parecidos && (
+        <div className="aviso aviso-atencao">
+          Já existe gente com nome parecido: <b>{parecidos}</b>. Se for a mesma pessoa, cancele e escolha na lista.
+          <label className="flex items-center gap-2 mt-2"><input type="checkbox" checked={outra} onChange={e => setOutra(e.target.checked)} /> É outra pessoa, cadastrar mesmo assim</label>
+        </div>
+      )}
+      <div className="flex gap-2">
+        <Button tamanho="sm" onClick={onCancelar} disabled={ocupado}>Cancelar</Button>
+        <Button tamanho="sm" variante="primario" icone={<Check size={14} />} onClick={cadastrar} carregando={ocupado}
+          disabled={!nome.trim() || !pix.trim() || (!!parecidos && !outra)}>Cadastrar</Button>
+      </div>
+    </div>
+  );
+};
+
 // ── Lançar diárias ──────────────────────────────────────────────────────────
-interface Linha { chave: number; pessoa_id: string; novo_nome: string; valor: string }
+interface Linha { chave: number; pessoa_id: string; valor: string }
 
 /**
  * Lança uma ou várias diárias do mesmo dia, tipo e setor (a equipe extra da
- * noite de uma vez). Pessoa nova se cadastra ali mesmo, pelo nome.
+ * noite de uma vez). Só pessoa do cadastro; pessoa nova entra por "Nova pessoa".
  */
 export const LancarExtras: React.FC<{
   dataInicial?: string;
@@ -146,8 +205,9 @@ export const LancarExtras: React.FC<{
   const [hIni, setHIni] = useState('');
   const [hFim, setHFim] = useState('');
   const [obs, setObs] = useState('');
-  const [linhas, setLinhas] = useState<Linha[]>([{ chave: 1, pessoa_id: '', novo_nome: '', valor: '' }]);
+  const [linhas, setLinhas] = useState<Linha[]>([{ chave: 1, pessoa_id: '', valor: '' }]);
   const [seq, setSeq] = useState(2);
+  const [cadastrando, setCadastrando] = useState(false);
   const [jaNoDia, setJaNoDia] = useState<Map<string, string>>(new Map());
   const [erro, setErro] = useState<string | null>(null);
   const [ocupado, setOcupado] = useState(false);
@@ -177,10 +237,22 @@ export const LancarExtras: React.FC<{
   const mudar = (chave: number, patch: Partial<Linha>) => setLinhas(ls => ls.map(l => (l.chave === chave ? { ...l, ...patch } : l)));
   const escolherPessoa = (chave: number, id: string) => {
     const p = pessoaPorId.get(id);
-    mudar(chave, { pessoa_id: id, novo_nome: '', valor: valorPadrao(p, tipo).toFixed(2).replace('.', ',') });
+    mudar(chave, { pessoa_id: id, valor: valorPadrao(p, tipo).toFixed(2).replace('.', ',') });
+  };
+  // Pessoa recém-cadastrada entra na lista e ocupa a primeira linha vazia (ou uma nova).
+  const novaCriada = (p: PessoaExtra) => {
+    setPessoas(ps => [...ps, p].sort((a, b) => a.nome.localeCompare(b.nome)));
+    setCadastrando(false);
+    const valor = valorPadrao(p, tipo).toFixed(2).replace('.', ',');
+    setLinhas(ls => {
+      const vazia = ls.find(l => !l.pessoa_id);
+      if (vazia) return ls.map(l => (l.chave === vazia.chave ? { ...l, pessoa_id: p.id, valor } : l));
+      return [...ls, { chave: seq, pessoa_id: p.id, valor }];
+    });
+    setSeq(s => s + 1);
   };
 
-  const validas = linhas.filter(l => (l.pessoa_id || l.novo_nome.trim()) && num(l.valor) > 0);
+  const validas = linhas.filter(l => l.pessoa_id && num(l.valor) > 0);
   const total = validas.reduce((a, l) => a + num(l.valor), 0);
   const dobradas = validas.filter(l => l.pessoa_id && jaNoDia.has(l.pessoa_id));
 
@@ -191,22 +263,8 @@ export const LancarExtras: React.FC<{
     if (!validas.length) { setErro('Adicione pelo menos uma pessoa com valor.'); return; }
     setOcupado(true); setErro(null);
     try {
-      // Pessoa nova: cadastra antes, já com o tipo.
-      const linhasProntas: { pessoa: PessoaExtra; valor: number }[] = [];
-      for (const l of validas) {
-        let p = l.pessoa_id ? pessoaPorId.get(l.pessoa_id) : undefined;
-        if (!p) {
-          const nome = l.novo_nome.trim().replace(/\s+/g, ' ');
-          const existe = pessoas.find(x => x.nome.toLowerCase() === nome.toLowerCase());
-          if (existe) p = existe;
-          else {
-            const { data: nova, error } = await supabase.from('extras_pessoas').insert({ nome, tipo_id: tipo.id }).select('*').single();
-            if (error) throw error;
-            p = nova as PessoaExtra;
-          }
-        }
-        linhasProntas.push({ pessoa: p, valor: num(l.valor) });
-      }
+      const linhasProntas = validas.map(l => ({ pessoa: pessoaPorId.get(l.pessoa_id) as PessoaExtra, valor: num(l.valor) }))
+        .filter(x => x.pessoa);
       const { error } = await supabase.from('extras_freelancers').insert(linhasProntas.map(({ pessoa, valor }) => ({
         nome: pessoa.nome, telefone: pessoa.telefone, pessoa_id: pessoa.id, tipo_id: tipo.id, funcao_temporaria: tipo.nome,
         setor, valor_diaria: valor, data_trabalho: data, horario_inicio: hIni || null, horario_fim: hFim || null,
@@ -248,23 +306,24 @@ export const LancarExtras: React.FC<{
 
       <div className="flex items-center justify-between mb-2">
         <span className="t-label" style={{ color: 'var(--text-secondary)' }}>Pessoas</span>
-        <Button tamanho="sm" icone={<Plus size={14} />} onClick={() => { setLinhas(ls => [...ls, { chave: seq, pessoa_id: '', novo_nome: '', valor: tipo ? tipo.valor_diaria.toFixed(2).replace('.', ',') : '' }]); setSeq(s => s + 1); }}>Adicionar pessoa</Button>
+        <div className="flex gap-2">
+          {!cadastrando && <Button tamanho="sm" variante="discreto" icone={<Plus size={14} />} onClick={() => setCadastrando(true)}>Nova pessoa</Button>}
+          <Button tamanho="sm" icone={<Plus size={14} />} onClick={() => { setLinhas(ls => [...ls, { chave: seq, pessoa_id: '', valor: tipo ? tipo.valor_diaria.toFixed(2).replace('.', ',') : '' }]); setSeq(s => s + 1); }}>Adicionar linha</Button>
+        </div>
       </div>
-      <datalist id="extras-pessoas">{pessoas.map(p => <option key={p.id} value={p.nome} />)}</datalist>
+      {cadastrando && <NovaPessoaExtra tipoId={tipoId} onCriada={novaCriada} onCancelar={() => setCadastrando(false)} />}
       {linhas.map(l => {
         const p = pessoaPorId.get(l.pessoa_id);
         const dobra = l.pessoa_id ? jaNoDia.get(l.pessoa_id) : undefined;
         return (
           <div key={l.chave} className="mb-2">
             <div className="grid grid-cols-[minmax(0,1fr)_120px_auto] gap-2 items-end">
-              <Input aria-label="Pessoa" list="extras-pessoas" placeholder="Nome da pessoa" value={p ? p.nome : l.novo_nome}
-                onChange={e => {
-                  const v = e.target.value;
-                  const achada = pessoas.find(x => x.nome.toLowerCase() === v.trim().toLowerCase());
-                  if (achada) escolherPessoa(l.chave, achada.id);
-                  else mudar(l.chave, { pessoa_id: '', novo_nome: v });
-                }}
-                dica={p ? [p.telefone, p.pix && `PIX ${p.pix}`].filter(Boolean).join(' · ') || undefined : l.novo_nome.trim() ? 'Pessoa nova: entra no cadastro.' : undefined} />
+              <div>
+                <SearchableSelect theme="dark" placeholder="Buscar pessoa do cadastro…" value={l.pessoa_id}
+                  options={pessoas.map(x => ({ value: x.id, label: x.nome, sublabel: [x.telefone, x.pix && `PIX ${x.pix}`].filter(Boolean).join(' · ') || undefined }))}
+                  onChange={v => escolherPessoa(l.chave, v)} emptyMessage='Não achou? Use "Nova pessoa".' />
+                {p && (p.telefone || p.pix) && <p className="t-caption" style={{ margin: '2px 0 0' }}>{[p.telefone, p.pix && `PIX ${p.pix}`].filter(Boolean).join(' · ')}</p>}
+              </div>
               <Input aria-label="Valor da diária" inputMode="decimal" placeholder="Valor" value={l.valor} onChange={e => mudar(l.chave, { valor: e.target.value })} />
               <div className="pb-1">
                 <button type="button" className="btn-icon btn-icon-danger" aria-label="Tirar pessoa" onClick={() => setLinhas(ls => (ls.length > 1 ? ls.filter(x => x.chave !== l.chave) : ls))}><X size={14} /></button>

@@ -34,7 +34,7 @@ interface Supplier {
   endereco?: string;
   observacoes?: string;
   categoria_padrao_id?: string;
-  tipo: 'geral' | 'musico' | 'rh';
+  tipo: 'geral' | 'musico' | 'rh' | 'extra';
   ciclo_compra_dias?: number | null;
   dias_compra?: number[] | null;
   status: 'ativo' | 'inativo';
@@ -512,7 +512,8 @@ const GeneralRegistrations: React.FC = () => {
           { name: 'tipo', label: 'Tipo de Fornecedor', type: 'select', required: true, options: [
             { value: 'geral', label: 'Geral (Aparece em todos os contextos)' },
             { value: 'musico', label: '🎵 Músico/Artista (Apenas aba Músicos)' },
-            { value: 'rh', label: '👥 RH/Colaborador (Apenas aba RH)' }
+            { value: 'rh', label: '👥 RH/Colaborador (Apenas aba RH)' },
+            { value: 'extra', label: '🧾 Extra/Diarista (módulo de Extras)' }
           ]},
           {
             name: 'categoria_padrao_id',
@@ -679,7 +680,8 @@ const GeneralRegistrations: React.FC = () => {
               const tipoMap = {
                 'geral': { label: 'Geral', icon: '', color: 'bg-[#12141f]/10 text-white/80' },
                 'musico': { label: 'Músico', icon: '🎵', color: 'bg-blue-500/15 text-blue-400' },
-                'rh': { label: 'RH', icon: '👥', color: 'bg-purple-500/15 text-purple-400' }
+                'rh': { label: 'RH', icon: '👥', color: 'bg-purple-500/15 text-purple-400' },
+                'extra': { label: 'Extra', icon: '🧾', color: 'bg-amber-500/15 text-amber-400' }
               };
               const tipo = tipoMap[item.tipo as keyof typeof tipoMap] || tipoMap.geral;
               return (

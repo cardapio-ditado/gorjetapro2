@@ -15,7 +15,7 @@ import {
 } from '../components/ui';
 import {
   brl, carregarCadastros, dataCurta, emAberto, FORMAS, hora, LancarExtras, MOTIVOS, nomeDe, num, Resumo, SELECT_DIARIA, SELECT_DIARIA_PAG, SELECT_DIARIA_PAGO_EM, datasPagamento,
-  SETORES, SITUACAO, situacao, temTelefone, type Diaria, type PessoaExtra, type Situacao, type TipoExtra,
+  NovaPessoaExtra, SETORES, SITUACAO, situacao, temTelefone, type Diaria, type PessoaExtra, type Situacao, type TipoExtra,
 } from '../components/extras/shared';
 
 dayjs.locale('pt-br');
@@ -543,6 +543,14 @@ const EditarPessoa: React.FC<{ inicial: Partial<PessoaExtra>; tipos: TipoExtra[]
     if (error) { setErro(error.message); setOcupado(false); return; }
     await onSalvo(inicial.id ? `${linha.nome} atualizado.` : `${linha.nome} cadastrado.`);
   };
+  // Pessoa nova só pelo cadastro travado (nome completo, PIX, aviso de parecido).
+  if (!inicial.id) {
+    return (
+      <Modal aberto onFechar={onFechar} titulo="Nova pessoa" descricao="Quem faz extra na casa. Fica ligada a quem recebe o PIX no Financeiro.">
+        <NovaPessoaExtra tipoId={inicial.tipo_id} onCancelar={onFechar} onCriada={p => { void onSalvo(`${p.nome} cadastrado.`); }} />
+      </Modal>
+    );
+  }
   return (
     <Modal aberto onFechar={onFechar} travado={ocupado} titulo={inicial.id ? 'Editar pessoa' : 'Nova pessoa'} descricao="Quem faz extra na casa. Telefone e PIX ajudam na hora de pagar."
       rodape={<><Button onClick={onFechar} disabled={ocupado}>Cancelar</Button><Button variante="primario" icone={<Check size={16} />} onClick={salvar} carregando={ocupado}>Salvar</Button></>}>
