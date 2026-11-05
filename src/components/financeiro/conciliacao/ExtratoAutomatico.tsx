@@ -103,6 +103,7 @@ export default function ExtratoAutomatico() {
   const [soAdiadas, setSoAdiadas] = useState(false);
   const [modo, setModo] = useState<'lista' | 'card'>('lista');
   const [busca, setBusca] = useState('');
+  const [dia, setDia] = useState(() => { try { return localStorage.getItem('conciliacao.dia') || ''; } catch { return ''; } });
   const [abertos, setAbertos] = useState<Set<string>>(new Set());
   const [verResumo, setVerResumo] = useState(false);
   // janelas
@@ -210,13 +211,28 @@ export default function ExtratoAutomatico() {
   const opcoesForn = useMemo(() => fornecedores.map(f => ({ id: f.id, nome: f.nome, sub: (f as any).cnpj || undefined })), [fornecedores]);
   const opcoesCat = useMemo(() => categorias.map(c => ({ id: c.id, nome: c.nome })), [categorias]);
 
+  // ── um dia por vez: começa no mais antigo pendente; dia que zera passa para o próximo ──
+  const diasPend = useMemo(() => {
+    const m = new Map<string, { n: number; total: number }>();
+    for (const x of [...saidas.filter(l => l.status === 'pendente'), ...entradas]) {
+      const d = m.get(x.data) ?? { n: 0, total: 0 };
+      d.n += 1; d.total += Number(x.valor);
+      m.set(x.data, d);
+    }
+    return [...m.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([data, v]) => ({ data, ...v }));
+  }, [saidas, entradas]);
+  const diaAtivo = dia === 'todas' ? 'todas' : diasPend.some(d => d.data === dia) ? dia : diasPend[0]?.data ?? 'todas';
+  const noDia = (x: { data: string }) => diaAtivo === 'todas' || x.data === diaAtivo;
+  const escolherDia = (d: string) => { setDia(d); try { localStorage.setItem('conciliacao.dia', d); } catch { /* sem storage */ } };
+  const entradasDia = entradas.filter(noDia);
+
   // ── grupos por destinatário, com filtros ─────────────────────────────────
-  const pendentes = saidas.filter(l => l.status === 'pendente');
+  const pendentes = saidas.filter(l => l.status === 'pendente' && noDia(l));
   const grupos: Grupo[] = useMemo(() => {
     const t = normal(busca.trim());
     const mapa = new Map<string, Grupo>();
     for (const l of saidas) {
-      if (l.status !== 'pendente') continue;
+      if (l.status !== 'pendente' || !noDia(l)) continue;
       if (tipo !== 'todas' && l.classe !== tipo) continue;
       if (soSemFornecedor && l.fornecedorId) continue;
       if (soAdiadas && !l.adiado) continue;
@@ -227,7 +243,7 @@ export default function ExtratoAutomatico() {
       mapa.set(chave, g);
     }
     return [...mapa.values()].sort((a, b) => b.total - a.total);
-  }, [saidas, tipo, soSemFornecedor, soAdiadas, busca]);
+  }, [saidas, tipo, soSemFornecedor, soAdiadas, busca, diaAtivo]);
 
   const selecionadas = pendentes.filter(l => l.selecionada);
   const totalPend = pendentes.reduce((s, l) => s + l.valor, 0);
@@ -446,7 +462,7 @@ export default function ExtratoAutomatico() {
         <KPICard rotulo="Saídas para conciliar" valor={fmt(totalPend)} detalhe={`${pendentes.length} ${pendentes.length === 1 ? 'pagamento' : 'pagamentos'}`}
           tom={pendentes.length ? 'atencao' : 'certo'} onClick={() => { setTipo('todas'); setSoSemFornecedor(false); }} />
         <KPICard rotulo="Prontas para aprovar" valor={String(prontas.length)} detalhe="com fornecedor ou conta definida" tom={prontas.length ? 'certo' : 'normal'}
-          onClick={() => setSaidas(prev => prev.map(l => ({ ...l, selecionada: pronta(l) })))} />
+          onClick={() => setSaidas(prev => prev.map(l => ({ ...l, selecionada: pronta(l) && noDia(l) })))} />
         <KPICard rotulo="Sem fornecedor" valor={String(semForn.length)} detalhe="escolha ou cadastre" tom={semForn.length ? 'alerta' : 'normal'}
           onClick={() => setSoSemFornecedor(true)} />
         <KPICard rotulo="Recebimentos para lançar" valor={String(receber.length)} detalhe={receber.length === 1 ? 'dia' : 'dias'} tom={receber.length ? 'destaque' : 'normal'}
@@ -456,10 +472,16 @@ export default function ExtratoAutomatico() {
       {/* ── saídas ── */}
       <SectionCard title="Saídas para conciliar"
         descricao={modo === 'lista' ? 'Agrupadas por quem recebeu. Escolha o fornecedor uma vez para o grupo e aprove.' : 'Um pagamento de cada vez, já preenchido. Confira, complete e passe para o próximo.'}
-        action={<Segmented rotulo="Modo" valor={modo} onMudar={setModo} opcoes={[{ valor: 'lista', rotulo: 'Lista' }, { valor: 'card', rotulo: 'Um por um' }]} />}>
+        action={<div className="flex flex-wrap items-center gap-2">
+          <Select aria-label="Data para conciliar" value={diaAtivo} onChange={e => escolherDia(e.target.value)}>
+            {diasPend.map(d => <option key={d.data} value={d.data}>{dayjs(d.data).format('DD/MM')} · {d.n} · {fmt(d.total)}</option>)}
+            <option value="todas">Todas as datas</option>
+          </Select>
+          <Segmented rotulo="Modo" valor={modo} onMudar={setModo} opcoes={[{ valor: 'lista', rotulo: 'Lista' }, { valor: 'card', rotulo: 'Um por um' }]} />
+        </div>}>
         {modo === 'card' ? (carregando ? <TableSkeleton /> : (
           <ConciliarUmPorUm
-            linhas={saidas} fornecedores={opcoesForn} categorias={opcoesCat} formas={formas} contas={contas} fornPorId={fornPorId}
+            linhas={saidas.filter(noDia)}fornecedores={opcoesForn} categorias={opcoesCat} formas={formas} contas={contas} fornPorId={fornPorId}
             onMudar={(id, f) => atualizar([id], f)}
             onLancar={async l => (await aprovar([l], true)) === 1}
             onIgnorar={l => ignorar([l])}
@@ -656,10 +678,10 @@ export default function ExtratoAutomatico() {
       )}
 
       {/* ── entradas fora da maquininha ── */}
-      {entradas.length > 0 && (
-        <SectionCard title={`Entradas fora da maquininha (${entradas.length})`} descricao="Pix e transferências recebidas direto na conta.">
+      {entradasDia.length > 0 && (
+        <SectionCard title={`Entradas fora da maquininha (${entradasDia.length})`} descricao="Pix e transferências recebidas direto na conta.">
           <ul className="flex flex-col gap-2">
-            {entradas.map(m => {
+            {entradasDia.map(m => {
               const transf = m.id in entradaTransf;
               return (
                 <li key={m.id} className="flex flex-wrap items-center gap-3">
