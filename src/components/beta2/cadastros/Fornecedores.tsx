@@ -52,7 +52,7 @@ const Fornecedores: React.FC = () => {
   const agrupados = useMemo(() => agrupar(visiveis, f => f.grupo, f => ({
     id: f.id, titulo: f.nome.trim(), inativo: f.status === 'inativo',
     sub: [f.modalidade === 'rua' ? 'comprador busca' : 'entrega', f.telefone, f.responsavel].filter(Boolean).join(' · ') || undefined,
-    etiquetas: <>{f.tipo === 'musico' && <Badge variant="gold">músico</Badge>}{f.tipo === 'rh' && <Badge variant="info">RH</Badge>}{f.status === 'inativo' && <Badge variant="neutral">arquivado</Badge>}</>,
+    etiquetas: <>{f.tipo === 'musico' && <Badge variant="gold">músico</Badge>}{f.tipo === 'rh' && <Badge variant="info">RH</Badge>}{f.tipo === 'extra' && <Badge variant="neutral">extra</Badge>}{f.status === 'inativo' && <Badge variant="neutral">arquivado</Badge>}</>,
   }), 'Sem grupo'), [visiveis]);
 
   const campo = <K extends keyof Fornecedor>(k: K, v: Fornecedor[K]) => setEdicao(p => (p ? { ...p, [k]: v } : p));
@@ -130,12 +130,12 @@ const Fornecedores: React.FC = () => {
             </Select>
             {edicao.grupo === NOVO ? <Input rotulo="Nome do novo grupo" value={novoGrupo} onChange={e => setNovoGrupo(e.target.value)} /> : (
               <Select rotulo="Tipo" value={edicao.tipo || 'geral'} onChange={e => campo('tipo', e.target.value)}>
-                <option value="geral">Fornecedor</option><option value="musico">Músico / artista</option><option value="rh">RH / colaborador</option>
+                <option value="geral">Fornecedor</option><option value="musico">Músico / artista</option><option value="rh">RH / colaborador</option><option value="extra">Extra / diarista</option>
               </Select>
             )}
             {edicao.grupo === NOVO && (
               <Select rotulo="Tipo" value={edicao.tipo || 'geral'} onChange={e => campo('tipo', e.target.value)}>
-                <option value="geral">Fornecedor</option><option value="musico">Músico / artista</option><option value="rh">RH / colaborador</option>
+                <option value="geral">Fornecedor</option><option value="musico">Músico / artista</option><option value="rh">RH / colaborador</option><option value="extra">Extra / diarista</option>
               </Select>
             )}
             <Select rotulo="Como compramos" value={edicao.modalidade || 'entrega'} onChange={e => campo('modalidade', e.target.value)}>

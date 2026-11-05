@@ -161,31 +161,18 @@ const ImportarAgendaMusicosIA: React.FC<Props> = ({ isOpen, onClose, onImportado
     );
   };
 
-  /** Reaproveita o fornecedor do artista; cria um se ainda não existir. */
-  const garantirFornecedor = async (linha: Linha): Promise<string | null> => {
+  /**
+   * Usa o cadastro do artista que já existe. Artista novo não é criado aqui:
+   * um gerente cadastra em "Novo artista" (com a chave Pix) e a agenda é importada de novo.
+   */
+  const garantirFornecedor = async (linha: Linha): Promise<string> => {
     if (linha.fornecedor_id) return linha.fornecedor_id;
 
     // mesmo nome (sem acento, maiúscula ou "Ltda"): usa o cadastro que existe
     const { data: existente } = await supabase.rpc('fn_fornecedor_encontrar', { p_nome: linha.nome, p_cnpj: null });
-
     if (existente) return existente as string;
 
-    const { data: novo, error } = await supabase
-      .from('fornecedores')
-      .insert([
-        {
-          nome: linha.nome,
-          telefone: linha.contato || null,
-          status: 'ativo',
-          tipo: 'musico',
-          observacoes: 'Cadastrado automaticamente ao importar a agenda de shows',
-        },
-      ])
-      .select('id')
-      .single();
-
-    if (error) throw error;
-    return novo.id;
+    throw new Error('artista sem cadastro. Um gerente cadastra em "Novo show › Novo artista" e você importa de novo.');
   };
 
   const lancar = async () => {

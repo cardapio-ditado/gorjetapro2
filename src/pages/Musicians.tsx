@@ -15,17 +15,32 @@ import {
 } from '../components/ui';
 import type { BadgeVariante } from '../components/ui';
 import ImportarAgendaMusicosIA from '../components/musicos/ImportarAgendaMusicosIA';
+import { useAuth } from '../contexts/AuthContext';
 
 dayjs.locale('pt-br');
 
 /**
  * Músicos: agenda de shows e controle de pagamento dos cachês.
  *
- * Lançar o show cria a conta a pagar no Financeiro (trigger no banco). Os
- * pagamentos lançados aqui são um controle à parte: ficam no histórico do
- * show (musicos_pagamentos) e não dão baixa no Financeiro. O saldo devedor
- * que vale é o desta tela.
+ * Lançar o show cria a conta a pagar no Financeiro (trigger no banco), no nome do artista.
+ * O pagamento lançado aqui é o "pagamento informado" do gerente: controle dele, no histórico
+ * do show (musicos_pagamentos), que não dá baixa no Financeiro. Ao lado aparece a situação
+ * da conta no Financeiro, para os dois lados enxergarem a diferença.
  */
+
+interface SituacaoFin { musico_id: string; fin_status: string; fin_valor: number; fin_pago: number; fin_saldo: number; fin_fornecedor: string | null }
+
+/** Situação da conta do show no Financeiro, em uma etiqueta curta. */
+const FinEtiqueta: React.FC<{ f?: SituacaoFin; show: Show }> = ({ f, show }) => {
+  if (show.status_pagamento === 'cancelado') return <span className="t-caption">—</span>;
+  if (!f) return <span className="t-caption">sem conta</span>;
+  const saldo = Number(f.fin_saldo) || 0, pago = Number(f.fin_pago) || 0;
+  const difere = Math.abs(saldo - saldoDe(show)) > 0.5;
+  const etiqueta = saldo < -0.004 ? <Badge variant="danger">Pago a mais {brl(-saldo)}</Badge>
+    : saldo <= 0.004 ? <Badge variant="success">Pago</Badge>
+    : pago > 0 ? <Badge variant="info">Falta {brl(saldo)}</Badge> : <Badge variant="warning">Em aberto</Badge>;
+  return <span className="inline-flex flex-col items-start gap-0.5">{etiqueta}{difere && <span className="t-caption texto-atencao" title="O controle desta tela e o Financeiro não batem">≠ controle</span>}</span>;
+};
 
 interface Show {
   id: string;
@@ -156,6 +171,7 @@ const Musicians: React.FC = () => {
   const [ficha, setFicha] = useState<string | null>(null);
   // Muda a cada pagamento, para a visão "A pagar" e a ficha recarregarem.
   const [versao, setVersao] = useState(0);
+  const [fin, setFin] = useState<Record<string, SituacaoFin>>({});
 
   const irParaMes = (m: dayjs.Dayjs) => {
     setMes(m.startOf('month'));
@@ -181,10 +197,20 @@ const Musicians: React.FC = () => {
   };
 
   useEffect(() => { void carregar(); }, [inicio, fim]);
+  // Situação de cada show no Financeiro (só leitura), para comparar com o controle desta tela.
   useEffect(() => {
-    supabase.from('fornecedores').select('id, nome, tipo').eq('status', 'ativo').in('tipo', ['musico', 'geral']).order('nome')
-      .then(({ data }) => setFornecedores(((data || []) as Fornecedor[]).sort((a, b) =>
-        a.tipo === b.tipo ? a.nome.localeCompare(b.nome) : a.tipo === 'musico' ? -1 : 1)));
+    const ids = shows.map(s => s.id);
+    if (!ids.length) { setFin({}); return; }
+    supabase.rpc('fn_musicos_situacao_financeiro', { p_ids: ids }).then(({ data }) => {
+      const m: Record<string, SituacaoFin> = {};
+      ((data || []) as SituacaoFin[]).forEach(r => { m[r.musico_id] = r; });
+      setFin(m);
+    });
+  }, [shows]);
+  useEffect(() => {
+    // Só artistas (fornecedor do tipo músico): o show não aceita outro cadastro.
+    supabase.from('fornecedores').select('id, nome, tipo').eq('status', 'ativo').eq('tipo', 'musico').order('nome')
+      .then(({ data }) => setFornecedores((data || []) as Fornecedor[]));
   }, []);
 
   // O show aberto no histórico acompanha a lista recarregada.
@@ -354,7 +380,7 @@ const Musicians: React.FC = () => {
           <Toolbar.Espaco />
           <Button tamanho="sm" variante="discreto" icone={<X size={14} />} onClick={() => setMarcados(new Set())}>Limpar</Button>
           <Button tamanho="sm" variante="primario" icone={<Wallet size={14} />} disabled={artistasSelecionados !== 1}
-            onClick={() => setLote({ titulo: selecionados[0].nome || 'Músico', shows: selecionados })}>Pagar selecionados</Button>
+            onClick={() => setLote({ titulo: selecionados[0].nome || 'Músico', shows: selecionados })}>Informar selecionados</Button>
         </div>
       )}
 
@@ -383,9 +409,10 @@ const Musicians: React.FC = () => {
                     <th className="px-4 py-2.5 text-left">Data</th>
                     <th className="px-4 py-2.5 text-left">Artista</th>
                     <th className="px-4 py-2.5 text-right">Total</th>
-                    <th className="px-4 py-2.5 text-right">Pago</th>
+                    <th className="px-4 py-2.5 text-right" title="Pagamento informado nesta tela">Informado</th>
                     <th className="px-4 py-2.5 text-right">Saldo</th>
-                    <th className="px-4 py-2.5 text-left">Situação</th>
+                    <th className="px-4 py-2.5 text-left">Controle</th>
+                    <th className="px-4 py-2.5 text-left">Financeiro</th>
                     <th className="px-4 py-2.5 text-right" aria-label="Ações" />
                   </tr>
                 </thead>
@@ -420,9 +447,10 @@ const Musicians: React.FC = () => {
                           {sit === 'cancelado' ? <span className="t-caption">—</span> : Math.abs(saldo) < 0.005 ? <span className="t-caption">zerado</span> : brl(saldo)}
                         </td>
                         <td className="px-4 py-3"><Badge variant={SITUACAO[sit].variante}>{SITUACAO[sit].rotulo}</Badge></td>
+                        <td className="px-4 py-3"><FinEtiqueta f={fin[s.id]} show={s} /></td>
                         <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
                           <div className="flex items-center justify-end gap-1">
-                            {(sit === 'pendente' || sit === 'parcial') && <Button tamanho="sm" icone={<Wallet size={14} />} onClick={() => setPagando(s)}>Pagar</Button>}
+                            {(sit === 'pendente' || sit === 'parcial') && <Button tamanho="sm" icone={<Wallet size={14} />} onClick={() => setPagando(s)} title="Informar pagamento (seu controle; não dá baixa no Financeiro)">Informar</Button>}
                             <IconButton aria-label="Histórico de pagamentos" title="Histórico de pagamentos" onClick={() => setDetalhe(s)}><History size={14} /></IconButton>
                             <IconButton aria-label="Editar show" title="Editar" onClick={() => setEditando(s)}><Pencil size={14} /></IconButton>
                             <IconButton aria-label="Excluir show" title="Excluir" tom="perigo" onClick={() => excluir(s)}><Trash2 size={14} /></IconButton>
@@ -438,7 +466,7 @@ const Musicians: React.FC = () => {
                     <td className="px-4 py-3 text-right num" style={{ fontWeight: 600 }}>{brl(visiveis.filter(s => s.status_pagamento !== 'cancelado').reduce((a, s) => a + s.valor_total_final, 0))}</td>
                     <td className="px-4 py-3 text-right num" style={{ fontWeight: 600 }}>{brl(visiveis.filter(s => s.status_pagamento !== 'cancelado').reduce((a, s) => a + s.valor_pago, 0))}</td>
                     <td className="px-4 py-3 text-right num" style={{ fontWeight: 600 }}>{brl(visiveis.reduce((a, s) => a + Math.max(0, saldoDe(s)), 0))}</td>
-                    <td colSpan={2} />
+                    <td colSpan={3} />
                   </tr>
                 </tfoot>
               </table>
@@ -451,11 +479,12 @@ const Musicians: React.FC = () => {
 
       {/* Ordem importa: o modal de baixo fica por cima (pagar sobre o histórico). */}
       {detalhe && (
-        <Detalhe show={detalhe} onFechar={() => setDetalhe(null)} onPagar={() => setPagando(detalhe)} onEditar={() => { setEditando(detalhe); setDetalhe(null); }}
+        <Detalhe show={detalhe} fin={fin[detalhe.id]} onFechar={() => setDetalhe(null)} onPagar={() => setPagando(detalhe)} onEditar={() => { setEditando(detalhe); setDetalhe(null); }}
           onMudou={async m => { setAviso(m); await carregar(); }} />
       )}
       {editando && (
         <FormShow inicial={editando} fornecedores={fornecedores} onFechar={() => setEditando(null)}
+          onNovoArtista={f => setFornecedores(l => [...l, f].sort((a, b) => a.nome.localeCompare(b.nome)))}
           onSalvo={async m => { setEditando(null); setAviso(m); await carregar(); }} />
       )}
       {pagando && (
@@ -531,7 +560,7 @@ const APagar: React.FC<{
                 onClick={() => window.open(urlWhatsApp(textoExtrato(g.nome, g.itens), g.contato), '_blank', 'noopener')}>Extrato</Button>}
               <Button tamanho="sm" variante="discreto" icone={<UserRound size={14} />} onClick={() => onFicha(g.nome)}>Ficha</Button>
               <Button tamanho="sm" variante="primario" icone={<Wallet size={14} />} onClick={() => onPagarTudo(g.nome, g.itens)}>
-                {g.itens.length > 1 ? `Pagar ${brl(g.total)}` : 'Pagar'}
+                {g.itens.length > 1 ? `Informar ${brl(g.total)}` : 'Informar'}
               </Button>
             </div>
           }>
@@ -550,7 +579,7 @@ const APagar: React.FC<{
                 </div>
                 <Badge variant={SITUACAO[sit].variante}>{SITUACAO[sit].rotulo}</Badge>
                 <span className="t-body num" style={{ minWidth: 96, textAlign: 'right', fontWeight: 700 }}>{brl(saldoDe(s))}</span>
-                <Button tamanho="sm" icone={<Wallet size={14} />} onClick={e => { e.stopPropagation(); onPagar(s); }}>Pagar</Button>
+                <Button tamanho="sm" icone={<Wallet size={14} />} onClick={e => { e.stopPropagation(); onPagar(s); }}>Informar</Button>
               </div>
             );
           })}
@@ -603,7 +632,7 @@ const PagarLote: React.FC<{ titulo: string; shows: Show[]; onFechar: () => void;
   };
 
   return (
-    <Modal aberto onFechar={onFechar} largura="lg" travado={ocupado} titulo={`Pagar ${titulo}`}
+    <Modal aberto onFechar={onFechar} largura="lg" travado={ocupado} titulo={`Informar pagamento · ${titulo}`}
       descricao="Um pagamento só para vários shows. O valor cobre do show mais antigo para o mais novo. Não dá baixa no Financeiro."
       rodape={<><Button onClick={onFechar} disabled={ocupado}>Cancelar</Button><Button variante="primario" icone={<Check size={16} />} onClick={confirmar} carregando={ocupado} disabled={!escolhidos.length}>Lançar {v > 0 ? brl(v) : ''}</Button></>}>
       {erro && <div className="aviso aviso-perigo mb-3" role="alert">{erro}</div>}
@@ -679,7 +708,7 @@ const Ficha: React.FC<{ nome: string; versao: number; onFechar: () => void; onDe
       descricao={[r.contato, r.fornecedor && `Financeiro: ${r.fornecedor}`, r.primeiro && `toca na casa desde ${dayjs(r.primeiro).format('MM/YYYY')}`].filter(Boolean).join(' · ')}
       rodape={<>
         {r.abertos.length > 0 && temTelefone(r.contato) && <Button icone={<MessageCircle size={14} />} onClick={() => window.open(urlWhatsApp(textoExtrato(titulo, r.abertos), r.contato), '_blank', 'noopener')}>Mandar extrato</Button>}
-        {r.abertos.length > 0 && <Button variante="primario" icone={<Wallet size={16} />} onClick={() => onPagarTudo(titulo, r.abertos)}>Pagar em aberto ({brl(r.falta)})</Button>}
+        {r.abertos.length > 0 && <Button variante="primario" icone={<Wallet size={16} />} onClick={() => onPagarTudo(titulo, r.abertos)}>Informar em aberto ({brl(r.falta)})</Button>}
         {r.abertos.length === 0 && <Button onClick={onFechar}>Fechar</Button>}
       </>}>
       {erro && <div className="aviso aviso-perigo mb-3" role="alert">{erro}</div>}
@@ -792,13 +821,13 @@ const Pagar: React.FC<{ show: Show; onFechar: () => void; onFeito: (m: string) =
     const { data: r, error } = await supabase.rpc('fn_musico_pagar', { p_musico: show.id, p_valor: v, p_data: data, p_forma: forma, p_obs: obs || null });
     if (error) { setErro(error.message); setOcupado(false); return; }
     const res = r as { saldo: number };
-    await onFeito(res.saldo > 0.004 ? `${show.nome}: ${brl(v)} lançado. Ainda falta ${brl(res.saldo)}.` : `${show.nome}: ${brl(v)} lançado. Show quitado.`);
+    await onFeito(res.saldo > 0.004 ? `${show.nome}: ${brl(v)} informado. Ainda falta ${brl(res.saldo)}.` : `${show.nome}: ${brl(v)} informado. Show quitado no controle.`);
   };
 
   return (
-    <Modal aberto onFechar={onFechar} travado={ocupado} titulo={`Pagar ${show.nome || 'músico'}`}
-      descricao={`Show de ${dataCurta(show.data_evento)}. Controle desta tela: não dá baixa no Financeiro.`}
-      rodape={<><Button onClick={onFechar} disabled={ocupado}>Cancelar</Button><Button variante="primario" icone={<Check size={16} />} onClick={confirmar} carregando={ocupado}>Lançar pagamento</Button></>}>
+    <Modal aberto onFechar={onFechar} travado={ocupado} titulo={`Informar pagamento · ${show.nome || 'músico'}`}
+      descricao={`Show de ${dataCurta(show.data_evento)}. É o seu controle: não dá baixa no Financeiro. O Financeiro baixa a conta quando o Pix sai.`}
+      rodape={<><Button onClick={onFechar} disabled={ocupado}>Cancelar</Button><Button variante="primario" icone={<Check size={16} />} onClick={confirmar} carregando={ocupado}>Informar pagamento</Button></>}>
       {erro && <div className="aviso aviso-perigo mb-3" role="alert">{erro}</div>}
       <div className="grid grid-cols-3 gap-2 mb-4">
         <Resumo rotulo="Total" valor={brl(show.valor_total_final)} />
@@ -827,7 +856,7 @@ const Resumo: React.FC<{ rotulo: string; valor: string; destaque?: boolean }> = 
 );
 
 // ── Detalhe e histórico ─────────────────────────────────────────────────────
-const Detalhe: React.FC<{ show: Show; onFechar: () => void; onPagar: () => void; onEditar: () => void; onMudou: (m: string) => Promise<void> }> = ({ show, onFechar, onPagar, onEditar, onMudou }) => {
+const Detalhe: React.FC<{ show: Show; fin?: SituacaoFin; onFechar: () => void; onPagar: () => void; onEditar: () => void; onMudou: (m: string) => Promise<void> }> = ({ show, fin, onFechar, onPagar, onEditar, onMudou }) => {
   const [pagamentos, setPagamentos] = useState<Pagamento[] | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [estornando, setEstornando] = useState<string | null>(null);
@@ -857,7 +886,7 @@ const Detalhe: React.FC<{ show: Show; onFechar: () => void; onPagar: () => void;
       descricao={`${show.data_evento ? dayjs(show.data_evento).format('dddd, DD/MM/YYYY') : ''}${show.horario_inicio ? ` · ${hora(show.horario_inicio)} às ${hora(show.horario_fim)}` : ''}${show.contato ? ` · ${show.contato}` : ''}`}
       rodape={<>
         <Button icone={<Pencil size={14} />} onClick={onEditar}>Editar show</Button>
-        {(sit === 'pendente' || sit === 'parcial') && <Button variante="primario" icone={<Wallet size={16} />} onClick={onPagar}>Registrar pagamento</Button>}
+        {(sit === 'pendente' || sit === 'parcial') && <Button variante="primario" icone={<Wallet size={16} />} onClick={onPagar}>Informar pagamento</Button>}
       </>}>
       {erro && <div className="aviso aviso-perigo mb-3" role="alert">{erro}</div>}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
@@ -866,8 +895,17 @@ const Detalhe: React.FC<{ show: Show; onFechar: () => void; onPagar: () => void;
         <Resumo rotulo="Pago" valor={brl(show.valor_pago)} />
         <Resumo rotulo={saldoDe(show) < 0 ? 'Pago a mais' : 'Falta'} valor={brl(Math.abs(saldoDe(show)))} destaque />
       </div>
+      <div className="rounded px-3 py-2 mb-4 flex flex-wrap items-center gap-x-4 gap-y-1" style={{ border: '1px solid var(--border-subtle)' }}>
+        <span className="t-label" style={{ color: 'var(--text-secondary)' }}>No Financeiro</span>
+        {fin ? <>
+          <span className="t-body num">pago {brl(Number(fin.fin_pago) || 0)}</span>
+          <span className="t-body num">{(Number(fin.fin_saldo) || 0) < -0.004 ? `pago a mais ${brl(-Number(fin.fin_saldo))}` : `falta ${brl(Math.max(0, Number(fin.fin_saldo) || 0))}`}</span>
+          <span className="t-caption">conta em {fin.fin_fornecedor || '—'}</span>
+          <FinEtiqueta f={fin} show={show} />
+        </> : <span className="t-caption">sem conta a pagar ligada a este show</span>}
+      </div>
       <div className="flex items-center gap-2 mb-2">
-        <span className="t-label" style={{ color: 'var(--text-secondary)' }}>Histórico de pagamentos</span>
+        <span className="t-label" style={{ color: 'var(--text-secondary)' }}>Pagamentos informados (controle)</span>
         <Badge variant={SITUACAO[sit].variante}>{SITUACAO[sit].rotulo}</Badge>
       </div>
       {pagamentos === null ? <p className="t-caption">Carregando…</p> : pagamentos.length === 0 ? (
@@ -914,12 +952,36 @@ const Detalhe: React.FC<{ show: Show; onFechar: () => void; onPagar: () => void;
 };
 
 // ── Cadastro do show ────────────────────────────────────────────────────────
-const FormShow: React.FC<{ inicial: Partial<Show>; fornecedores: Fornecedor[]; onFechar: () => void; onSalvo: (m: string) => Promise<void> }> = ({ inicial, fornecedores, onFechar, onSalvo }) => {
+/**
+ * O show é sempre de um artista do cadastro (a conta a pagar nasce no nome dele e o Pix vai para ele).
+ * Projeto do artista ("Mesa de Bar") entra no campo Projeto e o show fica "Mesa de Bar · Artista".
+ * Artista novo só um gerente cadastra, com a chave Pix.
+ */
+const FormShow: React.FC<{
+  inicial: Partial<Show>; fornecedores: Fornecedor[]; onFechar: () => void; onSalvo: (m: string) => Promise<void>;
+  onNovoArtista: (f: Fornecedor) => void;
+}> = ({ inicial, fornecedores, onFechar, onSalvo, onNovoArtista }) => {
   const novo = !inicial.id;
-  const [nome, setNome] = useState(inicial.nome || '');
+  const { isAdmin } = useAuth();
   const [contato, setContato] = useState(inicial.contato || '');
   const [fornecedorId, setFornecedorId] = useState(inicial.fornecedor_id || '');
-  const [sugerido, setSugerido] = useState('');
+  const artista = fornecedores.find(f => f.id === fornecedorId) || null;
+  // Show antigo com nome diferente do artista: o que sobra vira o projeto (e mostra se o artista está errado).
+  const [projeto, setProjeto] = useState(() => {
+    const n = (inicial.nome || '').trim();
+    const a = (fornecedores.find(f => f.id === inicial.fornecedor_id)?.nome || inicial.fornecedor_nome || '').trim();
+    if (!n || !a || n.toLowerCase() === a.toLowerCase()) return '';
+    const sufixo = ` · ${a}`.toLowerCase();
+    return n.toLowerCase().endsWith(sufixo) ? n.slice(0, n.length - sufixo.length) : n;
+  });
+  const nome = artista ? (projeto.trim() ? `${projeto.trim()} · ${artista.nome.trim()}` : artista.nome.trim()) : '';
+  const [cadastrando, setCadastrando] = useState(false);
+  const [novoNome, setNovoNome] = useState('');
+  const [novoPix, setNovoPix] = useState('');
+  const [novoTel, setNovoTel] = useState('');
+  const [outroMesmo, setOutroMesmo] = useState(false);
+  const parecidos = useMemo(() => novoNome.trim().length < 3 ? [] :
+    fornecedores.filter(f => parecido(novoNome, f.nome) >= 75).slice(0, 3), [novoNome, fornecedores]);
   const [data, setData] = useState(inicial.data_evento ? dayjs(inicial.data_evento).format('YYYY-MM-DD') : dayjs().format('YYYY-MM-DD'));
   const [hIni, setHIni] = useState(hora(inicial.horario_inicio || null) || '20:00');
   const [hFim, setHFim] = useState(hora(inicial.horario_fim || null) || '23:00');
@@ -934,35 +996,40 @@ const FormShow: React.FC<{ inicial: Partial<Show>; fornecedores: Fornecedor[]; o
   const total = Math.max(0, num(valor) + num(adicional) - num(consumo));
   const pago = Number(inicial.valor_pago) || 0;
 
-  useEffect(() => {
-    if (!novo || !nome.trim() || !fornecedores.length) return;
-    const melhor = fornecedores.map(f => ({ id: f.id, nota: parecido(nome, f.nome) })).sort((a, b) => b.nota - a.nota)[0];
-    if (melhor && melhor.nota >= 60) {
-      setSugerido(melhor.id);
-      setFornecedorId(atual => atual || melhor.id);
-    } else setSugerido('');
-  }, [nome, fornecedores, novo]);
-
-  const salvar = async () => {
-    if (!nome.trim() || !data || num(valor) <= 0) { setErro('Preencha nome, data e o valor do cachê.'); return; }
+  const cadastrarArtista = async () => {
+    const n = novoNome.trim().replace(/\s+/g, ' ');
+    if (n.length < 3) { setErro('Escreva o nome do artista ou da dupla.'); return; }
+    if (novoPix.trim().length < 5) { setErro('Informe a chave Pix de quem recebe o cachê.'); return; }
+    if (parecidos.length && !outroMesmo) { setErro(`Já existe "${parecidos[0].nome.trim()}". Escolha ele na lista, ou marque que é outro artista.`); return; }
     setOcupado(true); setErro(null);
     try {
-      let fid = fornecedorId;
-      if (!fid && novo) {
-        const { data: existe } = await supabase.rpc('fn_fornecedor_encontrar', { p_nome: nome.trim(), p_cnpj: null });
-        if (existe) fid = existe as string;
-        else {
-          const { data: criado, error } = await supabase.from('fornecedores').insert([{
-            nome: nome.trim(), telefone: contato.trim() || null, status: 'ativo', tipo: 'musico', observacoes: 'Cadastrado automaticamente via módulo de Músicos',
-          }]).select('id').single();
-          if (error) throw error;
-          fid = criado.id;
-        }
-      }
+      const { data: existe } = await supabase.rpc('fn_fornecedor_encontrar', { p_nome: n, p_cnpj: null });
+      if (existe) throw new Error('Esse nome já está cadastrado. Escolha na lista de artistas.');
+      const { data: criado, error } = await supabase.from('fornecedores').insert([{
+        nome: n.toUpperCase(), telefone: novoTel.trim() || null, chave_pix: novoPix.trim(), status: 'ativo', tipo: 'musico',
+        observacoes: 'Artista cadastrado no módulo de Músicos',
+      }]).select('id, nome, tipo').single();
+      if (error) throw error;
+      onNovoArtista(criado as Fornecedor);
+      setFornecedorId(criado.id);
+      if (!contato.trim() && novoTel.trim()) setContato(novoTel.trim());
+      setCadastrando(false); setNovoNome(''); setNovoPix(''); setNovoTel(''); setOutroMesmo(false);
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : 'Erro ao cadastrar o artista');
+    } finally {
+      setOcupado(false);
+    }
+  };
+
+  const salvar = async () => {
+    if (!artista) { setErro('Escolha o artista na lista. Se ele ainda não existe, um gerente cadastra em "Novo artista".'); return; }
+    if (!data || num(valor) <= 0) { setErro('Preencha a data e o valor do cachê.'); return; }
+    setOcupado(true); setErro(null);
+    try {
       const linha = {
-        nome: nome.trim(), contato: contato.trim() || null, data_evento: data, horario_inicio: hIni || null, horario_fim: hFim || null,
+        nome, contato: contato.trim() || null, data_evento: data, horario_inicio: hIni || null, horario_fim: hFim || null,
         valor: num(valor), valor_consumo: num(consumo), valor_adicional: num(adicional), material_promocional: material.trim() || null,
-        observacoes: obs.trim() || null, fornecedor_id: fid || null,
+        observacoes: obs.trim() || null, fornecedor_id: artista.id,
         // O banco recalcula total, saldo e situação; aqui só se marca o cancelamento.
         status_pagamento: cancelado ? 'cancelado' : 'pendente',
       };
@@ -979,20 +1046,47 @@ const FormShow: React.FC<{ inicial: Partial<Show>; fornecedores: Fornecedor[]; o
 
   return (
     <Modal aberto onFechar={onFechar} largura="lg" travado={ocupado} titulo={novo ? 'Novo show' : 'Editar show'}
-      descricao="O show gera a conta a pagar no Financeiro. Os pagamentos se lançam depois, no botão Pagar."
+      descricao="O show gera a conta a pagar no Financeiro, no nome do artista. O pagamento que você informa aqui é o seu controle e não dá baixa no Financeiro."
       rodape={<><Button onClick={onFechar} disabled={ocupado}>Cancelar</Button><Button variante="primario" icone={<Check size={16} />} onClick={salvar} carregando={ocupado}>Salvar</Button></>}>
       {erro && <div className="aviso aviso-perigo mb-3" role="alert">{erro}</div>}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <Input rotulo="Músico ou banda" value={nome} onChange={e => setNome(e.target.value)} autoFocus className="md:col-span-2" placeholder="Ex.: Wender e Falcão" />
-        <Input rotulo="Contato" value={contato} onChange={e => setContato(e.target.value)} placeholder="Telefone" />
-        <div>
-          <SearchableSelect label="Fornecedor (para o Financeiro)" theme="dark"
-            options={fornecedores.map(f => ({ value: f.id, label: f.nome, sublabel: f.tipo === 'musico' ? 'Músico' : undefined }))}
-            value={fornecedorId} onChange={v => { setFornecedorId(v); setSugerido(''); }} placeholder="Buscar fornecedor…" emptyMessage="Nenhum fornecedor" />
-          <p className="t-caption mt-1" style={{ margin: 0 }}>
-            {sugerido && fornecedorId === sugerido ? <span className="texto-certo">Achado pelo nome. Confira.</span> : novo ? 'Sem fornecedor, o sistema cadastra um com o nome do músico.' : ''}
-          </p>
+        <div className="md:col-span-2">
+          <SearchableSelect label="Artista (quem recebe o cachê)" theme="dark"
+            options={fornecedores.map(f => ({ value: f.id, label: f.nome.trim() }))}
+            value={fornecedorId} onChange={v => setFornecedorId(v)} placeholder="Buscar artista…"
+            emptyMessage={isAdmin() ? 'Não achou? Use "Novo artista".' : 'Não achou? Peça a um gerente para cadastrar.'} />
+          <div className="flex flex-wrap items-center gap-2 mt-1">
+            <p className="t-caption" style={{ margin: 0 }}>Só artistas do cadastro. O nome do show sai do artista escolhido.</p>
+            {isAdmin() && !cadastrando && <Button tamanho="sm" variante="discreto" icone={<Plus size={14} />} onClick={() => { setCadastrando(true); setErro(null); }}>Novo artista</Button>}
+          </div>
         </div>
+        {cadastrando && (
+          <div className="md:col-span-2 rounded p-3 flex flex-col gap-3" style={{ background: 'var(--bg-hover)', border: '1px solid var(--border-subtle)' }}>
+            <p className="t-label" style={{ margin: 0 }}>Novo artista</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <Input rotulo="Nome do artista ou dupla" value={novoNome} onChange={e => { setNovoNome(e.target.value); setOutroMesmo(false); }} autoFocus placeholder="Ex.: Wender e Falcão" />
+              <Input rotulo="Chave Pix de quem recebe" value={novoPix} onChange={e => setNovoPix(e.target.value)} placeholder="CPF, CNPJ, telefone ou e-mail" />
+              <Input rotulo="Telefone" value={novoTel} onChange={e => setNovoTel(e.target.value)} placeholder="Opcional" />
+            </div>
+            {parecidos.length > 0 && (
+              <div className="aviso aviso-atencao">
+                Parecido com: {parecidos.map(f => (
+                  <button key={f.id} type="button" className="underline mr-2" onClick={() => { setFornecedorId(f.id); setCadastrando(false); setNovoNome(''); }}>{f.nome.trim()}</button>
+                ))}
+                <label className="flex items-center gap-2 mt-2"><input type="checkbox" checked={outroMesmo} onChange={e => setOutroMesmo(e.target.checked)} /> É outro artista, cadastrar mesmo assim</label>
+              </div>
+            )}
+            <div className="flex gap-2">
+              <Button tamanho="sm" onClick={() => setCadastrando(false)} disabled={ocupado}>Voltar</Button>
+              <Button tamanho="sm" variante="primario" icone={<Check size={14} />} onClick={cadastrarArtista} carregando={ocupado}>Cadastrar artista</Button>
+            </div>
+          </div>
+        )}
+        <Input rotulo="Projeto (opcional)" value={projeto} onChange={e => setProjeto(e.target.value)} placeholder='Ex.: Mesa de Bar' dica="Só quando o artista toca com outro nome de projeto." />
+        <Input rotulo="Contato" value={contato} onChange={e => setContato(e.target.value)} placeholder="Telefone" />
+        <p className="t-body md:col-span-2" style={{ margin: 0 }}>
+          Nome do show: <strong>{nome || '— escolha o artista —'}</strong>
+        </p>
         <Input rotulo="Data" type="date" value={data} onChange={e => setData(e.target.value)} />
         <div className="grid grid-cols-2 gap-3">
           <Input rotulo="Início" type="time" value={hIni} onChange={e => setHIni(e.target.value)} />
@@ -1001,7 +1095,7 @@ const FormShow: React.FC<{ inicial: Partial<Show>; fornecedores: Fornecedor[]; o
         <Input rotulo="Cachê (R$)" inputMode="decimal" value={valor} onChange={e => setValor(e.target.value)} placeholder="0,00" />
         <div className="grid grid-cols-2 gap-3">
           <Input rotulo="Adicional (R$)" inputMode="decimal" value={adicional} onChange={e => setAdicional(e.target.value)} placeholder="0,00" dica="Hora extra, repertório" />
-          <Input rotulo="Consumo (R$)" inputMode="decimal" value={consumo} onChange={e => setConsumo(e.target.value)} placeholder="0,00" dica="Só o que o músico consumiu. Pagamento vai no botão Pagar." />
+          <Input rotulo="Consumo (R$)" inputMode="decimal" value={consumo} onChange={e => setConsumo(e.target.value)} placeholder="0,00" dica="Só o que o músico consumiu. Pagamento vai no botão Informar." />
         </div>
         <Input rotulo="Material promocional" value={material} onChange={e => setMaterial(e.target.value)} className="md:col-span-2" placeholder="Instagram, link, release" />
         <Textarea rotulo="Observações" value={obs} onChange={e => setObs(e.target.value)} rows={2} className="md:col-span-2" />
