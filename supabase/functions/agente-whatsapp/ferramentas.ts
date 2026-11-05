@@ -244,6 +244,29 @@ const DEFINICOES: Definicao[] = [
     },
   },
   {
+    name: "cruzar_bar_central",
+    acoes: ["contagem"],
+    description:
+      "Com as contagens do Bar e do Central abertas: o mesmo item faltando num e sobrando no outro (provável transferência não lançada, com quantidade, de onde e para onde) e os itens com diferença no Bar que não foram contados no Central. Só lê.",
+    input_schema: { type: "object", properties: {} },
+  },
+  {
+    name: "transferencia_da_contagem",
+    acoes: ["transferir"],
+    description:
+      "Lança uma transferência não lançada achada no cruzamento e corrige a folha das contagens abertas, para a diferença não contar duas vezes. Use em vez de transferir durante a contagem, só depois que a pessoa confirmar.",
+    input_schema: {
+      type: "object",
+      properties: {
+        item_id: { type: "string" },
+        quantidade: { type: "number" },
+        de: { type: "string", enum: ["central", "bar"] },
+        para: { type: "string", enum: ["central", "bar"] },
+      },
+      required: ["item_id", "quantidade", "de", "para"],
+    },
+  },
+  {
     name: "cancelar_contagem",
     acoes: ["contagem"],
     description: "Cancela a contagem aberta do setor, sem mexer em saldo. Só se a pessoa pedir.",
@@ -630,6 +653,19 @@ export async function executarFerramenta(
           `📋 *Contagem do ${String(r.estoque ?? entrada.estoque).replace("Estoque ", "")}* de ${pessoa.nome} aguardando aprovação: ${r.diferencas} diferença(s), ${valor}.\nAprove no sistema em Estoque → ${r.onde_aprovar ?? "Aprovar diferenças"}.`);
       }
       return r;
+    }
+
+    case "cruzar_bar_central":
+      return rpc(db, "fn_agente_contagem_cruzar", { p_pessoa: pessoa.id });
+
+    case "transferencia_da_contagem": {
+      const de = ESTOQUES[String(entrada.de)];
+      const para = ESTOQUES[String(entrada.para)];
+      if (!de || !para || de === para) return { status: "erro", motivo: "Origem ou destino inválido." };
+      const r = await rpc(db, "fn_agente_contagem_transferir", {
+        p_pessoa: pessoa.id, p_item: entrada.item_id, p_qtd: entrada.quantidade, p_de: de, p_para: para,
+      });
+      return sePendente(ctx, "transferir", r);
     }
 
     case "lista_compras": {
