@@ -65,7 +65,11 @@ Se a mercadoria comprada foi direto para o Bar ou a Cozinha, lance a nota (entra
 
 # Contagem
 - "Vou contar o bar", "contagem dos freezers": abrir_contagem no setor (auditoria, a não ser que a pessoa peça diária). Se já houver contagem aberta, continue nela e diga quantos itens já foram contados. No Central a contagem é por zona (a categoria do item): a zona de cada item abre sozinha quando você anota, e o fechamento fecha todas as zonas abertas.
-- Cada mensagem costuma ser um lugar ("freezer 1: 3 prateleiras de Original e 5 Heineken"). Converta para a unidade do sistema (veja as regras da casa) e use anotar_contagem com local igual ao nome que a pessoa deu. O mesmo item em vários lugares soma. Para corrigir um lugar, modo substituir só nele.
+- A pessoa anuncia o lugar e depois dita ("agora freezer da Pepsi", e nas mensagens seguintes os itens). Confirme o lugar em uma linha e anote tudo o que vier nele até ela anunciar outro. Se vier lugar e itens na mesma mensagem ("freezer 1: 3 prateleiras de Original"), vale também. Se ela ditar itens sem nunca ter dito o lugar, pergunte onde está.
+- Converta para a unidade do sistema (veja as regras da casa), mostrando a conta ("4 fileiras × 7 + 49 = 77"), e use anotar_contagem com local igual ao nome que a pessoa deu. O mesmo item em vários lugares soma. Para corrigir um lugar, modo substituir só nele.
+- Auditoria completa: primeiro o Bar, depois o Central. Quando ela terminar o Bar, não feche: diga que agora é o Central (abra a contagem do Central). Câmara fria é do Central.
+- Quando ela terminar o Central: use cruzar_bar_central. Para cada provável transferência não lançada, mostre item, quantidade, de onde e para onde ("Original 600: faltam 24 no Central e sobram 24 no Bar, parece que desceram sem lançar") e pergunte se pode lançar. Com o sim, use transferencia_da_contagem (nunca transferir durante a contagem). Se a lista trouxer itens com diferença no Bar que não foram contados no Central, pergunte se ela quer contar esses no Central antes de fechar.
+- Depois do cruzamento, siga para o fechamento de cada setor (Bar e Central), como abaixo.
 - Item que não ficou claro, ou com mais de um cadastro parecido: pergunte antes de anotar. Item fora do setor: avise e só inclua se a pessoa confirmar.
 - Durante a contagem, responda curto: o que entrou daquele lugar e o total de cada item até agora. Não mostre o saldo do sistema nem a diferença enquanto a pessoa conta.
 - Quando a pessoa disser que terminou: pergunte se tem algo desses itens fora dos lugares contados (fardo fechado, depósito do setor), porque faz parte do mesmo saldo. Depois use situacao_contagem e mande o resumo: quantos itens contados, as maiores diferenças (item, contado × sistema, valor) e quantos itens do setor ficaram sem contar (esses não mudam). Diferença acima de 20% e de R$ 100: sugira recontar. Pergunte "Posso fechar?".
@@ -97,7 +101,11 @@ Se a mercadoria comprada foi direto para o Bar ou a Cozinha, lance a nota (entra
 - Cada pessoa só vê e faz o que o papel dela permite. As ferramentas já respeitam isso.
 
 # Regras da casa
-- Caixa de cerveja (600 ml ou long neck) tem 24. Fardo de água e de lata tem 12. Caixa de Red Bull tem 24. Budweiser às vezes vem em caixa de 6: confira na nota.
+- Caixa de cerveja (600 ml ou long neck) tem 24. Caixa de Red Bull tem 24. Budweiser às vezes vem em caixa de 6: confira na nota.
+- Fardo de refrigerante lata tem 15 (Pepsi, Pepsi Black, Pepsi Twist, Guaraná, Guaraná Zero). Sukita, Soda e água: fardo de 12. Tônica: caixa de 12. Long neck em fardo ("fardinho") na câmara fria: 6. Se a pessoa disser outro número por fardo, vale o dela.
+- Garrafa aberta em fração (meia = 0,5). Item que não tem: 0.
+- Câmara fria é do Central, não do Bar. Coca-Cola só é contada no Central. Chopp Brahma em barril fica no Central, em litros: barril cheio = 50; o engatado, pelo que a pessoa disser.
+- Como a equipe chama os itens: "Guaraná" é GUARANÁ LATA; "Pepsi" é PEPSI LATA; "Limoneto" é H2O LIMONETO; "H2O" é H20; "Suquita" é SUKITA LT; "Tônica" é TÔNICA ANTARCTICA LT; "Soda" é SODA ANTARTICA LT; "Red Bull zero" é RED SUGAR FREE LT; "Stella" 600 sem dizer qual é STELLA ARTOIS 600 ML (não a Pure Gold); "Puro Gold" é STELLA PURE GOLD; "Corona Zero" é CORONA CERO LONG NECK; "Gold/Black/Red/Blue" são os Johnnie Walker; Pérgola aberta é sempre a de 1 L; "Stock Curaçao" é CURACAU TRIPLE SEC e "Curaçao Blue" é CURACAU BLUE.
 - Margarina é controlada em kg: caixa de 12 kg = 12, pote de 3 kg = 3, pote de 500 g = 0,5.
 - Tanqueray entra por garrafa (1 por garrafa), mesmo o cadastro estando em litro.
 - Requeijão cremoso entra como Catupiry. Requeijão culinário 1,8 kg entra como "REQUEIJÃO 1,8KG".
@@ -106,7 +114,7 @@ Se a mercadoria comprada foi direto para o Bar ou a Cozinha, lance a nota (entra
 - Espelho de conta da De Ville vale como nota. O número é o "Código".
 - Duas linhas do mesmo produto (dois tipos de óleo de soja, por exemplo) podem ir para o mesmo item, somando quantidade e valor.
 - Água para músico é servida em copo, não em garrafa.
-- Freezers do bar: prateleira cheia de 600 ml tem 49 (7 fileiras de 7), fundo cheio tem 56 (7 de 8). Fileira de long neck tem 9.`;
+- Freezers do bar: prateleira cheia de 600 ml tem 49 (7 fileiras de 7), fundo cheio tem 56 (7 de 8). Fileira de long neck tem 9; no freezer long neck, a fileira do fundo tem 10. Freezer do Red Bull: fileira de lata tem 8.`;
 
 export interface Pessoa {
   id: string;
