@@ -29,6 +29,17 @@ Regras permanentes para qualquer agente que trabalhe neste repositório. A parte
    na `main` sem pedido. Sem identificador de modelo em commit, código ou PR.
 9. Quando errar, diga que errou e corrija. Não afirme que algo está completo sem ter verificado.
 
+## Estoque (onde estão as regras)
+
+Não duplicar aqui: cada regra tem uma fonte só.
+- **Regras invioláveis do estoque**: `CONTEXTO-PROJETO.md`, seções 2 a 4. O front nunca escreve
+  saldo, só movimentação. A régua única de saldo é `fn_saldo_por_movimentacoes`. Produção só por
+  `processar_producao`. Contagem é verdade absoluta, sem tolerância.
+- **Medidas da casa** (fileira, prateleira, fundo, caixa, fardo, kg): skill `contagem-estoque`
+  (`.claude/skills/contagem-estoque/SKILL.md`). A fonte original é `supabase/functions/agente-whatsapp/prompt.ts`,
+  seção "Regras da casa". Não pergunte ao Kadu o que já está lá. Quando ele disser outro número, vale o dele.
+- **Relatório de faltas e sobras**: skill `relatorio-contagem`, sempre no layout do modelo de 23/10.
+
 ## Regras de negócio combinadas
 
 ### Músicos (05/11/2026)
