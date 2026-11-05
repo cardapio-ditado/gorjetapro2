@@ -104,6 +104,8 @@ export default function ExtratoAutomatico() {
   const [soAdiadas, setSoAdiadas] = useState(false);
   const [modo, setModo] = useState<'lista' | 'card'>('lista');
   const [busca, setBusca] = useState('');
+  const [aba, setAba] = useState<'saidas' | 'entradas'>(() => { try { return localStorage.getItem('conciliacao.aba') === 'entradas' ? 'entradas' : 'saidas'; } catch { return 'saidas'; } });
+  const escolherAba = (a: 'saidas' | 'entradas') => { setAba(a); try { localStorage.setItem('conciliacao.aba', a); } catch { /* sem storage */ } };
   const [dia, setDia] = useState(() => { try { return localStorage.getItem('conciliacao.dia') || ''; } catch { return ''; } });
   const [abertos, setAbertos] = useState<Set<string>>(new Set());
   const [verResumo, setVerResumo] = useState(false);
@@ -215,13 +217,13 @@ export default function ExtratoAutomatico() {
   // ── um dia por vez: começa no mais antigo pendente; dia que zera passa para o próximo ──
   const diasPend = useMemo(() => {
     const m = new Map<string, { n: number; total: number }>();
-    for (const x of [...saidas.filter(l => l.status === 'pendente'), ...entradas]) {
+    for (const x of aba === 'saidas' ? saidas.filter(l => l.status === 'pendente') : entradas) {
       const d = m.get(x.data) ?? { n: 0, total: 0 };
       d.n += 1; d.total += Number(x.valor);
       m.set(x.data, d);
     }
     return [...m.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([data, v]) => ({ data, ...v }));
-  }, [saidas, entradas]);
+  }, [saidas, entradas, aba]);
   const diaAtivo = dia === 'todas' ? 'todas' : diasPend.some(d => d.data === dia) ? dia : diasPend[0]?.data ?? 'todas';
   const noDia = (x: { data: string }) => diaAtivo === 'todas' || x.data === diaAtivo;
   const escolherDia = (d: string) => { setDia(d); try { localStorage.setItem('conciliacao.dia', d); } catch { /* sem storage */ } };
@@ -458,16 +460,20 @@ export default function ExtratoAutomatico() {
       )}
       {aviso && <p className={`aviso aviso-${aviso.tipo}`} role="status">{aviso.texto}</p>}
 
+      {/* ── abas ── */}
+      <Segmented rotulo="Conciliação" valor={aba} onMudar={escolherAba} opcoes={[
+        { valor: 'saidas', rotulo: `Saídas (${saidas.filter(l => l.status === 'pendente').length})` },
+        { valor: 'entradas', rotulo: `Entradas (${receber.length + entradas.length})` }]} />
+
+      {aba === 'saidas' && (<>
       {/* ── números ── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <KPICard rotulo="Saídas para conciliar" valor={fmt(totalPend)} detalhe={`${pendentes.length} ${pendentes.length === 1 ? 'pagamento' : 'pagamentos'}`}
           tom={pendentes.length ? 'atencao' : 'certo'} onClick={() => { setTipo('todas'); setSoSemFornecedor(false); }} />
         <KPICard rotulo="Prontas para aprovar" valor={String(prontas.length)} detalhe="com fornecedor ou conta definida" tom={prontas.length ? 'certo' : 'normal'}
           onClick={() => setSaidas(prev => prev.map(l => ({ ...l, selecionada: pronta(l) && noDia(l) })))} />
         <KPICard rotulo="Sem fornecedor" valor={String(semForn.length)} detalhe="escolha ou cadastre" tom={semForn.length ? 'alerta' : 'normal'}
           onClick={() => setSoSemFornecedor(true)} />
-        <KPICard rotulo="Recebimentos para lançar" valor={String(receber.length)} detalhe={receber.length === 1 ? 'dia' : 'dias'} tom={receber.length ? 'destaque' : 'normal'}
-          onClick={() => document.getElementById('recebimentos')?.scrollIntoView({ behavior: 'smooth' })} />
       </div>
 
       {/* ── saídas ── */}
@@ -645,6 +651,16 @@ export default function ExtratoAutomatico() {
         )}
         </>)}
       </SectionCard>
+      </>)}
+
+      {aba === 'entradas' && (<>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <KPICard rotulo="Recebimentos da maquininha" valor={String(receber.length)} detalhe={`${receber.length === 1 ? 'dia' : 'dias'} para lançar em Contas a Receber`} tom={receber.length ? 'destaque' : 'certo'}
+          onClick={() => document.getElementById('recebimentos')?.scrollIntoView({ behavior: 'smooth' })} />
+        <KPICard rotulo="Entradas fora da maquininha" valor={String(entradas.length)} detalhe="Pix e transferências para conferir" tom={entradas.length ? 'atencao' : 'certo'}
+          onClick={() => document.getElementById('entradas-fora')?.scrollIntoView({ behavior: 'smooth' })} />
+      </div>
+      {receber.length === 0 && entradas.length === 0 && !carregando && <EmptyState icon={CheckCircle2} title="Nenhuma entrada para conciliar" compact />}
 
       {/* ── recebimentos do dia ── */}
       <div id="recebimentos" />
@@ -679,8 +695,13 @@ export default function ExtratoAutomatico() {
       )}
 
       {/* ── entradas fora da maquininha ── */}
-      {entradasDia.length > 0 && (
-        <SectionCard title={`Entradas fora da maquininha (${entradasDia.length})`} descricao="Pix e transferências recebidas direto na conta.">
+      <div id="entradas-fora" />
+      {entradas.length > 0 && (
+        <SectionCard title={`Entradas fora da maquininha (${entradasDia.length})`} descricao="Pix e transferências recebidas direto na conta."
+          action={<Select aria-label="Data das entradas" value={diaAtivo} onChange={e => escolherDia(e.target.value)}>
+            {diasPend.map(d => <option key={d.data} value={d.data}>{dayjs(d.data).format('DD/MM')} · {d.n} · {fmt(d.total)}</option>)}
+            <option value="todas">Todas as datas</option>
+          </Select>}>
           <ul className="flex flex-col gap-2">
             {entradasDia.map(m => {
               const transf = m.id in entradaTransf;
@@ -714,6 +735,7 @@ export default function ExtratoAutomatico() {
           </ul>
         </SectionCard>
       )}
+      </>)}
 
       {/* ── resumo de 7 dias ── */}
       <SectionCard title={`Últimos ${DIAS_RESUMO} dias`} action={<Button tamanho="sm" variante="discreto" onClick={() => setVerResumo(v => !v)}>{verResumo ? 'Esconder' : 'Mostrar'}</Button>}>
