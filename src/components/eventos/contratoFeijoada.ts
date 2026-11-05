@@ -131,7 +131,7 @@ export function montarContratoFeijoada(dados: { dataEvento: string; dataAssinatu
   }
   blocos.push(
     { tipo: 'clausula', texto: `CLÁUSULA ${num++} – ASSINATURA ELETRÔNICA` },
-    p('As partes reconhecem como válida a assinatura deste contrato por meio eletrônico, inclusive pela plataforma gov.br, nos termos da Lei nº 14.063/2020, dispensada a assinatura de testemunhas.'),
+    p('As partes assinam este contrato eletronicamente, em plataforma própria da CONTRATADA, e reconhecem essa forma de assinatura como válida e suficiente para comprovar a autoria e o aceite, nos termos do art. 10, § 2º, da Medida Provisória nº 2.200-2/2001, dispensada a assinatura de testemunhas. A plataforma registra o nome, a data e a hora, o IP e o navegador de cada assinante e anexa ao documento um certificado de assinaturas com o código de verificação (hash) do contrato.'),
     { tipo: 'clausula', texto: `CLÁUSULA ${num++} – FORO` },
     p('As partes buscarão resolver de forma amigável qualquer divergência sobre este contrato. Persistindo, fica eleito o foro da Comarca de Cuiabá – MT.'),
     p('E, por estarem de acordo, as partes assinam o presente instrumento.'),

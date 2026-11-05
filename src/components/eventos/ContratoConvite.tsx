@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Check, Download, ExternalLink, FileSignature, FileText, ImagePlus, Loader2, Search, Share2, Trash2, Upload, X } from 'lucide-react';
+import { Check, Clock, Copy, Download, FileSignature, FileText, ImagePlus, Loader2, PenLine, RefreshCw, Search, Share2, Trash2, X } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { CONDICOES_PADRAO, montarContratoFeijoada, type Condicoes, type Contratante } from './contratoFeijoada';
@@ -7,11 +7,15 @@ import { gerarContratoPdf } from './contratoPdf';
 import { brl, diaDaSemana, diaEMes, documentoValido, formatarCep, formatarDocumento, hora, soDigitos } from './extenso';
 import { carregarFontesConvite, desenharConvite, LAYOUTS, type ConviteTexto } from './convite/desenharConvite';
 import { prepararLogo } from './convite/prepararLogo';
+import CampoAssinatura from './assinatura/CampoAssinatura';
+import { chamarAssinatura, linkAssinatura } from './assinatura/api';
 
 /**
  * Contrato e convite de um evento fechado (por enquanto o modelo da feijoada).
  * - Contrato: preenche o contratante (busca CNPJ e CEP), ajusta as condições e
- *   gera o PDF, que as partes assinam no gov.br; o PDF assinado volta para cá.
+ *   gera o PDF. A assinatura é eletrônica, na plataforma própria (edge function
+ *   contrato-assinatura): o bar assina aqui e gera um link de 7 dias para o
+ *   cliente. Depois de assinado, o contrato trava (trigger no banco).
  * - Convite: arte no formato stories, com a foto do layout, os logos e os dados.
  * Os dados ficam em eventos_contratos (só quem tem o módulo de eventos).
  */
@@ -41,6 +45,11 @@ interface Registro {
   assinado_em: string | null;
 }
 
+interface Assinatura {
+  id: string; status: 'aguardando' | 'assinado'; expira_em: string;
+  bar_nome: string; bar_em: string; cliente_nome: string | null; cliente_em: string | null;
+}
+
 const BUCKET_FOTOS = 'marketing-assets';
 const fotoUrl = (nome: string, mini = false) => supabase.storage.from(BUCKET_FOTOS).getPublicUrl(`convites/feijoada/${mini ? 'mini/' : ''}${nome}.jpg`).data.publicUrl;
 const ENDERECO_PADRAO = 'Rua Senador Vilas Boas, 89 · Popular · Cuiabá';
@@ -65,13 +74,18 @@ const Campo: React.FC<{ rotulo: string; className?: string; children: React.Reac
   <label className={className}><span className={labelCls}>{rotulo}</span>{children}</label>
 );
 
-const ContratoConvite: React.FC<{ evento: EventoBase; onClose: () => void; onAtualizado?: () => void }> = ({ evento, onClose, onAtualizado }) => {
+const ContratoConvite: React.FC<{ evento: EventoBase; onClose: () => void }> = ({ evento, onClose }) => {
   const { usuario } = useAuth();
   const [aba, setAba] = useState<'contrato' | 'convite'>('contrato');
   const [carregando, setCarregando] = useState(true);
   const [salvando, setSalvando] = useState(false);
   const [aviso, setAviso] = useState<{ tipo: 'ok' | 'erro'; texto: string } | null>(null);
   const [buscando, setBuscando] = useState<'cnpj' | 'cep' | null>(null);
+  const [assinatura, setAssinatura] = useState<Assinatura | null>(null);
+  const [token, setToken] = useState<string | null>(null);
+  const [modalAssinar, setModalAssinar] = useState(false);
+  const [minhaAssinatura, setMinhaAssinatura] = useState<string | null>(null);
+  const [processando, setProcessando] = useState(false);
   const [reg, setReg] = useState<Registro>({
     contratante: { nome: evento.cliente_responsavel || '', telefone: evento.telefone_cliente || '', cidade: 'Cuiabá', uf: 'MT' },
     condicoes: {},
@@ -82,8 +96,13 @@ const ContratoConvite: React.FC<{ evento: EventoBase; onClose: () => void; onAtu
   useEffect(() => {
     let vivo = true;
     (async () => {
-      const { data, error } = await supabase.from('eventos_contratos').select('contratante, condicoes, convite, gerado_em, assinado_arquivo, assinado_em').eq('evento_id', evento.id).maybeSingle();
+      const [{ data, error }, { data: ass }] = await Promise.all([
+        supabase.from('eventos_contratos').select('contratante, condicoes, convite, gerado_em, assinado_arquivo, assinado_em').eq('evento_id', evento.id).maybeSingle(),
+        supabase.from('eventos_assinaturas').select('id, status, expira_em, bar_nome, bar_em, cliente_nome, cliente_em')
+          .eq('evento_id', evento.id).neq('status', 'cancelado').order('criado_em', { ascending: false }).limit(1).maybeSingle(),
+      ]);
       if (!vivo) return;
+      setAssinatura(ass as Assinatura | null);
       if (error) setAviso({ tipo: 'erro', texto: `Não consegui ler o contrato: ${error.message}` });
       if (data) setReg(r => ({ ...r, ...data, contratante: { ...r.contratante, ...(data.contratante as Contratante) } }));
       setCarregando(false);
@@ -169,21 +188,64 @@ const ContratoConvite: React.FC<{ evento: EventoBase; onClose: () => void; onAtu
     setTimeout(() => URL.revokeObjectURL(url), 60_000);
   };
 
-  // ── contrato assinado (gov.br) ──
-  const enviarAssinado = async (arquivo: File) => {
-    if (arquivo.type !== 'application/pdf') { setAviso({ tipo: 'erro', texto: 'Envie o PDF assinado (o arquivo que o gov.br devolve).' }); return; }
-    setSalvando(true); setAviso(null);
-    const caminho = `${evento.id}/contrato-assinado-${Date.now()}.pdf`;
-    const { error } = await supabase.storage.from('eventos-contratos').upload(caminho, arquivo, { contentType: 'application/pdf' });
-    if (error) { setSalvando(false); setAviso({ tipo: 'erro', texto: `Não consegui enviar: ${error.message}` }); return; }
-    const agora = new Date().toISOString();
-    const ok = await salvar({ assinado_arquivo: caminho, assinado_em: agora });
-    if (ok) {
-      await supabase.from('eventos_fechados').update({ contrato_assinado: true }).eq('id', evento.id);
-      setAviso({ tipo: 'ok', texto: 'Contrato assinado guardado e evento marcado como "contrato assinado".' });
-      onAtualizado?.();
+  // ── assinatura eletrônica (plataforma própria) ──
+  const travado = !!reg.assinado_em;
+  const expirado = assinatura?.status === 'aguardando' && new Date(assinatura.expira_em).getTime() < Date.now();
+  const recarregarAssinatura = async () => {
+    const { data } = await supabase.from('eventos_assinaturas').select('id, status, expira_em, bar_nome, bar_em, cliente_nome, cliente_em')
+      .eq('evento_id', evento.id).neq('status', 'cancelado').order('criado_em', { ascending: false }).limit(1).maybeSingle();
+    setAssinatura(data as Assinatura | null);
+  };
+  const copiar = async (t: string) => {
+    try { await navigator.clipboard.writeText(linkAssinatura(t)); setAviso({ tipo: 'ok', texto: 'Link copiado. Mande para o cliente pelo WhatsApp ou e-mail.' }); }
+    catch { setAviso({ tipo: 'ok', texto: `Copie o link: ${linkAssinatura(t)}` }); }
+  };
+
+  const assinarPeloBar = async () => {
+    if (!minhaAssinatura) return;
+    setProcessando(true); setAviso(null);
+    try {
+      if (!(await salvar({ gerado_em: new Date().toISOString(), gerado_por: usuario?.nome_completo || undefined }))) return;
+      const pdf = montarPdf().output('datauristring').split(',')[1];
+      const r = await chamarAssinatura<{ token: string }>({ acao: 'bar_assinar', evento_id: evento.id, pdf, assinatura: minhaAssinatura });
+      setToken(r.token); setModalAssinar(false); setMinhaAssinatura(null);
+      await recarregarAssinatura();
+      await copiar(r.token);
+    } catch (e) {
+      setAviso({ tipo: 'erro', texto: e instanceof Error ? e.message : 'Não consegui assinar.' });
+    } finally { setProcessando(false); }
+  };
+
+  // só o hash do link fica no banco: sem o link na memória, gera outro (o anterior para de valer)
+  const novoLink = async (confirmar: boolean) => {
+    if (!assinatura) return;
+    if (confirmar && !window.confirm('Para copiar de novo, o sistema gera um link novo e o link enviado antes para de funcionar. Continuar?')) return;
+    setProcessando(true); setAviso(null);
+    try {
+      const r = await chamarAssinatura<{ token: string }>({ acao: 'novo_link', assinatura_id: assinatura.id });
+      setToken(r.token);
+      await recarregarAssinatura();
+      await copiar(r.token);
+    } catch (e) {
+      setAviso({ tipo: 'erro', texto: e instanceof Error ? e.message : 'Não consegui gerar o link.' });
+      await recarregarAssinatura();
+    } finally { setProcessando(false); }
+  };
+
+  const baixarVersaoBar = async () => {
+    if (!assinatura) return;
+    const janela = window.open('', '_blank');
+    try {
+      const blob = await chamarAssinatura<Blob>({ acao: 'previa', assinatura_id: assinatura.id });
+      const url = URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }));
+      if (janela) janela.location.href = url; else window.open(url, '_blank');
+      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    } catch (e) {
+      janela?.close();
+      setAviso({ tipo: 'erro', texto: e instanceof Error ? e.message : 'Não consegui gerar o PDF.' });
     }
   };
+
   const abrirAssinado = async () => {
     if (!reg.assinado_arquivo) return;
     const { data, error } = await supabase.storage.from('eventos-contratos').createSignedUrl(reg.assinado_arquivo, 300);
@@ -326,7 +388,9 @@ const ContratoConvite: React.FC<{ evento: EventoBase; onClose: () => void; onAtu
           {carregando ? (
             <div className="flex items-center gap-2 text-white/60 text-sm"><Loader2 className="w-4 h-4 animate-spin" /> Carregando…</div>
           ) : aba === 'contrato' ? (
-            <div className="grid gap-6 lg:grid-cols-2">
+            <div className="space-y-5">
+            {travado && <p className="text-sm text-amber-200 bg-amber-500/10 rounded-lg p-3">Contrato assinado: não dá mais para alterar. Para mudar alguma coisa, faça um contrato novo.</p>}
+            <fieldset disabled={travado} className="grid gap-6 lg:grid-cols-2 min-w-0 disabled:opacity-70">
               <section className="space-y-3">
                 <h4 className="text-white font-medium">Contratante</h4>
                 <div className="flex gap-2 items-end">
@@ -394,25 +458,43 @@ const ContratoConvite: React.FC<{ evento: EventoBase; onClose: () => void; onAtu
                 {faltando.length > 0 && <p className="text-xs text-amber-300">Falta preencher: {faltando.join(', ')}. O PDF sai com espaço em branco nesses pontos.</p>}
                 {reg.gerado_em && <p className="text-xs text-white/40">Último PDF gerado em {new Date(reg.gerado_em).toLocaleString('pt-BR')}.</p>}
 
-                <div className="mt-4 rounded-xl border border-white/10 p-4 space-y-2">
-                  <h4 className="text-white font-medium flex items-center gap-2"><FileSignature className="w-4 h-4" /> Assinatura pelo gov.br</h4>
-                  <ol className="text-sm text-white/70 list-decimal pl-5 space-y-1">
-                    <li>Baixe o PDF acima.</li>
-                    <li>Assine em <a href="https://assinador.iti.br" target="_blank" rel="noreferrer" className="text-blue-300 underline inline-flex items-center gap-1">assinador.iti.br <ExternalLink className="w-3 h-3" /></a> (entra com a conta gov.br, nível prata ou ouro).</li>
-                    <li>Mande o PDF assinado ao cliente para ele assinar também, no mesmo site.</li>
-                    <li>Quando voltar com as duas assinaturas, envie aqui. Para conferir, use <a href="https://validar.iti.gov.br" target="_blank" rel="noreferrer" className="text-blue-300 underline">validar.iti.gov.br</a>.</li>
-                  </ol>
-                  <div className="flex flex-wrap items-center gap-2 pt-1">
-                    <label className={`${botao} border border-white/20 text-white/80 hover:bg-white/5 cursor-pointer`}>
-                      <Upload className="w-4 h-4" /> Enviar PDF assinado
-                      <input type="file" accept="application/pdf" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) void enviarAssinado(f); e.target.value = ''; }} />
-                    </label>
-                    {reg.assinado_arquivo && (
-                      <button onClick={abrirAssinado} className={`${botao} text-green-300 hover:bg-white/5`}><Check className="w-4 h-4" /> Assinado em {reg.assinado_em ? new Date(reg.assinado_em).toLocaleDateString('pt-BR') : '—'} · abrir</button>
-                    )}
-                  </div>
-                </div>
               </section>
+            </fieldset>
+
+            <div className="rounded-xl border border-white/10 p-4 space-y-3">
+              <h4 className="text-white font-medium flex items-center gap-2"><FileSignature className="w-4 h-4" /> Assinatura eletrônica</h4>
+              {travado ? (
+                <div className="flex flex-wrap items-center gap-3">
+                  <p className="text-sm text-green-300 flex items-center gap-2"><Check className="w-4 h-4" />
+                    Assinado{assinatura?.cliente_nome ? ` por ${assinatura.cliente_nome}` : ''} em {new Date(reg.assinado_em!).toLocaleString('pt-BR')}.
+                  </p>
+                  {reg.assinado_arquivo && <button onClick={() => void abrirAssinado()} className={`${botao} bg-wine text-white hover:bg-[#6a1a25]`}><Download className="w-4 h-4" /> Baixar PDF assinado</button>}
+                </div>
+              ) : assinatura?.status === 'aguardando' ? (
+                <div className="space-y-2">
+                  <p className={`text-sm flex items-center gap-2 ${expirado ? 'text-red-300' : 'text-amber-200'}`}><Clock className="w-4 h-4" />
+                    {expirado ? `Link expirado em ${new Date(assinatura.expira_em).toLocaleString('pt-BR')}.` : `Aguardando o cliente. O link vale até ${new Date(assinatura.expira_em).toLocaleString('pt-BR')}.`}
+                  </p>
+                  <p className="text-xs text-white/50">O bar assinou: {assinatura.bar_nome}, {new Date(assinatura.bar_em).toLocaleString('pt-BR')}.</p>
+                  <div className="flex flex-wrap gap-2">
+                    {expirado ? (
+                      <button onClick={() => void novoLink(false)} disabled={processando} className={`${botao} bg-wine text-white hover:bg-[#6a1a25]`}>{processando ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />} Gerar novo link</button>
+                    ) : (
+                      <button onClick={() => (token ? void copiar(token) : void novoLink(true))} disabled={processando} className={`${botao} bg-wine text-white hover:bg-[#6a1a25]`}>{processando ? <Loader2 className="w-4 h-4 animate-spin" /> : <Copy className="w-4 h-4" />} Copiar link</button>
+                    )}
+                    <button onClick={() => void baixarVersaoBar()} className={`${botao} border border-white/20 text-white/80 hover:bg-white/5`}><Download className="w-4 h-4" /> PDF assinado pelo bar</button>
+                    <button onClick={() => setModalAssinar(true)} disabled={processando} className={`${botao} text-white/60 hover:bg-white/5`}><PenLine className="w-4 h-4" /> Assinar de novo</button>
+                  </div>
+                  <p className="text-xs text-white/40">Se mudar o contrato, o link atual é cancelado e o bar assina de novo.</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <p className="text-sm text-white/70">O bar assina primeiro. Depois sai um link de 7 dias para o cliente ler, confirmar nome e CPF/CNPJ e assinar pelo celular.</p>
+                  <button onClick={() => setModalAssinar(true)} disabled={faltando.length > 0 || salvando} className={`${botao} bg-wine text-white hover:bg-[#6a1a25]`}><PenLine className="w-4 h-4" /> Assinar e gerar link</button>
+                  {faltando.length > 0 && <p className="text-xs text-amber-300">Antes de assinar, preencha: {faltando.join(', ')}.</p>}
+                </div>
+              )}
+            </div>
             </div>
           ) : (
             <div className="grid gap-6 lg:grid-cols-[1fr_300px]">
@@ -502,6 +584,26 @@ const ContratoConvite: React.FC<{ evento: EventoBase; onClose: () => void; onAtu
           )}
         </div>
       </div>
+
+      {modalAssinar && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[60] p-3">
+          <div className="bg-[#0f1020] border border-white/10 rounded-2xl w-full max-w-lg p-5 space-y-4 shadow-2xl max-h-[94vh] overflow-y-auto">
+            <div className="flex items-center gap-3">
+              <PenLine className="w-5 h-5 text-white/60" />
+              <h3 className="flex-1 text-white font-semibold">Assinar pelo Ditado Popular</h3>
+              <button onClick={() => { setModalAssinar(false); setMinhaAssinatura(null); }} aria-label="Fechar" className="p-1.5 hover:bg-white/10 rounded-xl text-white/40 hover:text-white"><X className="w-5 h-5" /></button>
+            </div>
+            <p className="text-sm text-white/70">Assina como <strong className="text-white">{usuario?.nome_completo || 'usuário logado'}</strong>. O PDF de agora é guardado com o código de verificação (hash) e não muda mais.</p>
+            <CampoAssinatura nome={usuario?.nome_completo || ''} onChange={setMinhaAssinatura} escuro />
+            <div className="flex justify-end gap-2">
+              <button onClick={() => { setModalAssinar(false); setMinhaAssinatura(null); }} className={`${botao} text-white/60 hover:bg-white/5`}>Cancelar</button>
+              <button onClick={() => void assinarPeloBar()} disabled={!minhaAssinatura || processando} className={`${botao} bg-wine text-white hover:bg-[#6a1a25]`}>
+                {processando ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileSignature className="w-4 h-4" />} Assinar e gerar link
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

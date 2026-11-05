@@ -20,3 +20,9 @@ verify_jwt = false
 
 [functions.pluggy-sync]
 verify_jwt = false
+
+# Assinatura de contratos de eventos: a página pública /assinar/<token> chama
+# sem login. A função confere o token (ações públicas) ou o JWT + fn_eventos_pode
+# (ações do bar) por conta própria.
+[functions.contrato-assinatura]
+verify_jwt = false
