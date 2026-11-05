@@ -125,56 +125,43 @@ ext_freq as (  -- dias trabalhados nos últimos 30 dias (diárias lançadas ou d
 ext_sem_vinc as (select coalesce(json_agg(distinct d.nome), '[]'::json) j from pass_k d where d.fid_nome is null),
 
 -- ── MÚSICOS ───────────────────────────────────────────────────────────────
-mnome as (  -- nome normalizado do fornecedor (agrupa "GRUPO NOBATUK" e "NOBATUK")
-  select fo.id fid, fo.nome,
-    btrim(regexp_replace(regexp_replace(lower(unaccent(btrim(fo.nome))), '^(grupo|banda|projeto)\s+', ''),
+-- Desde 05/11/2026 as contas de músico do financeiro foram limpas (antes de outubro: sem dívida).
+-- A dívida de músico passa a ser a conta em aberto no financeiro, com o nome do show do módulo
+-- (o fornecedor da conta às vezes é outro artista, ex. show "Zé Rodrigo e Alexandre" na conta de "Enzo e Rodrigo").
+mus_ab as (
+  select c.id, c.data_vencimento d, c.valor_total v, c.saldo_restante ab, btrim(coalesce(m.nome, fo.nome)) nome_show,
+    btrim(regexp_replace(regexp_replace(lower(unaccent(btrim(coalesce(m.nome, fo.nome)))), '^(grupo|banda|projeto)\s+', ''),
                          '\s*(-\s*musico|\(musico\))\s*$', '')) g
-  from fornecedores fo
-  where fo.id in (select fornecedor_id from musicos) or fo.id in (select fid from pix where g = 'mus')),
-show as (
-  select m.id, mn.g, m.data_evento::date d, m.valor_total_final v
-  from musicos m join mnome mn on mn.fid = m.fornecedor_id
-  where m.status_pagamento <> 'cancelado' and m.data_evento >= (select ini_mus from par)),
-show_pass as (select * from show where d <= (select hoje from par)),
-pix_g as (
-  select mn.g, sum(p.valor) pago, count(*) n, max(p.data) ult
-  from pix p join mnome mn on mn.fid = p.fid where p.g = 'mus' group by 1),
-ev_mus as (
-  select g, d dt, 0 o, v x from show_pass
-  union all
-  -- músico pode receber sinal antes do show: o Pix vale para shows até 7 dias depois dele
-  select mn.g, p.data + 7, 1, -p.valor from pix p join mnome mn on mn.fid = p.fid where p.g = 'mus'),
-cum_mus as (select g, dt, o, sum(x) over (partition by g order by dt, o rows unbounded preceding) s from ev_mus),
-bal_mus as (select g, (array_agg(s order by dt desc, o desc))[1] - least(0, min(s)) b from cum_mus group by g),
-rev_mus as (select g, d, v, sum(v) over (partition by g order by d desc, id desc rows unbounded preceding) rc from show_pass),
-mus_aberto as (
-  select r.g, r.d, r.v, least(r.v, b.b - (r.rc - r.v)) aberto
-  from rev_mus r join bal_mus b on b.g = r.g where b.b - (r.rc - r.v) > 0.009),
-fin_aberto as (
-  select mn.g, count(*) n, sum(c.saldo_restante) v from contas_pagar c join mnome mn on mn.fid = c.fornecedor_id
-  where c.status <> 'pago' and c.saldo_restante > 0 and c.categoria_id in (select id from cat_mus)
-    and c.data_vencimento <= (select hoje from par) group by 1),
-grupos as (
-  select g, (array_agg(btrim(nome) order by length(nome) desc))[1] nome, count(*) nforn from mnome group by g),
-mus_g as (
-  select gr.g, gr.nome, gr.nforn,
-    (select count(*) from show_pass s where s.g = gr.g) n,
-    coalesce((select sum(v) from show_pass s where s.g = gr.g), 0) devido,
-    (select min(d) from show s where s.g = gr.g and s.d > (select hoje from par)) prox
-  from grupos gr),
+  from contas_pagar c join fornecedores fo on fo.id = c.fornecedor_id
+  left join musicos m on m.id = c.origem_id and c.origem_modulo = 'musicos'
+  where c.categoria_id in (select id from cat_mus) and c.status <> 'pago' and c.saldo_restante > 0
+    and c.data_vencimento <= (select hoje from par)),
+mnome as (
+  select fo.id fid, btrim(regexp_replace(regexp_replace(lower(unaccent(btrim(fo.nome))), '^(grupo|banda|projeto)\s+', ''),
+                         '\s*(-\s*musico|\(musico\))\s*$', '')) g
+  from fornecedores fo where fo.id in (select fid from pix where g = 'mus')),
+pix_g as (select mn.g, max(p.data) ult from pix p join mnome mn on mn.fid = p.fid where p.g = 'mus' group by 1),
+prox_mus as (
+  select btrim(regexp_replace(regexp_replace(lower(unaccent(btrim(m.nome))), '^(grupo|banda|projeto)\s+', ''),
+                         '\s*(-\s*musico|\(musico\))\s*$', '')) g, min(m.data_evento::date) prox
+  from musicos m where m.status_pagamento <> 'cancelado' and m.data_evento::date > (select hoje from par) group by 1),
 mus_json as (
   select coalesce(json_agg(json_build_object(
-      'g', mg.g, 'nome', mg.nome, 'nforn', mg.nforn, 'n', mg.n, 'devido', mg.devido, 'pago', coalesce(px.pago, 0),
-      'pix', coalesce(px.n, 0), 'ult_pix', px.ult, 'prox', mg.prox, 'fin_ab', coalesce(fa.v, 0), 'fin_n', coalesce(fa.n, 0),
-      'sobra', round(coalesce(px.pago, 0) - (mg.devido - coalesce(bm.b, 0)), 2),
-      'abertos', (select json_agg(json_build_object('d', a.d, 'v', a.v, 'ab', round(a.aberto, 2)) order by a.d) from mus_aberto a where a.g = mg.g))
-      order by mg.nome), '[]'::json) j
-  from mus_g mg left join pix_g px on px.g = mg.g left join fin_aberto fa on fa.g = mg.g left join bal_mus bm on bm.g = mg.g
-  where exists (select 1 from mus_aberto a where a.g = mg.g) or coalesce(fa.v, 0) > 0
-     or coalesce(px.pago, 0) - (mg.devido - coalesce(bm.b, 0)) > 1000),
-mus_parecidos as (
-  select coalesce(json_agg(json_build_object('a', a.nome, 'b', b.nome)), '[]'::json) j
-  from grupos a join grupos b on a.g < b.g and similarity(a.g, b.g) >= 0.55)
+      'g', x.g, 'nome', x.nome, 'n', x.n, 'devido', x.devido, 'fin_ab', x.ab, 'pago', 0, 'pix', 0, 'sobra', 0,
+      'ult_pix', px.ult, 'prox', pr.prox,
+      'abertos', (select json_agg(json_build_object('d', a.d, 'v', a.v, 'ab', a.ab) order by a.d) from mus_ab a where a.g = x.g))
+      order by x.nome), '[]'::json) j
+  from (select g, max(nome_show) nome, count(*) n, sum(v) devido, sum(ab) ab from mus_ab group by g) x
+  left join pix_g px on px.g = x.g left join prox_mus pr on pr.g = x.g),
+-- show lançado no módulo com um fornecedor de outro nome (erro de cadastro, ou projeto do artista)
+mus_forn_errado as (
+  select coalesce(json_agg(json_build_object('show', y.show, 'forn', y.forn, 'd', y.d, 'v', y.v) order by y.d desc), '[]'::json) j from (
+    select btrim(m.nome) show, btrim(fo.nome) forn, m.data_evento::date d, m.valor_total_final v,
+      btrim(regexp_replace(lower(unaccent(btrim(m.nome))), '^(grupo|banda|projeto)\s+', '')) a,
+      btrim(regexp_replace(lower(unaccent(btrim(fo.nome))), '^(grupo|banda|projeto)\s+', '')) b
+    from musicos m join fornecedores fo on fo.id = m.fornecedor_id
+    where m.status_pagamento <> 'cancelado' and m.data_evento >= (select hoje - 60 from par)) y
+  where greatest(similarity(y.a, y.b), word_similarity(y.a, y.b), word_similarity(y.b, y.a)) < 0.5)
 
 select json_build_object(
   'gerado', to_char(now() at time zone 'America/Cuiaba', 'YYYY-MM-DD"T"HH24:MI'),
@@ -183,5 +170,5 @@ select json_build_object(
   'ext_pix_sem_diaria', (select j from ext_pix_sem), 'ext_credito', (select j from ext_credito),
   'ext_dar_baixa', (select j from ext_baixa), 'ext_frequentes', (select j from ext_freq),
   'ext_sem_vinculo', (select j from ext_sem_vinc),
-  'musicos', (select j from mus_json), 'mus_parecidos', (select j from mus_parecidos)
+  'musicos', (select j from mus_json), 'mus_forn_errado', (select j from mus_forn_errado)
 ) foto;
