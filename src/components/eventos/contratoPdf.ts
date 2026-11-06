@@ -4,7 +4,8 @@ import { CONTRATADA } from './contratoFeijoada';
 
 /**
  * Desenha o contrato em PDF (A4), com parágrafos justificados e negrito no
- * meio do texto. O PDF sai sem assinatura: as partes assinam no gov.br.
+ * meio do texto. O PDF sai sem assinatura: as partes assinam pela plataforma
+ * própria (edge function contrato-assinatura), que anexa o certificado.
  */
 
 const MARGEM_X = 22, MARGEM_TOPO = 22, MARGEM_BAIXO = 22;

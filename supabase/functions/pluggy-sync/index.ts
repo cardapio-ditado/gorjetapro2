@@ -79,9 +79,11 @@ async function transacoes(chave: string, accountId: string, desde: string) {
   const todas: any[] = [...(r.corpo?.results ?? [])];
   let next = r.corpo?.next;
   for (let p = 1; next && p < MAX_PAGINAS; p++) {
-    const url = String(next).startsWith('http') || String(next).startsWith('/')
-      ? String(next)
-      : `${base}${filtrarAqui ? '' : `&from=${desde}`}&cursor=${encodeURIComponent(next)}`;
+    // a v2 manda `next` pronto ("?accountId=...&after=..."): usa como veio, sem remontar
+    const n = String(next);
+    const url = n.startsWith('http') || n.startsWith('/') ? n
+      : n.startsWith('?') ? `/v2/transactions${n}`
+      : `${base}${filtrarAqui ? '' : `&from=${desde}`}&after=${encodeURIComponent(n)}`;
     const pr = await pluggy(chave, url);
     if (!pr.ok) throw new Error(`Erro ao paginar movimentações (${pr.status}): ${pr.corpo?.message ?? ''}`);
     todas.push(...(pr.corpo?.results ?? []));

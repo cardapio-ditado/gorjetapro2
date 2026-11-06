@@ -965,7 +965,7 @@ const Events: React.FC = () => {
         )}
 
         {eventoContrato && (
-          <ContratoConvite evento={eventoContrato} onClose={() => setEventoContrato(null)} onAtualizado={fetchData} />
+          <ContratoConvite evento={eventoContrato} onClose={() => { setEventoContrato(null); void fetchData(); }} />
         )}
 
         {/* Modal gerar conta */}

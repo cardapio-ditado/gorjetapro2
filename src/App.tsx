@@ -41,6 +41,7 @@ const ListaCompras        = lazy(() => import('./pages/ListaCompras'));
 const ListaComprasPublica = lazy(() => import('./pages/ListaComprasPublica'));
 const ConferenciaCompras  = lazy(() => import('./pages/ConferenciaCompras'));
 const MapaMesasPublico    = lazy(() => import('./pages/MapaMesasPublico'));
+const AssinarContrato     = lazy(() => import('./pages/AssinarContrato'));
 const ContagemMobile      = lazy(() => import('./components/inventory/contagem/ContagemMobile'));
 const DiscPublico         = lazy(() => import('./pages/DiscPublico'));
 const DRESimplificado     = lazy(() => import('./pages/DRESimplificado'));
@@ -74,7 +75,7 @@ function AppContent() {
 
   useEffect(() => { testConnection(); }, []);
 
-  const rotasPublicas = ['/pre-entrevista', '/solicitacao', '/requisicao-estoque', '/pedido', '/cartaz-requisicao', '/contagem-mobile', '/disc', '/compras-publica', '/conferencia-compras', '/reservar-mesa', '/mapademesas', '/login', '/redefinir-senha'];
+  const rotasPublicas = ['/pre-entrevista', '/solicitacao', '/requisicao-estoque', '/pedido', '/cartaz-requisicao', '/contagem-mobile', '/disc', '/compras-publica', '/conferencia-compras', '/reservar-mesa', '/mapademesas', '/assinar/', '/login', '/redefinir-senha'];
   const isRotaPublica = rotasPublicas.some(r => location.pathname.startsWith(r));
 
   if (location.pathname === '/login') return <Login />;
@@ -102,6 +103,7 @@ function AppContent() {
           <Route path="/conferencia-compras/:id"  element={<ConferenciaCompras />} />
           <Route path="/reservar-mesa"            element={<MapaMesasPublico />} />
           <Route path="/mapademesas"              element={<MapaMesasPublico />} />
+          <Route path="/assinar/:token"           element={<AssinarContrato />} />
         </Routes>
       </Suspense>
     );
