@@ -197,7 +197,7 @@ const DEFINICOES: Definicao[] = [
     name: "anotar_contagem",
     acoes: ["contagem"],
     description:
-      "Anota o que foi contado num local (freezer, prateleira, depósito). Por padrão soma ao que já tinha naquele local; o total do item é a soma dos locais. Para corrigir um local, modo substituir. Devolve o total contado de cada item e os itens fora do setor (não anotados).",
+      "Anota o que foi contado num local (freezer, prateleira, depósito). Por padrão soma ao que já tinha naquele local; o total do item é a soma dos locais. Para corrigir um local, modo substituir. Devolve, lido do banco depois de gravar, o total do item somando todas as folhas abertas do estoque (itens[].total_contado e partes), os itens fora do setor e os itens em confirmar_antes, que NÃO foram gravados (zerar ou reduzir com saída de R$ 300 ou mais).",
     input_schema: {
       type: "object",
       properties: {
@@ -217,6 +217,7 @@ const DEFINICOES: Definicao[] = [
         modo: { type: "string", enum: ["somar", "substituir"], description: "Padrão somar." },
         apagar_parte: { type: "boolean", description: "Com substituir e quantidade 0: tira o local da conta do item (foi anotado por engano)." },
         incluir_fora_do_setor: { type: "boolean", description: "Só depois que a pessoa confirmar que o item está mesmo nesse setor." },
+        confirmado: { type: "boolean", description: "Só para os itens que voltaram em confirmar_antes, depois que a pessoa confirmou o nome exato e a quantidade na mensagem mais recente." },
       },
       required: ["estoque", "local", "itens"],
     },
@@ -236,7 +237,7 @@ const DEFINICOES: Definicao[] = [
     name: "concluir_contagem",
     acoes: ["contagem"],
     description:
-      "Fecha a contagem. Só use depois que a pessoa confirmou o resumo na mensagem mais recente. Item não contado não muda. Auditoria com diferença: se a pessoa pode aprovar, o saldo é acertado na hora; se não, fica aguardando aprovação e quem aprova é avisado.",
+      "Fecha a contagem. Só use depois que a pessoa confirmou o resumo na mensagem mais recente. Item não contado não muda. Com o Bar e o Central abertos, recusa (status cruzar_antes, nada fechado) até o cruzamento ter sido mostrado, e devolve o cruzamento. Auditoria com diferença: se a pessoa pode aprovar, o saldo é acertado na hora; se não, fica aguardando aprovação e quem aprova é avisado. Devolve valor_faltas, valor_sobras e valor_liquido por item.",
     input_schema: {
       type: "object",
       properties: { estoque: { type: "string", enum: ["central", "bar", "cozinha"] } },
@@ -247,7 +248,7 @@ const DEFINICOES: Definicao[] = [
     name: "cruzar_bar_central",
     acoes: ["contagem"],
     description:
-      "Com as contagens do Bar e do Central abertas: o mesmo item faltando num e sobrando no outro (provável transferência não lançada, com quantidade, de onde e para onde) e os itens com diferença no Bar que não foram contados no Central. Só lê.",
+      "Com as contagens do Bar e do Central abertas: o mesmo item faltando num e sobrando no outro (provável transferência não lançada, com quantidade, de onde e para onde) e os itens com diferença no Bar que não foram contados no Central. Não mexe em saldo: só marca nas folhas que o cruzamento foi feito, o que libera o fechamento.",
     input_schema: { type: "object", properties: {} },
   },
   {
@@ -503,6 +504,17 @@ async function avisarAprovadores(ctx: Contexto, texto: string) {
   }
 }
 
+/**
+ * Ferramentas de contagem rodam uma de cada vez: o modelo pede várias em paralelo e duas
+ * anotações do mesmo item ao mesmo tempo perdiam uma das partes (e abriam folha duplicada em 06/11).
+ */
+let filaContagem: Promise<unknown> = Promise.resolve();
+function emFila<T>(f: () => Promise<T>): Promise<T> {
+  const p = filaContagem.then(f, f);
+  filaContagem = p.catch(() => {});
+  return p;
+}
+
 export async function executarFerramenta(
   nome: string,
   entrada: Record<string, any>,
@@ -646,7 +658,7 @@ export async function executarFerramenta(
       if (!estoque) return { status: "erro", motivo: "Estoque inválido." };
       const op = nome.replace("_contagem", "");
       const { estoque: _e, ...resto } = entrada;
-      const r = await rpc(db, "fn_agente_contagem", { p_pessoa: pessoa.id, p_op: op, p_args: { ...resto, estoque_id: estoque } }) as any;
+      const r = await emFila(() => rpc(db, "fn_agente_contagem", { p_pessoa: pessoa.id, p_op: op, p_args: { ...resto, estoque_id: estoque } })) as any;
       if (op === "concluir" && r?.status === "aguardando_aprovacao") {
         const valor = Number(r.valor ?? 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
         await avisarAprovadores(ctx,
@@ -656,15 +668,15 @@ export async function executarFerramenta(
     }
 
     case "cruzar_bar_central":
-      return rpc(db, "fn_agente_contagem_cruzar", { p_pessoa: pessoa.id });
+      return emFila(() => rpc(db, "fn_agente_contagem_cruzar", { p_pessoa: pessoa.id }));
 
     case "transferencia_da_contagem": {
       const de = ESTOQUES[String(entrada.de)];
       const para = ESTOQUES[String(entrada.para)];
       if (!de || !para || de === para) return { status: "erro", motivo: "Origem ou destino inválido." };
-      const r = await rpc(db, "fn_agente_contagem_transferir", {
+      const r = await emFila(() => rpc(db, "fn_agente_contagem_transferir", {
         p_pessoa: pessoa.id, p_item: entrada.item_id, p_qtd: entrada.quantidade, p_de: de, p_para: para,
-      });
+      }));
       return sePendente(ctx, "transferir", r);
     }
 
