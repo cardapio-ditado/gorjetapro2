@@ -98,7 +98,16 @@ const dataBr = (s: string) => `${s.slice(8, 10)}/${s.slice(5, 7)}/${s.slice(0, 4
 
 // ── certificado (pdf-lib, fonte padrão WinAnsi) ──
 
-interface Parte { papel: string; nome: string; em: string; ip: string | null; navegador: string | null; png: Uint8Array; extra?: string }
+interface Parte {
+  papel: string; nome: string; em: string; ip: string | null; navegador: string | null; png: Uint8Array; extra?: string;
+  campo: 'contratante' | 'contratada';  // linha de assinatura do contrato onde vai a imagem
+}
+
+/** Linhas de assinatura gravadas pelo gerador do contrato (contratoPdf.ts) nas palavras-chave do PDF, em mm do topo. */
+function camposAssinatura(pdf: PDFDocument): Record<string, { p: number; x: number; y: number; w: number }> {
+  const m = /assinaturas=(\{.*\})/.exec(pdf.getKeywords() ?? '');
+  try { return m ? JSON.parse(m[1]) : {}; } catch { return {}; }
+}
 
 const winAnsi = (s: unknown) => String(s ?? '').replace(/[^\x20-\x7E\xA0-\xFF–—‘’“”•]/g, '?');
 
@@ -127,6 +136,19 @@ async function anexarCertificado(original: Uint8Array, info: {
 }) {
   const pdf = await PDFDocument.load(original);
   const paginasOriginais = pdf.getPageCount();
+
+  // assinatura de cada parte em cima da linha dela no contrato
+  const campos = camposAssinatura(pdf), MM = 72 / 25.4;
+  for (const p of info.partes) {
+    const c = campos[p.campo];
+    if (!c || c.p < 1 || c.p > paginasOriginais) continue;  // contrato gerado antes desta versão: só o certificado
+    const pg = pdf.getPage(c.p - 1);
+    const img = await pdf.embedPng(p.png);
+    const esc = Math.min((c.w * MM) / img.width, (17 * MM) / img.height), h = img.height * esc;
+    // o PNG tem margem transparente embaixo: desce um pouco para o traço encostar na linha
+    pg.drawImage(img, { x: c.x * MM, y: pg.getHeight() - c.y * MM - h * 0.18, width: img.width * esc, height: h });
+  }
+
   const normal = await pdf.embedFont(StandardFonts.Helvetica);
   const negrito = await pdf.embedFont(StandardFonts.HelveticaBold);
   const M = 50, L = 595.28 - 2 * M;
@@ -149,7 +171,7 @@ async function anexarCertificado(original: Uint8Array, info: {
   texto(info.titulo, { tam: 11 });
   y -= 6;
   texto(`ID do documento: ${info.documentoId}`, { tam: 9, cor: cinza });
-  texto(`SHA-256 do PDF original (${paginasOriginais} página${paginasOriginais > 1 ? 's' : ''}, antes deste certificado):`, { tam: 9, cor: cinza });
+  texto(`SHA-256 do PDF original (${paginasOriginais} página${paginasOriginais > 1 ? 's' : ''}, antes das assinaturas e deste certificado):`, { tam: 9, cor: cinza });
   texto(info.hashOriginal, { tam: 9, fonte: negrito });
   y -= 10;
 
@@ -175,7 +197,7 @@ async function anexarCertificado(original: Uint8Array, info: {
   y -= 6;
   texto('Validade', { tam: 10, fonte: negrito });
   texto('Documento assinado com assinatura eletrônica simples, em plataforma própria do Ditado Popular, com aceite das partes, nos termos do art. 10, § 2º, da Medida Provisória nº 2.200-2/2001. Cada assinante foi registrado com nome, data e hora, IP e navegador. A contratante confirmou o nome, o CPF/CNPJ do contrato e declarou ter lido e aceito o documento.', { tam: 9 });
-  texto('Qualquer alteração nas páginas anteriores muda o SHA-256 do PDF original informado acima.', { tam: 9, cor: cinza });
+  texto('O SHA-256 acima identifica o contrato original, guardado sem alteração na plataforma. As imagens das assinaturas foram aplicadas sobre ele, nos campos de assinatura de cada parte.', { tam: 9, cor: cinza });
 
   return { bytes: await pdf.save(), paginasOriginais };
 }
@@ -231,7 +253,7 @@ async function baixarOriginal(a: any) {
 
 const parteBar = (a: any): Parte => ({
   papel: 'Contratada · Ditado Popular', nome: a.bar_nome, em: a.bar_em, ip: a.bar_ip, navegador: a.bar_navegador,
-  png: pngValido(a.bar_assinatura)!,
+  png: pngValido(a.bar_assinatura)!, campo: 'contratada',
 });
 
 // ── ações ──
@@ -284,7 +306,7 @@ Deno.serve(async (req) => {
       const { bytes } = await anexarCertificado(original, {
         documentoId: a.id, titulo, hashOriginal: a.pdf_original_sha256,
         partes: [parteBar(a), {
-          papel: 'Contratante', nome, em: agora, ip, navegador, png,
+          papel: 'Contratante', nome, em: agora, ip, navegador, png, campo: 'contratante',
           extra: `${doc.length === 11 ? 'CPF' : 'CNPJ'} conferido com o contrato: ${mascarar(doc)}`,
         }],
       });

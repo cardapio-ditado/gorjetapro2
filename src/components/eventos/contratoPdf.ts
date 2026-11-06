@@ -82,6 +82,9 @@ export function gerarContratoPdf(blocos: Bloco[], rodape: string): jsPDF {
   const fim = 297 - MARGEM_BAIXO;
   const novaPagina = () => { doc.addPage(); y = MARGEM_TOPO; };
   const garantir = (mm: number) => { if (y + mm > fim) novaPagina(); };
+  // onde fica cada linha de assinatura (página, mm do topo): a edge function contrato-assinatura
+  // lê isso das palavras-chave do PDF e põe a assinatura de cada parte em cima da linha dela
+  const campos: Record<string, { p: number; x: number; y: number; w: number }> = {};
 
   const paragrafo = (trechos: Trecho[], recuo = 0, marcador?: string) => {
     doc.setFontSize(CORPO);
@@ -145,6 +148,7 @@ export function gerarContratoPdf(blocos: Bloco[], rodape: string): jsPDF {
         const assinatura = (rotulo: string, nome: string, docum: string) => {
           doc.setDrawColor(60); doc.setLineWidth(0.3);
           doc.line(MARGEM_X, y, MARGEM_X + 105, y);
+          campos[rotulo.toLowerCase()] = { p: doc.getCurrentPageInfo().pageNumber, x: MARGEM_X, y, w: 105 };
           y += 5;
           doc.setFont('helvetica', 'bold'); doc.text(rotulo, MARGEM_X, y); y += 5;
           doc.setFont('helvetica', 'normal');
@@ -158,6 +162,8 @@ export function gerarContratoPdf(blocos: Bloco[], rodape: string): jsPDF {
       }
     }
   }
+
+  if (Object.keys(campos).length) doc.setProperties({ keywords: `assinaturas=${JSON.stringify(campos)}` });
 
   const total = doc.getNumberOfPages();
   for (let i = 1; i <= total; i++) {

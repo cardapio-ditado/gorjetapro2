@@ -14,12 +14,20 @@ const W = 600, H = 180, TINTA = '#1b1f4a';
 let fontesProntas: Promise<void> | null = null;
 function carregarFontes() {
   if (!fontesProntas) {
-    if (!document.querySelector(`link[href="${CSS_FONTES}"]`)) {
-      const l = document.createElement('link');
-      l.rel = 'stylesheet'; l.href = CSS_FONTES;
-      document.head.appendChild(l);
-    }
-    fontesProntas = Promise.all(FONTES.map(f => document.fonts.load(`64px "${f}"`))).then(() => undefined).catch(() => undefined);
+    // as regras @font-face só existem depois que o CSS chega; antes disso fonts.load não baixa nada
+    // e os 4 modelos saíam na fonte padrão (iguais)
+    const css = new Promise<void>(pronto => {
+      let l = document.querySelector<HTMLLinkElement>(`link[href="${CSS_FONTES}"]`);
+      if (l?.sheet) return pronto();
+      if (!l) {
+        l = document.createElement('link');
+        l.rel = 'stylesheet'; l.href = CSS_FONTES;
+        document.head.appendChild(l);
+      }
+      l.addEventListener('load', () => pronto());
+      l.addEventListener('error', () => pronto());
+    });
+    fontesProntas = css.then(() => Promise.all(FONTES.map(f => document.fonts.load(`64px "${f}"`)))).then(() => undefined).catch(() => undefined);
   }
   return fontesProntas;
 }
