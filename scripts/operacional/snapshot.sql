@@ -80,7 +80,11 @@ banco as (
                     join fornecedores fo on fo.id = c.fornecedor_id
                     where fc.tipo = 'saida' and abs(fc.valor - abs(b.valor)) < 0.01
                       and fc.data between b.data - 3 and b.data + 3
-                      and similarity(lower(unaccent(fo.nome)), lower(unaccent(coalesce(b.contraparte_nome, '')))) >= 0.35)),
+                      and (similarity(lower(unaccent(fo.nome)), lower(unaccent(coalesce(b.contraparte_nome, '')))) >= 0.35
+                        -- mesmo primeiro nome ("ALSEDIR SEGURANÇA" × "Alsedir Filho dos Santos", "SCOTCH STORE" × "Scotch Store Comércio...")
+                        or (length(split_part(btrim(lower(unaccent(fo.nome))), ' ', 1)) > 2
+                            and split_part(btrim(lower(unaccent(fo.nome))), ' ', 1)
+                              = split_part(btrim(lower(unaccent(regexp_replace(coalesce(b.contraparte_nome, ''), '^[0-9. ]+', '')))), ' ', 1))))),
 corte as (select coalesce(min(data), (select hoje from par) + 1) - 1 d from banco),
 kfn as (select distinct kf.k, btrim(lower(unaccent(fo.nome))) n from k_forn kf join fornecedores fo on fo.id = kf.f),
 ban_c as (  -- vale-transporte (71,40) é de colaborador, não é diária
