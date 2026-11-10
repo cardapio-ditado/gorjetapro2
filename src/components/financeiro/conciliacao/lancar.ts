@@ -11,7 +11,14 @@ export interface Fornecedor { id: string; nome: string; categoria_padrao_id: str
 export interface SugFornecedor { id: string; nome: string; categoria_padrao_id: string | null; categoria_padrao_nome: string | null; score: number; }
 export interface SugConta { id: string; descricao: string; fornecedor_id: string; fornecedor_nome: string; valor_total: number; saldo_restante: number; data_vencimento: string; categoria_id: string | null; }
 export interface SugJa { fluxo_id: string; data: string; valor: number; descricao: string; }
-export interface Sugestao { fornecedores: SugFornecedor[]; contas_abertas: SugConta[]; ja_conciliado: SugJa[]; }
+/** contas_musicos: contas de show em aberto (qualquer valor); a de músico só se paga por ela. */
+export interface Sugestao { fornecedores: SugFornecedor[]; contas_abertas: SugConta[]; contas_musicos?: SugConta[]; ja_conciliado: SugJa[]; }
+
+/** Contas que dá para escolher em "Pagar conta aberta": mesmo valor + shows do músico escolhido. */
+export function contasParaBaixa(sug: Sugestao, fornecedorId: string): SugConta[] {
+  const ids = new Set(sug.contas_abertas.map(c => c.id));
+  return [...sug.contas_abertas, ...(sug.contas_musicos || []).filter(c => c.fornecedor_id === fornecedorId && !ids.has(c.id))];
+}
 
 /** transferencia: só no extrato automático (Pix entre contas do próprio bar). */
 export type Acao = 'nova' | 'baixa' | 'ja' | 'ignorar' | 'transferencia';

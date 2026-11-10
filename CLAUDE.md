@@ -49,6 +49,9 @@ Não duplicar aqui: cada regra tem uma fonte só.
   Contas a Pagar, e os dois são comparados lado a lado (`fn_musicos_situacao_financeiro`), sem um
   sobrescrever o outro.
 - Antes de outubro/2026 não há dívida com músicos: as contas antigas foram limpas em 05/11.
+- **10/11/2026:** o controle do Cristiano é a referência. O Contas a Pagar de músicos foi acertado para ficar
+  igual ao controle, show por show (backup `_backup_contas_musicos_20261110`). Conta de músico só nasce do
+  show no módulo (trava `trg_contas_pagar_trava_musico`): o financeiro paga a conta do show, nunca cria avulsa.
 - O fornecedor genérico "MÚSICOS E ARTISTAS" está inativo e não deve ser usado.
 
 ### Extras / diaristas (05/11/2026)

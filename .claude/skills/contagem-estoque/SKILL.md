@@ -38,7 +38,10 @@ Se lá mudar, vale o que estiver lá. Hoje:
 
 ## Onde fica cada local
 
-- **Bar:** freezers (Pepsi, Red Bull, Original 1/2/3, long neck, freezer 4), garrafas abertas e lacradas do balcão.
+- **Bar:** freezers (Pepsi, Red Bull, Original 1/2/3, long neck, freezer 4) e as garrafas **abertas** do balcão.
+  Garrafa fechada (destilado, litro) fica no **Central** e desce quando é aberta ou vendida (Kadu, 10/11).
+- **Item da folha do Central que não foi contado = zerado** (Kadu, 10/11). Antes de fechar, confirme a lista
+  dos não contados; depois do fechamento, baixe o saldo como complemento de contagem.
 - **Câmara fria = Estoque Central** (não é do Bar). Anote na contagem do Central.
 - **Chopp Brahma barril** fica no Central, em litros: barril = 50 L, o engatado vai pelo que ele disser.
 - **Coca-Cola** não entra na folha do Bar (só no Central).

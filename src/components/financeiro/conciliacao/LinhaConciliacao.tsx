@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { RefreshCw, CheckCircle2, Ban } from 'lucide-react';
 import dayjs from 'dayjs';
 import { Combobox } from '../../ui';
-import { fmt, inputCls, type Linha, type Acao, type Fornecedor, type Categoria, type Forma } from './lancar';
+import { contasParaBaixa, fmt, inputCls, type Linha, type Acao, type Fornecedor, type Categoria, type Forma } from './lancar';
 
 interface Props {
   linha: Linha;
@@ -90,8 +90,8 @@ export default function LinhaConciliacao({ linha: l, fornecedores, categorias, f
             <label className="block text-caption text-white/60 mb-1">Conta a pagar (em aberto)</label>
             <select value={l.contaPagarId} onChange={e => onChange({ contaPagarId: e.target.value })} className={inputCls}>
               <option value="">Selecione...</option>
-              {l.sug.contas_abertas.map(c => (
-                <option key={c.id} value={c.id}>{c.fornecedor_nome} · {c.descricao} · vc {dayjs(c.data_vencimento).format('DD/MM')}</option>
+              {contasParaBaixa(l.sug, l.fornecedorId).map(c => (
+                <option key={c.id} value={c.id}>{c.fornecedor_nome} · {c.descricao} · vc {dayjs(c.data_vencimento).format('DD/MM')} · falta {fmt(Number(c.saldo_restante))}</option>
               ))}
             </select>
           </div>

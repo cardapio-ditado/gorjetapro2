@@ -1,4 +1,4 @@
-import type { Acao, Fornecedor, Linha } from './lancar';
+import { contasParaBaixa, type Acao, type Fornecedor, type Linha } from './lancar';
 
 // Peças do extrato automático usadas pela lista e pelo modo "um por um".
 
@@ -30,10 +30,10 @@ export const pronta = (l: LinhaAuto) => l.status === 'pendente'
   && (l.acao === 'ja' || (l.acao === 'baixa' && !!l.contaPagarId) || (l.acao === 'nova' && !!l.fornecedorId)
     || (l.acao === 'transferencia' && !!l.contaOutraId));
 
-/** Ao escolher o fornecedor: conta aberta dele com o mesmo valor vira "pagar conta aberta"; senão "criar conta e pagar". */
+/** Ao escolher o fornecedor: conta aberta dele (mesmo valor, ou show do músico) vira "pagar conta aberta"; senão "criar conta e pagar". */
 export function aplicarFornecedor(l: LinhaAuto, f: Fornecedor | undefined, categoriaId?: string): LinhaAuto {
   if (!f) return { ...l, fornecedorId: '', notasIds: undefined, erro: null };
-  const conta = l.sug.contas_abertas.find(c => c.fornecedor_id === f.id);
+  const conta = contasParaBaixa(l.sug, f.id).find(c => c.fornecedor_id === f.id);
   return {
     ...l,
     fornecedorId: f.id,

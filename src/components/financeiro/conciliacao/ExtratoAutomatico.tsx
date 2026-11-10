@@ -8,7 +8,7 @@ import {
 import NovoFornecedor from './NovoFornecedor';
 import ConciliarUmPorUm from './ConciliarUmPorUm';
 import {
-  fmt, acaoInicial, validar, lancar, lancarTransferencia, registrarIgnorada, adiar, SUG_VAZIA,
+  contasParaBaixa, fmt, acaoInicial, validar, lancar, lancarTransferencia, registrarIgnorada, adiar, SUG_VAZIA,
   type Forma, type Categoria, type Fornecedor, type Sugestao, type Acao,
 } from './lancar';
 import { ACOES, aplicarFornecedor, documento, pronta, type Conta, type LinhaAuto } from './extrato';
@@ -330,7 +330,7 @@ export default function ExtratoAutomatico() {
         }
         const contaPagarId = await lancar(l, integ.banco_conta_id, null);
         const fornecedorId = l.acao === 'nova' ? l.fornecedorId
-          : l.acao === 'baixa' ? (l.sug.contas_abertas.find(c => c.id === l.contaPagarId)?.fornecedor_id || l.fornecedorId || null) : (l.fornecedorId || null);
+          : l.acao === 'baixa' ? (contasParaBaixa(l.sug, l.fornecedorId).find(c => c.id === l.contaPagarId)?.fornecedor_id || l.fornecedorId || null) : (l.fornecedorId || null);
         await resolverExtrato(l.extratoId, { status: 'conciliada', conta_pagar_id: contaPagarId, fornecedor_id: fornecedorId || null, categoria_id: l.categoriaId || null });
         if (l.doc && fornecedorId) regras.set(l.doc, { nome: l.nome || documento(l.docTipo, l.doc), fornecedorId, categoriaId: l.categoriaId || null });
         atualizar([l.extratoId], x => ({ ...x, status: 'conciliada', salvando: false, selecionada: false }));
@@ -621,7 +621,7 @@ export default function ExtratoAutomatico() {
                             <Select aria-label="Conta aberta" value={l.contaPagarId} className="flex-1 min-w-[200px]"
                               onChange={e => atualizar([l.extratoId], x => ({ ...x, contaPagarId: e.target.value }))}>
                               <option value="">Escolha a conta…</option>
-                              {l.sug.contas_abertas.map(c => <option key={c.id} value={c.id}>{c.fornecedor_nome} · {c.descricao} · vence {dayjs(c.data_vencimento).format('DD/MM')}</option>)}
+                              {contasParaBaixa(l.sug, l.fornecedorId).map(c => <option key={c.id} value={c.id}>{c.fornecedor_nome} · {c.descricao} · vence {dayjs(c.data_vencimento).format('DD/MM')} · falta {fmt(Number(c.saldo_restante))}</option>)}
                             </Select>
                           )}
                           {l.acao === 'ja' && l.sug.ja_conciliado[0] && (
