@@ -70,7 +70,9 @@ Não duplicar aqui: cada regra tem uma fonte só.
 ### Andar Operacional (prioridade de pagamento)
 - Atualização diária às 6:32 (Cuiabá). Passo a passo em `scripts/operacional/README.md`.
 - Prazo: extra da casa 7 dias, extra de fora 2 dias, músico 7 dias.
-- Dívida real = diária/show lançado − PIX recebido. Um PIX só paga diária do mesmo dia ou anterior.
+- A fila de pagar segue o **controle do Cristiano** (saldo nos módulos de Extras e Músicos), desde 10/11.
+  A página tem o botão "Atualizar agora" (leva uma cópia de `snapshot.sql`) e gera ordens de pagamento
+  para o financeiro (`op/ordens`). A auditoria pelos PIX continua: um PIX só paga diária do mesmo dia ou anterior.
 - **Corte do financeiro:** até o dia anterior ao primeiro PIX da Stone sem baixa, controle e financeiro
   têm que bater; diferença ali é real. Depois do corte, o PIX do banco aparece "sem baixa, a
   confirmar" e não abate a dívida sozinho.
