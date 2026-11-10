@@ -56,6 +56,14 @@ Só gere o PDF quando o Kadu disser que terminou de conferir os itens. Durante a
 - Se alguém lançar transferência no meio da contagem, atualize `quantidade_sistema` da folha para o saldo atual antes de concluir. O Bar processa pela folha.
 - Garrafa vendida pelo Bar que saiu do Central: lance como transferência (com custo), não como perda no Central.
 - Destilado negativo no Bar que não estava no balcão: zerar sem custo (a perda já saiu no Central).
+  O Bar só guarda garrafa aberta; a fechada fica no Central (Kadu, 10/11). Garrafa vendida no Bar com
+  falta igual no Central entra em `vendas_sem_baixa` do Central ("vendida pelo Bar: saiu daqui").
+- Item da folha do Central não contado = zerado (Kadu, 10/11): baixe o saldo com movimentação de
+  origem `contagem` depois do fechamento. No relatório ele aparece como "contado depois" e cruza com
+  a sobra do Bar (desceu sem requisição).
+- Relatório acumulado (uma contagem fechou sem relatório): compare com a contagem do último relatório.
+  Em `consulta.sql`, o `t0` vira o fechamento dessa contagem e o `deveria` desconta os ajustes de
+  contagem feitos no meio (feito assim em 10/11, acumulado desde 06/11).
 
 ## Estilo do texto
 
