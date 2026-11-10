@@ -4,7 +4,7 @@ import 'dayjs/locale/pt-br';
 import { ArrowLeft, ArrowRight, Ban, CheckCircle2, Clock, FileText, RotateCcw, SkipForward } from 'lucide-react';
 import { Badge, Button, Combobox, EmptyState, IconButton, Input, Segmented, Select } from '../../ui';
 import type { OpcaoCombo } from '../../ui';
-import { fmt, notasSugeridas, type Acao, type Forma, type Fornecedor, type NotasSugeridas } from './lancar';
+import { contasParaBaixa, fmt, notasSugeridas, type Acao, type Forma, type Fornecedor, type NotasSugeridas } from './lancar';
 import { aplicarFornecedor, documento, type Conta, type LinhaAuto } from './extrato';
 
 // Conciliação "um por um": um pagamento de cada vez, já preenchido. Confere,
@@ -260,7 +260,7 @@ export default function ConciliarUmPorUm({
                   {l.acao === 'baixa' && (
                     <Select rotulo="Conta aberta" value={l.contaPagarId} onChange={e => mudar({ contaPagarId: e.target.value })}>
                       <option value="">Escolha a conta…</option>
-                      {l.sug.contas_abertas.map(c => <option key={c.id} value={c.id}>{c.fornecedor_nome} · {c.descricao} · vence {dayjs(c.data_vencimento).format('DD/MM')}</option>)}
+                      {contasParaBaixa(l.sug, l.fornecedorId).map(c => <option key={c.id} value={c.id}>{c.fornecedor_nome} · {c.descricao} · vence {dayjs(c.data_vencimento).format('DD/MM')} · falta {fmt(Number(c.saldo_restante))}</option>)}
                     </Select>
                   )}
                   <Select rotulo="Forma de pagamento" value={l.formaPagamentoId} onChange={e => mudar({ formaPagamentoId: e.target.value })}>
