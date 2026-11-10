@@ -11,7 +11,7 @@ export interface Fornecedor { id: string; nome: string; categoria_padrao_id: str
 export interface SugFornecedor { id: string; nome: string; categoria_padrao_id: string | null; categoria_padrao_nome: string | null; score: number; }
 export interface SugConta { id: string; descricao: string; fornecedor_id: string; fornecedor_nome: string; valor_total: number; saldo_restante: number; data_vencimento: string; categoria_id: string | null; }
 export interface SugJa { fluxo_id: string; data: string; valor: number; descricao: string; }
-/** contas_musicos: contas de show em aberto (qualquer valor); a de músico só se paga por ela. */
+/** contas_musicos: contas do módulo em aberto, show de músico ou diária de extra (qualquer valor); só se paga por elas. */
 export interface Sugestao { fornecedores: SugFornecedor[]; contas_abertas: SugConta[]; contas_musicos?: SugConta[]; ja_conciliado: SugJa[]; }
 
 /** Contas que dá para escolher em "Pagar conta aberta": mesmo valor + shows do músico escolhido. */

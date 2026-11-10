@@ -62,6 +62,10 @@ Não duplicar aqui: cada regra tem uma fonte só.
 - Mesma pessoa com dois cadastros: juntar (`juntado_com`). Com o OK do Kadu, juntar também o
   fornecedor criado pelo módulo no fornecedor que recebe o PIX (`fn_fornecedor_unificar`).
 - Colaborador da casa que faz extra continua como colaborador; o PIX dele pode ser salário ou vale.
+- **10/11/2026:** igual aos músicos, o Contas a Pagar de extras foi acertado para ficar igual ao controle do
+  Cristiano, diária por diária (backups `_backup_contas_extras_20261110` e `_backup_extras_freelancers_20261110`).
+  Conta de extra só nasce da diária no módulo (trava `trg_contas_pagar_trava_extra`): o financeiro paga a
+  conta da diária, nunca cria avulsa (fornecedor tipo `extra` ou categoria de extra).
 
 ### Andar Operacional (prioridade de pagamento)
 - Atualização diária às 6:32 (Cuiabá). Passo a passo em `scripts/operacional/README.md`.
