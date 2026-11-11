@@ -52,6 +52,11 @@ Não duplicar aqui: cada regra tem uma fonte só.
 - **10/11/2026:** o controle do Cristiano é a referência. O Contas a Pagar de músicos foi acertado para ficar
   igual ao controle, show por show (backup `_backup_contas_musicos_20261110`). Conta de músico só nasce do
   show no módulo (trava `trg_contas_pagar_trava_musico`): o financeiro paga a conta do show, nunca cria avulsa.
+- **11/11/2026:** nomes de show padronizados no nome do cadastro do artista ("Projeto · Artista" quando há projeto) e
+  shows passados para o cadastro certo (backups `_backup_musicos_unificar_20261111` e `_backup_contas_musicos_unificar_20261111`).
+  Karanova ≠ Nobatuk. Faltam cadastros próprios para "Junior e Nando" (shows no Junior e Rangel) e "Rafa Santiago"
+  (shows no Gabi Santin): são artistas diferentes, o Kadu cria com a chave PIX e depois os shows mudam de cadastro.
+  Ao trocar nome ou cadastro de um show, o gatilho regrava a conta pelo show: conferir e restaurar valor e vencimento.
 - O fornecedor genérico "MÚSICOS E ARTISTAS" está inativo e não deve ser usado.
 
 ### Extras / diaristas (05/11/2026)
