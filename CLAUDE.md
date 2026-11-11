@@ -70,7 +70,8 @@ Não duplicar aqui: cada regra tem uma fonte só.
 - **10/11/2026:** igual aos músicos, o Contas a Pagar de extras foi acertado para ficar igual ao controle do
   Cristiano, diária por diária (backups `_backup_contas_extras_20261110` e `_backup_extras_freelancers_20261110`).
   Conta de extra só nasce da diária no módulo (trava `trg_contas_pagar_trava_extra`): o financeiro paga a
-  conta da diária, nunca cria avulsa (fornecedor tipo `extra` ou categoria de extra).
+  conta da diária, nunca cria avulsa. A trava olha a **categoria** (categoria de extra, ou sem categoria em cadastro
+  `extra`): salário, férias e vale de quem tem cadastro `extra` passam (corrigido em 11/11).
 
 ### Andar Operacional (prioridade de pagamento)
 - Atualização diária às 6:32 (Cuiabá). Passo a passo em `scripts/operacional/README.md`.
