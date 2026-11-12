@@ -30,7 +30,7 @@
   "notas": [
     [
       "Pagamentos em partes.",
-      "Os Pix saíram em partes (R$ 500,00 e R$ 691,26). O Pix de R$ 691,26 de 05/11/2026 foi pago em duplicidade e ficou como pagamento adiantado da 4ª parcela; a 3ª parcela foi completada com o Pix de R$ 500,00 de 06/11/2026."
+      "Os Pix saíram em partes (R$ 500,00 e R$ 691,26) e abatem sempre a parcela mais antiga em aberto. O Pix de R$ 691,26 de 05/11/2026 fechou a 3ª parcela (R$ 500,00) e os R$ 191,26 que sobraram, com o Pix de R$ 500,00 de 06/11/2026, ficaram como pagamento adiantado da 4ª."
     ],
     [
       "O que falta.",
