@@ -23,6 +23,9 @@ Central de agentes, 5º andar (Jurídico): https://claude.ai/artifact/9reGQma3mb
 Ao juntar comprovantes, ponha os pagamentos em ordem de data e vá quitando as parcelas da mais antiga para a mais nova. Só passa para a
 próxima parcela quando a anterior estiver quitada. Não case o pagamento com a parcela pelo mês do Pix nem pela descrição do comprovante.
 
+- **Exceção: Pix pago em duplicidade.** Quando o Kadu disser que um Pix foi pago em dobro por engano, ele não fecha a parcela mais
+  antiga: entra como pagamento adiantado da parcela que o Kadu indicar (no Eduardo, o Pix de 05/11 foi para a última parcela).
+  Escreva isso na `obs` do comprovante. Na dúvida sobre um Pix que sobra, pergunte ao Kadu antes de distribuir.
 - A parcela fica quitada no dia do pagamento que completa o valor dela. É esse dia que conta o atraso e a faixa da multa.
 - **Comprovante entra sempre com o valor cheio do Pix**, na parcela que ele fecha. Não divida um comprovante em dois valores (o Kadu
   estranha "juntei 691 e aparece 191"). Se o Pix passa do que faltava, o que sobra vai para a parcela seguinte como uma linha
