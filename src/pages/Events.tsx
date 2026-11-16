@@ -3,7 +3,7 @@ import { Tab } from '@headlessui/react';
 import {
   Plus, Search, CreditCard as Edit, Trash2, Calendar,
   DollarSign, CheckSquare, MessageSquare, X,
-  List, CalendarDays, ChevronLeft, ChevronRight, FileSignature, Ticket
+  List, CalendarDays, ChevronLeft, ChevronRight, FileSignature, Ticket, Check, Ban
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { testConnection } from '../lib/supabase';
@@ -71,6 +71,8 @@ interface ReservaNormal {
   local_bar: string;
   observacoes?: string;
   criado_em: string;
+  situacao?: 'pre_reserva' | 'confirmada' | 'recusada';
+  origem?: 'equipe' | 'link';
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -125,6 +127,8 @@ const Events: React.FC = () => {
   const [eventosFechados, setEventosFechados]     = useState<EventoFechado[]>([]);
   const [reservasEspeciais, setReservasEspeciais] = useState<ReservaEspecial[]>([]);
   const [reservasNormais, setReservasNormais]     = useState<ReservaNormal[]>([]);
+  // Pré-reservas do link (ditado.org/reserva) ainda sem resposta, de hoje em diante, em qualquer mês.
+  const [preReservas, setPreReservas]             = useState<ReservaNormal[]>([]);
 
   // Filtros
   const [searchTerm, setSearchTerm]   = useState('');
@@ -205,6 +209,10 @@ const Events: React.FC = () => {
           .order('data_reserva', { ascending: false });
         if (error) throw error;
         setReservasNormais(data || []);
+        const { data: pre } = await supabase.from('reservas_normais').select('*')
+          .eq('situacao', 'pre_reserva').gte('data_reserva', dayjs().format('YYYY-MM-DD'))
+          .order('data_reserva').order('horario');
+        setPreReservas(pre || []);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao carregar dados');
@@ -221,7 +229,7 @@ const Events: React.FC = () => {
       const [ef, re, rn] = await Promise.all([
         supabase.from('eventos_fechados').select('id,nome_evento,data_evento,horario_inicio,status_pagamento,tipo_evento').gte('data_evento', inicio).lte('data_evento', fim),
         supabase.from('reservas_especiais').select('id,nome_cliente,data_reserva,horario_inicio,status_pagamento,local_reservado').gte('data_reserva', inicio).lte('data_reserva', fim),
-        supabase.from('reservas_normais').select('id,nome_cliente,data_reserva,horario,local_bar').gte('data_reserva', inicio).lte('data_reserva', fim),
+        supabase.from('reservas_normais').select('id,nome_cliente,data_reserva,horario,local_bar,situacao').neq('situacao', 'recusada').gte('data_reserva', inicio).lte('data_reserva', fim),
       ]);
 
       const combined = [
@@ -231,6 +239,25 @@ const Events: React.FC = () => {
       ];
       setAllCalendarEvents(combined);
     } catch { /* silently fail */ }
+  };
+
+  // ── Pré-reserva do link: confirmar ou recusar e avisar o cliente no WhatsApp ──
+  const whatsCliente = (r: ReservaNormal, texto: string) => {
+    let dig = (r.telefone_cliente || '').replace(/\D/g, '');
+    if (!dig.startsWith('55')) dig = '55' + dig;
+    window.open(`https://wa.me/${dig}?text=${encodeURIComponent(texto)}`, '_blank');
+  };
+  const quandoReserva = (r: ReservaNormal) =>
+    `${dayjs(r.data_reserva).format('DD/MM')} às ${(r.horario || '').slice(0, 5)}, ${r.numero_pessoas} ${r.numero_pessoas === 1 ? 'pessoa' : 'pessoas'}`;
+  const responderPreReserva = async (r: ReservaNormal, situacao: 'confirmada' | 'recusada') => {
+    if (situacao === 'recusada' && !confirm(`Recusar a pré-reserva de ${r.nome_cliente}?`)) return;
+    const { error } = await supabase.from('reservas_normais').update({ situacao }).eq('id', r.id);
+    if (error) { setError(error.message); return; }
+    const primeiro = (r.nome_cliente || '').split(' ')[0];
+    whatsCliente(r, situacao === 'confirmada'
+      ? `Olá, ${primeiro}! Aqui é do Ditado Popular. Sua reserva para ${quandoReserva(r)} está CONFIRMADA. Até lá!`
+      : `Olá, ${primeiro}! Aqui é do Ditado Popular. Infelizmente não conseguimos reservar mesa para ${quandoReserva(r)}. Se quiser outro dia ou horário, é só responder esta mensagem.`);
+    fetchData();
   };
 
   // ── Save ─────────────────────────────────────────────────────────────────
@@ -800,14 +827,25 @@ const Events: React.FC = () => {
         </thead>
         <tbody className="divide-y divide-white/10">
           {(filteredData as ReservaNormal[]).map(r => (
-            <tr key={r.id} className="hover:bg-white/5">
-              <td className="px-6 py-4"><div className="font-medium text-white">{r.nome_cliente}</div><div className="text-sm text-white/40">{r.telefone_cliente}</div></td>
+            <tr key={r.id} className={`hover:bg-white/5 ${r.situacao === 'recusada' ? 'opacity-40' : ''}`}>
+              <td className="px-6 py-4">
+                <div className="font-medium text-white">{r.nome_cliente}</div><div className="text-sm text-white/40">{r.telefone_cliente}</div>
+                {r.situacao === 'pre_reserva' && <span className="inline-block mt-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-400/15 text-amber-300 border border-amber-400/40">Pré-reserva · link</span>}
+                {r.situacao === 'recusada' && <span className="inline-block mt-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-red-500/15 text-red-300">Recusada</span>}
+                {r.situacao === 'confirmada' && r.origem === 'link' && <span className="inline-block mt-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/15 text-emerald-300">Confirmada · link</span>}
+              </td>
               <td className="px-6 py-4"><div className="text-sm text-white">{dayjs(r.data_reserva).format('DD/MM/YYYY')}</div><div className="text-sm text-white/40">{r.horario}</div></td>
               <td className="px-6 py-4 text-sm text-white">{r.numero_pessoas}</td>
               <td className="px-6 py-4 text-sm text-white">{r.local_bar}</td>
               <td className="px-6 py-4 text-sm text-white/60">{r.observacoes || '-'}</td>
               <td className="px-6 py-4">
-                <div className="flex gap-2">
+                <div className="flex gap-2 items-center">
+                  {r.situacao === 'pre_reserva' && <>
+                    <button onClick={() => responderPreReserva(r, 'confirmada')} title="Confirmar e avisar no WhatsApp"
+                      className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold bg-emerald-600/80 hover:bg-emerald-600 text-white"><Check className="w-3.5 h-3.5" />Confirmar</button>
+                    <button onClick={() => responderPreReserva(r, 'recusada')} title="Recusar e avisar no WhatsApp"
+                      className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold bg-white/10 hover:bg-white/20 text-white/80"><Ban className="w-3.5 h-3.5" />Recusar</button>
+                  </>}
                   <button onClick={() => openForm(r)} className="text-blue-400 hover:text-blue-300"><Edit className="w-4 h-4" /></button>
                   <button onClick={() => handleDelete(r.id)} className="text-red-400 hover:text-red-300"><Trash2 className="w-4 h-4" /></button>
                 </div>
@@ -818,6 +856,31 @@ const Events: React.FC = () => {
       </table>
     );
   };
+
+  // Aviso das pré-reservas do link que ainda esperam resposta (qualquer mês).
+  const renderAvisoPreReservas = () => preReservas.length > 0 && (
+    <div className="mb-4 rounded-xl border border-amber-400/40 bg-amber-400/10 p-4">
+      <p className="text-sm font-semibold text-amber-200 mb-2">
+        {preReservas.length} {preReservas.length === 1 ? 'pré-reserva do link espera' : 'pré-reservas do link esperam'} confirmação
+      </p>
+      <div className="space-y-2">
+        {preReservas.map(r => (
+          <div key={r.id} className="flex flex-wrap items-center gap-2 text-sm text-white/80">
+            <span className="font-medium text-white">{r.nome_cliente}</span>
+            <span className="text-white/50">{r.telefone_cliente}</span>
+            <span>{quandoReserva(r)}</span>
+            {r.observacoes && <span className="text-white/50 italic">“{r.observacoes}”</span>}
+            <span className="flex gap-2 ml-auto">
+              <button onClick={() => responderPreReserva(r, 'confirmada')}
+                className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold bg-emerald-600/80 hover:bg-emerald-600 text-white"><Check className="w-3.5 h-3.5" />Confirmar</button>
+              <button onClick={() => responderPreReserva(r, 'recusada')}
+                className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold bg-white/10 hover:bg-white/20 text-white/80"><Ban className="w-3.5 h-3.5" />Recusar</button>
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 
   // ── Render principal ──────────────────────────────────────────────────────
   return (
@@ -906,6 +969,7 @@ const Events: React.FC = () => {
             <Tab.Panels>
               {['Eventos Fechados', 'Reservas Especiais', 'Reservas Normais'].map((title) => (
                 <Tab.Panel key={title} className="rounded-xl p-6">
+                  {title === 'Reservas Normais' && renderAvisoPreReservas()}
                   {viewMode === 'calendar' ? (
                     renderCalendar()
                   ) : loading ? (
