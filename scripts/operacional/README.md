@@ -15,6 +15,17 @@ A página lê um único documento do banco do artifact: coleção `op`, document
    e passar em `if_version`).
 4. Não mexer em nenhum outro documento do artifact nem republicar a página.
 
+## Botão "Atualizar agora" (na própria página)
+
+A página do Operacional tem o botão "Atualizar agora" (só para o dono). Ele roda a mesma consulta
+pelo conector Supabase de quem está vendo (`execute_sql`, só leitura) e grava `op/foto`.
+A página leva uma **cópia** de `snapshot.sql` (constante `OP_SQL`, sem as linhas de comentário):
+quando `snapshot.sql` mudar, copie de novo para a página e republique, senão o botão e a rotina
+das 6h32 passam a dar números diferentes.
+
+As ordens de pagamento que o Kadu gera para o financeiro ficam em `op/ordens` (lista). A rotina
+diária não mexe nesse documento.
+
 ## Regras de negócio (combinadas com o Kadu em 05/11 e 10/11/2026)
 
 - **A referência da fila de pagar é o controle do Cristiano** (Kadu, 10/11/2026): o saldo de cada

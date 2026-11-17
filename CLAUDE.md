@@ -52,6 +52,11 @@ Não duplicar aqui: cada regra tem uma fonte só.
 - **10/11/2026:** o controle do Cristiano é a referência. O Contas a Pagar de músicos foi acertado para ficar
   igual ao controle, show por show (backup `_backup_contas_musicos_20261110`). Conta de músico só nasce do
   show no módulo (trava `trg_contas_pagar_trava_musico`): o financeiro paga a conta do show, nunca cria avulsa.
+- **11/11/2026:** nomes de show padronizados no nome do cadastro do artista ("Projeto · Artista" quando há projeto) e
+  shows passados para o cadastro certo (backups `_backup_musicos_unificar_20261111` e `_backup_contas_musicos_unificar_20261111`).
+  Karanova ≠ Nobatuk. Faltam cadastros próprios para "Junior e Nando" (shows no Junior e Rangel) e "Rafa Santiago"
+  (shows no Gabi Santin): são artistas diferentes, o Kadu cria com a chave PIX e depois os shows mudam de cadastro.
+  Ao trocar nome ou cadastro de um show, o gatilho regrava a conta pelo show: conferir e restaurar valor e vencimento.
 - O fornecedor genérico "MÚSICOS E ARTISTAS" está inativo e não deve ser usado.
 
 ### Extras / diaristas (05/11/2026)
@@ -62,11 +67,18 @@ Não duplicar aqui: cada regra tem uma fonte só.
 - Mesma pessoa com dois cadastros: juntar (`juntado_com`). Com o OK do Kadu, juntar também o
   fornecedor criado pelo módulo no fornecedor que recebe o PIX (`fn_fornecedor_unificar`).
 - Colaborador da casa que faz extra continua como colaborador; o PIX dele pode ser salário ou vale.
+- **10/11/2026:** igual aos músicos, o Contas a Pagar de extras foi acertado para ficar igual ao controle do
+  Cristiano, diária por diária (backups `_backup_contas_extras_20261110` e `_backup_extras_freelancers_20261110`).
+  Conta de extra só nasce da diária no módulo (trava `trg_contas_pagar_trava_extra`): o financeiro paga a
+  conta da diária, nunca cria avulsa. A trava olha a **categoria** (categoria de extra, ou sem categoria em cadastro
+  `extra`): salário, férias e vale de quem tem cadastro `extra` passam (corrigido em 11/11).
 
 ### Andar Operacional (prioridade de pagamento)
 - Atualização diária às 6:32 (Cuiabá). Passo a passo em `scripts/operacional/README.md`.
 - Prazo: extra da casa 7 dias, extra de fora 2 dias, músico 7 dias.
-- Dívida real = diária/show lançado − PIX recebido. Um PIX só paga diária do mesmo dia ou anterior.
+- A fila de pagar segue o **controle do Cristiano** (saldo nos módulos de Extras e Músicos), desde 10/11.
+  A página tem o botão "Atualizar agora" (leva uma cópia de `snapshot.sql`) e gera ordens de pagamento
+  para o financeiro (`op/ordens`). A auditoria pelos PIX continua: um PIX só paga diária do mesmo dia ou anterior.
 - **Corte do financeiro:** até o dia anterior ao primeiro PIX da Stone sem baixa, controle e financeiro
   têm que bater; diferença ali é real. Depois do corte, o PIX do banco aparece "sem baixa, a
   confirmar" e não abate a dívida sozinho.
