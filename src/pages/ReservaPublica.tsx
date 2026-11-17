@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { AlertTriangle, CheckCircle2, CalendarDays } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, CalendarDays, MessageCircle } from 'lucide-react';
 
 /**
  * Pré-reserva pelo link do cliente (ditado.org/reserva).
@@ -10,6 +10,18 @@ import { AlertTriangle, CheckCircle2, CalendarDays } from 'lucide-react';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
 const SUPABASE_ANON = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
+
+// WhatsApp da equipe do Ditado, (65) 4141-3655 (Kadu, 17/11/2026).
+const WHATS_EQUIPE = '556541413655';
+
+function FalarEquipe({ texto }: { texto: string }) {
+  return (
+    <a href={`https://wa.me/${WHATS_EQUIPE}?text=${encodeURIComponent(texto)}`} target="_blank" rel="noopener noreferrer"
+      className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-white text-base bg-emerald-600 hover:bg-emerald-500 transition-all">
+      <MessageCircle size={18} /> Falar com a equipe no WhatsApp
+    </a>
+  );
+}
 
 const AMBIENTES = [
   { v: 'outros', t: 'Sem preferência' },
@@ -107,7 +119,8 @@ export default function ReservaPublica() {
               <p className="text-white/70">{feito.pessoas} {feito.pessoas === 1 ? 'pessoa' : 'pessoas'}</p>
             </div>
             <AvisoPre forte />
-            <p className="text-sm text-white/60 text-center">Aguarde a mensagem da equipe no seu WhatsApp. Se não receber, fale com o Ditado.</p>
+            <p className="text-sm text-white/60 text-center">Aguarde a mensagem da equipe no seu WhatsApp. Se não receber, fale com a gente:</p>
+            <FalarEquipe texto={`Olá! Fiz uma pré-reserva pelo site para ${dataLonga(feito.data).toLowerCase()} às ${feito.horario}, ${feito.pessoas} ${feito.pessoas === 1 ? 'pessoa' : 'pessoas'}.`} />
           </div>
         ) : (
           <form onSubmit={enviar} className="space-y-4" noValidate>
@@ -148,7 +161,10 @@ export default function ReservaPublica() {
                   </select>
                 </div>
               </div>
-              {form.pessoas > 20 && <p className="text-sm text-amber-200">Acima de 20 pessoas é evento: fale direto com a equipe do Ditado.</p>}
+              {form.pessoas > 20 && <div className="space-y-2">
+                <p className="text-sm text-amber-200">Acima de 20 pessoas é evento: fale direto com a equipe do Ditado.</p>
+                <FalarEquipe texto={`Olá! Quero reservar para ${form.pessoas} pessoas${form.data ? ` em ${dataLonga(form.data).toLowerCase()}` : ''}.`} />
+              </div>}
               <div>
                 <label htmlFor="r-obs" className={labelCls}>Observação</label>
                 <textarea id="r-obs" className={inputCls + ' resize-none'} rows={2} maxLength={300} value={form.obs} onChange={e => set('obs', e.target.value)} placeholder="Aniversário, cadeira de bebê, alguma preferência..." />
@@ -161,6 +177,7 @@ export default function ReservaPublica() {
             </label>
 
             {erro && <p className="text-sm text-red-300 bg-red-500/10 border border-red-400/30 rounded-xl px-4 py-3" role="alert">{erro}</p>}
+            {erro && /equipe/i.test(erro) && <FalarEquipe texto="Olá! Quero fazer uma reserva no Ditado." />}
 
             <button type="submit" disabled={enviando || form.pessoas > 20}
               className="w-full py-4 rounded-xl font-bold text-white text-base disabled:opacity-40 transition-all"
