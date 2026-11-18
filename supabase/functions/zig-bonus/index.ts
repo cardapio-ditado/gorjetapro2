@@ -92,6 +92,22 @@ Deno.serve(async (req) => {
       const { data: pode } = await caller.rpc('fn_bonus_pode');
       if (pode !== true) return json({ ok: false, error: 'Sem acesso.' }, 403);
     }
+    if (body?.acao === 'sondar' && ZIG_TOKEN) {
+      // Procura na ZIG a lista que traz a descrição do bônus (só lê; devolve código e campos, nunca o token).
+      const noite = /^\d{4}-\d{2}-\d{2}$/.test(String(body?.noite || '')) ? String(body.noite) : ontemCuiaba();
+      const caminhos: string[] = Array.isArray(body?.caminhos) ? body.caminhos.map(String).slice(0, 40) : [];
+      const out = [];
+      for (const c of caminhos) {
+        try {
+          const r = await fetch(`https://api.zigcore.com.br/integration/${c}?dtinicio=${noite}&dtfim=${noite}&loja=${LOJA}`, { headers: { Authorization: ZIG_TOKEN } });
+          const t = await r.text();
+          let campos: string[] = [], n = 0, amostra: unknown = null;
+          try { const j = JSON.parse(t); const l = Array.isArray(j) ? j : Array.isArray(j?.data) ? j.data : []; n = l.length; campos = l[0] ? Object.keys(l[0]) : Object.keys(j || {}); amostra = l.find((x: any) => JSON.stringify(x).match(/descri|motivo|reason|obs|bonus/i)) ?? null; } catch { /* não é JSON */ }
+          out.push({ caminho: c, status: r.status, n, campos, amostra });
+        } catch (e: any) { out.push({ caminho: c, erro: e?.message }); }
+      }
+      return json({ ok: true, noite, out });
+    }
     if (String(body?.acao || 'coletar') !== 'coletar') return json({ ok: false, error: 'Ação desconhecida.' }, 400);
 
     const ok = (s: unknown) => /^\d{4}-\d{2}-\d{2}$/.test(String(s || ''));
