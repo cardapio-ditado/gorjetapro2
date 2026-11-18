@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, BarChart3, Beer, ChefHat, Check, Martini, Maximize2, RotateCcw } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, BarChart3, Beer, ChefHat, Check, Flame, Martini, Maximize2, RotateCcw } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { Button, IconButton, Segmented } from '../components/ui';
@@ -11,23 +11,42 @@ import { Button, IconButton, Segmented } from '../components/ui';
  * do setor. Um toque em "Pronto" (cozinha) ou "Entregue" (bar e drinks) tira o
  * pedido da fila; um toque num item
  * marca só aquele item.
+ *
+ * Parrilla (/kds/parrilla): a carne dos assados, executivos e chapas, em colunas
+ * pelo ponto. A carne sem ponto fica na primeira coluna, em vermelho, com o aviso
+ * para cobrar o garçom; quando ele passar o ponto, um toque leva a carne para a
+ * coluna certa. Os acompanhamentos do mesmo prato aparecem na tela da cozinha.
  */
 
 const FUSO = 'America/Cuiaba';
 const LER_MS = 15_000;
 
-type Setor = 'cozinha' | 'bar' | 'drinks';
+type Setor = 'cozinha' | 'parrilla' | 'bar' | 'drinks';
 const SETORES: Record<Setor, { nome: string; caminho: string; Icone: React.ElementType; amarelo: number; vermelho: number; item: string; feito: string; feitos: string; vazio: string }> = {
   cozinha: { nome: 'Cozinha', caminho: '/kds', Icone: ChefHat, amarelo: 15, vermelho: 20, item: 'prato', feito: 'Pronto', feitos: 'prontos', vazio: 'Os pedidos da cozinha aparecem aqui assim que o garçom lança na ZIG.' },
+  parrilla: { nome: 'Parrilla', caminho: '/kds/parrilla', Icone: Flame, amarelo: 15, vermelho: 20, item: 'carne', feito: 'Pronto', feitos: 'prontas', vazio: 'As carnes dos assados, executivos e chapas aparecem aqui, separadas pelo ponto, assim que o garçom lança na ZIG.' },
   bar: { nome: 'Bar', caminho: '/kds/bar', Icone: Beer, amarelo: 5, vermelho: 8, item: 'item', feito: 'Entregue', feitos: 'entregues', vazio: 'Chopp, cervejas, long neck, refrigerantes e águas aparecem aqui assim que o garçom lança na ZIG.' },
   drinks: { nome: 'Drinks', caminho: '/kds/drinks', Icone: Martini, amarelo: 8, vermelho: 12, item: 'drink', feito: 'Entregue', feitos: 'entregues', vazio: 'Drinks, caipirinhas, doses, combos e garrafas aparecem aqui assim que o garçom lança na ZIG.' },
 };
-const setorDoCaminho = (caminho: string): Setor => (caminho.startsWith('/kds/bar') ? 'bar' : caminho.startsWith('/kds/drinks') ? 'drinks' : 'cozinha');
+const setorDoCaminho = (caminho: string): Setor =>
+  caminho.startsWith('/kds/parrilla') ? 'parrilla' : caminho.startsWith('/kds/bar') ? 'bar' : caminho.startsWith('/kds/drinks') ? 'drinks' : 'cozinha';
+
+type Ponto = 'mal' | 'ponto_mal' | 'ponto' | 'ponto_bem' | 'bem';
+const PONTOS: Array<{ id: Ponto; nome: string; curto: string; cor: string }> = [
+  { id: 'mal', nome: 'Mal passado', curto: 'Mal', cor: '#c0392b' },
+  { id: 'ponto_mal', nome: 'Ao ponto p/ mal', curto: 'P/ mal', cor: '#d9534f' },
+  { id: 'ponto', nome: 'Ao ponto', curto: 'Ponto', cor: '#d98a4f' },
+  { id: 'ponto_bem', nome: 'Ao ponto p/ bem', curto: 'P/ bem', cor: '#a8754a' },
+  { id: 'bem', nome: 'Bem passado', curto: 'Bem', cor: '#7a5a3f' },
+];
 
 interface Prato {
   id: number; transacao: string; produto: string; qtd: number; adicionais: string[];
   garcom: string | null; categoria: string | null; obs: string | null; pedido_em: string; pronto_em: string | null; pronto_por: string | null;
+  parte?: 'carne' | 'acomp' | null; ponto?: Ponto | null; ponto_origem?: 'zig' | 'obs' | null; precisa_ponto?: boolean;
+  ponto_manual?: Ponto | null; ponto_por?: string | null;
 }
+const pontoFinal = (p: Prato): Ponto | null => p.ponto_manual ?? p.ponto ?? null;
 interface Fila {
   noite: string; agora: string; lido_em: string | null; erro: string | null; pratos: Prato[];
   resumo: { pratos: number; feitos: number; media_min: number | null; vermelhos: number; atraso_zig: { pratos: number; ate_seg: number; desde_seg: number } | null };
@@ -87,7 +106,12 @@ const Kds: React.FC = () => {
       const f = data as Fila;
       // Pedido novo na fila: bipa (menos na primeira leitura).
       const abertos = new Set(f.pratos.filter((p) => !p.pronto_em).map((p) => p.transacao));
-      if (vistos.current && [...abertos].some((t) => !vistos.current!.has(t))) bipe(audio.current);
+      if (vistos.current && [...abertos].some((t) => !vistos.current!.has(t))) {
+        bipe(audio.current);
+        // Parrilla: carne nova sem ponto bipa de novo, para chamar o garçom.
+        const semPonto = f.pratos.some((p) => !p.pronto_em && p.precisa_ponto && !pontoFinal(p) && !vistos.current!.has(p.transacao));
+        if (semPonto) setTimeout(() => bipe(audio.current), 450);
+      }
       vistos.current = new Set([...(vistos.current ?? []), ...abertos]);
       setFila(f);
       setErro(null);
@@ -122,6 +146,13 @@ const Kds: React.FC = () => {
     try { audio.current = new AudioContext(); bipe(audio.current); } catch { /* sem som */ }
     void caixa.current?.requestFullscreen?.().catch(() => undefined);
     setIniciado(true);
+  };
+
+  const marcarPonto = async (id: number, ponto: Ponto | null) => {
+    setFila((f) => f && { ...f, pratos: f.pratos.map((p) => (p.id === id ? { ...p, ponto_manual: ponto } : p)) });
+    const { data, error } = await supabase.functions.invoke('kds-cozinha', { body: { acao: 'ponto', ids: [id], ponto } });
+    if (error || !data?.ok) setErro('Não consegui gravar o ponto. Toque de novo.');
+    void buscar();
   };
 
   const marcar = async (ids: number[], acao: 'pronto' | 'desfazer') => {
@@ -183,7 +214,10 @@ const Kds: React.FC = () => {
 
       {aba === 'fila' ? (
         <div className="flex-1 p-4">
-          {pedidos.length === 0 ? (
+          {setor === 'parrilla' && pedidos.length > 0 ? (
+            <ParrillaColunas pratos={(fila?.pratos ?? []).filter((p) => !p.pronto_em)} agora={agora}
+              onPronto={(id) => marcar([id], 'pronto')} onPonto={marcarPonto} />
+          ) : pedidos.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center gap-2" style={{ minHeight: '50vh', opacity: 0.7 }}>
               <S.Icone size={48} />
               <p style={{ fontSize: 20 }}>{fila ? 'Nada na fila.' : 'Lendo a ZIG…'}</p>
@@ -205,9 +239,15 @@ const Kds: React.FC = () => {
                       {ped.pratos.map((p) => (
                         <button key={p.id} type="button" onClick={() => marcar([p.id], 'pronto')} className="w-full text-left py-1.5"
                           style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }} title={`Toque para marcar só este ${S.item}`}>
-                          <div style={{ fontSize: 19, fontWeight: 700, lineHeight: 1.25 }}>
-                            <span style={{ color: c.texto }}>{qtd(p.qtd)}×</span> {p.produto}
-                          </div>
+                          {p.parte === 'acomp' ? (
+                            <div style={{ fontSize: 15, fontWeight: 700, lineHeight: 1.25, opacity: 0.85 }}>
+                              <span style={{ color: c.texto }}>{qtd(p.qtd)}×</span> Acompanhamento · {p.produto} <span style={{ opacity: 0.7 }}>(carne na parrilla)</span>
+                            </div>
+                          ) : (
+                            <div style={{ fontSize: 19, fontWeight: 700, lineHeight: 1.25 }}>
+                              <span style={{ color: c.texto }}>{qtd(p.qtd)}×</span> {p.produto}
+                            </div>
+                          )}
                           {p.adicionais.map((a, i) => (
                             <div key={i} style={{ fontSize: 16, opacity: 0.9, paddingLeft: 22 }}>+ {a}</div>
                           ))}
@@ -254,12 +294,88 @@ const Kds: React.FC = () => {
   );
 };
 
+/** Parrilla: uma coluna por ponto; a carne sem ponto fica primeiro, em vermelho, para cobrar o garçom. */
+const ParrillaColunas: React.FC<{
+  pratos: Prato[]; agora: number; onPronto: (id: number) => void; onPonto: (id: number, ponto: Ponto | null) => void;
+}> = ({ pratos, agora, onPronto, onPonto }) => {
+  const ordem = [...pratos].sort((a, b) => a.pedido_em.localeCompare(b.pedido_em));
+  const semPonto = ordem.filter((p) => p.precisa_ponto && !pontoFinal(p));
+  const naoLeva = ordem.filter((p) => !p.precisa_ponto);
+  const colunas: Array<{ id: string; nome: string; cor: string; itens: Prato[]; alerta?: boolean }> = [
+    { id: 'sem', nome: 'Sem ponto: cobrar o garçom', cor: '#e5484d', itens: semPonto, alerta: true },
+    ...PONTOS.map((pt) => ({ id: pt.id, nome: pt.nome, cor: pt.cor, itens: ordem.filter((p) => p.precisa_ponto && pontoFinal(p) === pt.id) })),
+    ...(naoLeva.length ? [{ id: 'nao', nome: 'Não leva ponto', cor: '#5b6472', itens: naoLeva }] : []),
+  ];
+  return (
+    <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${colunas.length}, minmax(160px, 1fr))`, overflowX: 'auto', alignItems: 'start' }}>
+      <style>{'@keyframes kdsPisca{0%,100%{box-shadow:0 0 0 0 rgba(229,72,77,.0)}50%{box-shadow:0 0 0 6px rgba(229,72,77,.55)}}'}</style>
+      {colunas.map((col) => (
+        <div key={col.id} className="flex flex-col gap-2" style={{ minWidth: 0 }}>
+          <div className="flex items-center gap-1.5 px-2 py-2" style={{ background: col.cor, color: '#fff', borderRadius: 10, fontSize: 15, fontWeight: 800, lineHeight: 1.15 }}>
+            {col.alerta && <AlertTriangle size={16} />}
+            <span className="flex-1">{col.nome}</span>
+            <span style={{ fontSize: 18 }}>{col.itens.reduce((s, p) => s + p.qtd, 0) || ''}</span>
+          </div>
+          {col.itens.map((p) => {
+            const ms = agora - new Date(p.pedido_em).getTime();
+            const c = corDe(ms / 60000, 'parrilla');
+            const sem = col.alerta;
+            return (
+              <div key={p.id} className="flex flex-col" style={{
+                border: `3px solid ${sem ? COR.vermelho.borda : c.borda}`, background: sem ? COR.vermelho.fundo : c.fundo, borderRadius: 12, overflow: 'hidden',
+                animation: sem ? 'kdsPisca 1.2s ease-in-out infinite' : undefined,
+              }}>
+                <div className="flex items-baseline justify-between px-2.5 pt-1.5">
+                  <span style={{ fontSize: 26, fontWeight: 900, color: c.texto, fontVariantNumeric: 'tabular-nums' }}>{relogio(ms)}</span>
+                  <span style={{ fontSize: 13, opacity: 0.85, textAlign: 'right' }}>{hhmm(p.pedido_em)}<br />{primeiro(p.garcom)}</span>
+                </div>
+                {p.obs && <div className="px-2.5" style={{ fontSize: 17, fontWeight: 800 }}>{p.obs}</div>}
+                <div className="px-2.5 py-1.5" style={{ fontSize: 18, fontWeight: 800, lineHeight: 1.2 }}>
+                  <span style={{ color: c.texto }}>{qtd(p.qtd)}×</span> {p.produto.replace(/^(ASSADO|EXECUTIVO)\s+(DE\s+)?/i, '')}
+                  {p.adicionais.map((a, i) => <div key={i} style={{ fontSize: 14, fontWeight: 600, opacity: 0.9 }}>+ {a}</div>)}
+                  {p.ponto_manual && <div style={{ fontSize: 12, fontWeight: 600, opacity: 0.7 }}>ponto marcado no tablet</div>}
+                  {!p.ponto_manual && p.ponto_origem === 'obs' && <div style={{ fontSize: 12, fontWeight: 600, opacity: 0.7 }}>ponto lido da observação</div>}
+                </div>
+                {sem ? (
+                  <div className="px-2 pb-2">
+                    <div style={{ fontSize: 14, fontWeight: 800, color: '#ffb3b5', marginBottom: 6 }}>
+                      Cobrar o ponto: {p.garcom ? primeiro(p.garcom) : 'garçom'}{p.obs ? ` · ${p.obs}` : ''}
+                    </div>
+                    <div className="grid gap-1" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
+                      {PONTOS.map((pt) => (
+                        <button key={pt.id} type="button" onClick={() => onPonto(p.id, pt.id)}
+                          style={{ minHeight: 40, background: pt.cor, color: '#fff', borderRadius: 8, fontSize: 13, fontWeight: 800 }}>{pt.curto}</button>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex">
+                    {p.ponto_manual && (
+                      <button type="button" onClick={() => onPonto(p.id, null)} title="Desfazer o ponto marcado"
+                        style={{ minHeight: 48, padding: '0 12px', background: 'rgba(255,255,255,0.08)' }}><RotateCcw size={16} /></button>
+                    )}
+                    <button type="button" onClick={() => onPronto(p.id)} className="flex flex-1 items-center justify-center gap-2"
+                      style={{ minHeight: 48, background: c.borda, color: '#0b0e13', fontSize: 18, fontWeight: 800 }}>
+                      <Check size={20} /> Pronto
+                    </button>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      ))}
+    </div>
+  );
+};
+
 interface Relat {
   noite: string; pratos: number; feitos: number; sem_pronto: number; media_min: number | null; mediana_min: number | null;
   amarelos: number; vermelhos: number; atraso_zig: { pratos: number; ate_seg: number; desde_seg: number } | null;
   por_produto: Array<{ produto: string; feitos: number; media_min: number | null; maior_min: number; acima_vermelho: number }>;
   por_hora: Array<{ hora: string; feitos: number; media_min: number | null }>;
   campos_zig: string[];
+  sem_ponto?: Array<{ garcom: string; carnes: number; sem_ponto: number; marcados_no_tablet: number }>;
 }
 
 /** Tempos de uma noite do setor: por item e por hora, e quanto a ZIG demora a mostrar o pedido. */
@@ -327,6 +443,25 @@ const Relatorio: React.FC<{ setor: Setor; noiteAtual: string | null }> = ({ seto
               ))}
             </tbody>
           </table>
+          {dados.sem_ponto && dados.sem_ponto.length > 0 && (
+            <>
+              <p style={{ fontSize: 17, fontWeight: 800, marginBottom: 6 }}>Carnes lançadas sem ponto, por garçom</p>
+              <table className="w-full" style={{ borderCollapse: 'collapse', marginBottom: 20 }}>
+                <thead><tr style={{ textAlign: 'left', opacity: 0.65 }}>
+                  <th style={celula}>Garçom</th><th style={celula}>Carnes</th><th style={celula}>Sem ponto</th><th style={celula}>Ponto marcado no tablet</th>
+                </tr></thead>
+                <tbody>
+                  {dados.sem_ponto.map((g) => (
+                    <tr key={g.garcom}>
+                      <td style={celula}>{g.garcom}</td><td style={celula}>{g.carnes}</td>
+                      <td style={{ ...celula, color: g.sem_ponto ? COR.vermelho.texto : undefined, fontWeight: 700 }}>{g.sem_ponto}</td>
+                      <td style={celula}>{g.marcados_no_tablet}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </>
+          )}
           <div className="flex flex-wrap gap-2">
             {dados.por_hora.map((h) => (
               <div key={h.hora} className="px-3 py-2" style={{ border: '1px solid rgba(255,255,255,0.12)', borderRadius: 10 }}>
