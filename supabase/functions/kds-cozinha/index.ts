@@ -1,4 +1,4 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { createClient } from 'npm:@supabase/supabase-js@2.45.4';
 
 // KDS da cozinha, do bar e dos drinks: a fila da noite, para o tablet de cada setor.
 //
