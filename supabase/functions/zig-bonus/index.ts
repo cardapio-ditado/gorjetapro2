@@ -63,8 +63,34 @@ async function compradores(noite: string): Promise<any[]> {
   return corpo.data;
 }
 
+/** Produtos de uma noite (erp/saida-produtos), para mostrar no cartão o que foi consumido, a mesa e o garçom. */
+async function produtos(noite: string): Promise<any[]> {
+  try {
+    if (ZIG_TOKEN) {
+      const res = await fetch(`${ZIG_API}/saida-produtos?dtinicio=${noite}&dtfim=${noite}&loja=${LOJA}`, { headers: { Authorization: ZIG_TOKEN } });
+      if (!res.ok) return [];
+      const corpo = await res.json();
+      return Array.isArray(corpo) ? corpo : Array.isArray(corpo?.data) ? corpo.data : [];
+    }
+    if (noite !== ontemCuiaba()) return [];
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/zig-consulta`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ endpoint: 'erp/saida-produtos', periodo: 'ontem' }),
+    });
+    const corpo = await res.json().catch(() => null);
+    return res.ok && corpo?.ok && Array.isArray(corpo.data) ? corpo.data : [];
+  } catch { return []; }
+}
+
 async function coletarNoite(noite: string) {
   const lista = await compradores(noite);
+  const saidas = lista.some((c) => c?.paymentType === 'Bonus') ? await produtos(noite) : [];
+  const porTransacaoProd = new Map<string, any[]>();
+  for (const s of saidas) {
+    if (!s?.transactionId) continue;
+    const l = porTransacaoProd.get(s.transactionId) ?? [];
+    l.push(s);
+    porTransacaoProd.set(s.transactionId, l);
+  }
   const porTransacao = new Map<string, any>();
   for (const c of lista) {
     if (c?.paymentType !== 'Bonus' || !c?.transactionId) continue;
@@ -75,7 +101,22 @@ async function coletarNoite(noite: string) {
     t.taxa += Number(c.tipValue || 0) / 100;
     porTransacao.set(c.transactionId, t);
   }
-  const itens = [...porTransacao.values()].map((t) => ({ ...t, consumo: Math.round(t.consumo * 100) / 100, taxa: Math.round(t.taxa * 100) / 100 }));
+  const itens = [...porTransacao.values()].map((t) => {
+    const ps = porTransacaoProd.get(t.transacao) ?? [];
+    const mesa = ps.map((p) => /mesa\s*:?\s*([\w-]+)/i.exec(String(p?.obs ?? ''))?.[1]).find(Boolean) ?? null;
+    const garcom = ps.map((p) => limpo(p?.employeeName)).find(Boolean) ?? null;
+    const agrup = new Map<string, { p: string; q: number; v: number }>();
+    for (const p of ps) {
+      const nome = limpo(p?.productName) || 'Produto';
+      const a = agrup.get(nome) ?? { p: nome, q: 0, v: 0 };
+      const q = Number(p?.count || 0);
+      a.q += q;
+      a.v += (Number(p?.unitValue || 0) * q) / 100;
+      agrup.set(nome, a);
+    }
+    const produtosT = [...agrup.values()].map((a) => ({ ...a, v: Math.round(a.v * 100) / 100 }));
+    return { ...t, consumo: Math.round(t.consumo * 100) / 100, taxa: Math.round(t.taxa * 100) / 100, mesa, garcom, itens: produtosT.length ? produtosT : null };
+  });
   const { data, error } = await db.rpc('fn_bonus_gravar_noite', { p_noite: noite, p_itens: itens });
   if (error) throw new Error(error.message);
   return data;
