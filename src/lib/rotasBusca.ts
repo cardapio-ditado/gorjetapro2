@@ -1,6 +1,6 @@
 import type { LucideIcon } from 'lucide-react';
 import {
-  Beer, BookOpen, CalendarDays, ChefHat, DollarSign, Gamepad2, Martini, Home, Music, Palette, Settings, Star, Target, TrendingUp, UserPlus, Users, Warehouse, Wine,
+  Beer, BookOpen, Flame, Gift, CalendarDays, ChefHat, DollarSign, Gamepad2, Martini, Home, Music, Palette, Settings, Star, Target, TrendingUp, UserPlus, Users, Warehouse, Wine,
 } from 'lucide-react';
 
 /** Uma tela que a busca do topo sabe abrir. */
@@ -35,6 +35,7 @@ export const ROTAS_BUSCA: RotaBusca[] = [
   { label: 'Livro da Noite',          path: '/livro',                                                icon: BookOpen, apelidos: 'ocorrencias ocorrencia diario caixa noite gerente' },
   { label: 'A Casa ao Vivo',          path: '/casa',                                                 icon: Gamepad2, apelidos: 'maquete jogo clientes garcom praca 3d tempo real' },
   { label: 'KDS da Cozinha',          path: '/kds',                                                  icon: ChefHat, apelidos: 'cozinha pedidos pratos tempo tablet fila preparo' },
+  { label: 'KDS da Parrilla',         path: '/kds/parrilla',                                         icon: Flame, apelidos: 'parrilla churrasco assado carne ponto brasa tablet fila' },
   { label: 'KDS do Bar',              path: '/kds/bar',                                              icon: Beer, apelidos: 'bar chopp cerveja pedidos tempo tablet fila' },
   { label: 'KDS de Drinks',           path: '/kds/drinks',                                           icon: Martini, apelidos: 'drinks caipirinha dose garrafa pedidos tempo tablet fila' },
   { label: 'Extras',                  path: '/extras',                                               icon: UserPlus, apelidos: 'diarista freelancer freela diaria' },
@@ -55,6 +56,7 @@ export const ROTAS_BUSCA: RotaBusca[] = [
   { label: 'Financeiro — DRE',                    path: '/finance?tab=relatorios&ver=dre',      icon: DollarSign, apelidos: 'resultado lucro dre' },
   { label: 'Financeiro — Relatórios Gerenciais',  path: '/finance?tab=relatorios&ver=gerenciais', icon: DollarSign },
   { label: 'Financeiro — Cadastros',              path: '/finance?tab=cadastros',               icon: DollarSign, apelidos: 'categoria forma pagamento banco cliente' },
+  { label: 'Bônus ZIG',                           path: '/bonus-zig',                           icon: Gift, apelidos: 'bonus bônus permuta parceiro cortesia desconto funcionario zig' },
   { label: 'ZIG Recebimentos',                    path: '/zig-recebimentos',                    icon: DollarSign },
   // Estoque
   { label: 'Estoque — Configurar setores',  path: '/setores',                                           icon: Warehouse, apelidos: 'bar cozinha nível zig contagem balcão' },

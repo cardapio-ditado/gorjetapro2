@@ -1,4 +1,4 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { createClient } from 'npm:@supabase/supabase-js@2.45.4';
 
 // KDS da cozinha, do bar e dos drinks: a fila da noite, para o tablet de cada setor.
 //
@@ -18,6 +18,12 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 //   antes das 10h UTC (06h em Cuiabá) a noite ainda é a "de ontem" (UTC).
 // - Acesso: {acao:'ler'} aceita o agendamento (x-agente-token); o resto exige
 //   login com o módulo "kds" (fn_kds_pode) ou master.
+// - Parrilla (Kadu, 18/11/2026): assados, executivos, chapas e queijo coalho na
+//   brasa saem pelo ponto COZINHA da ZIG, mas a carne vai para a tela da
+//   parrilla e os acompanhamentos para a da cozinha (duas linhas, cada uma com o
+//   seu "pronto"). O ponto da carne vem do complemento "Ponto da carne" da ZIG
+//   (fica em additions) ou da observação do lançamento; sem ponto, a parrilla
+//   avisa para cobrar o garçom e o parrilleiro marca o ponto no tablet.
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')!;
@@ -43,15 +49,37 @@ const ESQUECIDO_H = 3;
 /** Fora da fila: rodízio (sai em rodadas, não é um prato) e couvert. */
 const FORA_DA_FILA = /^(ROD[IÍ]ZIO|COUVER)/i;
 
-type Setor = 'cozinha' | 'bar' | 'drinks';
+type Setor = 'cozinha' | 'bar' | 'drinks' | 'parrilla';
 /** Amarelo e vermelho de cada setor (minutos desde o pedido). */
 const LIMITES: Record<Setor, { amarelo: number; vermelho: number }> = {
   cozinha: { amarelo: 15, vermelho: 20 },
+  parrilla: { amarelo: 15, vermelho: 20 },
   bar: { amarelo: 5, vermelho: 8 },
   drinks: { amarelo: 8, vermelho: 12 },
 };
 /** Categorias da ZIG que saem nos drinks: drinks, caipirinhas, doses, combos e garrafas. */
 const DRINKS = /^(DRINK|CAIPIRINHA|DOSE|CACHA[CÇ]A|COMBO|WHISKY|VODKA|GIN|LICOR|VINHO|CHAMPAGNE|ESPUMANTE|TEQUILA|RUM|CONHAQUE)/;
+
+/** Pratos da parrilla: pela categoria da ZIG (prato novo nessas categorias já entra) e o queijo coalho na brasa. */
+const PARRILLA_CATEGORIA = /^(ASSADO|EXECUTIVO|CHAPA)/;
+const PARRILLA_PRODUTO = /COALHO NA BRASA/;
+/** Acompanhamento que também sai da brasa: fica no cartão da parrilla, não vai para a cozinha. */
+const ACOMP_DA_BRASA = /COALHO/;
+/** Não leva ponto: porco, frango, costela, linguiça e queijo. */
+const SEM_PONTO = /SU[IÍ]N|PORCO|FRANGO|COSTELA|LINGUI|CHORIP|QUEIJO|COALHO/;
+
+export type Ponto = 'mal' | 'ponto_mal' | 'ponto' | 'ponto_bem' | 'bem';
+const PONTOS: Ponto[] = ['mal', 'ponto_mal', 'ponto', 'ponto_bem', 'bem'];
+/** Lê o ponto num texto (complemento da ZIG ou observação). A ordem importa: o mais específico primeiro. */
+function pontoDe(texto: string): Ponto | null {
+  const t = texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
+  if (/PONTO (PARA|PRA|P\/?) ?MAL|PONTO MENOS|MAL PRO PONTO/.test(t)) return 'ponto_mal';
+  if (/PONTO (PARA|PRA|P\/?) ?BEM|PONTO MAIS|BEM PRO PONTO/.test(t)) return 'ponto_bem';
+  if (/MAL ?PASSAD|MALPASSAD|SANGRANDO|AL SANGUE/.test(t)) return 'mal';
+  if (/BEM ?PASSAD|BEMPASSAD/.test(t)) return 'bem';
+  if (/AO PONTO|\bNO PONTO\b|^PONTO$/.test(t)) return 'ponto';
+  return null;
+}
 
 /** Cozinha pelo ponto da ZIG; o resto, drinks pela categoria, e bar o que sobra. */
 function setorDe(v: any): Setor | null {
@@ -60,7 +88,9 @@ function setorDe(v: any): Setor | null {
   if (ponto.includes('COZINHA')) return 'cozinha';
   return DRINKS.test(limpo(v.productCategory).toUpperCase()) ? 'drinks' : 'bar';
 }
-const ehSetor = (s: unknown): s is Setor => s === 'cozinha' || s === 'bar' || s === 'drinks';
+const ehSetor = (s: unknown): s is Setor => s === 'cozinha' || s === 'bar' || s === 'drinks' || s === 'parrilla';
+const ehParrilla = (produto: string, categoria: string | null) =>
+  PARRILLA_CATEGORIA.test((categoria ?? '').toUpperCase()) || PARRILLA_PRODUTO.test(produto.toUpperCase());
 
 function iguais(a: string, b: string) {
   if (a.length !== b.length) return false;
@@ -102,6 +132,28 @@ interface Prato {
   chave: string; noite: string; transacao: string; produto: string; qtd: number;
   adicionais: string[]; garcom: string | null; categoria: string | null; obs: string | null; pedido_em: string; cancelado: boolean;
   setor: Setor;
+  /** Prato da parrilla dividido: 'carne' (parrilla) ou 'acomp' (cozinha). */
+  parte: 'carne' | 'acomp' | null;
+  ponto: Ponto | null; ponto_origem: 'zig' | 'obs' | null; precisa_ponto: boolean;
+}
+
+/** Divide o prato da parrilla em carne (com o ponto) e acompanhamentos (cozinha). */
+function dividir(p: Prato): Prato[] {
+  if (p.setor !== 'cozinha' || !ehParrilla(p.produto, p.categoria)) return [p];
+  let ponto: Ponto | null = null;
+  const brasa: string[] = [], cozinha: string[] = [];
+  for (const a of p.adicionais) {
+    const pt = pontoDe(a);
+    if (pt) { ponto = ponto ?? pt; continue; }
+    (ACOMP_DA_BRASA.test(a.toUpperCase()) ? brasa : cozinha).push(a);
+  }
+  const precisa = !SEM_PONTO.test(p.produto.toUpperCase());
+  const carne: Prato = {
+    ...p, chave: `${p.chave}|parrilla`, setor: 'parrilla', parte: 'carne', adicionais: brasa,
+    precisa_ponto: precisa, ponto: precisa ? ponto : null, ponto_origem: precisa && ponto ? 'zig' : null,
+  };
+  if (!cozinha.length) return [carne];
+  return [carne, { ...p, chave: `${p.chave}|acomp`, parte: 'acomp', adicionais: cozinha, ponto: null, ponto_origem: null, precisa_ponto: false }];
 }
 
 /** Lê a ZIG (se a última leitura tiver mais de LER_A_CADA_MS) e grava os pratos novos. */
@@ -140,6 +192,7 @@ async function ler(): Promise<{ lido_em: string | null; erro: string | null; leu
     const p = pratos.get(chave) ?? {
       chave, noite, transacao, produto, qtd: 0, adicionais: [],
       garcom: limpo(v.employeeName) || null, categoria: limpo(v.productCategory) || null, obs: limpo(v.obs) || null, pedido_em, cancelado: true, setor,
+      parte: null, ponto: null, ponto_origem: null, precisa_ponto: false,
     };
     const q = Number(v.count || v.fractionalAmount || 1);
     if (!v.isRefunded) {
@@ -158,18 +211,34 @@ async function ler(): Promise<{ lido_em: string | null; erro: string | null; leu
     pratos.set(chave, p);
   }
 
-  const { data: jaTem } = await db.from('kds_pratos').select('chave, qtd, cancelado, adicionais').eq('noite', noite);
+  // Parrilla: separa carne e acompanhamentos. Ponto escrito na observação do
+  // lançamento só vale quando há uma carne só (que leva ponto) naquele lançamento.
+  const lista = [...pratos.values()].flatMap(dividir);
+  const carnesPorLanc = new Map<string, Prato[]>();
+  for (const p of lista) {
+    if (p.parte !== 'carne' || !p.precisa_ponto || p.cancelado) continue;
+    carnesPorLanc.set(p.transacao, [...(carnesPorLanc.get(p.transacao) ?? []), p]);
+  }
+  for (const carnes of carnesPorLanc.values()) {
+    const semPonto = carnes.filter((c) => !c.ponto);
+    const doObs = pontoDe(carnes[0].obs ?? '');
+    if (doObs && carnes.length === 1 && semPonto.length === 1) { semPonto[0].ponto = doObs; semPonto[0].ponto_origem = 'obs'; }
+  }
+
+  const { data: jaTem } = await db.from('kds_pratos').select('chave, qtd, cancelado, adicionais, ponto').eq('noite', noite);
   const existentes = new Map((jaTem ?? []).map((r: any) => [r.chave as string, r]));
   const novos = [];
-  for (const p of pratos.values()) {
+  for (const p of lista) {
     const ja = existentes.get(p.chave);
     if (!ja) {
       if (!p.cancelado) novos.push({ ...p, visto_em: agora.toISOString(), leitura_anterior: anterior });
       continue;
     }
-    // Estorno ou quantidade mudada depois: atualiza só o que veio da ZIG.
-    if (Number(ja.qtd) !== p.qtd || ja.cancelado !== p.cancelado || (ja.adicionais ?? []).join('|') !== p.adicionais.join('|')) {
-      await db.from('kds_pratos').update({ qtd: p.cancelado ? ja.qtd : p.qtd, cancelado: p.cancelado, adicionais: p.adicionais }).eq('chave', p.chave);
+    // Estorno, quantidade ou ponto mudado depois: atualiza só o que veio da ZIG (o ponto do tablet fica em ponto_manual).
+    if (Number(ja.qtd) !== p.qtd || ja.cancelado !== p.cancelado || (ja.adicionais ?? []).join('|') !== p.adicionais.join('|') || (ja.ponto ?? null) !== p.ponto) {
+      await db.from('kds_pratos').update({
+        qtd: p.cancelado ? ja.qtd : p.qtd, cancelado: p.cancelado, adicionais: p.adicionais, ponto: p.ponto, ponto_origem: p.ponto_origem,
+      }).eq('chave', p.chave);
     }
   }
   if (novos.length) {
@@ -200,6 +269,20 @@ function atrasoZig(pratos: any[]) {
   }
   if (!max.length) return null;
   return { pratos: max.length, ate_seg: Math.round(mediana(max)!), desde_seg: Math.round(mediana(min)!) };
+}
+
+/** Parrilla: carnes que saíram da ZIG sem ponto, por garçom (para cobrar). */
+function semPontoPorGarcom(pratos: any[]) {
+  const m = new Map<string, { garcom: string; carnes: number; sem_ponto: number; marcados_no_tablet: number }>();
+  for (const p of pratos) {
+    if (p.cancelado || !p.precisa_ponto) continue;
+    const g = p.garcom || 'Sem garçom';
+    const x = m.get(g) ?? { garcom: g, carnes: 0, sem_ponto: 0, marcados_no_tablet: 0 };
+    x.carnes += 1;
+    if (!p.ponto) { x.sem_ponto += 1; if (p.ponto_manual) x.marcados_no_tablet += 1; }
+    m.set(g, x);
+  }
+  return [...m.values()].sort((a, b) => b.sem_ponto - a.sem_ponto || b.carnes - a.carnes);
 }
 
 /** Resumo de uma noite de um setor: tempo de preparo por prato e pela noite. */
@@ -236,7 +319,7 @@ function resumir(pratos: any[], { amarelo, vermelho }: { amarelo: number; vermel
   };
 }
 
-const CAMPOS = 'id, setor, transacao, produto, qtd, adicionais, garcom, categoria, obs, pedido_em, visto_em, leitura_anterior, pronto_em, pronto_por, cancelado';
+const CAMPOS = 'id, setor, transacao, produto, qtd, adicionais, garcom, categoria, obs, pedido_em, visto_em, leitura_anterior, pronto_em, pronto_por, cancelado, parte, ponto, ponto_origem, precisa_ponto, ponto_manual, ponto_por';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS });
@@ -298,12 +381,33 @@ Deno.serve(async (req) => {
       return json({ ok: true });
     }
 
+    if (acao === 'ponto') {
+      // Parrilleiro marca o ponto que o garçom passou (ou corrige). null volta para o da ZIG.
+      const ids = (Array.isArray(body?.ids) ? body.ids : []).map(Number).filter((n: number) => Number.isFinite(n));
+      const ponto = body?.ponto === null ? null : PONTOS.includes(body?.ponto) ? (body.ponto as Ponto) : undefined;
+      if (!ids.length || ponto === undefined) return json({ ok: false, error: 'Ponto inválido.' }, 400);
+      let quem: string | null = null;
+      const { data: u } = await caller.auth.getUser();
+      const uid = u?.user?.id;
+      if (uid) {
+        const { data: us } = await db.from('usuarios_sistema').select('nome_completo').or(`auth_user_id.eq.${uid},id.eq.${uid}`).limit(1).maybeSingle();
+        quem = us?.nome_completo ?? null;
+      }
+      const { error } = await db.from('kds_pratos').update({ ponto_manual: ponto, ponto_por: ponto ? quem : null, ponto_em: ponto ? new Date().toISOString() : null })
+        .in('id', ids).eq('setor', 'parrilla');
+      if (error) throw new Error(error.message);
+      return json({ ok: true });
+    }
+
     if (acao === 'relatorio') {
       const noite = /^\d{4}-\d{2}-\d{2}$/.test(String(body?.noite || '')) ? String(body.noite) : noiteAtual().noite;
       const { data: pratos, error } = await db.from('kds_pratos').select(CAMPOS).eq('noite', noite).eq('setor', setor).order('pedido_em');
       if (error) throw new Error(error.message);
       const { data: estado } = await db.from('kds_estado').select('campos').eq('id', 1).maybeSingle();
-      return json({ ok: true, noite, setor, limites: LIMITES[setor], ...resumir(pratos ?? [], LIMITES[setor]), campos_zig: estado?.campos ?? [], lista: pratos ?? [] });
+      return json({
+        ok: true, noite, setor, limites: LIMITES[setor], ...resumir(pratos ?? [], LIMITES[setor]), campos_zig: estado?.campos ?? [], lista: pratos ?? [],
+        ...(setor === 'parrilla' ? { sem_ponto: semPontoPorGarcom(pratos ?? []) } : {}),
+      });
     }
 
     return json({ ok: false, error: 'Ação desconhecida.' }, 400);
