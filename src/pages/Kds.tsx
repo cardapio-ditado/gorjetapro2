@@ -47,6 +47,11 @@ interface Prato {
   ponto_manual?: Ponto | null; ponto_por?: string | null;
 }
 const pontoFinal = (p: Prato): Ponto | null => p.ponto_manual ?? p.ponto ?? null;
+/** Frango sem a palavra "frango" no nome também não leva ponto (a função já marca os novos assim). */
+const NAO_LEVA_PONTO = /COXA|\bASAS?\b/;
+/** Pronto travado depois de escolher o ponto, e janela do segundo toque. */
+const TRAVA_PONTO_MS = 15_000;
+const CONFIRMAR_MS = 3_000;
 
 /** Tipo do prato da parrilla (executivo, assado ou chapa): pela categoria da ZIG ou, sem ela, pelo começo do nome. */
 const TIPO_PRATO = {
@@ -320,13 +325,27 @@ const Kds: React.FC = () => {
 /** Parrilla: uma coluna por ponto; a carne sem ponto fica primeiro, em vermelho, para cobrar o garçom. */
 const ParrillaColunas: React.FC<{
   pratos: Prato[]; agora: number; onPronto: (id: number) => void; onPonto: (id: number, ponto: Ponto | null) => void;
-}> = ({ pratos, agora, onPronto, onPonto }) => {
+}> = ({ pratos, agora, onPronto, onPonto: marcarPonto }) => {
+  // Depois de escolher o ponto, o Pronto fica travado uns segundos (o parrilleiro apertava os dois em seguida
+  // e a carne saía da tela sem estar pronta). E o Pronto pede dois toques.
+  const [pontoEm, setPontoEm] = useState<Record<number, number>>({});
+  const [confirmar, setConfirmar] = useState<number | null>(null);
+  useEffect(() => { if (confirmar === null) return; const t = setTimeout(() => setConfirmar(null), CONFIRMAR_MS); return () => clearTimeout(t); }, [confirmar]);
+  const onPonto = (id: number, ponto: Ponto | null) => {
+    if (ponto) setPontoEm((m) => ({ ...m, [id]: Date.now() }));
+    setConfirmar(null);
+    marcarPonto(id, ponto);
+  };
+  const tocarPronto = (id: number) => {
+    if (confirmar === id) { setConfirmar(null); onPronto(id); } else setConfirmar(id);
+  };
+  const levaPonto = (p: Prato) => !!p.precisa_ponto && !NAO_LEVA_PONTO.test(p.produto.toUpperCase());
   const ordem = [...pratos].sort((a, b) => a.pedido_em.localeCompare(b.pedido_em));
-  const semPonto = ordem.filter((p) => p.precisa_ponto && !pontoFinal(p));
-  const naoLeva = ordem.filter((p) => !p.precisa_ponto);
+  const semPonto = ordem.filter((p) => levaPonto(p) && !pontoFinal(p));
+  const naoLeva = ordem.filter((p) => !levaPonto(p));
   const colunas: Array<{ id: string; nome: string; cor: string; itens: Prato[]; alerta?: boolean }> = [
     { id: 'sem', nome: 'Sem ponto: cobrar o garçom', cor: '#e5484d', itens: semPonto, alerta: true },
-    ...PONTOS.map((pt) => ({ id: pt.id, nome: pt.nome, cor: pt.cor, itens: ordem.filter((p) => p.precisa_ponto && pontoFinal(p) === pt.id) })),
+    ...PONTOS.map((pt) => ({ id: pt.id, nome: pt.nome, cor: pt.cor, itens: ordem.filter((p) => levaPonto(p) && pontoFinal(p) === pt.id) })),
     ...(naoLeva.length ? [{ id: 'nao', nome: 'Não leva ponto', cor: '#5b6472', itens: naoLeva }] : []),
   ];
   return (
@@ -378,10 +397,25 @@ const ParrillaColunas: React.FC<{
                       <button type="button" onClick={() => onPonto(p.id, null)} title="Desfazer o ponto marcado"
                         style={{ minHeight: 48, padding: '0 12px', background: 'rgba(255,255,255,0.08)' }}><RotateCcw size={16} /></button>
                     )}
-                    <button type="button" onClick={() => onPronto(p.id)} className="flex flex-1 items-center justify-center gap-2"
-                      style={{ minHeight: 48, background: c.borda, color: '#0b0e13', fontSize: 18, fontWeight: 800 }}>
-                      <Check size={20} /> Pronto
-                    </button>
+                    {(() => {
+                      const falta = pontoEm[p.id] ? Math.ceil((pontoEm[p.id] + TRAVA_PONTO_MS - agora) / 1000) : 0;
+                      if (falta > 0) {
+                        const pt = PONTOS.find((x) => x.id === pontoFinal(p));
+                        return (
+                          <div className="flex flex-1 flex-col items-center justify-center" style={{ minHeight: 48, background: pt?.cor ?? '#5b6472', color: '#fff', lineHeight: 1.15 }}>
+                            <span style={{ fontSize: 16, fontWeight: 900 }}>Ponto: {pt?.nome ?? '—'} ✓</span>
+                            <span style={{ fontSize: 12, fontWeight: 700, opacity: 0.85 }}>Pronto libera em {falta}s</span>
+                          </div>
+                        );
+                      }
+                      const conf = confirmar === p.id;
+                      return (
+                        <button type="button" onClick={() => tocarPronto(p.id)} className="flex flex-1 items-center justify-center gap-2"
+                          style={{ minHeight: 48, background: conf ? '#f5c451' : c.borda, color: '#0b0e13', fontSize: conf ? 15 : 18, fontWeight: 800, lineHeight: 1.15 }}>
+                          <Check size={20} /> {conf ? 'Toque de novo para confirmar' : 'Pronto'}
+                        </button>
+                      );
+                    })()}
                   </div>
                 )}
               </div>
