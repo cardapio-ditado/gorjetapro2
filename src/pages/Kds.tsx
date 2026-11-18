@@ -47,6 +47,29 @@ interface Prato {
   ponto_manual?: Ponto | null; ponto_por?: string | null;
 }
 const pontoFinal = (p: Prato): Ponto | null => p.ponto_manual ?? p.ponto ?? null;
+
+/** Tipo do prato da parrilla (executivo, assado ou chapa): pela categoria da ZIG ou, sem ela, pelo começo do nome. */
+const TIPO_PRATO = {
+  EXECUTIVO: { nome: 'EXECUTIVO', fundo: '#2563eb' },
+  ASSADO: { nome: 'ASSADO', fundo: '#c2410c' },
+  CHAPA: { nome: 'CHAPA', fundo: '#7c3aed' },
+} as const;
+function tipoPrato(p: Prato) {
+  const t = `${p.categoria ?? ''} ${p.produto}`.toUpperCase();
+  const cat = (p.categoria ?? '').toUpperCase();
+  const k = (['EXECUTIVO', 'ASSADO', 'CHAPA'] as const).find((x) => cat.startsWith(x)) ?? (['EXECUTIVO', 'ASSADO', 'CHAPA'] as const).find((x) => t.includes(x));
+  return k ? TIPO_PRATO[k] : null;
+}
+/** Nome da carne sem o tipo na frente ("ASSADO DE TIRA" vira "TIRA"). */
+const nomeCarne = (produto: string) => produto.replace(/^(ASSADO|EXECUTIVO|CHAPA)\s+(DE\s+|DA\s+|DO\s+)?/i, '') || produto;
+const EtiquetaTipo: React.FC<{ p: Prato; grande?: boolean }> = ({ p, grande }) => {
+  const t = tipoPrato(p);
+  if (!t) return null;
+  return (
+    <span style={{ display: 'inline-block', background: t.fundo, color: '#fff', borderRadius: 6, padding: grande ? '2px 8px' : '1px 6px',
+      fontSize: grande ? 16 : 12, fontWeight: 900, letterSpacing: 0.5, marginBottom: grande ? 4 : 0, marginRight: grande ? 0 : 4 }}>{t.nome}</span>
+  );
+};
 interface Fila {
   noite: string; agora: string; lido_em: string | null; erro: string | null; pratos: Prato[];
   resumo: { pratos: number; feitos: number; media_min: number | null; vermelhos: number; atraso_zig: { pratos: number; ate_seg: number; desde_seg: number } | null };
@@ -241,7 +264,7 @@ const Kds: React.FC = () => {
                           style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }} title={`Toque para marcar só este ${S.item}`}>
                           {p.parte === 'acomp' ? (
                             <div style={{ fontSize: 15, fontWeight: 700, lineHeight: 1.25, opacity: 0.85 }}>
-                              <span style={{ color: c.texto }}>{qtd(p.qtd)}×</span> Acompanhamento · {p.produto} <span style={{ opacity: 0.7 }}>(carne na parrilla)</span>
+                              <span style={{ color: c.texto }}>{qtd(p.qtd)}×</span> Acompanhamento · <EtiquetaTipo p={p} />{nomeCarne(p.produto)} <span style={{ opacity: 0.7 }}>(carne na parrilla)</span>
                             </div>
                           ) : (
                             <div style={{ fontSize: 19, fontWeight: 700, lineHeight: 1.25 }}>
@@ -271,7 +294,7 @@ const Kds: React.FC = () => {
                 {prontos.map((p) => (
                   <button key={p.id} type="button" onClick={() => marcar([p.id], 'desfazer')} className="flex items-center gap-2 px-3 py-2"
                     style={{ border: '1px solid rgba(255,255,255,0.15)', borderRadius: 10, fontSize: 15 }}>
-                    <RotateCcw size={14} /> {qtd(p.qtd)}× {p.produto} · {Math.round((new Date(p.pronto_em!).getTime() - new Date(p.pedido_em).getTime()) / 60000)} min
+                    <RotateCcw size={14} /> {qtd(p.qtd)}× {setor === 'parrilla' ? <><EtiquetaTipo p={p} />{nomeCarne(p.produto)}</> : p.produto} · {Math.round((new Date(p.pronto_em!).getTime() - new Date(p.pedido_em).getTime()) / 60000)} min
                   </button>
                 ))}
               </div>
@@ -331,7 +354,8 @@ const ParrillaColunas: React.FC<{
                 </div>
                 {p.obs && <div className="px-2.5" style={{ fontSize: 17, fontWeight: 800 }}>{p.obs}</div>}
                 <div className="px-2.5 py-1.5" style={{ fontSize: 18, fontWeight: 800, lineHeight: 1.2 }}>
-                  <span style={{ color: c.texto }}>{qtd(p.qtd)}×</span> {p.produto.replace(/^(ASSADO|EXECUTIVO)\s+(DE\s+)?/i, '')}
+                  <div><EtiquetaTipo p={p} grande /></div>
+                  <span style={{ color: c.texto }}>{qtd(p.qtd)}×</span> {nomeCarne(p.produto)}
                   {p.adicionais.map((a, i) => <div key={i} style={{ fontSize: 14, fontWeight: 600, opacity: 0.9 }}>+ {a}</div>)}
                   {p.ponto_manual && <div style={{ fontSize: 12, fontWeight: 600, opacity: 0.7 }}>ponto marcado no tablet</div>}
                   {!p.ponto_manual && p.ponto_origem === 'obs' && <div style={{ fontSize: 12, fontWeight: 600, opacity: 0.7 }}>ponto lido da observação</div>}
