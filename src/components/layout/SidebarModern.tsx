@@ -4,7 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import {
   Home, DollarSign, Warehouse, Users, Music, CalendarDays,
   Settings, BookOpen, Target, ClipboardList, Palette,
-  TrendingUp, ChevronDown, LogOut, Star, X, LayoutDashboard, Hexagon, UserPlus, Handshake, Wine, Gamepad2, ChefHat, Beer, Martini, Flame,
+  TrendingUp, ChevronDown, LogOut, Star, X, LayoutDashboard, Hexagon, UserPlus, Handshake, Wine, Gamepad2, ChefHat, Beer, Martini, Flame, Gift,
 } from 'lucide-react';
 
 // Desde 05/10/2026 o estoque vive no Beta 2, que tem o próprio menu dentro da
@@ -89,6 +89,7 @@ export const MODULES: Module[] = [
       { name: 'ZIG Recebimentos',         path: '/zig-recebimentos' },
     ],
   },
+  { name: 'Bônus ZIG',      path: '/bonus-zig',          icon: Gift,          slug: 'bonus_zig',       group: 'financeiro' },
   { name: 'OKRs',           path: '/gestao-estrategica', icon: TrendingUp,    slug: 'financeiro',      group: 'financeiro' },
   { name: 'Estoque',        path: '/estoque-beta2',      icon: Warehouse,     slug: 'estoque',         group: 'estoque' },
   { name: 'Controle De Ville', path: '/controle-deville', icon: Warehouse,     slug: 'estoque',         group: 'estoque' },

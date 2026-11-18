@@ -23,6 +23,7 @@ const ClubeWhisky         = lazy(() => import('./pages/ClubeWhisky'));
 const LivroNoite          = lazy(() => import('./pages/LivroNoite'));
 const CasaAoVivo          = lazy(() => import('./pages/CasaAoVivo'));
 const Kds                 = lazy(() => import('./pages/Kds'));
+const BonusZig            = lazy(() => import('./pages/BonusZig'));
 const Events              = lazy(() => import('./pages/Events'));
 const Settings            = lazy(() => import('./pages/Settings'));
 const MetasTarefas        = lazy(() => import('./pages/MetasTarefas'));
@@ -132,6 +133,7 @@ function AppContent() {
         <Route path="/metas-tarefas"       element={<ProtectedRoute moduloSlug="solicitacoes">  <MetasTarefas />        </ProtectedRoute>} />
         <Route path="/gestao-estrategica"  element={<ProtectedRoute moduloSlug="financeiro">    <GestaoEstrategica />   </ProtectedRoute>} />
         <Route path="/zig-vendas"          element={<ProtectedRoute moduloSlug="estoque">       <ZigVendasSync />       </ProtectedRoute>} />
+        <Route path="/bonus-zig"           element={<ProtectedRoute moduloSlug="bonus_zig">     <BonusZig />            </ProtectedRoute>} />
         <Route path="/zig-recebimentos"    element={<ProtectedRoute moduloSlug="financeiro">    <ZigRecebimentos />     </ProtectedRoute>} />
         <Route path="/lista-compras"       element={<ProtectedRoute moduloSlug="estoque">       <ListaCompras />        </ProtectedRoute>} />
         <Route path="/dre-simplificado"    element={<ProtectedRoute moduloSlug="financeiro">    <DRESimplificado />     </ProtectedRoute>} />
