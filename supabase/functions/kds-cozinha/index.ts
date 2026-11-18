@@ -65,8 +65,8 @@ const PARRILLA_CATEGORIA = /^(ASSADO|EXECUTIVO|CHAPA)/;
 const PARRILLA_PRODUTO = /COALHO NA BRASA/;
 /** Acompanhamento que também sai da brasa: fica no cartão da parrilla, não vai para a cozinha. */
 const ACOMP_DA_BRASA = /COALHO/;
-/** Não leva ponto: porco, frango, costela, linguiça e queijo. */
-const SEM_PONTO = /SU[IÍ]N|PORCO|FRANGO|COSTELA|LINGUI|CHORIP|QUEIJO|COALHO/;
+/** Não leva ponto: porco, frango (coxa, sobrecoxa, asa), costela, linguiça e queijo. */
+const SEM_PONTO = /SU[IÍ]N|PORCO|FRANGO|COXA|\bASAS?\b|COSTELA|LINGUI|CHORIP|QUEIJO|COALHO/;
 
 export type Ponto = 'mal' | 'ponto_mal' | 'ponto' | 'ponto_bem' | 'bem';
 const PONTOS: Ponto[] = ['mal', 'ponto_mal', 'ponto', 'ponto_bem', 'bem'];
