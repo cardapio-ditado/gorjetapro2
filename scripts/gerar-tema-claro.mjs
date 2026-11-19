@@ -24,11 +24,11 @@ function arquivos(dir) {
 
 const fonte = arquivos(RAIZ).map(f => readFileSync(f, 'utf8')).join('\n');
 
-// ── Paleta clara ──
-const INK = [31, 27, 26];          // #1f1b1a — texto
-const SUP = '#ffffff';             // cartão
-const FUNDO = '#f3f1ec';           // página (branco quente)
-const FUNDO2 = '#faf9f6';          // lateral / topo
+// ── Paleta clara: Manual da Marca Ditado Brasa & Bar (v1.2, nov/2026) ──
+const INK = [26, 26, 26];          // #1A1A1A — carvão, texto
+const SUP = '#fffdf9';             // cartão (off-white quase branco)
+const FUNDO = '#f5efe6';           // página: off-white do manual
+const FUNDO2 = '#fbf8f2';          // topo e áreas elevadas
 
 // Tailwind (v3) — as cores cromáticas que o app usa. 500 é a "cor da cor";
 // 700/800 são o que ela vira como texto sobre branco.
@@ -147,25 +147,25 @@ function regraPara(cls) {
     if (prop === 'text') cor = rgba(INK, 0.95);
     if (prop === 'ring') cor = SUP;
   } else if (nome.startsWith('text-')) {
-    cor = { 'text-primary': rgba(INK, 0.95), 'text-secondary': '#5f5955', 'text-muted': '#a8a09b', 'text-disabled': '#cfc9c3' }[nome];
+    cor = { 'text-primary': rgba(INK, 0.95), 'text-secondary': '#5e554d', 'text-muted': '#a39888', 'text-disabled': '#cfc6b8' }[nome];
   } else if (nome.startsWith('gray-')) {
     // A escala gray do app é azulada e pensada para o escuro.
     const tom = parseInt(nome.slice(5));
     if (prop === 'text') {
       if (a < 1) return null;
-      cor = { 100: '#2b2625', 200: '#3d3735', 300: '#4a4443', 400: '#5f5955', 500: '#6b645f' }[tom];
+      cor = { 100: '#2a2622', 200: '#3b3530', 300: '#4a433d', 400: '#5e554d', 500: '#6b6158' }[tom];
       if (!cor) return null; // 600+ já é escuro
     } else if (prop === 'bg' || prop === 'from' || prop === 'via' || prop === 'to') {
       if (tom < 600) return null;
-      cor = a < 1 ? rgba(INK, Math.min(0.12, a * 0.4).toFixed(3)) : { 600: '#e8e4dd', 700: '#eeeae4', 750: '#f1eee8', 800: '#f3f1ec', 900: '#faf9f6' }[tom] || FUNDO;
+      cor = a < 1 ? rgba(INK, Math.min(0.12, a * 0.4).toFixed(3)) : { 600: '#e7ded1', 700: '#ece4d8', 750: '#efe8dd', 800: '#f5efe6', 900: '#fbf8f2' }[tom] || FUNDO;
     } else if (prop === 'border' || prop === 'divide') {
       if (tom < 500) return null;
       cor = rgba(INK, a < 1 ? Math.max(0.1, a * 0.5).toFixed(2) : 0.14);
     } else return null;
   } else if (nome === 'gold') {
-    // Dourado sobre branco mede 2,1:1 — como texto, escurece.
+    // Dourado sobre claro mede 2,1:1. No tema da marca o acento vira o verde musgo (7,3:1).
     if (prop !== 'text') return null;
-    cor = a >= 1 ? '#7a5f0f' : rgba([122, 95, 15], alfaTexto(a));
+    cor = a >= 1 ? '#46513a' : rgba([70, 81, 58], alfaTexto(a));
   }
   if (!cor) return null;
   return decl(prop, seletor, cor);
@@ -214,6 +214,7 @@ for (const h of hexUsados) {
 // seletores de atributo pegam os gradientes inline com vinho/dourado sem marca.
 const ctx = [
   '.fundo-saturado',
+  '.sidebar-solid', // a lateral é verde musgo no tema da marca: texto branco continua branco
   '[style*="rgb(125, 31, 44)"]', '[style*="rgb(212, 175, 55)"]', '[style*="rgb(90, 21, 32)"]', '[style*="rgb(155, 37, 53)"]', '[style*="var(--wine)"]',
   '[style*="rgb(26, 42, 74)"]', // o banner azul-marinho do De Ville
   ...[...saturados].sort().map(c => '.' + escapar(c)),

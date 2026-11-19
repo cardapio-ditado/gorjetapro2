@@ -42,7 +42,7 @@ export const PageLayout: React.FC<PageLayoutProps> = ({
       {/* fundo-saturado: no tema claro, o texto branco daqui continua branco */}
       <div
         className="relative overflow-hidden fundo-saturado"
-        style={{ background: GRADIENTS[variant] }}
+        style={{ background: `var(--cor-area, ${GRADIENTS[variant]})` }}
       >
         <div className="relative px-6 lg:px-8 pt-6 pb-6">
           {/* Breadcrumb */}
@@ -71,7 +71,7 @@ export const PageLayout: React.FC<PageLayoutProps> = ({
                 <Icon className="text-white/90" style={{width:'22px',height:'22px'}} />
               </div>
               <div>
-                <h1 className="text-white text-3xl font-bold leading-none tracking-tight" style={{ fontFamily: 'Playfair Display' }}>
+                <h1 className="text-white text-3xl font-bold leading-none tracking-tight" style={{ fontFamily: "Charter, 'Bitstream Charter', 'Noto Serif', Georgia, serif" }}>
                   {title}
                 </h1>
                 <p className="text-white/50 text-sm mt-1.5">{description}</p>

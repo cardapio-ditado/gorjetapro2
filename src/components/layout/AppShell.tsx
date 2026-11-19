@@ -57,7 +57,10 @@ const AppShell: React.FC<Props> = ({ children }) => {
   }, []);
 
   return (
-    <div className="app-shell flex h-screen overflow-hidden" style={{ background: 'var(--bg-base)' }}>
+    <div
+      className="app-shell flex h-screen overflow-hidden"
+      style={{ background: 'var(--bg-base)', ...(area ? { ['--cor-area-marca' as string]: area.cor } : {}) }}
+    >
       <ColunaArea className="hidden lg:flex" modulos={modulos} areaAtual={areaAtual} />
 
       {/* Gaveta do celular */}

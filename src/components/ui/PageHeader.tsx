@@ -32,7 +32,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({ title, subtitle, actions
             ))}
           </p>
         )}
-        <h1 className="t-title" style={{ color: 'var(--text-primary)', margin: 0, fontWeight: 600 }}>{title}</h1>
+        <h1 className="t-title" style={{ color: 'var(--cor-area, var(--text-primary))', margin: 0, fontWeight: 600 }}>{title}</h1>
         {subtitle && <p className="t-body" style={{ color: 'var(--text-secondary)', margin: '4px 0 0' }}>{subtitle}</p>}
       </div>
       {actions && <div className="flex items-center gap-2 flex-shrink-0">{actions}</div>}

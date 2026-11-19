@@ -39,13 +39,19 @@ export function moduloLiberado(m: Module, temAcessoModulo: (slug: string) => boo
  * Exportada porque o saguão desenha um favo por área e a lateral rotula o
  * grupo aberto — dois lugares, uma verdade. A ordem aqui é a ordem na tela.
  */
-export const AREAS: Array<{ id: Area; nome: string; icone: React.ElementType; descricao: string }> = [
-  { id: 'operacao',   nome: 'Operação',          icone: ClipboardList, descricao: 'O turno de hoje: agenda, eventos e diário' },
-  { id: 'financeiro', nome: 'Financeiro',        icone: DollarSign,    descricao: 'Caixa, contas, faturamento e DRE' },
-  { id: 'estoque',    nome: 'Estoque',           icone: Warehouse,     descricao: 'Contagem, compras, produção e fichas' },
-  { id: 'rh',         nome: 'Recursos Humanos',  icone: Users,         descricao: 'Equipe, escalas, férias e recrutamento' },
-  { id: 'gestao',     nome: 'Clientes e Parceiros', icone: Handshake,  descricao: 'Fidelidade, permutas e clube' },
-  { id: 'sistema',    nome: 'Sistema',           icone: Settings,      descricao: 'Configurações, manual e padrões' },
+/**
+ * A cor de cada área (Manual da Marca Ditado Brasa & Bar): marca o título da tela,
+ * o topo e o cartão do saguão, para saber de relance em que área se está.
+ * Todas aguentam texto branco por cima e leem bem sobre o off-white.
+ * Só valem no tema claro; o escuro continua com as cores dele.
+ */
+export const AREAS: Array<{ id: Area; nome: string; icone: React.ElementType; descricao: string; cor: string }> = [
+  { id: 'operacao',   nome: 'Operação',          icone: ClipboardList, descricao: 'O turno de hoje: agenda, eventos e diário', cor: '#B65B43' },
+  { id: 'financeiro', nome: 'Financeiro',        icone: DollarSign,    descricao: 'Caixa, contas, faturamento e DRE', cor: '#46513A' },
+  { id: 'estoque',    nome: 'Estoque',           icone: Warehouse,     descricao: 'Contagem, compras, produção e fichas', cor: '#6B4938' },
+  { id: 'rh',         nome: 'Recursos Humanos',  icone: Users,         descricao: 'Equipe, escalas, férias e recrutamento', cor: '#702C34' },
+  { id: 'gestao',     nome: 'Clientes e Parceiros', icone: Handshake,  descricao: 'Fidelidade, permutas e clube', cor: '#8C5E17' },
+  { id: 'sistema',    nome: 'Sistema',           icone: Settings,      descricao: 'Configurações, manual e padrões', cor: '#3A3A3A' },
 ];
 
 export const MODULES: Module[] = [
@@ -174,11 +180,11 @@ const SidebarModern: React.FC<Props> = ({ onNavigate, onCloseMobile }) => {
             <button
               onClick={() => setExpanded(p => p === m.name ? null : m.name)}
               className={itemClass}
-              style={active ? { background: 'rgba(125,31,44,0.18)' } : undefined}
+              style={active ? { background: 'var(--nav-ativo-bg, rgba(125,31,44,0.18))' } : undefined}
             >
               {active && (
                 <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 rounded-r"
-                  style={{ background: 'var(--wine)' }} />
+                  style={{ background: 'var(--nav-ativo-fio, var(--wine))' }} />
               )}
               <m.icon className={iconClass} size={15} />
               <span className="flex-1 text-left font-sans">{m.name}</span>
@@ -218,7 +224,7 @@ const SidebarModern: React.FC<Props> = ({ onNavigate, onCloseMobile }) => {
                       }`}
                       style={{
                         color: subActive ? 'var(--gold)' : 'var(--text-secondary)',
-                        background: subActive ? 'rgba(212,175,55,0.08)' : undefined,
+                        background: subActive ? 'var(--nav-ativo-bg, rgba(212,175,55,0.08))' : undefined,
                       }}
                     >
                       {sub.name}
@@ -237,11 +243,11 @@ const SidebarModern: React.FC<Props> = ({ onNavigate, onCloseMobile }) => {
             to={m.path}
             onClick={onNavigate}
             className={itemClass}
-            style={active ? { background: 'rgba(125,31,44,0.18)' } : undefined}
+            style={active ? { background: 'var(--nav-ativo-bg, rgba(125,31,44,0.18))' } : undefined}
           >
             {active && (
               <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 rounded-r"
-                style={{ background: 'var(--wine)' }} />
+                style={{ background: 'var(--nav-ativo-fio, var(--wine))' }} />
             )}
             <m.icon className={iconClass} size={15} />
             <span className="font-sans">{m.name}</span>
@@ -274,28 +280,20 @@ const SidebarModern: React.FC<Props> = ({ onNavigate, onCloseMobile }) => {
   return (
     <div className="flex flex-col h-full" style={{ background: 'var(--bg-dark)' }}>
 
-      {/* Logo block */}
-      <div className="flex items-center gap-3 h-[52px] px-4 flex-shrink-0"
-        style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-        <div className="w-7 h-7 rounded-lg flex-shrink-0 flex items-center justify-center"
-          style={{ background: 'linear-gradient(135deg, var(--wine), var(--gold))' }}>
-          <span className="text-white t-caps font-black tracking-tighter">DP</span>
-        </div>
-        <div className="min-w-0 flex-1">
-          <p className="t-body font-bold leading-none tracking-tight"
-            style={{ color: 'var(--text-primary)' }}>
-            Ditado Popular
-          </p>
-          <p className="t-caps mt-0.5 tracking-widest uppercase font-medium"
-            style={{ color: 'var(--text-secondary)' }}>
-            Gestão
-          </p>
-        </div>
+      {/* Logo da casa (Ditado Brasa & Bar). No tema da marca fica sobre off-white,
+          como pede o manual: a logo vermelha lê melhor em área clara. */}
+      <div className="flex items-center gap-3 h-[64px] px-4 flex-shrink-0"
+        style={{ background: 'var(--nav-logo-bg, transparent)', borderBottom: '1px solid var(--border)' }}>
+        <img src="/marca/ditado-brasa-bar.svg" alt="Ditado Brasa & Bar" className="flex-shrink-0" style={{ height: 40, width: 'auto' }} />
+        <p className="min-w-0 flex-1 t-caps tracking-widest uppercase font-semibold"
+          style={{ color: 'var(--nav-logo-texto, var(--text-secondary))' }}>
+          Gestão
+        </p>
         {onCloseMobile && (
           <button
             onClick={onCloseMobile}
             className="lg:hidden flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-lg transition-all"
-            style={{ color: 'var(--text-secondary)' }}
+            style={{ color: 'var(--nav-logo-texto, var(--text-secondary))' }}
             aria-label="Fechar menu"
           >
             <X size={15} />
@@ -347,7 +345,7 @@ const SidebarModern: React.FC<Props> = ({ onNavigate, onCloseMobile }) => {
         <div className="flex items-center gap-2.5 px-2 py-2 rounded-xl transition-all"
           style={{ background: 'rgba(255,255,255,0.03)' }}>
           <div className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
-            style={{ background: 'linear-gradient(135deg, var(--wine), var(--gold))' }}>
+            style={{ background: 'var(--nav-avatar, linear-gradient(135deg, var(--wine), var(--gold)))' }}>
             {initials}
           </div>
           <div className="min-w-0 flex-1">
