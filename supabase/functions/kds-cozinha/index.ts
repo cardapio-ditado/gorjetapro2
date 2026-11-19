@@ -62,7 +62,7 @@ const DRINKS = /^(DRINK|CAIPIRINHA|DOSE|CACHA[CÇ]A|COMBO|WHISKY|VODKA|GIN|LICOR
 
 /** Pratos da parrilla: pela categoria da ZIG (prato novo nessas categorias já entra) e o queijo coalho na brasa. */
 const PARRILLA_CATEGORIA = /^(ASSADO|EXECUTIVO|CHAPA)/;
-const PARRILLA_PRODUTO = /COALHO NA BRASA|CASCATA DE QUEIJO|^CHAPA MISTA|^BURGU?ER/;
+const PARRILLA_PRODUTO = /COALHO NA BRASA|CASCATA DE QUEIJO|^CHAPA MISTA|COSTELA DE COLHER|^BURGU?ER/;
 /** Sem a opção de ponto na ZIG: entram sozinhos em "Ao ponto" (a observação e o tablet ainda trocam). */
 const PONTO_PADRAO = /CASCATA DE QUEIJO|^CHAPA MISTA/;
 /** Picanha na chapa c/ cascata de queijo: o queijo e os acompanhamentos já vão para a cozinha. */
