@@ -62,7 +62,9 @@ const DRINKS = /^(DRINK|CAIPIRINHA|DOSE|CACHA[CÇ]A|COMBO|WHISKY|VODKA|GIN|LICOR
 
 /** Pratos da parrilla: pela categoria da ZIG (prato novo nessas categorias já entra) e o queijo coalho na brasa. */
 const PARRILLA_CATEGORIA = /^(ASSADO|EXECUTIVO|CHAPA)/;
-const PARRILLA_PRODUTO = /COALHO NA BRASA|CASCATA DE QUEIJO|^BURGU?ER/;
+const PARRILLA_PRODUTO = /COALHO NA BRASA|CASCATA DE QUEIJO|^CHAPA MISTA|^BURGU?ER/;
+/** Sem a opção de ponto na ZIG: entram sozinhos em "Ao ponto" (a observação e o tablet ainda trocam). */
+const PONTO_PADRAO = /CASCATA DE QUEIJO|^CHAPA MISTA/;
 /** Picanha na chapa c/ cascata de queijo: o queijo e os acompanhamentos já vão para a cozinha. */
 const CASCATA = /CASCATA DE QUEIJO/;
 /** Burguer: o hambúrguer sai da parrilla e a cozinha só monta depois do Pronto da parrilla. */
@@ -138,7 +140,7 @@ interface Prato {
   setor: Setor;
   /** Prato da parrilla dividido: 'carne' (parrilla) ou 'acomp' (cozinha). */
   parte: 'carne' | 'acomp' | null;
-  ponto: Ponto | null; ponto_origem: 'zig' | 'obs' | null; precisa_ponto: boolean;
+  ponto: Ponto | null; ponto_origem: 'zig' | 'obs' | 'padrao' | null; precisa_ponto: boolean;
   /** Linha da cozinha que só aparece quando a carne da parrilla fica pronta (burguer). */
   espera_parrilla: boolean;
 }
@@ -160,6 +162,7 @@ function dividir(p: Prato): Prato[] {
     precisa_ponto: precisa, ponto: precisa ? ponto : null, ponto_origem: precisa && ponto ? 'zig' : null,
   };
   const nome = p.produto.toUpperCase();
+  if (precisa && !ponto && PONTO_PADRAO.test(nome)) { carne.ponto = 'ponto'; carne.ponto_origem = 'padrao'; }
   const espera = BURGUER.test(nome);
   if (CASCATA.test(nome)) cozinha.unshift('Cascata de queijo');
   if (espera) cozinha.unshift('Montar o burguer');
@@ -231,7 +234,7 @@ async function ler(): Promise<{ lido_em: string | null; erro: string | null; leu
     carnesPorLanc.set(p.transacao, [...(carnesPorLanc.get(p.transacao) ?? []), p]);
   }
   for (const carnes of carnesPorLanc.values()) {
-    const semPonto = carnes.filter((c) => !c.ponto);
+    const semPonto = carnes.filter((c) => !c.ponto || c.ponto_origem === 'padrao');
     const doObs = pontoDe(carnes[0].obs ?? '');
     if (doObs && carnes.length === 1 && semPonto.length === 1) { semPonto[0].ponto = doObs; semPonto[0].ponto_origem = 'obs'; }
   }

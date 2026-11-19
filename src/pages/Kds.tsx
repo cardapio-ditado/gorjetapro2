@@ -43,7 +43,7 @@ const PONTOS: Array<{ id: Ponto; nome: string; curto: string; cor: string }> = [
 interface Prato {
   id: number; transacao: string; produto: string; qtd: number; adicionais: string[];
   garcom: string | null; categoria: string | null; obs: string | null; pedido_em: string; pronto_em: string | null; pronto_por: string | null;
-  parte?: 'carne' | 'acomp' | null; ponto?: Ponto | null; ponto_origem?: 'zig' | 'obs' | null; precisa_ponto?: boolean;
+  parte?: 'carne' | 'acomp' | null; ponto?: Ponto | null; ponto_origem?: 'zig' | 'obs' | 'padrao' | null; precisa_ponto?: boolean;
   ponto_manual?: Ponto | null; ponto_por?: string | null;
   /** Cozinha: só aparece quando a carne da parrilla fica pronta (burguer: montar). */
   espera_parrilla?: boolean;
@@ -392,6 +392,7 @@ const ParrillaColunas: React.FC<{
                   {p.adicionais.map((a, i) => <div key={i} style={{ fontSize: 14, fontWeight: 600, opacity: 0.9 }}>+ {a}</div>)}
                   {p.ponto_manual && <div style={{ fontSize: 12, fontWeight: 600, opacity: 0.7 }}>ponto marcado no tablet</div>}
                   {!p.ponto_manual && p.ponto_origem === 'obs' && <div style={{ fontSize: 12, fontWeight: 600, opacity: 0.7 }}>ponto lido da observação</div>}
+                  {!p.ponto_manual && p.ponto_origem === 'padrao' && <div style={{ fontSize: 12, fontWeight: 600, opacity: 0.7 }}>ao ponto automático (sem opção na ZIG)</div>}
                 </div>
                 {sem ? (
                   <div className="px-2 pb-2">
