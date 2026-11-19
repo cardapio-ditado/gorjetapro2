@@ -27,7 +27,7 @@ const LINKS: Array<{ titulo: string; sub: string; href: string; Icone: typeof Gl
   { titulo: 'WhatsApp', sub: '(65) 4141-3655', href: `https://wa.me/${WHATS}?text=${encodeURIComponent('Olá! Vim pelo Instagram do Ditado.')}`, Icone: MessageCircle, externo: true },
   { titulo: 'Como chegar', sub: 'Praça Popular, Cuiabá', href: MAPS, Icone: MapPin, externo: true },
   { titulo: 'Instagram', sub: '@ditadopopular', href: 'https://www.instagram.com/ditadopopular/', Icone: Instagram, externo: true },
-  { titulo: 'Site', sub: 'ditadopopular.com.br', href: 'https://ditadopopular.com.br', Icone: Globe, externo: true },
+  { titulo: 'Site', sub: 'www.ditadopopular.com.br', href: 'https://www.ditadopopular.com.br', Icone: Globe, externo: true },
 ];
 
 /** Noto Serif só nesta página, para quem não tem a Charter no aparelho. */
