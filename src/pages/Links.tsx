@@ -3,15 +3,16 @@ import { CalendarDays, ChevronRight, Globe, Instagram, MapPin, MessageCircle, Ut
 
 /**
  * Links da bio do Instagram (ditado.org/links), no lugar do Linktree (Kadu, 19/11/2026).
- * Página pública, sem login, na identidade nova do Ditado Brasa & Bar (Guia de Marca):
- * carvão #1A1A1A, vermelho brasa #E31E24, âmbar #FFB347, off-white #F4EDE4;
- * Bebas Neue nos títulos, Yellowtail no ditado, Inter no texto; slogan assinado pelo Ditado Popular.
+ * Página pública, sem login, na identidade nova do Ditado Brasa & Bar, versão clara (Kadu, 19/11/2026):
+ * a base do cardápio novo (creme, texto marrom, Bebas Neue / Barlow / Yellowtail) com verde e
+ * terracota nos destaques; slogan assinado pelo Ditado Popular. Cores a conferir com o manual da marca.
  * Os contatos vêm do site oficial (ditado-popular-site, src/lib/site.ts). O @ do Instagram não muda.
  */
 
-const COR = { carvao: '#1A1A1A', vermelho: '#E31E24', ambar: '#FFB347', off: '#F4EDE4' };
+const COR = { fundo: '#f3ebe0', cartao: '#fbf6ee', borda: '#d9c7b4', texto: '#2a1712', apoio: '#7a6255', verde: '#2f5d43', terracota: '#b5532f' };
 const BEBAS = "'Bebas Neue', 'Oswald', 'Arial Narrow', sans-serif";
 const YELLOWTAIL = "'Yellowtail', 'Brush Script MT', cursive";
+const BARLOW = "'Barlow', system-ui, sans-serif";
 
 const WHATS = '556541413655';
 const ENDERECO = 'R. Sen. Vilas Bôas, 89 · Praça Popular · Cuiabá-MT';
@@ -33,7 +34,7 @@ function useFontesDaMarca() {
     if (document.getElementById(id)) return;
     const l = document.createElement('link');
     l.id = id; l.rel = 'stylesheet';
-    l.href = 'https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Yellowtail&display=swap';
+    l.href = 'https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@400;500;600&family=Yellowtail&display=swap';
     document.head.appendChild(l);
   }, []);
 }
@@ -42,20 +43,16 @@ export default function Links() {
   useFontesDaMarca();
   useEffect(() => { document.title = 'Ditado Brasa & Bar · Links'; }, []);
   return (
-    <div className="min-h-screen" style={{ background: COR.carvao, color: COR.off }}>
+    <div className="min-h-screen" style={{ background: COR.fundo, color: COR.texto, fontFamily: BARLOW }}>
       <div className="relative max-w-md mx-auto px-4 pt-10 pb-12">
-        {/* luz da brasa atrás do logo */}
-        <div aria-hidden className="pointer-events-none absolute left-1/2 -translate-x-1/2 top-0" style={{
-          width: 420, maxWidth: '100%', height: 300, background: 'radial-gradient(closest-side, rgba(255,179,71,0.22), rgba(227,30,36,0.10) 55%, transparent)',
-        }} />
 
         <header className="relative flex flex-col items-center text-center mb-8">
           <img src="/marca/ditado-brasa-bar.svg" alt="Ditado Brasa & Bar" style={{ width: 250, maxWidth: '78%', height: 'auto' }} />
-          <p className="mt-3" style={{ fontFamily: BEBAS, letterSpacing: '0.28em', fontSize: 15, color: COR.ambar }}>Desde 2008 · Cuiabá</p>
-          <p className="mt-5 leading-none" style={{ fontFamily: YELLOWTAIL, fontSize: 32, color: COR.ambar, textShadow: '0 0 18px rgba(255,179,71,0.45)' }}>
+          <p className="mt-3" style={{ fontFamily: BEBAS, letterSpacing: '0.28em', fontSize: 15, color: COR.verde }}>Desde 2008 · Cuiabá</p>
+          <p className="mt-5 leading-none" style={{ fontFamily: YELLOWTAIL, fontSize: 32, color: COR.terracota }}>
             Onde há fumaça, há fogo.
           </p>
-          <p className="mt-1 text-xs" style={{ color: 'rgba(244,237,228,0.6)' }}>— Ditado Popular</p>
+          <p className="mt-1 text-xs" style={{ color: COR.apoio }}>— Ditado Popular</p>
         </header>
 
         <nav aria-label="Links do Ditado" className="relative flex flex-col gap-3">
@@ -63,26 +60,26 @@ export default function Links() {
             <a key={titulo} href={href} {...(externo ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
               className="flex items-center gap-3 rounded-2xl px-4 py-3 transition-transform active:scale-[0.98] hover:brightness-110"
               style={destaque
-                ? { background: COR.vermelho, color: COR.off, boxShadow: '0 10px 28px rgba(227,30,36,0.35)' }
-                : { background: 'rgba(244,237,228,0.05)', border: '1px solid rgba(244,237,228,0.12)', color: COR.off }}>
+                ? { background: COR.verde, color: COR.cartao, boxShadow: '0 8px 20px rgba(47,93,67,0.25)' }
+                : { background: COR.cartao, border: `1px solid ${COR.borda}`, color: COR.texto }}>
               <span className="flex items-center justify-center rounded-xl flex-shrink-0" style={{
                 width: 42, height: 42,
-                background: destaque ? 'rgba(244,237,228,0.16)' : 'rgba(255,179,71,0.12)',
-                color: destaque ? COR.off : COR.ambar,
+                background: destaque ? 'rgba(251,246,238,0.16)' : 'rgba(181,83,47,0.12)',
+                color: destaque ? COR.cartao : COR.terracota,
               }}>
                 <Icone size={20} />
               </span>
               <span className="flex-1 min-w-0">
                 <span className="block leading-none" style={{ fontFamily: BEBAS, fontSize: 24, letterSpacing: '0.04em' }}>{titulo}</span>
-                <span className="block text-xs truncate mt-0.5" style={{ opacity: destaque ? 0.9 : 0.65 }}>{sub}</span>
+                <span className="block text-xs truncate mt-0.5" style={{ color: destaque ? 'rgba(251,246,238,0.85)' : COR.apoio }}>{sub}</span>
               </span>
               <ChevronRight size={18} style={{ opacity: 0.6 }} />
             </a>
           ))}
         </nav>
 
-        <footer className="relative mt-10 text-center text-xs" style={{ color: 'rgba(244,237,228,0.45)' }}>
-          <p style={{ fontFamily: BEBAS, fontSize: 16, letterSpacing: '0.12em', color: 'rgba(244,237,228,0.7)' }}>Ditado Brasa &amp; Bar</p>
+        <footer className="relative mt-10 text-center text-xs" style={{ color: COR.apoio }}>
+          <p style={{ fontFamily: BEBAS, fontSize: 16, letterSpacing: '0.12em', color: COR.verde }}>Ditado Brasa &amp; Bar</p>
           <p className="mt-1">{ENDERECO}</p>
         </footer>
       </div>
