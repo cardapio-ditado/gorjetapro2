@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { CalendarDays, ChevronRight, Globe, Instagram, MapPin, MessageCircle, UtensilsCrossed } from 'lucide-react';
+import { CalendarDays, ChevronRight, Globe, Instagram, MapPin, MessageCircle, Trophy, UtensilsCrossed } from 'lucide-react';
 
 /**
  * Links da bio do Instagram (ditado.org/links), no lugar do Linktree (Kadu, 19/11/2026).
@@ -13,9 +13,12 @@ import { CalendarDays, ChevronRight, Globe, Instagram, MapPin, MessageCircle, Ut
  * Os contatos vêm do site oficial (ditado-popular-site, src/lib/site.ts). O @ do Instagram não muda.
  */
 
-const COR = { offwhite: '#F5EFE6', terracota: '#B65B43', musgo: '#46513A', carvao: '#1A1A1A', tabaco: '#6B4938' };
+const COR = { offwhite: '#F5EFE6', terracota: '#B65B43', musgo: '#46513A', carvao: '#1A1A1A', tabaco: '#6B4938', ambar: '#D99736' };
 const SERIFA = "Charter, 'Bitstream Charter', 'Noto Serif', Georgia, serif";
 const SANS = "'Liberation Sans', Arial, Helvetica, sans-serif";
+
+/** Votação do Encontro Gastrô Cuiabá (Kadu, 19/11/2026): o Ditado concorre em Bar/Buteco e Carta de Drinks. */
+const VOTACAO = 'https://www.encontrogastro.com.br/cba/?grupo=entretenimento';
 
 const WHATS = '556541413655';
 const ENDERECO = 'R. Sen. Vilas Bôas, 89 · Praça Popular · Cuiabá-MT';
@@ -55,6 +58,20 @@ export default function Links() {
         </header>
 
         <nav aria-label="Links do Ditado" className="flex flex-col gap-3">
+          {/* A votação em destaque, em âmbar (o acento do manual), com as duas categorias. */}
+          <a href={VOTACAO} target="_blank" rel="noopener noreferrer"
+            className="flex items-center gap-3 rounded-2xl px-4 py-4 transition-transform active:scale-[0.98] hover:brightness-105"
+            style={{ background: COR.ambar, color: COR.carvao }}>
+            <span className="flex items-center justify-center rounded-xl flex-shrink-0"
+              style={{ width: 42, height: 42, background: 'rgba(26,26,26,0.10)' }}>
+              <Trophy size={20} />
+            </span>
+            <span className="flex-1 min-w-0">
+              <span className="block leading-tight" style={{ fontFamily: SERIFA, fontSize: 20, fontWeight: 600 }}>Vote no Ditado</span>
+              <span className="block text-sm mt-0.5" style={{ opacity: 0.9 }}>Encontro Gastrô · vote em <b>Bar/Buteco</b> e em <b>Carta de Drinks</b></span>
+            </span>
+            <ChevronRight size={18} style={{ opacity: 0.75 }} />
+          </a>
           {LINKS.map(({ titulo, sub, href, Icone, destaque, externo }) => (
             <a key={titulo} href={href} {...(externo ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
               className="flex items-center gap-3 rounded-2xl px-4 py-3.5 transition-transform active:scale-[0.98] hover:brightness-110"
