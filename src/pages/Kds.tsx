@@ -126,11 +126,15 @@ const Kds: React.FC = () => {
   const vistos = useRef<Set<string> | null>(null);
   const trava = useRef<WakeLockSentinel | null>(null);
   const caixa = useRef<HTMLDivElement>(null);
+  /** Hora do último toque (ponto ou pronto). Leitura que saiu antes dele chega velha e é descartada. */
+  const ultimoToque = useRef(0);
 
   const buscar = useCallback(async () => {
+    const saiu = Date.now();
     try {
       const { data, error } = await supabase.functions.invoke('kds-cozinha', { body: { acao: 'fila', setor } });
       if (error || !data?.ok) throw new Error(data?.error || 'sem resposta');
+      if (ultimoToque.current >= saiu) return;
       const f = data as Fila;
       // Pedido novo na fila: bipa (menos na primeira leitura).
       const abertos = new Set(f.pratos.filter((p) => !p.pronto_em).map((p) => p.transacao));
@@ -177,19 +181,23 @@ const Kds: React.FC = () => {
   };
 
   const marcarPonto = async (id: number, ponto: Ponto | null) => {
+    ultimoToque.current = Date.now();
     setFila((f) => f && { ...f, pratos: f.pratos.map((p) => (p.id === id ? { ...p, ponto_manual: ponto } : p)) });
     const { data, error } = await supabase.functions.invoke('kds-cozinha', { body: { acao: 'ponto', ids: [id], ponto } });
+    ultimoToque.current = Date.now();
     if (error || !data?.ok) setErro('Não consegui gravar o ponto. Toque de novo.');
     void buscar();
   };
 
   const marcar = async (ids: number[], acao: 'pronto' | 'desfazer') => {
     // Some da fila na hora; a próxima leitura confirma.
+    ultimoToque.current = Date.now();
     setFila((f) => f && {
       ...f,
       pratos: f.pratos.map((p) => (ids.includes(p.id) ? { ...p, pronto_em: acao === 'pronto' ? new Date().toISOString() : null } : p)),
     });
     const { data, error } = await supabase.functions.invoke('kds-cozinha', { body: { acao, ids } });
+    ultimoToque.current = Date.now();
     if (error || !data?.ok) setErro('Não consegui gravar. Toque de novo.');
     void buscar();
   };
