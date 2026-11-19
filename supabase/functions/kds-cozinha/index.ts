@@ -62,7 +62,11 @@ const DRINKS = /^(DRINK|CAIPIRINHA|DOSE|CACHA[CÇ]A|COMBO|WHISKY|VODKA|GIN|LICOR
 
 /** Pratos da parrilla: pela categoria da ZIG (prato novo nessas categorias já entra) e o queijo coalho na brasa. */
 const PARRILLA_CATEGORIA = /^(ASSADO|EXECUTIVO|CHAPA)/;
-const PARRILLA_PRODUTO = /COALHO NA BRASA/;
+const PARRILLA_PRODUTO = /COALHO NA BRASA|CASCATA DE QUEIJO|^BURGU?ER/;
+/** Picanha na chapa c/ cascata de queijo: o queijo e os acompanhamentos já vão para a cozinha. */
+const CASCATA = /CASCATA DE QUEIJO/;
+/** Burguer: o hambúrguer sai da parrilla e a cozinha só monta depois do Pronto da parrilla. */
+const BURGUER = /^BURGU?ER/;
 /** Acompanhamento que também sai da brasa: fica no cartão da parrilla, não vai para a cozinha. */
 const ACOMP_DA_BRASA = /COALHO/;
 /** Não leva ponto: porco, frango (coxa, sobrecoxa, asa), costela, linguiça e queijo. */
@@ -135,6 +139,8 @@ interface Prato {
   /** Prato da parrilla dividido: 'carne' (parrilla) ou 'acomp' (cozinha). */
   parte: 'carne' | 'acomp' | null;
   ponto: Ponto | null; ponto_origem: 'zig' | 'obs' | null; precisa_ponto: boolean;
+  /** Linha da cozinha que só aparece quando a carne da parrilla fica pronta (burguer). */
+  espera_parrilla: boolean;
 }
 
 /** Divide o prato da parrilla em carne (com o ponto) e acompanhamentos (cozinha). */
@@ -147,13 +153,18 @@ function dividir(p: Prato): Prato[] {
     if (pt) { ponto = ponto ?? pt; continue; }
     (ACOMP_DA_BRASA.test(a.toUpperCase()) ? brasa : cozinha).push(a);
   }
-  const precisa = !SEM_PONTO.test(p.produto.toUpperCase());
+  // "Cascata de queijo" é o acompanhamento: a picanha leva ponto.
+  const precisa = !SEM_PONTO.test(p.produto.toUpperCase().replace(CASCATA, ''));
   const carne: Prato = {
     ...p, chave: `${p.chave}|parrilla`, setor: 'parrilla', parte: 'carne', adicionais: brasa,
     precisa_ponto: precisa, ponto: precisa ? ponto : null, ponto_origem: precisa && ponto ? 'zig' : null,
   };
+  const nome = p.produto.toUpperCase();
+  const espera = BURGUER.test(nome);
+  if (CASCATA.test(nome)) cozinha.unshift('Cascata de queijo');
+  if (espera) cozinha.unshift('Montar o burguer');
   if (!cozinha.length) return [carne];
-  return [carne, { ...p, chave: `${p.chave}|acomp`, parte: 'acomp', adicionais: cozinha, ponto: null, ponto_origem: null, precisa_ponto: false }];
+  return [carne, { ...p, chave: `${p.chave}|acomp`, parte: 'acomp', adicionais: cozinha, ponto: null, ponto_origem: null, precisa_ponto: false, espera_parrilla: espera }];
 }
 
 /** Lê a ZIG (se a última leitura tiver mais de LER_A_CADA_MS) e grava os pratos novos. */
@@ -192,7 +203,7 @@ async function ler(): Promise<{ lido_em: string | null; erro: string | null; leu
     const p = pratos.get(chave) ?? {
       chave, noite, transacao, produto, qtd: 0, adicionais: [],
       garcom: limpo(v.employeeName) || null, categoria: limpo(v.productCategory) || null, obs: limpo(v.obs) || null, pedido_em, cancelado: true, setor,
-      parte: null, ponto: null, ponto_origem: null, precisa_ponto: false,
+      parte: null, ponto: null, ponto_origem: null, precisa_ponto: false, espera_parrilla: false,
     };
     const q = Number(v.count || v.fractionalAmount || 1);
     if (!v.isRefunded) {
@@ -231,10 +242,14 @@ async function ler(): Promise<{ lido_em: string | null; erro: string | null; leu
   for (const p of lista) {
     const ja = existentes.get(p.chave);
     if (!ja) {
+      // Prato gravado inteiro antes de passar a ser dividido (regra nova no meio da noite): não volta como pedido novo.
+      const inteiro = p.chave.replace(/\|(parrilla|acomp)$/, '');
+      if (inteiro !== p.chave && existentes.has(inteiro)) continue;
       if (!p.cancelado) novos.push({ ...p, visto_em: agora.toISOString(), leitura_anterior: anterior });
       continue;
     }
     // Estorno, quantidade ou ponto mudado depois: atualiza só o que veio da ZIG (o ponto do tablet fica em ponto_manual).
+    // (Os textos fixos "Cascata de queijo" e "Montar o burguer" entram nos adicionais da cozinha.)
     if (Number(ja.qtd) !== p.qtd || ja.cancelado !== p.cancelado || (ja.adicionais ?? []).join('|') !== p.adicionais.join('|') || (ja.ponto ?? null) !== p.ponto) {
       await db.from('kds_pratos').update({
         qtd: p.cancelado ? ja.qtd : p.qtd, cancelado: p.cancelado, adicionais: p.adicionais, ponto: p.ponto, ponto_origem: p.ponto_origem,
@@ -319,7 +334,24 @@ function resumir(pratos: any[], { amarelo, vermelho }: { amarelo: number; vermel
   };
 }
 
-const CAMPOS = 'id, setor, transacao, produto, qtd, adicionais, garcom, categoria, obs, pedido_em, visto_em, leitura_anterior, pronto_em, pronto_por, cancelado, parte, ponto, ponto_origem, precisa_ponto, ponto_manual, ponto_por';
+const CAMPOS = 'id, chave, setor, transacao, produto, qtd, adicionais, garcom, categoria, obs, pedido_em, visto_em, leitura_anterior, pronto_em, pronto_por, cancelado, parte, ponto, ponto_origem, precisa_ponto, ponto_manual, ponto_por, espera_parrilla';
+
+/**
+ * Linhas da cozinha que esperam a parrilla (burguer): só entram na fila quando a carne fica
+ * pronta, como um cartão próprio, com o cronômetro contando desse Pronto.
+ */
+function liberarEspera(doSetor: any[], todos: any[]) {
+  const prontoParrilla = new Map<string, string | null>();
+  for (const t of todos) if (t.setor === 'parrilla') prontoParrilla.set(t.chave, t.pronto_em);
+  const out: any[] = [];
+  for (const p of doSetor) {
+    if (!p.espera_parrilla) { out.push(p); continue; }
+    const liberado = prontoParrilla.get(String(p.chave).replace(/\|acomp$/, '|parrilla'));
+    if (!liberado) continue;
+    out.push({ ...p, pedido_zig: p.pedido_em, pedido_em: liberado, transacao: `${p.transacao}|montar` });
+  }
+  return out;
+}
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS });
@@ -351,7 +383,7 @@ Deno.serve(async (req) => {
       const { data: todos, error } = await db.from('kds_pratos').select(CAMPOS).eq('noite', noite).order('pedido_em');
       if (error) throw new Error(error.message);
       const ms = (t: string) => new Date(t).getTime();
-      const doSetor = (todos ?? []).filter((p: any) => p.setor === setor);
+      const doSetor = liberarEspera((todos ?? []).filter((p: any) => p.setor === setor), todos ?? []);
       const pratos = doSetor.filter((p: any) => !p.cancelado && ms(p.pedido_em) > velho && (!p.pronto_em || ms(p.pronto_em) > desde));
       const r = resumir(doSetor, LIMITES[setor]);
       return json({

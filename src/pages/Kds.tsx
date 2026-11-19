@@ -45,6 +45,8 @@ interface Prato {
   garcom: string | null; categoria: string | null; obs: string | null; pedido_em: string; pronto_em: string | null; pronto_por: string | null;
   parte?: 'carne' | 'acomp' | null; ponto?: Ponto | null; ponto_origem?: 'zig' | 'obs' | null; precisa_ponto?: boolean;
   ponto_manual?: Ponto | null; ponto_por?: string | null;
+  /** Cozinha: só aparece quando a carne da parrilla fica pronta (burguer: montar). */
+  espera_parrilla?: boolean;
 }
 const pontoFinal = (p: Prato): Ponto | null => p.ponto_manual ?? p.ponto ?? null;
 /** Frango sem a palavra "frango" no nome também não leva ponto (a função já marca os novos assim). */
@@ -275,7 +277,11 @@ const Kds: React.FC = () => {
                       {ped.pratos.map((p) => (
                         <button key={p.id} type="button" onClick={() => marcar([p.id], 'pronto')} className="w-full text-left py-1.5"
                           style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }} title={`Toque para marcar só este ${S.item}`}>
-                          {p.parte === 'acomp' ? (
+                          {p.parte === 'acomp' && p.espera_parrilla ? (
+                            <div style={{ fontSize: 19, fontWeight: 700, lineHeight: 1.25 }}>
+                              <span style={{ color: c.texto }}>{qtd(p.qtd)}×</span> {p.produto} <span style={{ fontSize: 15, opacity: 0.75 }}>(hambúrguer pronto na parrilla)</span>
+                            </div>
+                          ) : p.parte === 'acomp' ? (
                             <div style={{ fontSize: 15, fontWeight: 700, lineHeight: 1.25, opacity: 0.85 }}>
                               <span style={{ color: c.texto }}>{qtd(p.qtd)}×</span> Acompanhamento · <EtiquetaTipo p={p} />{nomeCarne(p.produto)} <span style={{ opacity: 0.7 }}>(carne na parrilla)</span>
                             </div>
