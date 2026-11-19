@@ -32,7 +32,7 @@ const Topo: React.FC<Props> = ({ caminho, usuario, onLogout, onAbrirMenu, onAbri
   const ehMac = typeof navigator !== 'undefined' && /Mac/i.test(navigator.platform);
 
   return (
-    <header className="h-14 flex items-center gap-3 px-4 lg:px-7 flex-shrink-0" style={{ background: 'var(--bg-base)', borderBottom: '1px solid var(--border)' }}>
+    <header className="h-14 flex items-center gap-3 px-4 lg:px-7 flex-shrink-0" style={{ background: 'var(--bg-base)', borderBottom: '1px solid var(--border)', boxShadow: 'inset 0 -3px 0 var(--cor-area, transparent)' }}>
       <button type="button" onClick={onAbrirMenu} className="lg:hidden btn-icon" aria-label="Abrir menu">
         <Menu size={18} />
       </button>

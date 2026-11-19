@@ -27,7 +27,8 @@ const ColunaArea: React.FC<Props> = ({ modulos, areaAtual, onNavegar, className 
 
   const estiloLink = (on: boolean): React.CSSProperties => ({
     color: on ? 'var(--text-primary)' : 'var(--text-secondary)',
-    background: on ? 'rgba(255,255,255,0.07)' : 'transparent',
+    background: on ? 'var(--nav-ativo-bg, rgba(255,255,255,0.07))' : 'transparent',
+    boxShadow: on ? 'inset 3px 0 0 var(--nav-ativo-fio, transparent)' : undefined,
     fontWeight: on ? 600 : 500,
   });
 
@@ -55,25 +56,20 @@ const ColunaArea: React.FC<Props> = ({ modulos, areaAtual, onNavegar, className 
   return (
     <nav
       aria-label={area ? area.nome : 'Telas'}
-      className={`flex-col w-[232px] flex-shrink-0 overflow-y-auto scrollbar-hide ${className}`.trim()}
+      className={`sidebar-solid flex-col w-[232px] flex-shrink-0 overflow-y-auto scrollbar-hide ${className}`.trim()}
       style={{ background: 'var(--bg-dark)', borderRight: '1px solid var(--border)' }}
     >
-      {/* A marca e o caminho de volta ao saguão, onde se troca de área. */}
-      <div className="flex items-center gap-3 h-14 px-4 flex-shrink-0" style={{ borderBottom: '1px solid var(--border)' }}>
-        <Link
-          to="/"
-          onClick={onNavegar}
-          className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 font-display font-bold text-base text-white focus-ring"
-          style={{ background: 'var(--wine)' }}
-          aria-label="Saguão"
-        >
-          D
-        </Link>
-        <div className="min-w-0 flex-1">
-          <p className="t-label truncate" style={{ color: 'var(--text-primary)', margin: 0 }}>Ditado Popular</p>
-          <p className="t-caption truncate" style={{ margin: 0 }}>Gestão</p>
-        </div>
-      </div>
+      {/* A marca (Ditado Brasa & Bar) sobre o claro, como pede o manual; leva ao saguão. */}
+      <Link
+        to="/"
+        onClick={onNavegar}
+        aria-label="Saguão"
+        className="flex items-center gap-3 h-14 px-4 flex-shrink-0 focus-ring"
+        style={{ background: 'var(--nav-logo-bg, transparent)', borderBottom: '1px solid var(--border)' }}
+      >
+        <img src="/marca/ditado-brasa-bar.svg" alt="Ditado Brasa & Bar" style={{ height: 34, width: 'auto' }} />
+        <span className="t-caption truncate" style={{ margin: 0, color: 'var(--nav-logo-texto, var(--text-secondary))', fontWeight: 600 }}>Gestão</span>
+      </Link>
 
       <div className="px-2 pt-3">
         <Link
@@ -88,7 +84,17 @@ const ColunaArea: React.FC<Props> = ({ modulos, areaAtual, onNavegar, className 
       </div>
 
       <div className="px-4 pt-4 pb-1">
-        <p className="t-section" style={{ color: 'var(--text-primary)', fontSize: 20, fontWeight: 600, margin: 0 }}>
+        <p className="t-section flex items-center gap-2.5" style={{ color: 'var(--text-primary)', fontSize: 20, fontWeight: 600, margin: 0 }}>
+          {/* O selo na cor da área: a mesma do título da tela e do fio do topo. */}
+          {area && (
+            <span
+              aria-hidden="true"
+              className="w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0"
+              style={{ background: 'var(--cor-area, var(--wine))', border: '1px solid rgba(245,239,230,0.45)', color: '#fff' }}
+            >
+              <area.icone size={15} />
+            </span>
+          )}
           {area ? area.nome : 'Todas as áreas'}
         </p>
         {area && <p className="t-caption" style={{ margin: '2px 0 0' }}>{area.descricao}</p>}

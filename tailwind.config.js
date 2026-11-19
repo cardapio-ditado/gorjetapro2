@@ -4,7 +4,8 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        display: ['Playfair Display', 'Georgia', 'serif'],
+        // Serifa editorial do Manual da Marca (Charter); Noto Serif quando o aparelho não tem Charter.
+        display: ['Charter', 'Bitstream Charter', 'Noto Serif', 'Georgia', 'serif'],
         sans:    ['DM Sans', 'system-ui', '-apple-system', 'sans-serif'],
         mono:    ['DM Mono', 'monospace'],
       },

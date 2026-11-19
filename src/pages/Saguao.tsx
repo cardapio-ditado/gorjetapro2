@@ -1,75 +1,57 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogOut, ChevronRight } from 'lucide-react';
+import { ArrowRight, LogOut } from 'lucide-react';
 import { AREAS, MODULES, moduloLiberado } from '../components/layout/SidebarModern';
 import { useAuth } from '../contexts/AuthContext';
 
 /**
- * O saguão: a entrada do sistema, um favo por ÁREA da casa.
+ * O saguão: a entrada do sistema, um cartão por ÁREA da casa.
  *
- * Um favo por área — Operação, Financeiro, Estoque, Recursos Humanos, Clientes
- * e Parceiros, Sistema — e não um por módulo: catorze hexágonos é o sidebar gigante de novo, só que
- * deitado. A pessoa pensa "vou mexer no dinheiro", não "vou abrir o módulo
- * Contas a Pagar"; o favo é a área, e as telas da área aparecem na lateral
- * depois que ela entra.
+ * Identidade Ditado Brasa & Bar (Manual da Marca v1.2 e proposta visual de
+ * 19/11/2026): base off-white, painel verde musgo, a primeira área em terracota,
+ * títulos em serifa editorial, vermelho só na logo.
  *
- * AREAS e MODULES vêm do sidebar — uma verdade só. Área sem nenhum módulo
- * que o usuário possa ver não vira favo: favo que não abre nada é vitrine de
- * porta trancada.
+ * Um cartão por área — Operação, Financeiro, Estoque, Recursos Humanos, Clientes
+ * e Parceiros, Sistema — e não um por módulo: a pessoa pensa "vou mexer no
+ * dinheiro", não "vou abrir Contas a Pagar". As telas da área aparecem na
+ * lateral depois que ela entra.
+ *
+ * AREAS e MODULES vêm do sidebar — uma verdade só. Área sem nenhum módulo que
+ * o usuário possa ver não vira cartão: cartão que não abre nada é porta trancada.
  */
 
-/** Hexágono "ponta pra cima" — lados retos na esquerda/direita, ponta em
- *  cima e embaixo. É essa orientação que permite empilhar em fileiras que
- *  se encaixam de verdade (a fileira de baixo entra no vão da de cima),
- *  em vez de depender de deslocar item a item dentro de uma flexbox que
- *  quebra linha sozinha.
- */
-const HEXAGONO = 'polygon(50% 0%, 97% 25%, 97% 75%, 50% 100%, 3% 75%, 3% 25%)';
-const HEX_W = 186;
-const HEX_H = 200;
-const HEX_GAP = 14;
-const HEX_BORDA = 2;
+const COR = {
+  offwhite: '#F5EFE6',
+  cartao: '#FFFDF9',
+  terracota: '#B65B43',
+  musgo: '#46513A',
+  carvao: '#1A1A1A',
+  apoio: '#5E554D',
+  borda: 'rgba(26,26,26,0.12)',
+};
+const SERIFA = "Charter, 'Bitstream Charter', 'Noto Serif', Georgia, serif";
 
-const Hexagono: React.FC<{
-  area: { id: string; nome: string; descricao: string; icone: React.ElementType };
+const Cartao: React.FC<{
+  area: { id: string; nome: string; descricao: string; icone: React.ElementType; cor: string };
+  destaque: boolean;
   onClick: () => void;
-}> = ({ area, onClick }) => (
+}> = ({ area, destaque, onClick }) => (
   <button
+    type="button"
     onClick={onClick}
-    className="group relative shrink-0 transition-transform duration-200 hover:scale-[1.06] focus:outline-none"
-    style={{ width: HEX_W, height: HEX_H }}
+    className="group text-left rounded-xl p-5 flex flex-col gap-3 transition-transform duration-150 hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+    style={destaque
+      ? { background: area.cor, color: '#FFFFFF', outlineColor: COR.musgo, minHeight: 148 }
+      : { background: COR.cartao, color: COR.carvao, border: `1px solid ${COR.borda}`, borderTop: `4px solid ${area.cor}`, outlineColor: COR.musgo, minHeight: 148 }}
   >
-    {/* Camada 1: a borda dourada — um hexágono levemente maior, cheio de cor. */}
-    <div className="absolute inset-0" style={{ clipPath: HEXAGONO, background: 'linear-gradient(160deg, var(--gold), rgba(212,175,55,0.25))' }} />
-    {/* Camada 2: o preenchimento — hexágono recuado pela espessura da borda,
-        por cima da camada 1. As duas usam o MESMO clip-path percentual, então
-        a borda sai com espessura uniforme nos seis lados, ponta inclusa. */}
-    <div
-      className="absolute flex flex-col items-center justify-center text-center px-6"
-      style={{
-        inset: HEX_BORDA,
-        clipPath: HEXAGONO,
-        background: 'linear-gradient(160deg, rgba(125,31,44,0.55) 0%, rgba(61,14,22,0.92) 55%, rgba(12,16,24,0.96) 100%)',
-      }}
-    >
-      <span
-        className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-        style={{ background: 'linear-gradient(160deg, rgba(125,31,44,0.65), rgba(212,175,55,0.16))' }}
-      />
-      <area.icone size={24} className="relative mb-2.5" style={{ color: 'var(--gold)' }} strokeWidth={1.75} />
-      <span className="relative text-body font-display font-bold leading-tight" style={{ color: 'var(--text-primary)' }}>
-        {area.nome}
+    <area.icone size={30} strokeWidth={1.6} style={{ color: destaque ? '#FFFFFF' : area.cor }} />
+    <span className="block">
+      <span className="block text-lg font-semibold leading-tight" style={{ color: destaque ? '#FFFFFF' : area.cor }}>{area.nome}</span>
+      <span className="flex items-end gap-3 mt-1">
+        <span className="flex-1 text-sm leading-snug" style={{ color: destaque ? 'rgba(255,255,255,0.88)' : COR.apoio }}>{area.descricao}</span>
+        <ArrowRight size={18} className="flex-shrink-0 transition-transform duration-150 group-hover:translate-x-0.5" />
       </span>
-      <span className="relative text-caption leading-snug mt-1.5" style={{ color: 'var(--text-secondary)' }}>
-        {area.descricao}
-      </span>
-      <span
-        className="relative text-caption uppercase tracking-widest mt-2.5 opacity-0 group-hover:opacity-100 transition-opacity"
-        style={{ color: 'var(--gold)' }}
-      >
-        Entrar
-      </span>
-    </div>
+    </span>
   </button>
 );
 
@@ -79,116 +61,69 @@ const Saguao: React.FC = () => {
 
   const permitidos = MODULES.filter((m) => moduloLiberado(m, temAcessoModulo));
 
-  // Cada favo leva ao primeiro módulo visível da área — a ordem em MODULES
+  // Cada cartão leva ao primeiro módulo visível da área — a ordem em MODULES
   // já é a ordem de importância dentro dela.
   const areas = AREAS.map((area) => ({
     ...area,
     modulos: permitidos.filter((m) => m.group === area.id),
   })).filter((a) => a.modulos.length > 0);
 
-  // Duas fileiras fixas — 3 em cima, o resto embaixo deslocado meio passo —
-  // é o arranjo de colmeia pra até 6 favos (o total de áreas que existem).
-  // Sem depender de quebra de linha automática pra decidir o deslocamento,
-  // que era a causa do desalinhamento. As fileiras NÃO se encaixam uma na
-  // outra: favo cobrindo favo come a borda dourada do de cima.
-  const fileiras = areas.length > 3 ? [areas.slice(0, 3), areas.slice(3)] : [areas];
-
-  const iniciais =
-    usuario?.nome_completo
-      ?.split(' ')
-      .map((n) => n[0])
-      .join('')
-      .substring(0, 2)
-      .toUpperCase() ?? 'U';
+  const primeiroNome = usuario?.nome_completo?.split(' ')[0] ?? 'Usuário';
+  const inicial = primeiroNome.charAt(0).toUpperCase();
 
   return (
-    <div className="min-h-screen relative overflow-y-auto">
-      {/* A imagem inteira, sem corte de painel — é o pano de fundo da tela toda. */}
-      <img
-        src="/images/login-hero-ditado-bar.jpg"
-        alt="Ditado Bar — Sistema de Gestão Inteligente"
-        className="fixed inset-0 w-full h-full object-cover"
-        style={{ objectPosition: '22% center' }}
-      />
-      {/* Sombra só no canto onde os favos pousam — o resto da foto fica vívido. */}
-      <div
-        className="fixed inset-0"
-        style={{ background: 'radial-gradient(900px 800px at 100% 62%, rgba(6,4,8,0.8), transparent 62%), linear-gradient(200deg, transparent 35%, rgba(6,4,8,0.42) 100%)' }}
-      />
-      {/* No celular a lista ocupa a largura toda e a arte passaria por trás do
-          texto — aqui ela vira fundo mesmo, bem apagada. */}
-      <div className="fixed inset-0 sm:hidden" style={{ background: 'rgba(6,4,8,0.72)' }} />
+    <div className="min-h-screen flex flex-col" style={{ background: COR.offwhite, color: COR.carvao }}>
+      {/* Topo: a logo assina sobre o claro, como pede o manual. */}
+      <header className="flex items-center gap-4 px-5 sm:px-8 py-3" style={{ background: '#FBF8F2', borderBottom: `1px solid ${COR.borda}` }}>
+        <img src="/marca/ditado-brasa-bar.svg" alt="Ditado Brasa & Bar" style={{ height: 52, width: 'auto' }} />
+        <span aria-hidden className="hidden sm:block h-9 w-px" style={{ background: COR.borda }} />
+        <span className="hidden sm:block text-lg font-semibold" style={{ color: COR.apoio }}>Gestão</span>
+        <span className="flex-1" />
+        <span className="flex items-center gap-2.5">
+          <span className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold" style={{ background: COR.musgo, color: COR.offwhite }}>{inicial}</span>
+          <span className="hidden sm:block text-sm font-semibold">{primeiroNome}</span>
+          <button type="button" onClick={logout} title="Sair" aria-label="Sair"
+            className="w-9 h-9 flex items-center justify-center rounded-lg transition-colors hover:bg-black/5" style={{ color: COR.apoio }}>
+            <LogOut size={16} />
+          </button>
+        </span>
+      </header>
 
-      <div className="relative min-h-screen flex flex-col">
-        {/* Cabeçalho enxuto: o saguão é passagem, não morada. A marca já está na foto. */}
-        <header className="flex items-center justify-end px-6 py-5">
-          <div className="flex items-center gap-2.5">
-            <div
-              className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-xs font-bold"
-              style={{ background: 'linear-gradient(135deg, var(--wine), var(--gold))' }}
-            >
-              {iniciais}
-            </div>
-            <button
-              onClick={logout}
-              title="Sair"
-              className="w-8 h-8 flex items-center justify-center rounded-lg transition-all hover:bg-white/[0.06]"
-              style={{ color: 'var(--text-secondary)' }}
-            >
-              <LogOut size={14} />
-            </button>
-          </div>
-        </header>
-
-        <main className="flex-1 flex flex-col justify-center items-end px-6 sm:px-10 lg:px-16 pb-16 max-w-full">
-          <p
-            className="text-right text-caption uppercase tracking-[0.18em] font-semibold mb-8"
-            style={{ color: 'var(--text-secondary)' }}
-          >
-            Onde você vai trabalhar agora?
+      <main className="flex-1 flex flex-col lg:flex-row">
+        {/* Painel musgo: o convite. */}
+        <section className="relative overflow-hidden lg:w-[40%] lg:flex-shrink-0 px-6 sm:px-10 lg:px-12 py-10 lg:py-16 flex flex-col justify-center" style={{ background: COR.musgo, color: COR.offwhite }}>
+          <h1 className="relative font-bold leading-[1.08]" style={{ fontFamily: SERIFA, fontSize: 'clamp(34px, 3.8vw, 56px)', color: COR.offwhite, maxWidth: 460 }}>
+            Tudo pronto para abrir a casa.
+          </h1>
+          <p className="relative mt-4 text-lg leading-snug" style={{ color: 'rgba(245,239,230,0.88)', maxWidth: 380 }}>
+            Pessoas, operação e resultado no mesmo lugar.
           </p>
-
-          {/* Colmeia — telas sm e maiores. */}
-          <div className="hidden sm:flex flex-col items-center">
-            {fileiras.map((fileira, fi) => (
-              <div
-                key={fi}
-                className="flex justify-center"
-                style={{
-                  gap: HEX_GAP,
-                  marginTop: fi === 0 ? 0 : HEX_GAP,
-                  marginLeft: fi % 2 === 1 ? (HEX_W + HEX_GAP) / 2 : 0,
-                }}
-              >
-                {fileira.map((area) => (
-                  <Hexagono key={area.id} area={area} onClick={() => navigate(area.modulos[0].path)} />
-                ))}
-              </div>
+          {/* Arcos em terracota: o mesmo desenho da proposta, discreto, só no desktop. */}
+          <div aria-hidden className="hidden lg:grid absolute left-0 bottom-0 grid-cols-4 gap-2" style={{ width: 320 }}>
+            {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => (
+              <span key={i} style={{
+                width: 72, height: 72, background: COR.terracota, opacity: i < 4 && i !== 1 ? 0 : 0.95,
+                borderTopLeftRadius: i % 2 === 0 ? 72 : 0, borderTopRightRadius: i % 2 === 1 ? 72 : 0,
+              }} />
             ))}
           </div>
+        </section>
 
-          {/* Lista — mobile. Hexágono espremido em tela estreita vira ruim; aqui é
-              o mesmo cartão em vidro usado no resto do sistema. */}
-          <div className="sm:hidden w-full flex flex-col gap-3">
-            {areas.map((area) => (
-              <button
-                key={area.id}
-                onClick={() => navigate(area.modulos[0].path)}
-                className="glass-card rounded-2xl p-4 flex items-center gap-3.5 text-left group"
-              >
-                <div className="w-11 h-11 shrink-0 rounded-xl flex items-center justify-center bg-gradient-to-br from-wine/25 to-gold/10 border border-gold/15">
-                  <area.icone className="w-5 h-5" style={{ color: 'var(--gold)' }} strokeWidth={1.75} />
-                </div>
-                <span className="flex-1 min-w-0">
-                  <span className="block text-sm font-display font-bold" style={{ color: 'var(--text-primary)' }}>{area.nome}</span>
-                  <span className="block text-xs mt-0.5" style={{ color: 'var(--text-secondary)' }}>{area.descricao}</span>
-                </span>
-                <ChevronRight className="w-4 h-4 shrink-0" style={{ color: 'var(--text-muted)' }} />
-              </button>
+        {/* As áreas. */}
+        <section className="flex-1 min-w-0 px-5 sm:px-10 py-8 lg:py-14">
+          <h2 className="font-bold mb-6" style={{ fontFamily: SERIFA, fontSize: 'clamp(28px, 3vw, 40px)', lineHeight: 1.1, color: COR.carvao }}>
+            Onde vamos trabalhar?
+          </h2>
+          <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(220px, 100%), 1fr))', maxWidth: 900 }}>
+            {areas.map((area, i) => (
+              <Cartao key={area.id} area={area} destaque={i === 0} onClick={() => navigate(area.modulos[0].path)} />
             ))}
           </div>
-        </main>
-      </div>
+          {areas.length === 0 && (
+            <p className="text-base" style={{ color: COR.apoio }}>Seu usuário ainda não tem nenhuma área liberada. Fale com o Kadu.</p>
+          )}
+        </section>
+      </main>
     </div>
   );
 };

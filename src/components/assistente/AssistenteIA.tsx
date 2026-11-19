@@ -69,7 +69,7 @@ const AssistenteIA: React.FC = () => {
     <>
       {!aberto && (
         <button type="button" onClick={() => setAberto(true)} aria-label="Abrir o assistente"
-          className="fixed z-[60] flex items-center gap-2 focus-ring"
+          className="assistente-botao fixed z-[60] flex items-center gap-2 focus-ring"
           style={{ right: 20, bottom: 20, padding: '12px 16px', borderRadius: 999, background: 'linear-gradient(135deg, var(--wine, #7a1f2b), #a33a3a)', color: '#fff', boxShadow: '0 8px 24px rgba(0,0,0,0.35)', fontWeight: 700, fontSize: 14 }}>
           <MessageCircleQuestion size={20} /> Posso ajudar?
         </button>

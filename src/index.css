@@ -520,31 +520,69 @@
    * continuam escuros sobre a foto. Os utilitários fixos (text-white,
    * bg-white/5, bg-[#12141f]...) são remapeados em src/tema-claro.css. */
   .app-shell { color: var(--text-primary); }
+  /* Tema da marca (Manual da Marca Ditado Brasa & Bar, v1.2, nov/2026): base
+   * off-white, terracota no botão principal, verde musgo como acento e na
+   * lateral, texto carvão. O vermelho fica só na logo. Contrastes medidos:
+   * branco sobre terracota 4,6:1; off-white sobre musgo 7,3:1; carvão sobre
+   * off-white 15,2:1; #5e554d (texto de apoio) sobre o cartão 7,2:1. */
   [data-theme="light"] .app-shell {
-    --bg-base:     #f3f1ec;
-    --bg-dark:     #faf9f6;
-    --bg-card:     #ffffff;
-    --bg-elevated: #fbfaf8;
-    --bg-surface:  #f3f1ec;
-    --bg-hover:    rgba(0,0,0,0.035);
-    --bg-active:   rgba(0,0,0,0.06);
-    --border:        rgba(0,0,0,0.09);
-    --border-subtle: rgba(0,0,0,0.05);
-    --border-strong: rgba(0,0,0,0.16);
-    --text-primary:   #1f1b1a;
-    --text-secondary: #5f5955;
-    --text-muted:     #a8a09b;
-    --text-disabled:  #cfc9c3;
-    --gold:        #a3841c;   /* dourado que ainda lê sobre branco (4,1:1) */
-    --gold-light:  #b8961f;
-    --ok-text:     #047857;  --ok-bg:     rgba(16,185,129,0.10);  --ok-border:     rgba(4,120,87,0.30);
-    --warn-text:   #b45309;  --warn-bg:   rgba(245,158,11,0.12);  --warn-border:   rgba(180,83,9,0.32);
-    --danger-text: #b91c1c;  --danger-bg: rgba(239,68,68,0.09);   --danger-border: rgba(185,28,28,0.30);
-    --info-text:   #1d4ed8;  --info-bg:   rgba(59,130,246,0.10);  --info-border:   rgba(29,78,216,0.30);
-    --shadow-rest:    0 1px 2px rgba(31,27,26,0.08);
-    --shadow-raised:  0 4px 14px rgba(31,27,26,0.12);
-    --shadow-overlay: 0 12px 36px rgba(31,27,26,0.22);
+    --bg-base:     #f5efe6;
+    --bg-dark:     #fbf8f2;
+    --bg-card:     #fffdf9;
+    --bg-elevated: #fbf8f2;
+    --bg-surface:  #efe8dd;
+    --bg-hover:    rgba(26,26,26,0.04);
+    --bg-active:   rgba(26,26,26,0.07);
+    --border:        rgba(26,26,26,0.10);
+    --border-subtle: rgba(26,26,26,0.05);
+    --border-strong: rgba(26,26,26,0.18);
+    --text-primary:   #1a1a1a;
+    --text-secondary: #5e554d;
+    --text-muted:     #a39888;
+    --text-disabled:  #cfc6b8;
+    /* "vinho" é o botão principal: no tema da marca, terracota */
+    --wine:         #b65b43;
+    --wine-light:   #a6503a;
+    --wine-deep:    #9e4b36;
+    --wine-deepest: #7a3a2a;
+    --wine-glow:    rgba(182,91,67,0.16);
+    /* "dourado" é o acento (número que importa, item ativo): no tema da marca, verde musgo */
+    --gold:        #46513a;
+    --gold-light:  #5e6a4c;
+    --gold-muted:  rgba(70,81,58,0.12);
+    --terracota:   #b65b43;
+    --musgo:       #46513a;
+    --ok-text:     #3f6b35;  --ok-bg:     rgba(70,107,53,0.12);   --ok-border:     rgba(63,107,53,0.32);
+    --warn-text:   #9a5b0e;  --warn-bg:   rgba(217,151,54,0.16);  --warn-border:   rgba(154,91,14,0.32);
+    --danger-text: #a8321e;  --danger-bg: rgba(182,91,67,0.12);   --danger-border: rgba(168,50,30,0.30);
+    --info-text:   #2f5d8a;  --info-bg:   rgba(47,93,138,0.10);   --info-border:   rgba(47,93,138,0.28);
+    --shadow-rest:    0 1px 2px rgba(26,26,26,0.07);
+    --shadow-raised:  0 4px 14px rgba(26,26,26,0.10);
+    --shadow-overlay: 0 12px 36px rgba(26,26,26,0.20);
+    --shadow-focus:   0 0 0 3px rgba(70,81,58,0.30);
     color-scheme: light;
+  }
+  /* Lateral em verde musgo, com a logo sobre off-white no topo (proposta visual). */
+  /* Cor da área aberta (AREAS[].cor, posta no shell como --cor-area-marca):
+   * título da tela, faixa do PageLayout, fio do topo e selo da coluna. */
+  [data-theme="light"] .app-shell { --cor-area: var(--cor-area-marca); }
+  /* Botão do assistente: fica fora do shell (também no saguão); terracota no claro. */
+  [data-theme="light"] .assistente-botao { background: #b65b43 !important; box-shadow: 0 8px 24px rgba(26,26,26,0.22) !important; }
+  [data-theme="light"] .app-shell .sidebar-solid {
+    --bg-dark:        #46513a;
+    --text-primary:   #f5efe6;
+    --text-secondary: rgba(245,239,230,0.80);
+    --text-muted:     rgba(245,239,230,0.55);
+    --border:         rgba(245,239,230,0.14);
+    --bg-hover:       rgba(245,239,230,0.08);
+    --gold:           #f5efe6;
+    --nav-ativo-bg:   #5e6a4c;
+    --nav-ativo-fio:  #d99736;
+    --nav-logo-bg:    #fbf8f2;
+    --nav-logo-texto: #46513a;
+    --nav-avatar:     #b65b43;
+    background: #46513a;
+    border-right: 0;
   }
   [data-theme="light"] .app-shell .glass-card,
   [data-theme="light"] .app-shell .glass-soft {
@@ -757,9 +795,9 @@
   /* -- Escala tipografica ---------------------------------------------------
      Fechada: um papel por degrau. Piso de 11px, e 11px SO para legenda.
      Substitui os 303 tamanhos cravados (text-[8px] a text-[14px]).          */
-  --fs-display:  2.5rem;    /* 40px - Playfair 700 - so capa: Login, Saguao  */
-  --fs-title:    1.75rem;   /* 28px - Playfair 700 - titulo de pagina (h1)   */
-  --fs-section:  1.25rem;   /* 20px - Playfair 700 - titulo de secao (h2)    */
+  --fs-display:  2.5rem;    /* 40px - serifa 700  - so capa: Login, Saguao  */
+  --fs-title:    1.75rem;   /* 28px - serifa 700  - titulo de pagina (h1)   */
+  --fs-section:  1.25rem;   /* 20px - serifa 700  - titulo de secao (h2)    */
   --fs-subsec:   1rem;      /* 16px - DM Sans 600  - subtitulo (h3)          */
   --fs-body:     0.875rem;  /* 14px - DM Sans 400  - corpo, celula de tabela */
   --fs-label:    0.75rem;   /* 12px - DM Sans 600  - rotulo, cabecalho, badge*/
@@ -814,7 +852,8 @@
 }
 
 /* -- REGRA DA SERIFADA -------------------------------------------------------
-   Playfair Display (font-display): SO em display, titulo de pagina e titulo
+   Serifa editorial (font-display; Charter, proposta do Manual da Marca, com
+   Noto Serif de reserva; era Playfair): SO em display, titulo de pagina e titulo
    de secao. Ela nomeia as coisas; nao explica nem opera.
    DM Sans: todo o resto - subtitulo, corpo, rotulo, legenda, botao, formulario.
    DM Mono (font-mono): SO numero que se compara em coluna (ver .num abaixo).
@@ -832,9 +871,9 @@
 
 @layer components {
   /* -- Tipografia aplicada -- */
-  .t-display { font-family:'Playfair Display',Georgia,serif; font-size:var(--fs-display); font-weight:700; line-height:var(--lh-tight); letter-spacing:var(--tracking-display); }
-  .t-title   { font-family:'Playfair Display',Georgia,serif; font-size:var(--fs-title);   font-weight:700; line-height:var(--lh-tight); letter-spacing:var(--tracking-display); }
-  .t-section { font-family:'Playfair Display',Georgia,serif; font-size:var(--fs-section); font-weight:700; line-height:var(--lh-tight); }
+  .t-display { font-family:Charter,'Bitstream Charter','Noto Serif',Georgia,serif; font-size:var(--fs-display); font-weight:700; line-height:var(--lh-tight); letter-spacing:var(--tracking-display); }
+  .t-title   { font-family:Charter,'Bitstream Charter','Noto Serif',Georgia,serif; font-size:var(--fs-title);   font-weight:700; line-height:var(--lh-tight); letter-spacing:var(--tracking-display); }
+  .t-section { font-family:Charter,'Bitstream Charter','Noto Serif',Georgia,serif; font-size:var(--fs-section); font-weight:700; line-height:var(--lh-tight); }
   .t-subsec  { font-size:var(--fs-subsec);  font-weight:600; line-height:var(--lh-snug); }
   .t-body    { font-size:var(--fs-body);    font-weight:400; line-height:var(--lh-body); letter-spacing:var(--tracking-body); }
   .t-label   { font-size:var(--fs-label);   font-weight:600; line-height:var(--lh-snug); }

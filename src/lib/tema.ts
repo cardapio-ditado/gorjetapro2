@@ -1,5 +1,6 @@
 /**
- * Tema do sistema: escuro (padrão) ou claro.
+ * Tema do sistema: claro (padrão, na identidade da marca Ditado Brasa & Bar) ou escuro.
+ * Quem já escolheu o escuro continua no escuro; quem nunca escolheu entra no da marca.
  *
  * O tema é uma preferência de quem usa, guardada no navegador. Vale só para o
  * shell dos módulos (.app-shell): Login e Saguão são arte sobre foto e não
@@ -12,9 +13,9 @@ const CHAVE = 'dp-tema';
 
 export function lerTema(): Tema {
   try {
-    return localStorage.getItem(CHAVE) === 'claro' ? 'claro' : 'escuro';
+    return localStorage.getItem(CHAVE) === 'escuro' ? 'escuro' : 'claro';
   } catch {
-    return 'escuro';
+    return 'claro';
   }
 }
 
