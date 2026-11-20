@@ -99,6 +99,31 @@ const COR = {
 };
 const corDe = (min: number, s: Setor) => (min >= SETORES[s].vermelho ? COR.vermelho : min >= SETORES[s].amarelo ? COR.amarelo : COR.verde);
 
+/**
+ * Cozinha em colunas (Kadu, 20/11/2026): cada prato vai para a coluna do tipo dele,
+ * pela categoria do cardápio na ZIG. O acompanhamento de assado, executivo, chapa,
+ * costela de colher e burguer (a carne fica na parrilla) vai para Assados.
+ */
+type ColCozinha = 'entrada' | 'fritura' | 'assado' | 'pratos' | 'sobremesa';
+const COLUNAS_COZINHA: Array<{ id: ColCozinha; nome: string; cor: string }> = [
+  { id: 'entrada', nome: 'Entradas e frios', cor: '#2f7d6d' },
+  { id: 'fritura', nome: 'Fritura', cor: '#b7791f' },
+  { id: 'assado', nome: 'Assados e acompanhamentos', cor: '#b65b43' },
+  { id: 'pratos', nome: 'Pratos e lanches', cor: '#5b5fc7' },
+  { id: 'sobremesa', nome: 'Sobremesa', cor: '#9b4f78' },
+];
+const semAcento = (t: string) => t.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
+function colunaCozinha(p: Prato): ColCozinha {
+  if (p.parte === 'acomp') return 'assado';
+  const cat = semAcento(p.categoria ?? '');
+  if (/SOBREMESA/.test(cat)) return 'sobremesa';
+  if (/ENTRADA|FRIOS|SALADA/.test(cat)) return 'entrada';
+  if (/BELISCAR|PORCAO|BOLINHO|PASTE|FOME DE PASSARINHO/.test(cat)) return 'fritura';
+  if (/ASSADO|EXECUTIVO|CHAPA|OUTROS/.test(cat)) return 'assado';
+  return 'pratos';
+}
+const CHAVE_MODO = 'kds-cozinha-modo';
+
 /** Bipe curto para pedido novo (precisa de um toque antes: regra do navegador). */
 function bipe(ctx: AudioContext | null) {
   if (!ctx) return;
@@ -115,6 +140,28 @@ function bipe(ctx: AudioContext | null) {
   }
 }
 
+/** Um prato da cozinha (texto do item e adicionais), igual nos dois modos. */
+const LinhaPrato: React.FC<{ p: Prato; cor: string }> = ({ p, cor }) => (
+  <>
+    {p.parte === 'acomp' && p.espera_parrilla ? (
+      <div style={{ fontSize: 19, fontWeight: 700, lineHeight: 1.25 }}>
+        <span style={{ color: cor }}>{qtd(p.qtd)}×</span> {p.produto} <span style={{ fontSize: 15, opacity: 0.75 }}>(hambúrguer pronto na parrilla)</span>
+      </div>
+    ) : p.parte === 'acomp' ? (
+      <div style={{ fontSize: 15, fontWeight: 700, lineHeight: 1.25, opacity: 0.85 }}>
+        <span style={{ color: cor }}>{qtd(p.qtd)}×</span> Acompanhamento · <EtiquetaTipo p={p} />{nomeCarne(p.produto)} <span style={{ opacity: 0.7 }}>(carne na parrilla)</span>
+      </div>
+    ) : (
+      <div style={{ fontSize: 19, fontWeight: 700, lineHeight: 1.25 }}>
+        <span style={{ color: cor }}>{qtd(p.qtd)}×</span> {p.produto}
+      </div>
+    )}
+    {p.adicionais.map((a, i) => (
+      <div key={i} style={{ fontSize: 16, opacity: 0.9, paddingLeft: 22 }}>+ {a}</div>
+    ))}
+  </>
+);
+
 const Kds: React.FC = () => {
   const navigate = useNavigate();
   const setor = setorDoCaminho(useLocation().pathname);
@@ -124,6 +171,10 @@ const Kds: React.FC = () => {
   const [erro, setErro] = useState<string | null>(null);
   const [agora, setAgora] = useState(Date.now());
   const [iniciado, setIniciado] = useState(false);
+  const [modo, setModo] = useState<'colunas' | 'pedido'>(() => {
+    try { return localStorage.getItem(CHAVE_MODO) === 'pedido' ? 'pedido' : 'colunas'; } catch { return 'colunas'; }
+  });
+  const mudarModo = (m: 'colunas' | 'pedido') => { setModo(m); try { localStorage.setItem(CHAVE_MODO, m); } catch { /* sem storage */ } };
   const audio = useRef<AudioContext | null>(null);
   const vistos = useRef<Set<string> | null>(null);
   const trava = useRef<WakeLockSentinel | null>(null);
@@ -221,9 +272,12 @@ const Kds: React.FC = () => {
   const lidoHa = fila?.lido_em ? Math.round((agora - new Date(fila.lido_em).getTime()) / 1000) : null;
 
   return (
-    <div ref={caixa} className="min-h-screen flex flex-col" style={{ background: '#0b0e13', color: '#ece6da' }}>
-      {/* topo */}
-      <div className="flex flex-wrap items-center gap-3 px-4 py-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+    // A própria tela do KDS rola: em tela cheia o navegador prende o elemento na altura do
+    // tablet, e com a fila maior que a tela não dava para deslizar (bug de 20/11/2026).
+    <div ref={caixa} className="flex flex-col"
+      style={{ height: '100dvh', overflowY: 'auto', overscrollBehavior: 'contain', WebkitOverflowScrolling: 'touch', background: '#0b0e13', color: '#ece6da' }}>
+      {/* topo, sempre visível */}
+      <div className="flex flex-wrap items-center gap-3 px-4 py-3" style={{ position: 'sticky', top: 0, zIndex: 20, background: '#0b0e13', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
         <IconButton aria-label="Voltar ao sistema" onClick={() => navigate('/')}><ArrowLeft size={18} /></IconButton>
         <S.Icone size={22} style={{ color: '#f5c451' }} />
         <Segmented<Setor> rotulo="Setor" valor={setor} onMudar={(s) => navigate(SETORES[s].caminho)}
@@ -231,6 +285,10 @@ const Kds: React.FC = () => {
         <span style={{ fontSize: 26, fontWeight: 800, fontVariantNumeric: 'tabular-nums' }}>{hhmm(new Date(agora).toISOString())}</span>
         <Segmented<'fila' | 'relatorio'> rotulo="Tela" valor={aba} onMudar={setAba}
           opcoes={[{ valor: 'fila', rotulo: `Fila (${pedidos.length})` }, { valor: 'relatorio', rotulo: 'Tempos' }]} />
+        {setor === 'cozinha' && aba === 'fila' && (
+          <Segmented<'colunas' | 'pedido'> rotulo="Arrumação" valor={modo} onMudar={mudarModo}
+            opcoes={[{ valor: 'colunas', rotulo: 'Colunas' }, { valor: 'pedido', rotulo: 'Por pedido' }]} />
+        )}
         <div className="flex-1" />
         {r && (
           <span style={{ fontSize: 15, opacity: 0.85 }}>
@@ -255,6 +313,9 @@ const Kds: React.FC = () => {
           {setor === 'parrilla' && pedidos.length > 0 ? (
             <ParrillaColunas pratos={(fila?.pratos ?? []).filter((p) => !p.pronto_em)} agora={agora}
               onPronto={(id) => marcar([id], 'pronto')} onPonto={marcarPonto} />
+          ) : setor === 'cozinha' && modo === 'colunas' && pedidos.length > 0 ? (
+            <CozinhaColunas pratos={(fila?.pratos ?? []).filter((p) => !p.pronto_em)} agora={agora}
+              onPronto={(ids) => marcar(ids, 'pronto')} />
           ) : pedidos.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center gap-2" style={{ minHeight: '50vh', opacity: 0.7 }}>
               <S.Icone size={48} />
@@ -277,22 +338,7 @@ const Kds: React.FC = () => {
                       {ped.pratos.map((p) => (
                         <button key={p.id} type="button" onClick={() => marcar([p.id], 'pronto')} className="w-full text-left py-1.5"
                           style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }} title={`Toque para marcar só este ${S.item}`}>
-                          {p.parte === 'acomp' && p.espera_parrilla ? (
-                            <div style={{ fontSize: 19, fontWeight: 700, lineHeight: 1.25 }}>
-                              <span style={{ color: c.texto }}>{qtd(p.qtd)}×</span> {p.produto} <span style={{ fontSize: 15, opacity: 0.75 }}>(hambúrguer pronto na parrilla)</span>
-                            </div>
-                          ) : p.parte === 'acomp' ? (
-                            <div style={{ fontSize: 15, fontWeight: 700, lineHeight: 1.25, opacity: 0.85 }}>
-                              <span style={{ color: c.texto }}>{qtd(p.qtd)}×</span> Acompanhamento · <EtiquetaTipo p={p} />{nomeCarne(p.produto)} <span style={{ opacity: 0.7 }}>(carne na parrilla)</span>
-                            </div>
-                          ) : (
-                            <div style={{ fontSize: 19, fontWeight: 700, lineHeight: 1.25 }}>
-                              <span style={{ color: c.texto }}>{qtd(p.qtd)}×</span> {p.produto}
-                            </div>
-                          )}
-                          {p.adicionais.map((a, i) => (
-                            <div key={i} style={{ fontSize: 16, opacity: 0.9, paddingLeft: 22 }}>+ {a}</div>
-                          ))}
+                          <LinhaPrato p={p} cor={c.texto} />
                         </button>
                       ))}
                     </div>
@@ -332,6 +378,57 @@ const Kds: React.FC = () => {
           <span style={{ fontSize: 16, opacity: 0.75 }}>Liga o som de pedido novo, deixa a tela acesa e abre em tela cheia.</span>
         </button>
       )}
+    </div>
+  );
+};
+
+/** Cozinha em colunas por tipo: um cartão por prato, do mais antigo para o mais novo. */
+const CozinhaColunas: React.FC<{ pratos: Prato[]; agora: number; onPronto: (ids: number[]) => void }> = ({ pratos, agora, onPronto }) => {
+  const ordem = [...pratos].sort((a, b) => a.pedido_em.localeCompare(b.pedido_em) || a.id - b.id);
+  const col = new Map(ordem.map((p) => [p.id, colunaCozinha(p)] as const));
+  // O que mais o mesmo pedido tem em outras colunas, para sair tudo junto.
+  const outras = (p: Prato) => {
+    const m = new Map<ColCozinha, number>();
+    for (const q of ordem) if (q.transacao === p.transacao && col.get(q.id) !== col.get(p.id)) m.set(col.get(q.id)!, (m.get(col.get(q.id)!) ?? 0) + q.qtd);
+    return [...m.entries()].map(([c, n]) => `+${qtd(n)} em ${COLUNAS_COZINHA.find((x) => x.id === c)!.nome}`);
+  };
+  return (
+    <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${COLUNAS_COZINHA.length}, minmax(190px, 1fr))`, overflowX: 'auto', alignItems: 'start' }}>
+      {COLUNAS_COZINHA.map((c0) => {
+        const itens = ordem.filter((p) => col.get(p.id) === c0.id);
+        return (
+          <div key={c0.id} className="flex flex-col gap-2" style={{ minWidth: 0 }}>
+            <div className="flex items-center gap-1.5 px-2 py-2" style={{ background: c0.cor, color: '#fff', borderRadius: 10, fontSize: 15, fontWeight: 800, lineHeight: 1.15 }}>
+              <span className="flex-1">{c0.nome}</span>
+              <span style={{ fontSize: 18 }}>{itens.reduce((s, p) => s + p.qtd, 0) || ''}</span>
+            </div>
+            {itens.map((p) => {
+              const ms = agora - new Date(p.pedido_em).getTime();
+              const c = corDe(ms / 60000, 'cozinha');
+              const mais = outras(p);
+              return (
+                <div key={p.id} className="flex flex-col" style={{ border: `3px solid ${c.borda}`, background: c.fundo, borderRadius: 12, overflow: 'hidden' }}>
+                  <div className="flex items-baseline justify-between px-2.5 pt-1.5">
+                    <span style={{ fontSize: 26, fontWeight: 900, color: c.texto, fontVariantNumeric: 'tabular-nums' }}>{relogio(ms)}</span>
+                    <span style={{ fontSize: 13, opacity: 0.85, textAlign: 'right' }}>{hhmm(p.pedido_em)}<br />{primeiro(p.garcom)}</span>
+                  </div>
+                  {p.obs && <div className="px-2.5" style={{ fontSize: 17, fontWeight: 800 }}>{p.obs}</div>}
+                  <div className="px-2.5 py-1.5"><LinhaPrato p={p} cor={c.texto} /></div>
+                  {mais.length > 0 && (
+                    <div className="px-2.5 pb-1.5" style={{ fontSize: 13, fontWeight: 700, color: '#f5c451' }}>
+                      Mesmo pedido: {mais.join(' · ')}
+                    </div>
+                  )}
+                  <button type="button" onClick={() => onPronto([p.id])}
+                    className="flex items-center justify-center gap-2" style={{ minHeight: 48, background: c.borda, color: '#0b0e13', fontSize: 18, fontWeight: 800 }}>
+                    <Check size={20} /> Pronto
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        );
+      })}
     </div>
   );
 };
