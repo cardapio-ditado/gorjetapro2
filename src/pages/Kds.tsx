@@ -229,7 +229,7 @@ const Kds: React.FC = () => {
 
   const comecar = () => {
     try { audio.current = new AudioContext(); bipe(audio.current); } catch { /* sem som */ }
-    void caixa.current?.requestFullscreen?.().catch(() => undefined);
+    void document.documentElement.requestFullscreen?.().catch(() => undefined);
     setIniciado(true);
   };
 
@@ -272,10 +272,10 @@ const Kds: React.FC = () => {
   const lidoHa = fila?.lido_em ? Math.round((agora - new Date(fila.lido_em).getTime()) / 1000) : null;
 
   return (
-    // A própria tela do KDS rola: em tela cheia o navegador prende o elemento na altura do
-    // tablet, e com a fila maior que a tela não dava para deslizar (bug de 20/11/2026).
-    <div ref={caixa} className="flex flex-col"
-      style={{ height: '100dvh', overflowY: 'auto', overscrollBehavior: 'contain', WebkitOverflowScrolling: 'touch', background: '#0b0e13', color: '#ece6da' }}>
+    // Tela cheia é a PÁGINA inteira (document.documentElement), não esta caixa: com a caixa em
+    // tela cheia o navegador a prende na altura do tablet e o dedo não desliza a fila (bug de
+    // 20/11/2026, em todos os setores). Assim quem rola é a própria página, com o topo fixo.
+    <div ref={caixa} className="flex flex-col" style={{ minHeight: '100dvh', background: '#0b0e13', color: '#ece6da' }}>
       {/* topo, sempre visível */}
       <div className="flex flex-wrap items-center gap-3 px-4 py-3" style={{ position: 'sticky', top: 0, zIndex: 20, background: '#0b0e13', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
         <IconButton aria-label="Voltar ao sistema" onClick={() => navigate('/')}><ArrowLeft size={18} /></IconButton>
@@ -299,7 +299,7 @@ const Kds: React.FC = () => {
           {lidoHa === null ? 'lendo a ZIG…' : `ZIG lida há ${lidoHa}s`}
           {r?.atraso_zig ? ` · a ZIG mostra o pedido em até ~${r.atraso_zig.ate_seg}s` : ''}
         </span>
-        <IconButton aria-label="Tela cheia" onClick={() => (document.fullscreenElement ? void document.exitFullscreen() : void caixa.current?.requestFullscreen?.())}>
+        <IconButton aria-label="Tela cheia" onClick={() => (document.fullscreenElement ? void document.exitFullscreen() : void document.documentElement.requestFullscreen?.())}>
           <Maximize2 size={18} />
         </IconButton>
       </div>
