@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { AlertTriangle, ArrowLeft, BarChart3, Beer, ChefHat, Check, Flame, Martini, Maximize2, RotateCcw } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, BarChart3, Beer, ChefHat, Check, Flame, History, Martini, Maximize2, RotateCcw, Search } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { Button, IconButton, Segmented } from '../components/ui';
@@ -54,6 +54,19 @@ const NAO_LEVA_PONTO = /COXA|\bASAS?\b/;
 /** Pronto travado depois de escolher o ponto, e janela do segundo toque. */
 const TRAVA_PONTO_MS = 15_000;
 const CONFIRMAR_MS = 3_000;
+
+/**
+ * Dois toques para finalizar, igual em todos os KDS (Kadu, 20/11/2026): o primeiro toque
+ * arma o botão ("Toque de novo para confirmar") e o segundo, em até 3 s, confirma.
+ */
+function useDoisToques() {
+  const [armado, setArmado] = useState<string | null>(null);
+  useEffect(() => { if (!armado) return; const t = setTimeout(() => setArmado(null), CONFIRMAR_MS); return () => clearTimeout(t); }, [armado]);
+  const tocar = (chave: string, fazer: () => void) => { if (armado === chave) { setArmado(null); fazer(); } else setArmado(chave); };
+  return { armado, tocar };
+}
+type DoisToques = ReturnType<typeof useDoisToques>;
+const AMARELO_CONF = '#f5c451';
 
 /** Tipo do prato da parrilla (executivo, assado ou chapa): pela categoria da ZIG ou, sem ela, pelo começo do nome. */
 const TIPO_PRATO = {
@@ -166,7 +179,8 @@ const Kds: React.FC = () => {
   const navigate = useNavigate();
   const setor = setorDoCaminho(useLocation().pathname);
   const S = SETORES[setor];
-  const [aba, setAba] = useState<'fila' | 'relatorio'>('fila');
+  const [aba, setAba] = useState<'fila' | 'relatorio' | 'historico'>('fila');
+  const dois = useDoisToques();
   const [fila, setFila] = useState<Fila | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [agora, setAgora] = useState(Date.now());
@@ -283,8 +297,8 @@ const Kds: React.FC = () => {
         <Segmented<Setor> rotulo="Setor" valor={setor} onMudar={(s) => navigate(SETORES[s].caminho)}
           opcoes={(Object.keys(SETORES) as Setor[]).map((s) => ({ valor: s, rotulo: SETORES[s].nome }))} />
         <span style={{ fontSize: 26, fontWeight: 800, fontVariantNumeric: 'tabular-nums' }}>{hhmm(new Date(agora).toISOString())}</span>
-        <Segmented<'fila' | 'relatorio'> rotulo="Tela" valor={aba} onMudar={setAba}
-          opcoes={[{ valor: 'fila', rotulo: `Fila (${pedidos.length})` }, { valor: 'relatorio', rotulo: 'Tempos' }]} />
+        <Segmented<'fila' | 'relatorio' | 'historico'> rotulo="Tela" valor={aba} onMudar={setAba}
+          opcoes={[{ valor: 'fila', rotulo: `Fila (${pedidos.length})` }, { valor: 'historico', rotulo: 'Histórico' }, { valor: 'relatorio', rotulo: 'Tempos' }]} />
         {setor === 'cozinha' && aba === 'fila' && (
           <Segmented<'colunas' | 'pedido'> rotulo="Arrumação" valor={modo} onMudar={mudarModo}
             opcoes={[{ valor: 'colunas', rotulo: 'Colunas' }, { valor: 'pedido', rotulo: 'Por pedido' }]} />
@@ -314,7 +328,7 @@ const Kds: React.FC = () => {
             <ParrillaColunas pratos={(fila?.pratos ?? []).filter((p) => !p.pronto_em)} agora={agora}
               onPronto={(id) => marcar([id], 'pronto')} onPonto={marcarPonto} />
           ) : setor === 'cozinha' && modo === 'colunas' && pedidos.length > 0 ? (
-            <CozinhaColunas pratos={(fila?.pratos ?? []).filter((p) => !p.pronto_em)} agora={agora}
+            <CozinhaColunas pratos={(fila?.pratos ?? []).filter((p) => !p.pronto_em)} agora={agora} dois={dois}
               onPronto={(ids) => marcar(ids, 'pronto')} />
           ) : pedidos.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center gap-2" style={{ minHeight: '50vh', opacity: 0.7 }}>
@@ -336,15 +350,17 @@ const Kds: React.FC = () => {
                     {ped.obs && <div className="px-3" style={{ fontSize: 20, fontWeight: 800 }}>{ped.obs}</div>}
                     <div className="flex-1 px-3 py-2">
                       {ped.pratos.map((p) => (
-                        <button key={p.id} type="button" onClick={() => marcar([p.id], 'pronto')} className="w-full text-left py-1.5"
-                          style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }} title={`Toque para marcar só este ${S.item}`}>
+                        <button key={p.id} type="button" onClick={() => dois.tocar(`i${p.id}`, () => marcar([p.id], 'pronto'))} className="w-full text-left py-1.5"
+                          style={{ borderTop: '1px solid rgba(255,255,255,0.08)', ...(dois.armado === `i${p.id}` ? { background: 'rgba(245,196,81,0.18)', boxShadow: `inset 4px 0 0 ${AMARELO_CONF}` } : {}) }}
+                          title={`Dois toques para marcar só este ${S.item}`}>
                           <LinhaPrato p={p} cor={c.texto} />
+                          {dois.armado === `i${p.id}` && <div style={{ fontSize: 14, fontWeight: 800, color: AMARELO_CONF }}>Toque de novo para marcar só este {S.item}</div>}
                         </button>
                       ))}
                     </div>
-                    <button type="button" onClick={() => marcar(ped.pratos.map((p) => p.id), 'pronto')}
-                      className="flex items-center justify-center gap-2" style={{ minHeight: 56, background: c.borda, color: '#0b0e13', fontSize: 20, fontWeight: 800 }}>
-                      <Check size={22} /> {S.feito}
+                    <button type="button" onClick={() => dois.tocar(`p${ped.transacao}`, () => marcar(ped.pratos.map((p) => p.id), 'pronto'))}
+                      className="flex items-center justify-center gap-2" style={{ minHeight: 56, background: dois.armado === `p${ped.transacao}` ? AMARELO_CONF : c.borda, color: '#0b0e13', fontSize: dois.armado === `p${ped.transacao}` ? 17 : 20, fontWeight: 800 }}>
+                      <Check size={22} /> {dois.armado === `p${ped.transacao}` ? 'Toque de novo para confirmar' : S.feito}
                     </button>
                   </div>
                 );
@@ -354,18 +370,20 @@ const Kds: React.FC = () => {
 
           {prontos.length > 0 && (
             <div className="mt-6">
-              <p style={{ fontSize: 14, opacity: 0.6, marginBottom: 6 }}>{S.feitos.charAt(0).toUpperCase() + S.feitos.slice(1)} nos últimos 15 minutos (toque para voltar à fila)</p>
+              <p style={{ fontSize: 14, opacity: 0.6, marginBottom: 6 }}>{S.feitos.charAt(0).toUpperCase() + S.feitos.slice(1)} nos últimos 15 minutos (dois toques para voltar à fila)</p>
               <div className="flex flex-wrap gap-2">
                 {prontos.map((p) => (
-                  <button key={p.id} type="button" onClick={() => marcar([p.id], 'desfazer')} className="flex items-center gap-2 px-3 py-2"
-                    style={{ border: '1px solid rgba(255,255,255,0.15)', borderRadius: 10, fontSize: 15 }}>
-                    <RotateCcw size={14} /> {qtd(p.qtd)}× {setor === 'parrilla' ? <><EtiquetaTipo p={p} />{nomeCarne(p.produto)}</> : p.produto} · {Math.round((new Date(p.pronto_em!).getTime() - new Date(p.pedido_em).getTime()) / 60000)} min
+                  <button key={p.id} type="button" onClick={() => dois.tocar(`d${p.id}`, () => marcar([p.id], 'desfazer'))} className="flex items-center gap-2 px-3 py-2"
+                    style={{ border: `1px solid ${dois.armado === `d${p.id}` ? AMARELO_CONF : 'rgba(255,255,255,0.15)'}`, borderRadius: 10, fontSize: 15, background: dois.armado === `d${p.id}` ? 'rgba(245,196,81,0.18)' : undefined }}>
+                    <RotateCcw size={14} /> {dois.armado === `d${p.id}` ? <b style={{ color: AMARELO_CONF }}>Toque de novo para voltar à fila: </b> : null}{qtd(p.qtd)}× {setor === 'parrilla' ? <><EtiquetaTipo p={p} />{nomeCarne(p.produto)}</> : p.produto} · {Math.round((new Date(p.pronto_em!).getTime() - new Date(p.pedido_em).getTime()) / 60000)} min
                   </button>
                 ))}
               </div>
             </div>
           )}
         </div>
+      ) : aba === 'historico' ? (
+        <Historico key={setor} setor={setor} noiteAtual={fila?.noite ?? null} />
       ) : (
         <Relatorio key={setor} setor={setor} noiteAtual={fila?.noite ?? null} />
       )}
@@ -383,7 +401,7 @@ const Kds: React.FC = () => {
 };
 
 /** Cozinha em colunas por tipo: um cartão por prato, do mais antigo para o mais novo. */
-const CozinhaColunas: React.FC<{ pratos: Prato[]; agora: number; onPronto: (ids: number[]) => void }> = ({ pratos, agora, onPronto }) => {
+const CozinhaColunas: React.FC<{ pratos: Prato[]; agora: number; dois: DoisToques; onPronto: (ids: number[]) => void }> = ({ pratos, agora, dois, onPronto }) => {
   const ordem = [...pratos].sort((a, b) => a.pedido_em.localeCompare(b.pedido_em) || a.id - b.id);
   const col = new Map(ordem.map((p) => [p.id, colunaCozinha(p)] as const));
   // O que mais o mesmo pedido tem em outras colunas, para sair tudo junto.
@@ -419,9 +437,9 @@ const CozinhaColunas: React.FC<{ pratos: Prato[]; agora: number; onPronto: (ids:
                       Mesmo pedido: {mais.join(' · ')}
                     </div>
                   )}
-                  <button type="button" onClick={() => onPronto([p.id])}
-                    className="flex items-center justify-center gap-2" style={{ minHeight: 48, background: c.borda, color: '#0b0e13', fontSize: 18, fontWeight: 800 }}>
-                    <Check size={20} /> Pronto
+                  <button type="button" onClick={() => dois.tocar(`c${p.id}`, () => onPronto([p.id]))}
+                    className="flex items-center justify-center gap-2" style={{ minHeight: 48, background: dois.armado === `c${p.id}` ? AMARELO_CONF : c.borda, color: '#0b0e13', fontSize: dois.armado === `c${p.id}` ? 15 : 18, fontWeight: 800, lineHeight: 1.15 }}>
+                    <Check size={20} /> {dois.armado === `c${p.id}` ? 'Toque de novo para confirmar' : 'Pronto'}
                   </button>
                 </div>
               );
@@ -641,6 +659,98 @@ const Relatorio: React.FC<{ setor: Setor; noiteAtual: string | null }> = ({ seto
             ))}
           </div>
         </>
+      )}
+      <div className="mt-6"><Button tamanho="sm" onClick={() => setNoite(noiteAtual ?? noite)}>Voltar para a noite de hoje</Button></div>
+    </div>
+  );
+};
+
+interface ItemHist extends Prato { visto_em: string | null; cancelado: boolean | null }
+
+/**
+ * Histórico da noite (Kadu, 20/11/2026): cada item do setor, com a hora que entrou na ZIG,
+ * a hora que apareceu no KDS, a hora do pronto, o tempo, o garçom que lançou e quem marcou.
+ * Usa a mesma leitura dos Tempos (kds_pratos), sem mudar nada no banco.
+ */
+const Historico: React.FC<{ setor: Setor; noiteAtual: string | null }> = ({ setor, noiteAtual }) => {
+  const S = SETORES[setor];
+  const [noite, setNoite] = useState<string>(noiteAtual ?? new Date(Date.now() - 4 * 3600 * 1000).toISOString().slice(0, 10));
+  const [lista, setLista] = useState<ItemHist[] | null>(null);
+  const [carregando, setCarregando] = useState(false);
+  const [filtro, setFiltro] = useState<'feitos' | 'sem' | 'todos'>('feitos');
+  const [busca, setBusca] = useState('');
+
+  useEffect(() => {
+    let vivo = true;
+    setCarregando(true);
+    supabase.functions.invoke('kds-cozinha', { body: { acao: 'relatorio', noite, setor } }).then(({ data }) => {
+      if (vivo) { setLista(data?.ok ? ((data.lista ?? []) as ItemHist[]) : null); setCarregando(false); }
+    });
+    return () => { vivo = false; };
+  }, [noite, setor]);
+
+  const termo = semAcento(busca.trim());
+  const linhas = (lista ?? [])
+    .filter((p) => (filtro === 'todos' ? true : filtro === 'feitos' ? !!p.pronto_em : !p.pronto_em))
+    .filter((p) => !termo || semAcento(`${p.produto} ${p.obs ?? ''} ${p.garcom ?? ''} ${p.pronto_por ?? ''} ${p.adicionais.join(' ')}`).includes(termo))
+    .sort((a, b) => String(b.pronto_em ?? b.pedido_em).localeCompare(String(a.pronto_em ?? a.pedido_em)));
+  const nFeitos = (lista ?? []).filter((p) => p.pronto_em).length;
+  const nSem = (lista ?? []).length - nFeitos;
+
+  const cel: React.CSSProperties = { padding: '8px 10px', borderBottom: '1px solid rgba(255,255,255,0.08)', fontSize: 15, verticalAlign: 'top' };
+  const hms = (iso: string | null) => (iso ? new Date(iso).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: FUSO }) : '—');
+  return (
+    <div className="p-4">
+      <div className="flex flex-wrap items-center gap-3 mb-4">
+        <History size={20} />
+        <span style={{ fontSize: 18, fontWeight: 800 }}>Histórico · {S.nome}</span>
+        <input type="date" value={noite} onChange={(e) => setNoite(e.target.value)} aria-label="Noite"
+          style={{ background: '#151a22', color: '#ece6da', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 8, padding: '6px 10px', fontSize: 16 }} />
+        <Segmented<'feitos' | 'sem' | 'todos'> rotulo="Mostrar" valor={filtro} onMudar={setFiltro}
+          opcoes={[{ valor: 'feitos', rotulo: `Encerrados (${nFeitos})` }, { valor: 'sem', rotulo: `Sem ${S.feito.toLowerCase()} (${nSem})` }, { valor: 'todos', rotulo: 'Todos' }]} />
+        <label className="flex items-center gap-2 px-3" style={{ background: '#151a22', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 8, height: 38 }}>
+          <Search size={16} style={{ opacity: 0.7 }} />
+          <input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Mesa, prato ou garçom" aria-label="Buscar"
+            style={{ background: 'transparent', color: '#ece6da', outline: 'none', fontSize: 16, width: 200 }} />
+        </label>
+        {carregando && <span style={{ opacity: 0.6 }}>carregando…</span>}
+      </div>
+      {!lista || linhas.length === 0 ? (
+        <p style={{ opacity: 0.7, fontSize: 16 }}>{carregando ? '' : 'Nada encontrado nesta noite.'}</p>
+      ) : (
+        <div style={{ overflowX: 'auto' }}>
+          <table className="w-full" style={{ borderCollapse: 'collapse', minWidth: 900 }}>
+            <thead><tr style={{ textAlign: 'left', opacity: 0.65 }}>
+              <th style={cel}>Saiu</th><th style={cel}>Item</th><th style={cel}>Mesa / obs.</th><th style={cel}>Garçom</th>
+              <th style={cel}>Entrou (ZIG)</th><th style={cel}>No KDS</th><th style={cel}>Tempo</th><th style={cel}>Marcou</th>
+            </tr></thead>
+            <tbody>
+              {linhas.map((p) => {
+                const min = p.pronto_em ? (new Date(p.pronto_em).getTime() - new Date(p.pedido_em).getTime()) / 60000 : null;
+                const pt = PONTOS.find((x) => x.id === pontoFinal(p));
+                return (
+                  <tr key={p.id} style={{ opacity: p.cancelado ? 0.5 : 1 }}>
+                    <td style={{ ...cel, fontWeight: 800, fontVariantNumeric: 'tabular-nums' }}>{p.pronto_em ? hms(p.pronto_em) : <span style={{ opacity: 0.6 }}>—</span>}</td>
+                    <td style={cel}>
+                      <div style={{ fontWeight: 700 }}>
+                        {qtd(p.qtd)}× {p.parte === 'acomp' ? 'Acompanhamento · ' : ''}{setor === 'parrilla' ? <><EtiquetaTipo p={p} />{nomeCarne(p.produto)}</> : p.produto}
+                        {p.cancelado && <span style={{ marginLeft: 6, fontSize: 12, color: COR.vermelho.texto }}>cancelado</span>}
+                      </div>
+                      {p.adicionais.length > 0 && <div style={{ fontSize: 13, opacity: 0.8 }}>+ {p.adicionais.join(' · ')}</div>}
+                      {pt && <div style={{ fontSize: 13, opacity: 0.8 }}>Ponto: {pt.nome}{p.ponto_manual ? ' (marcado no tablet)' : ''}</div>}
+                    </td>
+                    <td style={cel}>{p.obs ?? '—'}</td>
+                    <td style={cel}>{p.garcom ?? 'Balcão'}</td>
+                    <td style={{ ...cel, fontVariantNumeric: 'tabular-nums' }}>{hms(p.pedido_em)}</td>
+                    <td style={{ ...cel, fontVariantNumeric: 'tabular-nums' }}>{hms(p.visto_em)}</td>
+                    <td style={{ ...cel, fontWeight: 800, color: min === null ? undefined : corDe(min, setor).texto }}>{min === null ? '—' : `${Math.round(min)} min`}</td>
+                    <td style={cel}>{p.pronto_por ?? '—'}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       )}
       <div className="mt-6"><Button tamanho="sm" onClick={() => setNoite(noiteAtual ?? noite)}>Voltar para a noite de hoje</Button></div>
     </div>
