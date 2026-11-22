@@ -271,9 +271,9 @@
   }
   .chip:hover { color: var(--text-primary); background: var(--bg-hover); }
   .chip-on          { background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.3); color: var(--text-primary); }
-  .chip-on.chip-perigo  { background: rgba(239,68,68,0.12);  border-color: rgba(248,113,113,0.5); color: #fca5a5; }
-  .chip-on.chip-atencao { background: rgba(245,158,11,0.12); border-color: rgba(251,191,36,0.5);  color: #fcd34d; }
-  .chip-on.chip-certo   { background: rgba(16,185,129,0.12); border-color: rgba(52,211,153,0.5);  color: #6ee7b7; }
+  .chip-on.chip-perigo  { background: var(--danger-bg); border-color: var(--danger-border); color: var(--danger-text); }
+  .chip-on.chip-atencao { background: var(--warn-bg);   border-color: var(--warn-border);   color: var(--warn-text); }
+  .chip-on.chip-certo   { background: var(--ok-bg);     border-color: var(--ok-border);     color: var(--ok-text); }
   .chip-on.chip-ouro    { background: rgba(212,175,55,0.14); border-color: rgba(212,175,55,0.5);  color: var(--gold-light); }
 
   /* ── Segmentado: uma escolha entre poucas (Toda a casa | Central | Bar) ── */

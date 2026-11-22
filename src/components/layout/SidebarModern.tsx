@@ -57,7 +57,7 @@ export const AREAS: Array<{ id: Area; nome: string; icone: React.ElementType; de
 export const MODULES: Module[] = [
   { name: 'Início',         path: '/dashboard',          icon: Home,          slug: 'dashboard',       group: 'operacao' },
   { name: 'Portal do Gerente', path: '/portal-gerente',  icon: LayoutDashboard, slug: 'dashboard',     group: 'operacao', tambem: 'livro' },
-  { name: 'Agenda do Dia',  path: '/agenda-diaria',      icon: ClipboardList, slug: 'dashboard',       group: 'operacao' },
+  { name: 'Fila de Pagamentos', path: '/fila-pagamentos', icon: ClipboardList, slug: 'financeiro',     group: 'financeiro' },
   { name: 'RH',             path: '/staff',              icon: Users,         slug: 'rh',              group: 'rh',
     subModules: [
       { name: 'Recrutamento',  path: '/recruitment' },
