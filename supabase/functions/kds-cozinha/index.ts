@@ -127,6 +127,20 @@ async function zig(endpoint: string, periodo: string) {
 const utc = (s: unknown) => (s ? `${String(s).slice(0, 19)}Z` : null);
 const limpo = (s: unknown) => String(s ?? '').replace(/\t/g, ' ').replace(/\s+/g, ' ').trim();
 
+/**
+ * Todas as linhas de uma consulta: a API do banco devolve no máximo 1000 por vez.
+ * (21/11/2026: a noite com feijoada passou de 1000 itens e tudo depois das 21:34 sumiu dos KDS.)
+ */
+async function todasAsLinhas(consulta: (de: number, ate: number) => any): Promise<any[]> {
+  const saida: any[] = [];
+  for (let de = 0; ; de += 1000) {
+    const { data, error } = await consulta(de, de + 999);
+    if (error) throw new Error(error.message);
+    saida.push(...(data ?? []));
+    if (!data || data.length < 1000) return saida;
+  }
+}
+
 /** A noite em andamento, como a ZIG a chama (data UTC; antes das 10h UTC, a de ontem). */
 function noiteAtual(agora = new Date()) {
   const ontem = agora.getUTCHours() < 10;
@@ -239,7 +253,7 @@ async function ler(): Promise<{ lido_em: string | null; erro: string | null; leu
     if (doObs && carnes.length === 1 && semPonto.length === 1) { semPonto[0].ponto = doObs; semPonto[0].ponto_origem = 'obs'; }
   }
 
-  const { data: jaTem } = await db.from('kds_pratos').select('chave, qtd, cancelado, adicionais, ponto').eq('noite', noite);
+  const jaTem = await todasAsLinhas((de, ate) => db.from('kds_pratos').select('chave, qtd, cancelado, adicionais, ponto').eq('noite', noite).order('id').range(de, ate));
   const existentes = new Map((jaTem ?? []).map((r: any) => [r.chave as string, r]));
   const novos = [];
   for (const p of lista) {
@@ -383,8 +397,7 @@ Deno.serve(async (req) => {
       const desde = Date.now() - PRONTOS_MIN * 60_000;
       const velho = Date.now() - ESQUECIDO_H * 3600_000;
       // A noite tem algumas centenas de itens nos três setores: filtra aqui o do setor e o que vai para a tela.
-      const { data: todos, error } = await db.from('kds_pratos').select(CAMPOS).eq('noite', noite).order('pedido_em');
-      if (error) throw new Error(error.message);
+      const todos = await todasAsLinhas((de, ate) => db.from('kds_pratos').select(CAMPOS).eq('noite', noite).order('pedido_em').order('id').range(de, ate));
       const ms = (t: string) => new Date(t).getTime();
       const doSetor = liberarEspera((todos ?? []).filter((p: any) => p.setor === setor), todos ?? []);
       const pratos = doSetor.filter((p: any) => !p.cancelado && ms(p.pedido_em) > velho && (!p.pronto_em || ms(p.pronto_em) > desde));
@@ -436,8 +449,7 @@ Deno.serve(async (req) => {
 
     if (acao === 'relatorio') {
       const noite = /^\d{4}-\d{2}-\d{2}$/.test(String(body?.noite || '')) ? String(body.noite) : noiteAtual().noite;
-      const { data: pratos, error } = await db.from('kds_pratos').select(CAMPOS).eq('noite', noite).eq('setor', setor).order('pedido_em');
-      if (error) throw new Error(error.message);
+      const pratos = await todasAsLinhas((de, ate) => db.from('kds_pratos').select(CAMPOS).eq('noite', noite).eq('setor', setor).order('pedido_em').order('id').range(de, ate));
       const { data: estado } = await db.from('kds_estado').select('campos').eq('id', 1).maybeSingle();
       return json({
         ok: true, noite, setor, limites: LIMITES[setor], ...resumir(pratos ?? [], LIMITES[setor]), campos_zig: estado?.campos ?? [], lista: pratos ?? [],
