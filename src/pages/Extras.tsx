@@ -8,6 +8,7 @@ import {
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { exportToExcel } from '../utils/reportGenerator';
+import ExtratoPagamentos from '../components/pagamentos/ExtratoPagamentos';
 import { urlWhatsApp } from '../components/inventory/comprasShared';
 import {
   Badge, Button, Chip, EmptyState, IconButton, Input, KPICard, Modal, PageHeader, SectionCard, Segmented, Select,
@@ -28,7 +29,7 @@ dayjs.locale('pt-br');
  * Músicos: não dão baixa no Financeiro.
  */
 
-type Visao = 'diarias' | 'a_pagar' | 'pessoas' | 'valores';
+type Visao = 'diarias' | 'a_pagar' | 'pagamentos' | 'pessoas' | 'valores';
 type Filtro = 'todos' | 'a_pagar' | 'pago' | 'faltou';
 
 interface Pagamento {
@@ -50,7 +51,7 @@ const Extras: React.FC = () => {
   // ?visao=a_pagar abre direto numa visão (o Portal do Gestor usa).
   const [visao, setVisao] = useState<Visao>(() => {
     const v = new URLSearchParams(window.location.search).get('visao') as Visao | null;
-    return v && (['diarias', 'a_pagar', 'pessoas', 'valores'] as Visao[]).includes(v) ? v : 'diarias';
+    return v && (['diarias', 'a_pagar', 'pagamentos', 'pessoas', 'valores'] as Visao[]).includes(v) ? v : 'diarias';
   });
   const [mes, setMes] = useState(dayjs().startOf('month'));
   const [inicio, setInicio] = useState(dayjs().startOf('month').format('YYYY-MM-DD'));
@@ -197,7 +198,7 @@ const Extras: React.FC = () => {
 
       <Toolbar className="mb-4">
         <Segmented<Visao> rotulo="Visão" valor={visao} onMudar={setVisao}
-          opcoes={[{ valor: 'diarias', rotulo: 'Diárias' }, { valor: 'a_pagar', rotulo: 'A pagar' }, { valor: 'pessoas', rotulo: 'Pessoas' }, { valor: 'valores', rotulo: 'Tabela de valores' }]} />
+          opcoes={[{ valor: 'diarias', rotulo: 'Diárias' }, { valor: 'a_pagar', rotulo: 'A pagar' }, { valor: 'pagamentos', rotulo: 'Pagamentos' }, { valor: 'pessoas', rotulo: 'Pessoas' }, { valor: 'valores', rotulo: 'Tabela de valores' }]} />
         <Toolbar.Espaco />
         {(visao === 'diarias' || visao === 'a_pagar' || visao === 'pessoas') && (
           <div className="relative" style={{ minWidth: 220 }}>
@@ -368,6 +369,7 @@ const Extras: React.FC = () => {
 
       {visao === 'a_pagar' && <APagar versao={versao} busca={busca} onPagar={setPagando} onDetalhe={setDetalhe}
         onPagarTudo={(nome, lista) => setLote({ titulo: nome, diarias: lista })} />}
+      {visao === 'pagamentos' && <ExtratoPagamentos modulo="extras" />}
       {visao === 'pessoas' && <Pessoas pessoas={pessoas} tipos={tipos} busca={busca} versao={versao} onMudou={async m => { setAviso(m); await carregar(); }} />}
       {visao === 'valores' && <Valores tipos={tipos} onMudou={async m => { setAviso(m); await carregar(); }} />}
 
