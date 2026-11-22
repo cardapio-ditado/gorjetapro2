@@ -6,6 +6,7 @@ import {
   Plus, RefreshCw, Search, Sparkles, Trash2, Undo2, UserRound, Wallet, X,
 } from 'lucide-react';
 import { ReportGenerator, exportToExcel } from '../utils/reportGenerator';
+import ExtratoPagamentos from '../components/pagamentos/ExtratoPagamentos';
 import { supabase } from '../lib/supabase';
 import { urlWhatsApp } from '../components/inventory/comprasShared';
 import { SearchableSelect } from '../components/common/SearchableSelect';
@@ -80,7 +81,7 @@ interface Fornecedor { id: string; nome: string; tipo: string }
 
 type Situacao = 'pendente' | 'parcial' | 'pago' | 'pago_a_mais' | 'cancelado' | 'sem_valor';
 type Filtro = 'todos' | 'a_pagar' | Situacao;
-type Visao = 'lista' | 'a_pagar' | 'calendario';
+type Visao = 'lista' | 'a_pagar' | 'pagamentos' | 'calendario';
 
 const SITUACAO: Record<Situacao, { rotulo: string; variante: BadgeVariante }> = {
   pendente: { rotulo: 'Pendente', variante: 'warning' },
@@ -160,7 +161,7 @@ const Musicians: React.FC = () => {
   // ?visao=a_pagar abre direto numa visão (o Portal do Gestor usa).
   const [visao, setVisao] = useState<Visao>(() => {
     const v = new URLSearchParams(window.location.search).get('visao') as Visao | null;
-    return v && (['lista', 'a_pagar', 'calendario'] as Visao[]).includes(v) ? v : 'lista';
+    return v && (['lista', 'a_pagar', 'pagamentos', 'calendario'] as Visao[]).includes(v) ? v : 'lista';
   });
   const [editando, setEditando] = useState<Partial<Show> | null>(null);
   const [pagando, setPagando] = useState<Show | null>(null);
@@ -328,7 +329,7 @@ const Musicians: React.FC = () => {
       {erro && <div className="aviso aviso-perigo mb-3" role="alert">{erro}</div>}
       {aviso && <div className="aviso aviso-certo mb-3">{aviso}</div>}
 
-      {visao !== 'a_pagar' && <>
+      {visao !== 'a_pagar' && visao !== 'pagamentos' && <>
       <div className="flex flex-wrap items-center gap-2 mb-4">
         <IconButton aria-label="Mês anterior" onClick={() => irParaMes(mes.subtract(1, 'month'))}><ChevronLeft size={16} /></IconButton>
         <span className="t-subsec" style={{ minWidth: 170, textAlign: 'center' }}>{mes.format('MMMM [de] YYYY').replace(/^./, c => c.toUpperCase())}</span>
@@ -355,8 +356,8 @@ const Musicians: React.FC = () => {
 
       <Toolbar className="mb-3">
         <Segmented<Visao> rotulo="Visão" valor={visao} onMudar={setVisao}
-          opcoes={[{ valor: 'lista', rotulo: 'Lista' }, { valor: 'a_pagar', rotulo: 'A pagar' }, { valor: 'calendario', rotulo: 'Calendário' }]} />
-        {visao !== 'a_pagar' && <div className="flex flex-wrap gap-2">
+          opcoes={[{ valor: 'lista', rotulo: 'Lista' }, { valor: 'a_pagar', rotulo: 'A pagar' }, { valor: 'pagamentos', rotulo: 'Pagamentos' }, { valor: 'calendario', rotulo: 'Calendário' }]} />
+        {visao !== 'a_pagar' && visao !== 'pagamentos' && <div className="flex flex-wrap gap-2">
           <Chip ligado={filtro === 'todos'} onMudar={() => setFiltro('todos')}>Todos {shows.length}</Chip>
           <Chip ligado={filtro === 'a_pagar'} onMudar={() => setFiltro('a_pagar')} tom="atencao">A pagar {(contagem.pendente || 0) + (contagem.parcial || 0)}</Chip>
           <Chip ligado={filtro === 'parcial'} onMudar={() => setFiltro('parcial')} tom="atencao">Parcial {contagem.parcial || 0}</Chip>
@@ -365,10 +366,10 @@ const Musicians: React.FC = () => {
           {!!contagem.cancelado && <Chip ligado={filtro === 'cancelado'} onMudar={() => setFiltro('cancelado')}>Cancelado {contagem.cancelado}</Chip>}
         </div>}
         <Toolbar.Espaco />
-        <div className="relative" style={{ minWidth: 220 }}>
+        {visao !== 'pagamentos' && <div className="relative" style={{ minWidth: 220 }}>
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-secondary)' }} />
           <input className="input-dark w-full" style={{ paddingLeft: 32 }} placeholder="Buscar artista" value={busca} onChange={e => setBusca(e.target.value)} />
-        </div>
+        </div>}
       </Toolbar>
 
       {visao === 'lista' && selecionados.length > 0 && (
@@ -384,7 +385,9 @@ const Musicians: React.FC = () => {
         </div>
       )}
 
-      {visao === 'a_pagar' ? (
+      {visao === 'pagamentos' ? (
+        <ExtratoPagamentos modulo="musicos" />
+      ) : visao === 'a_pagar' ? (
         <APagar versao={versao} busca={busca} onFicha={setFicha} onPagar={setPagando} onDetalhe={setDetalhe}
           onPagarTudo={(nome, lista) => setLote({ titulo: nome, shows: lista })} />
       ) : visao === 'lista' ? (
