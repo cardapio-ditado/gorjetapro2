@@ -88,6 +88,14 @@ Não duplicar aqui: cada regra tem uma fonte só.
 - Grupo de cada categoria: tabela `agp_grupo_categoria` (o Kadu ajusta na própria tela). Extra e músico não entram
   como avulso. Tudo pelas funções `fn_agp_*` (migração `20261123120000_agenda_pagamentos.sql`); tabelas `agp_*` sem acesso direto.
 
+### Reservas pelo link e Brasa (23/11/2026)
+- Pré-reserva em ditado.org/reserva (`fn_reserva_publica`, até 18h para o mesmo dia) vai para a Brasa: gatilho
+  `trg_reserva_brasa_enfileirar` põe na fila `reservas_brasa_envios` ("criada"; "confirmada" quando a equipe confirma
+  em Eventos; "cancelada" quando recusa) e o robô `brasa-reservas-enviar` (pg_cron, 1 min) envia com a chave do Vault
+  `brasa_reservas_segredo` (o Kadu cadastra). Só reserva que mandou "criada" manda os outros avisos.
+- A aprovação que volta da Brasa (`receber-reserva-brasa`, com `source_channel: "link"` e `external_id`) confirma a
+  pré-reserva existente; a etiqueta `brasa:<id>` impede o aviso "confirmada" de voltar para a Brasa.
+
 ### Andar Operacional (prioridade de pagamento)
 - Atualização diária às 6:32 (Cuiabá). Passo a passo em `scripts/operacional/README.md`.
 - Prazo: extra da casa 7 dias, extra de fora 2 dias, músico 7 dias.
