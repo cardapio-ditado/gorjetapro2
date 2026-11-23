@@ -81,7 +81,7 @@ interface Fornecedor { id: string; nome: string; tipo: string }
 
 type Situacao = 'pendente' | 'parcial' | 'pago' | 'pago_a_mais' | 'cancelado' | 'sem_valor';
 type Filtro = 'todos' | 'a_pagar' | Situacao;
-type Visao = 'lista' | 'a_pagar' | 'pagamentos' | 'calendario';
+type Visao = 'lista' | 'a_pagar' | 'pagamentos' | 'calendario' | 'artistas';
 
 const SITUACAO: Record<Situacao, { rotulo: string; variante: BadgeVariante }> = {
   pendente: { rotulo: 'Pendente', variante: 'warning' },
@@ -161,7 +161,7 @@ const Musicians: React.FC = () => {
   // ?visao=a_pagar abre direto numa visão (o Portal do Gestor usa).
   const [visao, setVisao] = useState<Visao>(() => {
     const v = new URLSearchParams(window.location.search).get('visao') as Visao | null;
-    return v && (['lista', 'a_pagar', 'pagamentos', 'calendario'] as Visao[]).includes(v) ? v : 'lista';
+    return v && (['lista', 'a_pagar', 'pagamentos', 'calendario', 'artistas'] as Visao[]).includes(v) ? v : 'lista';
   });
   const [editando, setEditando] = useState<Partial<Show> | null>(null);
   const [pagando, setPagando] = useState<Show | null>(null);
@@ -208,11 +208,12 @@ const Musicians: React.FC = () => {
       setFin(m);
     });
   }, [shows]);
-  useEffect(() => {
+  const carregarArtistas = () => {
     // Só artistas (fornecedor do tipo músico): o show não aceita outro cadastro.
     supabase.from('fornecedores').select('id, nome, tipo').eq('status', 'ativo').eq('tipo', 'musico').order('nome')
       .then(({ data }) => setFornecedores((data || []) as Fornecedor[]));
-  }, []);
+  };
+  useEffect(carregarArtistas, []);
 
   // O show aberto no histórico acompanha a lista recarregada.
   // Show fora do período (aberto pela ficha ou pelo "A pagar") é buscado sozinho.
@@ -329,7 +330,7 @@ const Musicians: React.FC = () => {
       {erro && <div className="aviso aviso-perigo mb-3" role="alert">{erro}</div>}
       {aviso && <div className="aviso aviso-certo mb-3">{aviso}</div>}
 
-      {visao !== 'a_pagar' && visao !== 'pagamentos' && <>
+      {visao !== 'a_pagar' && visao !== 'pagamentos' && visao !== 'artistas' && <>
       <div className="flex flex-wrap items-center gap-2 mb-4">
         <IconButton aria-label="Mês anterior" onClick={() => irParaMes(mes.subtract(1, 'month'))}><ChevronLeft size={16} /></IconButton>
         <span className="t-subsec" style={{ minWidth: 170, textAlign: 'center' }}>{mes.format('MMMM [de] YYYY').replace(/^./, c => c.toUpperCase())}</span>
@@ -356,8 +357,8 @@ const Musicians: React.FC = () => {
 
       <Toolbar className="mb-3">
         <Segmented<Visao> rotulo="Visão" valor={visao} onMudar={setVisao}
-          opcoes={[{ valor: 'lista', rotulo: 'Lista' }, { valor: 'a_pagar', rotulo: 'A pagar' }, { valor: 'pagamentos', rotulo: 'Pagamentos' }, { valor: 'calendario', rotulo: 'Calendário' }]} />
-        {visao !== 'a_pagar' && visao !== 'pagamentos' && <div className="flex flex-wrap gap-2">
+          opcoes={[{ valor: 'lista', rotulo: 'Lista' }, { valor: 'a_pagar', rotulo: 'A pagar' }, { valor: 'pagamentos', rotulo: 'Pagamentos' }, { valor: 'calendario', rotulo: 'Calendário' }, { valor: 'artistas', rotulo: 'Artistas' }]} />
+        {visao !== 'a_pagar' && visao !== 'pagamentos' && visao !== 'artistas' && <div className="flex flex-wrap gap-2">
           <Chip ligado={filtro === 'todos'} onMudar={() => setFiltro('todos')}>Todos {shows.length}</Chip>
           <Chip ligado={filtro === 'a_pagar'} onMudar={() => setFiltro('a_pagar')} tom="atencao">A pagar {(contagem.pendente || 0) + (contagem.parcial || 0)}</Chip>
           <Chip ligado={filtro === 'parcial'} onMudar={() => setFiltro('parcial')} tom="atencao">Parcial {contagem.parcial || 0}</Chip>
@@ -385,7 +386,9 @@ const Musicians: React.FC = () => {
         </div>
       )}
 
-      {visao === 'pagamentos' ? (
+      {visao === 'artistas' ? (
+        <Artistas busca={busca} onMudou={async m => { setAviso(m); carregarArtistas(); await carregar(); }} />
+      ) : visao === 'pagamentos' ? (
         <ExtratoPagamentos modulo="musicos" />
       ) : visao === 'a_pagar' ? (
         <APagar versao={versao} busca={busca} onFicha={setFicha} onPagar={setPagando} onDetalhe={setDetalhe}
@@ -1006,14 +1009,10 @@ const FormShow: React.FC<{
     if (parecidos.length && !outroMesmo) { setErro(`Já existe "${parecidos[0].nome.trim()}". Escolha ele na lista, ou marque que é outro artista.`); return; }
     setOcupado(true); setErro(null);
     try {
-      const { data: existe } = await supabase.rpc('fn_fornecedor_encontrar', { p_nome: n, p_cnpj: null });
-      if (existe) throw new Error('Esse nome já está cadastrado. Escolha na lista de artistas.');
-      const { data: criado, error } = await supabase.from('fornecedores').insert([{
-        nome: n.toUpperCase(), telefone: novoTel.trim() || null, chave_pix: novoPix.trim(), status: 'ativo', tipo: 'musico',
-        observacoes: 'Artista cadastrado no módulo de Músicos',
-      }]).select('id, nome, tipo').single();
-      if (error) throw error;
-      onNovoArtista(criado as Fornecedor);
+      const { data: r, error } = await supabase.rpc('fn_musicos_artista_salvar', { p_id: null, p_nome: n, p_pix: novoPix.trim(), p_telefone: novoTel.trim() || null, p_outro: outroMesmo });
+      if (error) throw new Error(textoErro(error.message));
+      const criado = { id: (r as { id: string }).id, nome: (r as { nome: string }).nome, tipo: 'musico' };
+      onNovoArtista(criado);
       setFornecedorId(criado.id);
       if (!contato.trim() && novoTel.trim()) setContato(novoTel.trim());
       setCadastrando(false); setNovoNome(''); setNovoPix(''); setNovoTel(''); setOutroMesmo(false);
@@ -1114,6 +1113,140 @@ const FormShow: React.FC<{
           <Ban size={14} /> Show cancelado (sai do a pagar e cancela a conta no Financeiro)
         </label>
       )}
+    </Modal>
+  );
+};
+
+// ── Artistas: o cadastro dentro do módulo (só gerente cadastra e edita) ─────
+interface Artista {
+  id: string; nome: string; chave_pix: string | null; telefone: string | null; ativo: boolean;
+  shows: number; ultimo: string | null; proximo: string | null; aberto: number; shows_abertos: number;
+}
+type FiltroArtista = 'ativos' | 'sem_pix' | 'a_pagar' | 'inativos';
+const textoErro = (m: string) => m.replace(/^./, c => c.toUpperCase());
+
+const Artistas: React.FC<{ busca: string; onMudou: (m: string) => Promise<void> }> = ({ busca, onMudou }) => {
+  const { isAdmin } = useAuth();
+  const gerente = isAdmin();
+  const [lista, setLista] = useState<Artista[] | null>(null);
+  const [erro, setErro] = useState<string | null>(null);
+  const [filtro, setFiltro] = useState<FiltroArtista>('ativos');
+  const [editando, setEditando] = useState<Partial<Artista> | null>(null);
+  const [ocupado, setOcupado] = useState(false);
+
+  const carregar = () => supabase.rpc('fn_musicos_artistas').then(({ data, error }) => {
+    if (error) { setErro(error.message.includes('sem acesso') ? 'Seu usuário não tem acesso ao módulo de Músicos.' : textoErro(error.message)); setLista([]); return; }
+    setLista(((data || []) as Artista[]).sort((a, b) => a.nome.localeCompare(b.nome)));
+  });
+  useEffect(() => { void carregar(); }, []);
+
+  const ativos = (lista || []).filter(a => a.ativo);
+  const conta = { ativos: ativos.length, sem_pix: ativos.filter(a => !a.chave_pix).length, a_pagar: ativos.filter(a => a.aberto > 0.004).length, inativos: (lista || []).filter(a => !a.ativo).length };
+  const visiveis = useMemo(() => {
+    const t = busca.trim().toLowerCase();
+    return (lista || []).filter(a => {
+      if (t && !`${a.nome} ${a.chave_pix || ''} ${a.telefone || ''}`.toLowerCase().includes(t)) return false;
+      if (filtro === 'inativos') return !a.ativo;
+      if (!a.ativo) return false;
+      if (filtro === 'sem_pix') return !a.chave_pix;
+      if (filtro === 'a_pagar') return a.aberto > 0.004;
+      return true;
+    });
+  }, [lista, busca, filtro]);
+
+  const alternarAtivo = async (a: Artista) => {
+    if (a.ativo && !window.confirm(`Inativar ${a.nome}? Sai da lista de escolha do show. Os shows antigos continuam.`)) return;
+    setOcupado(true); setErro(null);
+    const { error } = await supabase.rpc('fn_musicos_artista_ativo', { p_id: a.id, p_ativo: !a.ativo });
+    setOcupado(false);
+    if (error) { setErro(textoErro(error.message)); return; }
+    await carregar(); await onMudou(`${a.nome} ${a.ativo ? 'inativado' : 'reativado'}.`);
+  };
+
+  if (!lista) return <p className="t-body" style={{ color: 'var(--text-secondary)' }}>Carregando…</p>;
+  return (
+    <div className="flex flex-col gap-3">
+      {erro && <div className="aviso aviso-perigo" role="alert">{erro}</div>}
+      <div className="flex flex-wrap items-center gap-2">
+        <Chip ligado={filtro === 'ativos'} onMudar={() => setFiltro('ativos')}>Ativos {conta.ativos}</Chip>
+        <Chip ligado={filtro === 'sem_pix'} onMudar={() => setFiltro('sem_pix')} tom="atencao">Sem chave Pix {conta.sem_pix}</Chip>
+        <Chip ligado={filtro === 'a_pagar'} onMudar={() => setFiltro('a_pagar')} tom="atencao">Com cachê a pagar {conta.a_pagar}</Chip>
+        {!!conta.inativos && <Chip ligado={filtro === 'inativos'} onMudar={() => setFiltro('inativos')}>Inativos {conta.inativos}</Chip>}
+        <Toolbar.Espaco />
+        {gerente
+          ? <Button variante="primario" icone={<Plus size={16} />} onClick={() => setEditando({})}>Novo artista</Button>
+          : <span className="t-caption">Só gerente cadastra e edita artista.</span>}
+      </div>
+      <SectionCard noPadding>
+        {!visiveis.length ? (
+          <EmptyState icon={UserRound} compact variant={lista.length ? 'filtered' : 'empty'} title={lista.length ? 'Nenhum artista com esse filtro' : 'Nenhum artista cadastrado'}
+            description={gerente ? 'Use "Novo artista" para cadastrar.' : undefined} />
+        ) : visiveis.map(a => (
+          <div key={a.id} className="px-5 py-3 flex flex-wrap items-center gap-x-4 gap-y-1" style={{ borderBottom: '1px solid var(--border-subtle)', opacity: a.ativo ? 1 : 0.6 }}>
+            <div className="flex-1 min-w-[220px]">
+              <p className="t-body" style={{ margin: 0, fontWeight: 600 }}>{a.nome}</p>
+              <p className="t-caption" style={{ margin: 0 }}>
+                {a.chave_pix ? <>Pix: <span style={{ color: 'var(--text-primary)' }}>{a.chave_pix}</span></> : <span className="texto-atencao">sem chave Pix</span>}
+                {a.telefone && ` · ${a.telefone}`}
+              </p>
+              <p className="t-caption" style={{ margin: 0 }}>
+                {a.shows ? `${a.shows} show${a.shows === 1 ? '' : 's'}` : 'nenhum show'}
+                {a.ultimo && ` · último ${dataCurta(a.ultimo)}`}{a.proximo && ` · próximo ${dataCurta(a.proximo)}`}
+              </p>
+            </div>
+            {a.aberto > 0.004 && <span className="text-right">
+              <span className="t-body num" style={{ display: 'block', fontWeight: 700 }}>{brl(a.aberto)}</span>
+              <span className="t-caption">a pagar · {a.shows_abertos} show{a.shows_abertos === 1 ? '' : 's'}</span>
+            </span>}
+            {gerente && <div className="flex items-center gap-2">
+              <Button tamanho="sm" variante="discreto" icone={<Pencil size={14} />} onClick={() => setEditando(a)}>Editar</Button>
+              <Button tamanho="sm" variante="discreto" disabled={ocupado} onClick={() => alternarAtivo(a)}>{a.ativo ? 'Inativar' : 'Reativar'}</Button>
+            </div>}
+          </div>
+        ))}
+      </SectionCard>
+      {editando && <ModalArtista inicial={editando} onFechar={() => setEditando(null)}
+        onSalvo={async m => { setEditando(null); await carregar(); await onMudou(m); }} />}
+    </div>
+  );
+};
+
+const ModalArtista: React.FC<{ inicial: Partial<Artista>; onFechar: () => void; onSalvo: (m: string) => Promise<void> }> = ({ inicial, onFechar, onSalvo }) => {
+  const [nome, setNome] = useState(inicial.nome || '');
+  const [pix, setPix] = useState(inicial.chave_pix || '');
+  const [tel, setTel] = useState(inicial.telefone || '');
+  const [outro, setOutro] = useState(false);
+  const [parecido, setParecido] = useState(false);
+  const [erro, setErro] = useState<string | null>(null);
+  const [ocupado, setOcupado] = useState(false);
+  const novo = !inicial.id;
+  const trocaNome = !novo && nome.trim().replace(/\s+/g, ' ').toUpperCase() !== (inicial.nome || '').trim().toUpperCase();
+
+  const salvar = async () => {
+    if (nome.trim().length < 3) { setErro('Escreva o nome do artista como está no Pix.'); return; }
+    if (!pix.trim()) { setErro('A chave Pix é obrigatória.'); return; }
+    if (trocaNome && inicial.shows && !window.confirm(`Trocar o nome de "${inicial.nome}" para "${nome.trim().toUpperCase()}"? Os ${inicial.shows} shows dele passam a ter o nome novo. Valor e vencimento das contas não mudam.`)) return;
+    setOcupado(true); setErro(null);
+    const { data, error } = await supabase.rpc('fn_musicos_artista_salvar', { p_id: inicial.id || null, p_nome: nome, p_pix: pix, p_telefone: tel || null, p_outro: outro });
+    setOcupado(false);
+    if (error) { setParecido(error.message.includes('parecido')); setErro(textoErro(error.message)); return; }
+    const r = data as { nome: string; shows_renomeados?: number };
+    await onSalvo(novo ? `${r.nome} cadastrado.` : `${r.nome} atualizado${r.shows_renomeados ? `, ${r.shows_renomeados} shows com o nome novo` : ''}.`);
+  };
+
+  return (
+    <Modal aberto onFechar={onFechar} travado={ocupado} largura="md" titulo={novo ? 'Novo artista' : `Editar ${inicial.nome}`}
+      descricao="Nome como está no Pix de quem recebe o cachê. A chave Pix é obrigatória."
+      rodape={<><Button variante="discreto" onClick={onFechar} disabled={ocupado}>Cancelar</Button>
+        <Button variante="primario" icone={<Check size={16} />} carregando={ocupado} onClick={salvar}>{novo ? 'Cadastrar' : 'Salvar'}</Button></>}>
+      <div className="flex flex-col gap-3">
+        {erro && <div className="aviso aviso-perigo" role="alert">{erro}</div>}
+        <Input rotulo="Nome do artista ou da dupla" autoFocus value={nome} onChange={e => { setNome(e.target.value); setParecido(false); setOutro(false); }} placeholder="Ex.: JUNIOR E NANDO" />
+        {trocaNome && !!inicial.shows && <p className="t-caption texto-atencao" style={{ margin: 0 }}>Os {inicial.shows} shows deste artista passam a ter o nome novo ("Projeto · Artista" mantém o projeto).</p>}
+        <Input rotulo="Chave Pix" value={pix} onChange={e => setPix(e.target.value)} placeholder="CPF, telefone, e-mail ou chave aleatória" />
+        <Input rotulo="Telefone (opcional)" value={tel} onChange={e => setTel(e.target.value)} placeholder="(65) 90000-0000" />
+        {parecido && <label className="flex items-center gap-2 t-body cursor-pointer"><input type="checkbox" checked={outro} onChange={e => setOutro(e.target.checked)} /> É outro artista, cadastrar mesmo assim</label>}
+      </div>
     </Modal>
   );
 };

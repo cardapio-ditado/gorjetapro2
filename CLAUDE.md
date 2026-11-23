@@ -58,6 +58,10 @@ Não duplicar aqui: cada regra tem uma fonte só.
   (shows no Gabi Santin): são artistas diferentes, o Kadu cria com a chave PIX e depois os shows mudam de cadastro.
   Ao trocar nome ou cadastro de um show, o gatilho regrava a conta pelo show: conferir e restaurar valor e vencimento.
 - O fornecedor genérico "MÚSICOS E ARTISTAS" está inativo e não deve ser usado.
+- **23/11/2026:** aba **Artistas** no módulo de Músicos: cadastrar, editar (chave Pix, telefone, nome) e inativar artista,
+  só gerente (admin/master), tudo por `fn_musicos_artista_salvar` / `fn_musicos_artista_ativo` (o "Novo artista" do show
+  usa a mesma função). Trocar o nome do artista renomeia os shows dele e devolve valor, vencimento e status de cada conta
+  (aborta se os totais mudarem).
 
 ### Extras / diaristas (05/11/2026)
 - Fornecedor tem 4 tipos: `geral`, `musico`, `rh` (colaborador) e **`extra`** (diarista).
