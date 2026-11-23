@@ -73,14 +73,16 @@ Não duplicar aqui: cada regra tem uma fonte só.
   conta da diária, nunca cria avulsa. A trava olha a **categoria** (categoria de extra, ou sem categoria em cadastro
   `extra`): salário, férias e vale de quem tem cadastro `extra` passam (corrigido em 11/11).
 
-### Fila de pagamentos (22/11/2026)
-- Tela `/fila-pagamentos` (Financeiro): substitui a planilha diária "valores a pagar" e a antiga Agenda do Dia.
-  A fila se monta sozinha (Contas a Pagar em aberto, saldo nos módulos de Extras e de Músicos, e avulsos).
-- **Só o Kadu autoriza** (nível master). Cristiano e Beth colocam na pauta do dia; o que o Kadu coloca já entra autorizado.
-- **A fila não dá baixa.** O "Paguei" só registra quem pagou, quando e de qual conta saiu, ligado à conta, diária ou
-  show: serve de referência para a conciliação. Enquanto a baixa não acontece, aparece como "aguardando baixa".
-- Extra e músico não entram como avulso: nascem no módulo. Tudo passa pelas funções `fn_fila_*`
-  (migração `20261122180000_fila_pagamentos.sql`); as tabelas `fila_*` não têm acesso direto.
+### Agenda de pagamentos (22-23/11/2026)
+- Tela `/agenda-pagamentos` (Financeiro): substitui a planilha diária "valores a pagar". Uma folha por dia, no jeito
+  da planilha: fechamento de caixa (venda da ZIG, entradas digitadas dinheiro/cartão/Pix/bônus/desconto, pagamentos
+  do caixa), valores a pagar nos grupos da planilha (+ Extras e Músicos como grupos próprios, vindos dos módulos) e
+  pagamentos do dia (digitando ou pela seta). A "Fila de pagamentos" de 22/11 saiu (não gostou do formato).
+- **Só o Kadu autoriza** (nível master). Cristiano e Beth colocam; o que o Kadu coloca já entra autorizado.
+- **A agenda não dá baixa.** O "Paguei" registra quem pagou, quando e a forma, ligado à conta, diária ou show:
+  serve de apoio para a conciliação. Enquanto a baixa não acontece, aparece "aguardando baixa".
+- Grupo de cada categoria: tabela `agp_grupo_categoria` (o Kadu ajusta na própria tela). Extra e músico não entram
+  como avulso. Tudo pelas funções `fn_agp_*` (migração `20261123120000_agenda_pagamentos.sql`); tabelas `agp_*` sem acesso direto.
 
 ### Andar Operacional (prioridade de pagamento)
 - Atualização diária às 6:32 (Cuiabá). Passo a passo em `scripts/operacional/README.md`.

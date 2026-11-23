@@ -1,6 +1,6 @@
 import { lazy, Suspense, useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import SidebarModern from './components/layout/SidebarModern';
 import ProtectedRoute from './components/layout/ProtectedRoute';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -50,7 +50,7 @@ const DiscPublico         = lazy(() => import('./pages/DiscPublico'));
 const DRESimplificado     = lazy(() => import('./pages/DRESimplificado'));
 const ControleDeville     = lazy(() => import('./pages/ControleDeville'));
 const AgendaDiaria        = lazy(() => import('./pages/AgendaDiaria'));
-const FilaPagamentos      = lazy(() => import('./pages/FilaPagamentos'));
+const AgendaPagamentos    = lazy(() => import('./pages/AgendaPagamentos'));
 const FidelidadeModule    = lazy(() => import('./pages/FidelidadeModule'));
 const RedefinirSenha      = lazy(() => import('./pages/RedefinirSenha'));
 const PortalGerente       = lazy(() => import('./pages/PortalGerente'));
@@ -122,7 +122,8 @@ function AppContent() {
         <Route path="/dashboard"           element={<ProtectedRoute moduloSlug="dashboard">     <PainelInicial />       </ProtectedRoute>} />
         <Route path="/portal-gerente"      element={<ProtectedRoute moduloSlug="dashboard" ou="livro">     <PortalGerente />       </ProtectedRoute>} />
         <Route path="/agenda-diaria"       element={<ProtectedRoute moduloSlug="dashboard">     <AgendaDiaria />        </ProtectedRoute>} />
-        <Route path="/fila-pagamentos"     element={<ProtectedRoute moduloSlug="financeiro">    <FilaPagamentos />      </ProtectedRoute>} />
+        <Route path="/agenda-pagamentos"   element={<ProtectedRoute moduloSlug="financeiro">    <AgendaPagamentos />    </ProtectedRoute>} />
+        <Route path="/fila-pagamentos"     element={<Navigate to="/agenda-pagamentos" replace />} />
         <Route path="/finance"             element={<ProtectedRoute moduloSlug="financeiro">    <Finance />             </ProtectedRoute>} />
         <Route path="/financeiro"          element={<ProtectedRoute moduloSlug="financeiro">    <DashboardFinanceiro /> </ProtectedRoute>} />
         <Route path="/advanced-inventory"  element={<ProtectedRoute moduloSlug="estoque">       <AdvancedInventory />   </ProtectedRoute>} />

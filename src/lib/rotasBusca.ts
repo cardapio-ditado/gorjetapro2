@@ -18,7 +18,7 @@ export interface RotaBusca {
  */
 export const ROTAS_BUSCA: RotaBusca[] = [
   { label: 'Dashboard',               path: '/',                                                    icon: Home },
-  { label: 'Fila de Pagamentos',      path: '/fila-pagamentos',                                     icon: CalendarDays, apelidos: 'pagar hoje pauta autorizar agenda do dia planilha' },
+  { label: 'Agenda de Pagamentos',    path: '/agenda-pagamentos',                                   icon: CalendarDays, apelidos: 'pagar hoje autorizar agenda do dia planilha fechamento de caixa' },
   { label: 'Portal do Gerente',       path: '/portal-gerente',                                      icon: Home },
   // RH
   { label: 'RH — Colaboradores',      path: '/staff?tab=0',                                         icon: Users, apelidos: 'funcionários equipe' },
