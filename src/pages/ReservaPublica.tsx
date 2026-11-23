@@ -184,7 +184,7 @@ export default function ReservaPublica() {
               style={{ background: '#7D1F2C' }}>
               {enviando ? 'Enviando...' : 'Enviar pré-reserva'}
             </button>
-            <p className="text-xs text-white/40 text-center">Pela página, dá para pedir até as 16h para o mesmo dia e até 90 dias antes.</p>
+            <p className="text-xs text-white/40 text-center">Pela página, dá para pedir até as 18h para o mesmo dia e até 90 dias antes.</p>
           </form>
         )}
       </main>
