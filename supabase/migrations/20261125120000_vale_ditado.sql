@@ -96,7 +96,8 @@ create table public.vale_pedidos (
   forma_pagamento text not null default 'pix' check (forma_pagamento in ('pix', 'cartao')),
   gateway text,
   gateway_cliente_id text,
-  gateway_cobranca_id text unique,
+  gateway_cobranca_id text unique,      -- Pix: id do pagamento; cartão: id da preferência do checkout
+  gateway_pagamento_id text,            -- id do pagamento aprovado (base do estorno)
   gateway_url text,
   pix_copia_cola text,
   pix_expira_em timestamptz,
@@ -470,13 +471,14 @@ end $$;
 
 -- Pix/cartão confirmado pelo gateway: gera os vales. Idempotente (pedido já pago devolve 'ja_pago').
 -- Pedido expirado/cancelado que foi pago depois: emite se ainda houver lote; senão fica 'pago_sem_lote' (estornar no admin).
-create or replace function public.fn_vale_confirmar_pagamento(p_cobranca text, p_pago_em timestamptz, p_valor numeric)
+-- p_pedido: o pedido (external_reference do gateway); p_pagamento: id do pagamento aprovado.
+create or replace function public.fn_vale_confirmar_pagamento(p_pedido uuid, p_pagamento text, p_pago_em timestamptz, p_valor numeric)
 returns jsonb language plpgsql security definer set search_path = public as $$
 declare
   d vale_pedidos%rowtype; c vale_campanha%rowtype; it record; s record; v_cod uuid; v_n integer;
   v_falta boolean := false; v_brinde boolean; v_validade date; v_codigos integer := 0; v_pago timestamptz := coalesce(p_pago_em, now());
 begin
-  select * into d from vale_pedidos where gateway_cobranca_id = p_cobranca for update;
+  select * into d from vale_pedidos where id = p_pedido for update;
   if d.id is null then return jsonb_build_object('ok', false, 'erro', 'pedido_nao_encontrado'); end if;
   if d.status in ('pago', 'pago_sem_lote', 'estornado') then return jsonb_build_object('ok', true, 'resultado', 'ja_pago', 'pedido_id', d.id); end if;
   if p_valor is not null and p_valor + 0.009 < d.valor_total then
@@ -492,7 +494,7 @@ begin
     select bool_or(pr.lote_total - pr.lote_vendido - pr.lote_reservado < i.q) into v_falta
       from (select produto_id, sum(quantidade) q from vale_pedido_itens where pedido_id = d.id group by 1) i join vale_produtos pr on pr.id = i.produto_id;
     if v_falta then
-      update vale_pedidos set status = 'pago_sem_lote', pago_em = v_pago, valor_pago = p_valor, atualizado_em = now() where id = d.id;
+      update vale_pedidos set status = 'pago_sem_lote', pago_em = v_pago, valor_pago = p_valor, gateway_pagamento_id = p_pagamento, atualizado_em = now() where id = d.id;
       return jsonb_build_object('ok', true, 'resultado', 'pago_sem_lote', 'pedido_id', d.id);
     end if;
     update vale_produtos pr set lote_vendido = pr.lote_vendido + i.q, atualizado_em = now()
@@ -521,7 +523,7 @@ begin
     end loop;
   end loop;
 
-  update vale_pedidos set status = 'pago', pago_em = v_pago, valor_pago = p_valor, atualizado_em = now() where id = d.id;
+  update vale_pedidos set status = 'pago', pago_em = v_pago, valor_pago = p_valor, gateway_pagamento_id = p_pagamento, atualizado_em = now() where id = d.id;
   return jsonb_build_object('ok', true, 'resultado', 'pago', 'pedido_id', d.id, 'codigos', v_codigos);
 end $$;
 
@@ -890,7 +892,7 @@ begin
   insert into vale_estornos (pedido_id, codigos, valor, motivo, usuario_id, usuario_nome)
   values (d.id, v_cods, v_valor, nullif(btrim(coalesce(p_motivo, '')), ''), fn_usuario_sistema_id(), fn_vale_usuario_nome())
   returning id into v_id;
-  return jsonb_build_object('estorno_id', v_id, 'valor', v_valor, 'cobranca_id', d.gateway_cobranca_id,
+  return jsonb_build_object('estorno_id', v_id, 'valor', v_valor, 'pagamento_id', coalesce(d.gateway_pagamento_id, d.gateway_cobranca_id),
                             'total', d.valor_total, 'integral', v_valor >= d.valor_total);
 end $$;
 
@@ -922,7 +924,7 @@ revoke all on function public.fn_vale_cpf_valido(text), public.fn_vale_hoje(), p
   public.fn_vale_novo_codigo(), public.fn_vale_pode(boolean), public.fn_vale_usuario_nome(), public.fn_vale_situacao_venda(),
   public.fn_vale_status_exibido(text, date), public.fn_vale_happy_hour_agora(), public.fn_vale_vitrine(), public.fn_vale_regulamento(),
   public.fn_vale_reservar(jsonb), public.fn_vale_encerrar_pedido(uuid, text), public.fn_vale_cobranca_gravar(uuid, jsonb),
-  public.fn_vale_confirmar_pagamento(text, timestamptz, numeric), public.fn_vale_expirar_reservas(), public.fn_vale_pedido_interno(text),
+  public.fn_vale_confirmar_pagamento(uuid, text, timestamptz, numeric), public.fn_vale_expirar_reservas(), public.fn_vale_pedido_interno(text),
   public.fn_vale_codigo_json(uuid), public.fn_vale_pedido_publico(text), public.fn_vale_consultar(text, text),
   public.fn_vale_resgate_ler(text), public.fn_vale_resgatar(text, jsonb, numeric, text, boolean, boolean), public.fn_vale_resgate_desfazer(uuid),
   public.fn_vale_admin_dados(), public.fn_vale_admin_campanha_salvar(jsonb), public.fn_vale_admin_produto_salvar(jsonb),
@@ -941,7 +943,7 @@ grant execute on function public.fn_vale_pode(boolean), public.fn_vale_resgate_l
   to authenticated;
 -- só edge functions (service role)
 grant execute on function public.fn_vale_reservar(jsonb), public.fn_vale_encerrar_pedido(uuid, text), public.fn_vale_cobranca_gravar(uuid, jsonb),
-  public.fn_vale_confirmar_pagamento(text, timestamptz, numeric), public.fn_vale_expirar_reservas(), public.fn_vale_pedido_interno(text),
+  public.fn_vale_confirmar_pagamento(uuid, text, timestamptz, numeric), public.fn_vale_expirar_reservas(), public.fn_vale_pedido_interno(text),
   public.fn_vale_estorno_concluir(uuid, boolean, text, text), public.fn_vale_vitrine(), public.fn_vale_pedido_publico(text)
   to service_role;
 
@@ -1018,106 +1020,5 @@ with i (slug, ordem, descricao, qtd, alcool, valor) as (values
 insert into public.vale_produto_itens (produto_id, descricao, quantidade, tem_alcool, valor_cardapio, ordem)
 select p.id, i.descricao, i.qtd, i.alcool, i.valor, i.ordem from i join public.vale_produtos p on p.slug = i.slug;
 
--- Regulamento: minuta de docs/textos.md (seção 1). Revisar com o advogado; editável no admin.
-update public.vale_campanha set regulamento_md = $reg$### REGULAMENTO DA CAMPANHA "MAIS VALE UM DITADO NA MÃO" — Black Brasa e Vale de Natal 2026
-
-**1. Quem vende**
-1.1. A campanha é feita por **K M POPULAR BAR LTDA**, CNPJ **12.061.357/0001-69**, nome fantasia Ditado Brasa & Bar, com sede em `[CONFIRMAR: endereço completo]`, Cuiabá-MT.
-1.2. Atendimento: WhatsApp **(65) 4141-3655**, e-mail `[CONFIRMAR]`, de `[CONFIRMAR: dias e horário de atendimento]`. Respondemos em até `[CONFIRMAR: 1 dia útil]`.
-1.3. Venda exclusiva pela página `[CONFIRMAR: endereço da página]`, em duas fases, com os mesmos produtos e preços:
-- **Black Brasa:** de 27/11/2026, a partir de `[CONFIRMAR: hora]`, até 30/11/2026;
-- **Vale de Natal:** de 01/12/2026 até 24/12/2026, às `[CONFIRMAR: hora]`;
-ou até acabar o lote de cada produto, o que vier primeiro.
-
-**2. Os produtos**
-2.1. O comprador paga o valor abaixo e recebe os itens descritos, para resgatar no Ditado Brasa & Bar:
-
-| Produto | O que dá direito | Preço de cardápio | Preço do vale | Lote |
-|---|---|---|---|---|
-| Abre a Brasa | 1 Linguiça Portuguesa na Massa + 1 Queijo Coalho com Mel + 1 Pão de Alho + 4 Chopps Brahma 300 ml | R$ 184,00 | **R$ 129,90** | 60 |
-| Cartela 5 Chopps | 5 Chopps Brahma 300 ml | R$ 92,50 | **R$ 64,90** | 100 |
-| Cartela 10 Chopps | 10 Chopps Brahma 300 ml | R$ 185,00 | **R$ 129,90** | 50 |
-| Kit Boteco | 1 Torresmo de Rolo + 1 Bolinho de Costela (8 un) + 6 Chopps Brahma 300 ml | R$ 227,00 | **R$ 159,90** | 60 |
-| Kit Passarinho | 1 Frango a Passarinho + 1 Fritas 500 g + 4 Chopps Brahma 300 ml | R$ 168,00 | **R$ 119,90** | 50 |
-| Kit Picanha | 1 Picanha Acebolada 400 g + 4 Chopps Brahma 300 ml | R$ 193,00 | **R$ 139,90** | 40 |
-| Tábua & Chopp | 1 Tábua de Frios Ditado + 4 Chopps Brahma 300 ml | R$ 203,90 | **R$ 149,90** | 40 |
-| Assado do Zé | 1 Coxa e Sobrecoxa Desossada na Brasa (para 2) + 4 Chopps Brahma 300 ml | R$ 163,00 | **R$ 119,90** | 30 |
-| Rolê de Gin | 4 Gin Tônica | R$ 116,00 | **R$ 79,90** | 50 |
-| Rodada de Caipirinha | 4 Caipirinhas 500 ml | R$ 151,60 | **R$ 99,90** | 40 |
-| Família no Ditado | 1 Picanha na Chapa com Cascata de Queijo + 4 Refrigerantes | R$ 196,00 | **R$ 159,90** | 30 |
-| Vale Ditado 100 | R$ 125,00 de crédito em consumo | R$ 125,00 | **R$ 100,00** | 100 |
-| Vale Ditado 200 | R$ 250,00 de crédito em consumo | R$ 250,00 | **R$ 200,00** | 50 |
-
-2.2. **Vales Ditado 100 e 200:** o crédito pode ser usado em comida e bebida do cardápio, **exceto** garrafas (de bebida) e itens vendidos em outras promoções.
-2.3. Os itens dos kits e cartelas não podem ser trocados por outros produtos nem por dinheiro, salvo nos casos dos itens 9 e 10.
-2.4. Os vales não dão troco. Se o consumo passar do crédito, a diferença é paga normalmente na hora.
-2.5. A página mostra quantas unidades restam de cada produto.
-
-**3. Limite por pessoa**
-3.1. Cada CPF pode comprar **até 2 unidades** `[CONFIRMAR: 2 no total ou 2 de cada produto]`.
-
-**4. Taxa de serviço e couvert**
-4.1. A taxa de serviço de 10% é opcional `[CONFIRMAR com advogado a redação]` e, quando paga, é **calculada sobre o valor pago pelo vale**, não sobre o preço de cardápio. É cobrada no resgate, proporcional ao que for usado em cada visita. Valor total da taxa por produto:
-- Abre a Brasa R$ 12,99 · Cartela 5 R$ 6,49 · Cartela 10 R$ 12,99 · Kit Boteco R$ 15,99 · Kit Passarinho R$ 11,99 · Kit Picanha R$ 13,99 · Tábua & Chopp R$ 14,99 · Assado do Zé R$ 11,99 · Rolê de Gin R$ 7,99 · Rodada de Caipirinha R$ 9,99 · Família no Ditado R$ 15,99.
-- Vale Ditado 100 e 200: R$ 0,80 a cada R$ 10,00 de crédito usado (total de R$ 10,00 e R$ 20,00).
-4.2. O **couvert artístico** não está incluído e é cobrado à parte nos dias em que houver música com couvert.
-
-**5. Validade**
-5.1. Cada vale vale por **6 meses a partir da data da compra**. A data exata de vencimento aparece no vale e no e-mail de confirmação. Exemplo: comprado em 27/11/2026, vence em 27/05/2027.
-5.2. `[DEFINIR COM ADVOGADO: o que acontece com o saldo não usado após o vencimento.]`
-
-**6. Dias e horários de uso**
-6.1. O vale pode ser usado **em qualquer dia em que o Ditado Brasa & Bar estiver aberto**, durante o horário de funcionamento (`[CONFIRMAR: horário de funcionamento]`).
-6.2. Os produtos com chopp (Abre a Brasa, Cartelas 5 e 10, Kit Boteco, Kit Passarinho, Kit Picanha, Tábua & Chopp e Assado do Zé) **não podem ser resgatados durante o happy hour**, que vai até as 21h `[CONFIRMAR: dias do happy hour]`. Depois das 21h, valem normalmente.
-
-**7. Como resgatar (inclusive em mais de uma visita)**
-7.1. Na chegada ou na hora de pedir, informe o código do vale ao garçom ou ao caixa e apresente documento oficial com foto do titular.
-7.2. O uso pode ser **fracionado**:
-- Vales Ditado 100 e 200: o saldo em reais pode ser usado em quantas visitas o titular quiser, dentro da validade.
-- Kits, cartelas e rodadas: cada item é um crédito por unidade (ex.: 2 chopps hoje, 3 na semana que vem). Pratos e petiscos são servidos em porção inteira.
-7.3. O saldo restante aparece no comprovante de cada resgate e pode ser consultado pelo WhatsApp.
-7.4. O titular pode dividir o que resgatar com a mesa, respeitando o item 8.
-
-**8. Maioridade**
-8.1. Bebida alcoólica é vendida e servida **somente a maiores de 18 anos** (Lei 8.069/1990, art. 243). Na compra de produto com bebida alcoólica, o comprador informa a data de nascimento e declara ser maior de 18 anos.
-8.2. No resgate de qualquer item com álcool, inclusive pelo crédito dos Vales Ditado 100 e 200, o documento oficial com foto é conferido. Sem documento, ou para menor de 18, a bebida alcoólica não é servida. Na mesa, a equipe pode pedir documento de qualquer pessoa.
-8.3. Nos kits, se o titular não puder receber as bebidas alcoólicas, a comida continua válida.
-
-**9. Arrependimento e reembolso**
-9.1. O comprador pode desistir em até **7 dias corridos** a partir da compra (CDC, art. 49), pelo WhatsApp ou e-mail do item 1.2, e recebe a **devolução integral** do valor pago, pelo mesmo meio de pagamento, em até `[CONFIRMAR]` dias. `[CONFIRMAR com advogado: regra para vale já usado em parte dentro dos 7 dias]`
-9.2. Com o pedido de arrependimento, o código é cancelado.
-
-**10. Encerramento ou mudança de endereço**
-10.1. Se o Ditado Brasa & Bar encerrar as atividades, ou mudar de endereço, antes do vencimento do vale, o titular recebe **em dinheiro** o valor pago correspondente ao saldo não usado, em até `[CONFIRMAR]` dias. No caso de mudança de endereço, o titular pode escolher entre o reembolso e usar o vale no novo endereço.
-10.2. O cálculo do reembolso é proporcional ao valor pago (ex.: Vale Ditado 100 com R$ 50 de saldo devolve R$ 40). `[CONFIRMAR com advogado: proporcional ao pago ou ao crédito]`
-
-**11. Transferência**
-11.1. O vale é **nominal**. Na compra, o comprador pode cadastrar o nome e o CPF do presenteado.
-11.2. O vale pode ser transferido para outra pessoa, sem custo, a qualquer momento antes do vencimento, pelo WhatsApp do item 1.2, informando nome completo e CPF do novo titular. A partir daí, só o novo titular resgata.
-
-**12. Não acumulação**
-12.1. O vale não acumula com nenhuma outra promoção ou desconto da casa (happy hour, chopp promocional, Sexta da Chapa, entre outras). O item resgatado pelo vale não recebe desconto adicional.
-12.2. O crédito dos Vales Ditado 100 e 200 não paga itens vendidos em outras promoções nem garrafas.
-
-**13. Perda, uso indevido e fraude**
-13.1. Guarde o código. Em caso de perda, o titular pode pedir a reemissão pelo WhatsApp, com confirmação de CPF. Código já resgatado não é reemitido.
-13.2. Vale comprado com fraude no pagamento é cancelado.
-
-**14. Nota fiscal**
-14.1. A venda e a nota fiscal são feitas pela K M POPULAR BAR LTDA, CNPJ 12.061.357/0001-69. A nota é emitida `[CONFIRMAR COM CONTADOR: na compra, no resgate, ou documento de antecipação na compra + nota no resgate]` e enviada ao e-mail informado.
-
-**15. Privacidade (LGPD — Lei 13.709/2018)**
-15.1. **Controladora dos dados:** K M POPULAR BAR LTDA. Contato do encarregado: `[CONFIRMAR: nome/e-mail]`.
-15.2. **Dados coletados:** nome, CPF, data de nascimento, e-mail e celular do comprador e, se houver, nome e CPF do presenteado.
-15.3. **Para que usamos:** emitir e validar o vale, emitir a nota fiscal, conferir a maioridade e o titular no resgate, prestar atendimento, prevenir fraude e cumprir obrigações legais e fiscais.
-15.4. **Com quem compartilhamos:** plataforma de pagamento `[CONFIRMAR]`, sistema de caixa (ZIG), contabilidade e autoridades, quando a lei exigir. Não vendemos dados.
-15.5. **Por quanto tempo guardamos:** pelo prazo da campanha e pelo prazo legal fiscal `[CONFIRMAR com contador]`.
-15.6. **Seus direitos:** acesso, correção, exclusão, portabilidade e revogação do consentimento, pelo contato do item 15.1.
-15.7. **Mensagens de WhatsApp:** só enviamos novidades e ofertas por WhatsApp para quem marcar, separadamente, a caixa de consentimento na compra. **A caixa vem desmarcada e não é condição para comprar.** Para parar de receber, basta responder SAIR.
-
-**16. Disposições finais**
-16.1. Dúvidas e casos não previstos: atendimento do item 1.2. Este regulamento fica disponível na página da campanha durante toda a validade dos vales.
-16.2. Foro: `[CONFIRMAR com advogado]`.
-
-*Beba com moderação. Proibido para menores de 18 anos.*
-$reg$ where id = 1;
+-- Regulamento: a página usa a minuta de docs/textos.md (seção 1) enquanto regulamento_md estiver vazio;
+-- o texto revisado pelo advogado entra pelo admin.
