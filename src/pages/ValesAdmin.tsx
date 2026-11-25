@@ -12,7 +12,7 @@ import { TEXTOS_PADRAO } from '../vale/textos';
  * Tudo por funções do banco (fn_vale_admin_*); o reembolso passa pela função vale/estornar (gateway).
  */
 
-type Aba = 'painel' | 'pedidos' | 'produtos' | 'campanha';
+type Aba = 'painel' | 'pedidos' | 'produtos' | 'campanha' | 'acessos';
 const reais = (v: number | null | undefined) => (Number(v) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const quando = (ts?: string | null) => (ts ? new Date(ts).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'America/Cuiaba' }) : '');
 /** timestamptz → valor do <input type="datetime-local"> no horário de Cuiabá */
@@ -45,12 +45,13 @@ export default function ValesAdmin() {
         </div>} />
       <Segmented rotulo="Seção" valor={aba} onMudar={setAba} opcoes={[
         { valor: 'painel', rotulo: 'Painel' }, { valor: 'pedidos', rotulo: 'Pedidos' },
-        { valor: 'produtos', rotulo: 'Produtos' }, { valor: 'campanha', rotulo: 'Campanha' },
+        { valor: 'produtos', rotulo: 'Produtos' }, { valor: 'campanha', rotulo: 'Campanha' }, { valor: 'acessos', rotulo: 'Acessos' },
       ]} />
       {aba === 'painel' && <Painel />}
       {aba === 'pedidos' && <Pedidos />}
       {aba === 'produtos' && <Produtos />}
       {aba === 'campanha' && <Campanha />}
+      {aba === 'acessos' && <Acessos />}
     </div>
   );
 }
@@ -115,6 +116,83 @@ function Painel() {
             <div key={x.origem} className="flex justify-between t-body py-1"><span>{x.origem}</span><span className="tabular-nums">{x.pedidos} · R$ {reais(x.receita)}</span></div>))}
         </SectionCard>
       </div>
+    </div>
+  );
+}
+
+// ───────────────────────── Acessos (links da bio e /vale) ─────────────────────────
+
+interface AcessosDados {
+  links_pessoas: number; links_cliques: { alvo: string; cliques: number; pessoas: number }[];
+  vale_pessoas: number; vale_checkout: number; vale_pix: number; pedidos_pagos: number;
+  vale_origem: { origem: string; pessoas: number }[];
+  por_dia: { dia: string; links: number; clique_vale: number; vale: number; checkout: number }[];
+  celular_pct: number | null;
+}
+
+const NOME_BOTAO: Record<string, string> = {
+  vale: 'Vale Ditado', reservar: 'Reservar mesa', cardapio: 'Cardápio', whatsapp: 'WhatsApp',
+  'como-chegar': 'Como chegar', instagram: 'Instagram', site: 'Site', votacao: 'Vote no Ditado',
+};
+
+/** Contador das páginas públicas: quantas pessoas abriram os links da bio e o /vale, e até onde foram. */
+function Acessos() {
+  const [dias, setDias] = useState<'1' | '7' | '0'>('7');
+  const [d, setD] = useState<AcessosDados | null>(null);
+  const [erro, setErro] = useState('');
+  const carregar = useCallback(async () => {
+    setD(null);
+    const { data, error } = await supabase.rpc('fn_site_acessos', { p_dias: Number(dias) });
+    if (error) setErro(error.message); else { setErro(''); setD(data as AcessosDados); }
+  }, [dias]);
+  useEffect(() => { carregar(); }, [carregar]);
+  const pct = (a: number, b: number) => (b > 0 ? ` (${Math.round((100 * a) / b)}%)` : '');
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <Segmented rotulo="Período" valor={dias} onMudar={setDias} opcoes={[
+          { valor: '1', rotulo: 'Hoje' }, { valor: '7', rotulo: '7 dias' }, { valor: '0', rotulo: 'Tudo' },
+        ]} />
+        <Button variante="discreto" icone={<RefreshCw size={14} />} onClick={carregar}>Atualizar</Button>
+      </div>
+      {erro && <p className="aviso aviso-perigo m-0">{erro}</p>}
+      {!d && !erro && <p className="t-body">Carregando…</p>}
+      {d && <>
+        <p className="t-caption m-0">Conta pessoas (cada aba do navegador uma vez a cada 30 minutos), sem guardar dado pessoal. Começou em 25/11/2026.</p>
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+          <KPICard rotulo="Abriram os links da bio" valor={d.links_pessoas} />
+          <KPICard rotulo="Clicaram em Vale Ditado" valor={d.links_cliques.find(x => x.alvo === 'vale')?.pessoas ?? 0}
+            detalhe={pct(d.links_cliques.find(x => x.alvo === 'vale')?.pessoas ?? 0, d.links_pessoas).trim() || undefined} />
+          <KPICard rotulo="Abriram o /vale" valor={d.vale_pessoas} detalhe={d.celular_pct != null ? `${d.celular_pct}% no celular` : undefined} tom="destaque" />
+          <KPICard rotulo="Foram ao pagamento" valor={d.vale_checkout} detalhe={`${d.vale_pix} geraram o Pix${pct(d.vale_checkout, d.vale_pessoas)}`} />
+          <KPICard rotulo="Pedidos pagos" valor={d.pedidos_pagos} detalhe={d.vale_pessoas > 0 ? `${Math.round((100 * d.pedidos_pagos) / d.vale_pessoas)}% de quem abriu o /vale` : undefined} />
+        </div>
+        <div className="grid lg:grid-cols-2 gap-4">
+          <SectionCard title="Cliques nos links da bio">
+            {d.links_cliques.length === 0 ? <p className="t-body m-0">Nenhum clique ainda.</p> : d.links_cliques.map(x => (
+              <div key={x.alvo} className="flex justify-between t-body py-1">
+                <span>{NOME_BOTAO[x.alvo] ?? x.alvo}</span><span className="tabular-nums">{x.pessoas} {x.pessoas === 1 ? 'pessoa' : 'pessoas'}</span>
+              </div>))}
+          </SectionCard>
+          <SectionCard title="De onde veio quem abriu o /vale">
+            {d.vale_origem.length === 0 ? <p className="t-body m-0">Ninguém ainda.</p> : d.vale_origem.map(x => (
+              <div key={x.origem} className="flex justify-between t-body py-1"><span>{x.origem}</span><span className="tabular-nums">{x.pessoas}</span></div>))}
+          </SectionCard>
+        </div>
+        <SectionCard title="Por dia" noPadding>
+          <table className="w-full t-body">
+            <thead><tr className="text-left"><th className="p-2">Dia</th><th className="p-2 text-right">Links da bio</th><th className="p-2 text-right">Clicou no Vale</th><th className="p-2 text-right">Abriu o /vale</th><th className="p-2 text-right">Foi ao pagamento</th></tr></thead>
+            <tbody>{d.por_dia.length === 0
+              ? <tr><td className="p-2" colSpan={5}>Sem acessos no período.</td></tr>
+              : d.por_dia.map(x => (
+                <tr key={x.dia} style={{ borderTop: '1px solid var(--border)' }}>
+                  <td className="p-2">{x.dia.split('-').reverse().join('/')}</td>
+                  <td className="p-2 text-right tabular-nums">{x.links}</td><td className="p-2 text-right tabular-nums">{x.clique_vale}</td>
+                  <td className="p-2 text-right tabular-nums">{x.vale}</td><td className="p-2 text-right tabular-nums">{x.checkout}</td>
+                </tr>))}</tbody>
+          </table>
+        </SectionCard>
+      </>}
     </div>
   );
 }

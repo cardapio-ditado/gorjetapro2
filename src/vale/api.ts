@@ -3,8 +3,8 @@
  * fala direto com as funções do banco (RPC) e com as edge functions, com a chave anônima.
  */
 
-const URL_SUPA = (import.meta.env.VITE_SUPABASE_URL as string | undefined) || 'https://nzdiojmrukdxavrdazot.supabase.co';
-const CHAVE = (import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined)
+export const URL_SUPA = (import.meta.env.VITE_SUPABASE_URL as string | undefined) || 'https://nzdiojmrukdxavrdazot.supabase.co';
+export const CHAVE = (import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined)
   || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im56ZGlvam1ydWtkeGF2cmRhem90Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg4OTA1NjksImV4cCI6MjA2NDQ2NjU2OX0.-6VLiW0Ui4OEhMhYXpXJKhKC2tgujjrPywgnRW4BLY0';
 
 const cabecalhos = { apikey: CHAVE, Authorization: `Bearer ${CHAVE}`, 'Content-Type': 'application/json' };

@@ -90,6 +90,8 @@ Não duplicar aqui: cada regra tem uma fonte só.
 - A página pública (`src/vale`) não carrega o sistema: `src/main.tsx` decide pela rota. Não citar Open de Chopp nem rodízio.
 - Visual da página (25/11): cores do Manual da Marca, como o tema claro do sistema; foto só real, enviada pelo admin.
   Para mexer no visual, use as skills do projeto `design-taste-frontend-carregador` e `web-design-guidelines`.
+- **Contador de acessos** (25/11): `/links` e `/vale` registram abertura e clique em `site_cliques` (sem dado pessoal,
+  só origem, aparelho e código aleatório da aba) por `fn_site_registrar`; o admin lê na aba **Acessos** (`fn_site_acessos`).
 
 ### Agenda de pagamentos (22-23/11/2026)
 - Tela `/agenda-pagamentos` (Financeiro): substitui a planilha diária "valores a pagar". Uma folha por dia, no jeito

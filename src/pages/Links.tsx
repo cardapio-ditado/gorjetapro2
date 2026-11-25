@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { CalendarDays, ChevronRight, Globe, Instagram, MapPin, MessageCircle, Ticket, Trophy, UtensilsCrossed } from 'lucide-react';
+import { registrar } from '../vale/contador';
 
 /**
  * Links da bio do Instagram (ditado.org/links), no lugar do Linktree (Kadu, 19/11/2026).
@@ -24,15 +25,15 @@ const WHATS = '556541413655';
 const ENDERECO = 'R. Sen. Vilas Bôas, 89 · Praça Popular · Cuiabá-MT';
 const MAPS = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent('Ditado Popular, R. Sen. Vilas Bôas, 89 - Popular, Cuiabá - MT, 78045-430')}`;
 
-const LINKS: Array<{ titulo: string; sub: string; href: string; Icone: typeof Globe; destaque?: boolean; externo?: boolean }> = [
+const LINKS: Array<{ id: string; titulo: string; sub: string; href: string; Icone: typeof Globe; destaque?: boolean; externo?: boolean }> = [
   // Vale Ditado (Kadu, 25/11/2026): a venda de vales pré-pagos, logo abaixo da votação.
-  { titulo: 'Vale Ditado', sub: 'Chopp e kits com desconto, só no site', href: '/vale', Icone: Ticket, destaque: true },
-  { titulo: 'Reservar mesa', sub: 'A equipe confirma pelo WhatsApp', href: '/reserva', Icone: CalendarDays, destaque: true },
-  { titulo: 'Cardápio', sub: 'Brasa, petiscos, chopp e drinks', href: 'https://ditadopopular-bra.ola.click/products', Icone: UtensilsCrossed, externo: true },
-  { titulo: 'WhatsApp', sub: '(65) 4141-3655', href: `https://wa.me/${WHATS}?text=${encodeURIComponent('Olá! Vim pelo Instagram do Ditado.')}`, Icone: MessageCircle, externo: true },
-  { titulo: 'Como chegar', sub: 'Praça Popular, Cuiabá', href: MAPS, Icone: MapPin, externo: true },
-  { titulo: 'Instagram', sub: '@ditadopopular', href: 'https://www.instagram.com/ditadopopular/', Icone: Instagram, externo: true },
-  { titulo: 'Site', sub: 'www.ditadopopular.com.br', href: 'https://www.ditadopopular.com.br', Icone: Globe, externo: true },
+  { id: 'vale', titulo: 'Vale Ditado', sub: 'Chopp e kits com desconto, só no site', href: '/vale', Icone: Ticket, destaque: true },
+  { id: 'reservar', titulo: 'Reservar mesa', sub: 'A equipe confirma pelo WhatsApp', href: '/reserva', Icone: CalendarDays, destaque: true },
+  { id: 'cardapio', titulo: 'Cardápio', sub: 'Brasa, petiscos, chopp e drinks', href: 'https://ditadopopular-bra.ola.click/products', Icone: UtensilsCrossed, externo: true },
+  { id: 'whatsapp', titulo: 'WhatsApp', sub: '(65) 4141-3655', href: `https://wa.me/${WHATS}?text=${encodeURIComponent('Olá! Vim pelo Instagram do Ditado.')}`, Icone: MessageCircle, externo: true },
+  { id: 'como-chegar', titulo: 'Como chegar', sub: 'Praça Popular, Cuiabá', href: MAPS, Icone: MapPin, externo: true },
+  { id: 'instagram', titulo: 'Instagram', sub: '@ditadopopular', href: 'https://www.instagram.com/ditadopopular/', Icone: Instagram, externo: true },
+  { id: 'site', titulo: 'Site', sub: 'www.ditadopopular.com.br', href: 'https://www.ditadopopular.com.br', Icone: Globe, externo: true },
 ];
 
 /** Noto Serif só nesta página, para quem não tem a Charter no aparelho. */
@@ -49,7 +50,7 @@ function useSerifa() {
 
 export default function Links() {
   useSerifa();
-  useEffect(() => { document.title = 'Ditado Brasa & Bar · Links'; }, []);
+  useEffect(() => { document.title = 'Ditado Brasa & Bar · Links'; registrar('links'); }, []);
   return (
     <div className="min-h-screen" style={{ background: COR.offwhite, color: COR.carvao, fontFamily: SANS }}>
       <div className="max-w-md mx-auto px-4 pt-10 pb-12">
@@ -61,7 +62,7 @@ export default function Links() {
 
         <nav aria-label="Links do Ditado" className="flex flex-col gap-3">
           {/* A votação em destaque, em âmbar (o acento do manual), com as duas categorias. */}
-          <a href={VOTACAO} target="_blank" rel="noopener noreferrer"
+          <a href={VOTACAO} target="_blank" rel="noopener noreferrer" onClick={() => registrar('links', 'votacao')}
             className="flex items-center gap-3 rounded-2xl px-4 py-4 transition-transform active:scale-[0.98] hover:brightness-105"
             style={{ background: COR.ambar, color: COR.carvao }}>
             <span className="flex items-center justify-center rounded-xl flex-shrink-0"
@@ -74,8 +75,8 @@ export default function Links() {
             </span>
             <ChevronRight size={18} style={{ opacity: 0.75 }} />
           </a>
-          {LINKS.map(({ titulo, sub, href, Icone, destaque, externo }) => (
-            <a key={titulo} href={href} {...(externo ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+          {LINKS.map(({ id, titulo, sub, href, Icone, destaque, externo }) => (
+            <a key={titulo} href={href} {...(externo ? { target: '_blank', rel: 'noopener noreferrer' } : {})} onClick={() => registrar('links', id)}
               className="flex items-center gap-3 rounded-2xl px-4 py-3.5 transition-transform active:scale-[0.98] hover:brightness-110"
               style={destaque
                 ? { background: COR.terracota, color: '#FFFFFF' }

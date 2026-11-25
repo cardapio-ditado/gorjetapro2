@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { AnimatePresence, LazyMotion, MotionConfig, domAnimation, m } from 'motion/react';
 import type { Produto } from './api';
 import { useVale } from './carrinho';
+import { registrar } from './contador';
 import { BotaoAdicionar, Carregando, Chevron, FaixaTeste, IconeFechar, Logo, Restam, RodapeLegal, Seletor, Toast, useRelogio } from './comum';
 import { diaCuiaba, horaCuiaba, linkWhats, pctBonus, pctDesconto, reais, rs } from './util';
 
@@ -12,7 +13,7 @@ export default function Home() {
   const [aberto, setAberto] = useState<Produto | null>(null);
   const [gaveta, setGaveta] = useState(false);
 
-  useEffect(() => { document.title = 'Vale Ditado · Mais vale um Ditado na mão'; }, []);
+  useEffect(() => { document.title = 'Vale Ditado · Mais vale um Ditado na mão'; registrar('vale'); }, []);
 
   if (!vitrine) {
     if (erroVitrine) return (
