@@ -16,7 +16,7 @@ export function montar() {
   document.body.classList.add('vale');
   document.documentElement.lang = 'pt-BR';
   const meta = document.querySelector('meta[name="description"]');
-  meta?.setAttribute('content', 'Vale Ditado: kits, cartelas de chopp e vales com desconto para usar em até 6 meses no Ditado Brasa & Bar.');
+  meta?.setAttribute('content', 'Vale Ditado: kits, cartelas de chopp e vales com desconto para usar no Ditado Brasa & Bar.');
   createRoot(document.getElementById('root')!).render(
     <StrictMode>
       <BrowserRouter>

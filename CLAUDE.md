@@ -77,6 +77,17 @@ Não duplicar aqui: cada regra tem uma fonte só.
   conta da diária, nunca cria avulsa. A trava olha a **categoria** (categoria de extra, ou sem categoria em cadastro
   `extra`): salário, férias e vale de quem tem cadastro `extra` passam (corrigido em 11/11).
 
+### Vale Ditado (25/11/2026)
+- Venda online de vales pré-pagos em ditado.org/vale (Black Brasa 27–30/11, Vale de Natal 01–24/12). Base: `docs/PRD-vale-ditado.md`,
+  `docs/layout-pagina.md`, `docs/copy-pagina.md`, `docs/textos.md`. Resgate em `/vales/resgate`, admin em `/vales` (só gerente).
+- Tabelas `vale_*` (RLS, sem acesso direto); tudo por funções `fn_vale_*`. Lote e resgate só por função transacional.
+- Pagamento: função `vale` (rotas criar-pedido, webhook, status, estornar) com a camada `paymentProvider`; gateway **Asaas**
+  (conta da CEM; recebedor "C E M DE OLIVEIRA LTDA"). Secrets `ASAAS_API_KEY`, `ASAAS_WEBHOOK_TOKEN`, `ASAAS_AMBIENTE` (o Kadu configura).
+- **Nota fiscal no resgate**, pela ZIG (botão VALE PRÉ-PAGO, forma "Voucher pré-pago"), em nome da K M. A venda online não emite nota.
+- **Uso numa visita só** (Kadu, 25/11): a primeira baixa abre o vale; o resto só até o fim daquela noite (6h). Sobra não volta.
+- **Validade 3 meses** (Kadu, 25/11). Limite 2 de cada produto por CPF. Produtos com chopp não valem no happy hour (até 21h).
+- A página pública (`src/vale`) não carrega o sistema: `src/main.tsx` decide pela rota. Não citar Open de Chopp nem rodízio.
+
 ### Agenda de pagamentos (22-23/11/2026)
 - Tela `/agenda-pagamentos` (Financeiro): substitui a planilha diária "valores a pagar". Uma folha por dia, no jeito
   da planilha: fechamento de caixa (venda da ZIG, entradas digitadas dinheiro/cartão/Pix/bônus/desconto, pagamentos

@@ -1,6 +1,9 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { carregarVitrine, type Produto, type Vitrine } from './api';
 import { criarTextos, type Textos } from './textos';
+
+/** Todo texto pode usar {meses} (validade configurada na campanha). */
+const comMeses = (t: Textos, meses: number): Textos => (k, vars = {}) => t(k, { meses, ...vars });
 import { lerOrigem } from './util';
 
 /** Estado da página: vitrine (campanha + produtos ao vivo) e carrinho (guardado no aparelho). */
@@ -110,7 +113,7 @@ export function ProvedorVale({ children }: { children: ReactNode }) {
   }, [itens, vitrine]);
 
   const valor: Estado = {
-    vitrine, erroVitrine, recarregar, t: criarTextos(vitrine?.campanha.textos), produto,
+    vitrine, erroVitrine, recarregar, t: comMeses(criarTextos(vitrine?.campanha.textos), vitrine?.campanha.validade_meses ?? 3), produto,
     itens, quantidade: (slug) => itens[slug] ?? 0, definir, limpar: () => setItens({}),
     presente, setPresente, totais, maximo, aviso, avisar,
   };

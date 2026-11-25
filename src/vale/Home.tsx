@@ -361,14 +361,14 @@ function Credito({ creditos, desabilitado }: { creditos: Produto[]; desabilitado
 // ───────────────────────── S6 · como funciona ─────────────────────────
 
 function ComoFunciona() {
-  const { t } = useVale();
+  const { t, vitrine } = useVale();
   return (
     <section className="v-col v-secao">
       <h2 className="v-h2">{t('como_titulo')}</h2>
       <ol className="v-passos">
         <li><span className="v-passo-num">1</span><span><b>Compra aqui.</b> Escolhe, paga no Pix e pronto.</span></li>
         <li><span className="v-passo-num">2</span><span><b>Recebe o código.</b> Chega na hora, com QR code. Salva no WhatsApp.</span></li>
-        <li><span className="v-passo-num">3</span><span><b>Mostra no bar.</b> O garçom lê o código e dá baixa. Vale numa visita, qualquer dia em até 6 meses.</span></li>
+        <li><span className="v-passo-num">3</span><span><b>Mostra no bar.</b> O garçom lê o código e dá baixa. Vale numa visita, qualquer dia em até {vitrine!.campanha.validade_meses} meses.</span></li>
       </ol>
       <Link to="/vale/consultar" className="v-link">Já comprei: consultar meu vale</Link>
     </section>
@@ -378,7 +378,7 @@ function ComoFunciona() {
 // ───────────────────────── S7 · presente ─────────────────────────
 
 function Presente({ compacto }: { compacto: boolean }) {
-  const { t, setPresente, produto, definir, quantidade, avisar } = useVale();
+  const { t, vitrine, setPresente, produto, definir, quantidade, avisar } = useVale();
   const montar = () => { setPresente(true); avisar('Presente ligado: o vale sai no nome de quem vai ganhar'); document.getElementById('escolha')?.scrollIntoView({ behavior: 'smooth' }); };
   if (compacto) return (
     <section id="presente" className="v-col v-secao">
@@ -395,7 +395,7 @@ function Presente({ compacto }: { compacto: boolean }) {
       <h2 className="v-h2">{t('presente_titulo_natal')}</h2>
       <p>{t('presente_texto')}</p>
       <ul className="v-regras">
-        <li>Fica no nome de quem ganha</li><li>Sai na hora, é só mandar no WhatsApp</li><li>Vale 6 meses</li>
+        <li>Fica no nome de quem ganha</li><li>Sai na hora, é só mandar no WhatsApp</li><li>Vale {vitrine!.campanha.validade_meses} meses</li>
       </ul>
       <div className="v-pilha">
         {vitrinePresente.map((p) => (
@@ -446,7 +446,7 @@ function Faq() {
   const hh = vitrine!.campanha.happy_hour_fim.replace(':00', 'h');
   const itens: [string, string][] = [
     ['Posso dar de presente?', 'Pode. Marque "é presente" e coloque nome e CPF de quem vai ganhar. Se preferir, transfere depois pelo WhatsApp, sem custo.'],
-    ['Preciso usar tudo de uma vez?', 'Sim. O vale é usado numa visita só, na mesma noite, qualquer dia dentro dos 6 meses. O que sobrar não fica guardado para outro dia.'],
+    ['Preciso usar tudo de uma vez?', `Sim. O vale é usado numa visita só, na mesma noite, qualquer dia dentro dos ${vitrine!.campanha.validade_meses} meses. O que sobrar não fica guardado para outro dia.`],
     ['Vale no fim de semana?', `Vale. Qualquer dia que a casa abrir. Só os produtos com chopp ficam fora do happy hour, até as ${hh}.`],
     ['O Vale Ditado 100 paga qualquer coisa?', 'Qualquer item do cardápio, menos garrafas e o que já estiver em outra promoção.'],
     ['Paga 10%?', 'Paga, mas sobre o valor que você pagou, não sobre o preço cheio. O couvert é à parte.'],
