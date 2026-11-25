@@ -1,6 +1,6 @@
-import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { CORS, json, provedor } from "../_shared/pagamento.ts";
+import { CORS, json, provedor } from "./pagamento.ts";
+
 
 /**
  * Vale Ditado: estorno pelo admin (gerente/master).
@@ -12,7 +12,7 @@ import { CORS, json, provedor } from "../_shared/pagamento.ts";
  *
  * Exige login (verify_jwt = true). Entrada: { pedido_id, codigos?: uuid[], motivo? }.
  */
-Deno.serve(async (req) => {
+export async function estornar(req: Request): Promise<Response> {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
   if (req.method !== "POST") return json({ ok: false }, 405);
   let p: any;
@@ -33,4 +33,4 @@ Deno.serve(async (req) => {
   await db.rpc("fn_vale_estorno_concluir", { p_estorno: prep.estorno_id, p_ok: r.ok, p_gateway_id: r.id, p_resposta: r.resposta });
   if (!r.ok) return json({ ok: false, erro: `o gateway recusou o estorno: ${r.resposta}` }, 502);
   return json({ ok: true, valor: prep.valor });
-});
+}

@@ -1,6 +1,6 @@
-import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { json, provedor } from "../_shared/pagamento.ts";
+import { CORS, json, provedor } from "./pagamento.ts";
+
 
 /**
  * Vale Ditado: aviso de pagamento do gateway.
@@ -12,7 +12,7 @@ import { json, provedor } from "../_shared/pagamento.ts";
  *
  * Pública (verify_jwt = false). 5xx faz o gateway tentar de novo; 2xx encerra.
  */
-Deno.serve(async (req) => {
+export async function webhook(req: Request): Promise<Response> {
   if (req.method !== "POST") return json({ ok: false }, 405);
   const corpo = await req.text();
   const gw = provedor();
@@ -62,4 +62,4 @@ Deno.serve(async (req) => {
 
   await db.from("vale_webhook_eventos").update({ processado_em: new Date().toISOString(), resultado: resultado.slice(0, 500) }).eq("id", eventoRow);
   return json({ ok: true });
-});
+}

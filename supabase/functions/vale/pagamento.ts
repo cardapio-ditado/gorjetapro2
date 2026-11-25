@@ -3,9 +3,10 @@
  *
  * As edge functions só falam com esta interface: trocar de gateway é escrever outra implementação aqui,
  * sem mexer em pedido, webhook ou tela. O gateway em uso vem do secret PAGAMENTO_GATEWAY
- * ("pagbank", o padrão, ou "mercadopago").
+ * ("asaas", o padrão; "pagbank" ou "mercadopago" ficam de reserva).
  *
  * Chaves só em Supabase secrets (nunca no front nem no banco):
+ *   Asaas:        ASAAS_API_KEY, ASAAS_WEBHOOK_TOKEN, ASAAS_AMBIENTE ("sandbox" ou "producao")
  *   PagBank:      PAGBANK_TOKEN, PAGBANK_AMBIENTE ("sandbox" ou "producao")
  *   Mercado Pago: MP_ACCESS_TOKEN, MP_WEBHOOK_SECRET
  */
@@ -56,7 +57,7 @@ export interface PaymentProvider {
 }
 
 const SITE = Deno.env.get("VALE_SITE_URL") ?? "https://www.ditado.org";
-const WEBHOOK = `${Deno.env.get("SUPABASE_URL")}/functions/v1/vale-webhook`;
+const WEBHOOK = `${Deno.env.get("SUPABASE_URL")}/functions/v1/vale/webhook`;
 
 // ───────────────────────────── Mercado Pago ─────────────────────────────
 
@@ -362,8 +363,132 @@ class PagBank implements PaymentProvider {
   }
 }
 
+
+// ───────────────────────────── Asaas ─────────────────────────────
+
+class Asaas implements PaymentProvider {
+  nome = "asaas";
+
+  private get chave(): string {
+    const t = Deno.env.get("ASAAS_API_KEY");
+    if (!t) throw new Error("ASAAS_API_KEY não configurado");
+    return t;
+  }
+
+  private get base(): string {
+    return (Deno.env.get("ASAAS_AMBIENTE") ?? "sandbox") === "producao"
+      ? "https://api.asaas.com/v3" : "https://api-sandbox.asaas.com/v3";
+  }
+
+  private async chamar(metodo: string, caminho: string, corpo?: unknown) {
+    const r = await fetch(`${this.base}${caminho}`, {
+      method: metodo,
+      headers: { access_token: this.chave, "Content-Type": "application/json", "User-Agent": "ValeDitado/1.0" },
+      body: corpo ? JSON.stringify(corpo) : undefined,
+    });
+    const texto = await r.text();
+    let json: any = null;
+    try { json = JSON.parse(texto); } catch { /* resposta não-JSON */ }
+    if (!r.ok) {
+      const det = json?.errors?.map((e: any) => e.description ?? e.code).join("; ");
+      throw new Error(`Asaas ${r.status}: ${det || texto.slice(0, 300)}`);
+    }
+    return json;
+  }
+
+  /** Cliente do Asaas pelo CPF (reaproveita o que já existe). Sem aviso do Asaas por e-mail/SMS: quem avisa é a página. */
+  private async cliente(p: PedidoCobranca): Promise<string> {
+    const achado = await this.chamar("GET", `/customers?cpfCnpj=${p.cpf}&limit=1`);
+    if (achado?.data?.[0]?.id) return achado.data[0].id;
+    const novo = await this.chamar("POST", "/customers", {
+      name: p.nome, cpfCnpj: p.cpf, email: p.email ?? undefined, notificationDisabled: true,
+      externalReference: `vale-${p.cpf.slice(0, 3)}`,
+    });
+    return novo.id;
+  }
+
+  private hojeCuiaba() {
+    return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Cuiaba" }).format(new Date());
+  }
+
+  private async cobranca(p: PedidoCobranca, tipo: "PIX" | "CREDIT_CARD") {
+    const cliente = await this.cliente(p);
+    return await this.chamar("POST", "/payments", {
+      customer: cliente, billingType: tipo, value: Number(p.valor.toFixed(2)), dueDate: this.hojeCuiaba(),
+      description: p.descricao, externalReference: p.pedidoId,
+    });
+  }
+
+  async criarPix(p: PedidoCobranca): Promise<CobrancaPix> {
+    const c = await this.cobranca(p, "PIX");
+    const qr = await this.chamar("GET", `/payments/${c.id}/pixQrCode`);
+    if (!qr?.payload) throw new Error("Asaas não devolveu o código Pix");
+    return { cobrancaId: String(c.id), pixCopiaCola: qr.payload, expiraEm: qr.expirationDate ?? null };
+  }
+
+  async criarCartao(p: PedidoCobranca): Promise<CobrancaCartao> {
+    const c = await this.cobranca(p, "CREDIT_CARD");
+    if (!c?.invoiceUrl) throw new Error("Asaas não devolveu o link do cartão");
+    return { cobrancaId: String(c.id), url: c.invoiceUrl };
+  }
+
+  private converter(r: any): Pagamento {
+    const mapa: Record<string, StatusPagamento> = {
+      RECEIVED: "aprovado", CONFIRMED: "aprovado", RECEIVED_IN_CASH: "aprovado",
+      PENDING: "pendente", AWAITING_RISK_ANALYSIS: "pendente", OVERDUE: "cancelado",
+      REFUNDED: "estornado", REFUND_REQUESTED: "estornado", REFUND_IN_PROGRESS: "estornado", CHARGEBACK_REQUESTED: "estornado",
+      CHARGEBACK_DISPUTE: "estornado", AWAITING_CHARGEBACK_REVERSAL: "estornado", DELETED: "cancelado",
+    };
+    const quando = r.clientPaymentDate ?? r.paymentDate ?? r.confirmedDate ?? null;
+    return {
+      id: String(r.id),
+      status: mapa[r.status] ?? "pendente",
+      pedidoId: r.externalReference ?? null,
+      valor: Number(r.value ?? 0),
+      // o Asaas devolve só a data; vale o momento da consulta para a hora (o brinde da Black olha a data/hora)
+      pagoEm: quando ? (quando.length > 10 ? quando : new Date().toISOString()) : null,
+    };
+  }
+
+  async consultarCobranca(c: { cobrancaId: string; pedidoId: string; forma: "pix" | "cartao" }) {
+    return this.converter(await this.chamar("GET", `/payments/${encodeURIComponent(c.cobrancaId)}`));
+  }
+
+  async pagamentoDoAviso(idAviso: string) {
+    try { return this.converter(await this.chamar("GET", `/payments/${encodeURIComponent(idAviso)}`)); }
+    catch (e) { if (/Asaas 404/.test((e as Error).message)) return null; throw e; }
+  }
+
+  async estornar(pagamentoId: string, valor: number | null, _chave: string) {
+    try {
+      const r = await this.chamar("POST", `/payments/${encodeURIComponent(pagamentoId)}/refund`,
+        valor === null ? { description: "Vale Ditado: estorno" } : { value: Number(valor.toFixed(2)), description: "Vale Ditado: estorno" });
+      return { ok: true, id: r?.id ? String(r.id) : pagamentoId, resposta: JSON.stringify({ status: r?.status, refunds: r?.refunds }).slice(0, 1000) };
+    } catch (e) {
+      return { ok: false, id: null, resposta: String((e as Error).message) };
+    }
+  }
+
+  /** Autenticidade do Asaas: header asaas-access-token igual ao token cadastrado no webhook do painel. */
+  async lerWebhook(req: Request, corpo: string) {
+    let o: any = {};
+    try { o = JSON.parse(corpo || "{}"); } catch { /* corpo inválido */ }
+    const tipo = String(o?.event ?? "");
+    const eventoId = String(o?.id ?? `${tipo}:${o?.payment?.id ?? "?"}`);
+    const esperado = Deno.env.get("ASAAS_WEBHOOK_TOKEN") ?? "";
+    const recebido = req.headers.get("asaas-access-token") ?? "";
+    let dif = esperado.length > 0 && esperado.length === recebido.length ? 0 : 1;
+    for (let i = 0; i < Math.min(esperado.length, recebido.length); i++) dif |= esperado.charCodeAt(i) ^ recebido.charCodeAt(i);
+    const interessa = ["PAYMENT_RECEIVED", "PAYMENT_CONFIRMED", "PAYMENT_RECEIVED_IN_CASH"].includes(tipo);
+    return { valido: dif === 0, eventoId, idAviso: interessa && o?.payment?.id ? String(o.payment.id) : null, tipo };
+  }
+}
+
 export function provedor(): PaymentProvider {
-  return (Deno.env.get("PAGAMENTO_GATEWAY") ?? "pagbank") === "mercadopago" ? new MercadoPago() : new PagBank();
+  const g = Deno.env.get("PAGAMENTO_GATEWAY") ?? "asaas";
+  if (g === "mercadopago") return new MercadoPago();
+  if (g === "pagbank") return new PagBank();
+  return new Asaas();
 }
 
 // ───────────────────────────── utilidades comuns ─────────────────────────────

@@ -1,6 +1,6 @@
-import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { CORS, json, provedor } from "../_shared/pagamento.ts";
+import { CORS, json, provedor } from "./pagamento.ts";
+
 
 /**
  * Vale Ditado: "Já paguei" e a volta do app do banco. Pergunta direto ao gateway se o pedido pendente foi pago
@@ -10,7 +10,7 @@ import { CORS, json, provedor } from "../_shared/pagamento.ts";
  *
  * Pública (verify_jwt = false). Entrada: { token }.
  */
-Deno.serve(async (req) => {
+export async function status(req: Request): Promise<Response> {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
   let token = "";
   try { token = String((await req.json())?.token ?? ""); } catch { /* sem corpo */ }
@@ -38,4 +38,4 @@ Deno.serve(async (req) => {
   const { data } = await db.rpc("fn_vale_pedido_publico", { p_token: token });
   if (!data) return json({ ok: false, erro: "nao_encontrado" }, 404);
   return json({ ok: true, pedido: data });
-});
+}

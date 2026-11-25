@@ -1,6 +1,6 @@
-import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { CORS, json, provedor } from "../_shared/pagamento.ts";
+import { CORS, json, provedor } from "./pagamento.ts";
+
 
 /**
  * Vale Ditado: cria o pedido da página pública (ditado.org/vale).
@@ -12,7 +12,7 @@ import { CORS, json, provedor } from "../_shared/pagamento.ts";
  *
  * Pública (verify_jwt = false): quem chama é o cliente, sem login. Só escreve por funções do banco.
  */
-Deno.serve(async (req) => {
+export async function criarPedido(req: Request): Promise<Response> {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
   if (req.method !== "POST") return json({ ok: false, erro: "metodo" }, 405);
 
@@ -57,4 +57,4 @@ Deno.serve(async (req) => {
   }
 
   return json({ ok: true, token: r.token });
-});
+}
