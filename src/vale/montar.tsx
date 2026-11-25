@@ -17,6 +17,14 @@ export function montar() {
   document.documentElement.lang = 'pt-BR';
   const meta = document.querySelector('meta[name="description"]');
   meta?.setAttribute('content', 'Vale Ditado: kits, cartelas de chopp e vales com desconto para usar no Ditado Brasa & Bar.');
+  // barra do navegador na cor do fundo da página (off-white do manual da marca)
+  let cor = document.querySelector('meta[name="theme-color"]');
+  if (!cor) { cor = document.createElement('meta'); cor.setAttribute('name', 'theme-color'); document.head.appendChild(cor); }
+  cor.setAttribute('content', '#f5efe6');
+  // fonte dos títulos antes do CSS pedir (evita o título piscar em outra fonte)
+  const fonte = document.createElement('link');
+  Object.assign(fonte, { rel: 'preload', as: 'font', type: 'font/woff2', href: '/fonts/vale/charis-sil-700-latin.woff2', crossOrigin: 'anonymous' });
+  document.head.appendChild(fonte);
   createRoot(document.getElementById('root')!).render(
     <StrictMode>
       <BrowserRouter>

@@ -195,7 +195,7 @@ export default function Checkout() {
           {campo('cpf', 'CPF', { placeholder: '000.000.000-00', inputMode: 'numeric', autoComplete: 'off' }, mascaraCPF, 'Usado para emitir e conferir o vale.')}
           {campo('nascimento', 'Data de nascimento', { placeholder: 'dd/mm/aaaa', inputMode: 'numeric', autoComplete: 'bday' }, mascaraData)}
           {campo('celular', 'Celular (WhatsApp)', { placeholder: '(65) 90000-0000', inputMode: 'tel', autoComplete: 'tel-national' }, mascaraCelular, 'O comprovante fica no link que aparece depois do pagamento.')}
-          {campo('email', 'E-mail (opcional)', { placeholder: 'voce@email.com', inputMode: 'email', autoComplete: 'email', type: 'email' })}
+          {campo('email', 'E-mail (opcional)', { placeholder: 'voce@email.com', inputMode: 'email', autoComplete: 'email', type: 'email', spellCheck: false, name: 'email' })}
 
           {bloqueioIdade && (
             <div className="v-alerta" role="alert" id="a-idade" tabIndex={-1}>
@@ -269,7 +269,7 @@ export default function Checkout() {
           <div className="v-rodape-fixo">
             {mostrarFalta && falta && <p className="v-falta" role="alert">{falta[0]}</p>}
             <button type="submit" className="v-cta" disabled={enviando}>
-              {enviando ? 'Gerando seu pagamento...' : `Pagar R$ ${reais(totais.total)}${forma === 'pix' ? ' com Pix' : ''}`}
+              {enviando ? 'Gerando seu pagamento…' : `Pagar R$ ${reais(totais.total)}${forma === 'pix' ? ' com Pix' : ''}`}
             </button>
           </div>
           <p className="v-legenda v-centro"><b>Beba com moderação. Proibido para menores de 18 anos.</b></p>

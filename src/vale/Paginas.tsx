@@ -45,7 +45,7 @@ export function Consultar() {
             <label htmlFor="q-cpf">3 primeiros números do CPF do titular</label>
             <input id="q-cpf" value={cpf3} onChange={(e) => setCpf3(e.target.value.replace(/\D/g, '').slice(0, 3))} placeholder="000" inputMode="numeric" autoComplete="off" />
           </div>
-          <button type="submit" className="v-cta" disabled={buscando || codigo.length < 13 || cpf3.length < 3}>{buscando ? 'Consultando...' : 'Consultar'}</button>
+          <button type="submit" className="v-cta" disabled={buscando || codigo.length < 13 || cpf3.length < 3}>{buscando ? 'Consultando…' : 'Consultar'}</button>
         </form>
         {erro && <div className="v-alerta" role="alert">{erro}</div>}
         {vale && <div style={{ marginTop: 16 }}><CardVale v={vale} /></div>}
