@@ -5,7 +5,7 @@
 **Base desta versão (fonte: `produtos.md`, 24/11):**
 - Preço "de" = preço cheio de cardápio da tabela. Chopp Brahma 300 ml = **R$ 18,50**.
 - Venda: **Black Brasa** de 27/11 (sexta) a 30/11 (segunda); depois **Vale de Natal** de 01/12 a 24/12, mesmos produtos e preços.
-- Validade de 6 meses · vale todo dia que o bar abre, inclusive no happy hour · não acumula com outras promoções · vales de consumo não pagam outras promoções · 10% sobre o valor pago, couvert à parte · até 2 por CPF.
+- Validade de 3 meses · uso numa visita só · vale todo dia que o bar abre, inclusive no happy hour · não acumula com outras promoções · vales de consumo não pagam outras promoções · 10% sobre o valor pago, couvert à parte · até 2 por CPF.
 - Sem rodízio nesta campanha.
 
 ---
@@ -52,25 +52,25 @@ ou até acabar o lote de cada produto, o que vier primeiro.
 3.1. Cada CPF pode comprar **até 2 unidades** `[CONFIRMAR: 2 no total ou 2 de cada produto]`.
 
 **4. Taxa de serviço e couvert**
-4.1. A taxa de serviço de 10% é opcional `[CONFIRMAR com advogado a redação]` e, quando paga, é **calculada sobre o valor pago pelo vale**, não sobre o preço de cardápio. É cobrada no resgate, proporcional ao que for usado em cada visita. Valor total da taxa por produto:
+4.1. A taxa de serviço de 10% é opcional `[CONFIRMAR com advogado a redação]` e, quando paga, é **calculada sobre o valor pago pelo vale**, não sobre o preço de cardápio. É cobrada no resgate. Valor total da taxa por produto:
 - Abre a Brasa R$ 12,99 · Cartela 5 R$ 6,49 · Cartela 10 R$ 12,99 · Kit Boteco R$ 15,99 · Kit Passarinho R$ 11,99 · Kit Picanha R$ 13,99 · Tábua & Chopp R$ 14,99 · Assado do Zé R$ 11,99 · Rolê de Gin R$ 7,99 · Rodada de Caipirinha R$ 9,99 · Família no Ditado R$ 15,99.
-- Vale Ditado 100 e 200: R$ 0,80 a cada R$ 10,00 de crédito usado (total de R$ 10,00 e R$ 20,00).
+- Vale Ditado 100 e 200: R$ 0,80 a cada R$ 10,00 de crédito usado (até R$ 10,00 e R$ 20,00).
 4.2. O **couvert artístico** não está incluído e é cobrado à parte nos dias em que houver música com couvert.
 
 **5. Validade**
-5.1. Cada vale vale por **6 meses a partir da data da compra**. A data exata de vencimento aparece no vale e no e-mail de confirmação. Exemplo: comprado em 27/11/2026, vence em 27/05/2027.
+5.1. Cada vale vale por **3 meses a partir da data da compra**. A data exata de vencimento aparece no vale e no comprovante. Exemplo: comprado em 27/11/2026, vence em 27/02/2027.
 5.2. `[DEFINIR COM ADVOGADO: o que acontece com o saldo não usado após o vencimento.]`
 
 **6. Dias e horários de uso**
 6.1. O vale pode ser usado **em qualquer dia em que o Ditado Brasa & Bar estiver aberto**, durante o horário de funcionamento (`[CONFIRMAR: horário de funcionamento]`).
 6.2. Todos os vales, inclusive os produtos com chopp, podem ser usados durante o happy hour. O item resgatado pelo vale não recebe o desconto do happy hour (item 12.1).
 
-**7. Como resgatar (inclusive em mais de uma visita)**
+**7. Como resgatar (numa visita só)**
 7.1. Na chegada ou na hora de pedir, informe o código do vale ao garçom ou ao caixa e apresente documento oficial com foto do titular.
-7.2. O uso pode ser **fracionado**:
-- Vales Ditado 100 e 200: o saldo em reais pode ser usado em quantas visitas o titular quiser, dentro da validade.
-- Kits, cartelas e rodadas: cada item é um crédito por unidade (ex.: 2 chopps hoje, 3 na semana que vem). Pratos e petiscos são servidos em porção inteira.
-7.3. O saldo restante aparece no comprovante de cada resgate e pode ser consultado pelo WhatsApp.
+7.2. O vale é usado **numa visita só**. O primeiro resgate abre o vale, e o que faltar pode ser pedido na mesma noite, até as 6h da manhã seguinte. Depois disso o vale se encerra, e o que não foi usado não fica para outro dia nem é devolvido em dinheiro:
+- Vales Ditado 100 e 200: o crédito é usado no consumo daquela visita; o que sobrar se perde.
+- Kits, cartelas e rodadas: os itens são servidos ao longo daquela noite. Pratos e petiscos são servidos em porção inteira.
+7.3. O que já foi usado aparece no comprovante e no link do vale.
 7.4. O titular pode dividir o que resgatar com a mesa, respeitando o item 8.
 
 **8. Maioridade**
@@ -122,7 +122,7 @@ ou até acabar o lote de cada produto, o que vier primeiro.
 
 ### Topo
 **Mais vale um Ditado na mão.**
-Garanta agora, use em até 6 meses. Para você ou de presente.
+Garanta agora, use em até 3 meses. Para você ou de presente.
 
 *Faixa de 27/11 a 30/11:* **BLACK BRASA · só até segunda (30/11)**
 *Faixa de 01/12 a 24/12:* **VALE DE NATAL · até 24/12**
@@ -136,12 +136,12 @@ Lotes limitados. Cada produto mostra quantos restam.
 **CHOPP PRA VÁRIAS VISITAS**
 
 **CARTELA 5 CHOPPS**
-5 chopps Brahma 300 ml para usar em várias visitas. Dois hoje, três no fim de semana.
+5 chopps Brahma 300 ml. Pra uma rodada.
 ~~R$ 92,50~~ **R$ 64,90** · Restam [X]
 [QUERO ESTE]
 
 **CARTELA 10 CHOPPS**
-10 chopps Brahma 300 ml. Usa aos poucos, em quantas visitas quiser, dentro de 6 meses.
+10 chopps Brahma 300 ml, pra dividir com a mesa.
 ~~R$ 185,00~~ **R$ 129,90** · Restam [X]
 [QUERO ESTE]
 
@@ -220,10 +220,10 @@ R$ 50 a mais. Presente que ninguém devolve.
 
 ### Resumo das regras (aparece antes do botão de pagar, com a caixa de aceite)
 Antes de pagar, confira:
-- Vale por **6 meses** a partir da compra. A data de vencimento vem no seu vale.
+- Vale por **3 meses** a partir da compra. A data de vencimento vem no seu vale.
 - Usa **qualquer dia que o bar estiver aberto**.
 - Não junta com outras promoções. Os Vales Ditado 100 e 200 não pagam outras promoções.
-- Pode usar **aos poucos**, em mais de uma visita.
+- Vale **numa visita só**: o que sobrar naquela noite não fica para outro dia.
 - **10% de serviço** sobre o valor pago, cobrado no resgate. **Couvert à parte**, quando houver música com couvert.
 - Até **2 por CPF**. Vale nominal: dá para colocar o nome do presenteado ou transferir depois.
 - Bebida alcoólica só para **maiores de 18**, com documento com foto na hora.
@@ -241,7 +241,7 @@ Vendido por K M POPULAR BAR LTDA · CNPJ 12.061.357/0001-69 · `[CONFIRMAR: ende
 Pode. Coloque o nome e o CPF de quem vai ganhar na compra. Se preferir, transfere depois pelo WhatsApp.
 
 **Preciso usar tudo de uma vez?**
-Não. Usa em quantas visitas quiser, dentro dos 6 meses.
+Sim. O vale é usado numa visita só, na mesma noite, qualquer dia dentro dos 3 meses. O que sobrar não fica guardado para outro dia.
 
 **Vale no fim de semana?**
 Vale. Qualquer dia que a casa abrir.
@@ -311,12 +311,12 @@ Chama no WhatsApp com seu CPF que a gente reenvia.
 ### (c) Sumidos há 91 a 180 dias
 **Versão 1 — quem é vivo**
 > Oi, {nome}! Quem é vivo sempre aparece. A gente tá aqui, de casa nova: Ditado Brasa & Bar.
-> Pra facilitar a volta: paga R$ 100, consome R$ 125. Use em até 6 meses: {link}
+> Pra facilitar a volta: paga R$ 100, consome R$ 125. Use em até 3 meses: {link}
 > Responda SAIR para não receber mais.
 
 **Versão 2 — o que continua**
 > {nome}, faz tempo! O chopp gelado e a música ao vivo continuam. Agora tem carne na brasa pra dividir.
-> Cartela de chopp pra usar em várias visitas, de R$ 92,50 por R$ 64,90: {link}
+> Cartela de 5 chopps, de R$ 92,50 por R$ 64,90: {link}
 > Responda SAIR para não receber mais.
 
 **Versão 3 — presente**
@@ -331,7 +331,7 @@ Chama no WhatsApp com seu CPF que a gente reenvia.
 
 *Na hora de entregar a conta. Fala natural, sem decorar palavra por palavra.*
 
-> "Antes de fechar: sabe o Vale Ditado? Você paga 100 e consome 125 aqui, em até 6 meses. Tem também cartela de chopp pra usar em várias visitas e kit de petisco com chopp. Serve de presente. Quer que eu te mande o link no WhatsApp?"
+> "Antes de fechar: sabe o Vale Ditado? Você paga 100 e consome 125 aqui, em até 3 meses. Tem também cartela de chopp pra mesa e kit de petisco com chopp. Serve de presente. Quer que eu te mande o link no WhatsApp?"
 
 *De 27/11 a 30/11, abrir com: "Tá rolando a Black Brasa, só até segunda..."*
 
@@ -360,14 +360,14 @@ Se disser não: "Tranquilo. Valeu demais pela visita!"
 
 **Story 3 — último dia da Black Brasa (30/11)**
 > Último dia da Black Brasa. Amanhã é tarde.
-> 13 vales, use em até 6 meses. Link aqui.
+> 13 vales, use em até 3 meses. Link aqui.
 > *Beba com moderação. Proibido para menores de 18 anos.*
 
 **Feed**
 > Mais vale um Ditado na mão do que dois voando.
 >
-> Black Brasa, de 27 a 30/11. Vales pré-pagos para usar em até 6 meses, qualquer dia que a casa abrir:
-> Cartela 5 chopps: de R$ 92,50 por R$ 64,90. Cartela 10: de R$ 185 por R$ 129,90. Usa em várias visitas.
+> Black Brasa, de 27 a 30/11. Vales pré-pagos para usar em até 3 meses, qualquer dia que a casa abrir:
+> Cartela 5 chopps: de R$ 92,50 por R$ 64,90. Cartela 10: de R$ 185 por R$ 129,90.
 > Kit Boteco: torresmo de rolo, bolinho de costela e 6 chopps, de R$ 227 por R$ 159,90.
 > Vale Ditado: paga R$ 100, consome R$ 125.
 > E mais kits de picanha, passarinho, tábua, gin e caipirinha no link da bio.
@@ -392,10 +392,10 @@ Se disser não: "Tranquilo. Valeu demais pela visita!"
 **Feed**
 > Quem tem amigo tem tudo. Quem dá um Ditado ganha companhia na mesa.
 >
-> Até 24/12, dá pra presentear com vale pré-pago, para usar em até 6 meses:
+> Até 24/12, dá pra presentear com vale pré-pago, para usar em até 3 meses:
 > Vale Ditado 100 (consome R$ 125) ou 200 (consome R$ 250).
 > Família no Ditado: picanha na chapa com cascata de queijo + 4 refrigerantes, de R$ 196 por R$ 159,90.
-> Cartela de chopp para várias visitas, Kit Boteco, Kit Picanha, Rolê de Gin e outros no link da bio.
+> Cartelas de chopp, Kit Boteco, Kit Picanha, Rolê de Gin e outros no link da bio.
 >
 > Coloca o nome de quem vai ganhar na compra. Lote limitado, até 2 por CPF.
 >
