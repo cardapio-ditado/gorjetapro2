@@ -22,17 +22,17 @@ export const TEXTOS_PADRAO = {
   linha_confianca: 'Pix na hora · Código com QR na hora · 7 dias para desistir',
   // S3
   destaque_1_titulo: 'Até {pct}% mais barato', destaque_1_texto: 'Preço que só existe aqui no site.',
-  destaque_2_titulo: '6 meses para usar', destaque_2_texto: 'Qualquer dia que a casa abrir. Dá para usar aos poucos.',
+  destaque_2_titulo: '6 meses para usar', destaque_2_texto: 'Qualquer dia que a casa abrir, numa visita.',
   destaque_3_titulo: 'Pra você ou de presente', destaque_3_texto: 'Coloca o nome de quem vai ganhar na compra.',
   ditado_secao: 'Quem guarda, tem.',
   // S4
   grade_titulo: 'Escolha o seu',
   grade_subtitulo: 'Lote limitado. Quando acabar, acabou.',
-  bloco_chopp: 'Chopp pra várias visitas', bloco_kits: 'Kits de mesa', bloco_drinks: 'Drinks', bloco_familia: 'Pra família',
+  bloco_chopp: 'Chopp pra mesa', bloco_kits: 'Kits de mesa', bloco_drinks: 'Drinks', bloco_familia: 'Pra família',
   // S5
   credito_titulo: 'Não sabe o que escolher? Dá crédito.',
-  credito_texto: 'Você paga R$ 100 e consome R$ 125. Ou paga R$ 200 e consome R$ 250. Usa no que quiser do cardápio, em quantas visitas quiser, por 6 meses.',
-  credito_pequeno: 'Não paga garrafas nem itens de outras promoções. Não dá troco: se passar do saldo, paga a diferença na hora.',
+  credito_texto: 'Você paga R$ 100 e consome R$ 125. Ou paga R$ 200 e consome R$ 250. Usa no que quiser do cardápio, numa visita, em até 6 meses.',
+  credito_pequeno: 'Vale numa visita só: o que sobrar não fica para outro dia. Não paga garrafas nem itens de outras promoções. Não dá troco: se passar do crédito, paga a diferença na hora.',
   // S6
   como_titulo: 'Simples como pedir mais uma.',
   // S7

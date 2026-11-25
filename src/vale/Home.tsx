@@ -368,7 +368,7 @@ function ComoFunciona() {
       <ol className="v-passos">
         <li><span className="v-passo-num">1</span><span><b>Compra aqui.</b> Escolhe, paga no Pix e pronto.</span></li>
         <li><span className="v-passo-num">2</span><span><b>Recebe o código.</b> Chega na hora, com QR code. Salva no WhatsApp.</span></li>
-        <li><span className="v-passo-num">3</span><span><b>Mostra no bar.</b> O garçom lê o código e dá baixa no que você usar. O resto fica guardado, por até 6 meses.</span></li>
+        <li><span className="v-passo-num">3</span><span><b>Mostra no bar.</b> O garçom lê o código e dá baixa. Vale numa visita, qualquer dia em até 6 meses.</span></li>
       </ol>
       <Link to="/vale/consultar" className="v-link">Já comprei: consultar meu vale</Link>
     </section>
@@ -424,7 +424,7 @@ function Regras() {
         <li><span>Vale <b>{c.validade_meses} meses</b> a partir da compra. A data exata vem no seu vale.</span></li>
         <li><span>Usa <b>qualquer dia</b> que o bar estiver aberto.</span></li>
         <li><span>Produtos com chopp <b>não valem no happy hour (até {hh})</b>. Depois das {hh}, tudo certo.</span></li>
-        <li><span>Pode usar <b>aos poucos</b>, em mais de uma visita.</span></li>
+        <li><span>Vale <b>numa visita só</b>: o que não for usado naquela noite não fica para outro dia.</span></li>
         <li><span><b>10% de serviço</b> sobre o valor que você pagou, não sobre o preço cheio.</span></li>
         <li><span><b>Couvert artístico à parte</b>, nos dias de música com couvert.</span></li>
         <li><span><b>Não junta</b> com outras promoções. Os vales 100 e 200 não pagam garrafas nem outras promoções.</span></li>
@@ -446,7 +446,7 @@ function Faq() {
   const hh = vitrine!.campanha.happy_hour_fim.replace(':00', 'h');
   const itens: [string, string][] = [
     ['Posso dar de presente?', 'Pode. Marque "é presente" e coloque nome e CPF de quem vai ganhar. Se preferir, transfere depois pelo WhatsApp, sem custo.'],
-    ['Preciso usar tudo de uma vez?', 'Não. Usa em quantas visitas quiser, dentro dos 6 meses. O saldo fica no seu comprovante.'],
+    ['Preciso usar tudo de uma vez?', 'Sim. O vale é usado numa visita só, na mesma noite, qualquer dia dentro dos 6 meses. O que sobrar não fica guardado para outro dia.'],
     ['Vale no fim de semana?', `Vale. Qualquer dia que a casa abrir. Só os produtos com chopp ficam fora do happy hour, até as ${hh}.`],
     ['O Vale Ditado 100 paga qualquer coisa?', 'Qualquer item do cardápio, menos garrafas e o que já estiver em outra promoção.'],
     ['Paga 10%?', 'Paga, mas sobre o valor que você pagou, não sobre o preço cheio. O couvert é à parte.'],
@@ -548,14 +548,14 @@ function FolhaProduto({ p, fechar, desabilitado }: { p: Produto; fechar: () => v
               {c.brinde_descricao && <li><span>{c.brinde_descricao} (brinde Black, comprando até 30/11)</span><span>1x</span></li>}
             </ul>
           ) : (
-            <p style={{ margin: 0 }}>Paga R$ {reais(p.preco_por)} e consome R$ {reais(p.credito_valor ?? 0)} no cardápio, em quantas visitas quiser.</p>
+            <p style={{ margin: 0 }}>Paga R$ {reais(p.preco_por)} e consome R$ {reais(p.credito_valor ?? 0)} no cardápio, numa visita.</p>
           )}
           <ul className="v-regras" style={{ margin: 0 }}>
             <li>Vale {c.validade_meses} meses a partir da compra.</li>
             {p.trava_happy_hour && <li>Não vale no happy hour (até {c.happy_hour_fim.replace(':00', 'h')}).</li>}
             {p.tem_alcool && <li>Bebida alcoólica só para maiores de 18, com documento com foto.</li>}
             {p.tipo === 'credito' && <li>Não paga garrafas nem outras promoções. Não dá troco.</li>}
-            <li>Pode usar aos poucos, em mais de uma visita.</li>
+            <li>Vale numa visita só (na mesma noite).</li>
           </ul>
           <div className="v-num"><span className="v-de">de R$ {reais(p.preco_de)}</span> <span className="v-por">R$ {reais(p.preco_por)}</span></div>
           <Restam p={p} />

@@ -222,7 +222,7 @@ function Pago({ pedido, token }: { pedido: PedidoPublico; token: string }) {
       <Moldura>
         <h1 className="v-h1">Tá na mão!</h1>
         <p style={{ margin: 0 }}><b>Mais vale um Ditado na mão.</b> Agora é só marcar o dia.</p>
-        <p className="v-apoio" style={{ margin: 0 }}>Seus vales estão abaixo. Guarde este link: ele mostra o saldo atualizado a cada visita.</p>
+        <p className="v-apoio" style={{ margin: 0 }}>Seus vales estão abaixo. Guarde este link: ele mostra o código e o que já foi usado.</p>
         <a className="v-cta" href={linkWhatsLivre(textoWhats)} target="_blank" rel="noopener noreferrer">Salvar no WhatsApp</a>
         <p className="v-legenda v-centro" style={{ margin: 0 }}>Dica: mande para você mesmo ou para quem vai ganhar.</p>
         {pedido.presente && <a className="v-btn" href={linkWhatsLivre(textoWhats)} target="_blank" rel="noopener noreferrer">Enviar para quem vai ganhar</a>}
@@ -240,11 +240,11 @@ function Pago({ pedido, token }: { pedido: PedidoPublico; token: string }) {
           <ul className="v-regras" style={{ margin: 0 }}>
             <li>Mostre o código ao garçom ou no caixa, com documento com foto.</li>
             <li>Produtos com chopp só depois das {hh} (não valem no happy hour).</li>
-            <li>Use aos poucos: o saldo fica guardado até a validade.</li>
+            <li>Vale numa visita só: o que sobrar naquela noite não fica para outro dia.</li>
             <li>10% sobre o valor pago · couvert à parte · não junta com outras promoções.</li>
           </ul>
         </div>
-        <p className="v-legenda v-centro"><b>Guarde este link.</b> O saldo aqui está sempre atualizado.</p>
+        <p className="v-legenda v-centro"><b>Guarde este link.</b> É nele que está o seu código.</p>
         <Link className="v-link" to="/vale/regulamento">Ver regulamento</Link>
       </Moldura>
     </LazyMotion>

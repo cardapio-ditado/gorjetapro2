@@ -46,6 +46,7 @@ export interface Campanha {
   brinde_descricao: string | null; brinde_ate: string | null;
   mostrar_contador: boolean; contador_fim: string | null; mostrar_vendidos_a_partir: number;
   hero_foto_url: string | null; textos: Record<string, string>; tem_regulamento: boolean;
+  uso_unico: boolean; fim_noite: string;
 }
 
 export interface Vitrine {
