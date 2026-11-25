@@ -54,6 +54,10 @@ próxima parcela quando a anterior estiver quitada. Não case o pagamento com a 
    - `so_pagamentos: true` (Kadu, 25/11/2026, acordo do Thiago): relatório **só com os pagamentos**, sem atraso, faixa nem
      valor de multa e sem as notas de cálculo (a contadoria do tribunal calcula). O quarto cartão vira "Pagamentos: N Pix".
      Pergunte ao Kadu qual versão ele quer quando o acordo estiver com parcela atrasada.
+   - `externo: true` (Kadu, 25/11/2026, acordo do Arian): versão para o **advogado da parte contrária**. Já é só pagamentos e
+     sai sem o que é interno: coluna "No sistema", observações dos comprovantes e a menção à Central. Não ponha a linha
+     "No sistema" em `dados` nem nota sobre o Contas a Pagar. `destinatario` = o advogado do reclamante.
+     Quando o Kadu pedir os dois, gere dois configs (ex.: `config-empresa.json` com multa e `config-contraria.json` externo).
    - `destinatario` (padrão: Dr. Rodolpho Vasconcellos Dias) e `emitido` (AAAA-MM-DD, a data de hoje em Cuiabá).
    - `dados`: linhas de "Dados do acordo", nesta ordem: Processo, Partes, Valor, Pagamento, Advogados, No sistema. Texto corrido, tirado da ata.
    - `notas`: caixas depois da tabela (título em negrito + texto). "Como foi calculado" entra sozinha, a partir da cláusula do acordo.
