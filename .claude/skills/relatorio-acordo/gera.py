@@ -66,7 +66,35 @@ def calcular(acordo, parcelas, comps, hoje):
         f = faixa_de(acordo.get('clausula'), atraso) if atraso else None
         multa = round(base * f['pct'] / 100, 2) if f and f.get('pct') is not None and f.get('base') != 'saldo' else None
         linhas.append(dict(p=p, comps=cs, pags=pags, valor=valor, base=base, pago=min(soma, valor), quit=quit_em, atraso=atraso, sit=sit,
-                           faixa=f, multa=multa, vencida=not quit_em and hoje > vu, sistema=fin.get('titulo') or '—'))
+                           faixa=f, multa=multa, vencida=not quit_em and hoje > vu, sistema=fin.get('titulo') or '—', vu=vu, antecipada=None))
+    return antecipar(acordo, linhas, hoje)
+
+def antecipar(acordo, linhas, hoje):
+    """Cláusula de vencimento antecipado: quando uma parcela passa do limite da faixa "do saldo" (ex.: mais de 20 dias) sem estar
+    quitada, as parcelas seguintes vencem nesse dia. Recalcula atraso e faixa delas a partir da data antecipada."""
+    faixas = (acordo.get('clausula') or {}).get('faixas', [])
+    i = next((k for k, f in enumerate(faixas) if f.get('base') == 'saldo'), None)
+    if i is None or i == 0: return linhas
+    limite = faixas[i - 1].get('ate')
+    if limite is None: return linhas
+    data_ant, origem = None, None
+    for l in linhas:
+        cruza = l['vu'] + timedelta(days=limite + 1)  # primeiro dia "acima de N dias"
+        if cruza <= hoje and (l['quit'] is None or dt(l['quit']) >= cruza):
+            if data_ant is None or cruza < data_ant: data_ant, origem = cruza, l
+    if data_ant is None: return linhas
+    acordo['_antecipacao'] = dict(data=data_ant.isoformat(), parcela=origem['p']['n'], limite=limite,
+                                  saldo=round(sum(x['base'] - sum(g['valor'] for g in x['pags'] if g['data'] < data_ant.isoformat()) for x in linhas
+                                                  if x['p']['n'] >= origem['p']['n']), 2))
+    for l in linhas:
+        if l['vu'] <= data_ant: continue
+        l['antecipada'] = data_ant.isoformat(); vu = data_ant
+        if l['quit']: atraso, sit = max(0, (dt(l['quit']) - vu).days), 'paga'
+        else: atraso = (hoje - vu).days if hoje > vu else None; sit = l['sit'] if l['sit'] != 'a vencer' else 'em aberto'
+        l['atraso'], l['sit'], l['vencida'] = atraso, sit, not l['quit'] and hoje > vu
+        f = faixa_de(acordo.get('clausula'), atraso) if atraso else None
+        l['faixa'] = f
+        l['multa'] = round(l['base'] * f['pct'] / 100, 2) if f and f.get('pct') is not None and f.get('base') != 'saldo' else None
     return linhas
 
 def imagem(pasta, asset):
@@ -98,6 +126,12 @@ def montar(acordo, linhas, cfg, pasta_comp, hoje):
     notas = [['Como foi calculado.', 'Atraso em dias corridos entre o vencimento e o dia em que a parcela ficou quitada; vencimento em sábado, domingo ou feriado '
               'passa para o dia útil seguinte (art. 132, §1º, do Código Civil). Faixas da cláusula penal: ' + texto_regra(acordo.get('clausula')) + '. '
               'A coluna “Multa máx.” é o teto pela regra, somado só nas faixas sobre a parcela; só é devida se o reclamante pedir ao juiz, e o juiz pode reduzir (art. 413 do Código Civil).']] + cfg.get('notas', [])
+    ant = acordo.get('_antecipacao')
+    if ant:
+        seguintes = [str(l['p']['n']) + 'ª' for l in linhas if l.get('antecipada')]
+        notas.insert(1, ['Vencimento antecipado.', f'A {ant["parcela"]}ª parcela passou de {ant["limite"]} dias de atraso em {br(ant["data"])} sem estar quitada. Pela cláusula, nesse dia ' + ('a ' + ' e a '.join(seguintes) + (' parcela venceu' if len(seguintes) == 1 else ' parcelas venceram') if seguintes else 'as demais parcelas venceram') +
+                         f' antecipadamente, e o atraso delas é contado a partir de {br(ant["data"])}. A multa de 100% incide sobre o saldo remanescente nessa data, '
+                         f'{brl(ant["saldo"])}, com juros e correção: é o teto, devido só se o reclamante pedir ao juiz, que pode reduzir (art. 413 do Código Civil).'])
 
     def pag_txt(g):
         t = f'<span class="pg">{br(g["data"], True)} {brl(g["valor"], False)}</span>'
@@ -113,7 +147,9 @@ def montar(acordo, linhas, cfg, pasta_comp, hoje):
         atraso = '—' if l['atraso'] is None else 'em dia' if l['atraso'] == 0 else f'{l["atraso"]} dias' + ('' if l['quit'] else '<span class="m">(até hoje)</span>')
         f = l['faixa']
         faixa = ('em dia' if l['atraso'] == 0 else '—') if not f else f'<b class="fx">{e(f.get("texto") or (str(f["pct"]) + ("% do saldo" if f.get("base") == "saldo" else "% da parcela")))}</b>'
-        return (f'<tr class="{"aberta" if l["vencida"] else ""}"><td>{p["n"]}</td><td>{MESES[d.month - 1]}/{d.year}</td><td>{br(p["venc"])}</td><td class="v">{brl(l["base"])}</td>'
+        return (f'<tr class="{"aberta" if l["vencida"] else ""}"><td>{p["n"]}</td><td>{MESES[d.month - 1]}/{d.year}</td><td>{br(p["venc"])}'
+                + (f'<span class="m">antecipado para {br(l["antecipada"])}</span>' if l.get('antecipada') else '') + '</td>'
+                f'<td class="v">{brl(l["base"])}</td>'
                 f'<td>{"".join(pag_txt(g) for g in l["pags"]) or "—"}</td><td class="v">{brl(l["pago"])}</td><td>{sit}</td><td>{atraso}</td><td>{faixa}</td>'
                 f'<td class="v">{brl(l["multa"]) if l["multa"] else "—"}</td><td class="m">{e(l["sistema"])}</td></tr>')
 

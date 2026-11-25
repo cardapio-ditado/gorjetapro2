@@ -77,5 +77,9 @@ próxima parcela quando a anterior estiver quitada. Não case o pagamento com a 
 - Faixa da multa: a primeira faixa de `clausula.faixas` em que o atraso cabe. "Multa máx." = percentual × valor da parcela (pela ata),
   somada só nas faixas sobre a parcela. A faixa "100% do saldo" aparece, mas não entra na soma. A multa só é devida se o reclamante pedir
   ao juiz, e o juiz pode reduzir (art. 413 do Código Civil).
+- **Vencimento antecipado** (Kadu, 25/11/2026, acordo do Thiago): quando uma parcela passa do limite da faixa "do saldo"
+  (ex.: mais de 20 dias) sem estar quitada, as parcelas seguintes vencem nesse dia. O gerador calcula sozinho: mostra
+  "antecipado para DD/MM" no vencimento, conta o atraso a partir dessa data e põe a nota "Vencimento antecipado" com o saldo
+  remanescente na data (teto da multa de 100%, só com pedido ao juiz).
 - Pago da parcela nunca passa do valor dela; o que passa aparece como "vão para a parcela seguinte".
 - Atraso médio: média dos dias de atraso das parcelas quitadas (em dia conta zero).
