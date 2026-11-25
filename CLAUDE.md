@@ -87,6 +87,8 @@ Não duplicar aqui: cada regra tem uma fonte só.
 - **Uso numa visita só** (Kadu, 25/11): a primeira baixa abre o vale; o resto só até o fim daquela noite (6h). Sobra não volta.
 - **Validade 3 meses** (Kadu, 25/11). Limite 2 de cada produto por CPF. Produtos com chopp não valem no happy hour (até 21h).
 - A página pública (`src/vale`) não carrega o sistema: `src/main.tsx` decide pela rota. Não citar Open de Chopp nem rodízio.
+- Visual da página (25/11): cores do Manual da Marca, como o tema claro do sistema; foto só real, enviada pelo admin.
+  Para mexer no visual, use as skills do projeto `design-taste-frontend-carregador` e `web-design-guidelines`.
 
 ### Agenda de pagamentos (22-23/11/2026)
 - Tela `/agenda-pagamentos` (Financeiro): substitui a planilha diária "valores a pagar". Uma folha por dia, no jeito
