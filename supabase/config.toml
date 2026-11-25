@@ -26,3 +26,18 @@ verify_jwt = false
 # (ações do bar) por conta própria.
 [functions.contrato-assinatura]
 verify_jwt = false
+
+# Vale Ditado (ditado.org/vale): o cliente compra sem login e o gateway avisa sem JWT.
+# A segurança fica dentro de cada função (validação no banco; assinatura HMAC no webhook).
+[functions.vale-criar-pedido]
+verify_jwt = false
+
+[functions.vale-webhook]
+verify_jwt = false
+
+[functions.vale-status]
+verify_jwt = false
+
+# Estorno: só com login de gerente (conferido de novo dentro da função, no banco).
+[functions.vale-estornar]
+verify_jwt = true
