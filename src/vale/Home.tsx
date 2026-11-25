@@ -3,8 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { AnimatePresence, LazyMotion, domAnimation, m } from 'motion/react';
 import type { Produto } from './api';
 import { useVale } from './carrinho';
-import { BotaoAdicionar, Carregando, Chevron, FaixaTeste, Logo, Restam, RodapeLegal, Seletor, Toast, useRelogio } from './comum';
-import { dataBR, diaCuiaba, horaCuiaba, linkWhats, pctBonus, pctDesconto, reais, rs } from './util';
+import { BotaoAdicionar, Carregando, Chevron, FaixaTeste, IconeFechar, Logo, Restam, RodapeLegal, Seletor, Toast, useRelogio } from './comum';
+import { diaCuiaba, horaCuiaba, linkWhats, pctBonus, pctDesconto, reais, rs } from './util';
 
 /** Página /vale — seções S1 a S10 de docs/layout-pagina.md, textos de docs/copy-pagina.md. */
 export default function Home() {
@@ -97,9 +97,9 @@ function Urgencia() {
 
   let texto: string;
   if (!natal) {
-    if (!alvo || resta <= 0 || !c.mostrar_contador) texto = 'BLACK BRASA · lote limitado';
-    else if (resta < 86_400_000) texto = `BLACK BRASA · Último dia${c.brinde_ate ? ' do brinde' : ''}. Acaba às ${horaCuiaba(alvo)} de hoje.`;
-    else texto = c.brinde_ate ? `BLACK BRASA · o brinde acaba em ${d}d ${h}h ${min}m` : `A Black Brasa acaba em ${d}d ${h}h ${min}min`;
+    if (!alvo || resta <= 0 || !c.mostrar_contador) texto = 'Black Brasa · lote limitado';
+    else if (resta < 86_400_000) texto = `Último dia${c.brinde_ate ? ' do brinde' : ' da Black Brasa'}: acaba às ${horaCuiaba(alvo)} de hoje`;
+    else texto = c.brinde_ate ? `O bolinho de brinde acaba em ${d}d ${h}h ${min}min` : `A Black Brasa acaba em ${d}d ${h}h ${min}min`;
   } else {
     const hoje = diaCuiaba(new Date(agora).toISOString());
     if (resta <= 0) texto = 'Vale de Natal';
@@ -140,18 +140,17 @@ function Hero() {
   const f = natal ? 'natal' : 'black';
   return (
     <header className="v-hero">
-      {c.hero_foto_url ? <img className="v-hero-foto" src={c.hero_foto_url} alt="" fetchPriority="high" /> : <div className="v-hero-sem-foto" />}
-      <div className="v-hero-pelicula" />
+      {c.hero_foto_url
+        ? <><img className="v-hero-foto" src={c.hero_foto_url} alt="" fetchPriority="high" /><div className="v-hero-pelicula" /></>
+        : <div className="v-hero-sem-foto" />}
       <div className="v-hero-conteudo v-col">
         <Logo />
         <span className="v-selo v-selo-desc" style={{ marginBottom: 12 }}>{t(`${f}_faixa`)}</span>
         <h1 className="v-h1">{t(`${f}_titulo`)}</h1>
-        <p style={{ fontSize: 16, margin: '10px 0 0' }}>{t(`${f}_subtitulo`, { pct: maiorPct })}</p>
-        {!natal && c.brinde_descricao && <p className="v-brinde-linha" style={{ margin: '8px 0 0' }}>{t('black_brinde_linha')}</p>}
+        <p className="v-hero-sub">{t(`${f}_subtitulo`, { pct: maiorPct })}</p>
         {Number.isFinite(menor) && <p className="v-ancora v-num">a partir de {rs(menor)}</p>}
         <a href="#destaques" className="v-cta">{t(`${f}_cta`)}</a>
-        <p className="v-legenda" style={{ margin: '10px 0 0' }}>{t(`${f}_apoio`)}</p>
-        <p className="v-legenda" style={{ margin: '4px 0 0' }}>{t('linha_confianca')}</p>
+        <p className="v-hero-rodape">{t(`${f}_apoio`)}<br />{t('linha_confianca')}</p>
       </div>
     </header>
   );
@@ -171,7 +170,8 @@ function Destaques({ abrir, desabilitado }: { abrir: (p: Produto) => void; desab
   const topo = segundoDia ? [...lista].sort((a, b) => b.vendidos - a.vendidos)[0] : undefined;
   const maiorPct = Math.max(0, ...vitrine!.produtos.filter((p) => p.tipo === 'kit').map((p) => pctDesconto(p.preco_de, p.preco_por)));
   return (
-    <section id="destaques" className="v-col v-secao">
+    <section id="destaques" className="v-col v-secao" aria-labelledby="destaques-titulo">
+      <h2 className="v-sr" id="destaques-titulo">Destaques</h2>
       <div className="v-vantagens">
         {[1, 2, 3].map((i) => (
           <div className="v-vantagem" key={i}>
@@ -180,17 +180,18 @@ function Destaques({ abrir, desabilitado }: { abrir: (p: Produto) => void; desab
           </div>
         ))}
       </div>
+      {!natal && <FaixaBrinde />}
       {lista.length > 0 && (
         <div className="v-carrossel" style={{ marginTop: 16 }}>
           {lista.map((p, i) => (
             <m.article key={p.slug} className={`v-card v-card-destaque${p.restam <= 0 ? ' v-esgotado' : ''}`}
-              initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06, duration: 0.3 }}
-              onClick={() => abrir(p)} style={{ cursor: 'pointer' }}>
+              initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.06, duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+              onClick={() => abrir(p)}>
               <Foto p={p} formato="43" />
               <div className="v-selos">
                 <SeloPreco p={p} />
-                <span className="v-selo v-selo-ambar">{topo && topo.slug === p.slug && p.vendidos > 0 ? 'MAIS PEDIDO' : 'DESTAQUE'}</span>
-                {c.brinde_descricao && <span className="v-selo v-selo-musgo">+ BRINDE BLACK</span>}
+                {topo && topo.slug === p.slug && p.vendidos > 0 && <span className="v-selo v-selo-ambar">Mais pedido</span>}
               </div>
               <h3 className="v-nome">{p.nome}</h3>
               <p className="v-comp">{p.composicao}</p>
@@ -199,9 +200,11 @@ function Destaques({ abrir, desabilitado }: { abrir: (p: Produto) => void; desab
                 <div className="v-por">R$ {reais(p.preco_por)}</div>
               </div>
               <Restam p={p} />
-              {p.restam <= 0
-                ? <><span className="v-selo v-selo-esgotado">Esgotado</span><p className="v-legenda" style={{ margin: 0 }}>Esse lote acabou. Quem chegou, chegou.</p></>
-                : <BotaoAdicionar p={p} texto="Quero este" desabilitado={desabilitado} />}
+              <div style={{ marginTop: 'auto', paddingTop: 4 }}>
+                {p.restam <= 0
+                  ? <><span className="v-selo v-selo-esgotado">Esgotado</span><p className="v-legenda" style={{ margin: '6px 0 0' }}>Esse lote acabou. Quem chegou, chegou.</p></>
+                  : <BotaoAdicionar p={p} texto="Quero este" desabilitado={desabilitado} />}
+              </div>
             </m.article>
           ))}
         </div>
@@ -211,13 +214,61 @@ function Destaques({ abrir, desabilitado }: { abrir: (p: Produto) => void; desab
   );
 }
 
+/** Nome curto de um item do kit: "Chopp Brahma 300 ml" × 6 → "chopps". */
+function rotulo(desc: string, q: number) {
+  const base = desc.replace(/\s*\(.*?\)/g, '').replace(/\s+\d+\s*(ml|g)$/i, '').trim().toLowerCase();
+  if (base.startsWith('chopp')) return q > 1 ? 'chopps' : 'chopp';
+  return q > 1 && !base.endsWith('s') ? `${base}s` : base;
+}
+
+/** O que o kit tem, para o bloco que ocupa o lugar da foto enquanto ela não chega. */
+function composicaoKit(p: Produto) {
+  if (p.tipo === 'credito') return { num: `R$ ${reais(p.credito_valor ?? 0).replace(',00', '')}`, rot: 'para consumir', mais: '' };
+  if (p.itens.length === 0) return null;
+  const chefe = p.itens.reduce((a, b) => (b.quantidade > a.quantidade ? b : a));
+  const resto = p.itens.filter((x) => x !== chefe).map((x) => x.descricao.replace(/\s*\(.*?\)/g, ''));
+  if (chefe.quantidade <= 1) return { num: String(p.itens.length), rot: 'itens', mais: p.itens.map((x) => x.descricao).join(' · ') };
+  return { num: String(chefe.quantidade), rot: rotulo(chefe.descricao, chefe.quantidade), mais: resto.length ? `+ ${resto.join(' · ')}` : '' };
+}
+
 function Foto({ p, formato }: { p: Produto; formato: '43' | 'quadrada' }) {
-  if (formato === '43') return p.foto_url
+  if (p.foto_url) return formato === '43'
     ? <img className="v-foto-43" src={p.foto_url} alt={p.nome} loading="lazy" width={600} height={450} />
-    : <div className="v-tipografico" aria-hidden="true">{p.nome}</div>;
-  return p.foto_url
-    ? <img className="v-item-foto" src={p.foto_url} alt="" loading="lazy" width={96} height={96} />
-    : <div className="v-item-inicial" aria-hidden="true">{p.nome.charAt(0)}</div>;
+    : <img className="v-item-foto" src={p.foto_url} alt="" loading="lazy" width={88} height={88} />;
+  const k = composicaoKit(p);
+  if (!k) return null;
+  return (
+    <div className={`v-kit${formato === 'quadrada' ? ' v-kit-quad' : ''}`} aria-hidden="true">
+      <span className={`v-kit-num v-num${k.num.length > 3 ? ' v-kit-longo' : ''}`}>{k.num}</span>
+      <span className="v-kit-rot">{k.rot}</span>
+      {formato === '43' && k.mais && <span className="v-kit-mais">{k.mais}</span>}
+    </div>
+  );
+}
+
+/** Faixa única do brinde (no lugar do selo repetido em todo card). */
+function FaixaBrinde() {
+  const { vitrine, t } = useVale();
+  const c = vitrine!.campanha;
+  if (!c.brinde_descricao || !c.brinde_ate || new Date(c.brinde_ate).getTime() < new Date(vitrine!.agora).getTime()) return null;
+  return (
+    <div className="v-brinde">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <rect x="3" y="8" width="18" height="4" rx="1" /><path d="M12 8v13" /><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7" />
+        <path d="M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5" />
+      </svg>
+      <div>
+        <b>{t('black_brinde_linha')}</b>
+        <span>Todo vale pago até {diaCuiaba(c.brinde_ate)} às {horaCuiaba(c.brinde_ate)} ganha {c.brinde_descricao}. Um por vale, resgatado junto com ele, dentro da validade.</span>
+      </div>
+    </div>
+  );
+}
+
+/** Linha curta do brinde nos cards (a explicação completa está na faixa). */
+function brindeCurto(c: { brinde_descricao: string | null; brinde_ate: string | null }, agora: string) {
+  if (!c.brinde_descricao || !c.brinde_ate || new Date(c.brinde_ate).getTime() < new Date(agora).getTime()) return null;
+  return `+ brinde até ${diaCuiaba(c.brinde_ate)}`;
 }
 
 function SeloPreco({ p }: { p: Produto }) {
@@ -280,11 +331,11 @@ function Grade({ kits, abrir, desabilitado }: { kits: Produto[]; abrir: (p: Prod
 
 function CardLista({ p, i, abrir, desabilitado }: { p: Produto; i: number; abrir: (p: Produto) => void; desabilitado: boolean }) {
   const { vitrine, t } = useVale();
-  const c = vitrine!.campanha;
   const esgotado = p.restam <= 0;
+  const brinde = vitrine!.campanha.fase === 'black' ? brindeCurto(vitrine!.campanha, vitrine!.agora) : null;
   return (
     <m.article className="v-card v-item" onClick={() => abrir(p)}
-      initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(i, 4) * 0.05, duration: 0.25 }}>
+      initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(i, 4) * 0.05, duration: 0.3, ease: [0.22, 1, 0.36, 1] }}>
       <div className={esgotado ? 'v-esgotado' : ''}><Foto p={p} formato="quadrada" /></div>
       <div className="v-item-corpo">
         <div className={esgotado ? 'v-esgotado' : ''} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -292,9 +343,7 @@ function CardLista({ p, i, abrir, desabilitado }: { p: Produto; i: number; abrir
           <p className="v-comp">{p.composicao}</p>
           <div className="v-selos">
             <SeloPreco p={p} />
-            {p.selo && <span className={`v-selo ${p.selo === 'Use em várias visitas' ? 'v-selo-musgo' : 'v-selo-18'}`}>{p.selo}</span>}
-            {p.tem_alcool && <span className="v-selo v-selo-18">+18</span>}
-            {c.brinde_descricao && <span className="v-selo v-selo-musgo">+ BRINDE BLACK</span>}
+            {p.tem_alcool ? <span className="v-selo v-selo-18">+18</span> : p.selo && <span className="v-selo v-selo-info">{p.selo}</span>}
           </div>
         </div>
         <div className="v-item-preco">
@@ -302,6 +351,7 @@ function CardLista({ p, i, abrir, desabilitado }: { p: Produto; i: number; abrir
             <div className="v-de">de R$ {reais(p.preco_de)}</div>
             <div className="v-por-lista">R$ {reais(p.preco_por)}</div>
             <Restam p={p} />
+            {!esgotado && brinde && <span className="v-brinde-linha">{brinde}</span>}
           </div>
           {esgotado ? <span className="v-selo v-selo-esgotado">Esgotado</span> : <BotaoAdicionar p={p} desabilitado={desabilitado} />}
         </div>
@@ -311,8 +361,6 @@ function CardLista({ p, i, abrir, desabilitado }: { p: Produto; i: number; abrir
             <a className="v-link" href={linkWhats(t('whatsapp'), `Oi! Quero ser avisado quando abrir um novo lote do ${p.nome}.`)} target="_blank" rel="noopener noreferrer">Avisar no próximo lote</a>
           </div>
         )}
-        {!esgotado && c.brinde_descricao && <span className="v-brinde-linha">Comprando até 30/11: + Dupla de Bolinho de Costela de brinde.</span>}
-        {p.trava_happy_hour && <span className="v-hh">Não vale no happy hour (até {c.happy_hour_fim.replace(':00', 'h')}).</span>}
       </div>
     </m.article>
   );
@@ -331,7 +379,7 @@ function TudoEsgotado() {
 // ───────────────────────── S5 · crédito ─────────────────────────
 
 function Credito({ creditos, desabilitado }: { creditos: Produto[]; desabilitado: boolean }) {
-  const { t, vitrine } = useVale();
+  const { t } = useVale();
   if (creditos.length === 0) return null;
   return (
     <section id="credito" className="v-col v-secao">
@@ -341,14 +389,11 @@ function Credito({ creditos, desabilitado }: { creditos: Produto[]; desabilitado
         <div className="v-credito-cards">
           {creditos.map((p) => (
             <div key={p.slug} className={`v-credito-card${p.restam <= 0 ? ' v-esgotado' : ''}`}>
-              <span className="v-paga v-num">PAGA R$ {reais(p.preco_por).replace(',00', '')}</span>
-              <span aria-hidden="true">↓</span>
-              <span className="v-paga">USA</span>
-              <span className="v-usa v-num" style={{ marginTop: -6 }}>R$ {reais(p.credito_valor ?? 0).replace(',00', '')}</span>
+              <span className="v-paga v-num">Paga R$ {reais(p.preco_por).replace(',00', '')}, usa</span>
+              <span className="v-usa v-num">R$ {reais(p.credito_valor ?? 0).replace(',00', '')}</span>
               <span className="v-selo v-selo-musgo">+R$ {reais((p.credito_valor ?? 0) - p.preco_por).replace(',00', '')} de bônus</span>
-              {vitrine!.campanha.brinde_descricao && <span className="v-selo v-selo-musgo">+ BRINDE BLACK</span>}
               <Restam p={p} />
-              {p.restam <= 0 ? <span className="v-selo v-selo-esgotado">Esgotado</span> : <BotaoAdicionar p={p} texto="Quero este" desabilitado={desabilitado} />}
+              {p.restam <= 0 ? <span className="v-selo v-selo-esgotado">Esgotado</span> : <BotaoAdicionar p={p} texto="Quero este" curto desabilitado={desabilitado} />}
             </div>
           ))}
         </div>
@@ -421,17 +466,14 @@ function Regras() {
     <section className="v-col v-secao">
       <h2 className="v-h2">O combinado</h2>
       <ul className="v-regras">
-        <li><span>Vale <b>{c.validade_meses} meses</b> a partir da compra. A data exata vem no seu vale.</span></li>
-        <li><span>Usa <b>qualquer dia</b> que o bar estiver aberto.</span></li>
+        <li><span>Vale <b>{c.validade_meses} meses</b> a partir da compra, <b>qualquer dia</b> que o bar abrir. A data exata vem no seu vale.</span></li>
         <li><span>Produtos com chopp <b>não valem no happy hour (até {hh})</b>. Depois das {hh}, tudo certo.</span></li>
         <li><span>Vale <b>numa visita só</b>: o que não for usado naquela noite não fica para outro dia.</span></li>
-        <li><span><b>10% de serviço</b> sobre o valor que você pagou, não sobre o preço cheio.</span></li>
-        <li><span><b>Couvert artístico à parte</b>, nos dias de música com couvert.</span></li>
+        <li><span><b>10% de serviço</b> sobre o valor que você pagou, não sobre o preço cheio. <b>Couvert artístico à parte</b>, nos dias de música.</span></li>
         <li><span><b>Não junta</b> com outras promoções. Os vales 100 e 200 não pagam garrafas nem outras promoções.</span></li>
         <li><span>Até <b>2 de cada produto por CPF</b>.</span></li>
         <li><span>Bebida alcoólica só para <b>maiores de 18</b>, com documento com foto na hora.</span></li>
         <li><span>Mudou de ideia? <b>7 dias</b> para cancelar, com devolução integral.</span></li>
-        {c.brinde_ate && <li><span>Brinde válido para vales pagos até {dataBR(c.brinde_ate.slice(0, 10))} às {horaCuiaba(c.brinde_ate)}, um por vale, resgatado junto com o vale, dentro da validade.</span></li>}
       </ul>
       <Link to="/vale/regulamento" className="v-link">Ler o regulamento completo</Link>
     </section>
@@ -502,7 +544,7 @@ function Gaveta({ fechar }: { fechar: () => void }) {
         <div className="v-alca" />
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <h2 className="v-h2" style={{ margin: 0 }}>Seu pedido</h2>
-          <button type="button" className="v-link" onClick={fechar}>Fechar</button>
+          <button type="button" className="v-fechar" onClick={fechar} aria-label="Fechar"><IconeFechar /></button>
         </div>
         {linhas.length === 0 && <p className="v-apoio">Carrinho vazio. A mesa está posta, falta escolher.</p>}
         {linhas.map(({ p, q }) => (
@@ -510,13 +552,13 @@ function Gaveta({ fechar }: { fechar: () => void }) {
             <div>
               <div style={{ fontWeight: 700 }}>{p!.nome}</div>
               <div className="v-legenda v-num">{q}x · R$ {reais(p!.preco_por * q)}</div>
-              <button type="button" className="v-link" style={{ minHeight: 32, fontSize: 13 }} onClick={() => definir(p!.slug, 0)}>Tirar</button>
+              <button type="button" className="v-link" style={{ fontSize: 13 }} onClick={() => definir(p!.slug, 0)}>Tirar</button>
             </div>
             <Seletor p={p!} claro />
           </div>
         ))}
         <div className="v-total v-num"><span>Total</span><span>R$ {reais(totais.total)}</span></div>
-        {totais.economia > 0 && <p className="v-economia" style={{ margin: '0 0 12px', color: '#8fa37a' }}>Você economiza R$ {reais(totais.economia)}</p>}
+        {totais.economia > 0 && <p className="v-economia-escura" style={{ margin: '0 0 12px', fontSize: 14 }}>Você economiza R$ {reais(totais.economia)}</p>}
         <button type="button" className="v-cta" disabled={totais.vales === 0} onClick={() => navegar('/vale/checkout')}>Ir para o pagamento</button>
       </m.div>
     </>
@@ -526,6 +568,7 @@ function Gaveta({ fechar }: { fechar: () => void }) {
 function FolhaProduto({ p, fechar, desabilitado }: { p: Produto; fechar: () => void; desabilitado: boolean }) {
   const { vitrine, quantidade, definir, maximo, avisar } = useVale();
   const c = vitrine!.campanha;
+  const brinde = c.fase === 'black' && brindeCurto(c, vitrine!.agora);
   useEsc(fechar);
   const q = quantidade(p.slug);
   const adicionar = () => {
@@ -539,13 +582,18 @@ function FolhaProduto({ p, fechar, desabilitado }: { p: Produto; fechar: () => v
         initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} transition={{ type: 'spring', stiffness: 380, damping: 36 }}>
         <div className="v-alca" />
         <div className="v-pilha">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
+            <div className="v-pilha" style={{ gap: 8 }}>
+              <div className="v-selos"><SeloPreco p={p} />{p.tem_alcool && <span className="v-selo v-selo-18">+18</span>}</div>
+              <h2 className="v-h2" style={{ margin: 0 }}>{p.nome}</h2>
+            </div>
+            <button type="button" className="v-fechar" onClick={fechar} aria-label="Fechar"><IconeFechar /></button>
+          </div>
           <Foto p={p} formato="43" />
-          <div className="v-selos"><SeloPreco p={p} />{p.tem_alcool && <span className="v-selo v-selo-18">+18</span>}</div>
-          <h2 className="v-h2" style={{ margin: 0 }}>{p.nome}</h2>
           {p.tipo === 'kit' ? (
             <ul className="v-saldos">
               {p.itens.map((it, i) => <li key={i}><span>{it.descricao}</span><span className="v-num">{it.quantidade}x</span></li>)}
-              {c.brinde_descricao && <li><span>{c.brinde_descricao} (brinde Black, comprando até 30/11)</span><span>1x</span></li>}
+              {brinde && <li><span>{c.brinde_descricao} (brinde, pagando até {diaCuiaba(c.brinde_ate!)})</span><span>1x</span></li>}
             </ul>
           ) : (
             <p style={{ margin: 0 }}>Paga R$ {reais(p.preco_por)} e consome R$ {reais(p.credito_valor ?? 0)} no cardápio, numa visita.</p>

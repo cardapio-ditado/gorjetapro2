@@ -16,6 +16,14 @@ export function Chevron() {
   );
 }
 
+export function IconeFechar() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
+      <path d="M6 6l12 12M18 6 6 18" />
+    </svg>
+  );
+}
+
 /** Seletor [− 1 +] que trava no máximo (limite por CPF ou o que resta do lote). */
 export function Seletor({ p, claro = false }: { p: Produto; claro?: boolean }) {
   const { quantidade, definir, maximo, avisar } = useVale();
@@ -32,10 +40,10 @@ export function Seletor({ p, claro = false }: { p: Produto; claro?: boolean }) {
 }
 
 /** Botão do card: "+" (ou "Quero este") que vira seletor depois do primeiro toque. */
-export function BotaoAdicionar({ p, texto, desabilitado }: { p: Produto; texto?: string; desabilitado?: boolean }) {
+export function BotaoAdicionar({ p, texto, desabilitado, curto }: { p: Produto; texto?: string; desabilitado?: boolean; curto?: boolean }) {
   const { quantidade, definir, maximo, avisar } = useVale();
   const q = quantidade(p.slug);
-  if (p.restam <= 0) return <button type="button" className="v-btn" disabled>Esgotou</button>;
+  if (p.restam <= 0) return <span className="v-selo v-selo-esgotado">Esgotado</span>;
   if (q > 0) return (
     <span style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
       <Seletor p={p} />
@@ -43,12 +51,13 @@ export function BotaoAdicionar({ p, texto, desabilitado }: { p: Produto; texto?:
     </span>
   );
   const add = (e: React.MouseEvent) => { e.stopPropagation(); definir(p.slug, 1); avisar('Adicionado'); };
-  if (texto) return <button type="button" className="v-cta" disabled={desabilitado} onClick={add}>{texto}</button>;
+  if (texto) return <button type="button" className={`v-cta${curto ? ' v-cta-curto' : ''}`} disabled={desabilitado} onClick={add}>{texto}</button>;
   return <button type="button" className="v-mais" aria-label={`Adicionar ${p.nome}`} disabled={desabilitado} onClick={add}>+</button>;
 }
 
+/** "Restam N" só depois que metade do lote saiu (no lançamento, "Restam 100 de 100" passa a ideia de que ninguém comprou). */
 export function Restam({ p }: { p: Produto }) {
-  if (p.restam <= 0) return null;
+  if (p.restam <= 0 || p.restam > p.lote_total * 0.5) return null;
   const pouco = p.restam < p.lote_total * 0.2;
   return <span className={`v-restam${pouco ? ' v-pouco' : ''}`}>{pouco ? `Últimos ${p.restam}` : `Restam ${p.restam} de ${p.lote_total}`}</span>;
 }
