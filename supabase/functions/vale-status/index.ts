@@ -22,9 +22,9 @@ Deno.serve(async (req) => {
   if (interno && ["pendente", "expirado", "cancelado"].includes(interno.status) && interno.gateway_cobranca_id) {
     try {
       const gw = provedor();
-      const pg = interno.forma_pagamento === "pix"
-        ? await gw.consultar(interno.gateway_cobranca_id)
-        : await gw.aprovadoDoPedido(interno.id);
+      const pg = await gw.consultarCobranca({
+        cobrancaId: interno.gateway_cobranca_id, pedidoId: interno.id, forma: interno.forma_pagamento,
+      });
       if (pg && pg.status === "aprovado") {
         await db.rpc("fn_vale_confirmar_pagamento", {
           p_pedido: interno.id, p_pagamento: pg.id, p_pago_em: pg.pagoEm ?? new Date().toISOString(), p_valor: pg.valor,

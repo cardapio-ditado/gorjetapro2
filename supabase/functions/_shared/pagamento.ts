@@ -1,12 +1,13 @@
 /**
  * Camada de pagamento do Vale Ditado (paymentProvider).
  *
- * As edge functions só falam com esta interface: trocar de gateway (Mercado Pago → Asaas, por exemplo)
- * é escrever outra implementação aqui, sem mexer em pedido, webhook ou tela.
+ * As edge functions só falam com esta interface: trocar de gateway é escrever outra implementação aqui,
+ * sem mexer em pedido, webhook ou tela. O gateway em uso vem do secret PAGAMENTO_GATEWAY
+ * ("pagbank", o padrão, ou "mercadopago").
  *
  * Chaves só em Supabase secrets (nunca no front nem no banco):
- *   MP_ACCESS_TOKEN   — TEST-... no teste, APP_USR-... em produção
- *   MP_WEBHOOK_SECRET — assinatura secreta do webhook (painel do Mercado Pago)
+ *   PagBank:      PAGBANK_TOKEN, PAGBANK_AMBIENTE ("sandbox" ou "producao")
+ *   Mercado Pago: MP_ACCESS_TOKEN, MP_WEBHOOK_SECRET
  */
 
 export type StatusPagamento = "aprovado" | "pendente" | "recusado" | "cancelado" | "estornado";
@@ -45,12 +46,13 @@ export interface PaymentProvider {
   nome: string;
   criarPix(p: PedidoCobranca): Promise<CobrancaPix>;
   criarCartao(p: PedidoCobranca): Promise<CobrancaCartao>;
-  consultar(pagamentoId: string): Promise<Pagamento>;
-  /** Último pagamento aprovado do pedido (o cartão volta com id de pagamento diferente da preferência). */
-  aprovadoDoPedido(pedidoId: string): Promise<Pagamento | null>;
+  /** Pagamento aprovado da cobrança (Pix: a ordem/pagamento; cartão: o checkout), ou o último estado dela. */
+  consultarCobranca(c: { cobrancaId: string; pedidoId: string; forma: "pix" | "cartao" }): Promise<Pagamento | null>;
+  /** O pagamento que o aviso do webhook menciona, consultado no gateway (o corpo do aviso não é confiável). */
+  pagamentoDoAviso(idAviso: string): Promise<Pagamento | null>;
   estornar(pagamentoId: string, valor: number | null, chave: string): Promise<{ ok: boolean; id: string | null; resposta: string }>;
-  /** Confere a assinatura do webhook. Devolve o id do pagamento avisado, ou null se não for aviso de pagamento. */
-  lerWebhook(req: Request, corpo: string): Promise<{ valido: boolean; eventoId: string; pagamentoId: string | null; tipo: string }>;
+  /** Confere a autenticidade do webhook e devolve o id que deve ser consultado. */
+  lerWebhook(req: Request, corpo: string): Promise<{ valido: boolean; eventoId: string; idAviso: string | null; tipo: string }>;
 }
 
 const SITE = Deno.env.get("VALE_SITE_URL") ?? "https://www.ditado.org";
@@ -154,11 +156,17 @@ class MercadoPago implements PaymentProvider {
     return this.converter(await this.chamar("GET", `/v1/payments/${encodeURIComponent(pagamentoId)}`));
   }
 
-  async aprovadoDoPedido(pedidoId: string): Promise<Pagamento | null> {
+  async consultarCobranca(c: { cobrancaId: string; pedidoId: string; forma: "pix" | "cartao" }) {
+    if (c.forma === "pix") return this.consultar(c.cobrancaId);
     const r = await this.chamar("GET",
-      `/v1/payments/search?external_reference=${encodeURIComponent(pedidoId)}&sort=date_created&criteria=desc&limit=20`);
+      `/v1/payments/search?external_reference=${encodeURIComponent(c.pedidoId)}&sort=date_created&criteria=desc&limit=20`);
     const aprovado = (r?.results ?? []).find((x: any) => x.status === "approved");
     return aprovado ? this.converter(aprovado) : null;
+  }
+
+  async pagamentoDoAviso(idAviso: string) {
+    try { return await this.consultar(idAviso); }
+    catch (e) { if (/Mercado Pago 404/.test((e as Error).message)) return null; throw e; }
   }
 
   async estornar(pagamentoId: string, valor: number | null, chave: string) {
@@ -188,7 +196,7 @@ class MercadoPago implements PaymentProvider {
     const assinatura = req.headers.get("x-signature") ?? "";
     const pedidoId = req.headers.get("x-request-id") ?? "";
     const partes = Object.fromEntries(assinatura.split(",").map((p) => p.trim().split("=") as [string, string]));
-    if (!segredo || !partes.ts || !partes.v1 || !dataId) return { valido: false, eventoId, pagamentoId: null, tipo };
+    if (!segredo || !partes.ts || !partes.v1 || !dataId) return { valido: false, eventoId, idAviso: null, tipo };
 
     const idManifesto = /^[a-z0-9]+$/i.test(dataId) ? dataId.toLowerCase() : dataId;
     const manifesto = `id:${idManifesto};request-id:${pedidoId};ts:${partes.ts};`;
@@ -198,12 +206,164 @@ class MercadoPago implements PaymentProvider {
     let dif = esperada.length === partes.v1.length ? 0 : 1;
     for (let i = 0; i < Math.min(esperada.length, partes.v1.length); i++) dif |= esperada.charCodeAt(i) ^ partes.v1.charCodeAt(i);
     const valido = dif === 0;
-    return { valido, eventoId, pagamentoId: tipo === "payment" || tipo === "" ? dataId : null, tipo };
+    return { valido, eventoId, idAviso: tipo === "payment" || tipo === "" ? dataId : null, tipo };
+  }
+}
+
+
+// ───────────────────────────── PagBank (PagSeguro) ─────────────────────────────
+
+class PagBank implements PaymentProvider {
+  nome = "pagbank";
+
+  private get token(): string {
+    const t = Deno.env.get("PAGBANK_TOKEN");
+    if (!t) throw new Error("PAGBANK_TOKEN não configurado");
+    return t;
+  }
+
+  private get base(): string {
+    return (Deno.env.get("PAGBANK_AMBIENTE") ?? "sandbox") === "producao"
+      ? "https://api.pagseguro.com" : "https://sandbox.api.pagseguro.com";
+  }
+
+  private async chamar(metodo: string, caminho: string, corpo?: unknown, idempotencia?: string) {
+    const headers: Record<string, string> = { Authorization: `Bearer ${this.token}`, "Content-Type": "application/json", accept: "application/json" };
+    if (idempotencia) headers["x-idempotency-key"] = idempotencia;
+    const r = await fetch(`${this.base}${caminho}`, { method: metodo, headers, body: corpo ? JSON.stringify(corpo) : undefined });
+    const texto = await r.text();
+    let json: any = null;
+    try { json = JSON.parse(texto); } catch { /* resposta não-JSON */ }
+    if (!r.ok) {
+      const det = json?.error_messages?.map((m: any) => `${m.code ?? ""} ${m.description ?? ""} ${m.parameter_name ?? ""}`.trim()).join("; ");
+      throw new Error(`PagBank ${r.status}: ${det || texto.slice(0, 300)}`);
+    }
+    return json;
+  }
+
+  private cliente(p: PedidoCobranca) {
+    return {
+      name: p.nome,
+      // o PagBank exige e-mail; sem e-mail do cliente, vai um endereço da casa por pedido
+      email: p.email ?? `vale+${p.token.slice(0, 10).toLowerCase()}@ditado.org`,
+      tax_id: p.cpf,
+    };
+  }
+
+  private centavos(v: number) {
+    return Math.round(v * 100);
+  }
+
+  /** Data no formato que o PagBank aceita: 2026-11-27T20:30:00-03:00 (sem milissegundos). */
+  private data(d: Date) {
+    const local = new Date(d.getTime() - 4 * 3600_000);
+    return local.toISOString().slice(0, 19) + "-04:00";
+  }
+
+  async criarPix(p: PedidoCobranca): Promise<CobrancaPix> {
+    const r = await this.chamar("POST", "/orders", {
+      reference_id: p.pedidoId,
+      customer: this.cliente(p),
+      items: [{ reference_id: "vale", name: p.descricao, quantity: 1, unit_amount: this.centavos(p.valor) }],
+      qr_codes: [{ amount: { value: this.centavos(p.valor) }, expiration_date: this.data(p.expiraEm) }],
+      notification_urls: [WEBHOOK],
+    }, `pix-${p.pedidoId}`);
+    const qr = r?.qr_codes?.[0];
+    if (!qr?.text) throw new Error("PagBank não devolveu o código Pix");
+    return { cobrancaId: String(r.id), pixCopiaCola: qr.text, expiraEm: qr.expiration_date ?? null };
+  }
+
+  async criarCartao(p: PedidoCobranca): Promise<CobrancaCartao> {
+    const volta = `${SITE}/vale/c/${p.token}`;
+    const r = await this.chamar("POST", "/checkouts", {
+      reference_id: p.pedidoId,
+      customer: this.cliente(p),
+      customer_modifiable: true,
+      items: [{ reference_id: "vale", name: p.descricao, quantity: 1, unit_amount: this.centavos(p.valor) }],
+      payment_methods: [{ type: "CREDIT_CARD" }],
+      payment_methods_configs: [{ type: "CREDIT_CARD", config_options: [{ option: "INSTALLMENTS_LIMIT", value: "1" }] }],
+      expiration_date: this.data(p.expiraEm),
+      redirect_url: volta,
+      return_url: volta,
+      notification_urls: [WEBHOOK],
+      payment_notification_urls: [WEBHOOK],
+    }, `cartao-${p.pedidoId}`);
+    const url = (r?.links ?? []).find((l: any) => l.rel === "PAY")?.href;
+    if (!url) throw new Error("PagBank não devolveu o link do cartão");
+    return { cobrancaId: String(r.id), url };
+  }
+
+  /** Lê uma ordem e devolve a cobrança paga (ou a mais recente). */
+  private daOrdem(o: any): Pagamento | null {
+    const cobrancas: any[] = o?.charges ?? [];
+    if (!o || cobrancas.length === 0) return null;
+    const paga = cobrancas.find((c) => c.status === "PAID") ?? cobrancas[cobrancas.length - 1];
+    const mapa: Record<string, StatusPagamento> = {
+      PAID: "aprovado", AUTHORIZED: "pendente", IN_ANALYSIS: "pendente", WAITING: "pendente",
+      DECLINED: "recusado", CANCELED: "cancelado",
+    };
+    return {
+      id: String(paga.id),
+      status: mapa[paga.status] ?? "pendente",
+      pedidoId: o.reference_id ?? null,
+      valor: Number(paga?.amount?.summary?.paid ?? paga?.amount?.value ?? 0) / 100,
+      pagoEm: paga.paid_at ?? null,
+    };
+  }
+
+  async consultarCobranca(c: { cobrancaId: string; pedidoId: string; forma: "pix" | "cartao" }) {
+    if (c.forma === "pix") return this.daOrdem(await this.chamar("GET", `/orders/${encodeURIComponent(c.cobrancaId)}`));
+    const ck = await this.chamar("GET", `/checkouts/${encodeURIComponent(c.cobrancaId)}`);
+    for (const o of ck?.orders ?? []) {
+      const pg = this.daOrdem(await this.chamar("GET", `/orders/${encodeURIComponent(o.id)}`));
+      if (pg?.status === "aprovado") return pg;
+    }
+    return null;
+  }
+
+  async pagamentoDoAviso(idAviso: string) {
+    try { return this.daOrdem(await this.chamar("GET", `/orders/${encodeURIComponent(idAviso)}`)); }
+    catch (e) { if (/PagBank 404/.test((e as Error).message)) return null; throw e; }
+  }
+
+  async estornar(pagamentoId: string, valor: number | null, chave: string) {
+    try {
+      let v = valor;
+      if (v === null) {
+        const c = await this.chamar("GET", `/charges/${encodeURIComponent(pagamentoId)}`);
+        v = Number(c?.amount?.value ?? 0) / 100;
+      }
+      const r = await this.chamar("POST", `/charges/${encodeURIComponent(pagamentoId)}/cancel`,
+        { amount: { value: this.centavos(v) } }, `estorno-${chave}`);
+      return { ok: true, id: r?.id ? String(r.id) : pagamentoId, resposta: JSON.stringify(r).slice(0, 1000) };
+    } catch (e) {
+      return { ok: false, id: null, resposta: String((e as Error).message) };
+    }
+  }
+
+  /**
+   * Autenticidade do PagBank: header x-authenticity-token = SHA-256 (hex) de `${token}-${corpo}`.
+   * O aviso traz a ordem; o que vale é a consulta da ordem no PagBank.
+   */
+  async lerWebhook(req: Request, corpo: string) {
+    let o: any = {};
+    try { o = JSON.parse(corpo || "{}"); } catch { /* corpo inválido */ }
+    const idAviso = typeof o?.id === "string" && o.id.startsWith("ORDE_") ? o.id : null;
+    const cobranca = (o?.charges ?? []).map((c: any) => `${c.id}:${c.status}`).join(",");
+    const eventoId = `${o?.id ?? "?"}:${cobranca}`;
+    const recebido = (req.headers.get("x-authenticity-token") ?? "").toLowerCase();
+    let token = "";
+    try { token = this.token; } catch { return { valido: false, eventoId, idAviso: null, tipo: "order" }; }
+    const hash = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(`${token}-${corpo}`));
+    const esperado = [...new Uint8Array(hash)].map((b) => b.toString(16).padStart(2, "0")).join("");
+    let dif = esperado.length === recebido.length ? 0 : 1;
+    for (let i = 0; i < Math.min(esperado.length, recebido.length); i++) dif |= esperado.charCodeAt(i) ^ recebido.charCodeAt(i);
+    return { valido: dif === 0, eventoId, idAviso, tipo: "order" };
   }
 }
 
 export function provedor(): PaymentProvider {
-  return new MercadoPago();
+  return (Deno.env.get("PAGAMENTO_GATEWAY") ?? "pagbank") === "mercadopago" ? new MercadoPago() : new PagBank();
 }
 
 // ───────────────────────────── utilidades comuns ─────────────────────────────

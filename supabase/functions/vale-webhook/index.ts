@@ -24,7 +24,7 @@ Deno.serve(async (req) => {
   try { payload = JSON.parse(corpo || "{}"); } catch { payload = { bruto: corpo.slice(0, 2000) }; }
 
   const { data: novo, error: erroEv } = await db.from("vale_webhook_eventos")
-    .upsert({ gateway: gw.nome, evento_id: aviso.eventoId, tipo: aviso.tipo, cobranca_id: aviso.pagamentoId, payload },
+    .upsert({ gateway: gw.nome, evento_id: aviso.eventoId, tipo: aviso.tipo, cobranca_id: aviso.idAviso, payload },
             { onConflict: "gateway,evento_id", ignoreDuplicates: true })
     .select("id");
   if (erroEv) {
@@ -34,15 +34,17 @@ Deno.serve(async (req) => {
   if (!novo || novo.length === 0) return json({ ok: true, repetido: true });
   const eventoRow = novo[0].id;
 
-  if (!aviso.pagamentoId) {
+  if (!aviso.idAviso) {
     await db.from("vale_webhook_eventos").update({ processado_em: new Date().toISOString(), resultado: "ignorado" }).eq("id", eventoRow);
     return json({ ok: true, ignorado: true });
   }
 
   let resultado = "";
   try {
-    const pg = await gw.consultar(aviso.pagamentoId);
-    if (pg.status === "aprovado" && pg.pedidoId) {
+    const pg = await gw.pagamentoDoAviso(aviso.idAviso);
+    if (!pg) {
+      resultado = "pagamento não encontrado no gateway";
+    } else if (pg.status === "aprovado" && pg.pedidoId) {
       const { data, error } = await db.rpc("fn_vale_confirmar_pagamento", {
         p_pedido: pg.pedidoId, p_pagamento: pg.id, p_pago_em: pg.pagoEm ?? new Date().toISOString(), p_valor: pg.valor,
       });
@@ -52,13 +54,8 @@ Deno.serve(async (req) => {
       resultado = `status ${pg.status}`;
     }
   } catch (e) {
-    if (/Mercado Pago 404/.test((e as Error).message)) {
-      // aviso de teste do painel ou pagamento que não existe: nada a fazer, sem retentativa
-      await db.from("vale_webhook_eventos").update({ processado_em: new Date().toISOString(), resultado: "pagamento não encontrado" }).eq("id", eventoRow);
-      return json({ ok: true, ignorado: true });
-    }
     // devolve 500 para o gateway tentar de novo, e libera o evento para o reprocessamento
-    console.error(`[vale] webhook pagamento ${aviso.pagamentoId}: ${(e as Error).message}`);
+    console.error(`[vale] webhook aviso ${aviso.idAviso}: ${(e as Error).message}`);
     await db.from("vale_webhook_eventos").delete().eq("id", eventoRow);
     return json({ ok: false }, 500);
   }
