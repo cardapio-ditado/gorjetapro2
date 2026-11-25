@@ -51,6 +51,9 @@ próxima parcela quando a anterior estiver quitada. Não case o pagamento com a 
 2. **Comprovantes.** Baixe cada arquivo com `Artifact` read, `path: <id do asset>` e `out_dir` numa pasta (ex.: `comprovantes`).
    É um arquivo por chamada (`paths` não serve para asset). O arquivo sai com o nome `<id do asset>.<ext>`.
 3. **Config.** Escreva `config.json` (modelo em `exemplo-config.json`, o do Eduardo):
+   - `so_pagamentos: true` (Kadu, 25/11/2026, acordo do Thiago): relatório **só com os pagamentos**, sem atraso, faixa nem
+     valor de multa e sem as notas de cálculo (a contadoria do tribunal calcula). O quarto cartão vira "Pagamentos: N Pix".
+     Pergunte ao Kadu qual versão ele quer quando o acordo estiver com parcela atrasada.
    - `destinatario` (padrão: Dr. Rodolpho Vasconcellos Dias) e `emitido` (AAAA-MM-DD, a data de hoje em Cuiabá).
    - `dados`: linhas de "Dados do acordo", nesta ordem: Processo, Partes, Valor, Pagamento, Advogados, No sistema. Texto corrido, tirado da ata.
    - `notas`: caixas depois da tabela (título em negrito + texto). "Como foi calculado" entra sozinha, a partir da cláusula do acordo.

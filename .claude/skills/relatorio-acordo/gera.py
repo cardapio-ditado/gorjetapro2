@@ -111,6 +111,8 @@ def imagem(pasta, asset):
     return f'data:{mime};base64,' + base64.b64encode(open(arq, 'rb').read()).decode(), eh_pdf
 
 def montar(acordo, linhas, cfg, pasta_comp, hoje):
+    # so_pagamentos (Kadu, 25/11/2026): só demonstra os pagamentos, sem atraso, faixa nem multa; a contadoria do tribunal calcula.
+    sp = bool(cfg.get('so_pagamentos'))
     total = sum(l['base'] for l in linhas); pago = sum(l['pago'] for l in linhas); aberto = round(total - pago, 2)
     quit_ = [l for l in linhas if l['quit']]
     media = round(sum(l['atraso'] for l in quit_) / len(quit_)) if quit_ else None
@@ -126,7 +128,8 @@ def montar(acordo, linhas, cfg, pasta_comp, hoje):
     notas = [['Como foi calculado.', 'Atraso em dias corridos entre o vencimento e o dia em que a parcela ficou quitada; vencimento em sábado, domingo ou feriado '
               'passa para o dia útil seguinte (art. 132, §1º, do Código Civil). Faixas da cláusula penal: ' + texto_regra(acordo.get('clausula')) + '. '
               'A coluna “Multa máx.” é o teto pela regra, somado só nas faixas sobre a parcela; só é devida se o reclamante pedir ao juiz, e o juiz pode reduzir (art. 413 do Código Civil).']] + cfg.get('notas', [])
-    ant = acordo.get('_antecipacao')
+    if sp: notas = list(cfg.get('notas', []))
+    ant = None if sp else acordo.get('_antecipacao')
     if ant:
         seguintes = [str(l['p']['n']) + 'ª' for l in linhas if l.get('antecipada')]
         notas.insert(1, ['Vencimento antecipado.', f'A {ant["parcela"]}ª parcela passou de {ant["limite"]} dias de atraso em {br(ant["data"])} sem estar quitada. Pela cláusula, nesse dia ' + ('a ' + ' e a '.join(seguintes) + (' parcela venceu' if len(seguintes) == 1 else ' parcelas venceram') if seguintes else 'as demais parcelas venceram') +
@@ -147,6 +150,11 @@ def montar(acordo, linhas, cfg, pasta_comp, hoje):
         atraso = '—' if l['atraso'] is None else 'em dia' if l['atraso'] == 0 else f'{l["atraso"]} dias' + ('' if l['quit'] else '<span class="m">(até hoje)</span>')
         f = l['faixa']
         faixa = ('em dia' if l['atraso'] == 0 else '—') if not f else f'<b class="fx">{e(f.get("texto") or (str(f["pct"]) + ("% do saldo" if f.get("base") == "saldo" else "% da parcela")))}</b>'
+        if sp:
+            vencida = not l['quit'] and hoje > l['vu']
+            return (f'<tr class="{"aberta" if vencida else ""}"><td>{p["n"]}</td><td>{MESES[d.month - 1]}/{d.year}</td><td>{br(p["venc"])}</td>'
+                    f'<td class="v">{brl(l["base"])}</td><td>{"".join(pag_txt(g) for g in l["pags"]) or "—"}</td><td class="v">{brl(l["pago"])}</td>'
+                    f'<td>{sit if l["sit"] in ("paga", "parcial") else ("em aberto" if vencida else "a vencer")}</td><td class="m">{e(l["sistema"])}</td></tr>')
         return (f'<tr class="{"aberta" if l["vencida"] else ""}"><td>{p["n"]}</td><td>{MESES[d.month - 1]}/{d.year}</td><td>{br(p["venc"])}'
                 + (f'<span class="m">antecipado para {br(l["antecipada"])}</span>' if l.get('antecipada') else '') + '</td>'
                 f'<td class="v">{brl(l["base"])}</td>'
@@ -172,6 +180,16 @@ def montar(acordo, linhas, cfg, pasta_comp, hoje):
         return f'<section class="par">{cab}<div class="grade">{cartoes}</div>{"".join(f"<p class=semcomp>{x}</p>" for x in extras)}</section>'
 
     css = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'estilo.css'), encoding='utf-8').read()
+    pix = [g for l in linhas for g in l['pags'] if not g['sobra']]
+    if sp:
+        ult = max((g['data'] for g in pix), default=None)
+        quarto_cartao = f'<div><span>Pagamentos</span><b>{len(pix)} Pix</b><small>{"último em " + br(ult) if ult else "nenhum ainda"}</small></div>'
+        tabela = ('<table><thead><tr><th>Nº</th><th>Referente</th><th>Vencimento</th><th>Valor</th><th>Pagamentos (Pix)</th><th>Pago</th><th>Situação</th><th>No sistema</th></tr></thead>'
+                  f'<tbody>{"".join(linha(l) for l in linhas)}<tr class="tot"><td colspan="3">TOTAL</td><td class="v">{brl(total)}</td><td></td><td class="v">{brl(pago)}</td><td colspan="2"></td></tr></tbody></table>')
+    else:
+        quarto_cartao = f'<div><span>Atraso médio</span><b>{"—" if media is None else f"{media} dias"}</b><small>entre vencimento e quitação</small></div>'
+        tabela = ('<table><thead><tr><th>Nº</th><th>Referente</th><th>Vencimento</th><th>Valor</th><th>Pagamentos (Pix)</th><th>Pago</th><th>Situação</th><th>Atraso</th><th>Faixa da multa</th><th>Multa máx.</th><th>No sistema</th></tr></thead>'
+                  f'<tbody>{"".join(linha(l) for l in linhas)}<tr class="tot"><td colspan="3">TOTAL</td><td class="v">{brl(total)}</td><td></td><td class="v">{brl(pago)}</td><td colspan="3"></td><td class="v">{brl(sum(l["multa"] or 0 for l in linhas))}</td><td></td></tr></tbody></table>')
     return f'''<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Acordo {e(nome)} · relatório de pagamentos</title><style>{css}</style></head><body>
 <header><div><h1>Acordo trabalhista · {e(nome)}</h1><p class="para">Relatório de pagamentos para o {e(cfg.get("destinatario", "Dr. Rodolpho Vasconcellos Dias"))}</p></div>
 <div class="emit">Ditado Popular<br>emitido em {hoje.strftime("%d/%m/%Y")}</div></header>
@@ -179,12 +197,10 @@ def montar(acordo, linhas, cfg, pasta_comp, hoje):
 <div><span>Valor do acordo</span><b>{brl(total)}</b><small>{composicao}</small></div>
 <div><span>Pago</span><b>{brl(pago)}</b><small>{len(quit_)} de {len(linhas)} parcelas quitadas</small></div>
 <div class="{"ab" if aberto > 0.009 else ""}"><span>Em aberto</span><b>{brl(aberto)}</b><small>{f"parc. {prox['p']['n']} (venc. {br(prox['p']['venc'])})" if prox else "acordo quitado"}</small></div>
-<div><span>Atraso médio</span><b>{"—" if media is None else f"{media} dias"}</b><small>entre vencimento e quitação</small></div></div>
+{quarto_cartao}</div>
 <h2>Dados do acordo</h2><dl>{"".join(f"<dt>{e(k)}</dt><dd>{e(v)}</dd>" for k, v in dados if v)}</dl>
 <h2>Parcela a parcela</h2>
-<table><thead><tr><th>Nº</th><th>Referente</th><th>Vencimento</th><th>Valor</th><th>Pagamentos (Pix)</th><th>Pago</th><th>Situação</th><th>Atraso</th><th>Faixa da multa</th><th>Multa máx.</th><th>No sistema</th></tr></thead>
-<tbody>{"".join(linha(l) for l in linhas)}
-<tr class="tot"><td colspan="3">TOTAL</td><td class="v">{brl(total)}</td><td></td><td class="v">{brl(pago)}</td><td colspan="3"></td><td class="v">{brl(sum(l["multa"] or 0 for l in linhas))}</td><td></td></tr></tbody></table>
+{tabela}
 {"".join(f"<p class=nota><b>{e(t)}</b> {e(x)}</p>" for t, x in notas)}
 <h2 class="anexo">Anexo · comprovantes por mês</h2>{"".join(anexo(l) for l in linhas)}
 </body></html>'''
