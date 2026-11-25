@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { AnimatePresence, LazyMotion, domAnimation, m } from 'motion/react';
+import { AnimatePresence, LazyMotion, MotionConfig, domAnimation, m } from 'motion/react';
 import type { Produto } from './api';
 import { useVale } from './carrinho';
 import { BotaoAdicionar, Carregando, Chevron, FaixaTeste, IconeFechar, Logo, Restam, RodapeLegal, Seletor, Toast, useRelogio } from './comum';
@@ -52,8 +52,8 @@ export default function Home() {
     : ['s1', 's3', 's4', 's5', 's6', 's7', 's8', 's9'];
 
   const render: Record<string, JSX.Element> = {
-    s1: <Hero key="s1" />,
-    s3: <Destaques key="s3" abrir={setAberto} desabilitado={!vendaAberta} />,
+    s1: <Hero key="s1" abrir={setAberto} />,
+    s3: natal ? <span key="s3" /> : <FaixaBrinde key="s3" />,
     s4: tudoEsgotado ? <TudoEsgotado key="s4" /> : <Grade key="s4" kits={kits} abrir={setAberto} desabilitado={!vendaAberta} />,
     s5: tudoEsgotado ? <span key="s5" /> : <Credito key="s5" creditos={creditos} desabilitado={!vendaAberta} />,
     s6: <ComoFunciona key="s6" />,
@@ -64,6 +64,7 @@ export default function Home() {
 
   return (
     <LazyMotion features={domAnimation}>
+      <MotionConfig reducedMotion="user">
       <div className="v-fundo">
         <FaixaTeste />
         {!gaveta && <Urgencia />}
@@ -81,6 +82,7 @@ export default function Home() {
         </AnimatePresence>
         <Toast />
       </div>
+      </MotionConfig>
     </LazyMotion>
   );
 }
@@ -130,7 +132,8 @@ function Antes() {
 
 // ───────────────────────── S1 · hero ─────────────────────────
 
-function Hero() {
+/** O topo diz o que se vende e mostra o produto: um vale de verdade, "na mão". */
+function Hero({ abrir }: { abrir: (p: Produto) => void }) {
   const { vitrine, t } = useVale();
   const c = vitrine!.campanha;
   const natal = c.fase === 'natal';
@@ -138,79 +141,49 @@ function Hero() {
   const menor = Math.min(...(abertos.length ? abertos : vitrine!.produtos).map((p) => p.preco_por));
   const maiorPct = Math.max(0, ...vitrine!.produtos.filter((p) => p.tipo === 'kit').map((p) => pctDesconto(p.preco_de, p.preco_por)));
   const f = natal ? 'natal' : 'black';
+  const ordem = (p: Produto) => (natal ? p.destaque_natal : p.destaque_black) ?? 99;
+  const vitrineVale = [...abertos].sort((a, b) => ordem(a) - ordem(b))[0];
   return (
-    <header className="v-hero">
-      {c.hero_foto_url
-        ? <><img className="v-hero-foto" src={c.hero_foto_url} alt="" fetchPriority="high" /><div className="v-hero-pelicula" /></>
-        : <div className="v-hero-sem-foto" />}
-      <div className="v-hero-conteudo v-col">
-        <Logo />
-        <span className="v-selo v-selo-desc" style={{ marginBottom: 12 }}>{t(`${f}_faixa`)}</span>
-        <h1 className="v-h1">{t(`${f}_titulo`)}</h1>
-        <p className="v-hero-sub">{t(`${f}_subtitulo`, { pct: maiorPct })}</p>
-        {Number.isFinite(menor) && <p className="v-ancora v-num">a partir de {rs(menor)}</p>}
-        <a href="#destaques" className="v-cta">{t(`${f}_cta`)}</a>
-        <p className="v-hero-rodape">{t(`${f}_apoio`)}<br />{t('linha_confianca')}</p>
+    <header className={`v-hero${c.hero_foto_url ? ' v-hero-com-foto' : ''}`}>
+      {c.hero_foto_url && <><img className="v-hero-foto" src={c.hero_foto_url} alt="" fetchPriority="high" /><div className="v-hero-pelicula" /></>}
+      <div className="v-largo v-hero-topo">
+        <img src="/marca/ditado-brasa-bar.svg" alt="Ditado Brasa & Bar" className="v-hero-logo" width={84} height={50} />
+        <Link to="/vale/consultar" className="v-hero-link">Já comprei</Link>
+      </div>
+      <div className="v-largo v-hero-grade">
+        <m.div className="v-hero-texto" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}>
+          <p className="v-aviso">{t(`${f}_faixa`)}</p>
+          <h1 className="v-display">{t(`${f}_titulo`)}</h1>
+          <p className="v-hero-sub">{t(`${f}_subtitulo`, { pct: maiorPct })}</p>
+          <a href="#escolha" className="v-cta v-hero-cta">{t(`${f}_cta`)}</a>
+          <p className="v-hero-rodape v-num">{Number.isFinite(menor) ? `A partir de ${rs(menor)}. ` : ''}{t(`${f}_apoio`)}</p>
+        </m.div>
+        {vitrineVale && <Bilhete p={vitrineVale} abrir={() => abrir(vitrineVale)} />}
       </div>
     </header>
   );
 }
 
-// ───────────────────────── S3 · destaques ─────────────────────────
-
-function Destaques({ abrir, desabilitado }: { abrir: (p: Produto) => void; desabilitado: boolean }) {
-  const { vitrine, t } = useVale();
-  const c = vitrine!.campanha;
-  const natal = c.fase === 'natal';
-  const lista = vitrine!.produtos
-    .filter((p) => (natal ? p.destaque_natal : p.destaque_black) != null)
-    .sort((a, b) => ((natal ? a.destaque_natal : a.destaque_black) ?? 9) - ((natal ? b.destaque_natal : b.destaque_black) ?? 9));
-  // "MAIS PEDIDO" só a partir do 2º dia de venda e só no mais vendido de verdade
-  const segundoDia = new Date(vitrine!.agora).getTime() - new Date(c.venda_inicio).getTime() > 86_400_000;
-  const topo = segundoDia ? [...lista].sort((a, b) => b.vendidos - a.vendidos)[0] : undefined;
-  const maiorPct = Math.max(0, ...vitrine!.produtos.filter((p) => p.tipo === 'kit').map((p) => pctDesconto(p.preco_de, p.preco_por)));
+/** O vale de papel: corpo com o que vem, picote e canhoto com o preço. Abre o produto. */
+function Bilhete({ p, abrir }: { p: Produto; abrir: () => void }) {
+  const credito = p.tipo === 'credito';
   return (
-    <section id="destaques" className="v-col v-secao" aria-labelledby="destaques-titulo">
-      <h2 className="v-sr" id="destaques-titulo">Destaques</h2>
-      <div className="v-vantagens">
-        {[1, 2, 3].map((i) => (
-          <div className="v-vantagem" key={i}>
-            <span className="v-ponto" />
-            <span><b>{t(`destaque_${i}_titulo` as 'destaque_1_titulo', { pct: maiorPct })}</b>{t(`destaque_${i}_texto` as 'destaque_1_texto')}</span>
-          </div>
-        ))}
-      </div>
-      {!natal && <FaixaBrinde />}
-      {lista.length > 0 && (
-        <div className="v-carrossel" style={{ marginTop: 16 }}>
-          {lista.map((p, i) => (
-            <m.article key={p.slug} className={`v-card v-card-destaque${p.restam <= 0 ? ' v-esgotado' : ''}`}
-              initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.06, duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-              onClick={() => abrir(p)}>
-              <Foto p={p} formato="43" />
-              <div className="v-selos">
-                <SeloPreco p={p} />
-                {topo && topo.slug === p.slug && p.vendidos > 0 && <span className="v-selo v-selo-ambar">Mais pedido</span>}
-              </div>
-              <h3 className="v-nome">{p.nome}</h3>
-              <p className="v-comp">{p.composicao}</p>
-              <div className="v-num">
-                <span className="v-de">de R$ {reais(p.preco_de)}</span>
-                <div className="v-por">R$ {reais(p.preco_por)}</div>
-              </div>
-              <Restam p={p} />
-              <div style={{ marginTop: 'auto', paddingTop: 4 }}>
-                {p.restam <= 0
-                  ? <><span className="v-selo v-selo-esgotado">Esgotado</span><p className="v-legenda" style={{ margin: '6px 0 0' }}>Esse lote acabou. Quem chegou, chegou.</p></>
-                  : <BotaoAdicionar p={p} texto="Quero este" desabilitado={desabilitado} />}
-              </div>
-            </m.article>
-          ))}
-        </div>
-      )}
-      {!natal && <p className="v-legenda v-serifa" style={{ textAlign: 'center', fontStyle: 'italic', fontSize: 15 }}>{t('ditado_secao')}</p>}
-    </section>
+    <m.button type="button" className="v-bilhete" onClick={abrir} aria-label={`${p.nome} por R$ ${reais(p.preco_por)}. Ver o que vem`}
+      initial={{ opacity: 0, y: 48, rotate: 2 }} animate={{ opacity: 1, y: 0, rotate: -3 }}
+      transition={{ duration: 0.9, delay: 0.25, ease: [0.22, 1, 0.36, 1] }}>
+      <span className="v-bilhete-papel">
+        <span className="v-bilhete-corpo">
+          <span className="v-bilhete-marca">Vale Ditado</span>
+          <span className="v-bilhete-nome">{p.nome}</span>
+          <span className="v-bilhete-comp">{p.composicao}</span>
+        </span>
+        <span className="v-bilhete-canhoto v-num">
+          <span className="v-bilhete-pct">{credito ? `+${pctBonus(p)}%` : `-${pctDesconto(p.preco_de, p.preco_por)}%`}</span>
+          <span className="v-bilhete-de">R$ {reais(p.preco_de)}</span>
+          <span className="v-bilhete-por">R$ {reais(p.preco_por)}</span>
+        </span>
+      </span>
+    </m.button>
   );
 }
 
@@ -246,22 +219,24 @@ function Foto({ p, formato }: { p: Produto; formato: '43' | 'quadrada' }) {
   );
 }
 
-/** Faixa única do brinde (no lugar do selo repetido em todo card). */
+/** Faixa da marca (âmbar): o brinde explicado uma vez, para a página toda. */
 function FaixaBrinde() {
   const { vitrine, t } = useVale();
   const c = vitrine!.campanha;
   if (!c.brinde_descricao || !c.brinde_ate || new Date(c.brinde_ate).getTime() < new Date(vitrine!.agora).getTime()) return null;
   return (
-    <div className="v-brinde">
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-        <rect x="3" y="8" width="18" height="4" rx="1" /><path d="M12 8v13" /><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7" />
-        <path d="M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5" />
-      </svg>
-      <div>
-        <b>{t('black_brinde_linha')}</b>
-        <span>Todo vale pago até {diaCuiaba(c.brinde_ate)} às {horaCuiaba(c.brinde_ate)} ganha {c.brinde_descricao}. Um por vale, resgatado junto com ele, dentro da validade.</span>
+    <section className="v-faixa-marca" aria-label="Brinde">
+      <div className="v-largo v-faixa-marca-in">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <rect x="3" y="8" width="18" height="4" rx="1" /><path d="M12 8v13" /><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7" />
+          <path d="M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5" />
+        </svg>
+        <div>
+          <p className="v-faixa-marca-titulo">{t('black_brinde_linha')}</p>
+          <p className="v-faixa-marca-texto">Todo vale pago até {diaCuiaba(c.brinde_ate)} às {horaCuiaba(c.brinde_ate)} ganha {c.brinde_descricao}. Um por vale, resgatado junto com ele, dentro da validade.</p>
+        </div>
       </div>
-    </div>
+    </section>
   );
 }
 
@@ -276,93 +251,67 @@ function SeloPreco({ p }: { p: Produto }) {
   return <span className="v-selo v-selo-desc">-{pctDesconto(p.preco_de, p.preco_por)}%</span>;
 }
 
-// ───────────────────────── S4 · grade ─────────────────────────
+// ───────────────────────── S4 · cardápio de vales ─────────────────────────
 
-const BLOCOS: { cat: Produto['categoria']; chip: string; titulo: 'bloco_chopp' | 'bloco_kits' | 'bloco_drinks' | 'bloco_familia' }[] = [
-  { cat: 'chopp', chip: 'Chopp', titulo: 'bloco_chopp' },
-  { cat: 'kits', chip: 'Petisco + Chopp', titulo: 'bloco_kits' },
-  { cat: 'drinks', chip: 'Drinks', titulo: 'bloco_drinks' },
-  { cat: 'familia', chip: 'Família', titulo: 'bloco_familia' },
+const BLOCOS: { cat: Produto['categoria']; titulo: 'bloco_chopp' | 'bloco_kits' | 'bloco_drinks' | 'bloco_familia' }[] = [
+  { cat: 'chopp', titulo: 'bloco_chopp' },
+  { cat: 'kits', titulo: 'bloco_kits' },
+  { cat: 'drinks', titulo: 'bloco_drinks' },
+  { cat: 'familia', titulo: 'bloco_familia' },
 ];
 
+/** Os vales como um cardápio: linhas com nome, o que vem e o preço, sem caixas. */
 function Grade({ kits, abrir, desabilitado }: { kits: Produto[]; abrir: (p: Produto) => void; desabilitado: boolean }) {
   const { vitrine, t } = useVale();
-  const natal = vitrine!.campanha.fase === 'natal';
-  const [ativo, setAtivo] = useState('chopp');
-  const refs = useRef<Record<string, HTMLElement | null>>({});
   const blocos = BLOCOS.filter((b) => kits.some((p) => p.categoria === b.cat));
-
-  // destaca o chip da categoria que está na tela (âncoras, não filtros)
-  useEffect(() => {
-    const obs = new IntersectionObserver((ents) => {
-      const vis = ents.filter((e) => e.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
-      if (vis) setAtivo((vis.target as HTMLElement).dataset.cat ?? 'chopp');
-    }, { rootMargin: '-120px 0px -55% 0px' });
-    Object.values(refs.current).forEach((el) => el && obs.observe(el));
-    return () => obs.disconnect();
-  }, [kits.length]);
-
-  const ir = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   const vendidos = vitrine!.vendidos_total;
-
   return (
-    <section id="escolha" className="v-col v-secao">
-      <h2 className="v-h2">{t('grade_titulo')}</h2>
-      <p className="v-apoio" style={{ margin: 0 }}>{t('grade_subtitulo')}</p>
-      {vendidos >= vitrine!.campanha.mostrar_vendidos_a_partir && <p className="v-legenda">{vendidos} vales já vendidos</p>}
-      <nav className="v-chips" aria-label="Categorias" style={{ marginTop: 12 }}>
-        {natal && <button type="button" className="v-chip" onClick={() => ir('presente')}>Presente</button>}
+    <section id="escolha" className="v-largo v-secao v-cardapio-secao">
+      <div className="v-cabeca">
+        <h2 className="v-h2-grande">{t('grade_titulo')}</h2>
+        <p className="v-apoio">{t('grade_subtitulo')}{vendidos >= vitrine!.campanha.mostrar_vendidos_a_partir ? ` ${vendidos} vales já vendidos.` : ''}</p>
+      </div>
+      <div className="v-cardapio">
         {blocos.map((b) => (
-          <button key={b.cat} type="button" className={`v-chip${ativo === b.cat ? ' v-ativo' : ''}`} onClick={() => ir(`bloco-${b.cat}`)}>{b.chip}</button>
-        ))}
-        <button type="button" className={`v-chip${ativo === 'credito' ? ' v-ativo' : ''}`} onClick={() => ir('credito')}>Crédito</button>
-      </nav>
-      {blocos.map((b) => (
-        <div key={b.cat} id={`bloco-${b.cat}`} data-cat={b.cat} ref={(el) => { refs.current[b.cat] = el; }} style={{ scrollMarginTop: 96 }}>
-          <h3 className="v-h3">{t(b.titulo)}</h3>
-          <div className="v-lista">
-            {kits.filter((p) => p.categoria === b.cat).map((p, i) => <CardLista key={p.slug} p={p} i={i} abrir={abrir} desabilitado={desabilitado} />)}
+          <div key={b.cat} id={`bloco-${b.cat}`} className={`v-grupo v-grupo-${b.cat}`}>
+            <h3 className="v-grupo-titulo">{t(b.titulo)}</h3>
+            <ul className="v-menu">
+              {kits.filter((p) => p.categoria === b.cat).map((p) => <LinhaMenu key={p.slug} p={p} abrir={abrir} desabilitado={desabilitado} />)}
+            </ul>
           </div>
-        </div>
-      ))}
+        ))}
+      </div>
     </section>
   );
 }
 
-function CardLista({ p, i, abrir, desabilitado }: { p: Produto; i: number; abrir: (p: Produto) => void; desabilitado: boolean }) {
-  const { vitrine, t } = useVale();
+function LinhaMenu({ p, abrir, desabilitado }: { p: Produto; abrir: (p: Produto) => void; desabilitado: boolean }) {
+  const { t } = useVale();
   const esgotado = p.restam <= 0;
-  const brinde = vitrine!.campanha.fase === 'black' ? brindeCurto(vitrine!.campanha, vitrine!.agora) : null;
   return (
-    <m.article className="v-card v-item" onClick={() => abrir(p)}
-      initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(i, 4) * 0.05, duration: 0.3, ease: [0.22, 1, 0.36, 1] }}>
-      <div className={esgotado ? 'v-esgotado' : ''}><Foto p={p} formato="quadrada" /></div>
-      <div className="v-item-corpo">
-        <div className={esgotado ? 'v-esgotado' : ''} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <h4 className="v-nome">{p.nome}</h4>
-          <p className="v-comp">{p.composicao}</p>
-          <div className="v-selos">
-            <SeloPreco p={p} />
-            {p.tem_alcool ? <span className="v-selo v-selo-18">+18</span> : p.selo && <span className="v-selo v-selo-info">{p.selo}</span>}
-          </div>
-        </div>
-        <div className="v-item-preco">
-          <div className={`v-num${esgotado ? ' v-esgotado' : ''}`}>
-            <div className="v-de">de R$ {reais(p.preco_de)}</div>
-            <div className="v-por-lista">R$ {reais(p.preco_por)}</div>
+    <li className={`v-linha-menu${esgotado ? ' v-esgotada' : ''}`}>
+      <button type="button" className="v-lm-abrir" onClick={() => abrir(p)}>
+        {p.foto_url && <img className="v-lm-foto" src={p.foto_url} alt="" loading="lazy" width={64} height={64} />}
+        <span className="v-lm-texto">
+          <span className="v-lm-nome">{p.nome}</span>
+          <span className="v-lm-comp">{p.composicao}</span>
+          <span className="v-lm-meta">
+            <span className="v-lm-pct">-{pctDesconto(p.preco_de, p.preco_por)}%</span>
+            {p.tem_alcool ? <span>+18</span> : p.selo ? <span>{p.selo}</span> : null}
             <Restam p={p} />
-            {!esgotado && brinde && <span className="v-brinde-linha">{brinde}</span>}
-          </div>
-          {esgotado ? <span className="v-selo v-selo-esgotado">Esgotado</span> : <BotaoAdicionar p={p} desabilitado={desabilitado} />}
-        </div>
-        {esgotado && (
-          <div onClick={(e) => e.stopPropagation()}>
-            <p className="v-legenda" style={{ margin: 0 }}>Esse lote acabou. Quem chegou, chegou.</p>
-            <a className="v-link" href={linkWhats(t('whatsapp'), `Oi! Quero ser avisado quando abrir um novo lote do ${p.nome}.`)} target="_blank" rel="noopener noreferrer">Avisar no próximo lote</a>
-          </div>
-        )}
-      </div>
-    </m.article>
+          </span>
+        </span>
+        <span className="v-lm-preco v-num">
+          <span className="v-lm-de">R$ {reais(p.preco_de)}</span>
+          <span className="v-lm-por">R$ {reais(p.preco_por)}</span>
+        </span>
+      </button>
+      <span className="v-lm-acao">
+        {esgotado
+          ? <a className="v-link v-lm-aviso" href={linkWhats(t('whatsapp'), `Oi! Quero ser avisado quando abrir um novo lote do ${p.nome}.`)} target="_blank" rel="noopener noreferrer">Avisar</a>
+          : <BotaoAdicionar p={p} desabilitado={desabilitado} />}
+      </span>
+    </li>
   );
 }
 

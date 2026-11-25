@@ -111,17 +111,88 @@ html:has(body.vale) { scrollbar-color: rgba(245, 239, 230, 0.25) var(--v-carvao)
 .v-faixa-musgo { background: var(--v-musgo); color: var(--v-off); text-align: center; font-size: 14px; font-weight: 700; padding: 10px 16px; }
 .v-faixa-teste { background: #3a3a3a; color: var(--v-off); text-align: center; font-size: 12px; font-weight: 700; padding: 6px 16px; letter-spacing: 0.04em; }
 
-/* hero (S1) */
-.v-hero { position: relative; overflow: hidden; }
-.v-hero-foto { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-.v-hero-pelicula { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(26, 26, 26, 0.6), rgba(26, 26, 26, 0.85) 70%, var(--v-carvao)); }
-.v-hero-sem-foto { position: absolute; inset: 0; background: radial-gradient(80% 60% at 50% 20%, rgba(182, 91, 67, 0.25), transparent 70%); }
-.v-hero-conteudo { position: relative; width: 100%; padding: 24px 16px 8px; text-align: center; }
-.v-hero-conteudo .v-cta { max-width: 400px; margin: 0 auto; }
-.v-hero-sub { font-size: 17px; line-height: 1.45; margin: 12px auto 0; max-width: 40ch; color: var(--v-off); }
 .v-logo { width: 110px; height: auto; display: block; margin: 0 auto 20px; }
-.v-ancora { color: var(--v-ambar); font-size: 18px; font-weight: 800; margin: 20px 0 12px; }
-.v-hero-rodape { font-size: 13px; line-height: 20px; color: var(--v-off-70); margin: 12px 0 0; }
+
+/* largura de página de campanha: mesma linha esquerda e direita em todas as seções largas */
+.v-largo { width: 100%; max-width: 1160px; margin: 0 auto; padding: 0 20px; }
+@media (min-width: 768px) { .v-largo { padding: 0 40px; } }
+
+/* hero (S1): o título é o anúncio; o vale de papel é o produto */
+.v-hero { position: relative; overflow: hidden; padding-bottom: 56px; }
+.v-hero-foto { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.v-hero-pelicula { position: absolute; inset: 0; background: rgba(26, 26, 26, 0.72); }
+.v-hero-topo { position: relative; display: flex; align-items: center; justify-content: space-between; padding-top: 16px; padding-bottom: 16px; }
+.v-hero-logo { width: 84px; height: auto; display: block; }
+.v-hero-link { min-height: 44px; display: inline-flex; align-items: center; font-size: 15px; font-weight: 700; color: var(--v-off); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; }
+.v-hero-grade { position: relative; display: grid; gap: 40px; padding-top: 16px; }
+.v-aviso { margin: 0 0 16px; font-size: 14px; font-weight: 700; color: var(--v-ambar); letter-spacing: 0.02em; }
+.v-display { font-family: var(--v-serifa); font-weight: 700; font-size: clamp(48px, 13vw, 96px); line-height: 0.98; letter-spacing: -0.025em; margin: 0; text-wrap: balance; }
+.v-hero-sub { font-size: 18px; line-height: 1.5; margin: 20px 0 0; max-width: 34ch; color: var(--v-off); }
+.v-hero-cta { margin-top: 28px; }
+.v-hero-rodape { font-size: 14px; line-height: 22px; color: var(--v-off-70); margin: 14px 0 0; }
+@media (min-width: 900px) {
+  .v-hero { padding-bottom: 96px; }
+  .v-hero-grade { grid-template-columns: 7fr 5fr; align-items: center; gap: 48px; padding-top: 48px; }
+  .v-hero-cta { width: auto; display: inline-flex; padding: 0 36px; }
+}
+
+/* o vale de papel */
+.v-bilhete { display: block; width: 100%; max-width: 440px; justify-self: center; padding: 0; border: 0; background: none; cursor: pointer;
+  filter: drop-shadow(0 22px 30px rgba(0, 0, 0, 0.5)); transition: filter 0.2s; }
+.v-bilhete:hover { filter: drop-shadow(0 28px 36px rgba(0, 0, 0, 0.55)); }
+.v-bilhete-papel { display: grid; grid-template-columns: 1fr auto; min-height: 168px; background: var(--v-off); color: var(--v-carvao); border-radius: 10px; text-align: left;
+  -webkit-mask: radial-gradient(circle 13px at 0 50%, transparent 97%, #000) left / 51% 100% no-repeat, radial-gradient(circle 13px at 100% 50%, transparent 97%, #000) right / 51% 100% no-repeat;
+  mask: radial-gradient(circle 13px at 0 50%, transparent 97%, #000) left / 51% 100% no-repeat, radial-gradient(circle 13px at 100% 50%, transparent 97%, #000) right / 51% 100% no-repeat; }
+.v-bilhete-corpo { display: flex; flex-direction: column; gap: 6px; padding: 20px 18px 20px 26px; }
+.v-bilhete-marca { font-family: var(--v-serifa); font-style: italic; font-weight: 700; font-size: 15px; color: var(--v-terracota-forte); }
+.v-bilhete-nome { font-family: var(--v-serifa); font-weight: 700; font-size: 28px; line-height: 1.05; letter-spacing: -0.01em; }
+.v-bilhete-comp { font-size: 15px; line-height: 1.4; color: #4a4542; }
+.v-bilhete-canhoto { display: flex; flex-direction: column; align-items: flex-end; justify-content: center; gap: 2px; padding: 20px 26px 20px 18px; border-left: 2px dashed rgba(26, 26, 26, 0.3); }
+.v-bilhete-pct { font-weight: 800; font-size: 15px; color: var(--v-terracota-forte); }
+.v-bilhete-de { font-size: 14px; color: #5b5552; text-decoration: line-through; }
+.v-bilhete-por { font-weight: 800; font-size: 26px; line-height: 1.1; white-space: nowrap; }
+@media (min-width: 900px) { .v-bilhete { max-width: 460px; } .v-bilhete-nome { font-size: 34px; } .v-bilhete-papel { min-height: 220px; } }
+
+/* faixa da marca (âmbar), a única faixa colorida da página */
+.v-faixa-marca { background: var(--v-ambar); color: var(--v-carvao); }
+.v-faixa-marca-in { display: flex; gap: 18px; align-items: flex-start; padding-top: 32px; padding-bottom: 32px; }
+.v-faixa-marca svg { flex: 0 0 auto; margin-top: 2px; }
+.v-faixa-marca-titulo { margin: 0; font-family: var(--v-serifa); font-weight: 700; font-size: 26px; line-height: 1.15; text-wrap: balance; max-width: 28ch; }
+.v-faixa-marca-texto { margin: 8px 0 0; font-size: 16px; line-height: 1.5; color: rgba(26, 26, 26, 0.82); max-width: 62ch; }
+@media (min-width: 900px) { .v-faixa-marca-in { align-items: center; padding-top: 40px; padding-bottom: 40px; } .v-faixa-marca-titulo { font-size: 32px; } }
+
+/* cardápio de vales (S4) */
+.v-cardapio-secao { padding-top: 64px; }
+.v-cabeca { margin-bottom: 32px; }
+.v-cabeca .v-apoio { margin: 8px 0 0; font-size: 16px; }
+.v-h2-grande { font-family: var(--v-serifa); font-weight: 700; font-size: clamp(36px, 9vw, 56px); line-height: 1.02; letter-spacing: -0.02em; margin: 0; text-wrap: balance; }
+.v-cardapio { display: grid; gap: 40px; }
+.v-grupo-titulo { font-family: var(--v-serifa); font-weight: 700; font-size: 22px; line-height: 1.2; margin: 0 0 8px; color: var(--v-ambar); }
+.v-menu { list-style: none; margin: 0; padding: 0; }
+.v-linha-menu { display: flex; align-items: center; gap: 12px; border-bottom: 1px solid rgba(245, 239, 230, 0.12); }
+.v-lm-abrir { flex: 1; min-width: 0; display: flex; align-items: center; gap: 14px; padding: 18px 0; background: none; border: 0; color: inherit; text-align: left; }
+.v-lm-abrir:hover .v-lm-nome { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; }
+.v-lm-foto { flex: 0 0 64px; width: 64px; height: 64px; object-fit: cover; border-radius: 8px; }
+.v-lm-texto { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.v-lm-nome { font-size: 18px; line-height: 1.3; font-weight: 700; }
+.v-lm-comp { font-size: 15px; line-height: 1.45; color: var(--v-off-70); }
+.v-lm-meta { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 13px; font-weight: 700; color: var(--v-off-70); }
+.v-lm-meta .v-restam { display: inline; font-size: 13px; }
+.v-lm-pct { color: #eda48f; }
+.v-lm-preco { flex: 0 0 auto; display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+.v-lm-de { font-size: 13px; color: var(--v-off-50); text-decoration: line-through; }
+.v-lm-por { font-size: 19px; font-weight: 800; white-space: nowrap; }
+.v-lm-acao { flex: 0 0 auto; display: flex; justify-content: flex-end; }
+.v-esgotada .v-lm-abrir { opacity: 0.45; }
+.v-lm-aviso { font-size: 14px; }
+.v-grupo-chopp { order: 1; } .v-grupo-kits { order: 2; } .v-grupo-drinks { order: 3; } .v-grupo-familia { order: 4; }
+@media (min-width: 900px) {
+  .v-cardapio { grid-template-columns: 1fr 1fr; gap: 48px 72px; align-items: start; }
+  .v-grupo-kits { grid-column: 1; grid-row: 1 / span 3; }
+  .v-grupo-chopp { grid-column: 2; grid-row: 1; }
+  .v-grupo-drinks { grid-column: 2; grid-row: 2; }
+  .v-grupo-familia { grid-column: 2; grid-row: 3; }
+}
 
 /* faixa de vantagens (S3, copy) */
 .v-vantagens { display: grid; grid-template-columns: 1fr; gap: 8px; margin-top: 16px; }
