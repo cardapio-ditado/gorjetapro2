@@ -58,6 +58,8 @@ const Saguao              = lazy(() => import('./pages/Saguao'));
 const KitDesign           = lazy(() => import('./pages/KitDesign'));
 const ConfigurarSetores   = lazy(() => import('./pages/ConfigurarSetores'));
 const Portaria            = lazy(() => import('./pages/Portaria'));
+const ValesAdmin          = lazy(() => import('./pages/ValesAdmin'));
+const ValesResgate        = lazy(() => import('./pages/ValesResgate'));
 
 const PageLoader = () => (
   <div className="flex flex-col items-center justify-center h-full min-h-[300px] gap-4">
@@ -139,6 +141,7 @@ function AppContent() {
         <Route path="/gestao-estrategica"  element={<ProtectedRoute moduloSlug="financeiro">    <GestaoEstrategica />   </ProtectedRoute>} />
         <Route path="/zig-vendas"          element={<ProtectedRoute moduloSlug="estoque">       <ZigVendasSync />       </ProtectedRoute>} />
         <Route path="/bonus-zig"           element={<ProtectedRoute moduloSlug="bonus_zig">     <BonusZig />            </ProtectedRoute>} />
+        <Route path="/vales"               element={<ProtectedRoute moduloSlug="vales">         <ValesAdmin />          </ProtectedRoute>} />
         <Route path="/zig-recebimentos"    element={<ProtectedRoute moduloSlug="financeiro">    <ZigRecebimentos />     </ProtectedRoute>} />
         <Route path="/lista-compras"       element={<ProtectedRoute moduloSlug="estoque">       <ListaCompras />        </ProtectedRoute>} />
         <Route path="/dre-simplificado"    element={<ProtectedRoute moduloSlug="financeiro">    <DRESimplificado />     </ProtectedRoute>} />
@@ -184,6 +187,15 @@ function AppContent() {
           <Route path="/portaria" element={<Portaria />} />
           <Route path="/ingresso/:codigo" element={<Portaria />} />
         </Routes>
+      </Suspense>
+    );
+  }
+
+  // Resgate do Vale Ditado: tela cheia no tablet/celular do caixa, como a Portaria.
+  if (location.pathname === '/vales/resgate') {
+    return (
+      <Suspense fallback={<PageLoader />}>
+        <ProtectedRoute moduloSlug="vales"><ValesResgate /></ProtectedRoute>
       </Suspense>
     );
   }

@@ -77,6 +77,17 @@ Não duplicar aqui: cada regra tem uma fonte só.
   conta da diária, nunca cria avulsa. A trava olha a **categoria** (categoria de extra, ou sem categoria em cadastro
   `extra`): salário, férias e vale de quem tem cadastro `extra` passam (corrigido em 11/11).
 
+### Vale Ditado (25/11/2026)
+- Venda online de vales pré-pagos em ditado.org/vale (Black Brasa 27–30/11, Vale de Natal 01–24/12). Base: `docs/PRD-vale-ditado.md`,
+  `docs/layout-pagina.md`, `docs/copy-pagina.md`, `docs/textos.md`. Resgate em `/vales/resgate`, admin em `/vales` (só gerente).
+- Tabelas `vale_*` (RLS, sem acesso direto); tudo por funções `fn_vale_*`. Lote e resgate só por função transacional.
+- Pagamento: função `vale` (rotas criar-pedido, webhook, status, estornar) com a camada `paymentProvider`; gateway **Asaas**
+  (conta da CEM; recebedor "C E M DE OLIVEIRA LTDA"). Secrets `ASAAS_API_KEY`, `ASAAS_WEBHOOK_TOKEN`, `ASAAS_AMBIENTE` (o Kadu configura).
+- **Nota fiscal no resgate**, pela ZIG (botão VALE PRÉ-PAGO, forma "Voucher pré-pago"), em nome da K M. A venda online não emite nota.
+- **Uso numa visita só** (Kadu, 25/11): a primeira baixa abre o vale; o resto só até o fim daquela noite (6h). Sobra não volta.
+- **Validade 3 meses** (Kadu, 25/11). Limite 2 de cada produto por CPF. Produtos com chopp não valem no happy hour (até 21h).
+- A página pública (`src/vale`) não carrega o sistema: `src/main.tsx` decide pela rota. Não citar Open de Chopp nem rodízio.
+
 ### Agenda de pagamentos (22-23/11/2026)
 - Tela `/agenda-pagamentos` (Financeiro): substitui a planilha diária "valores a pagar". Uma folha por dia, no jeito
   da planilha: fechamento de caixa (venda da ZIG, entradas digitadas dinheiro/cartão/Pix/bônus/desconto, pagamentos
@@ -87,6 +98,14 @@ Não duplicar aqui: cada regra tem uma fonte só.
   serve de apoio para a conciliação. Enquanto a baixa não acontece, aparece "aguardando baixa".
 - Grupo de cada categoria: tabela `agp_grupo_categoria` (o Kadu ajusta na própria tela). Extra e músico não entram
   como avulso. Tudo pelas funções `fn_agp_*` (migração `20261123120000_agenda_pagamentos.sql`); tabelas `agp_*` sem acesso direto.
+
+### Reservas pelo link e Brasa (23/11/2026)
+- Pré-reserva em ditado.org/reserva (`fn_reserva_publica`, até 18h para o mesmo dia) vai para a Brasa: gatilho
+  `trg_reserva_brasa_enfileirar` põe na fila `reservas_brasa_envios` ("criada"; "confirmada" quando a equipe confirma
+  em Eventos; "cancelada" quando recusa) e o robô `brasa-reservas-enviar` (pg_cron, 1 min) envia com a chave do Vault
+  `brasa_reservas_segredo` (o Kadu cadastra). Só reserva que mandou "criada" manda os outros avisos.
+- A aprovação que volta da Brasa (`receber-reserva-brasa`, com `source_channel: "link"` e `external_id`) confirma a
+  pré-reserva existente; a etiqueta `brasa:<id>` impede o aviso "confirmada" de voltar para a Brasa.
 
 ### Andar Operacional (prioridade de pagamento)
 - Atualização diária às 6:32 (Cuiabá). Passo a passo em `scripts/operacional/README.md`.

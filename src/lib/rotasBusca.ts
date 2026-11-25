@@ -1,6 +1,6 @@
 import type { LucideIcon } from 'lucide-react';
 import {
-  Beer, BookOpen, Flame, Gift, CalendarDays, ChefHat, DollarSign, Gamepad2, Martini, Home, Music, Palette, Settings, Star, Target, TrendingUp, UserPlus, Users, Warehouse, Wine,
+  Beer, BookOpen, Flame, Gift, CalendarDays, ChefHat, DollarSign, Gamepad2, Martini, Home, Music, Palette, Settings, Star, Target, TrendingUp, UserPlus, Users, Warehouse, Wine, Ticket,
 } from 'lucide-react';
 
 /** Uma tela que a busca do topo sabe abrir. */
@@ -58,6 +58,8 @@ export const ROTAS_BUSCA: RotaBusca[] = [
   { label: 'Financeiro — Cadastros',              path: '/finance?tab=cadastros',               icon: DollarSign, apelidos: 'categoria forma pagamento banco cliente' },
   { label: 'Bônus ZIG',                           path: '/bonus-zig',                           icon: Gift, apelidos: 'bonus bônus permuta parceiro cortesia desconto funcionario zig' },
   { label: 'ZIG Recebimentos',                    path: '/zig-recebimentos',                    icon: DollarSign },
+  { label: 'Vale Ditado (admin)',                 path: '/vales',                               icon: Ticket, apelidos: 'vale voucher black brasa natal pre-pago prepago cartela kit pedidos estorno' },
+  { label: 'Resgate de vales',                    path: '/vales/resgate',                       icon: Ticket, apelidos: 'vale voucher resgate baixa qr codigo dit' },
   // Estoque
   { label: 'Estoque — Configurar setores',  path: '/setores',                                           icon: Warehouse, apelidos: 'bar cozinha nível zig contagem balcão' },
   { label: 'Estoque — Configurar Central',  path: '/estoque-beta2?tela=central',                         icon: Warehouse, apelidos: 'ponto de pedido mínimo compras automático' },

@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import {
   Home, DollarSign, Warehouse, Users, Music, CalendarDays,
-  Settings, BookOpen, Target, ClipboardList, Palette,
+  Settings, BookOpen, Target, ClipboardList, Palette, Ticket, ScanLine,
   TrendingUp, ChevronDown, LogOut, Star, X, LayoutDashboard, Hexagon, UserPlus, Handshake, Wine, Gamepad2, ChefHat, Beer, Martini, Flame, Gift,
 } from 'lucide-react';
 
@@ -81,6 +81,8 @@ export const MODULES: Module[] = [
   { name: 'Extras',         path: '/extras',             icon: UserPlus,      slug: 'extras',          group: 'operacao' },
   { name: 'Metas & Tarefas', path: '/metas-tarefas',    icon: Target,        slug: 'solicitacoes',    group: 'operacao' },
   { name: 'Eventos',        path: '/events',             icon: CalendarDays,  slug: 'eventos',         group: 'operacao' },
+  { name: 'Vale Ditado',    path: '/vales',              icon: Ticket,        slug: 'vales',           group: 'operacao' },
+  { name: 'Resgate de vales', path: '/vales/resgate',    icon: ScanLine,      slug: 'vales',           group: 'operacao' },
   { name: 'Financeiro',     path: '/finance',            icon: DollarSign,    slug: 'financeiro',      group: 'financeiro',
     subModules: [
       { name: 'Painel',                   path: '/financeiro' },
