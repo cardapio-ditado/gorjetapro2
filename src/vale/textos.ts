@@ -32,7 +32,7 @@ export const TEXTOS_PADRAO = {
   // S5
   credito_titulo: 'Não sabe o que escolher? Dá crédito.',
   credito_texto: 'Você paga R$ 100 e consome R$ 125. Ou paga R$ 200 e consome R$ 250. Usa no que quiser do cardápio, numa visita, em até {meses} meses.',
-  credito_pequeno: 'Vale numa visita só: o que sobrar não fica para outro dia. Não paga garrafas nem itens de outras promoções. Não dá troco: se passar do crédito, paga a diferença na hora.',
+  credito_pequeno: 'Vale numa visita só: o que sobrar não fica para outro dia. Não paga itens de outras promoções. Não dá troco: se passar do crédito, paga a diferença na hora.',
   // S6
   como_titulo: 'Simples como pedir mais uma.',
   // S7

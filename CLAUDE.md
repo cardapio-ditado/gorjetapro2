@@ -85,7 +85,8 @@ Não duplicar aqui: cada regra tem uma fonte só.
   (conta da CEM; recebedor "C E M DE OLIVEIRA LTDA"). Secrets `ASAAS_API_KEY`, `ASAAS_WEBHOOK_TOKEN`, `ASAAS_AMBIENTE` (o Kadu configura).
 - **Nota fiscal no resgate**, pela ZIG (botão VALE PRÉ-PAGO, forma "Voucher pré-pago"), em nome da K M. A venda online não emite nota.
 - **Uso numa visita só** (Kadu, 25/11): a primeira baixa abre o vale; o resto só até o fim daquela noite (6h). Sobra não volta.
-- **Validade 3 meses** (Kadu, 25/11). Limite 2 de cada produto por CPF. Produtos com chopp não valem no happy hour (até 21h).
+- **Validade 3 meses** (Kadu, 25/11). Limite 2 de cada produto por CPF. **Vale no happy hour** e os Vales 100/200 **pagam garrafas**
+  (Kadu, 25/11; trava de happy hour desligada em todos os produtos). Não junta com outras promoções.
 - A página pública (`src/vale`) não carrega o sistema: `src/main.tsx` decide pela rota. Não citar Open de Chopp nem rodízio.
 - Visual da página (25/11): cores do Manual da Marca, como o tema claro do sistema; foto só real, enviada pelo admin.
   Para mexer no visual, use as skills do projeto `design-taste-frontend-carregador` e `web-design-guidelines`.

@@ -212,6 +212,7 @@ function Pago({ pedido, token }: { pedido: PedidoPublico; token: string }) {
   const produtos = [...new Set(pedido.vales.map((v) => v.produto))].join(', ');
   const validade = dataBR(pedido.vales[0]?.validade);
   const hh = vitrine?.campanha.happy_hour_fim.replace(':00', 'h') ?? '21h';
+  const temTravaHH = pedido.vales.some((v) => v.trava_happy_hour);
 
   const textoWhats = pedido.presente
     ? `Você ganhou um Ditado de presente!\n${produtos}, no seu nome.\nVálido até ${validade}. É só mostrar o código no bar.\nVer o vale: ${link}\nDitado Brasa & Bar · Onde há fumaça, há fogo.`
@@ -254,7 +255,7 @@ function Pago({ pedido, token }: { pedido: PedidoPublico; token: string }) {
           <h2 className="v-h3" style={{ marginTop: 0 }}>Como usar</h2>
           <ul className="v-regras" style={{ margin: 0 }}>
             <li>Mostre o código ao garçom ou no caixa, com documento com foto.</li>
-            <li>Produtos com chopp só depois das {hh} (não valem no happy hour).</li>
+            {temTravaHH && <li>Produtos com chopp só depois das {hh} (não valem no happy hour).</li>}
             <li>Vale numa visita só: o que sobrar naquela noite não fica para outro dia.</li>
             <li>10% sobre o valor pago · couvert à parte · não junta com outras promoções.</li>
           </ul>
