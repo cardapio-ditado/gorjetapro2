@@ -86,16 +86,18 @@ body.vale {
   font-size: 13px; line-height: 18px; font-weight: 800; text-align: center; text-decoration: none; display: block;
 }
 .v-urgencia small { font-weight: 600; opacity: 0.9; }
+.v-so-largo { display: none; }
+@media (min-width: 640px) { .v-so-largo { display: inline; } }
 .v-faixa-topo { background: var(--v-terracota); color: var(--v-off); text-align: center; font-size: 14px; font-weight: 700; padding: 10px 16px; border-top: 1px solid rgba(245, 239, 230, 0.2); }
 .v-faixa-musgo { background: var(--v-musgo); color: var(--v-off); text-align: center; font-size: 14px; font-weight: 700; padding: 10px 16px; }
 .v-faixa-teste { background: #3a3a3a; color: var(--v-off); text-align: center; font-size: 12px; font-weight: 700; padding: 6px 16px; letter-spacing: 0.04em; }
 
 /* hero (S1) */
-.v-hero { position: relative; max-height: 62vh; min-height: 420px; overflow: hidden; display: flex; align-items: flex-end; }
+.v-hero { position: relative; overflow: hidden; }
 .v-hero-foto { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .v-hero-pelicula { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(26, 26, 26, 0.6), rgba(26, 26, 26, 0.85) 70%, var(--v-carvao)); }
 .v-hero-sem-foto { position: absolute; inset: 0; background: radial-gradient(80% 60% at 50% 20%, rgba(182, 91, 67, 0.25), transparent 70%); }
-.v-hero-conteudo { position: relative; width: 100%; padding: 24px 0 8px; text-align: center; }
+.v-hero-conteudo { position: relative; width: 100%; padding: 20px 16px 8px; text-align: center; }
 .v-logo { width: 110px; height: auto; display: block; margin: 0 auto 16px; }
 .v-ancora { color: var(--v-ambar); font-size: 18px; font-weight: 800; margin: 12px 0 16px; }
 
