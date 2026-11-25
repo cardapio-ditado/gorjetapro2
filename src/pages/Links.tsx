@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { CalendarDays, ChevronRight, Globe, Instagram, MapPin, MessageCircle, Trophy, UtensilsCrossed } from 'lucide-react';
+import { CalendarDays, ChevronRight, Globe, Instagram, MapPin, MessageCircle, Ticket, Trophy, UtensilsCrossed } from 'lucide-react';
 
 /**
  * Links da bio do Instagram (ditado.org/links), no lugar do Linktree (Kadu, 19/11/2026).
@@ -25,6 +25,8 @@ const ENDERECO = 'R. Sen. Vilas Bôas, 89 · Praça Popular · Cuiabá-MT';
 const MAPS = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent('Ditado Popular, R. Sen. Vilas Bôas, 89 - Popular, Cuiabá - MT, 78045-430')}`;
 
 const LINKS: Array<{ titulo: string; sub: string; href: string; Icone: typeof Globe; destaque?: boolean; externo?: boolean }> = [
+  // Vale Ditado (Kadu, 25/11/2026): a venda de vales pré-pagos, logo abaixo da votação.
+  { titulo: 'Vale Ditado', sub: 'Chopp e kits com desconto, só no site', href: '/vale', Icone: Ticket, destaque: true },
   { titulo: 'Reservar mesa', sub: 'A equipe confirma pelo WhatsApp', href: '/reserva', Icone: CalendarDays, destaque: true },
   { titulo: 'Cardápio', sub: 'Brasa, petiscos, chopp e drinks', href: 'https://ditadopopular-bra.ola.click/products', Icone: UtensilsCrossed, externo: true },
   { titulo: 'WhatsApp', sub: '(65) 4141-3655', href: `https://wa.me/${WHATS}?text=${encodeURIComponent('Olá! Vim pelo Instagram do Ditado.')}`, Icone: MessageCircle, externo: true },

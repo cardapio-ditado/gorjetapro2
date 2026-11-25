@@ -5,7 +5,7 @@
 **Base desta versão (fonte: `produtos.md`, 24/11):**
 - Preço "de" = preço cheio de cardápio da tabela. Chopp Brahma 300 ml = **R$ 18,50**.
 - Venda: **Black Brasa** de 27/11 (sexta) a 30/11 (segunda); depois **Vale de Natal** de 01/12 a 24/12, mesmos produtos e preços.
-- Validade de 6 meses · vale todo dia que o bar abre · produtos com chopp não valem no happy hour (até 21h) · não acumula com outras promoções · vales de consumo não pagam outras promoções nem garrafas · 10% sobre o valor pago, couvert à parte · até 2 por CPF.
+- Validade de 6 meses · vale todo dia que o bar abre, inclusive no happy hour · não acumula com outras promoções · vales de consumo não pagam outras promoções · 10% sobre o valor pago, couvert à parte · até 2 por CPF.
 - Sem rodízio nesta campanha.
 
 ---
@@ -43,7 +43,7 @@ ou até acabar o lote de cada produto, o que vier primeiro.
 | Vale Ditado 100 | R$ 125,00 de crédito em consumo | R$ 125,00 | **R$ 100,00** | 100 |
 | Vale Ditado 200 | R$ 250,00 de crédito em consumo | R$ 250,00 | **R$ 200,00** | 50 |
 
-2.2. **Vales Ditado 100 e 200:** o crédito pode ser usado em comida e bebida do cardápio, **exceto** garrafas (de bebida) e itens vendidos em outras promoções.
+2.2. **Vales Ditado 100 e 200:** o crédito pode ser usado em comida e bebida do cardápio, inclusive garrafas, **exceto** itens vendidos em outras promoções.
 2.3. Os itens dos kits e cartelas não podem ser trocados por outros produtos nem por dinheiro, salvo nos casos dos itens 9 e 10.
 2.4. Os vales não dão troco. Se o consumo passar do crédito, a diferença é paga normalmente na hora.
 2.5. A página mostra quantas unidades restam de cada produto.
@@ -63,7 +63,7 @@ ou até acabar o lote de cada produto, o que vier primeiro.
 
 **6. Dias e horários de uso**
 6.1. O vale pode ser usado **em qualquer dia em que o Ditado Brasa & Bar estiver aberto**, durante o horário de funcionamento (`[CONFIRMAR: horário de funcionamento]`).
-6.2. Os produtos com chopp (Abre a Brasa, Cartelas 5 e 10, Kit Boteco, Kit Passarinho, Kit Picanha, Tábua & Chopp e Assado do Zé) **não podem ser resgatados durante o happy hour**, que vai até as 21h `[CONFIRMAR: dias do happy hour]`. Depois das 21h, valem normalmente.
+6.2. Todos os vales, inclusive os produtos com chopp, podem ser usados durante o happy hour. O item resgatado pelo vale não recebe o desconto do happy hour (item 12.1).
 
 **7. Como resgatar (inclusive em mais de uma visita)**
 7.1. Na chegada ou na hora de pedir, informe o código do vale ao garçom ou ao caixa e apresente documento oficial com foto do titular.
@@ -92,7 +92,7 @@ ou até acabar o lote de cada produto, o que vier primeiro.
 
 **12. Não acumulação**
 12.1. O vale não acumula com nenhuma outra promoção ou desconto da casa (happy hour, chopp promocional, Sexta da Chapa, entre outras). O item resgatado pelo vale não recebe desconto adicional.
-12.2. O crédito dos Vales Ditado 100 e 200 não paga itens vendidos em outras promoções nem garrafas.
+12.2. O crédito dos Vales Ditado 100 e 200 não paga itens vendidos em outras promoções. Garrafas podem ser pagas com o crédito.
 
 **13. Perda, uso indevido e fraude**
 13.1. Guarde o código. Em caso de perda, o titular pode pedir a reemissão pelo WhatsApp, com confirmação de CPF. Código já resgatado não é reemitido.
@@ -222,8 +222,7 @@ R$ 50 a mais. Presente que ninguém devolve.
 Antes de pagar, confira:
 - Vale por **6 meses** a partir da compra. A data de vencimento vem no seu vale.
 - Usa **qualquer dia que o bar estiver aberto**.
-- Produtos com chopp **não valem no happy hour (até 21h)**. Depois das 21h, tudo certo.
-- Não junta com outras promoções. Os Vales Ditado 100 e 200 não pagam outras promoções nem garrafas.
+- Não junta com outras promoções. Os Vales Ditado 100 e 200 não pagam outras promoções.
 - Pode usar **aos poucos**, em mais de uma visita.
 - **10% de serviço** sobre o valor pago, cobrado no resgate. **Couvert à parte**, quando houver música com couvert.
 - Até **2 por CPF**. Vale nominal: dá para colocar o nome do presenteado ou transferir depois.
@@ -245,13 +244,13 @@ Pode. Coloque o nome e o CPF de quem vai ganhar na compra. Se preferir, transfer
 Não. Usa em quantas visitas quiser, dentro dos 6 meses.
 
 **Vale no fim de semana?**
-Vale. Qualquer dia que a casa abrir. Só os produtos com chopp ficam fora do happy hour, até 21h.
+Vale. Qualquer dia que a casa abrir.
 
 **Junta com outra promoção?**
 Não. O vale já é a promoção.
 
 **O Vale Ditado 100 paga qualquer coisa?**
-Qualquer item do cardápio, menos garrafas e o que já estiver em outra promoção.
+Qualquer item do cardápio, menos o que já estiver em outra promoção.
 
 **Paga 10%?**
 Sim, mas sobre o valor que você pagou, não sobre o preço de cardápio. Couvert é à parte.
@@ -373,7 +372,7 @@ Se disser não: "Tranquilo. Valeu demais pela visita!"
 > Vale Ditado: paga R$ 100, consome R$ 125.
 > E mais kits de picanha, passarinho, tábua, gin e caipirinha no link da bio.
 >
-> Lote limitado, até 2 por CPF. Produtos com chopp não valem no happy hour (até 21h). Regras completas no link.
+> Lote limitado, até 2 por CPF. Regras completas no link.
 >
 > Onde há fumaça, há fogo.
 > *Beba com moderação. Proibido para menores de 18 anos.*

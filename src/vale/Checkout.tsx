@@ -221,7 +221,7 @@ export default function Checkout() {
             <h2 className="v-h3" style={{ marginTop: 0 }}>Antes de pagar, confira:</h2>
             <ul className="v-regras" style={{ margin: 0 }}>
               <li><span>Válido até <b>{dataBR(c.validade_ate)}</b> ({c.validade_meses} meses).</span></li>
-              <li><span>Qualquer dia que o bar abrir. Produtos com chopp não valem no happy hour (até {c.happy_hour_fim.replace(':00', 'h')}).</span></li>
+              <li><span>Qualquer dia que o bar abrir.</span></li>
               <li><span>Vale numa visita só: o que sobrar naquela noite não fica para outro dia.</span></li>
               <li><span>10% de serviço sobre o valor pago. Couvert à parte.</span></li>
               <li><span>Não junta com outras promoções.</span></li>
@@ -240,7 +240,7 @@ export default function Checkout() {
           )}
           <label className={`v-check${tocado._todos && !aceites.regras ? ' v-erro' : ''}`}>
             <input id="k-regras" type="checkbox" checked={aceites.regras} onChange={(e) => setAceites({ ...aceites, regras: e.target.checked })} />
-            <span>Entendi as regras de uso: validade, uma visita só, happy hour, 10% e couvert.</span>
+            <span>Entendi as regras de uso: validade, uma visita só, 10% e couvert.</span>
           </label>
           {tocado._todos && (!aceites.regulamento || !aceites.regras || (temAlcool && !aceites.maioridade)) && (
             <p className="v-msg-erro">Marque as caixas obrigatórias para continuar.</p>
