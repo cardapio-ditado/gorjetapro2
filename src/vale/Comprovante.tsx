@@ -67,7 +67,7 @@ export default function Comprovante() {
       <a className="v-cta" href={linkWhats('556541413655')} target="_blank" rel="noopener noreferrer">Chamar no WhatsApp</a>
     </Moldura>
   );
-  if (transicao) return <Moldura><div className="v-carregando"><b>Pix recebido! Gerando seus vales...</b></div></Moldura>;
+  if (transicao) return <Moldura><div className="v-carregando"><b>Pix recebido! Gerando seus vales…</b></div></Moldura>;
 
   switch (pedido.status) {
     case 'pendente': return <Pagar pedido={pedido} verificar={verificar} verificando={verificando} />;
@@ -134,23 +134,25 @@ function Pagar({ pedido, verificar, verificando }: { pedido: PedidoPublico; veri
   if (pedido.forma_pagamento === 'cartao') return (
     <Moldura>
       <h1 className="v-h2">Pague com cartão.</h1>
+      <ResumoPedido pedido={pedido} />
       <div className="v-valor-grande v-num">R$ {reais(pedido.valor_total)}</div>
       {pedido.gateway_url && <a className="v-cta" href={pedido.gateway_url}>Abrir pagamento com cartão</a>}
       <p className="v-relogio">Seus vales ficam reservados por <b>{String(minTot).padStart(2, '0')}:{String(s).padStart(2, '0')}</b>.</p>
-      <p className="v-apoio v-centro">Confirmando com o banco... Esta tela atualiza sozinha.</p>
-      <button type="button" className="v-btn" onClick={verificar} disabled={verificando}>{verificando ? 'Verificando...' : 'Já paguei e não atualizou'}</button>
+      <p className="v-apoio v-centro">Confirmando com o banco… Esta tela atualiza sozinha.</p>
+      <button type="button" className="v-btn" onClick={verificar} disabled={verificando}>{verificando ? 'Verificando…' : 'Já paguei e não atualizou'}</button>
     </Moldura>
   );
 
   return (
     <Moldura>
       <h1 className="v-h2">Paga no Pix e pronto.</h1>
+      <ResumoPedido pedido={pedido} />
       <div className="v-valor-grande v-num">R$ {reais(pedido.valor_total)}</div>
       <button type="button" className="v-cta" onClick={copiar}>{copiado ? 'Copiado ✓' : 'Copiar código Pix'}</button>
       {copiado && <p className="v-centro" style={{ margin: 0 }}>Código copiado. Agora é só colar no app do banco.</p>}
       <ol className="v-passos">
         <li><span className="v-passo-num">1</span><span>Abra o app do seu banco e escolha Pix copia e cola.</span></li>
-        <li><span className="v-passo-num">2</span><span>Cole o código. {t('recebedor_nome') ? <>Confira o recebedor: <b>{t('recebedor_nome')}</b>.</> : null}</span></li>
+        <li><span className="v-passo-num">2</span><span>Cole o código. {t('recebedor_nome') ? <>O recebedor aparece como <b>{t('recebedor_nome')}</b>, a empresa que recebe os pagamentos do Ditado.</> : null}</span></li>
         <li><span className="v-passo-num">3</span><span>Pague. Esta tela atualiza sozinha.</span></li>
       </ol>
       <button type="button" className="v-link" onClick={() => setQrAberto(!qrAberto)}>{qrAberto ? 'Esconder QR code' : 'Pagar com outro celular / computador'}</button>
@@ -159,12 +161,25 @@ function Pagar({ pedido, verificar, verificando }: { pedido: PedidoPublico; veri
       )}
       <p className="v-relogio">Seus vales ficam reservados por <b>{String(minTot).padStart(2, '0')}:{String(s).padStart(2, '0')}</b>.</p>
       <div className="v-card v-centro">
-        <b>Esperando o Pix cair...</b>
+        <b>Esperando o Pix cair…</b>
         <p className="v-legenda" style={{ margin: '6px 0 0' }}>Pode deixar esta tela aberta. Assim que o banco confirmar, seus códigos aparecem aqui.</p>
-        <button type="button" className="v-link" onClick={verificar} disabled={verificando}>{verificando ? 'Verificando...' : 'Já paguei e não atualizou → Verificar de novo'}</button>
+        <button type="button" className="v-link" onClick={verificar} disabled={verificando}>{verificando ? 'Verificando…' : 'Já paguei e não atualizou: verificar de novo'}</button>
       </div>
       <p className="v-legenda v-centro">Problema? <a className="v-link" href={linkWhats(t('whatsapp'), `Oi! Problema no Pix do Vale Ditado: ${location.href}`)} target="_blank" rel="noopener noreferrer">WhatsApp</a></p>
     </Moldura>
+  );
+}
+
+/** O que está sendo pago, acima do valor (para a pessoa conferir antes de abrir o banco). */
+function ResumoPedido({ pedido }: { pedido: PedidoPublico }) {
+  if (!pedido.itens.length) return null;
+  return (
+    <ul className="v-resumo-pix" aria-label="Seu pedido">
+      {pedido.itens.map((i) => (
+        <li key={i.slug}><span>{i.quantidade}x {i.produto}</span><span className="v-num">R$ {reais(i.preco * i.quantidade)}</span></li>
+      ))}
+      {pedido.presente && pedido.presenteado && <li className="v-legenda"><span>Presente para {pedido.presenteado}</span></li>}
+    </ul>
   );
 }
 
@@ -207,7 +222,7 @@ function Pago({ pedido, token }: { pedido: PedidoPublico; token: string }) {
     setBaixando(true);
     try {
       const html2canvas = (await import('html2canvas')).default;
-      const canvas = await html2canvas(area.current, { backgroundColor: '#1a1a1a', scale: 2 });
+      const canvas = await html2canvas(area.current, { backgroundColor: '#f5efe6', scale: 2 });
       const a = document.createElement('a');
       a.download = `vale-ditado-${pedido.vales[0]?.codigo ?? 'comprovante'}.png`;
       a.href = canvas.toDataURL('image/png');
@@ -233,7 +248,7 @@ function Pago({ pedido, token }: { pedido: PedidoPublico; token: string }) {
             } />
           ))}
         </div>
-        <button type="button" className="v-btn" onClick={baixar} disabled={baixando}>{baixando ? 'Gerando imagem...' : 'Baixar imagem'}</button>
+        <button type="button" className="v-btn" onClick={baixar} disabled={baixando}>{baixando ? 'Gerando imagem…' : 'Baixar imagem'}</button>
         <a className="v-btn" href="https://www.ditado.org/reserva">Reservar mesa</a>
         <div className="v-card">
           <h2 className="v-h3" style={{ marginTop: 0 }}>Como usar</h2>

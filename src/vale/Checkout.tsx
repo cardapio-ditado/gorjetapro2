@@ -29,6 +29,7 @@ export default function Checkout() {
   const [enviando, setEnviando] = useState(false);
   const [erroGeral, setErroGeral] = useState<string | null>(null);
   const [resumoAberto, setResumoAberto] = useState(false);
+  const [mostrarFalta, setMostrarFalta] = useState(false);
 
   useEffect(() => { document.title = 'Vale Ditado · Pagamento'; window.scrollTo(0, 0); }, []);
   useEffect(() => {
@@ -72,13 +73,16 @@ export default function Checkout() {
   const temAlcool = totais.temAlcool;
   const bloqueioIdade = menor && temAlcool;
 
-  const falta = (() => {
-    if (Object.keys(erros).length) return 'Confira seus dados';
-    if (bloqueioIdade) return 'Tire os itens com álcool';
-    if (!aceites.regulamento) return 'Falta aceitar o regulamento';
-    if (temAlcool && !aceites.maioridade) return 'Falta confirmar que é maior de 18';
-    if (!aceites.regras) return 'Falta aceitar as regras de uso';
-    if (vitrine.situacao !== 'aberta') return 'A venda ainda não abriu';
+  // o que falta e onde (o botão mostra o valor desde o começo; ao apertar, leva a pessoa ao que falta)
+  const ORDEM: (keyof Dados)[] = ['nome', 'cpf', 'nascimento', 'celular', 'email', 'presenteNome', 'presenteCpf'];
+  const falta = ((): [string, string] | null => {
+    const campoErro = ORDEM.find((k) => erros[k]);
+    if (campoErro) return ['Falta conferir seus dados.', `c-${campoErro}`];
+    if (bloqueioIdade) return ['Tire os itens com álcool para continuar.', 'a-idade'];
+    if (!aceites.regulamento) return ['Falta aceitar o regulamento.', 'k-regulamento'];
+    if (temAlcool && !aceites.maioridade) return ['Falta confirmar que é maior de 18.', 'k-maioridade'];
+    if (!aceites.regras) return ['Falta aceitar as regras de uso.', 'k-regras'];
+    if (vitrine.situacao !== 'aberta') return ['A venda ainda não abriu.', ''];
     return null;
   })();
 
@@ -89,7 +93,13 @@ export default function Checkout() {
 
   async function pagar() {
     setTocado((x) => ({ ...x, _todos: true }));
-    if (falta || enviando) return;
+    if (enviando) return;
+    if (falta) {
+      setMostrarFalta(true);
+      const el = falta[1] ? document.getElementById(falta[1]) : null;
+      if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); window.setTimeout(() => el.focus({ preventScroll: true }), 350); }
+      return;
+    }
     setEnviando(true);
     setErroGeral(null);
     try {
@@ -152,7 +162,7 @@ export default function Checkout() {
   );
 
   return (
-    <div className="v-fundo">
+    <div className="v-fundo v-checkout">
       <FaixaTeste />
       <div className="v-col" style={{ paddingTop: 16 }}>
         <Link to="/vale" className="v-link">← Voltar aos vales</Link>
@@ -177,7 +187,7 @@ export default function Checkout() {
             </div>
           ))}
           <div className="v-total v-num"><span>Total: R$ {reais(totais.total)}</span></div>
-          {totais.economia > 0 && <div className="v-legenda" style={{ color: '#9bb085', fontWeight: 700 }}>Você economizou R$ {reais(totais.economia)}</div>}
+          {totais.economia > 0 && <div className="v-legenda v-economia-escura">Você economizou R$ {reais(totais.economia)}</div>}
         </div>
 
         <form onSubmit={(e) => { e.preventDefault(); pagar(); }} noValidate>
@@ -185,10 +195,10 @@ export default function Checkout() {
           {campo('cpf', 'CPF', { placeholder: '000.000.000-00', inputMode: 'numeric', autoComplete: 'off' }, mascaraCPF, 'Usado para emitir e conferir o vale.')}
           {campo('nascimento', 'Data de nascimento', { placeholder: 'dd/mm/aaaa', inputMode: 'numeric', autoComplete: 'bday' }, mascaraData)}
           {campo('celular', 'Celular (WhatsApp)', { placeholder: '(65) 90000-0000', inputMode: 'tel', autoComplete: 'tel-national' }, mascaraCelular, 'O comprovante fica no link que aparece depois do pagamento.')}
-          {campo('email', 'E-mail (opcional)', { placeholder: 'voce@email.com', inputMode: 'email', autoComplete: 'email', type: 'email' })}
+          {campo('email', 'E-mail (opcional)', { placeholder: 'voce@email.com', inputMode: 'email', autoComplete: 'email', type: 'email', spellCheck: false, name: 'email' })}
 
           {bloqueioIdade && (
-            <div className="v-alerta" role="alert">
+            <div className="v-alerta" role="alert" id="a-idade" tabIndex={-1}>
               <p style={{ margin: '0 0 10px' }}>Pela lei, produto com bebida alcoólica só para maiores de 18. Tire do carrinho os itens com álcool para continuar. A Família no Ditado e os Vales Ditado 100 e 200 você pode levar.</p>
               <button type="button" className="v-btn" onClick={tirarAlcool}>Tirar itens com álcool</button>
             </div>
@@ -218,18 +228,18 @@ export default function Checkout() {
               <li><span>7 dias para desistir, com devolução integral.</span></li>
             </ul>
           </div>
-          <label className="v-check">
-            <input type="checkbox" checked={aceites.regulamento} onChange={(e) => setAceites({ ...aceites, regulamento: e.target.checked })} />
-            <span>Li e aceito o <Link to="/vale/regulamento" target="_blank" className="v-link" style={{ minHeight: 0 }}>regulamento</Link>.</span>
+          <label className={`v-check${tocado._todos && !aceites.regulamento ? ' v-erro' : ''}`}>
+            <input id="k-regulamento" type="checkbox" checked={aceites.regulamento} onChange={(e) => setAceites({ ...aceites, regulamento: e.target.checked })} />
+            <span>Li e aceito o <Link to="/vale/regulamento" target="_blank" className="v-link v-inline">regulamento</Link>.</span>
           </label>
           {temAlcool && (
-            <label className="v-check">
-              <input type="checkbox" checked={aceites.maioridade} onChange={(e) => setAceites({ ...aceites, maioridade: e.target.checked })} />
+            <label className={`v-check${tocado._todos && !aceites.maioridade ? ' v-erro' : ''}`}>
+              <input id="k-maioridade" type="checkbox" checked={aceites.maioridade} onChange={(e) => setAceites({ ...aceites, maioridade: e.target.checked })} />
               <span>Sou maior de 18 anos.</span>
             </label>
           )}
-          <label className="v-check">
-            <input type="checkbox" checked={aceites.regras} onChange={(e) => setAceites({ ...aceites, regras: e.target.checked })} />
+          <label className={`v-check${tocado._todos && !aceites.regras ? ' v-erro' : ''}`}>
+            <input id="k-regras" type="checkbox" checked={aceites.regras} onChange={(e) => setAceites({ ...aceites, regras: e.target.checked })} />
             <span>Entendi as regras de uso: validade, uma visita só, happy hour, 10% e couvert.</span>
           </label>
           {tocado._todos && (!aceites.regulamento || !aceites.regras || (temAlcool && !aceites.maioridade)) && (
@@ -251,14 +261,15 @@ export default function Checkout() {
             </button>
           </div>
           <p className="v-legenda">Separamos seus vales por 30 minutos.
-            {t('gateway_nome') ? ` Pagamento processado por ${t('gateway_nome')}${t('recebedor_nome') ? `, recebedor ${t('recebedor_nome')}` : ''}.` : ''}</p>
+            {t('gateway_nome') ? ` Pagamento processado pelo ${t('gateway_nome')}.` : ''}
+            {t('recebedor_nome') ? <> No banco, o recebedor aparece como <b>{t('recebedor_nome')}</b>, a empresa que recebe os pagamentos do Ditado.</> : null}</p>
 
           {erroGeral && <div className="v-alerta" role="alert">{erroGeral}</div>}
 
           <div className="v-rodape-fixo">
-            <button type="submit" className="v-cta" disabled={enviando} aria-disabled={!!falta}
-              style={falta ? { opacity: 0.55 } : undefined}>
-              {enviando ? 'Gerando seu pagamento...' : falta ?? `Pagar R$ ${reais(totais.total)}${forma === 'pix' ? ' com Pix' : ''}`}
+            {mostrarFalta && falta && <p className="v-falta" role="alert">{falta[0]}</p>}
+            <button type="submit" className="v-cta" disabled={enviando}>
+              {enviando ? 'Gerando seu pagamento…' : `Pagar R$ ${reais(totais.total)}${forma === 'pix' ? ' com Pix' : ''}`}
             </button>
           </div>
           <p className="v-legenda v-centro"><b>Beba com moderação. Proibido para menores de 18 anos.</b></p>
