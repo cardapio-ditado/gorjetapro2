@@ -51,6 +51,13 @@ próxima parcela quando a anterior estiver quitada. Não case o pagamento com a 
 2. **Comprovantes.** Baixe cada arquivo com `Artifact` read, `path: <id do asset>` e `out_dir` numa pasta (ex.: `comprovantes`).
    É um arquivo por chamada (`paths` não serve para asset). O arquivo sai com o nome `<id do asset>.<ext>`.
 3. **Config.** Escreva `config.json` (modelo em `exemplo-config.json`, o do Eduardo):
+   - `so_pagamentos: true` (Kadu, 25/11/2026, acordo do Thiago): relatório **só com os pagamentos**, sem atraso, faixa nem
+     valor de multa e sem as notas de cálculo (a contadoria do tribunal calcula). O quarto cartão vira "Pagamentos: N Pix".
+     Pergunte ao Kadu qual versão ele quer quando o acordo estiver com parcela atrasada.
+   - `externo: true` (Kadu, 25/11/2026, acordo do Arian): versão para o **advogado da parte contrária**. Já é só pagamentos e
+     sai sem o que é interno: coluna "No sistema", observações dos comprovantes e a menção à Central. Não ponha a linha
+     "No sistema" em `dados` nem nota sobre o Contas a Pagar. `destinatario` = o advogado do reclamante.
+     Quando o Kadu pedir os dois, gere dois configs (ex.: `config-empresa.json` com multa e `config-contraria.json` externo).
    - `destinatario` (padrão: Dr. Rodolpho Vasconcellos Dias) e `emitido` (AAAA-MM-DD, a data de hoje em Cuiabá).
    - `dados`: linhas de "Dados do acordo", nesta ordem: Processo, Partes, Valor, Pagamento, Advogados, No sistema. Texto corrido, tirado da ata.
    - `notas`: caixas depois da tabela (título em negrito + texto). "Como foi calculado" entra sozinha, a partir da cláusula do acordo.
@@ -77,5 +84,9 @@ próxima parcela quando a anterior estiver quitada. Não case o pagamento com a 
 - Faixa da multa: a primeira faixa de `clausula.faixas` em que o atraso cabe. "Multa máx." = percentual × valor da parcela (pela ata),
   somada só nas faixas sobre a parcela. A faixa "100% do saldo" aparece, mas não entra na soma. A multa só é devida se o reclamante pedir
   ao juiz, e o juiz pode reduzir (art. 413 do Código Civil).
+- **Vencimento antecipado** (Kadu, 25/11/2026, acordo do Thiago): quando uma parcela passa do limite da faixa "do saldo"
+  (ex.: mais de 20 dias) sem estar quitada, as parcelas seguintes vencem nesse dia. O gerador calcula sozinho: mostra
+  "antecipado para DD/MM" no vencimento, conta o atraso a partir dessa data e põe a nota "Vencimento antecipado" com o saldo
+  remanescente na data (teto da multa de 100%, só com pedido ao juiz).
 - Pago da parcela nunca passa do valor dela; o que passa aparece como "vão para a parcela seguinte".
 - Atraso médio: média dos dias de atraso das parcelas quitadas (em dia conta zero).

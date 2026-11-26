@@ -7,6 +7,7 @@ Uso: python3 gera.py <pasta_db> <id_do_acordo> <pasta_comprovantes> <config.json
 """
 import base64, glob, json, os, subprocess, sys, tempfile
 from datetime import date, timedelta
+from decimal import Decimal, ROUND_HALF_UP
 from html import escape as e
 
 MESES = 'janeiro fevereiro março abril maio junho julho agosto setembro outubro novembro dezembro'.split()
@@ -19,6 +20,10 @@ FERIADOS = set('''2025-01-01 2025-03-03 2025-03-04 2025-04-08 2025-04-18 2025-04
 def brl(v, cifrao=True):
     s = f'{v:,.2f}'.replace(',', 'X').replace('.', ',').replace('X', '.')
     return ('R$ ' if cifrao else '') + s
+
+def arred(v):
+    """Centavos com meio centavo para cima, como na conta à mão (round() do Python dá 2.133,24 em 4.266,49 × 50%)."""
+    return float(Decimal(str(v)).quantize(Decimal('0.01'), ROUND_HALF_UP))
 
 def dt(iso): return date.fromisoformat(iso[:10])
 def br(iso, curto=False): d = dt(iso); return d.strftime('%d/%m/%y' if curto else '%d/%m/%Y')
@@ -64,9 +69,37 @@ def calcular(acordo, parcelas, comps, hoje):
         elif hoje > vu: atraso, sit = (hoje - vu).days, 'parcial' if soma > 0.01 else 'em aberto'
         else: atraso, sit = None, 'parcial' if soma > 0.01 else 'a vencer'
         f = faixa_de(acordo.get('clausula'), atraso) if atraso else None
-        multa = round(base * f['pct'] / 100, 2) if f and f.get('pct') is not None and f.get('base') != 'saldo' else None
+        multa = arred(base * f['pct'] / 100) if f and f.get('pct') is not None and f.get('base') != 'saldo' else None
         linhas.append(dict(p=p, comps=cs, pags=pags, valor=valor, base=base, pago=min(soma, valor), quit=quit_em, atraso=atraso, sit=sit,
-                           faixa=f, multa=multa, vencida=not quit_em and hoje > vu, sistema=fin.get('titulo') or '—'))
+                           faixa=f, multa=multa, vencida=not quit_em and hoje > vu, sistema=fin.get('titulo') or '—', vu=vu, antecipada=None))
+    return antecipar(acordo, linhas, hoje)
+
+def antecipar(acordo, linhas, hoje):
+    """Cláusula de vencimento antecipado: quando uma parcela passa do limite da faixa "do saldo" (ex.: mais de 20 dias) sem estar
+    quitada, as parcelas seguintes vencem nesse dia. Recalcula atraso e faixa delas a partir da data antecipada."""
+    faixas = (acordo.get('clausula') or {}).get('faixas', [])
+    i = next((k for k, f in enumerate(faixas) if f.get('base') == 'saldo'), None)
+    if i is None or i == 0: return linhas
+    limite = faixas[i - 1].get('ate')
+    if limite is None: return linhas
+    data_ant, origem = None, None
+    for l in linhas:
+        cruza = l['vu'] + timedelta(days=limite + 1)  # primeiro dia "acima de N dias"
+        if cruza <= hoje and (l['quit'] is None or dt(l['quit']) >= cruza):
+            if data_ant is None or cruza < data_ant: data_ant, origem = cruza, l
+    if data_ant is None: return linhas
+    acordo['_antecipacao'] = dict(data=data_ant.isoformat(), parcela=origem['p']['n'], limite=limite,
+                                  saldo=round(sum(x['base'] - sum(g['valor'] for g in x['pags'] if g['data'] < data_ant.isoformat()) for x in linhas
+                                                  if x['p']['n'] >= origem['p']['n']), 2))
+    for l in linhas:
+        if l['vu'] <= data_ant: continue
+        l['antecipada'] = data_ant.isoformat(); vu = data_ant
+        if l['quit']: atraso, sit = max(0, (dt(l['quit']) - vu).days), 'paga'
+        else: atraso = (hoje - vu).days if hoje > vu else None; sit = l['sit'] if l['sit'] != 'a vencer' else 'em aberto'
+        l['atraso'], l['sit'], l['vencida'] = atraso, sit, not l['quit'] and hoje > vu
+        f = faixa_de(acordo.get('clausula'), atraso) if atraso else None
+        l['faixa'] = f
+        l['multa'] = arred(l['base'] * f['pct'] / 100) if f and f.get('pct') is not None and f.get('base') != 'saldo' else None
     return linhas
 
 def imagem(pasta, asset):
@@ -83,6 +116,11 @@ def imagem(pasta, asset):
     return f'data:{mime};base64,' + base64.b64encode(open(arq, 'rb').read()).decode(), eh_pdf
 
 def montar(acordo, linhas, cfg, pasta_comp, hoje):
+    # so_pagamentos (Kadu, 25/11/2026): só demonstra os pagamentos, sem atraso, faixa nem multa; a contadoria do tribunal calcula.
+    # externo (Kadu, 25/11/2026, acordo do Arian): versão para o advogado da parte contrária. É só pagamentos e sai sem o que é
+    # interno: coluna "No sistema" e observações dos comprovantes (falam do Contas a Pagar).
+    ext = bool(cfg.get('externo'))
+    sp = bool(cfg.get('so_pagamentos')) or ext
     total = sum(l['base'] for l in linhas); pago = sum(l['pago'] for l in linhas); aberto = round(total - pago, 2)
     quit_ = [l for l in linhas if l['quit']]
     media = round(sum(l['atraso'] for l in quit_) / len(quit_)) if quit_ else None
@@ -98,6 +136,13 @@ def montar(acordo, linhas, cfg, pasta_comp, hoje):
     notas = [['Como foi calculado.', 'Atraso em dias corridos entre o vencimento e o dia em que a parcela ficou quitada; vencimento em sábado, domingo ou feriado '
               'passa para o dia útil seguinte (art. 132, §1º, do Código Civil). Faixas da cláusula penal: ' + texto_regra(acordo.get('clausula')) + '. '
               'A coluna “Multa máx.” é o teto pela regra, somado só nas faixas sobre a parcela; só é devida se o reclamante pedir ao juiz, e o juiz pode reduzir (art. 413 do Código Civil).']] + cfg.get('notas', [])
+    if sp: notas = list(cfg.get('notas', []))
+    ant = None if sp else acordo.get('_antecipacao')
+    if ant:
+        seguintes = [str(l['p']['n']) + 'ª' for l in linhas if l.get('antecipada')]
+        notas.insert(1, ['Vencimento antecipado.', f'A {ant["parcela"]}ª parcela passou de {ant["limite"]} dias de atraso em {br(ant["data"])} sem estar quitada. Pela cláusula, nesse dia ' + ('a ' + ' e a '.join(seguintes) + (' parcela venceu' if len(seguintes) == 1 else ' parcelas venceram') if seguintes else 'as demais parcelas venceram') +
+                         f' antecipadamente, e o atraso delas é contado a partir de {br(ant["data"])}. A multa de 100% incide sobre o saldo remanescente nessa data, '
+                         f'{brl(ant["saldo"])}, com juros e correção: é o teto, devido só se o reclamante pedir ao juiz, que pode reduzir (art. 413 do Código Civil).'])
 
     def pag_txt(g):
         t = f'<span class="pg">{br(g["data"], True)} {brl(g["valor"], False)}</span>'
@@ -113,7 +158,15 @@ def montar(acordo, linhas, cfg, pasta_comp, hoje):
         atraso = '—' if l['atraso'] is None else 'em dia' if l['atraso'] == 0 else f'{l["atraso"]} dias' + ('' if l['quit'] else '<span class="m">(até hoje)</span>')
         f = l['faixa']
         faixa = ('em dia' if l['atraso'] == 0 else '—') if not f else f'<b class="fx">{e(f.get("texto") or (str(f["pct"]) + ("% do saldo" if f.get("base") == "saldo" else "% da parcela")))}</b>'
-        return (f'<tr class="{"aberta" if l["vencida"] else ""}"><td>{p["n"]}</td><td>{MESES[d.month - 1]}/{d.year}</td><td>{br(p["venc"])}</td><td class="v">{brl(l["base"])}</td>'
+        if sp:
+            vencida = not l['quit'] and hoje > l['vu']
+            return (f'<tr class="{"aberta" if vencida else ""}"><td>{p["n"]}</td><td>{MESES[d.month - 1]}/{d.year}</td><td>{br(p["venc"])}</td>'
+                    f'<td class="v">{brl(l["base"])}</td><td>{"".join(pag_txt(g) for g in l["pags"]) or "—"}</td><td class="v">{brl(l["pago"])}</td>'
+                    f'<td>{sit if l["sit"] in ("paga", "parcial") else ("em aberto" if vencida else "a vencer")}</td>'
+                    + ('' if ext else f'<td class="m">{e(l["sistema"])}</td>') + '</tr>')
+        return (f'<tr class="{"aberta" if l["vencida"] else ""}"><td>{p["n"]}</td><td>{MESES[d.month - 1]}/{d.year}</td><td>{br(p["venc"])}'
+                + (f'<span class="m">antecipado para {br(l["antecipada"])}</span>' if l.get('antecipada') else '') + '</td>'
+                f'<td class="v">{brl(l["base"])}</td>'
                 f'<td>{"".join(pag_txt(g) for g in l["pags"]) or "—"}</td><td class="v">{brl(l["pago"])}</td><td>{sit}</td><td>{atraso}</td><td>{faixa}</td>'
                 f'<td class="v">{brl(l["multa"]) if l["multa"] else "—"}</td><td class="m">{e(l["sistema"])}</td></tr>')
 
@@ -128,14 +181,24 @@ def montar(acordo, linhas, cfg, pasta_comp, hoje):
             pix = f' <span class="m">· Pix de {brl(c["valor_pix"])}</span>' if c.get('valor_pix') and abs(c['valor_pix'] - float(c['valor'])) > 0.01 else ''
             # print de celular aparece inteiro; página de PDF mostra a parte de cima, na largura do cartão
             foto = f'<img src="{img}" alt=""{"" if eh_pdf else " class=foto"}>' if img else '<div class="semimg">arquivo não baixado</div>'
-            obs = f'<i>{e(c["obs"])}</i>' if c.get('obs') else ''
+            obs = f'<i>{e(c["obs"])}</i>' if c.get('obs') and not ext else ''
             cartoes += f'<figure>{foto}<figcaption><b>{br(c["data"])} · {brl(float(c["valor"]))}</b>{pix}<br>{e(c.get("descricao") or "")}{obs}</figcaption></figure>'
-        extras = [f'{br(g["data"])} · {brl(g["valor"])}: pago, sem comprovante na Central' for g in l['pags'] if g['sem']]
+        extras = [f'{br(g["data"])} · {brl(g["valor"])}: pago, sem comprovante' + ('' if ext else ' na Central') for g in l['pags'] if g['sem']]
         extras += [f'{br(c["data"])} · {brl(float(c["valor"]))}: {e(c.get("descricao") or "sem arquivo")}' for c in l['comps'] if not c.get('asset')]
         if not cs and not extras: return ''
         return f'<section class="par">{cab}<div class="grade">{cartoes}</div>{"".join(f"<p class=semcomp>{x}</p>" for x in extras)}</section>'
 
     css = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'estilo.css'), encoding='utf-8').read()
+    pix = [g for l in linhas for g in l['pags'] if not g['sobra']]
+    if sp:
+        ult = max((g['data'] for g in pix), default=None)
+        quarto_cartao = f'<div><span>Pagamentos</span><b>{len(pix)} Pix</b><small>{"último em " + br(ult) if ult else "nenhum ainda"}</small></div>'
+        tabela = ('<table><thead><tr><th>Nº</th><th>Referente</th><th>Vencimento</th><th>Valor</th><th>Pagamentos (Pix)</th><th>Pago</th><th>Situação</th>' + ('' if ext else '<th>No sistema</th>') + '</tr></thead>'
+                  f'<tbody>{"".join(linha(l) for l in linhas)}<tr class="tot"><td colspan="3">TOTAL</td><td class="v">{brl(total)}</td><td></td><td class="v">{brl(pago)}</td><td colspan="{1 if ext else 2}"></td></tr></tbody></table>')
+    else:
+        quarto_cartao = f'<div><span>Atraso médio</span><b>{"—" if media is None else f"{media} dias"}</b><small>entre vencimento e quitação</small></div>'
+        tabela = ('<table><thead><tr><th>Nº</th><th>Referente</th><th>Vencimento</th><th>Valor</th><th>Pagamentos (Pix)</th><th>Pago</th><th>Situação</th><th>Atraso</th><th>Faixa da multa</th><th>Multa máx.</th><th>No sistema</th></tr></thead>'
+                  f'<tbody>{"".join(linha(l) for l in linhas)}<tr class="tot"><td colspan="3">TOTAL</td><td class="v">{brl(total)}</td><td></td><td class="v">{brl(pago)}</td><td colspan="3"></td><td class="v">{brl(sum(l["multa"] or 0 for l in linhas))}</td><td></td></tr></tbody></table>')
     return f'''<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Acordo {e(nome)} · relatório de pagamentos</title><style>{css}</style></head><body>
 <header><div><h1>Acordo trabalhista · {e(nome)}</h1><p class="para">Relatório de pagamentos para o {e(cfg.get("destinatario", "Dr. Rodolpho Vasconcellos Dias"))}</p></div>
 <div class="emit">Ditado Popular<br>emitido em {hoje.strftime("%d/%m/%Y")}</div></header>
@@ -143,12 +206,10 @@ def montar(acordo, linhas, cfg, pasta_comp, hoje):
 <div><span>Valor do acordo</span><b>{brl(total)}</b><small>{composicao}</small></div>
 <div><span>Pago</span><b>{brl(pago)}</b><small>{len(quit_)} de {len(linhas)} parcelas quitadas</small></div>
 <div class="{"ab" if aberto > 0.009 else ""}"><span>Em aberto</span><b>{brl(aberto)}</b><small>{f"parc. {prox['p']['n']} (venc. {br(prox['p']['venc'])})" if prox else "acordo quitado"}</small></div>
-<div><span>Atraso médio</span><b>{"—" if media is None else f"{media} dias"}</b><small>entre vencimento e quitação</small></div></div>
+{quarto_cartao}</div>
 <h2>Dados do acordo</h2><dl>{"".join(f"<dt>{e(k)}</dt><dd>{e(v)}</dd>" for k, v in dados if v)}</dl>
 <h2>Parcela a parcela</h2>
-<table><thead><tr><th>Nº</th><th>Referente</th><th>Vencimento</th><th>Valor</th><th>Pagamentos (Pix)</th><th>Pago</th><th>Situação</th><th>Atraso</th><th>Faixa da multa</th><th>Multa máx.</th><th>No sistema</th></tr></thead>
-<tbody>{"".join(linha(l) for l in linhas)}
-<tr class="tot"><td colspan="3">TOTAL</td><td class="v">{brl(total)}</td><td></td><td class="v">{brl(pago)}</td><td colspan="3"></td><td class="v">{brl(sum(l["multa"] or 0 for l in linhas))}</td><td></td></tr></tbody></table>
+{tabela}
 {"".join(f"<p class=nota><b>{e(t)}</b> {e(x)}</p>" for t, x in notas)}
 <h2 class="anexo">Anexo · comprovantes por mês</h2>{"".join(anexo(l) for l in linhas)}
 </body></html>'''

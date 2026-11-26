@@ -3,6 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { AnimatePresence, LazyMotion, MotionConfig, domAnimation, m } from 'motion/react';
 import type { Produto } from './api';
 import { useVale } from './carrinho';
+import { registrar } from './contador';
+import { initiateCheckout, viewContent } from './pixel';
 import { BotaoAdicionar, Carregando, Chevron, FaixaTeste, IconeFechar, Logo, Restam, RodapeLegal, Seletor, Toast, useRelogio } from './comum';
 import { diaCuiaba, horaCuiaba, linkWhats, pctBonus, pctDesconto, reais, rs } from './util';
 
@@ -12,7 +14,7 @@ export default function Home() {
   const [aberto, setAberto] = useState<Produto | null>(null);
   const [gaveta, setGaveta] = useState(false);
 
-  useEffect(() => { document.title = 'Vale Ditado · Mais vale um Ditado na mão'; }, []);
+  useEffect(() => { document.title = 'Vale Ditado · Mais vale um Ditado na mão'; registrar('vale'); viewContent(); }, []);
 
   if (!vitrine) {
     if (erroVitrine) return (
@@ -542,7 +544,10 @@ function Gaveta({ fechar }: { fechar: () => void }) {
         ))}
         <div className="v-total v-num"><span>Total</span><span>R$ {reais(totais.total)}</span></div>
         {totais.economia > 0 && <p className="v-economia-escura" style={{ margin: '0 0 12px', fontSize: 14 }}>Você economiza R$ {reais(totais.economia)}</p>}
-        <button type="button" className="v-cta" disabled={totais.vales === 0} onClick={() => navegar('/vale/checkout')}>Ir para o pagamento</button>
+        <button type="button" className="v-cta" disabled={totais.vales === 0} onClick={() => {
+          initiateCheckout(linhas.map(({ p, q }) => ({ slug: p!.slug, quantidade: q, preco: p!.preco_por })), totais.total);
+          navegar('/vale/checkout');
+        }}>Ir para o pagamento</button>
       </m.div>
     </>
   );

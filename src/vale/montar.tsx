@@ -1,7 +1,8 @@
-import { StrictMode } from 'react';
+import { StrictMode, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
-import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { ProvedorVale } from './carrinho';
+import { guardarFbclid, iniciarPixel, pageView } from './pixel';
 import Home from './Home';
 import Checkout from './Checkout';
 import Comprovante from './Comprovante';
@@ -25,9 +26,12 @@ export function montar() {
   const fonte = document.createElement('link');
   Object.assign(fonte, { rel: 'preload', as: 'font', type: 'font/woff2', href: '/fonts/vale/charis-sil-700-latin.woff2', crossOrigin: 'anonymous' });
   document.head.appendChild(fonte);
+  guardarFbclid();
+  iniciarPixel();
   createRoot(document.getElementById('root')!).render(
     <StrictMode>
       <BrowserRouter>
+        <RastreioRotas />
         <ProvedorVale>
           <Routes>
             <Route path="/vale" element={<Home />} />
@@ -41,4 +45,11 @@ export function montar() {
       </BrowserRouter>
     </StrictMode>,
   );
+}
+
+/** PageView do Pixel da Meta a cada troca de rota (o comprovante fica de fora, ver pixel.ts). */
+function RastreioRotas() {
+  const { pathname } = useLocation();
+  useEffect(() => { pageView(pathname); }, [pathname]);
+  return null;
 }
