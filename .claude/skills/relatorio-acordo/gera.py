@@ -184,7 +184,9 @@ def montar(acordo, linhas, cfg, pasta_comp, hoje):
             obs = f'<i>{e(c["obs"])}</i>' if c.get('obs') and not ext else ''
             cartoes += f'<figure>{foto}<figcaption><b>{br(c["data"])} · {brl(float(c["valor"]))}</b>{pix}<br>{e(c.get("descricao") or "")}{obs}</figcaption></figure>'
         extras = [f'{br(g["data"])} · {brl(g["valor"])}: pago, sem comprovante' + ('' if ext else ' na Central') for g in l['pags'] if g['sem']]
-        extras += [f'{br(c["data"])} · {brl(float(c["valor"]))}: {e(c.get("descricao") or "sem arquivo")}' for c in l['comps'] if not c.get('asset')]
+        # na versão externa, pagamento sem arquivo não cita o sistema interno (só a sobra mantém a descrição)
+        extras += [f'{br(c["data"])} · {brl(float(c["valor"]))}: ' + (e(c.get("descricao") or "sem arquivo") if not ext or c.get('sobra_de') else 'pago, sem comprovante anexo')
+                   for c in l['comps'] if not c.get('asset')]
         if not cs and not extras: return ''
         return f'<section class="par">{cab}<div class="grade">{cartoes}</div>{"".join(f"<p class=semcomp>{x}</p>" for x in extras)}</section>'
 
