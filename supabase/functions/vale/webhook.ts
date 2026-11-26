@@ -1,5 +1,6 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { CORS, json, provedor } from "./pagamento.ts";
+import { enviarCompraMeta } from "./meta.ts";
 
 
 /**
@@ -50,6 +51,7 @@ export async function webhook(req: Request): Promise<Response> {
       });
       if (error) throw new Error(error.message);
       resultado = JSON.stringify(data);
+      if (data?.resultado === "pago") await enviarCompraMeta(db, pg.pedidoId);
     } else {
       resultado = `status ${pg.status}`;
     }

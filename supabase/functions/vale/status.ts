@@ -1,5 +1,6 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { CORS, json, provedor } from "./pagamento.ts";
+import { enviarCompraMeta } from "./meta.ts";
 
 
 /**
@@ -26,9 +27,10 @@ export async function status(req: Request): Promise<Response> {
         cobrancaId: interno.gateway_cobranca_id, pedidoId: interno.id, forma: interno.forma_pagamento,
       });
       if (pg && pg.status === "aprovado") {
-        await db.rpc("fn_vale_confirmar_pagamento", {
+        const { data: conf } = await db.rpc("fn_vale_confirmar_pagamento", {
           p_pedido: interno.id, p_pagamento: pg.id, p_pago_em: pg.pagoEm ?? new Date().toISOString(), p_valor: pg.valor,
         });
+        if (conf?.resultado === "pago") await enviarCompraMeta(db, interno.id);
       }
     } catch (e) {
       console.error(`[vale] status ${interno.id}: ${(e as Error).message}`);

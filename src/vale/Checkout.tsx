@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { criarPedido, ErroRede } from './api';
 import { useVale } from './carrinho';
 import { registrar } from './contador';
+import { cookiesMeta } from './pixel';
 import { Carregando, FaixaTeste, Seletor, Toast } from './comum';
 import { cpfValido, dataBR, dataISO, idade, lerOrigem, linkWhats, mascaraCelular, mascaraCPF, mascaraData, reais, soDigitos } from './util';
 
@@ -108,7 +109,7 @@ export default function Checkout() {
         nome: d.nome.trim(), cpf: soDigitos(d.cpf), nascimento: nascISO, telefone: soDigitos(d.celular), email: d.email.trim() || null,
         presente, presente_nome: presente ? d.presenteNome.trim() : null, presente_cpf: presente ? soDigitos(d.presenteCpf) : null,
         aceite_regulamento: aceites.regulamento, aceite_regras: aceites.regras, aceite_maioridade: temAlcool ? aceites.maioridade : false,
-        aceita_whatsapp: aceites.whatsapp, forma_pagamento: forma, origem: lerOrigem(),
+        aceita_whatsapp: aceites.whatsapp, forma_pagamento: forma, origem: { ...lerOrigem(), ...cookiesMeta() },
         itens: linhas.map(({ p, q }) => ({ slug: p!.slug, quantidade: q })),
       });
       if (r.ok && r.token) {
