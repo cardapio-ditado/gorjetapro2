@@ -12,29 +12,8 @@ type Fase =
   | 'inicio'
   | 'respondendo'
   | 'calculando'
+  | 'erro'
   | 'resultado';
-
-interface Sessao {
-  id: string;
-  token: string;
-  tipo: string;
-  colaborador_id: string | null;
-  candidato_id: string | null;
-  nome_respondente: string | null;
-  status: string;
-  expira_em: string;
-  score_d?: number;
-  score_i?: number;
-  score_s?: number;
-  score_c?: number;
-  perfil_dominante?: string;
-  perfil_secundario?: string;
-  resumo_ia?: string;
-  pontos_fortes?: string[];
-  areas_desenvolvimento?: string[];
-  colaboradores?: { nome_completo: string } | null;
-  rh_candidatos?: { nome: string } | null;
-}
 
 interface Pergunta {
   id: number;
@@ -116,8 +95,6 @@ function ScoreBar({ letra, score }: { letra: string; score: number }) {
 
 export default function DiscPublico() {
   const [fase, setFase] = useState<Fase>('carregando');
-  const [sessao, setSessao] = useState<Sessao | null>(null);
-  const [nomeRespondente, setNomeRespondente] = useState('');
   const [primeiroNome, setPrimeiroNome] = useState('');
   const [perguntas, setPerguntas] = useState<Pergunta[]>([]);
   const [blocoAtual, setBlocoAtual] = useState(0);
@@ -131,49 +108,20 @@ export default function DiscPublico() {
   const token = new URLSearchParams(window.location.search).get('token') ?? '';
 
   // ─── Validação ──────────────────────────────────────────────────────────────
+  // A página não lê a tabela: a função do banco confere o token e devolve só a situação e o primeiro nome.
 
   const validarToken = useCallback(async () => {
     if (!token) { setFase('invalido'); return; }
 
-    const { data: s, error } = await supabase
-      .from('rh_disc_sessoes')
-      .select(`
-        *,
-        colaboradores ( nome_completo ),
-        rh_candidatos ( nome )
-      `)
-      .eq('token', token)
-      .maybeSingle();
+    const { data, error } = await supabase.rpc('fn_disc_publico_abrir', { p_token: token });
+    if (error || !data) { setFase('invalido'); return; }
 
-    if (error || !s) { setFase('invalido'); return; }
+    const d = data as { situacao?: string; primeiro_nome?: string };
+    setPrimeiroNome(d.primeiro_nome || 'Participante');
 
-    if (s.status === 'concluido') {
-      const nome =
-        (s.colaboradores as any)?.nome_completo ||
-        (s.rh_candidatos as any)?.nome ||
-        s.nome_respondente ||
-        'Participante';
-      setSessao(s as Sessao);
-      setNomeRespondente(nome);
-      setPrimeiroNome(nome.split(' ')[0]);
-      setFase('ja_respondido');
-      return;
-    }
-
-    if (s.expira_em && new Date(s.expira_em) < new Date()) {
-      setFase('expirado');
-      return;
-    }
-
-    const nome =
-      (s.colaboradores as any)?.nome_completo ||
-      (s.rh_candidatos as any)?.nome ||
-      s.nome_respondente ||
-      'Participante';
-
-    setSessao(s as Sessao);
-    setNomeRespondente(nome);
-    setPrimeiroNome(nome.split(' ')[0]);
+    if (d.situacao === 'ja_respondido') { setFase('ja_respondido'); return; }
+    if (d.situacao === 'expirado') { setFase('expirado'); return; }
+    if (d.situacao !== 'ok') { setFase('invalido'); return; }
     setFase('inicio');
   }, [token]);
 
@@ -182,18 +130,8 @@ export default function DiscPublico() {
   // ─── Iniciar ─────────────────────────────────────────────────────────────────
 
   const iniciar = async () => {
-    if (!sessao) return;
-
-    await supabase
-      .from('rh_disc_sessoes')
-      .update({ status: 'em_andamento', iniciado_em: new Date().toISOString() })
-      .eq('id', sessao.id);
-
-    const { data: ps } = await supabase
-      .from('rh_disc_perguntas')
-      .select('*')
-      .eq('ativo', true)
-      .order('ordem');
+    const { data: ps, error } = await supabase.rpc('fn_disc_publico_iniciar', { p_token: token });
+    if (error) { await validarToken(); return; }
 
     setPerguntas((ps ?? []) as Pergunta[]);
     setBlocoAtual(0);
@@ -201,22 +139,10 @@ export default function DiscPublico() {
   };
 
   // ─── Salvar resposta e avançar ────────────────────────────────────────────────
+  // As respostas ficam na tela e vão todas juntas para o banco ao concluir.
 
-  const avancar = async () => {
-    if (!maisSelecionado || !menosSelecionado || !sessao) return;
-
-    const pergunta = perguntas[blocoAtual];
-
-    await supabase.from('rh_disc_respostas').upsert(
-      {
-        sessao_id: sessao.id,
-        pergunta_id: pergunta.id,
-        opcao_mais: maisSelecionado,
-        opcao_menos: menosSelecionado,
-        respondido_em: new Date().toISOString(),
-      },
-      { onConflict: 'sessao_id,pergunta_id' }
-    );
+  const avancar = () => {
+    if (!maisSelecionado || !menosSelecionado) return;
 
     const novasRespostas = {
       ...respostas,
@@ -260,23 +186,18 @@ export default function DiscPublico() {
   // ─── Calcular e finalizar ────────────────────────────────────────────────────
 
   const calcularEFinalizar = async (todasRespostasLocais: Record<number, { mais: string; menos: string }>) => {
-    if (!sessao) return;
     setFase('calculando');
+    setErroMsg('');
 
     try {
-      // Buscar respostas do banco com opções das perguntas
-      const { data: dbRespostas } = await supabase
-        .from('rh_disc_respostas')
-        .select('opcao_mais, opcao_menos, rh_disc_perguntas(opcoes)')
-        .eq('sessao_id', sessao.id);
-
-      // Calcular scores
+      // Calcula os scores na tela só para pedir a análise da IA;
+      // o banco refaz a mesma conta ao concluir e é o resultado dele que vale.
       const scores = { D: 0, I: 0, S: 0, C: 0 };
-
-      (dbRespostas ?? []).forEach((r: any) => {
-        const opcoes: Array<{ letra: string; perfil: string }> = r.rh_disc_perguntas?.opcoes ?? [];
-        const mais = opcoes.find(o => o.letra === r.opcao_mais);
-        const menos = opcoes.find(o => o.letra === r.opcao_menos);
+      perguntas.forEach((p, idx) => {
+        const r = todasRespostasLocais[idx];
+        if (!r) return;
+        const mais = p.opcoes.find(o => o.letra === r.mais);
+        const menos = p.opcoes.find(o => o.letra === r.menos);
         if (mais) {
           const k = mais.perfil?.[0] as keyof typeof scores;
           if (k in scores) scores[k] += 2;
@@ -312,7 +233,7 @@ export default function DiscPublico() {
       const secundario = ranking[1].p;
 
       // Análise via edge function
-      let analise = {
+      let analise: ResultadoFinal['analise'] = {
         resumo: `Perfil ${dominante} com influência de ${secundario} identificado.`,
         pontos_fortes: ['Dedicado ao trabalho', 'Comprometido com a equipe', 'Confiável'],
         areas_desenvolvimento: ['Comunicação interpessoal', 'Gestão do tempo'],
@@ -330,7 +251,7 @@ export default function DiscPublico() {
               Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
             },
             body: JSON.stringify({
-              nome: nomeRespondente,
+              nome: primeiroNome,
               scoreD, scoreI, scoreS, scoreC,
               dominante, secundario,
             }),
@@ -344,28 +265,33 @@ export default function DiscPublico() {
         // usa fallback
       }
 
-      // Salvar sessão — trigger do banco cuida do rh_disc_colaborador/rh_disc_resultados
-      await supabase.from('rh_disc_sessoes').update({
-        status: 'concluido',
-        concluido_em: new Date().toISOString(),
-        score_d: scoreD,
-        score_i: scoreI,
-        score_s: scoreS,
-        score_c: scoreC,
-        perfil_dominante: dominante,
-        perfil_secundario: secundario,
-        resumo_ia: analise.resumo,
-        pontos_fortes: analise.pontos_fortes,
-        areas_desenvolvimento: analise.areas_desenvolvimento,
-        estilo_comunicacao: analise.estilo_comunicacao,
-        como_motivar: analise.como_motivar,
-        analise_ia: analise,
-      }).eq('id', sessao.id);
+      // Conclui pela função do banco (confere o token, recalcula os scores e grava a sessão uma vez só).
+      // O gatilho do banco cuida do rh_disc_colaborador/rh_disc_resultados.
+      const listaRespostas = perguntas
+        .map((p, idx) => ({ pergunta_id: p.id, mais: todasRespostasLocais[idx]?.mais, menos: todasRespostasLocais[idx]?.menos }))
+        .filter(r => r.mais && r.menos);
 
-      setResultadoFinal({ scoreD, scoreI, scoreS, scoreC, dominante, secundario, analise });
+      const { data, error } = await supabase.rpc('fn_disc_publico_concluir', {
+        p_token: token,
+        p_respostas: listaRespostas,
+        p_analise: analise,
+      });
+      if (error) throw new Error(error.message);
+
+      const r = (data || {}) as Partial<Pick<ResultadoFinal, 'scoreD' | 'scoreI' | 'scoreS' | 'scoreC' | 'dominante' | 'secundario'>>;
+      setResultadoFinal({
+        scoreD: r.scoreD ?? scoreD,
+        scoreI: r.scoreI ?? scoreI,
+        scoreS: r.scoreS ?? scoreS,
+        scoreC: r.scoreC ?? scoreC,
+        dominante: r.dominante ?? dominante,
+        secundario: r.secundario ?? secundario,
+        analise,
+      });
       setFase('resultado');
-    } catch (e: any) {
-      setErroMsg(e.message ?? 'Erro ao calcular resultado.');
+    } catch (e: unknown) {
+      setErroMsg(e instanceof Error ? e.message : 'Erro ao calcular resultado.');
+      setFase('erro');
     }
   };
 
@@ -526,6 +452,29 @@ export default function DiscPublico() {
             <p className="text-white font-semibold text-lg mb-1">Calculando seu perfil...</p>
             <p className="text-white/60 text-sm">Analisando suas respostas com IA</p>
           </div>
+        </div>
+      </Shell>
+    );
+  }
+
+  // Erro ao concluir
+  if (fase === 'erro') {
+    return (
+      <Shell>
+        <div className="bg-[#12141f] border border-white/10 rounded-2xl p-8 flex flex-col items-center gap-4 text-center">
+          <div className="w-14 h-14 rounded-full bg-red-500/15 border border-red-500/30 flex items-center justify-center">
+            <AlertTriangle className="w-7 h-7 text-red-400" />
+          </div>
+          <div>
+            <p className="text-white font-semibold text-lg mb-1">Não foi possível concluir</p>
+            <p className="text-white/50 text-sm">{erroMsg || 'Tente de novo em instantes.'}</p>
+          </div>
+          <button
+            onClick={() => calcularEFinalizar(respostas)}
+            className="w-full bg-wine hover:bg-wine-light text-white font-semibold py-3.5 rounded-xl text-sm transition-colors active:scale-95"
+          >
+            Tentar de novo
+          </button>
         </div>
       </Shell>
     );

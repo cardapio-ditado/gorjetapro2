@@ -204,6 +204,55 @@ export async function atualizarItem(
   if (error) throw error;
 }
 
+// ─── Contagem pelo celular (link público /contagem-mobile/:token) ─────────────
+// O celular não lê as tabelas: as funções do banco conferem o token e só deixam contar
+// (quantidade e observação) itens da contagem em andamento daquele link.
+export type ContagemMobileAbertura =
+  | { situacao: 'ok'; contagem: { estoque_nome: string; responsavel: string }; itens: ContagemItem[] }
+  | { situacao: 'invalido' | 'expirado' }
+  | { situacao: 'fechada'; status: string };
+
+const numOuNull = (v: unknown) => (v === null || v === undefined ? null : Number(v));
+
+export async function abrirContagemMobile(token: string): Promise<ContagemMobileAbertura> {
+  const { data, error } = await supabase.rpc('fn_contagem_mobile_abrir', { p_token: token });
+  if (error) falhar(error);
+  const d = (data || {}) as Record<string, unknown>;
+  if (d.situacao === 'fechada') return { situacao: 'fechada', status: String(d.status ?? '') };
+  if (d.situacao !== 'ok') return { situacao: d.situacao === 'expirado' ? 'expirado' : 'invalido' };
+  const c = (d.contagem || {}) as Record<string, unknown>;
+  const itens = (Array.isArray(d.itens) ? (d.itens as Record<string, unknown>[]) : []).map((i): ContagemItem => ({
+    id:                        String(i.id),
+    item_estoque_id:           String(i.item_estoque_id),
+    item_nome:                 String(i.item_nome ?? ''),
+    item_codigo:               String(i.item_codigo ?? ''),
+    unidade_medida:            String(i.unidade_medida ?? 'UN'),
+    grupo_contagem:            String(i.grupo_contagem ?? 'outros') as ContagemItem['grupo_contagem'],
+    ignorar_contagem_cadastro: Boolean(i.ignorar_contagem_cadastro),
+    ignorar_override:          i.ignorar_override === null || i.ignorar_override === undefined ? null : Boolean(i.ignorar_override),
+    quantidade_sistema:        Number(i.quantidade_sistema ?? 0),
+    quantidade_contada:        numOuNull(i.quantidade_contada),
+    valor_unitario:            Number(i.valor_unitario ?? 0),
+    diferenca:                 numOuNull(i.diferenca),
+    valor_diferenca:           numOuNull(i.valor_diferenca),
+    observacao:                (i.observacao as string | null) ?? null,
+  }));
+  return {
+    situacao: 'ok',
+    contagem: { estoque_nome: String(c.estoque_nome ?? ''), responsavel: String(c.responsavel ?? '') },
+    itens,
+  };
+}
+
+export async function salvarItemMobile(
+  token: string,
+  itemId: string,
+  updates: { quantidade_contada?: number | null; observacao?: string }
+): Promise<void> {
+  const { error } = await supabase.rpc('fn_contagem_mobile_salvar_item', { p_token: token, p_item_id: itemId, p_campos: updates });
+  if (error) falhar(error);
+}
+
 export function itemEstaIgnorado(item: ContagemItem): boolean {
   if (item.ignorar_override !== null && item.ignorar_override !== undefined) {
     return item.ignorar_override;

@@ -4,8 +4,7 @@ import {
   Search, Check, AlertCircle, Loader2, Filter,
   ClipboardList, TrendingUp, TrendingDown, Minus, EyeOff,
 } from 'lucide-react';
-import { supabase } from '../../../lib/supabase';
-import { atualizarItem, loadItensContagem, itemEstaIgnorado } from './contagemService';
+import { abrirContagemMobile, salvarItemMobile, itemEstaIgnorado } from './contagemService';
 import type { ContagemItem } from './types';
 import { GRUPOS } from './types';
 import { formatCurrency } from '../../../utils/currency';
@@ -22,7 +21,7 @@ const COR_BADGE: Record<string, string> = {
 export default function ContagemMobile() {
   const { token } = useParams<{ token: string }>();
 
-  const [contagem, setContagem]     = useState<any>(null);
+  const [contagem, setContagem]     = useState<{ estoque_nome: string; responsavel: string } | null>(null);
   const [itens, setItens]           = useState<ContagemItem[]>([]);
   const [loading, setLoading]       = useState(true);
   const [error, setError]           = useState<string | null>(null);
@@ -44,23 +43,19 @@ export default function ContagemMobile() {
     setLoading(true);
     setError(null);
     try {
-      const { data, error: err } = await supabase
-        .from('contagens_estoque')
-        .select('*, estoques(nome)')
-        .eq('token_acesso', token)
-        .maybeSingle();
-
-      if (err) throw err;
-      if (!data) { setError('Contagem não encontrada. Verifique o link.'); return; }
-      if (data.token_expira_em && new Date(data.token_expira_em) < new Date()) {
-        setError('Este link expirou. Solicite um novo ao responsável.'); return;
+      const r = await abrirContagemMobile(token!);
+      if (r.situacao === 'fechada') {
+        setError(`Esta contagem está "${r.status}". Apenas contagens em andamento podem ser preenchidas.`); return;
       }
-      if (data.status !== 'em_andamento') {
-        setError(`Esta contagem está "${data.status}". Apenas contagens em andamento podem ser preenchidas.`); return;
+      if (r.situacao !== 'ok') {
+        setError(r.situacao === 'expirado'
+          ? 'Este link expirou. Solicite um novo ao responsável.'
+          : 'Contagem não encontrada. Verifique o link.');
+        return;
       }
 
-      setContagem({ ...data, estoque_nome: data.estoques?.nome || '' });
-      setItens(await loadItensContagem(data.id));
+      setContagem(r.contagem);
+      setItens(r.itens);
     } catch (e: any) {
       setError(e.message || 'Erro ao carregar contagem.');
     } finally {
@@ -68,7 +63,7 @@ export default function ContagemMobile() {
     }
   };
 
-  const salvarCampo = useCallback((itemId: string, updates: Parameters<typeof atualizarItem>[1]) => {
+  const salvarCampo = useCallback((itemId: string, updates: Parameters<typeof salvarItemMobile>[2]) => {
     const key = Object.keys(updates)[0] + '-' + itemId;
     const ex = debounceTimers.current.get(key);
     if (ex) clearTimeout(ex);
@@ -76,7 +71,7 @@ export default function ContagemMobile() {
       debounceTimers.current.delete(key);
       setSavingItems(p => new Set(p).add(itemId));
       try {
-        await atualizarItem(itemId, updates);
+        await salvarItemMobile(token!, itemId, updates);
         setSavedItems(p => new Set(p).add(itemId));
         setTimeout(() => setSavedItems(p => { const n = new Set(p); n.delete(itemId); return n; }), 2000);
       } catch {
@@ -85,7 +80,7 @@ export default function ContagemMobile() {
         setSavingItems(p => { const n = new Set(p); n.delete(itemId); return n; });
       }
     }, 600));
-  }, []);
+  }, [token]);
 
   const handleQtd = useCallback((itemId: string, value: string) => {
     const parsed = value === '' ? null : parseFloat(value);

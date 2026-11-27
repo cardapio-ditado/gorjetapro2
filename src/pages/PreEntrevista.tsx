@@ -11,25 +11,23 @@ interface Message {
 }
 
 interface PreEntrevista {
-  id: string;
-  candidatura_id: string;
-  token: string;
-  status: string;
-  conversa: Message[];
-  expira_em: string;
-  candidatura: {
-    vaga: {
-      titulo: string;
-      descricao: string;
-      requisitos: string;
-      cargo: {
-        nome: string;
-      };
-    };
-    candidato: {
+  vaga: {
+    titulo: string;
+    descricao: string;
+    requisitos: string;
+    cargo: {
       nome: string;
     };
   };
+  candidato: {
+    nome: string;
+  };
+}
+
+// A página não lê a tabela: tudo passa por funções do banco que conferem o token do link.
+async function salvarConversa(token: string, conversa: Message[]) {
+  const { error } = await supabase.rpc('fn_pre_entrevista_publica_salvar', { p_token: token, p_conversa: conversa });
+  if (error) throw new Error(error.message);
 }
 
 export default function PreEntrevista() {
@@ -64,58 +62,47 @@ export default function PreEntrevista() {
 
   const carregarPreEntrevista = async () => {
     try {
-      const { data, error } = await supabase
-        .from('rh_pre_entrevistas')
-        .select(`
-          *,
-          candidatura:rh_candidaturas(
-            vaga:rh_vagas(
-              titulo,
-              descricao,
-              requisitos,
-              cargo:rh_cargos(nome)
-            ),
-            candidato:rh_candidatos(nome)
-          )
-        `)
-        .eq('token', token)
-        .maybeSingle();
+      // Abre o link; se estava pendente, a função já marca "em andamento" e avisa em "iniciou"
+      const { data, error } = await supabase.rpc('fn_pre_entrevista_publica_abrir', { p_token: token });
 
       if (error) throw error;
 
-      if (!data) {
-        setErro('Link de pré-entrevista inválido ou expirado');
-        setLoading(false);
-        return;
-      }
+      const d = (data || {}) as {
+        situacao?: string;
+        iniciou?: boolean;
+        conversa?: Message[];
+        vaga?: PreEntrevista['vaga'];
+        candidato?: PreEntrevista['candidato'];
+      };
 
-      if (data.status === 'expirada') {
+      if (d.situacao === 'expirada') {
         setErro('Esta pré-entrevista expirou');
         setLoading(false);
         return;
       }
 
-      if (data.status === 'concluida') {
+      if (d.situacao === 'concluida') {
         setErro('Esta pré-entrevista já foi concluída');
         setLoading(false);
         return;
       }
 
-      setPreEntrevista(data);
-      setMensagens(data.conversa || []);
+      if (d.situacao !== 'ok' || !d.vaga) {
+        setErro('Link de pré-entrevista inválido ou expirado');
+        setLoading(false);
+        return;
+      }
 
-      // Se está pendente, iniciar
-      if (data.status === 'pendente') {
-        await supabase
-          .from('rh_pre_entrevistas')
-          .update({
-            status: 'em_andamento',
-            iniciada_em: new Date().toISOString()
-          })
-          .eq('id', data.id);
+      const pe: PreEntrevista = {
+        vaga: d.vaga,
+        candidato: d.candidato || { nome: '' },
+      };
+      setPreEntrevista(pe);
+      setMensagens(d.conversa || []);
 
-        // Enviar mensagem de boas-vindas
-        await enviarMensagemInicial(data);
+      // Se estava pendente, enviar mensagem de boas-vindas
+      if (d.iniciou) {
+        await enviarMensagemInicial(pe);
       }
 
       setLoading(false);
@@ -127,6 +114,7 @@ export default function PreEntrevista() {
   };
 
   const enviarMensagemInicial = async (data: PreEntrevista) => {
+    if (!token) return;
     try {
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/pre-entrevista-chat`,
@@ -140,8 +128,8 @@ export default function PreEntrevista() {
             token,
             mensagem: 'Olá! Estou pronto para começar a pré-entrevista.',
             conversa_anterior: [],
-            vaga_info: data.candidatura.vaga,
-            cargo_info: data.candidatura.vaga.cargo
+            vaga_info: data.vaga,
+            cargo_info: data.vaga.cargo
           }),
         }
       );
@@ -159,10 +147,7 @@ export default function PreEntrevista() {
       const novaConversa = [novaMensagem];
       setMensagens(novaConversa);
 
-      await supabase
-        .from('rh_pre_entrevistas')
-        .update({ conversa: novaConversa })
-        .eq('id', data.id);
+      await salvarConversa(token, novaConversa);
     } catch (error) {
       console.error('Erro ao enviar mensagem inicial:', error);
     }
@@ -170,7 +155,7 @@ export default function PreEntrevista() {
 
   const enviarMensagem = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!inputMensagem.trim() || !preEntrevista || enviando) return;
+    if (!inputMensagem.trim() || !preEntrevista || enviando || !token) return;
 
     setEnviando(true);
 
@@ -197,8 +182,8 @@ export default function PreEntrevista() {
             token,
             mensagem: inputMensagem,
             conversa_anterior: mensagens,
-            vaga_info: preEntrevista.candidatura.vaga,
-            cargo_info: preEntrevista.candidatura.vaga.cargo
+            vaga_info: preEntrevista.vaga,
+            cargo_info: preEntrevista.vaga.cargo
           }),
         }
       );
@@ -216,10 +201,7 @@ export default function PreEntrevista() {
       const conversaFinal = [...conversaAtualizada, novaMensagemIA];
       setMensagens(conversaFinal);
 
-      await supabase
-        .from('rh_pre_entrevistas')
-        .update({ conversa: conversaFinal })
-        .eq('id', preEntrevista.id);
+      await salvarConversa(token, conversaFinal);
 
     } catch (error) {
       console.error('Erro ao enviar mensagem:', error);
@@ -230,16 +212,11 @@ export default function PreEntrevista() {
   };
 
   const finalizarEntrevista = async () => {
-    if (!preEntrevista || !window.confirm('Deseja finalizar a pré-entrevista?')) return;
+    if (!preEntrevista || !token || !window.confirm('Deseja finalizar a pré-entrevista?')) return;
 
     try {
-      await supabase
-        .from('rh_pre_entrevistas')
-        .update({
-          status: 'concluida',
-          concluida_em: new Date().toISOString()
-        })
-        .eq('id', preEntrevista.id);
+      const { error } = await supabase.rpc('fn_pre_entrevista_publica_concluir', { p_token: token });
+      if (error) throw error;
 
       alert('Pré-entrevista finalizada com sucesso! Obrigado pela participação.');
       navigate('/');
@@ -277,10 +254,10 @@ export default function PreEntrevista() {
       <div className="max-w-4xl mx-auto p-4 h-screen flex flex-col">
         <div className="bg-[#12141f] rounded-t-lg p-6 border-b">
           <h1 className="text-2xl font-bold text-white mb-2">
-            Pré-Entrevista - {preEntrevista?.candidatura.vaga.titulo}
+            Pré-Entrevista - {preEntrevista?.vaga.titulo}
           </h1>
           <p className="text-white/60">
-            Olá, {preEntrevista?.candidatura.candidato.nome}! Responda algumas perguntas para conhecermos melhor você.
+            Olá, {preEntrevista?.candidato.nome}! Responda algumas perguntas para conhecermos melhor você.
           </p>
         </div>
 
