@@ -1,4 +1,4 @@
--- ⚠️ NÃO APLICAR AINDA. Fica fora de supabase/migrations de propósito (para nenhum "db push" aplicar sozinho).
+-- Aplicada em 27/11/2026, depois que o Kadu publicou a main no Bolt (pedido dele: "publiquei no bolt, pode aplicar o fechamento").
 --
 -- Segurança, lote 3 parte 3 (Kadu, 27/11/2026): fecha o acesso direto da chave pública (anon) às tabelas do
 -- DISC, da pré-entrevista e da contagem pelo celular, e às funções de contagem que o celular não usa.
