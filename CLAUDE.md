@@ -119,6 +119,16 @@ Não duplicar aqui: cada regra tem uma fonte só.
 - A aprovação que volta da Brasa (`receber-reserva-brasa`, com `source_channel: "link"` e `external_id`) confirma a
   pré-reserva existente; a etiqueta `brasa:<id>` impede o aviso "confirmada" de voltar para a Brasa.
 
+### Agente do gerente (28/11/2026, etapa 1)
+- O Gilberto (papel `gerente_noite` no agente do WhatsApp, mesmo número oficial do estoque) continua com o estoque e ganhou
+  reservas (consultar, confirmar ou recusar pré-reserva, igual ao botão de Eventos, que avisa a Brasa) e o Livro da Noite
+  (registrar ocorrência; livro fechado vira adendo). Ações `reservas` e `livro` em `agente_permissoes`; tudo por
+  `fn_agente_gerente`, que grava em nome da pessoa em `agente_gerente_log`. Escrita só depois do "confirma?". Nada de financeiro.
+- Resumo da noite às 16h (pg_cron `agente-gerente-resumo`, 20h UTC) para os papéis em `agente_config.resumo_gerente`:
+  reservas confirmadas, pré-reservas esperando resposta, eventos, extras escalados e shows (`fn_agente_gerente_resumo_texto`).
+  Fora da janela de 24 h vai o aviso `aviso_estoque` (no máximo 1 a cada 12 h) e a mensagem sai quando ele toca em "Ver".
+- Etapa 2 (extras e ponto pelo WhatsApp) e etapa 3 (vale e Clube do Whisky) ainda vão ter plano próprio.
+
 ### Andar Operacional (prioridade de pagamento)
 - Atualização diária às 6:32 (Cuiabá). Passo a passo em `scripts/operacional/README.md`.
 - Prazo: extra da casa 7 dias, extra de fora 2 dias, músico 7 dias.

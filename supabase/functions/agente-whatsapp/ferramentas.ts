@@ -408,6 +408,67 @@ const DEFINICOES: Definicao[] = [
       required: ["pendencia_id", "aprovar"],
     },
   },
+
+  // Gerente da noite (etapa 1, 28/11/2026): reservas e Livro da Noite. Nada de financeiro.
+  {
+    name: "reservas_da_noite",
+    acoes: ["reservas"],
+    description: "Reservas de uma noite (confirmadas e pré-reservas do link), pré-reservas de hoje em diante esperando resposta, eventos, extras escalados e shows. Sem data, é a noite de hoje (a noite vai até 6h).",
+    input_schema: {
+      type: "object",
+      properties: { data: { type: "string", description: "AAAA-MM-DD. Omita para a noite de hoje." } },
+    },
+  },
+  {
+    name: "resumo_da_noite",
+    acoes: ["reservas"],
+    description: "O mesmo resumo que sai às 16h (reservas, pré-reservas, eventos, extras e shows), pronto para mandar. Use quando a pessoa pedir o resumo.",
+    input_schema: {
+      type: "object",
+      properties: { data: { type: "string", description: "AAAA-MM-DD. Omita para a noite de hoje." } },
+    },
+  },
+  {
+    name: "responder_pre_reserva",
+    acoes: ["reservas"],
+    description: "Confirma ou recusa uma pré-reserva (o reserva_id vem de reservas_da_noite). Igual ao botão da tela de Eventos: a do link também avisa a Brasa. Só chame depois do sim da pessoa na mensagem mais recente. Devolve o link para avisar o cliente no WhatsApp.",
+    input_schema: {
+      type: "object",
+      properties: {
+        reserva_id: { type: "string" },
+        confirmar: { type: "boolean", description: "true confirma, false recusa." },
+      },
+      required: ["reserva_id", "confirmar"],
+    },
+  },
+  {
+    name: "livro_da_noite",
+    acoes: ["livro"],
+    description: "O que já foi registrado no Livro da Noite de uma data (ocorrências e adendos) e quantas pendências de noites anteriores estão abertas.",
+    input_schema: {
+      type: "object",
+      properties: { data: { type: "string", description: "AAAA-MM-DD. Omita para a noite de hoje." } },
+    },
+  },
+  {
+    name: "registrar_ocorrencia",
+    acoes: ["livro"],
+    description: "Registra uma ocorrência no Livro da Noite, em nome de quem está falando. Se o livro daquela noite já estiver fechado, entra como adendo. Só chame depois do sim da pessoa na mensagem mais recente.",
+    input_schema: {
+      type: "object",
+      properties: {
+        data: { type: "string", description: "AAAA-MM-DD da noite (a noite vai até 6h). Omita para a noite de hoje. Só as últimas 7 noites." },
+        setor: { type: "string", enum: ["salao", "bar", "cozinha", "caixa", "seguranca", "limpeza", "estoque", "manutencao", "geral"] },
+        tipo: { type: "string", enum: ["pessoal", "cliente", "falta_produto", "equipamento", "seguranca", "elogio", "outro"] },
+        gravidade: { type: "string", enum: ["info", "atencao", "grave"] },
+        texto: { type: "string", description: "O que aconteceu, com as palavras da pessoa, corrigindo só erro de transcrição." },
+        envolvidos: { type: "string", description: "Nomes de quem estava envolvido, se a pessoa disser." },
+        precisa_providencia: { type: "boolean", description: "true quando alguém precisa resolver algo depois (conserto, compra, conversa)." },
+        responsavel: { type: "string", description: "Quem deve resolver, se a pessoa disser." },
+      },
+      required: ["setor", "tipo", "gravidade", "texto"],
+    },
+  },
 ];
 
 export function ferramentasPara(p: Pessoa): Anthropic.Tool[] {
@@ -687,6 +748,31 @@ export async function executarFerramenta(
 
     case "pendencias_abertas":
       return rpc(db, "fn_agente_pendencias_abertas", {});
+
+    case "reservas_da_noite":
+      return rpc(db, "fn_agente_gerente", { p_pessoa: pessoa.id, p_op: "noite", p_args: { data: entrada.data ?? null } });
+
+    case "resumo_da_noite":
+      return rpc(db, "fn_agente_gerente", { p_pessoa: pessoa.id, p_op: "resumo", p_args: { data: entrada.data ?? null } });
+
+    case "livro_da_noite":
+      return rpc(db, "fn_agente_gerente", { p_pessoa: pessoa.id, p_op: "livro", p_args: { data: entrada.data ?? null } });
+
+    case "registrar_ocorrencia":
+      return rpc(db, "fn_agente_gerente", { p_pessoa: pessoa.id, p_op: "registrar_ocorrencia", p_args: entrada });
+
+    case "responder_pre_reserva": {
+      const r = await rpc(db, "fn_agente_gerente", {
+        p_pessoa: pessoa.id, p_op: "responder_reserva",
+        p_args: { reserva_id: entrada.reserva_id, confirmar: entrada.confirmar },
+      }) as Record<string, unknown> | null;
+      // O telefone do cliente não vai para o modelo: vira só o link pronto para avisar.
+      if (r && typeof r.whats_cliente === "string") {
+        r.avisar_cliente = `https://wa.me/${r.whats_cliente}?text=${encodeURIComponent(String(r.mensagem_cliente ?? ""))}`;
+      }
+      if (r) delete r.whats_cliente;
+      return r;
+    }
 
     case "decidir_pendencia": {
       const r = await rpc(db, "fn_agente_decidir", {
