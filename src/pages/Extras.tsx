@@ -9,6 +9,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { exportToExcel } from '../utils/reportGenerator';
 import ExtratoPagamentos from '../components/pagamentos/ExtratoPagamentos';
+import { carregarPontos, PontoDiaria, usaPonto, type Ponto } from '../components/extras/PontoDiaria';
 import { urlWhatsApp } from '../components/inventory/comprasShared';
 import {
   Badge, Button, Chip, EmptyState, IconButton, Input, KPICard, Modal, PageHeader, SectionCard, Segmented, Select,
@@ -828,7 +829,11 @@ const Detalhe: React.FC<{ diaria: Diaria; onFechar: () => void; onPagar: () => v
   const [estornando, setEstornando] = useState<string | null>(null);
   const [motivo, setMotivo] = useState('');
   const [ocupado, setOcupado] = useState(false);
+  const [ponto, setPonto] = useState<Ponto | undefined>(undefined);
   const s: Situacao = situacao(diaria);
+  const comPonto = usaPonto(diaria);
+  const carregarPonto = async () => { if (comPonto) setPonto((await carregarPontos([diaria.id]))[diaria.id]); };
+  useEffect(() => { void carregarPonto(); }, [diaria.id, diaria.presenca]);
 
   const carregar = async () => {
     const { data, error } = await supabase.from('extras_pagamentos').select('*').eq('extra_id', diaria.id).order('data_pagamento').order('criado_em');
@@ -852,7 +857,7 @@ const Detalhe: React.FC<{ diaria: Diaria; onFechar: () => void; onPagar: () => v
       descricao={[capital(dayjs(diaria.data_trabalho).format('dddd, DD/MM/YYYY')), diaria.horario_inicio && `${hora(diaria.horario_inicio)} às ${hora(diaria.horario_fim)}`, diaria.funcao_temporaria, diaria.setor, diaria.pessoa?.telefone, diaria.pessoa?.pix && `PIX ${diaria.pessoa.pix}`].filter(Boolean).join(' · ')}
       rodape={<>
         <Button icone={<Pencil size={14} />} onClick={onEditar}>Editar</Button>
-        {emAberto(diaria) && <Button variante="primario" icone={<Wallet size={16} />} onClick={onPagar}>Registrar pagamento</Button>}
+        {emAberto(diaria) && (!comPonto || diaria.presenca === 'confirmada') && <Button variante="primario" icone={<Wallet size={16} />} onClick={onPagar}>Registrar pagamento</Button>}
       </>}>
       {erro && <div className="aviso aviso-perigo mb-3" role="alert">{erro}</div>}
       <div className="grid grid-cols-3 gap-2 mb-4">
@@ -862,11 +867,14 @@ const Detalhe: React.FC<{ diaria: Diaria; onFechar: () => void; onPagar: () => v
       </div>
       <div className="flex flex-wrap items-center gap-2 mb-4">
         <span className="t-label" style={{ color: 'var(--text-secondary)' }}>Presença</span>
-        <Segmented<Diaria['presenca']> rotulo="Presença" valor={diaria.presenca} onMudar={onPresenca}
-          opcoes={[{ valor: 'prevista', rotulo: 'Prevista' }, { valor: 'confirmada', rotulo: 'Veio' }, { valor: 'faltou', rotulo: 'Faltou' }]} />
+        {comPonto
+          ? <PontoDiaria diaria={diaria} ponto={ponto} onMudou={async () => { await carregarPonto(); await onMudou('Presença atualizada.'); }} />
+          : <Segmented<Diaria['presenca']> rotulo="Presença" valor={diaria.presenca} onMudar={onPresenca}
+          opcoes={[{ valor: 'prevista', rotulo: 'Prevista' }, { valor: 'confirmada', rotulo: 'Veio' }, { valor: 'faltou', rotulo: 'Faltou' }]} />}
         <span className="t-caption">{diaria.lancado_por_nome && `Lançou: ${diaria.lancado_por_nome}`}{diaria.pedido_por && ` · Pediu: ${diaria.pedido_por}`}{diaria.motivo_contratacao && ` · ${diaria.motivo_contratacao}`}</span>
       </div>
       {diaria.presenca === 'faltou' && <div className="aviso aviso-atencao mb-3">Marcada como falta: não entra no a pagar e a conta saiu do Financeiro.</div>}
+      {comPonto && diaria.presenca === 'prevista' && <div className="aviso aviso-atencao mb-3">Diária ainda não confirmada: sem conta no Financeiro e sem pagamento até a confirmação pelo ponto.</div>}
       <div className="flex items-center gap-2 mb-2">
         <span className="t-label" style={{ color: 'var(--text-secondary)' }}>Histórico de pagamentos</span>
         <Badge variant={SITUACAO[s].variante}>{SITUACAO[s].rotulo}</Badge>

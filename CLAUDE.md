@@ -77,6 +77,12 @@ Não duplicar aqui: cada regra tem uma fonte só.
   conta da diária, nunca cria avulsa. A trava olha a **categoria** (categoria de extra, ou sem categoria em cadastro
   `extra`): salário, férias e vale de quem tem cadastro `extra` passam (corrigido em 11/11).
 
+- **28/11/2026: ponto com GPS.** Diária a partir de 28/11 só vale com chegada (selfie + GPS a até 150 m do Ditado) e saída
+  (GPS) pelo link pessoal da noite (`/ponto/<token>`, enviado pelo Portal do Gerente, vence às 6h) e confirmação do gerente ou
+  do Cristiano (`fn_extra_confirmar`). Exceção: "à mão", com motivo registrado. A conta a pagar nasce só na confirmação e o
+  pagamento só entra em diária confirmada (gatilhos no banco). Tabelas `extras_ponto*` (sem acesso de visitante); a página
+  do link fala só com a função do servidor `extra-ponto`. Valor da tabela; mudar exige motivo.
+
 ### Vale Ditado (25/11/2026)
 - Venda online de vales pré-pagos em ditado.org/vale (Black Brasa 27–30/11, Vale de Natal 01–24/12). Base: `docs/PRD-vale-ditado.md`,
   `docs/layout-pagina.md`, `docs/copy-pagina.md`, `docs/textos.md`. Resgate em `/vales/resgate`, admin em `/vales` (só gerente).
