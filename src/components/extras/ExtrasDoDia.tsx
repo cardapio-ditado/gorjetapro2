@@ -3,7 +3,7 @@ import { Check, UserPlus, X } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { Badge, Button, SectionCard } from '../ui';
 import { brl, hora, LancarExtras, nomeDe, SELECT_DIARIA, type Diaria } from './shared';
-import { carregarPontos, PontoDiaria, usaPonto, type Ponto } from './PontoDiaria';
+import { carregarPontos, LiberacoesPendentes, PontoDiaria, usaPonto, type Ponto } from './PontoDiaria';
 
 /**
  * Extras do dia, para o Portal do Gerente: quem vem, marcar presença e
@@ -43,6 +43,7 @@ const ExtrasDoDia: React.FC<{ data: string; quem: string | null }> = ({ data, qu
       action={<Button tamanho="sm" variante="primario" icone={<UserPlus size={14} />} onClick={() => setLancando(true)}>Lançar extra</Button>}>
       {erro && <div className="aviso aviso-perigo mx-5 my-3" role="alert">{erro}</div>}
       {aviso && <div className="aviso aviso-certo mx-5 my-3">{aviso}</div>}
+      <LiberacoesPendentes selectDiaria={SELECT_DIARIA} nomeDe={nomeDe} />
       {lista === null ? <p className="t-caption px-5 py-4">Carregando…</p>
         : lista.length === 0 ? <p className="t-body px-5 py-4" style={{ color: 'var(--text-secondary)' }}>Nenhum extra lançado para hoje.</p>
         : lista.map(d => (

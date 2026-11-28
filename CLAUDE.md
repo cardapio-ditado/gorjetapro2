@@ -79,7 +79,8 @@ Não duplicar aqui: cada regra tem uma fonte só.
 
 - **28/11/2026: ponto com GPS.** Diária a partir de 28/11 só vale com chegada (selfie + GPS a até 150 m do Ditado) e saída
   (GPS) pelo link pessoal da noite (`/ponto/<token>`, enviado pelo Portal do Gerente, vence às 6h) e confirmação do gerente ou
-  do Cristiano (`fn_extra_confirmar`). Exceção: "à mão", com motivo registrado. A conta a pagar nasce só na confirmação e o
+  do Cristiano (`fn_extra_confirmar`). Sem chegada e saída pelo link, **só o Kadu libera** (nível master, pelo login dele):
+  gerente/Cristiano usam "Pedir liberação ao Kadu" (`fn_extra_pedir_liberacao`) e ele libera ou recusa (`fn_extra_liberar`). A conta a pagar nasce só na confirmação e o
   pagamento só entra em diária confirmada (gatilhos no banco). Tabelas `extras_ponto*` (sem acesso de visitante); a página
   do link fala só com a função do servidor `extra-ponto`. Valor da tabela; mudar exige motivo.
 
