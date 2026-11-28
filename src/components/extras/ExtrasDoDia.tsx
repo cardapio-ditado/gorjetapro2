@@ -3,6 +3,7 @@ import { Check, UserPlus, X } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { Badge, Button, SectionCard } from '../ui';
 import { brl, hora, LancarExtras, nomeDe, SELECT_DIARIA, type Diaria } from './shared';
+import { carregarPontos, PontoDiaria, usaPonto, type Ponto } from './PontoDiaria';
 
 /**
  * Extras do dia, para o Portal do Gerente: quem vem, marcar presença e
@@ -14,10 +15,15 @@ const ExtrasDoDia: React.FC<{ data: string; quem: string | null }> = ({ data, qu
   const [erro, setErro] = useState<string | null>(null);
   const [aviso, setAviso] = useState<string | null>(null);
   const [lancando, setLancando] = useState(false);
+  const [pontos, setPontos] = useState<Record<string, Ponto>>({});
 
   const carregar = async () => {
     const { data: d, error } = await supabase.from('extras_freelancers').select(SELECT_DIARIA).eq('data_trabalho', data).order('setor').order('nome');
-    if (error) setErro(error.message); else { setErro(null); setLista((d || []) as Diaria[]); }
+    if (error) { setErro(error.message); return; }
+    setErro(null);
+    const l = (d || []) as Diaria[];
+    setLista(l);
+    setPontos(await carregarPontos(l.filter(usaPonto).map(x => x.id)));
   };
   useEffect(() => { setLista(null); setAviso(null); void carregar(); }, [data]);
 
@@ -33,7 +39,7 @@ const ExtrasDoDia: React.FC<{ data: string; quem: string | null }> = ({ data, qu
 
   return (
     <SectionCard noPadding title="Extras do dia"
-      descricao={lista && lista.length ? `${validos.length} extra${validos.length === 1 ? '' : 's'} · ${brl(custo)} · ${vieram} chegou${vieram === 1 ? '' : 'aram'}` : 'Diaristas lançados para esta data.'}
+      descricao={lista && lista.length ? `${validos.length} extra${validos.length === 1 ? '' : 's'} · ${brl(custo)} · ${vieram} confirmad${vieram === 1 ? 'o' : 'os'}` : 'Diaristas lançados para esta data. Desde 28/11: envie o link, o extra marca chegada e saída, e você confirma.'}
       action={<Button tamanho="sm" variante="primario" icone={<UserPlus size={14} />} onClick={() => setLancando(true)}>Lançar extra</Button>}>
       {erro && <div className="aviso aviso-perigo mx-5 my-3" role="alert">{erro}</div>}
       {aviso && <div className="aviso aviso-certo mx-5 my-3">{aviso}</div>}
@@ -48,7 +54,7 @@ const ExtrasDoDia: React.FC<{ data: string; quem: string | null }> = ({ data, qu
                 {d.lancado_por_nome && ` · lançou ${d.lancado_por_nome.split(' ')[0]}`}
               </p>
             </div>
-            {d.presenca === 'faltou' ? <>
+            {usaPonto(d) ? <PontoDiaria diaria={d} ponto={pontos[d.id]} onMudou={carregar} /> : d.presenca === 'faltou' ? <>
               <Badge variant="danger">faltou</Badge>
               <Button tamanho="sm" variante="discreto" onClick={() => presenca(d, 'faltou')}>Desfazer</Button>
             </> : <>
